@@ -296,6 +296,20 @@ function createSidebarRuntime({
 		},
 		{ flush: 'post' },
 	);
+	// Prune expandedCollections for ids no longer present (NONE→VIEW must enter collapsed).
+	watch(
+		() => store.state.collections.value.map((c) => Number(c?.id)),
+		(currentIds) => {
+			const presentIds = new Set(currentIds.filter((id) => Number.isInteger(id) && id > 0));
+			for (const key of Object.keys(uiState.expandedCollections))
+			{
+				if (!presentIds.has(Number(key)))
+				{
+					delete uiState.expandedCollections[key];
+				}
+			}
+		},
+	);
 	const routeSyncService = new SidebarRouteSyncService({
 		store,
 		router,

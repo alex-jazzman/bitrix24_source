@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
+	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 
 	const { ChatService } = require('im/messenger/provider/services/chat');
 
@@ -289,10 +290,19 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 		 * @protected
 		 * @param {{ title: string, description: string }} params
 		 */
-		onClickCreate({ title, description })
+		async onClickCreate({ title, description })
 		{
 			this.dialogInfo.name = title;
 			this.dialogInfo.description = description;
+
+			const canCreate = await ProjectAccessGuard.canAddEntitiesToProjectChildChat(
+				this.dialogInfo.parentChatId,
+				this.participants,
+			);
+			if (!canCreate)
+			{
+				return;
+			}
 
 			this.create()
 				.then((result) => {

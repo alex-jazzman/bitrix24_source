@@ -8,6 +8,10 @@ import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.component
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
 import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import {
+	TasksPopupButtonQuote,
+	TYPES_DEFAULT_QUOTE_ACTIONS,
+} from 'tasks.v2.component.tasks-popup-button-quote';
 
 import { Model } from 'tasks.v2.const';
 import { calendar } from 'tasks.v2.lib.calendar';
@@ -26,6 +30,10 @@ import { resultsMeta } from '../../results-meta';
 import './result.css';
 import '../../results.css';
 
+const TYPES_QUOTE_ACTIONS = {
+	MESSAGE: TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE,
+};
+
 // @vue/component
 export const ResultListItem = {
 	name: 'TaskResultListItem',
@@ -33,6 +41,7 @@ export const ResultListItem = {
 		BIcon,
 		BMenu,
 		HeadlineSm,
+		TasksPopupButtonQuote,
 		UserAvatar,
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 		EntityCollapsibleText,
@@ -40,6 +49,7 @@ export const ResultListItem = {
 	},
 	directives: { hint },
 	inject: {
+		task: {},
 		embedded: {},
 	},
 	props: {
@@ -76,6 +86,8 @@ export const ResultListItem = {
 	{
 		return {
 			isSticky: false,
+			elementAnchorQuote: null,
+			elementScrollContainerQuote: null,
 			scrollContainer: null,
 			mutationObserver: null,
 			isMenuShown: false,
@@ -83,6 +95,15 @@ export const ResultListItem = {
 		};
 	},
 	computed: {
+		actionsQuote(): []
+		{
+			const actionQuoteMessage = {
+				type: TYPES_QUOTE_ACTIONS.MESSAGE,
+				chatId: this.task.chatId,
+			};
+
+			return [actionQuoteMessage];
+		},
 		result(): ResultModel
 		{
 			return this.$store.getters[`${Model.Results}/getById`](this.resultId);
@@ -188,6 +209,7 @@ export const ResultListItem = {
 	},
 	mounted(): void
 	{
+		this.elementAnchorQuote = this.$refs.collapsible.$el.parentNode?.querySelector('.tasks-card-entity-collapsible-text');
 		this.scrollContainer = this.$el?.closest('.tasks-field-results-result-list-content');
 
 		if (this.scrollContainer)
@@ -205,6 +227,8 @@ export const ResultListItem = {
 					subtree: true,
 				},
 			);
+
+			this.elementScrollContainerQuote = this.scrollContainer;
 		}
 	},
 	beforeUnmount(): void
@@ -329,6 +353,13 @@ export const ResultListItem = {
 			</div>
 			<div v-if="showDelimiter" class="tasks-field-results-result-separator"/>
 			<div v-else class="tasks-field-results-result-last-padding"/>
+			<TasksPopupButtonQuote
+				v-if="elementAnchorQuote"
+				:isQuoteTrimmed="true"
+				:elementAnchor="elementAnchorQuote"
+				:elementScrollContainer="elementScrollContainerQuote"
+				:actions="actionsQuote"
+			/>
 		</div>
 	`,
 };

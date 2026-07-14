@@ -1016,3 +1016,17 @@ create table if not exists b_tasks_task_access_request (
 	primary key (TASK_ID, USER_ID)
 );
 create index ix_b_tasks_task_access_request_created_date on b_tasks_task_access_request (CREATED_DATE);
+
+CREATE TABLE IF NOT EXISTS b_tasks_viewed_absence (
+	ID int not null generated always as identity,
+	VIEWED_BY int not null,
+	USER_ID int not null,
+	ABSENCE_ID int not null,
+	ABSENCE_END timestamp(0) not null,
+
+	primary key (ID)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ix_tasks_viewed_absence_unique ON b_tasks_viewed_absence (VIEWED_BY, USER_ID, ABSENCE_ID);
+
+CREATE INDEX IF NOT EXISTS ix_tasks_viewed_absence_end ON b_tasks_viewed_absence (ABSENCE_END);

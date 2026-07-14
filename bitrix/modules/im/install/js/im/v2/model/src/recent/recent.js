@@ -2,7 +2,7 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel, type Store, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { FakeDraftMessagePrefix, RecentType, type RecentTypeItem } from 'im.v2.const';
+import { FakeDraftMessagePrefix, RecentType, type RecentTypeItem, ParentChatScope } from 'im.v2.const';
 import { RecentManager } from 'im.v2.lib.recent';
 import { MessageManager } from 'im.v2.lib.message';
 
@@ -39,8 +39,6 @@ type IndexByParentAndType = {
 
 export class RecentModel extends BuilderModel
 {
-	static ROOT_PARENT_ID = 0;
-
 	getName(): string
 	{
 		return 'recent';
@@ -90,7 +88,7 @@ export class RecentModel extends BuilderModel
 		return {
 			/** @function recent/getCollection */
 			getCollection: (state: RecentState) => (payload: GetPayload & { unread?: boolean }): ImModelRecentItem[] => {
-				const { type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const { type, unread = false, parentChatId = ParentChatScope.topLevel } = payload;
 				const index = unread ? state.unreadIndex : state.recentIndex;
 
 				const parentGroup = index[parentChatId];
@@ -154,7 +152,7 @@ export class RecentModel extends BuilderModel
 			},
 			/** @function recent/hasInCollection */
 			hasInCollection: (state: RecentState) => (payload: GetPayload & { dialogId: string }): boolean => {
-				const { dialogId, type, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const { dialogId, type, parentChatId = ParentChatScope.topLevel } = payload;
 
 				const parentGroup = state.recentIndex[parentChatId];
 				if (!parentGroup)
@@ -180,7 +178,7 @@ export class RecentModel extends BuilderModel
 		return {
 			/** @function recent/setCollection */
 			setCollection: async (store: RecentStore, payload: RawSetPayload & { unread?: boolean }) => {
-				const { type, items, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const { type, items, unread = false, parentChatId = ParentChatScope.topLevel } = payload;
 
 				const itemIds = await Core.getStore().dispatch('recent/set', items);
 
@@ -190,7 +188,7 @@ export class RecentModel extends BuilderModel
 				const needToAddRootItem = RecentManager.isTypeWithNestedChats(type) && parentChatId > 0;
 				if (needToAddRootItem)
 				{
-					store.commit('setIndex', { ...setPayload, parentChatId: RecentModel.ROOT_PARENT_ID });
+					store.commit('setIndex', { ...setPayload, parentChatId: ParentChatScope.topLevel });
 				}
 			},
 			/** @function recent/setUnreadCollection */
@@ -199,7 +197,7 @@ export class RecentModel extends BuilderModel
 			},
 			/** @function recent/clearCollection */
 			clearCollection: async (store: RecentStore, payload: RawClearPayload & { unread?: boolean }) => {
-				const { type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const { type, unread = false, parentChatId = ParentChatScope.topLevel } = payload;
 
 				store.commit('clearCollection', { parentChatId, type, unread });
 			},
@@ -212,9 +210,15 @@ export class RecentModel extends BuilderModel
 				store: RecentStore,
 				payload: RawClearPayload & { dialogId: string, unread?: boolean },
 			) => {
-				const { dialogId, type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const { dialogId, type, unread = false, parentChatId = ParentChatScope.topLevel } = payload;
 
 				store.commit('clearByDialogId', { dialogId, type, unread, parentChatId });
+
+				const needToClearRootItem = RecentManager.isTypeWithNestedChats(type) && parentChatId > 0;
+				if (needToClearRootItem)
+				{
+					store.commit('clearByDialogId', { dialogId, type, unread, parentChatId: ParentChatScope.topLevel });
+				}
 			},
 			/** @function recent/set */
 			set: (store: RecentStore, payload: RawRecentItemsPayload): string[] => {

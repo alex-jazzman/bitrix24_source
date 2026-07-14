@@ -6,14 +6,14 @@ use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Internal\Entity\CustomServers\OnlyOfficeCustomServer;
 use Bitrix\Disk\Internal\Entity\CustomServers\R7CustomServer;
-use Bitrix\Disk\Internal\Enum\CustomServerTypes;
-use Bitrix\Disk\Internal\Enum\VersionTypes;
 use Bitrix\Disk\Internal\Interface\CustomServerDataRepositoryInterface;
 use Bitrix\Disk\Internal\Repository\BitrixOrmDocumentRestrictionLogRepository;
 use Bitrix\Disk\Internal\Repository\BitrixOrmDocumentSessionRepository;
 use Bitrix\Disk\Internal\Repository\CustomServerDataOptionRepository;
+use Bitrix\Disk\Internal\Repository\ExternalLinkBitrixOrmRepository;
 use Bitrix\Disk\Internal\Repository\Interface\DocumentRestrictionLogRepositoryInterface;
 use Bitrix\Disk\Internal\Repository\Interface\DocumentSessionRepositoryInterface;
+use Bitrix\Disk\Internal\Repository\Interface\ExternalLinkRepositoryInterface;
 use Bitrix\Disk\Internal\Repository\Interface\LimitEncounterCounterRepositoryInterface;
 use Bitrix\Disk\Internal\Repository\LimitEncounterCounterPersistentStorageRepository;
 use Bitrix\Disk\Internal\Service\CustomServerConfig;
@@ -123,6 +123,9 @@ return [
 						config: Configuration::getVersionMatchers(),
 					);
 				},
+			],
+			ExternalLinkRepositoryInterface::class => [
+				'className' => ExternalLinkBitrixOrmRepository::class,
 			],
 		],
 		'readonly' => true,

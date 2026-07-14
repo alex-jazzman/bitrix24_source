@@ -11,6 +11,19 @@ Loc::loadMessages(
 	\Bitrix\Landing\Manager::getDocRoot() .
 	'/bitrix/modules/landing/blocks/.components.php'
 );
+Loc::loadMessages(
+	\Bitrix\Landing\Manager::getDocRoot() .
+	'/bitrix/modules/landing/lib/hook/page/settings.php'
+);
+
+$addToBasketAction = [
+	'VALUES' => [
+		'AUTO' => Loc::getMessage('LANDING_HOOK_SETTINGS_ADD_TO_BASKET_ACTION_AUTO'),
+	],
+	'DEFAULT' => 'AUTO',
+	'MULTIPLE' => 'N',
+	'DYNAMIC_VALUE' => 'AUTO',
+];
 
 $return = [
 	'block' => [
@@ -54,8 +67,10 @@ $return = [
 					'USE_PRODUCT_QUANTITY' => [],
 					'SHOW_DISCOUNT_PERCENT' => [],
 					'SHOW_OLD_PRICE' => [],
-					'ADD_TO_BASKET_ACTION' => [],
-					'ADD_TO_BASKET_ACTION_PRIMARY' => [],
+					'ADD_TO_BASKET_ACTION' => $addToBasketAction,
+					'ADD_TO_BASKET_ACTION_PRIMARY' => [
+						'hidden' => true,
+					],
 					// texts
 					'MESS_BTN_BUY' => [],
 					'MESS_BTN_ADD_TO_BASKET' => [],

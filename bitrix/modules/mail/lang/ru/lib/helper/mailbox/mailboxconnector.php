@@ -16,3 +16,4 @@ $MESS["MAIL_MAILBOX_CONNECTOR_SMTP_PORT_BAD"] = "Недопустимый пор
 $MESS['MAIL_MAILBOX_CONNECTOR_REMOVE_DELETE_ERROR_NO_MAILBOX'] = "Почтовый ящик уже отключён";
 $MESS['MAIL_MAILBOX_CONNECTOR_REMOVE_DELETE_ERROR_DENIED'] = "Недостаточно прав на отключение ящика, обратитесь к администратору вашего Битрикс24";
 $MESS['MAIL_MAILBOX_CONNECTOR_EMAIL_EXISTS_NEW_OWNER'] = "Сотрудник уже пользуется этим ящиком. Попробуйте выбрать другого владельца или отключите ящик";
+$MESS['MAIL_MAILBOX_CONNECTOR_SHARED_LIMIT_EXCEEDED'] = "На вашем тарифе достигнут лимит ящиков с общим доступом. Попробуйте отключить общий доступ у другого ящика и сохранить настройки ещё раз";

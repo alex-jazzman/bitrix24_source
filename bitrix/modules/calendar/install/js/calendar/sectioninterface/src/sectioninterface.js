@@ -39,6 +39,7 @@ export class SectionInterface extends EventEmitter
 		this.keyHandlerBinded = this.keyHandler.bind(this);
 		this.currentUserId = this.calendarContext?.currentUser?.id;
 		this.isCollabFeatureEnabled = isCollabFeatureEnabled;
+		this.isNewProjectsOn = this.calendarContext?.isNewProjectsOn;
 
 		if (this.calendarContext !== null && this.calendarContext.util.config.accessNames)
 		{
@@ -233,12 +234,17 @@ export class SectionInterface extends EventEmitter
 					</div>
 				`,
 			);
+			const collabTitleText = (
+				this.isNewProjectsOn
+					? Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT')
+					: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB')
+			);
 			this.DOM.trackingCollabsFormWrap = this.DOM.outerWrap.appendChild(
 				Tag.render`
 					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
 						<div class="calendar-list-slider-card-widget-title">
 							<span class="calendar-list-slider-card-widget-title-text">
-								${Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB')}
+								${collabTitleText}
 							</span>
 						</div>
 					</div>
@@ -571,7 +577,12 @@ export class SectionInterface extends EventEmitter
 	createGroupsSectionList()
 	{
 		const sections = this.sliderSections.filter((section) => (
-			!section.belongsToView() && section.type === 'group' && !section.isCollab()
+			!section.belongsToView()
+			&& section.type === 'group'
+			&& (
+				!section.isCollab()
+				|| this.isNewProjectsOn
+			)
 		));
 
 		if (sections.length > 0)
@@ -579,7 +590,10 @@ export class SectionInterface extends EventEmitter
 			this.DOM.localSectionListWrap.appendChild(Tag.render`
 				<div class="calendar-list-slider-card-section-title">
 					<span class="calendar-list-slider-card-section-title-text">
-						${Loc.getMessage('EC_SEC_SLIDER_TITLE_GROUP_CALENDAR')}
+						${Loc.getMessage(this.isNewProjectsOn
+							? 'EC_SEC_SLIDER_TITLE_PROJECT_CALENDAR'
+							: 'EC_SEC_SLIDER_TITLE_GROUP_CALENDAR'
+						)}
 					</span>
 				</div>
 			`);
@@ -593,6 +607,11 @@ export class SectionInterface extends EventEmitter
 
 	createCollabSectionList()
 	{
+		if (this.isNewProjectsOn)
+		{
+			return;
+		}
+
 		const sections = this.sliderSections.filter((section) => (
 			!section.belongsToView() && section.type === 'group' && section.isCollab()
 		));
@@ -640,6 +659,11 @@ export class SectionInterface extends EventEmitter
 			&& calendarContext?.isCollabCalendar
 		)
 		{
+			if (this.isNewProjectsOn)
+			{
+				return Loc.getMessage('EC_SEC_SLIDER_THIS_PROJECT_CALENDARS_LIST');
+			}
+
 			return Loc.getMessage('EC_SEC_SLIDER_THIS_COLLAB_CALENDARS_LIST');
 		}
 
@@ -714,12 +738,12 @@ export class SectionInterface extends EventEmitter
 		const calendarContext = this.calendarContext || Util.getCalendarContext();
 		const { isBitrix24Template } = calendarContext.util.config;
 
-		if (isBitrix24Template)
+		if (isBitrix24Template && !this.isNewProjectsOn)
 		{
 			menuItems.push(this.getAddGroupMenuItem());
 		}
 
-		if (isBitrix24Template && this.isCollabFeatureEnabled)
+		if (isBitrix24Template && (this.isCollabFeatureEnabled || this.isNewProjectsOn))
 		{
 			menuItems.push(this.getAddCollabMenuItem());
 		}
@@ -791,8 +815,37 @@ export class SectionInterface extends EventEmitter
 
 	getAddCollabMenuItem(): Object
 	{
+		if (this.isNewProjectsOn)
+		{
+			const calendarContext = this.calendarContext || Util.getCalendarContext();
+
+			if (calendarContext.util.config.projectFeatureEnabled)
+			{
+				return {
+					text: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT'),
+					onclick: () => {
+						this.addBtnMenu.close();
+						this.showTrackingCollabsForm();
+					},
+				};
+			}
+
+			return {
+				className: 'menu-popup-item-lock',
+				text: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT'),
+				onclick: () => {
+					this.addBtnMenu.close();
+					FeaturePromotersRegistry.getPromoter({ featureId: 'socialnetwork_projects_groups' }).show();
+				},
+			};
+		}
+
 		return {
-			text: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB'),
+			text: (
+				this.isNewProjectsOn
+					? Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT')
+					: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB')
+			),
 			onclick: (): void => {
 				this.addBtnMenu.close();
 				this.showTrackingCollabsForm();

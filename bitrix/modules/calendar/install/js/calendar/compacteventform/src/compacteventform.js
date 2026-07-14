@@ -1260,6 +1260,7 @@ export class CompactEventForm extends EventEmitter
 				trackingUsersList: this.trackingUsersList,
 				isCollabUser: this.isCollabUser,
 				isCollabContext: this.getCurrentSection().isCollab(),
+				isNewProjectsOn: Util.getCalendarContext()?.util?.config?.isNewProjectsOn,
 			}),
 			mode,
 			zIndex: this.zIndex,

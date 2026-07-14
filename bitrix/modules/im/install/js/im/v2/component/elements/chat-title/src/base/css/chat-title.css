@@ -52,6 +52,31 @@
 	color: var(--im-chat-title-bot-color);
 }
 
+.bx-im-chat-title__text.--copilot {
+	color: var(--im-chat-title-bot-color);
+}
+
+.bx-im-chat-title__text.--copilot.--copilot2026 {
+	background-image:
+		var(--im-chat-title__background-image,
+		linear-gradient(
+				251deg,
+				var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
+				var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4, #F046B7) 21.82%,
+				var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3, #9D48FF) 52.44%,
+				var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2, #3F68FF) 76.41%,
+				var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1, #0098EA) 97.21%
+		)
+	);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: var(--im-chat-title__text-fill-color, transparent);
+	background-clip: text;
+}
+
+.bx-im-chat-title__icon.--copilot {
+	background-image: url('./images/ai-assistant.svg');
+}
+
 .bx-im-chat-title__text.--extranet {
 	color: var(--im-chat-title-extranet-color);
 }

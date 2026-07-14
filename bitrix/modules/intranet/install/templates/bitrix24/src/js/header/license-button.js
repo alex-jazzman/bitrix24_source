@@ -32,6 +32,10 @@ type LicenseButtonOptions = {
 		id: string,
 		secCode: string,
 	},
+	ordersPopup: {
+		signature: ?string,
+		shouldShow: ?boolean,
+	}
 };
 
 export class LicenseButton
@@ -46,7 +50,7 @@ export class LicenseButton
 		this.#options = options;
 		this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 		this.#button = this.#buttonWrapper.querySelector('button');
-		this.#setEventHandlers();
+		this.#setEventHandlers(this.#button);
 
 		if (this.#options.isCloud)
 		{
@@ -231,7 +235,7 @@ export class LicenseButton
 		}
 	}
 
-	static #setEventHandlers(): void
+	static #setEventHandlers(licenseButton: HTMLElement): void
 	{
 		if (this.#options.isCloud && this.#options.isSidePanelDemoLicense)
 		{
@@ -267,10 +271,7 @@ export class LicenseButton
 					this.#openWidget();
 				},
 			);
-		}
 
-		if (this.#options.isCloud)
-		{
 			PULL.subscribe({
 				moduleId: 'bitrix24',
 				command: 'updateCountOrdersAwaitingPayment',
@@ -278,9 +279,12 @@ export class LicenseButton
 					this.#updateOptionsFromPull(params);
 				},
 			});
+
 			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', this.#showInfrastructureSlider.bind(this));
 			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', this.#resetHighlightIntegrator.bind(this));
 		}
+
+		this.#initUnpaidOrdersPopup(licenseButton);
 	}
 
 	static #resetHighlightIntegrator(): void
@@ -392,5 +396,55 @@ export class LicenseButton
 		Runtime.loadExtension('ui.analytics').then(({ sendData }) => {
 			sendData(params);
 		});
+	}
+
+	static #initUnpaidOrdersPopup(licenseButton: HTMLElement)
+	{
+		if (
+			this.#options.ordersPopup?.shouldShow
+			&& this.#options.isCloud
+			&& (this.#options.personalTotalCount + this.#options.commonTotalCount) > 0
+		)
+		{
+			const orders = {
+				inCheckout: {
+					ordersCount: this.#options.counters.inCheckout,
+					path: this.#options.ordersInfo.checkoutPath,
+				},
+				awaitingPayment: {
+					ordersCount: this.#options.counters.awaitingPayment,
+					path: this.#options.ordersInfo.checkoutPath,
+				},
+				awaitingInvoice: {
+					ordersCount: this.#options.counters.awaitingInvoice,
+					path: this.#options.ordersInfo.invoicePath,
+				},
+				failedPayment: {
+					ordersCount: this.#options.counters.failedPayment,
+					path: this.#options.ordersInfo.checkoutPath,
+				},
+			};
+
+			Runtime.loadExtension(['bitrix24.unpaid-orders-popup', 'ui.banner-dispatcher'])
+				.then(({ BannerDispatcher } ) => {
+					BannerDispatcher.low.toQueue(async (onDone) => {
+						const popup = new BX.Bitrix24.UnpaidOrdersPopup().get(licenseButton, orders);
+						if (!popup)
+						{
+							onDone();
+
+							return;
+						}
+
+						popup.subscribe('onClose', () => {
+							BX.userOptions.save('bitrix24', 'show_unpaid_orders_popup', null, this.#options.ordersPopup?.signature);
+
+							onDone();
+						});
+
+						popup.show();
+					});
+				});
+		}
 	}
 }

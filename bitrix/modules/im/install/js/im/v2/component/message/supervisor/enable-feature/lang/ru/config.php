@@ -58,3 +58,6 @@ $MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_DESCRIPTION'] = 'Игра, 
 
 $MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_TITLE'] = 'Разрешите отправлять геопозицию в Чекине';
 $MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_GEO_DESCRIPTION'] = 'Разрешите сотрудникам отмечать не только время начала рабочего дня, но и место, откуда они работают';
+
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_TITLE'] = 'Включите Чекин';
+$MESS['IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_DESCRIPTION'] = 'Чекин поможет лучше понять работу команды в течение дня: карта выездов, маршруты, авточекины, планы и итоги дня — всё в одном инструменте';

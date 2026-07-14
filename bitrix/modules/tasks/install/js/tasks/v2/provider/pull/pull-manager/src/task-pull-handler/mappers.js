@@ -15,6 +15,7 @@ export function mapInstantFields(model: TaskModel): TaskModel
 		auditorsIds: model.auditorsIds,
 		needsControl: model.needsControl,
 		requireResult: model.requireResult,
+		requireDeadlineChangeReason: model.requireDeadlineChangeReason,
 	};
 
 	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isUndefined(value)));
@@ -50,6 +51,7 @@ export function mapPushToModel(id: number, data: TaskPush): TaskModel
 		estimatedTime: data.TIME_ESTIMATE,
 		needsControl: data.TASK_CONTROL,
 		requireResult: mapValue(data.taskRequireResult, data.taskRequireResult === 'Y'),
+		requireDeadlineChangeReason: data.taskRequireDeadlineChangeReason,
 	};
 
 	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isUndefined(value)));

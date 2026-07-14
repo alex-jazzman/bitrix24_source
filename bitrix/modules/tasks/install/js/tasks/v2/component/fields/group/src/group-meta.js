@@ -10,9 +10,14 @@ export const groupMeta = Object.freeze({
 	storyPointsTitle: Loc.getMessage('TASKS_V2_GROUP_STORY_POINTS_TITLE'),
 	getTitle: (groupId: number) => {
 		const group = Core.getStore().getters[`${Model.Groups}/getById`](groupId);
+		const collabTitle = (
+			Core.getParams().features.isNewProjectsOn
+				? Loc.getMessage('TASKS_V2_GROUP_TITLE')
+				: Loc.getMessage('TASKS_V2_GROUP_TITLE_COLLAB')
+		);
 
 		return {
-			[GroupType.Collab]: Loc.getMessage('TASKS_V2_GROUP_TITLE_COLLAB'),
+			[GroupType.Collab]: collabTitle,
 			[GroupType.Scrum]: Loc.getMessage('TASKS_V2_GROUP_TITLE_SCRUM'),
 		}[group?.type] ?? Loc.getMessage('TASKS_V2_GROUP_TITLE');
 	},

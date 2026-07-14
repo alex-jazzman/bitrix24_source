@@ -14,9 +14,7 @@ use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\BizProcService;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepository;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepositoryInterface;
-use Bitrix\Tasks\Flow\Provider\DepartmentExistsProvider;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
-use Bitrix\Tasks\Flow\Provider\UserStatusProvider;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -33,6 +31,7 @@ use Bitrix\Tasks\V2\Internal\Integration\Disk\Repository\DiskFileRepositoryInter
 use Bitrix\Tasks\V2\Internal\Integration\Disk\Repository\InMemoryDiskFileRepository;
 use Bitrix\Tasks\V2\Internal\Integration\HumanResources\Repository\StructureRepository;
 use Bitrix\Tasks\V2\Internal\Integration\HumanResources\Repository\StructureRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Integration\Intranet\Service\AbsenceService;
 use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotification;
 use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotificationInterface;
 use Bitrix\Tasks\V2\Internal\Integration\Im\MessageSender;
@@ -61,6 +60,8 @@ use Bitrix\Tasks\V2\Internal\Repository\ElapsedTimeRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\FavoriteTaskRepository;
 use Bitrix\Tasks\V2\Internal\Repository\FavoriteTaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\FileRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\FlowMemberRepository;
+use Bitrix\Tasks\V2\Internal\Repository\FlowMemberRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\FlowRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\GanttLinkRepository;
 use Bitrix\Tasks\V2\Internal\Repository\GanttLinkRepositoryInterface;
@@ -145,6 +146,8 @@ use Bitrix\Tasks\V2\Internal\Repository\UserFieldSchemeRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserOptionRepository;
 use Bitrix\Tasks\V2\Internal\Repository\UserOptionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\ViewedAbsenceRepository;
+use Bitrix\Tasks\V2\Internal\Repository\ViewedAbsenceRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\ViewedUserRepository;
 use Bitrix\Tasks\V2\Internal\Repository\ViewedUserRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\ViewRepository;
@@ -405,11 +408,20 @@ return [
 		ViewedUserRepositoryInterface::class => [
 			'className' => ViewedUserRepository::class,
 		],
+		FlowMemberRepositoryInterface::class => [
+			'className' => FlowMemberRepository::class,
+		],
 		TemplateParameterRepositoryInterface::class => [
 			'className' => TemplateParameterRepository::class,
 		],
 		TaskAccessRequestRepositoryInterface::class => [
 			'className' => TaskAccessRequestRepository::class,
+		],
+		ViewedAbsenceRepositoryInterface::class => [
+			'className' => ViewedAbsenceRepository::class,
+		],
+		AbsenceService::class => [
+			'className' => AbsenceService::class,
 		],
 		// endregion
 

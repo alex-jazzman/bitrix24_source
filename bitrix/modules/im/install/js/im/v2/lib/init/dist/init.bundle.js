@@ -218,6 +218,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				copilot
 			} = im_v2_application_core.Core.getApplicationData();
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setName', copilot.botName);
+			void im_v2_application_core.Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
 			if (!copilot.availableEngines) {
 				return;
 			}

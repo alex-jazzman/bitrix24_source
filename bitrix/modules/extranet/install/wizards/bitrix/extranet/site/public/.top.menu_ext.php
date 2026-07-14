@@ -83,6 +83,7 @@ if (
 	&& Collab\CollabFeature::isOn()
 	&& Collab\CollabFeature::isFeatureEnabled()
 	&& Collab\Requirement::check()->isSuccess()
+	&& !\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn()
 )
 {
 	$menuItems[] = [
@@ -199,14 +200,24 @@ if ($USER->IsAuthorized())
 	}
 }
 
-if (!$isCollaber && CBXFeatures::IsFeatureEnabled('Workgroups') && CBXFeatures::IsFeatureEnabled('Extranet'))
+$isNewProjectsOn = (
+	class_exists(\Bitrix\Socialnetwork\V2\Feature::class)
+	&& \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn()
+);
+if (
+	(!$isCollaber || $isNewProjectsOn)
+	&& CBXFeatures::IsFeatureEnabled('Workgroups')
+	&& CBXFeatures::IsFeatureEnabled('Extranet')
+)
 {
+	$messageKey = ($isNewProjectsOn ? 'EXTRANET_LEFT_MENU_PROJECTS' : 'EXTRANET_LEFT_MENU_GROUPS');
+
 	$menuItems[] = array(
-		Loc::getMessage('EXTRANET_LEFT_MENU_GROUPS'),
+		Loc::getMessage($messageKey),
 		SITE_DIR . 'workgroups/',
 		[],
 		[
-			'class' => 'menu-groups-extranet',
+			'class' => $isNewProjectsOn ? 'menu-all-projects' : 'menu-groups-extranet',
 			'real_link' => getLeftMenuItemLink(
 				'sonetgroups_panel_menu',
 				SITE_DIR . 'workgroups/'

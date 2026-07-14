@@ -66,6 +66,7 @@ export const AnalyticsEvent = Object.freeze({
 export const AnalyticsTool = Object.freeze({
 	im: 'im',
 	ai: 'ai',
+	task: 'task',
 });
 
 export const AnalyticsCategory = Object.freeze({
@@ -73,6 +74,7 @@ export const AnalyticsCategory = Object.freeze({
 	callDocs: 'call_docs',
 	messenger: 'messenger',
 	callsOperations: 'calls_operations',
+	chatOperations: 'chat_operations',
 	callFollowup: 'call_followup',
 	callRecord: 'call_record',
 	collabCall: 'collab_call',
@@ -82,6 +84,8 @@ export const AnalyticsType = Object.freeze({
 	private: 'private',
 	group: 'group',
 	videoconf: 'videoconf',
+	video: 'video',
+	audio: 'audio',
 	resume: 'resume',
 	doc: 'doc',
 	presentation: 'presentation',
@@ -97,6 +101,9 @@ export const AnalyticsSection = Object.freeze({
 	callPopup: 'call_popup',
 	chatList: 'chat_list',
 	chatWindow: 'chat_window',
+	taskChat: 'task_chat',
+	taskCard: 'task_card',
+	chatTasks: 'chat_tasks',
 	callMessage: 'call_message',
 	callFollowup: 'call_followup',
 	call: 'call',
@@ -106,6 +113,7 @@ export const AnalyticsSubSection = Object.freeze({
 	finishButton: 'finish_button',
 	contextMenu: 'context_menu',
 	window: 'window',
+	taskCard: 'task_card',
 });
 
 export const AnalyticsElement = Object.freeze({

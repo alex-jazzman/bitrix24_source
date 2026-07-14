@@ -1,6 +1,6 @@
 import { Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { BitrixVue, reactive } from 'ui.vue3';
+import { BitrixVue, reactive, watchEffect } from 'ui.vue3';
 import { createSidebarFeature, DialogService, NoteEvent } from 'note.sidebar';
 import { openOrphanRestorePopup, RecycleBinService } from 'note.recyclebin';
 import { NoteTheme, NoteThemeContext } from 'note.ui.theme-context';
@@ -41,6 +41,7 @@ export class NoteApp
 	#handleDocRenamed: Function | null = null;
 	#handleCollectionRenamed: Function | null = null;
 	#handleChildrenChanged: Function | null = null;
+	#childrenWatchStop: Function | null = null;
 	#documentActions: Object | null = null;
 	#dialogService: DialogService = new DialogService();
 	#lastKnownCollectionId: number = 0;
@@ -94,6 +95,30 @@ export class NoteApp
 
 		this.#documentActions = this.#createDocumentActions();
 
+		// Live-mirror the open document's sidebar branch into the editor children-block.
+		// Every create/rename/move/remove the store applies reaches the block without a
+		// per-event re-sync — getChildren returns the reactive docsByParent array.
+		this.#childrenWatchStop = watchEffect(() => {
+			const ctx = this.#routeDocumentContext;
+			if (!ctx || !this.#sidebarFeature)
+			{
+				return;
+			}
+
+			const docId = Number(ctx.docId);
+			const collectionId = Number(ctx.document?.collectionId);
+			if (!Number.isInteger(docId) || docId <= 0 || !Number.isInteger(collectionId) || collectionId <= 0)
+			{
+				ctx.children = [];
+				ctx.childrenHasMore = false;
+
+				return;
+			}
+
+			ctx.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
+			ctx.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+		});
+
 		this.#app = BitrixVue.createApp(NoteLayout, {
 			state: this.#sidebarFeature.state,
 			actions: this.#sidebarFeature.actions,
@@ -103,6 +128,7 @@ export class NoteApp
 			documentActions: this.#documentActions,
 			themeActions: this.#themeActions,
 		});
+		// @chef-ignore
 		this.#app.use(this.#router);
 		this.#app.mount(target);
 		this.#themeRoot = document.querySelector(target);
@@ -142,7 +168,10 @@ export class NoteApp
 				&& Number(this.#routeDocumentContext.docId) === parentId
 			)
 			{
-				this.#syncChildDocumentsState(parentId, collectionId);
+				// Display is handled reactively by the children watchEffect; we only need
+				// to fetch an unloaded branch (first remote child of a leaf) so it has
+				// something to mirror. ensureChildrenLoaded is a no-op once hydrated.
+				void this.#sidebarFeature.ensureChildrenLoaded(Number(collectionId), parentId);
 			}
 		};
 		EventEmitter.subscribe(NoteEvent.DOCUMENT_RENAMED, this.#handleDocRenamed);
@@ -157,6 +186,12 @@ export class NoteApp
 	destroy(): void
 	{
 		this.#applyMobileClass(false);
+
+		if (Type.isFunction(this.#childrenWatchStop))
+		{
+			this.#childrenWatchStop();
+			this.#childrenWatchStop = null;
+		}
 
 		if (this.#app)
 		{
@@ -932,6 +967,9 @@ export class NoteApp
 		const sidebarDoc = this.#sidebarFeature.findLoadedDocument(collectionId, docId);
 		if (sidebarDoc && !sidebarDoc.hasChildren)
 		{
+			// Nothing to fetch; the watchEffect already reflects the empty branch.
+			this.#syncChildDocumentsState(docId, collectionId);
+
 			return;
 		}
 
@@ -964,8 +1002,7 @@ export class NoteApp
 			return;
 		}
 
-		this.#routeDocumentContext.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
-		this.#routeDocumentContext.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+		// children / childrenHasMore are kept live by the children watchEffect.
 		this.#routeDocumentContext.childrenLoading = false;
 		this.#routeDocumentContext.loadMoreChildren = () => {
 			void this.#loadMoreChildDocuments(docId, collectionId);
@@ -1068,26 +1105,29 @@ export class NoteApp
 					void this.#sidebarFeature.actions.deleteDocument(doc);
 				}
 			},
-			restoreFromTrash: (documentId) => {
-				void this.#restoreDocumentFromTrash(documentId);
+			restoreFromTrash: (documentId, hints = {}) => {
+				void this.#restoreDocumentFromTrash(documentId, hints);
 			},
-			hardDelete: (documentId) => {
-				void this.#hardDeleteDocument(documentId);
+			hardDelete: (documentId, hints = {}) => {
+				void this.#hardDeleteDocument(documentId, hints);
 			},
 		};
 	}
 
-	async #restoreDocumentFromTrash(documentId: number): Promise<void>
+	async #restoreDocumentFromTrash(documentId: number, hints: Object = {}): Promise<void>
 	{
 		const doc = this.#resolveLoadedDocument(documentId);
-		const recycleBinId = Number(doc?.recycleBinId);
-		if (!doc || !Number.isInteger(recycleBinId) || recycleBinId <= 0)
+		// Editor passes the freshest recycleBinId/isOrphan via hints — routeDocumentContext.document
+		// stays at its initial-load snapshot and is stale after a push-driven trash flip.
+		const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
+		const isOrphan = typeof hints?.isOrphan === 'boolean' ? hints.isOrphan : Boolean(doc?.isOrphan);
+		if (!doc || recycleBinId <= 0)
 		{
 			return;
 		}
 
 		let targetCollectionId = null;
-		if (doc.isOrphan)
+		if (isOrphan)
 		{
 			const result = await openOrphanRestorePopup({ documentTitle: String(doc.title || '') });
 			if (!result)
@@ -1136,11 +1176,11 @@ export class NoteApp
 		void this.#router?.push?.({ name: ROUTE_NAME_RECYCLE_BIN });
 	}
 
-	async #hardDeleteDocument(documentId: number): Promise<void>
+	async #hardDeleteDocument(documentId: number, hints: Object = {}): Promise<void>
 	{
 		const doc = this.#resolveLoadedDocument(documentId);
-		const recycleBinId = Number(doc?.recycleBinId);
-		if (!doc || !Number.isInteger(recycleBinId) || recycleBinId <= 0)
+		const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
+		if (!doc || recycleBinId <= 0)
 		{
 			return;
 		}

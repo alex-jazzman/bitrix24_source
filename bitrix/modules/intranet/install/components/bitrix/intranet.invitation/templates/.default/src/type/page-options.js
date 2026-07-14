@@ -9,9 +9,11 @@ export type PageOptions = {
 	useLocalEmailProgram: boolean,
 	isAdmin: boolean,
 	needConfirmRegistration: boolean,
+	invitationLink: string,
 	whiteList: string,
 	isCloud: boolean,
 	linkRegisterEnabled: boolean,
 	isExtranetInstalled: boolean,
 	canCurrentUserInvite: boolean,
+	canCurrentUserCreateDepartment: boolean,
 }

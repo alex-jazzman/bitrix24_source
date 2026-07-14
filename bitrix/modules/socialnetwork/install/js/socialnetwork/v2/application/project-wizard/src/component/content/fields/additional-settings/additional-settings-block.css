@@ -1,0 +1,6 @@
+.sonet--project-wizard--additional-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm, 12px);
+	padding: var(--ui-space-inline-3xs, 2px) 0;
+}

@@ -22,10 +22,6 @@
 	transition: opacity .3s;
 }
 
-.bx-im-list-recent-item__wrap:first-child {
-	margin-top: 4px;
-}
-
 .bx-im-list-recent-item__wrap:hover {
 	background-color: var(--im-list-recent-item__background-color_hover);
 }

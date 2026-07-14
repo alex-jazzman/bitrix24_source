@@ -122,7 +122,6 @@ export const RecentListContainer = {
 		},
 		onToggleUnreadMode()
 		{
-			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.default });
 			this.unreadMode = !this.unreadMode;
 		},
 	},
@@ -156,8 +155,8 @@ export const RecentListContainer = {
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<RecentList v-if="!unreadMode" @selectChat="onSelectChat" />
-					<RecentUnreadList v-else @selectChat="onSelectChat" />
+					<RecentList v-show="!searchMode && !unreadMode" @selectChat="onSelectChat" />
+					<RecentUnreadList v-if="unreadMode" @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

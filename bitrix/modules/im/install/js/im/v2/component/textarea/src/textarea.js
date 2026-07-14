@@ -96,6 +96,10 @@ export const ChatTextarea = {
 			type: Boolean,
 			default: true,
 		},
+		withCopilot: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['mounted'],
 	data(): JsonObject
@@ -1065,6 +1069,7 @@ export const ChatTextarea = {
 				:bindElement="$refs['textarea-content']"
 				:dialogId="dialogId"
 				:query="mentionQuery"
+				:withCopilot="withCopilot"
 				@close="closeMentionPopup"
 				@onFocusTextarea="focus"
 			/>

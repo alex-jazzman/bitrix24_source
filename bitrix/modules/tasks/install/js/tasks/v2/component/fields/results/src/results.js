@@ -329,7 +329,7 @@ export const Results = {
 		},
 		tryShowResultHints(): void
 		{
-			if (!this.requireResult || this.containsResults)
+			if (!this.requireResult || this.containsResults || this.isTemplate)
 			{
 				return;
 			}
@@ -355,7 +355,9 @@ export const Results = {
 				ahaMoments.setActive(Option.AhaRequiredResultResponsiblePopup);
 
 				setTimeout((): void => {
-					this.showResponsibleHint();
+					const event = new BaseEvent({ data: { taskId: this.taskId } });
+
+					this.showResponsibleHint(event);
 				}, 2000);
 			}
 		},

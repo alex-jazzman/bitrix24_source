@@ -31,4 +31,11 @@ export type TaskPush = {
 	MARK: string,
 	TASK_CONTROL: boolean,
 	taskRequireResult: string,
+	taskRequireDeadlineChangeReason: boolean,
+};
+
+export type StopTimerPush = {
+	taskId: number,
+	timeElapsed: {[key: number]: number},
+	userId: number,
 };

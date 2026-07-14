@@ -8,11 +8,11 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 	const { Theme } = require('im/lib/theme');
 
 	const { Loc } = require('im/messenger/loc');
-	const { MessageComponent, Analytics } = require('im/messenger/const');
+	const { MessageComponent, Analytics, ButtonDesignType } = require('im/messenger/const');
 	const { openPlanLimitsWidget } = require('im/messenger/lib/plan-limit');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 
-	const { ButtonType, ButtonDesignType, ImageNameType, ButtonId } = require('im/messenger/lib/element/dialog/message/banner/const/type');
+	const { ButtonType, ImageNameType, ButtonId } = require('im/messenger/lib/element/dialog/message/banner/const/type');
 	const { SignMetaData } = require('im/messenger/lib/element/dialog/message/banner/banners/sign/configuration');
 	const { AdminMetaData } = require('im/messenger/lib/element/dialog/src/message/banner/banners/admin/configuration');
 

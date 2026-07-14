@@ -5,6 +5,9 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 	const { NavigationTabId } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { CreateChannel } = require('im/messenger/controller/chat-composer');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { isProjectsGroupsRestricted, showProjectsGroupsRestrictionIfNeeded } = require('im/messenger/lib/plan-limit');
+	const { ProjectCreateManager } = require('layout/socialnetwork/project-v2/create');
 
 	async function openChatCreateByActiveRecentTab()
 	{
@@ -47,6 +50,16 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 	function openCollabCreate()
 	{
+		if (Feature.isNestedChatAvailable)
+		{
+			if (isProjectsGroupsRestricted())
+			{
+				return showProjectsGroupsRestrictionIfNeeded();
+			}
+
+			return ProjectCreateManager.open();
+		}
+
 		return serviceLocator.get('dialog-creator').createCollab();
 	}
 

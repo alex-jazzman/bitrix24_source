@@ -171,3 +171,5 @@ DROP TABLE IF EXISTS b_tasks_result_message;
 DROP TABLE IF EXISTS b_tasks_template_parameter;
 
 DROP TABLE IF EXISTS b_tasks_task_access_request;
+
+DROP TABLE IF EXISTS b_tasks_viewed_absence;

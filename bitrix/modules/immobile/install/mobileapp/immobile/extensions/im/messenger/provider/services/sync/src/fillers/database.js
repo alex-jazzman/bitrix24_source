@@ -80,7 +80,7 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		{
 			const cloneResult = clone(result);
 
-			return this.filterChildChats(this.filterUsers(cloneResult));
+			return this.filterUsers(cloneResult);
 		}
 
 		getUuidPrefix()
@@ -295,6 +295,7 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		{
 			const { recentItems, chatSync, messages } = syncListResult;
 			await this.fillAddedRecent(recentItems, chatSync.addedRecent, messages);
+			await this.fillRecentSections(syncListResult);
 		}
 
 		/**
@@ -319,6 +320,38 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		 * @param {SyncListResult} syncListResult
 		 * @return {Promise<void>}
 		 */
+		async fillRecentSections(syncListResult)
+		{
+			const { recentConfigs, dialogIds } = syncListResult;
+			if (!Type.isArrayFilled(recentConfigs))
+			{
+				return;
+			}
+
+			const dialogIdByChatId = Type.isArray(dialogIds) ? {} : dialogIds;
+
+			await Promise.all(recentConfigs.map(async ({ chatId, sections }) => {
+				const dialogId = dialogIdByChatId[chatId];
+				if (!Type.isStringFilled(dialogId))
+				{
+					return;
+				}
+
+				if (Type.isArray(sections) && sections.length === 0)
+				{
+					await this.recentRepository.deleteSectionsByDialogId(dialogId);
+
+					return;
+				}
+
+				await this.recentRepository.setSections(dialogId, sections);
+			}));
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 * @return {Promise<void>}
+		 */
 		async fillReactions(syncListResult)
 		{
 			if (!Type.isArrayFilled(syncListResult.reactions))
@@ -329,6 +362,34 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 			const reactions = this.getReactionsFromSyncListResult(syncListResult);
 
 			await this.reactionRepository.saveFromRest(reactions);
+		}
+
+		/**
+		 * @override
+		 * @param {string} source
+		 * @param {Record<string, number> | []} completeDeletedChatsIds
+		 * @return {Promise<void>}
+		 */
+		async processCompletelyDeletedChats(source, completeDeletedChatsIds)
+		{
+			const chatIdList = Object.values(completeDeletedChatsIds);
+			if (Type.isArrayFilled(chatIdList))
+			{
+				const childDialogIds = await this.dialogRepository.getDialogIdsByParentChatIds(chatIdList);
+				if (Type.isArrayFilled(childDialogIds))
+				{
+					const chatProvider = new ChatDataProvider();
+
+					await this.recentRepository.deleteByIds(childDialogIds);
+					for (const dialogId of childDialogIds)
+					{
+						// eslint-disable-next-line no-await-in-loop
+						await chatProvider.deleteFromSource(source, { dialogId });
+					}
+				}
+			}
+
+			await super.processCompletelyDeletedChats(source, completeDeletedChatsIds);
 		}
 
 		/**

@@ -13,7 +13,7 @@ export const MultidialogContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId">
+		<BaseChatContent :dialogId="dialogId" :withChatContentDisclaimer="false">
 			<template #header>
 				<MultidialogHeader :dialogId="dialogId" :key="dialogId" />
 			</template>

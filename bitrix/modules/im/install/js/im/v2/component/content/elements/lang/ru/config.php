@@ -45,3 +45,4 @@ $MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TITLE'] = "Пригл
 $MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TEXT'] = "Ваша коллаба готова, осталось пригласить коллег, подрядчиков или клиентов. Это просто и быстро!";
 $MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TITLE'] = "В коллабе всё ещё никого нет";
 $MESS['IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TEXT'] = "Пригласите коллег <br> или внешнюю команду. <br> Это первое, с чего нужно начать";
+$MESS["IM_CONTENT_COPILOT_DISCLAIMER_MSGVER_1"] = "#COPILOT_NAME# может ошибаться. [link]Подробнее[/link]";

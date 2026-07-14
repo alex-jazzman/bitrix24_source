@@ -16,12 +16,17 @@ export class EmailWithCounterField extends BaseField
 	{
 		const counterNode = this.renderCounter(params.count, params.isOverLimit, params.counterHintText);
 		const iconNode = this.#renderProviderIcon(params.serviceName);
+		const emailContent = Tag.render`
+			<div class="mailbox-grid_email-content">
+				<span class="mailbox-grid_email-text">${Text.encode(params.email)}</span>
+				${counterNode}
+			</div>
+		`;
 
 		const emailContainer = Tag.render`
 			<div class="mailbox-grid_email-container">
 				${iconNode}
-				<span class="mailbox-grid_email-text">${Text.encode(params.email)}</span>
-				${counterNode}
+				${emailContent}
 			</div>
 		`;
 

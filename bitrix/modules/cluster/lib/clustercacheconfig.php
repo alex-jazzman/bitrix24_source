@@ -46,9 +46,9 @@ class ClusterCacheConfig
 
 	public function getConfig(bool $onlyOnline = false, array &$otherGroups = []): array
 	{
+		$arList = false;
 		if (self::$servers === null || !isset(self::$servers[$this->type]))
 		{
-			$arList = false;
 			$configFile = $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/' . $this->type . '.php';
 
 			if (file_exists($configFile))
@@ -85,7 +85,7 @@ class ClusterCacheConfig
 				$result[$server['ID']] = [
 					'host' => $server['HOST'],
 					'port' => $server['PORT'],
-					'weight' => (int) $server['WEIGHT'] ?? 100
+					'weight' => (int)$server['WEIGHT'] ?: 100
 				];
 			}
 
@@ -115,7 +115,7 @@ class ClusterCacheConfig
 			$defaultGroup = $groups[$group['ID']] = (int) $group['ID'];
 		}
 
-		foreach ($servers as $i => $server)
+		foreach ($servers as $server)
 		{
 			$serverID = (int) $server['ID'];
 			$groupID = (int) $server['GROUP_ID'];

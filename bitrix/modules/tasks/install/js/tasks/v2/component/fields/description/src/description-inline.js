@@ -50,6 +50,7 @@ export const DescriptionInline = {
 						category: 'tasks',
 						contextId: `tasks_${this.taskId}`,
 						menuForceTop: false,
+						responseFormat: 'html',
 					},
 					triggerBySpace: true,
 				};

@@ -1,21 +1,18 @@
 import { Loc } from 'main.core';
-import { MenuItemDesign } from 'ui.system.menu';
+import { MenuItemDesign, type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 
-import { ChatService } from 'im.v2.provider.service.chat';
-import { Utils } from 'im.v2.lib.utils';
-import { RecentMenu } from 'im.v2.lib.menu';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { ActionByRole, ActionByUserType, Layout } from 'im.v2.const';
-import { PermissionManager } from 'im.v2.lib.permission';
+import { ActionByRole, ActionByUserType, Layout, type ApplicationContext } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
-import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
-import { Notifier } from 'im.v2.lib.notifier';
 import { ChatManager } from 'im.v2.lib.chat';
+import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-
-import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
-import type { ApplicationContext } from 'im.v2.const';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { RecentMenu } from 'im.v2.lib.menu';
+import { Notifier } from 'im.v2.lib.notifier';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Utils } from 'im.v2.lib.utils';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 export class MainMenu extends RecentMenu
 {
@@ -47,6 +44,7 @@ export class MainMenu extends RecentMenu
 		return [
 			this.getPinMessageItem(),
 			this.getEditItem(),
+			this.getCopyItem(),
 			this.getAddMembersToChatItem(),
 			this.getOpenProfileItem(),
 			this.getOpenUserCalendarItem(),
@@ -116,7 +114,7 @@ export class MainMenu extends RecentMenu
 
 	getEditItem(): ?MenuItemOptions
 	{
-		if (!this.permissionManager.canPerformActionByRole(ActionByRole.update, this.context.dialogId))
+		if (!this.#canUpdateChat())
 		{
 			return null;
 		}
@@ -134,9 +132,38 @@ export class MainMenu extends RecentMenu
 		};
 	}
 
+	getCopyItem(): ?MenuItemOptions
+	{
+		if (!this.#canUpdateChat() || !this.#isCollabV2())
+		{
+			return null;
+		}
+
+		const isCollabV2CopyAvailable = TariffManager.collabV2.isCopyAvailable();
+
+		return {
+			isLocked: !isCollabV2CopyAvailable,
+			title: Loc.getMessage('IM_SIDEBAR_MENU_COPY_CHAT'),
+			onClick: () => {
+				if (!isCollabV2CopyAvailable)
+				{
+					TariffManager.collabV2.openCopyFeatureSlider();
+
+					return;
+				}
+
+				void LayoutManager.getInstance().setLayout({
+					name: Layout.copyCollab,
+					entityId: this.context.dialogId,
+				});
+			},
+		};
+	}
+
 	getDeleteItem(): ?MenuItemOptions
 	{
-		if (!this.permissionManager.canPerformActionByRole(ActionByRole.delete, this.context.dialogId))
+		const canDelete = this.permissionManager.canPerformActionByRole(ActionByRole.delete, this.context.dialogId);
+		if (!canDelete || this.#isCollabV2())
 		{
 			return null;
 		}
@@ -245,5 +272,15 @@ export class MainMenu extends RecentMenu
 		}
 
 		return false;
+	}
+
+	#canUpdateChat(): boolean
+	{
+		return this.permissionManager.canPerformActionByRole(ActionByRole.update, this.context.dialogId);
+	}
+
+	#isCollabV2(): boolean
+	{
+		return this.isCollabChat() && FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
 	}
 }

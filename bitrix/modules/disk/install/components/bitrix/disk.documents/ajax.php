@@ -3,6 +3,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk;
+use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
@@ -102,13 +103,14 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$actions = [];
 
 		$supportsUnifiedLink = $file->supportsUnifiedLink();
-		$isBoard = (int)$file->getTypeFile() === Disk\TypeFile::FLIPCHART;
+		$fileType = (int)$file->getTypeFile();
+		$isBoard = $fileType === Disk\TypeFile::FLIPCHART;
 
 		if (!$isBoard && $supportsUnifiedLink)
 		{
 			$viewUnifiedLinkOptions = [];
 
-			if (!empty($analytics))
+			if (!empty($analytics) && Disk\Analytics\Availability::isAvailableForObject($file))
 			{
 				$viewUnifiedLinkOptions['additionalQueryParams']['analytics'] = $analytics;
 			}
@@ -130,21 +132,8 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			'href' => $downloadUri,
 		];
 
-		$actionToShare = [];
-		if (Disk\Configuration::isPossibleToShowExternalLinkControl())
-		{
-			$featureBlocker = Bitrix24Manager::filterJsAction($this->getExternalLinkFeature($trackedObject), '');
-			$actionToShare[] = [
-				'id' => 'externalLink',
-				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_GET_EXT_LINK'),
-				'dataset' => [
-					'shouldBlockFeature' => (bool)$featureBlocker,
-					'blocker' => $featureBlocker ?: null,
-				],
-			];
-		}
-
 		$belongsToDiskStorages = $this->belongsToDiskStorages($file);
+		$internalLink = null;
 		if ($belongsToDiskStorages)
 		{
 			if ($supportsUnifiedLink)
@@ -163,26 +152,19 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 					'cmd' => 'show',
 				], true);
 			}
-
-			$actionToShare[] = [
-				'id' => 'internalLink',
-				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK'),
-				'dataset' => [
-					'internalLink' => $internalLink,
-					'textCopied' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK'),
-				],
-			];
 		}
 
-		$actionToShare[] = [
-			'id' => 'sharing',
-			'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_SHARING_2'),
-			'dataset' => [
-				'objectId' => $trackedObject->getFileId(),
-				'objectName' => $trackedObject->getFile()->getName(),
-				'type' => $this->getSharingControlType($trackedObject),
-			],
-		];
+		$supportsSharingAccessPopup = $supportsUnifiedLink;
+		$sharingMode = $this->getSharingControlType($trackedObject);
+		$actionToShare = $this->buildDocumentsShareMenuItems(
+			$trackedObject,
+			$file,
+			$internalLink,
+			$supportsUnifiedLink,
+			$supportsSharingAccessPopup,
+			$sharingMode,
+			$belongsToDiskStorages,
+		);
 
 		if ($actionToShare)
 		{
@@ -347,12 +329,18 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				}
 			}
 
-			if (\in_array('externalLink', $actions, true))
-			{
-				$externalLinkData = $fileController->getExternalLinkAction($trackedObject->getFile());
-				$result[$trackedObjectId]['externalLink'] = $externalLinkData['externalLink'] ?? null;
+				if (\in_array('externalLink', $actions, true))
+				{
+					$file = $trackedObject->getFile();
+					$externalLinkData = $fileController->getExternalLinkAction($file);
+					$externalLink = $externalLinkData['externalLink'] ?? [
+						'id' => null,
+						'objectId' => $trackedObject->getFileId(),
+					];
+					$externalLink['supportsSharingAccessPopup'] = $file->supportsUnifiedLink();
+					$result[$trackedObjectId]['externalLink'] = $externalLink;
+				}
 			}
-		}
 
 		return $result;
 	}
@@ -395,6 +383,151 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$isBoardType = (int)$trackedObject->getFile()->getTypeFile() === Disk\TypeFile::FLIPCHART;
 
 		return $isBoardType ? 'disk_board_external_link' : 'disk_manual_external_link';
+	}
+
+	private function buildDocumentsShareMenuItems(
+		Disk\Document\TrackedObject $trackedObject,
+		File $file,
+		?string $internalLink,
+		bool $supportsUnifiedLink,
+		bool $supportsSharingAccessPopup,
+		?string $sharingMode,
+		bool $belongsToDiskStorages,
+	): array
+	{
+		if ($supportsUnifiedLink)
+		{
+			return $this->buildDocumentsUnifiedShareMenuItems(
+				$trackedObject,
+				$file,
+				$internalLink,
+				$supportsSharingAccessPopup,
+				$sharingMode,
+				$belongsToDiskStorages,
+			);
+		}
+
+		return $this->buildDocumentsLegacyShareMenuItems(
+			$trackedObject,
+			$file,
+			$internalLink,
+			$sharingMode,
+			$belongsToDiskStorages,
+		);
+	}
+
+	private function buildDocumentsUnifiedShareMenuItems(
+		Disk\Document\TrackedObject $trackedObject,
+		File $file,
+		?string $internalLink,
+		bool $supportsSharingAccessPopup,
+		?string $sharingMode,
+		bool $belongsToDiskStorages,
+	): array
+	{
+		$items = [];
+
+		if ($belongsToDiskStorages && $internalLink !== null)
+		{
+			$items[] = [
+				'id' => 'internalLink',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPY_LINK'),
+				'dataset' => [
+					'internalLink' => $internalLink,
+					'textCopied' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK'),
+				],
+			];
+		}
+
+		$sharingItem = $this->buildDocumentsSharingMenuItem(
+			$trackedObject,
+			$file,
+			$supportsSharingAccessPopup,
+			$sharingMode,
+			Loc::getMessage('DISK_DOCUMENTS_ACT_ACCESS_BY_LINK'),
+		);
+		if ($sharingItem !== null)
+		{
+			$items[] = $sharingItem;
+		}
+
+		return $items;
+	}
+
+	private function buildDocumentsLegacyShareMenuItems(
+		Disk\Document\TrackedObject $trackedObject,
+		File $file,
+		?string $internalLink,
+		?string $sharingMode,
+		bool $belongsToDiskStorages,
+	): array
+	{
+		$items = [];
+
+		if (Configuration::isEnabledExternalLink())
+		{
+			$externalLinkFeature = $this->getExternalLinkFeature($trackedObject);
+			$items[] = [
+				'id' => 'externalLink',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_GET_EXT_LINK'),
+				'dataset' => [
+					'shouldBlockFeature' => !Bitrix24Manager::isFeatureEnabled($externalLinkFeature),
+					'blocker' => Bitrix24Manager::filterJsAction($externalLinkFeature, ''),
+				],
+			];
+		}
+
+		if ($belongsToDiskStorages && $internalLink !== null)
+		{
+			$items[] = [
+				'id' => 'internalLink',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK'),
+				'dataset' => [
+					'internalLink' => $internalLink,
+					'textCopied' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK'),
+				],
+			];
+		}
+
+		$sharingItem = $this->buildDocumentsSharingMenuItem(
+			$trackedObject,
+			$file,
+			false,
+			$sharingMode,
+			Loc::getMessage('DISK_DOCUMENTS_ACT_SHOW_SHARING_DETAIL_2'),
+		);
+		if ($sharingItem !== null)
+		{
+			$items[] = $sharingItem;
+		}
+
+		return $items;
+	}
+
+	private function buildDocumentsSharingMenuItem(
+		Disk\Document\TrackedObject $trackedObject,
+		File $file,
+		bool $supportsSharingAccessPopup,
+		?string $sharingMode,
+		string $text,
+	): ?array
+	{
+		if ($sharingMode === null)
+		{
+			return null;
+		}
+
+		return [
+			'id' => 'sharing',
+			'text' => $text,
+			'dataset' => [
+				'objectId' => $trackedObject->getFileId(),
+				'objectName' => $file->getName(),
+				'type' => $sharingMode,
+				'supportsUnifiedLink' => $supportsSharingAccessPopup ? 'true' : 'false',
+				'supportsSharingAccessPopup' => $supportsSharingAccessPopup ? 'true' : 'false',
+			],
+		];
 	}
 
 }

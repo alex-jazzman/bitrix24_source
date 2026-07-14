@@ -17,7 +17,7 @@ jn.define('im/messenger/lib/ui/avatar/src/chat-avatar-adapter', (require, export
 		{
 			this.props = props;
 
-			this.chatAvatar = ChatAvatar.createFromDialogId(props.dialogId);
+			this.chatAvatar = ChatAvatar.createFromDialogId(props.dialogId, props.options ?? {});
 		}
 
 		/**

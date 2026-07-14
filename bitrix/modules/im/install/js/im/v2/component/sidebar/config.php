@@ -35,6 +35,7 @@ return [
 		'im.v2.lib.call',
 		'im.v2.lib.channel',
 		'im.v2.lib.chat',
+		'im.v2.lib.collab',
 		'im.v2.lib.confirm',
 		'im.v2.lib.copilot',
 		'im.v2.lib.counter',

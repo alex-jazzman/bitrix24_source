@@ -128,12 +128,8 @@ $elementCode = $classBlock->get('ELEMENT_CODE');
 				'SHOW_CLOSE_POPUP' => 'Y',
 				'CHECK_SECTION_ID_VARIABLE' => 'N',
 				'SHOW_BASIS_PRICE' => 'N',
-				'ADD_TO_BASKET_ACTION' => [
-					0 => 'BUY',
-				],
-				'ADD_TO_BASKET_ACTION_PRIMARY' => [
-					0 => 'BUY',
-				],
+				'ADD_TO_BASKET_ACTION' => $classBlock->get('ADD_TO_BASKET_ACTION'),
+				'ADD_TO_BASKET_ACTION_PRIMARY' => $classBlock->get('ADD_TO_BASKET_ACTION_PRIMARY'),
 				'COMPONENT_TEMPLATE' => 'store_v3',
 				'SET_CANONICAL_URL' => 'Y',
 				'SHOW_DEACTIVATED' => 'Y',

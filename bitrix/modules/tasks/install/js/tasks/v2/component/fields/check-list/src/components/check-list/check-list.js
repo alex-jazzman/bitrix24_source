@@ -2,8 +2,8 @@ import { Dom, Event, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { mapActions, mapGetters } from 'ui.vue3.vuex';
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
+import { type BitrixVueComponentProps } from 'ui.vue3';
+import { type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
 import { BMenu } from 'ui.vue3.components.menu';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
@@ -13,10 +13,9 @@ import { Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import { EntityTypes, FileService, fileService } from 'tasks.v2.provider.service.file-service';
-
 import { highlighter } from 'tasks.v2.lib.highlighter';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type CheckListModel } from 'tasks.v2.model.check-list';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { checkListMeta } from '../../lib/check-list-meta';
 import { CheckListStub } from './check-list-stub';
@@ -29,11 +28,9 @@ import { CheckListItemPanel } from '../check-list-item-panel/check-list-item-pan
 import { Context } from '../../lib/check-list-const';
 import { CheckListManager } from '../../lib/check-list-manager';
 import { CheckListNotifier } from '../../lib/check-list-notifier';
-import { CheckListParticipantService } from '../../lib/check-list-participant-service';
+import { CheckListParticipantService, type ParticipantType } from '../../lib/check-list-participant-service';
 import { CheckListChangeTracker } from '../../lib/check-list-change-tracker';
 import { PanelAction } from '../check-list-item-panel/check-list-item-panel-meta';
-
-import type { ParticipantType } from '../../lib/check-list-participant-service';
 
 import './check-list.css';
 
@@ -90,6 +87,7 @@ export const CheckList = {
 	setup(): { task: TaskModel }
 	{
 		return {
+			shownPopups: new Set(),
 			resizeObserver: null,
 			AirButtonStyle,
 			ButtonSize,
@@ -112,7 +110,6 @@ export const CheckList = {
 			isForwardMenuShown: false,
 			forwardMenuSectionCode: 'createSection',
 			forwardBindElement: null,
-			shownPopups: new Set(),
 			notifiers: new Map(),
 			isFreeze: false,
 			closing: false,
@@ -327,6 +324,7 @@ export const CheckList = {
 			},
 		});
 
+		this.shownPopups = new Set();
 		this.checkListParticipantService = new CheckListParticipantService(this.taskId);
 	},
 	mounted(): void
@@ -1102,7 +1100,12 @@ export const CheckList = {
 			const popupVisible = top > topPopupLimitValue && top < listVisibleBottom;
 			if (!popupVisible)
 			{
-				this.shownPopups.forEach((popup) => {
+				// Clear the set before closing: popup.close() emits onClose synchronously,
+				// which can re-enter updatePanelPosition (e.g. via participant dialog handleClose)
+				// and otherwise iterate the same popup again, causing infinite recursion.
+				const popupsToClose = [...this.shownPopups];
+				this.shownPopups.clear();
+				popupsToClose.forEach((popup) => {
 					popup.close();
 				});
 			}

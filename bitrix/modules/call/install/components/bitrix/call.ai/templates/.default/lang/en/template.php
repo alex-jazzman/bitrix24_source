@@ -51,3 +51,4 @@ $MESS["CALL_SPEAKER_EVALUATION_COMMUNICATION_TIME_MSGVER_1"] = "Call time";
 $MESS["CALL_SPEAKER_EVALUATION_DETAILED_ANALYSIS_MSGVER_1"] = "Participant engagement";
 $MESS["CALL_SPEAKER_EVALUATION_EFFICIENCY_DESCRIPTION"] = "Shows the contribution a participant has made while attending the meeting. Calculated using the following six metrics: results-oriented mindset, preparedness, politeness, positive attitude, focus, and clarity of expression.";
 $MESS["CALL_SPEAKER_EVALUATION_EMPLOYEES"] = "Participants";
+

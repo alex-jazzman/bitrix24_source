@@ -178,8 +178,8 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 
 		$DatabaseName = $DB->DBName;
 		$is_ok = false;
-		$rsBinLogs = $DB->Query('show master status', true, '', ['fixed_connection' => true]);
-		if (!$rsBinLogs)
+		$arBinLogs = CClusterDBNode::getMasterStatus($DB);
+		if ($arBinLogs === false)
 		{
 			$result['master_status'] = [
 				'IS_OK' => CClusterDBNodeCheck::ERROR,
@@ -189,17 +189,13 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 		}
 		else
 		{
-			if ($ar = $rsBinLogs->Fetch())
+			if ($arBinLogs)
 			{
-				$Binlog_Do_DB = implode(',', array_keys(array_flip(explode(',', $ar['Binlog_Do_DB']))));
+				$Binlog_Do_DB = implode(',', array_keys(array_flip(explode(',', $arBinLogs['Binlog_Do_DB']))));
 				if ($Binlog_Do_DB === $DatabaseName)
 				{
 					$is_ok = true;
 				}
-			}
-			if ($rsBinLogs->Fetch())
-			{
-					$is_ok = false;
 			}
 
 			$result['binlog_do_db'] = [
@@ -374,10 +370,8 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 		if (is_object($nodeDB))
 		{
 			//Check if replication is runnung
-			$rs = $nodeDB->Query('show slave status', true, '', ['fixed_connection' => true]);
-			$ar = $rs ? $rs->Fetch() : false;
-
-			if ($ar && $ar['Slave_IO_State'] <> '')
+			$ar = CClusterDBNode::getSlaveStatus($nodeDB);
+			if ($ar && $ar['Slave_IO_State'])
 			{
 				if ($ar['Master_Host'] == $master_host && $ar['Master_Port'] == $master_port)
 				{
@@ -431,20 +425,16 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 			//Test if this connection is not the same as master
 			$bSkipSecondTest = false;
 			//1. Make sure that no replication is runnung
-			$rs = $nodeDB->Query('show slave status', true, '', ['fixed_connection' => true]);
-			$ar = $rs ? $rs->Fetch() : false;
-			if ($ar)
+			$ar = CClusterDBNode::getSlaveStatus($nodeDB);
+			if ($ar && $ar['Slave_IO_State'])
 			{
-				if ($ar['Slave_IO_State'] <> '')
+				if ($ar['Master_Host'] != $master_host || $ar['Master_Port'] != $master_port)
 				{
-					if ($ar['Master_Host'] != $master_host || $ar['Master_Port'] != $master_port)
-					{
-						return GetMessage('CLU_RUNNING_SLAVE');
-					}
-					else
-					{
-						$bSkipSecondTest = true; //The replication is OK
-					}
+					return GetMessage('CLU_RUNNING_SLAVE');
+				}
+				else
+				{
+					$bSkipSecondTest = true; //The replication is OK
 				}
 			}
 			//2. Check if b_cluster_dbnode exists on node
@@ -502,13 +492,10 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 					$DB->Query("UPDATE b_cluster_dbnode SET UNIQID='" . $uniqid . "' WHERE ID=1", false, '', ['fixed_connection' => true]);
 
 					$Seconds_Behind_Master = 1;
-					$rs = $masterDB->Query('SHOW SLAVE STATUS');
-					if ($ar = $rs->Fetch())
+					$ar = CClusterDBNode::getSlaveStatus($masterDB);
+					if ($ar && $ar['Seconds_Behind_Master'] > 0)
 					{
-						if ($ar['Seconds_Behind_Master'] > 0)
-						{
-							$Seconds_Behind_Master += $ar['Seconds_Behind_Master'];
-						}
+						$Seconds_Behind_Master += $ar['Seconds_Behind_Master'];
 					}
 					sleep($Seconds_Behind_Master);
 
@@ -928,8 +915,8 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 
 		$DatabaseName = $DB->DBName;
 		$is_ok = false;
-		$rsBinLogs = $nodeDB->Query('show master status', true, '', ['fixed_connection' => true]);
-		if (!$rsBinLogs)
+		$arBinLogs = CClusterDBNode::getMasterStatus($nodeDB);
+		if ($arBinLogs === false)
 		{
 			$result['master_status'] = [
 				'IS_OK' => CClusterDBNodeCheck::ERROR,
@@ -939,17 +926,13 @@ class CClusterDBNodeCheck extends CAllClusterDBNodeCheck
 		}
 		else
 		{
-			if ($ar = $rsBinLogs->Fetch())
+			if ($arBinLogs)
 			{
-				$Binlog_Do_DB = implode(',', array_keys(array_flip(explode(',', $ar['Binlog_Do_DB']))));
+				$Binlog_Do_DB = implode(',', array_keys(array_flip(explode(',', $arBinLogs['Binlog_Do_DB']))));
 				if ($Binlog_Do_DB === $DatabaseName)
 				{
 					$is_ok = true;
 				}
-			}
-			if ($rsBinLogs->Fetch())
-			{
-				$is_ok = false;
 			}
 
 			$result['binlog_do_db'] = [

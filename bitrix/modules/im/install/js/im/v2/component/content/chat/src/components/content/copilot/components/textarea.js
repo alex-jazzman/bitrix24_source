@@ -40,13 +40,13 @@ export const CopilotTextarea = {
 			:withSmileSelector="false"
 		>
 			<template #bottom-panel-buttons>
-				<ToolbarButtons 
+				<ToolbarButtons
 					v-if="isToolbarButtonsEnabled"
 					:dialogId="dialogId"
 				/>
 				<ReasoningButton
 					v-else
-					:dialogId="dialogId" 
+					:dialogId="dialogId"
 				/>
 			</template>
 		</ChatTextarea>

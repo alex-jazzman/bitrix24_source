@@ -1,13 +1,23 @@
-<?
+<?php
 $MESS["authprov_sg_a"] = "Group owner";
+$MESS["authprov_sg_a_v2"] = "Project owner";
+$MESS["authprov_sg_current"] = "Current group";
+$MESS["authprov_sg_current_v2"] = "Current project";
 $MESS["authprov_sg_e"] = "Group moderators";
+$MESS["authprov_sg_e_v2"] = "Project moderators";
 $MESS["authprov_sg_k"] = "All group members";
-$MESS["authprov_sg_panel_last"] = "Last";
-$MESS["authprov_sg_panel_my_group"] = "My groups";
-$MESS["authprov_sg_panel_search"] = "Search";
-$MESS["authprov_sg_panel_search_text"] = "Enter the group name.";
+$MESS["authprov_sg_k_v2"] = "All project members";
 $MESS["authprov_sg_name"] = "Social network groups";
 $MESS["authprov_sg_name_out"] = "Social network group";
+$MESS["authprov_sg_name_out_v2"] = "Project";
+$MESS["authprov_sg_name_v2"] = "Projects";
+$MESS["authprov_sg_panel_last"] = "Last";
+$MESS["authprov_sg_panel_last_v2"] = "Last";
+$MESS["authprov_sg_panel_my_group"] = "My groups";
+$MESS["authprov_sg_panel_my_group_v2"] = "My projects";
+$MESS["authprov_sg_panel_search"] = "Search";
+$MESS["authprov_sg_panel_search_text"] = "Enter the group name.";
+$MESS["authprov_sg_panel_search_text_v2"] = "Enter the project name.";
+$MESS["authprov_sg_panel_search_v2"] = "Search";
 $MESS["authprov_sg_socnet_group"] = "Social network groups";
-$MESS["authprov_sg_current"] = "Current group";
-?>
+$MESS["authprov_sg_socnet_group_v2"] = "Project";

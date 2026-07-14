@@ -11,6 +11,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -45,6 +46,13 @@ if (empty($arParams["PATH_TO_USER_REQUESTS"]))
 	$arParams["PATH_TO_USER_REQUESTS"] = ComponentHelper::getUserSEFUrl()."user/#user_id#/requests/";
 }
 
+$projectProvider = new ProjectProvider();
+if ($projectProvider->isProject($arParams["GROUP_ID"]))
+{
+	ShowError(GetMessage("SONET_P_USER_NO_GROUP"));
+
+	return;
+}
 
 $arParams["SET_NAV_CHAIN"] = ($arParams["SET_NAV_CHAIN"] == "N" ? "N" : "Y");
 $bAutoSubscribe = (array_key_exists("USE_AUTOSUBSCRIBE", $arParams) && $arParams["USE_AUTOSUBSCRIBE"] == "N" ? false : true);

@@ -14,6 +14,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const {
 		EventType,
 		BBCode,
@@ -671,22 +672,37 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		/**
 		 * @param {string} mentionId
 		 */
-		#onAddParticipant(mentionId)
+		async #onAddParticipant(mentionId)
 		{
-			AnalyticsService.getInstance().sendAddParticipantFromMentionPanel(this.dialogId);
-			this.provider.updateMembershipMap(mentionId, true);
-
-			if (DialogHelper.isDialogId(this.dialogId))
+			if (!DialogHelper.isDialogId(this.dialogId))
 			{
-				void this.#addParticipant(mentionId);
-				this.#onShowAddUserSuccess(mentionId);
-				this.onMentionItemSelected(this.prepareItemForDrawing(mentionId));
-			}
-			else
-			{
+				AnalyticsService.getInstance().sendAddParticipantFromMentionPanel(this.dialogId);
+				this.provider.updateMembershipMap(mentionId, true);
 				void this.#addChat(mentionId);
 				this.#onShowAddUserSuccess(mentionId);
+
+				return;
 			}
+
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](this.dialogId);
+			const dialogHelper = dialog ? DialogHelper.createByModel(dialog) : null;
+			if (dialogHelper?.inheritsParentChatMembership)
+			{
+				const parentChatId = dialog.parentChatId ?? 0;
+				const canAdd = await ProjectAccessGuard.canAddUsersToProjectChildChat(parentChatId, [Number(mentionId)]);
+				if (!canAdd)
+				{
+					this.#onHideAddUserPopup(mentionId);
+
+					return;
+				}
+			}
+
+			AnalyticsService.getInstance().sendAddParticipantFromMentionPanel(this.dialogId);
+			this.provider.updateMembershipMap(mentionId, true);
+			void this.#addParticipant(mentionId);
+			this.#onShowAddUserSuccess(mentionId);
+			this.onMentionItemSelected(this.prepareItemForDrawing(mentionId));
 		}
 
 		/**

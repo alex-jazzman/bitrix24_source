@@ -22,4 +22,6 @@ export const PopupType = Object.freeze({
 	stickerPackContextMenu: 'im-sticker-pack-context-menu',
 	sharedLinkContextMenu: 'im-shared-link-context-menu',
 	mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown',
+	collabCardPromo: 'im-collab-card-promo-popup',
+	collabCreateChatPromo: 'im-collab-create-chat-promo-popup',
 });

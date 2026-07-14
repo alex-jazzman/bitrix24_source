@@ -305,7 +305,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const isValidSize = size && Object.values(ImageBbCodeSizes).includes(size.toLowerCase());
 				const isInvalidUrl = ['/docs/pub/', 'logout=yes'].includes(url.toLowerCase());
 				const isSafeUrl = getUtils().text.checkUrl(url);
-				const isImage = isImageUrl(url);
+				const isImage = getUtils().text.isUrlImageLike(url);
 				const hasNestedItems = hasNestedImgBbCodes(url);
 				if (!isValidSize || isInvalidUrl || !isSafeUrl || !isImage || hasNestedItems) {
 					return whole.replaceAll(/\[url]([\S\s]*?)\[\/url]/gi, '$1');
@@ -352,9 +352,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function canPurifyLink(symbolBeforeUrl, url) {
 		return hasImageFileExtension(url) && !isLinkFromDisk(url) && !isLogoutLink(url) && !hasLeadingTextBeforeUrl(symbolBeforeUrl);
-	}
-	function isImageUrl(url) {
-		return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url.trim());
 	}
 	function hasNestedImgBbCodes(url) {
 		return /\[img/i.test(url.trim());
@@ -1322,7 +1319,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				attach = false,
 				files = false,
 				isSticker = false,
-				showPhraseMessageWasDeleted = true
+				showPhraseMessageWasDeleted = true,
+				removeNewLines = true
 			} = config;
 			if (!main_core.Type.isString(text)) {
 				text = main_core.Type.isNumber(text) ? text.toString() : '';
@@ -1354,7 +1352,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			text = ParserImage.purifyImageBbCode(text);
 			text = ParserDisk.purify(text);
 			text = ParserDate.purify(text);
-			text = ParserCommon.purifyNewLine(text);
+			if (removeNewLines) {
+				text = ParserCommon.purifyNewLine(text);
+			}
 			text = this.addTextPrefix({
 				text,
 				attach,

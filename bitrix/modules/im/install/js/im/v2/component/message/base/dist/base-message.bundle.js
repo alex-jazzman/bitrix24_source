@@ -82,12 +82,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return {
 					'--self': this.isSelfMessage,
 					'--opponent': this.isOpponentMessage,
-					'--system': this.isSystemMessage,
+					'--system': this.isSystemMessage && !this.shouldForceBackground,
 					'--has-error': this.hasError,
 					'--has-after-content': Boolean(this.$slots['after-message']),
 					'--selected': this.isMessageSelected,
 					'--is-bulk-actions-mode': this.isBulkActionsMode
 				};
+			},
+			shouldForceBackground() {
+				return this.$store.getters['messages/builder/forceBackground'](this.message.id);
 			},
 			bodyClasses() {
 				return {
@@ -96,7 +99,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				};
 			},
 			isTransparentBackground() {
-				return !this.withBackground || this.isSystemMessage;
+				if (!this.withBackground) {
+					return true;
+				}
+				if (this.shouldForceBackground) {
+					return false;
+				}
+				return this.isSystemMessage;
 			},
 			showRetryButton() {
 				return this.withRetryButton && this.isSelfMessage && this.hasError;

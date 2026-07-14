@@ -23,6 +23,7 @@ $MESS['IM_LIB_MENU_FIND_SHARED_CHATS'] = "Найти общие чаты";
 
 $MESS['IM_LIB_MENU_USER_KICK_FROM_CHAT'] = "Исключить из чата";
 $MESS['IM_LIB_MENU_USER_KICK_FROM_COLLAB'] = "Исключить из коллабы";
+$MESS['IM_LIB_MENU_USER_KICK_FROM_COLLAB_V2'] = "Исключить из проекта";
 $MESS["IM_LIB_MENU_USER_MENTION"] = "Упомянуть";
 $MESS['IM_LIB_MENU_USER_WRITE'] = "Написать лично";
 

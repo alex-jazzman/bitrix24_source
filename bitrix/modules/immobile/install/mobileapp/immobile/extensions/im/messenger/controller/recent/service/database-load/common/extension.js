@@ -42,7 +42,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		{
 			this.logger.log('loadNextPage');
 
-			const page = await this.#getPage();
+			const page = await this.#loadPage(true);
 			await this.#savePageToModel(page);
 
 			this.logger.log('loadNextPage complete');
@@ -57,8 +57,9 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		{
 			this.logger.log('loadFirstPage');
 
-			const page = await this.#getFirstPage();
+			const page = await this.#loadPage();
 			await this.#savePageToModel(page, true);
+			await this.#saveFixedParentChatToModel();
 
 			const loadedPageCursor = this.#processLoadedPageData(page);
 
@@ -69,11 +70,25 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 
 		/**
 		 * @private
-		 * @return ListByDialogTypeFilter
+		 * @return {string}
 		 */
-		get filter()
+		get section()
 		{
-			return this.props.filter;
+			return this.recentLocator.get('recentSection');
+		}
+
+		/**
+		 * @private
+		 * @return {number|null}
+		 */
+		get parentChatId()
+		{
+			if (this.props.filter?.ignoreParentChatId)
+			{
+				return null;
+			}
+
+			return this.recentLocator.get('parentChatId') ?? null;
 		}
 
 		/**
@@ -147,63 +162,35 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		}
 
 		/**
+		 * @param {boolean} [withCursor] pass true for subsequent pages to include lastActivityDate cursor
 		 * @return {Promise<RecentListResult>}
 		 */
-		async #getFirstPage()
+		async #loadPage(withCursor = false)
 		{
 			if (this.#hasChatIdsFilter())
 			{
-				return this.#getChatIdsPage();
+				const page = await this.recentRepository.getByChatIds(this.props.filter.chatIds);
+				page.items = this.#sortPageItems(page.items).slice(0, this.limit);
+				page.hasMore = false;
+
+				this.logger.log('#loadPage folder filter loaded:', page);
+
+				return page;
 			}
 
 			const filter = {
-				...this.filter,
+				section: this.section,
+				parentChatId: this.parentChatId,
+				limit: this.limit,
+				...(withCursor && { lastActivityDate: this.lastActivityDate }),
 			};
-			this.logger.log('#getFirstPage filter:', filter);
-			const page = await this.recentRepository.getListByDialogTypeFilter(filter);
-			this.logger.log('#getFirstPage loaded:', page);
+			this.logger.log('#loadPage filter:', filter);
+			const page = await this.recentRepository.getListBySectionFilter(filter);
+			this.logger.log('#loadPage loaded:', page);
 
 			return page;
 		}
 
-		/**
-		 * @return {Promise<RecentListResult>}
-		 */
-		async #getPage()
-		{
-			if (this.#hasChatIdsFilter())
-			{
-				return this.#getChatIdsPage();
-			}
-
-			const filter = {
-				...this.filter,
-				lastActivityDate: this.lastActivityDate,
-			};
-			this.logger.log('#getPage filter:', filter);
-			const page = await this.recentRepository.getListByDialogTypeFilter(filter);
-			this.logger.log('#getPage loaded:', page);
-
-			return page;
-		}
-
-		/**
-		 * @return {Promise<RecentListResult>}
-		 */
-		async #getChatIdsPage()
-		{
-			const page = await this.recentRepository.getByChatIds(this.props.filter.chatIds);
-			page.items = this.#sortPageItems(page.items).slice(0, this.limit);
-			page.hasMore = false;
-
-			this.logger.log('#getChatIdsPage loaded:', page);
-
-			return page;
-		}
-
-		/**
-		 * @return {boolean}
-		 */
 		#hasChatIdsFilter()
 		{
 			return Type.isArray(this.props.filter?.chatIds);
@@ -267,6 +254,53 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		}
 
 		/**
+		 * Dispatches all related model data from a page (dialogues, users, messages, files, draft, stickers).
+		 * Does NOT dispatch recent items — callers decide how to handle them.
+		 *
+		 * @param {RecentListResult} page
+		 * @return {Promise<void>}
+		 */
+		async #saveRelatedDataToModel(page)
+		{
+			const saveList = [];
+
+			const chatList = page.items.map((item) => item.chat).filter(Boolean);
+			if (Type.isArrayFilled(chatList))
+			{
+				saveList.push(this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', chatList));
+			}
+
+			if (Type.isArrayFilled(page.users))
+			{
+				saveList.push(this.store.dispatch('usersModel/setFromLocalDatabase', page.users));
+			}
+
+			if (Type.isArrayFilled(page.messages))
+			{
+				saveList.push(this.store.dispatch('messagesModel/store', page.messages));
+			}
+
+			if (Type.isArrayFilled(page.files))
+			{
+				saveList.push(this.store.dispatch('filesModel/setFromLocalDatabase', page.files));
+			}
+
+			if (Type.isArrayFilled(page.draft))
+			{
+				saveList.push(this.store.dispatch('draftModel/setFromLocalDatabase', page.draft));
+			}
+
+			if (Type.isArrayFilled(page.stickers))
+			{
+				saveList.push(this.store.dispatch('stickerPackModel/addStickers', {
+					stickers: page.stickers,
+				}));
+			}
+
+			await Promise.all(saveList);
+		}
+
+		/**
 		 * @param {RecentListResult} page
 		 * @param {boolean} firstPage
 		 */
@@ -274,49 +308,15 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		{
 			try
 			{
-				const savePromiseList = [];
-				const chatList = page.items.map((item) => item.chat);
-				if (Type.isArrayFilled(chatList))
-				{
-					savePromiseList.push(this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', chatList));
-				}
+				await this.#saveRelatedDataToModel(page);
 
-				if (Type.isArrayFilled(page.users))
-				{
-					savePromiseList.push(this.store.dispatch('usersModel/setFromLocalDatabase', page.users));
-				}
-
-				if (Type.isArrayFilled(page.messages))
-				{
-					savePromiseList.push(this.store.dispatch('messagesModel/store', page.messages));
-				}
-
-				if (Type.isArrayFilled(page.files))
-				{
-					savePromiseList.push(this.store.dispatch('filesModel/setFromLocalDatabase', page.files));
-				}
-
-				if (Type.isArrayFilled(page.draft))
-				{
-					savePromiseList.push(this.store.dispatch('draftModel/setFromLocalDatabase', page.draft));
-				}
-
-				if (Type.isArrayFilled(page.stickers))
-				{
-					savePromiseList.push(this.store.dispatch('stickerPackModel/addStickers', {
-						stickers: page.stickers,
-					}));
-				}
-
-				await Promise.all(savePromiseList);
-
-				if (Type.isArrayFilled(page.items))
+				if (firstPage || Type.isArrayFilled(page.items))
 				{
 					const recentAction = firstPage ? this.saveFirstPageAction : this.savePageAction;
 					const actionName = firstPage ? this.saveFirstPageActionName : this.savePageActionName;
 					const payload = {
 						recentSection: this.recentLocator.get('recentSection'),
-						itemList: page.items,
+						itemList: page.items ?? [],
 						parentChatId: this.recentLocator.get('parentChatId'),
 					};
 					if (Type.isStringFilled(actionName))
@@ -374,6 +374,31 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 					lastItem: loadedPageCursor.lastItem,
 				},
 			);
+		}
+
+		/**
+		 * Loads the parent chat into state.collection without adding it to nestedIdCollection.
+		 * Only runs when props.fetchFixedParentChat is true and parentChatId is set.
+		 */
+		async #saveFixedParentChatToModel()
+		{
+			if (!this.props.fetchFixedParentChat || !this.parentChatId)
+			{
+				return;
+			}
+
+			const dialogId = `chat${this.parentChatId}`;
+			const page = await this.recentRepository.getByDialogIds([dialogId]);
+
+			if (!Type.isArrayFilled(page.items))
+			{
+				return;
+			}
+
+			await this.#saveRelatedDataToModel(page);
+
+			// Dispatch to collection only — nestedIdCollection must not include the parent chat
+			await this.store.dispatch('recentModel/set', page.items);
 		}
 
 		subscribeEvents()

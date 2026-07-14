@@ -26,6 +26,6 @@ $MESS["NOTE_SIDEBAR_KNOWLEDGE_BASE"] = "Knowledge base 2.0";
 $MESS["NOTE_SIDEBAR_OPEN_PERMISSIONS"] = "Access permissions";
 $MESS["NOTE_SIDEBAR_PROMPT_COLLECTION_NAME"] = "Enter space name";
 $MESS["NOTE_SIDEBAR_PROMPT_DOCUMENT_NAME"] = "Enter article name";
-$MESS["NOTE_SIDEBAR_RECYCLE_BIN"] = "Recycle bin";
+$MESS["NOTE_SIDEBAR_RECYCLE_BIN"] = "Recycle Bin";
 $MESS["NOTE_SIDEBAR_SHARED_WITH_ME"] = "Shared with me";
 $MESS["NOTE_WORKSPACE_NOT_FOUND"] = "Space was not found.";

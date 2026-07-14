@@ -123,6 +123,20 @@ export class SimpleVAD
 		this.currentVolume = Math.max(rms, this.currentVolume * AVERAGING_COEFFICIENT);
 	};
 
+	pause()
+	{
+		clearInterval(this.measureInterval);
+	}
+
+	resume()
+	{
+		if (this.audioContext)
+		{
+			clearInterval(this.measureInterval);
+			this.measureInterval = setInterval(this.analyzeAudioStream.bind(this), 100);
+		}
+	}
+
 	destroy()
 	{
 		if (this.analyserNode)

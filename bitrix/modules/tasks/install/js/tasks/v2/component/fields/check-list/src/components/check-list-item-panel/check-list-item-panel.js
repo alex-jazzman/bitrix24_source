@@ -79,7 +79,7 @@ export const CheckListItemPanel = {
 					className: 'tasks-hint',
 					background: 'var(--ui-color-bg-content-inapp)',
 					darkMode: false,
-					offsetLeft: -(this.currentHintElement?.offsetWidth ?? 0),
+					offsetLeft: Math.round((this.currentHintElement?.offsetWidth ?? 0) / 3),
 					padding: 6,
 					bindOptions: {
 						forceBindPosition: true,

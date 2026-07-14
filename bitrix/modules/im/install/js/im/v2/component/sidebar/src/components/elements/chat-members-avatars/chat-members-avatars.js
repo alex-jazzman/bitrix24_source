@@ -1,16 +1,17 @@
-import { Analytics } from 'im.v2.lib.analytics';
-import { PermissionManager } from 'im.v2.lib.permission';
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
-import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
-import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { Analytics } from 'im.v2.lib.analytics';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { CollabManager } from 'im.v2.lib.collab';
+import { type ImModelChat } from 'im.v2.model';
 
 import './chat-members-avatars.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
-import type { BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component
 export const ChatMembersAvatars = {
@@ -78,7 +79,7 @@ export const ChatMembersAvatars = {
 		},
 		addUsersButtonColor(): ButtonColor
 		{
-			if (this.isCollab)
+			if (this.isCollab && CollabManager.shouldUseAccentColor(this.dialog))
 			{
 				return this.ButtonColor.Collab;
 			}
@@ -87,7 +88,7 @@ export const ChatMembersAvatars = {
 		},
 		addMembersPopupComponent(): BitrixVueComponentProps
 		{
-			return this.dialog.type === ChatType.collab ? AddToCollab : AddToChat;
+			return this.isCollab ? AddToCollab : AddToChat;
 		},
 	},
 	methods:

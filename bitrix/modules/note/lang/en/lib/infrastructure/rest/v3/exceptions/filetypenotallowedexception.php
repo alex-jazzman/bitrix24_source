@@ -1,0 +1,2 @@
+<?php
+$MESS["NOTE_REST_V3_EXCEPTION_FILETYPENOTALLOWEDEXCEPTION_MSG"] = "File type is not supported.";

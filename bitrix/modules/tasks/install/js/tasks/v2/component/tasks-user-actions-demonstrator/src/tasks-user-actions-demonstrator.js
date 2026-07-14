@@ -1,8 +1,9 @@
-import { TasksEntitiesDemonstrator } from 'tasks.v2.component.tasks-entities-demonstrator';
-import { UserAvatar } from 'tasks.v2.component.elements.user-avatar';
-import { userService } from 'tasks.v2.provider.service.user-service';
 import { Outline, Animated } from 'ui.icon-set.api.vue';
 import { markRaw } from 'ui.vue3';
+
+import { UserAvatar } from 'tasks.v2.component.elements.user-avatar';
+import { TasksEntitiesDemonstrator } from 'tasks.v2.component.tasks-entities-demonstrator';
+import { userService } from 'tasks.v2.provider.service.user-service';
 
 import './tasks-user-actions-demonstrator.css';
 

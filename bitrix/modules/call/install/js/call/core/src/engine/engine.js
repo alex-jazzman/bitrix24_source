@@ -1,6 +1,6 @@
 import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import { JoinResponseError } from '../call_api';
+import { JoinResponseError, ClientPlatform } from '../call_api';
 import {ServerPlainCall} from './server_plain_call'
 import {BitrixCall} from './bitrix_call'
 import {CallStub} from './stub'
@@ -40,7 +40,8 @@ export const EndpointDirection = {
 
 export const CallType = {
 	Instant: 1,
-	Permanent: 2
+	Permanent: 2,
+	Large: 3,
 };
 
 export const RoomType = {
@@ -143,6 +144,8 @@ export const CallEvent = {
 	onDeviceListUpdated: 'onDeviceListUpdated',
 	onRTCStatsReceived: 'onRTCStatsReceived',
 	onCallFailure: 'onCallFailure',
+	onRemoteMediaAvailable: 'onRemoteMediaAvailable',
+	onRemoteMediaUnavailable: 'onRemoteMediaUnavailable',
 	onRemoteMediaReceived: 'onRemoteMediaReceived',
 	onRemoteMediaStopped: 'onRemoteMediaStopped',
 	onBadNetworkIndicator: 'onBadNetworkIndicator',
@@ -277,8 +280,7 @@ class Engine
 	{
 		return new Promise(async (resolve, reject) =>
 		{
-			const callType = config.type || CallType.Instant;
-			const callProvider = config.provider || this.getDefaultProvider();
+			let instanceId = Util.getUuidv4();
 
 			if (config.joinExisting)
 			{
@@ -298,26 +300,40 @@ class Engine
 
 							Hardware.isCameraOn = config.videoEnabled === true;
 
-							return resolve({
-								call: call,
-								isNew: false
-							});
+							if (call.hasConnectionData)
+							{
+								return resolve({
+									call,
+									isNew: false,
+								});
+							}
+							else
+							{
+								instanceId = call.instanceId;
+							}
 						}
 					}
 				}
 			}
 
-			let data;
-			const instanceId = Util.getUuidv4();
+			const chatId = config.chatInfo.chatId;
+			const callProvider = config.provider || this.getDefaultProvider();
+			const callType = config.type || CallType.Instant;
+			const roomType = Util.getRoomType(callProvider, chatId);
+
+			let data = null;
+
 			try
 			{
 				data = await Util.getCallConnectionData({
+					callType,
+					roomType,
+					instanceId,
 					callToken: config.token,
-					callType: callType,
 					provider: callProvider,
-					instanceId: instanceId,
 					isVideo: config.videoEnabled,
-				}, config.chatInfo.chatId);
+					callUuid: config.roomId,
+				}, chatId, !config.joinExisting);
 			}
 			catch(error)
 			{
@@ -352,6 +368,8 @@ class Engine
 				CallAI.setup(aiSettings);
 			}
 
+			const connectionData = this.#getFormattedConnectionData(data.result);
+
 			if (this.calls[data.result.roomId])
 			{
 				if (this.calls[data.result.roomId] instanceof CallStub)
@@ -362,6 +380,8 @@ class Engine
 				{
 					console.warn(`Call ${data.result.roomId} already exists, returning it instead of creating a new one`);
 
+					this.calls[data.result.roomId].connectionData = connectionData;
+
 					return resolve({
 						call: this.calls[data.result.roomId],
 						isNew: false,
@@ -371,28 +391,31 @@ class Engine
 
 			Hardware.isCameraOn = config.videoEnabled === true;
 			const callFactory = this.#getCallFactory(callProvider);
+			// Seed initiatorId only when the media-balancer actually created a
+			// brand-new room for this client (data.result.isNew === true).
+			// On race-y joins that fall through to this branch (joinExisting
+			// with no local registry entry) the room already exists on the
+			// balancer, isNew is false, and we must NOT mark every joiner as
+			// initiator — that would break role-aware auto-hangup. For the
+			// genuine "start" case (isNew=true) the local user is by
+			// construction the call session creator and matches the
+			// server-side INITIATOR_ID.
+			const isNewRoom = data.result?.isNew === true;
 			const call = callFactory.createCall({
+				instanceId,
+				connectionData,
 				uuid: data.result.roomId,
-				instanceId: instanceId,
+				initiatorId: isNewRoom ? this.userId : '',
 				direction: Direction.Outgoing,
 				enableMicAutoParameters: (config.enableMicAutoParameters !== false),
 				associatedEntity: config.chatInfo,
 				type: callType,
+				roomType: data.result.roomType,
 				startDate: new Date(data.result.startDate * 1000),
 				events: {
-					onDestroy: this.#onCallDestroy.bind(this)
+					onDestroy: this.#onCallDestroy.bind(this),
 				},
 				debug: config.debug === true,
-				connectionData: {
-					mediaServerUrl: data.result.mediaServerUrl,
-					roomData: data.result.roomData,
-					roomType: data.result.roomType,
-					monitoringServerUrl: data.result.monitoring?.metricsServerUrl,
-					monitoringLogsServerUrl: data.result.monitoring?.logsServerUrl,
-					monitoringJwtToken: data.result.monitoring?.token,
-					monitoringEnvironment: data.result.monitoring?.env,
-					monitoringRegion: data.result.monitoring?.region,
-				},
 				scheme: data.result.scheme,
 			});
 
@@ -421,15 +444,17 @@ class Engine
 					const createCallResponse = response.data;
 					const token = createCallResponse.token;
 					const chatId = createCallResponse.chatId;
-					const callType = CallType.Instant;
 					const callFactory = this.#getCallFactory(newProvider);
 					const instanceId = Util.getUuidv4();
+					const callType = CallType.Instant;
+					const roomType = Util.getRoomType(newProvider, chatId);
 
 					CallTokenManager.setToken(chatId, token);
 
 					Util.getCallConnectionData({
 						instanceId,
 						callType,
+						roomType,
 						callToken: token,
 						provider: newProvider,
 						isVideo: config.videoEnabled,
@@ -449,20 +474,12 @@ class Engine
 								direction: Direction.Outgoing,
 								enableMicAutoParameters: parentCall.enableMicAutoParameters !== false,
 								type: callType,
+								roomType: data.result.roomType,
 								startDate: data.result.startDate,
 								events: {
 									onDestroy: this.#onCallDestroy.bind(this),
 								},
-								connectionData: {
-									mediaServerUrl: data.result.mediaServerUrl,
-									roomData: data.result.roomData,
-									roomType: data.result.roomType,
-									monitoringServerUrl: data.result.monitoring?.metricsServerUrl,
-									monitoringLogsServerUrl: data.result.monitoring?.logsServerUrl,
-									monitoringJwtToken: data.result.monitoring?.token,
-									monitoringEnvironment: data.result.monitoring?.env,
-									monitoringRegion: data.result.monitoring?.region,
-								},
+								connectionData: this.#getFormattedConnectionData(data.result),
 								debug: config.debug,
 								scheme: data.result.scheme,
 							});
@@ -503,6 +520,19 @@ class Engine
 			CallTokenManager.setToken(associatedEntity.chatId, callToken);
 		}
 
+		// Bulk-seed Util.userData with the call participants' profile + role
+		// returned by call.Call.tryJoinCall. Without this the role-aware
+		// fallback in BitrixCall.#isPrivilegedUser (Util.getUserRoleByUserId)
+		// stays empty for every JWT joiner — onUserJoined / onUserInvited
+		// payloads from the media-server carry no role, and we deliberately
+		// avoid per-user dozenfetches in big chats. One bulk write at join
+		// time is enough; pull events keep it fresh through the JWT
+		// __onPullEvent handler.
+		if (Type.isPlainObject(userData))
+		{
+			Util.setUserData(userData);
+		}
+
 		const callFactory = this.#getCallFactory(callFields.PROVIDER);
 		const call = callFactory.createCall({
 			uuid,
@@ -536,10 +566,7 @@ class Engine
 		return new Promise((resolve, reject) => {
 			const call = this.calls[uuid];
 
-			if (
-				(call && call.hasConnectionData)
-				|| (call && !config)
-			)
+			if (call?.hasConnectionData)
 			{
 				resolve({ call, isNew: false });
 			}
@@ -584,6 +611,11 @@ class Engine
 		if (callScheme !== CallScheme.jwt)
 		{
 			return;
+		}
+
+		if (params.userData && Type.isPlainObject(params.userData))
+		{
+			Util.setUserData(params.userData);
 		}
 
 		if (this.handlers[command])
@@ -695,8 +727,8 @@ class Engine
 
 		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, { timeout: 100 });
 		const hasActiveCalls = broadcastResponse.some((res) => res);
-
-		if (call && !hasActiveCalls)
+		const canProcessEvent = !params.isAlreadyInCall || ClientPlatform === params.activeCallPlatform;
+		if (call && !hasActiveCalls && canProcessEvent)
 		{
 			BX.onCustomEvent(window, 'CallEvents::incomingCall', [{
 				call,
@@ -795,6 +827,20 @@ class Engine
 	#callHasAssociatedEntity(call: AbstractCall): boolean
 	{
 		return Type.isObject(call?.associatedEntity) && Object.keys(call.associatedEntity).length > 0;
+	}
+
+	#getFormattedConnectionData(data: any): any
+	{
+		return {
+			mediaServerUrl: data.mediaServerUrl,
+			roomData: data.roomData,
+			roomType: data.roomType,
+			monitoringServerUrl: data.monitoring?.metricsServerUrl,
+			monitoringLogsServerUrl: data.monitoring?.logsServerUrl,
+			monitoringJwtToken: data.monitoring?.token,
+			monitoringEnvironment: data.monitoring?.env,
+			monitoringRegion: data.monitoring?.region,
+		};
 	}
 
 	debug(debugFlag: boolean = true): boolean

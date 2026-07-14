@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/recent/service/server-load/channel', (require
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
-	const { RestMethod, MessengerInitRestMethod } = require('im/messenger/const');
+	const { RestMethod, MessengerInitRestMethod, RecentFilterId } = require('im/messenger/const');
 	const { PaginationState } = require('im/messenger/controller/recent/service/pagination/lib/state');
 	const { ServerLoadUtils } = require('im/messenger/controller/recent/service/server-load/lib/utils');
 
@@ -60,11 +60,12 @@ jn.define('im/messenger/controller/recent/service/server-load/channel', (require
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @param {ServerLoadRequestContext} [context]
 		 * @return {object}
 		 */
-		getInitRequestOptions(mode)
+		getInitRequestOptions(mode, { currentFilterId } = {})
 		{
-			return {};
+			return currentFilterId === RecentFilterId.unread ? { unreadOnly: 'Y' } : {};
 		}
 
 		/**

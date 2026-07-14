@@ -4,29 +4,24 @@ import 'main.polyfill.intersectionobserver';
 import 'ui.fonts.opensans';
 
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
-import { LocalStorageKey, AudioPlaybackRate, AudioPlaybackState as State, EventType } from 'im.v2.const';
+import { LocalStorageKey, AudioPlaybackRate, AudioPlaybackState as State, EventType, PlaylistScope } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Utils } from 'im.v2.lib.utils';
 
+import { Playlist } from '../classes/playlist';
 import { Timeline } from './elements/timeline/timeline';
 import { TranscriptionButton } from './elements/transcription-button/transcription-button';
 import { TranscriptionText } from './elements/transcription-text/transcription-text';
 
 import './css/audio-player.css';
 
-const ID_KEY = 'im:audioplayer:id';
-
 // @vue/component
 export const AudioPlayer = {
 	name: 'AudioPlayer',
 	components: { MessageAvatar, Timeline, TranscriptionButton, TranscriptionText },
 	props: {
-		id: {
-			type: Number,
-			default: 0,
-		},
 		src: {
 			type: String,
 			default: '',
@@ -59,8 +54,13 @@ export const AudioPlayer = {
 			type: Boolean,
 			default: true,
 		},
+		playlistScope: {
+			type: String,
+			default: PlaylistScope.chat,
+		},
 	},
-	data(): JsonObject {
+	data(): JsonObject
+	{
 		return {
 			preload: 'none',
 			loaded: false,
@@ -73,8 +73,7 @@ export const AudioPlayer = {
 			isTranscriptionOpened: false,
 		};
 	},
-	computed:
-	{
+	computed: {
 		State: () => State,
 		isPlaying(): boolean
 		{
@@ -104,10 +103,6 @@ export const AudioPlayer = {
 		{
 			return Utils.file.formatFileSize(this.file.size);
 		},
-		getAudioPlayerIds(): Array
-		{
-			return this.$Bitrix.Data.get(ID_KEY, []);
-		},
 		currentRateLabel(): string
 		{
 			return `${this.currentRate}x`;
@@ -124,34 +119,14 @@ export const AudioPlayer = {
 				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
 		},
 	},
-	watch:
-	{
-		id(value: number)
-		{
-			this.registerPlayer(value);
-		},
-		timeCurrent(value: number)
-		{
-			const progress = Math.round(100 / this.timeTotal * value);
-			if (progress > 70)
-			{
-				this.preloadNext();
-			}
-		},
-	},
 	created()
 	{
 		this.localStorageInst = LocalStorageManager.getInstance();
 		this.currentRate = this.getRateFromLS();
 
-		this.preloadRequestSent = false;
-		this.registeredId = 0;
-
-		this.registerPlayer(this.id);
-		this.getEmitter().subscribe(EventType.audioPlayer.play, this.onPlay);
-		this.getEmitter().subscribe(EventType.audioPlayer.stop, this.onStop);
+		Playlist.getInstance(this.playlistScope).register(this.file);
 		this.getEmitter().subscribe(EventType.audioPlayer.pause, this.onPause);
-		this.getEmitter().subscribe(EventType.audioPlayer.preload, this.onPreload);
+		this.getEmitter().subscribe(EventType.player.playNext, this.onPlayNext);
 	},
 	mounted()
 	{
@@ -159,12 +134,10 @@ export const AudioPlayer = {
 	},
 	beforeUnmount()
 	{
-		this.unregisterPlayer();
+		Playlist.getInstance(this.playlistScope).unregister(this.file);
 
-		this.getEmitter().unsubscribe(EventType.audioPlayer.play, this.onPlay);
-		this.getEmitter().unsubscribe(EventType.audioPlayer.stop, this.onStop);
 		this.getEmitter().unsubscribe(EventType.audioPlayer.pause, this.onPause);
-		this.getEmitter().unsubscribe(EventType.audioPlayer.preload, this.onPreload);
+		this.getEmitter().unsubscribe(EventType.player.playNext, this.onPlayNext);
 
 		this.getObserver().unobserve(this.$refs.body);
 	},
@@ -264,106 +237,28 @@ export const AudioPlayer = {
 			this.currentRate = newRate;
 			this.source().playbackRate = newRate;
 		},
-		registerPlayer(id: number): boolean
-		{
-			if (id <= 0)
-			{
-				return;
-			}
-
-			this.unregisterPlayer();
-			const audioIdArray = [...new Set([...this.getAudioPlayerIds, id])];
-			this.$Bitrix.Data.set(ID_KEY, audioIdArray.sort((a, b) => a - b));
-
-			this.registeredId = id;
-		},
-		unregisterPlayer(): boolean
-		{
-			if (!this.registeredId)
-			{
-				return;
-			}
-
-			this.$Bitrix.Data.get(ID_KEY, this.getAudioPlayerIds.filter((id) => id !== this.registeredId));
-
-			this.registeredId = 0;
-		},
-		playNext(): boolean
-		{
-			if (!this.registeredId)
-			{
-				return;
-			}
-
-			const nextId = this.getAudioPlayerIds.filter((id) => id > this.registeredId).slice(0, 1)[0];
-			if (nextId)
-			{
-				this.getEmitter().emit(EventType.audioPlayer.play, { id: nextId, start: true });
-			}
-		},
-		preloadNext(): boolean
-		{
-			if (this.preloadRequestSent || !this.registeredId)
-			{
-				return;
-			}
-
-			this.preloadRequestSent = true;
-
-			const nextId = this.getAudioPlayerIds.filter((id) => id > this.registeredId).slice(0, 1)[0];
-			if (nextId)
-			{
-				this.getEmitter().emit(EventType.audioPlayer.preload, { id: nextId });
-			}
-		},
-		onPlay(event: BaseEvent)
-		{
-			const data = event.getData();
-
-			if (data.id !== this.id)
-			{
-				return;
-			}
-
-			if (data.start)
-			{
-				this.stop();
-			}
-
-			this.play();
-		},
-		onStop(event: BaseEvent)
-		{
-			const data = event.getData();
-
-			if (data.initiator === this.id)
-			{
-				return;
-			}
-
-			this.stop();
-		},
 		onPause(event: BaseEvent)
 		{
 			const data = event.getData();
 
-			if (data.initiator === this.id)
+			if (data.initiator === this.file.id)
 			{
 				return;
 			}
 
 			this.pause();
 		},
-		onPreload(event: BaseEvent)
+		onPlayNext(event: BaseEvent)
 		{
 			const data = event.getData();
 
-			if (data.id !== this.id)
+			if (data.fileId !== this.file.id || data.scope !== this.playlistScope)
 			{
 				return;
 			}
 
-			this.loadFile();
+			this.$refs.body?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			this.play();
 		},
 		source(): HTMLAudioElement
 		{
@@ -386,7 +281,7 @@ export const AudioPlayer = {
 					break;
 				case 'abort':
 				case 'error':
-					console.error('BxAudioPlayer: load failed', this.id, event);
+					console.error('BxAudioPlayer: load failed', this.file.id, event);
 
 					this.loading = false;
 					this.state = State.none;
@@ -407,10 +302,15 @@ export const AudioPlayer = {
 
 					this.timeCurrent = this.source().currentTime;
 
-					if (this.isPlaying && this.timeCurrent >= this.timeTotal)
-					{
-						this.playNext();
-					}
+					break;
+				case 'ended':
+					this.timeCurrent = 0;
+					this.source().currentTime = 0;
+					this.state = State.stop;
+					Playlist.getInstance(this.playlistScope).onFileEnded({
+						file: this.file,
+						context: { emitter: this.getEmitter() },
+					});
 
 					break;
 				case 'pause':
@@ -425,15 +325,7 @@ export const AudioPlayer = {
 					Analytics.getInstance().player.onPlay(this.file.id);
 					this.state = State.play;
 
-					if (this.state === State.stop)
-					{
-						this.timeCurrent = 0;
-					}
-
-					if (this.id > 0)
-					{
-						this.getEmitter().emit(EventType.audioPlayer.pause, { initiator: this.id });
-					}
+					this.getEmitter().emit(EventType.audioPlayer.pause, { initiator: this.file.id });
 
 					break;
 				// No default
@@ -472,8 +364,8 @@ export const AudioPlayer = {
 	},
 	template: `
 		<div class="bx-im-audio-player__scope">
-			<div 
-				class="bx-im-audio-player__container" 
+			<div
+				class="bx-im-audio-player__container"
 				ref="body"
 				@mouseover="showContextButton = true"
 				@mouseleave="showContextButton = false"
@@ -492,13 +384,13 @@ export const AudioPlayer = {
 						<MessageAvatar
 							:messageId="messageId"
 							:authorId="authorId"
-							:size="AvatarSize.XS" 
+							:size="AvatarSize.XS"
 						/>
 					</div>
 				</div>
 				<div class="bx-im-audio-player__content-container">
 					<div class="bx-im-audio-player__timeline-container">
-						<Timeline 
+						<Timeline
 							:loaded="loaded"
 							:timeCurrent="timeCurrent"
 							:timeTotal="timeTotal"
@@ -533,11 +425,11 @@ export const AudioPlayer = {
 						@click="$emit('contextMenuClick', $event)"
 					></button>
 				</div>
-				<audio 
-					v-if="src" 
-					:src="src" 
-					class="bx-im-audio-player__audio-source" 
-					ref="source" 
+				<audio
+					v-if="src"
+					:src="src"
+					class="bx-im-audio-player__audio-source"
+					ref="source"
 					:preload="preload"
 					@abort="audioEventRouter('abort', $event)"
 					@error="audioEventRouter('error', $event)"
@@ -551,6 +443,7 @@ export const AudioPlayer = {
 					@play="audioEventRouter('play', $event)"
 					@playing="audioEventRouter('playing', $event)"
 					@pause="audioEventRouter('pause', $event)"
+					@ended="audioEventRouter('ended', $event)"
 				></audio>
 			</div>
 			<TranscriptionText

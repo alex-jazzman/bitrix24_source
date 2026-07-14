@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/navigation/api-handler', (require, exports, m
 	} = require('im/messenger/const');
 	const { waitViewLoaded } = require('im/messenger/lib/wait-view-loaded');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { openPlanLimitsWidgetByError } = require('im/messenger/lib/plan-limit');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
@@ -138,6 +139,7 @@ jn.define('im/messenger/controller/navigation/api-handler', (require, exports, m
 					isSuccess: false,
 					errorText: `im.messenger: failed to load chat ${chatId}.`,
 				}]);
+				await openPlanLimitsWidgetByError(error?.[0] ?? error ?? {});
 
 				return;
 			}

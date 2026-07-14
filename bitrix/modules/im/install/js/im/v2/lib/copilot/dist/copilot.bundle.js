@@ -14,7 +14,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return Promise.resolve();
 			}
 			const {
-				recommendedRoles,
 				roles,
 				chats,
 				messages
@@ -22,7 +21,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!roles) {
 				return Promise.resolve();
 			}
-			return Promise.all([this.store.dispatch('copilot/chats/set', chats), this.store.dispatch('copilot/roles/add', roles), this.store.dispatch('copilot/setRecommendedRoles', recommendedRoles), this.store.dispatch('copilot/messages/add', messages)]);
+			return Promise.all([this.store.dispatch('copilot/chats/set', chats), this.store.dispatch('copilot/roles/add', roles), this.store.dispatch('copilot/messages/add', messages)]);
 		}
 		async handleChatLoadResponse(copilotData) {
 			if (!copilotData) {

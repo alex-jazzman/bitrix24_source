@@ -2,6 +2,7 @@
 $MESS["IM_SEARCH_INPUT_PLACEHOLDER_V2"] = "Find employee or chat";
 $MESS["IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2"] = "Group chat";
 $MESS["IM_SEARCH_ITEM_COLLAB_TYPE"] = "Collab";
+$MESS["IM_SEARCH_ITEM_COLLAB_V2_TYPE"] = "Project";
 $MESS["IM_SEARCH_ITEM_FOUND_BY_USER"] = "Found in chat members";
 $MESS["IM_SEARCH_ITEM_JOIN_TO_CHANNEL"] = "Subscribe";
 $MESS["IM_SEARCH_ITEM_JOIN_TO_CHAT"] = "Join";

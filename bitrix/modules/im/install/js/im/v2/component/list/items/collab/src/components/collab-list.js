@@ -4,16 +4,19 @@ import { type EventEmitter } from 'main.core.events';
 import { BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
+import { CollabManager } from 'im.v2.lib.collab';
 import { type ImModelRecentItem } from 'im.v2.model';
+import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 
 import { CollabService } from '../classes/services/collab';
-import { CollabRecentMenu } from '../classes/context-menu-manager';
-import { EmptyState } from './empty-state';
+import { CollabRecentMenu } from '../classes/context-menu';
+
+export { CollabUnreadList } from './unread/list';
 
 // @vue/component
 export const CollabList = {
 	name: 'CollabList',
-	components: { EmptyState, BaseRecentList },
+	components: { BaseRecentList, RecentEmptyState },
 	emits: ['selectChat'],
 	data(): JsonObject
 	{
@@ -24,9 +27,18 @@ export const CollabList = {
 		};
 	},
 	computed: {
+		RecentType: () => RecentType,
 		collection(): ImModelRecentItem[]
 		{
 			return this.$store.getters['recent/getSortedCollection']({ type: RecentType.collab });
+		},
+		emptyStateTitle(): string
+		{
+			return CollabManager.getListEmptyStateText();
+		},
+		emptyStateSubtitle(): string
+		{
+			return CollabManager.getListEmptyStateSubtitleText();
 		},
 	},
 	async created()
@@ -113,7 +125,11 @@ export const CollabList = {
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<EmptyState />
+				<RecentEmptyState 
+					:title="emptyStateTitle"
+					:subtitle="emptyStateSubtitle"
+					:recentSection="RecentType.collab"
+				/>
 			</template>
 		</BaseRecentList>
 	`,

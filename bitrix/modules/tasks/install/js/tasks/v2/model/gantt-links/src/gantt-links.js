@@ -3,6 +3,11 @@ import { Model } from 'tasks.v2.const';
 
 import type { GanttLinkId, GanttLinkModel, GanttLinksModelState } from './types';
 
+function buildGanttLinkId({ taskId, dependentId }: GanttLinkId): string
+{
+	return `${taskId}.${dependentId}`;
+}
+
 export class GanttLinks extends BuilderEntityModel<GanttLinksModelState, GanttLinkModel>
 {
 	getName(): string
@@ -15,7 +20,7 @@ export class GanttLinks extends BuilderEntityModel<GanttLinksModelState, GanttLi
 		return {
 			/** @function gantt-links/getLink */
 			getLink: (state: GanttLinksModelState) => (ganttLinkId: GanttLinkId): GanttLinkModel => {
-				return state.collection[this.#buildId(ganttLinkId)];
+				return state.collection[buildGanttLinkId(ganttLinkId)];
 			},
 		};
 	}
@@ -24,15 +29,10 @@ export class GanttLinks extends BuilderEntityModel<GanttLinksModelState, GanttLi
 	{
 		return {
 			upsert: (state: GanttLinksModelState, ganttLink: GanttLinkModel): void => {
-				const id = this.#buildId(ganttLink);
+				const id = buildGanttLinkId(ganttLink);
 
 				BuilderEntityModel.defaultModel.getMutations(this).upsert(state, { id, ...ganttLink });
 			},
 		};
-	}
-
-	#buildId({ taskId, dependentId }: GanttLinkId): string
-	{
-		return `${taskId}.${dependentId}`;
 	}
 }

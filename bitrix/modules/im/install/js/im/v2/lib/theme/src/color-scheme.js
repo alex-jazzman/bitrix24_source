@@ -76,9 +76,11 @@ export const SelectableBackground = Object.freeze({
 // should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId
 export const SpecialBackgroundId = {
 	collab: 'collab',
+	collabV2: 'collabV2',
 	martaAI: 'martaAI',
 	copilot: 'copilot',
 	aiAssistant: 'aiAssistant',
+	aiAssistantWidget: 'aiAssistantWidget',
 	notifications: 'notifications',
 	transparent: 'transparent',
 };
@@ -86,6 +88,11 @@ export const SpecialBackgroundId = {
 export const SpecialBackground = {
 	[SpecialBackgroundId.collab]: {
 		color: '#76c68b',
+		type: ThemeType.dark,
+		pattern: ThemePattern.default,
+	},
+	[SpecialBackgroundId.collabV2]: {
+		color: '#5E96F0',
 		type: ThemeType.dark,
 		pattern: ThemePattern.default,
 	},
@@ -100,6 +107,10 @@ export const SpecialBackground = {
 		type: ThemeType.dark,
 		pattern: ThemePattern.default,
 	},
+	[SpecialBackgroundId.aiAssistantWidget]: {
+		color: '#5B4FC7',
+		type: ThemeType.dark,
+	},
 	[SpecialBackgroundId.notifications]: {
 		color: '#fafcfd',
 		type: ThemeType.light,
@@ -112,14 +123,16 @@ export const SpecialBackground = {
 };
 
 /**
- * Maps background IDs to image file (without extension).
- * Images are at /bitrix/js/im/images/chat-v2-background/{name}.png
+ * Maps background IDs to image file name.
+ * Images are at /bitrix/js/im/images/chat-v2-background/{name}.[png|webp]
  */
 export const ImageFileByBackgroundId = {
-	[SpecialBackgroundId.collab]: 'collab-v2',
+	[SpecialBackgroundId.collab]: 'collab',
+	[SpecialBackgroundId.collabV2]: 'collabV2',
 	[SpecialBackgroundId.martaAI]: 'ai-assistant',
 	[SpecialBackgroundId.copilot]: '4',
 	[SpecialBackgroundId.aiAssistant]: 'ai-assistant-v2',
+	[SpecialBackgroundId.aiAssistantWidget]: 'ai-assistant-widget.webp',
 	[SpecialBackgroundId.notifications]: '11',
 	[SelectableBackgroundId.azure]: '1',
 	[SelectableBackgroundId.mint]: '2',

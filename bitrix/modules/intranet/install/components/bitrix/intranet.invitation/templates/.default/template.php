@@ -37,6 +37,8 @@ Extension::load([
 	'intranet.selector-button',
 	'intranet.invitation-input',
 	'intranet.department-control',
+	'humanresources.department-creation-popup',
+	'humanresources.entity-selector',
 	'ui.notification',
 	'ui.form-elements.view',
 	'ui.form-elements.field',
@@ -202,7 +204,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 
 		INTRANET_INVITE_DIALOG_EMAIL_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL')?>',
 		INTRANET_INVITE_DIALOG_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_PHONE')?>',
-		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL_AND_PHONE')?>',
+		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL_AND_PHONE_MSGVER_1')?>',
 
 		INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER: '<?= GetMessageJS($arResult['IS_INTEGRATOR_RENAMED'] ? 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_RENAMED' : 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL') ?>',
 		INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE: '<?= GetMessageJS($arResult['IS_INTEGRATOR_RENAMED'] ? 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE_RENAMED' : 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE') ?>',
@@ -230,10 +232,12 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 			) ?>,
 			projectLimitExceeded: <?= Json::encode($isProjectLimitExceeded); ?>,
 			projectLimitFeatureId: '<?= $projectLimitFeatureId ?>',
+			invitationLink: '<?= CUtil::JSEscape($arResult['REGISTER_URL'] ?? '') ?>',
 			whitelistValue: '<?= CUtil::JSEscape($arResult['REGISTER_SETTINGS']['REGISTER_WHITELIST'])?>',
 			registerConfirm: <?= (isset($arResult['REGISTER_SETTINGS']['REGISTER_CONFIRM']) && $arResult['REGISTER_SETTINGS']['REGISTER_CONFIRM'] === 'Y' ? 'true' : 'false') ?>,
 			isCollabEnabled: '<?= $arResult['IS_COLLAB_ENABLED'] ? 'Y' : 'N' ?>',
 			canCurrentUserInvite: <?= $arResult['canCurrentUserInvite'] ? 'true' : 'false' ?>,
+			canCurrentUserCreateDepartment: <?= $arResult['canCurrentUserCreateDepartment'] ? 'true' : 'false' ?>,
 			useLocalEmailProgram: <?= $arResult['USE_INVITE_LOCAL_EMAIL_PROGRAM'] ? 'true' : 'false' ?>,
 			leftMenuItems: <?= Json::encode(array_merge($arResult['MENU_ITEMS'], $arResult['SUB_MENU_ITEMS'] ?? [])); ?>,
 		});

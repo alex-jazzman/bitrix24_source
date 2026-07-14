@@ -1,0 +1,4188 @@
+<?php
+
+namespace Bitrix\Im\V2;
+
+use Bitrix\Disk\Folder;
+use Bitrix\Im\Alias;
+use Bitrix\Im\V2\Analytics\MessageAnalytics;
+use Bitrix\Im\V2\Chat\Background\Background;
+use Bitrix\Im\V2\Guest\GuestCounter;
+use Bitrix\Im\V2\Chat\TextField\TextFieldEnabled;
+use Bitrix\Im\V2\Entity\User\UserCollection;
+use Bitrix\Im\V2\Entity\File\FileItem;
+use Bitrix\Im\V2\Entity\User\UserError;
+use Bitrix\Im\V2\Async\Promise\BackgroundJobPromise;
+use Bitrix\Im\V2\Entity\User\UserType;
+use Bitrix\Im\V2\Folder\FolderCascadeHandler;
+use Bitrix\Im\V2\Integration\AI\AIHelper;
+use Bitrix\Im\V2\Integration\Call\CallToken;
+use Bitrix\Im\Recent;
+use Bitrix\Im\V2\Integration\AI\Restriction;
+use Bitrix\Im\V2\Integration\Socialnetwork\Group;
+use Bitrix\Im\V2\Message\Send\MentionService;
+use Bitrix\Im\V2\Message\Send\PushService;
+use Bitrix\Im\V2\Message\Send\SendingService;
+use Bitrix\Im\V2\Message\Send\SendResult;
+use Bitrix\Im\V2\Permission\Action;
+use Bitrix\Im\V2\Reading\Counter\Infrastructure\CountersEventHandler;
+use Bitrix\Im\V2\Reading\View\ViewProvider;
+use Bitrix\Im\V2\Recent\Config\ChatRecentConfig;
+use Bitrix\Im\V2\Recent\Config\RecentConfigManager;
+use Bitrix\Im\V2\Relation\AddUsersConfig;
+use Bitrix\Im\V2\Relation\DeleteUserConfig;
+use Bitrix\Im\V2\Relation\Provider\RelationProvider;
+use Bitrix\Im\V2\Relation\Reason;
+use Bitrix\Im\V2\Relation\RelationChangeSet;
+use Bitrix\Im\V2\Relation\RelationError;
+use Bitrix\Im\V2\Rest\PopupData;
+use Bitrix\Im\V2\Rest\PopupDataAggregatable;
+use Bitrix\Im\V2\Rest\RestEntity;
+use Bitrix\Im\V2\SharingLink\Entity\LinkEntityType;
+use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Im;
+use Bitrix\Im\User;
+use Bitrix\Im\Color;
+use Bitrix\Im\Model\ChatTable;
+use Bitrix\Im\Model\EO_Chat;
+use Bitrix\Im\Model\RelationTable;
+use Bitrix\Im\V2\Service\Locator;
+use Bitrix\Im\V2\Service\Context;
+use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Im\V2\Chat\ChatError;
+use Bitrix\Im\V2\Chat\Access\ParentChainFilterFactory;
+use Bitrix\Im\V2\Chat\Tree\TreeOrigin;
+use Bitrix\Im\V2\Common\ContextCustomer;
+use Bitrix\Im\V2\Common\ActiveRecordImplementation;
+use Bitrix\Im\V2\Common\RegistryEntryImplementation;
+use Bitrix\Im\V2\Message\MessageError;
+use Bitrix\Im\V2\Message\Send\SendingConfig;
+use Bitrix\Im\V2\Recent\AncestorContextSender;
+use Bitrix\Im\V2\Chat\Param\Params;
+use Bitrix\Pull\Event;
+use CGlobalCounter;
+use CIMContactList;
+use CIMNotify;
+use CPushManager;
+use Bitrix\Im\V2\Message\Delete\DeletionMode;
+use Bitrix\Im\V2\Chat\Add\AddResult;
+use Bitrix\Im\V2\Cache\CacheableEntity;
+use Bitrix\Im\V2\SharingLink\Entity\ShareableEntity;
+use Bitrix\Im\V2\Permission\ChatActionAccessCheckable;
+
+/**
+ * Chat version #2
+ */
+abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDataAggregatable, CacheableEntity, ShareableEntity, AccessCheckable, ChatActionAccessCheckable
+{
+	use ContextCustomer
+	{
+		setContext as private defaultSaveContext;
+	}
+	use RegistryEntryImplementation;
+	use ActiveRecordImplementation
+	{
+		save as defaultSave;
+	}
+
+	public const
+		IM_TYPE_PRIVATE = 'P',
+		IM_TYPE_CHAT = 'C',
+		IM_TYPE_COMMENT = 'T',
+		IM_TYPE_OPEN_LINE = 'L',
+		IM_TYPE_SYSTEM = 'S',
+		IM_TYPE_CHANNEL = 'N',
+		IM_TYPE_OPEN_CHANNEL = 'J',
+		IM_TYPE_OPEN = 'O',
+		IM_TYPE_COPILOT = 'A',
+		IM_TYPE_COLLAB = 'B',
+		IM_TYPE_OPEN_COLLAB = 'E',
+		IM_TYPE_EXTERNAL = 'X'
+	;
+
+	public const IM_TYPES = [
+		self::IM_TYPE_PRIVATE,
+		self::IM_TYPE_CHAT,
+		self::IM_TYPE_COMMENT,
+		self::IM_TYPE_OPEN_LINE,
+		self::IM_TYPE_SYSTEM,
+		self::IM_TYPE_CHANNEL,
+		self::IM_TYPE_OPEN_CHANNEL,
+		self::IM_TYPE_OPEN,
+		self::IM_TYPE_COPILOT,
+		self::IM_TYPE_COLLAB,
+		self::IM_TYPE_OPEN_COLLAB,
+		self::IM_TYPE_EXTERNAL,
+	];
+
+	public const IM_TYPES_TRANSLATE = [
+		'PRIVATE' => self::IM_TYPE_PRIVATE,
+		'CHAT' => self::IM_TYPE_CHAT,
+		'COMMENT' => self::IM_TYPE_COMMENT,
+		'OPENLINE' => self::IM_TYPE_OPEN_LINE,
+		'SYSTEM' => self::IM_TYPE_SYSTEM,
+		'NOTIFY' => self::IM_TYPE_SYSTEM,
+		'CHANNEL' => self::IM_TYPE_CHANNEL,
+		'OPEN_CHANNEL' => self::IM_TYPE_OPEN_CHANNEL,
+		'OPEN' => self::IM_TYPE_OPEN,
+		'COPILOT' => self::IM_TYPE_COPILOT,
+		'COLLAB' => self::IM_TYPE_COLLAB,
+		'OPEN_COLLAB' => self::IM_TYPE_OPEN_COLLAB,
+		'EXTERNAL' => self::IM_TYPE_EXTERNAL
+	];
+
+	// Default entity types
+	public const
+		ENTITY_TYPE_VIDEOCONF = 'VIDEOCONF',
+		ENTITY_TYPE_GENERAL = 'GENERAL',
+		ENTITY_TYPE_FAVORITE = 'FAVORITE',
+		ENTITY_TYPE_GENERAL_CHANNEL = 'GENERAL_CHANNEL',
+		ENTITY_TYPE_PRIVATE_AI_ASSISTANT = 'AI_ASSISTANT_PRIVATE'
+	;
+
+	//OPENLINES
+	public const
+		ENTITY_TYPE_LINE = 'LINES', //OPERATOR
+		ENTITY_TYPE_LIVECHAT = 'LIVECHAT'; //USER
+
+	protected const ENTITY_TYPES = [
+		self::ENTITY_TYPE_LINE,
+		self::ENTITY_TYPE_LIVECHAT,
+		self::ENTITY_TYPE_FAVORITE,
+		self::ENTITY_TYPE_VIDEOCONF,
+	];
+
+	public const NON_CACHED_FIELDS = ['MESSAGE_COUNT', 'USER_COUNT', 'LAST_MESSAGE_ID'];
+
+	public const
+		MANAGE_RIGHTS_NONE = 'NONE',
+		MANAGE_RIGHTS_MEMBER = 'MEMBER',
+		MANAGE_RIGHTS_OWNER = 'OWNER',
+		MANAGE_RIGHTS_MANAGERS = 'MANAGER'
+	;
+
+	public const ROLE_OWNER = 'OWNER';
+	public const ROLE_MANAGER = 'MANAGER';
+	public const ROLE_MEMBER = 'MEMBER';
+	public const ROLE_GUEST = 'GUEST';
+	public const ROLE_NONE = 'NONE';
+
+	private const CHUNK_SIZE = 1000;
+	protected const EXTRANET_CAN_SEE_HISTORY = true;
+	protected const MAX_USERS_TO_DISABLE_DELETE_MESSAGE = 50;
+
+	protected array $accessCache = [];
+
+	protected ?int $chatId = null;
+
+	/**
+	 * Dialog Id:
+	 * 		chatNNN - chat,
+	 * 		sgNNN - socnet group,
+	 * 		crmNNN - crm chat,
+	 * 		NNN - recipient user.
+	 */
+	protected ?string $dialogId = null;
+
+	/**
+	 * Message type:
+	 * 	@see \IM_MESSAGE_SYSTEM = S - notification,
+	 * 	@see \IM_MESSAGE_PRIVATE = P - private chat,
+	 * 	@see \IM_MESSAGE_CHAT = S - group chat,
+	 * 	@see \IM_MESSAGE_OPEN = O - open chat,
+	 * 	@see \IM_MESSAGE_OPEN_LINE = L - open line chat.
+	 */
+	protected ?string $type = null;
+
+	protected ?int $authorId = null;
+
+	protected ?string $title = null;
+
+	protected ?string $description = null;
+
+	protected ?string $color = null;
+
+	protected int $parentChatId = 0;
+
+	protected int $parentMessageId = 0;
+
+	protected ?bool $extranet = null;
+
+	protected ?int $avatarId = null;
+
+	protected ?int $pinMessageId = null;
+
+	protected ?int $callType = null;
+
+	protected ?string $callNumber = null;
+
+	protected ?string $entityType = null;
+
+	protected ?string $entityId = null;
+
+	protected ?string $entityData1 = null;
+
+	protected ?string $entityData2 = null;
+
+	/** Keeps only one flag - Silent mode flag for Open Lines (Y|N). */
+	protected ?string $entityData3 = null;
+
+	protected ?int $diskFolderId = null;
+
+	protected ?Folder $diskFolder = null;
+
+	protected ?int $messageCount = null;
+
+	protected ?int $userCount = null;
+
+	protected ?int $prevMessageId = null;
+
+	protected ?int $lastMessageId = null;
+	protected ?int $lastFileId = null;
+	protected ?DateTime $dateMessage = null;
+
+	protected ?int $markedId = null;
+	protected ?string $role = null;
+
+	protected ?string $aliasName = null;
+
+	protected ?string $lastMessageStatus = null;
+
+	protected ?DateTime $dateCreate = null;
+
+	protected ?string $manageUsersAdd = null;
+	protected ?string $manageUsersDelete = null;
+
+	protected ?string $manageUI = null;
+
+	protected ?string $manageSettings = null;
+
+	protected ?string $manageMessages = null;
+
+	protected ?array $usersIds = null;
+
+	protected ?int $messagesAutoDeleteDelay = null;
+
+	protected ?Params $chatParams = null;
+
+	/** @var Registry<Message>  */
+	protected Registry $messageRegistry;
+
+	protected ?Im\V2\Relation\ChatRelations $chatRelations = null;
+
+	protected Background $background;
+	protected TextFieldEnabled $textFieldEnabled;
+
+	protected RecentConfigManager $recentConfigManager;
+
+	protected RelationProvider $relationProvider;
+
+	protected bool $isFilledNonCachedData = false;
+	protected bool $isDiskFolderFilled = false;
+	protected ?CallToken $callToken = null;
+
+	/**
+	 * @param int|array|EO_Chat|null $source
+	 */
+	public function __construct($source = null, ?Context $context = null)
+	{
+		$this->setContext($context);
+		$this->initByDefault();
+
+		if (!empty($source))
+		{
+			$this->load($source);
+		}
+
+		$this->messageRegistry = new Registry;
+		$this->recentConfigManager = Main\DI\ServiceLocator::getInstance()->get(RecentConfigManager::class);
+	}
+
+	//region Users
+	//endregion
+
+	//region Relations
+	//endregion
+
+	/**
+	 * @param int|null $chatId
+	 * @return static
+	 */
+	public static function getInstance(?int $chatId): self
+	{
+		if (!isset($chatId))
+		{
+			return new Im\V2\Chat\NullChat();
+		}
+
+		return ChatFactory::getInstance()->getChatById($chatId);
+	}
+
+	public static function cleanCache(int $id, bool $cleanStaticCache = true): void
+	{
+		$cacheLevel = $cleanStaticCache ? Im\V2\Cache\CacheLevel::All : Im\V2\Cache\CacheLevel::Persistent;
+
+		ChatFactory::getInstance()->cleanCache($id, $cacheLevel);
+		Im\V2\Chat\EntityLink::cleanCache($id);
+	}
+
+	public static function cleanAccessCache(int $chatId): void
+	{
+		$instance = self::getFromStaticCache($chatId);
+		if (isset($instance))
+		{
+			$instance->accessCache = [];
+		}
+	}
+
+	public function save(): Result
+	{
+		$id = $this->getChatId();
+		$result = $this->defaultSave();
+
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		if ($id !== null && ($result->getResult()['IS_CHANGES'] ?? true) === true)
+		{
+			self::cleanCache($id, false);
+		}
+
+		if ($this->getChatParams()->isCreated())
+		{
+			$this->getChatParams()->saveWithNewChatId($this->getChatId());
+		}
+		else
+		{
+			$this->getChatParams()->save();
+		}
+
+		return $result;
+	}
+
+	public function getStartId(?int $userId = null): int
+	{
+		return RelationCollection::getStartId($userId ?? $this->getContext()->getUserId(), $this->getChatId());
+	}
+
+	public function isExist(): bool
+	{
+		return isset($this->chatId);
+	}
+
+	public function isCounterIncrementAllowed(): bool
+	{
+		return !empty($this->getRecentSections());
+	}
+
+	public function shouldAddToRecent(): bool
+	{
+		return !empty($this->getRecentSections());
+	}
+
+	public function needToSendTaskCreationMessage(): bool
+	{
+		return true;
+	}
+
+	public function needToSendCalendarCreationMessage(): bool
+	{
+		return true;
+	}
+
+	public function getRecentSections(): array
+	{
+		return $this->recentConfigManager->getRecentSectionsByChat($this);
+	}
+
+	public function getRecentSectionsForGuest(): array
+	{
+		return $this->getRecentSections();
+	}
+
+	public function add(array $params): AddResult
+	{
+		return new AddResult();
+	}
+
+	public function containsCollaber(): bool
+	{
+		return (bool)$this->getChatParams()->get(Params::CONTAINS_COLLABER)?->getValue();
+	}
+
+	public function containsGuest(): bool
+	{
+		return (bool)$this->getChatParams()->get(Params::CONTAINS_GUEST)?->getValue();
+	}
+
+	public function containsCopilot(): bool
+	{
+		return false;
+	}
+
+	protected function setUserIds(?array $userIds): self
+	{
+		$this->usersIds = $this->getValidUsersToAdd($userIds ?? []);
+
+		return $this;
+	}
+
+	public function getUserIds(): ?array
+	{
+		return $this->usersIds;
+	}
+
+	public function getAllUserIdsForMention(): array
+	{
+		return $this->getRelations()->filterActiveMembers()->getUserIds();
+	}
+
+	public function getAliasName(): ?string
+	{
+		return $this->aliasName;
+	}
+
+	public function setAliasName(string $aliasName): self
+	{
+		$this->aliasName = $aliasName;
+
+		return $this;
+	}
+
+	public function prepareAliasToLoad($alias): ?string
+	{
+		if (is_string($alias))
+		{
+			return $alias;
+		}
+
+		if ($alias === null)
+		{
+			return null;
+		}
+
+		return $alias['ALIAS'] ?? null;
+	}
+
+	public function getMarkedId(): int
+	{
+		if (!isset($this->markedId))
+		{
+			$this->markedId = Im\Recent::getMarkedId($this->getContext()->getUserId(), $this->getType(), $this->getDialogId());
+		}
+
+		return $this->markedId;
+	}
+
+	public function setMarkedId(?int $markedId): self
+	{
+		$this->markedId = $markedId;
+		return $this;
+	}
+
+	public function markFilledNonCachedData(bool $isFilledNonCachedData): self
+	{
+		$this->isFilledNonCachedData = $isFilledNonCachedData;
+
+		return $this;
+	}
+
+
+
+	public function getRole(): string
+	{
+		if (isset($this->role))
+		{
+			return $this->role;
+		}
+
+		$selfRelation = $this->getSelfRelation();
+		$this->role = $selfRelation?->getRole() ?? self::ROLE_GUEST;
+
+		return $this->role;
+	}
+
+	public function checkColor(): Result
+	{
+		if (!Color::isSafeColor($this->color))
+		{
+			CGlobalCounter::Increment('im_chat_color_id', CGlobalCounter::ALL_SITES, false);
+			$chatColorId = CGlobalCounter::GetValue('im_chat_color_id', CGlobalCounter::ALL_SITES);
+			$this->color = Color::getCodeByNumber($chatColorId);
+		}
+
+		return new Result();
+	}
+
+	public function setChatParams(array $chatParams = []): self
+	{
+		$this->chatParams = Chat\Param\Params::loadWithoutChat($chatParams);
+
+		return $this;
+	}
+
+	public function getChatParams(): Params
+	{
+		$this->chatParams ??= $this->getId() !== null
+			? Params::getInstance($this->getId())
+			: Params::loadWithoutChat([])
+		;
+
+		return $this->chatParams;
+	}
+
+	//region Access & Permissions
+
+	final public function checkAccess(?int $userId = null): Im\V2\AccessCheckResult
+	{
+		$userId = $this->getUserId($userId);
+
+		if (isset($this->accessCache[$userId]))
+		{
+			return $this->accessCache[$userId];
+		}
+
+		if (!$userId || !$this->getChatId())
+		{
+			$this->accessCache[$userId] = Im\V2\AccessCheckResult::denied(new Im\V2\AccessError(ChatError::NOT_FOUND));
+
+			return $this->accessCache[$userId];
+		}
+
+		$access = Im\V2\AccessCheckResult::fromResult($this->checkAccessInternal($userId));
+		if ($this->hasParent() && $this->requiresParentMembership())
+		{
+			$parentAccess = $this->getParentChat()?->checkAccess($userId);
+			if ($parentAccess !== null && !$parentAccess->isSuccess())
+			{
+				$access = $parentAccess;
+			}
+		}
+
+		return $this->accessCache[$userId] = $access;
+	}
+
+	protected function checkAccessInternal(int $userId): Result
+	{
+		return (new Result())->addError(new ChatError(ChatError::ACCESS_DENIED));
+	}
+
+	protected function getUserId($user): int
+	{
+		$userId = 0;
+		if ($user === null)
+		{
+			$userId = $this->getContext()->getUserId();
+		}
+		elseif (is_numeric($user))
+		{
+			$userId = (int)$user;
+		}
+		elseif ($user instanceof User)
+		{
+			$userId = $user->getId();
+		}
+
+		return $userId;
+	}
+
+
+	//endregion
+
+	//region Message
+
+	/**
+	 * @return Registry<Message>
+	 */
+	public function getMessageRegistry(): Registry
+	{
+		return $this->messageRegistry;
+	}
+
+	/**
+	 * @param int $messageId
+	 * @return Message|null
+	 */
+	public function getMessage(int $messageId): ?Message
+	{
+		if (isset($this->messageRegistry[$messageId]))
+		{
+			return $this->messageRegistry[$messageId];
+		}
+
+		$message = new Message;
+		$message->setRegistry($this->messageRegistry);
+
+		$loadResult = $message->load($messageId);
+		if ($loadResult->isSuccess())
+		{
+			return $message;
+		}
+
+		return null;
+	}
+
+	public function sendMessage(Message $message, ?SendingConfig $sendingConfig = null): SendResult
+	{
+		$result = new SendResult();
+
+		$this->prepareMessage($message);
+		$sendingConfig ??= new SendingConfig();
+
+		$sendService = (new SendingService($sendingConfig))->setContext($message->getContext());
+		$onBeforeResult = $this->onBeforeMessageSend($message, $sendingConfig);
+		if (!$onBeforeResult->isSuccess())
+		{
+			return $result->addErrors($onBeforeResult->getErrors());
+		}
+
+		$checkUuidResult = $sendService->checkDuplicateByUuid($message);
+		if (!$checkUuidResult->isSuccess())
+		{
+			return $result->addErrors($checkUuidResult->getErrors());
+		}
+
+		$data = $checkUuidResult->getResult();
+		if (!empty($data['messageId']))
+		{
+			return $result->setMessageId((int)$data['messageId']);
+		}
+
+		$message->autocompleteParams($sendingConfig);
+
+		$eventResult = $sendService->fireEventBeforeSend($this, $message);
+		if (!$eventResult->isSuccess())
+		{
+			return $result->addErrors($eventResult->getErrors());
+		}
+
+		if ($message->getChatId() !== $this->getId()) // The target chat was changed in the event handler
+		{
+			return $this->processSendToOtherChat($message, $sendingConfig);
+		}
+
+		if ($message->isCompletelyEmpty())
+		{
+			return $result->addError(new MessageError(MessageError::EMPTY_MESSAGE));
+		}
+
+		$message->uploadFileFromText();
+
+		$saveResult = $message->save();
+		if (!$saveResult->isSuccess())
+		{
+			return $result->addErrors($saveResult->getErrors());
+		}
+
+		$promise = BackgroundJobPromise::deferJob(fn () => $this->onAfterMessageSend($message, $sendService));
+
+		return $result->setMessageId($message->getId())->setPromise($promise);
+	}
+
+	public function onAfterMessageUpdate(Message $message): Result
+	{
+		Sync\Logger::getInstance()->add(
+			new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::UPDATED_MESSAGE_ENTITY, $message->getId()),
+			fn () => $this->getRelations()->getUserIds(),
+			$this
+		);
+
+		return new Result();
+	}
+
+	public function onBeforeMentionsChange(Message\Send\Mention\MentionChange $mentionChange): Result
+	{
+		return new Result();
+	}
+
+	public function onAfterMessagesDelete(MessageCollection $messages, DeletionMode $deletionMode): Result
+	{
+		return new Result();
+	}
+
+	public function onAfterMessagesRead(MessageCollection $messages, int $readerId): Result
+	{
+		Sync\Logger::getInstance()->add(
+			new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::CHAT_ENTITY, $this->getChatId()),
+			$readerId,
+			$this
+		);
+
+		return new Result();
+	}
+
+	public function onAfterAllMessagesRead(int $readerId): Result
+	{
+		Sync\Logger::getInstance()->add(
+			new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::CHAT_ENTITY, $this->getChatId()),
+			$readerId,
+			$this
+		);
+
+		return new Result();
+	}
+
+	protected function onBeforeMessageSend(Message $message, SendingConfig $config): Result
+	{
+		if (
+			!$message->isSystem()
+			&& !$this->getContext()->getUser()->isBot()
+			&& !$message->getChat()->getTextFieldEnabled()->get()
+		)
+		{
+			return (new Result())->addError(new ChatError(ChatError::TEXT_FIELD_DISABLED));
+		}
+
+		return new Result();
+	}
+
+	public function getPullRecipients(): RelationCollection
+	{
+		return $this->getRelations()->filterActive();
+	}
+
+	public function getUsersToNotify(): RelationCollection
+	{
+		return $this->getRelations()->filterActiveMembers();
+	}
+
+	protected function onAfterMessageSend(Message $message, SendingService $sendingService): void
+	{
+		$authorContext = $message->getContext();
+		$sendingConfig = $sendingService->getConfig();
+
+		$sendingService->updateMessageUuid($message);
+		$this->processMessageAnalyticsOnAfterSend($message);
+
+		if ($sendingConfig->convertMode())
+		{
+			return;
+		}
+
+		$this->updateStateAfterMessageSend($message, $sendingConfig);
+
+		$this->getMentionService($sendingConfig)->setContext($authorContext)->onMessageSend($message);
+		$counters = $this->updateCountersAfterMessageSend($message, $sendingConfig);
+
+		if ($this->hasParent())
+		{
+			$this->updateParentStateAfterMessageSend($message, $sendingConfig);
+		}
+		$this->getPushService($message, $sendingConfig)->setContext($authorContext)->sendPush($counters);
+		$sendingService->fireEventAfterMessageSend($this, $message);
+		(new Im\V2\Link\LinkFacade($sendingConfig))->setContext($authorContext)->saveLinksFromMessage($message);
+		$this->transcribeFilesAfterMessageSend($message);
+	}
+
+	protected function transcribeFilesAfterMessageSend(Message $message): void
+	{
+		if (
+			!(new Restriction())->isAutoTaskActive()
+			|| $message->getParams()->isSet(Message\Params::FORWARD_ID)
+		)
+		{
+			return;
+		}
+
+		/** @var FileItem $file */
+		foreach ($message->getFiles() as $file)
+		{
+			if ($file->isTranscribable())
+			{
+				$transcribeManager = new Im\V2\Integration\AI\Transcription\TranscribeManager(
+					$file->getOriginalFileId(),
+					$file->getId(),
+					$message->getChatId(),
+					$message->getMessageId()
+				);
+
+				$transcribeManager->setContext($message->getContext())->transcribeFile();
+
+				return;
+			}
+		}
+	}
+
+	protected function processMessageAnalyticsOnAfterSend(Message $message): void
+	{
+		$messageAnalytics = (new MessageAnalytics($message));
+
+		$messageAnalytics->addSendMessage();
+		if ($message->hasMentionAll())
+		{
+			$messageAnalytics->addMentionAll();
+		}
+	}
+
+	protected function processSendToOtherChat(Message $message, SendingConfig $config): SendResult
+	{
+		$newConfig = clone $config;
+		$newConfig->skipFireEventBeforeMessageNotifySend();
+
+		return $message->getChat()->sendMessage($message, $config);
+	}
+
+	protected function prepareMessage(Message $message): void
+	{
+		$message
+			->setRegistry($this->messageRegistry)
+			->setContextUser($message->getAuthorId() ?: $this->getContext()->getUserId())
+			->setChatId($this->getId())
+			->setChat($this)
+			->filterMessageText()
+		;
+	}
+
+	protected function updateStateAfterMessageSend(Message $message, SendingConfig $sendingConfig): Result
+	{
+		$result = new Result();
+		$this->updateChatAfterMessageSend($message);
+		$this->logToSyncAfterMessageSend($message);
+		(new Im\V2\Message\Sticker\Recent\RecentSticker())->setContext($message->getContext())->add($message);
+
+		if (!$sendingConfig->addRecent())
+		{
+			return $result;
+		}
+
+		$this->updateRecentAfterMessageSend($message, $sendingConfig);
+		$this->updateRelationsAfterMessageSend($message);
+
+		return $result;
+	}
+
+	protected function updateParentStateAfterMessageSend(Message $message, SendingConfig $sendingConfig): Result
+	{
+		$counterRecipientRelations =
+			$this
+				->getUsersToNotify()
+				->filterByUserIds($this->getCounterRecipients($sendingConfig))
+		;
+		$raiseUserIds = $counterRecipientRelations->filterNotifySubscribed()->getUserIds();
+		$metaUserIds = $counterRecipientRelations->filterExcludingUserIds($raiseUserIds)->getUserIds();
+
+		$parentChat = $this->getParentChat();
+		Recent::raiseChat($parentChat, $parentChat->getRelationsByUserIds($raiseUserIds), new DateTime());
+
+		ServiceLocator::getInstance()->get(AncestorContextSender::class)->send($this, $metaUserIds);
+
+		return new Result();
+	}
+
+	protected function updateChatAfterMessageSend(Message $message): Result
+	{
+		$countMessageBeforeUpdate = $this->getMessageCount();
+		\Bitrix\Im\Model\ChatTable::update($this->getId(), [
+			'MESSAGE_COUNT' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'MESSAGE_COUNT'),
+			'LAST_MESSAGE_ID' => $message->getId(),
+		]);
+		$this->messageCount = $countMessageBeforeUpdate + 1;
+		$this->lastMessageId = $message->getId();
+
+		/**
+		 * We need to clear the static cache due to the side effects of the withContext method due to cloning an object in it.
+		 * @see ContextCustomer::withContext
+		 *
+		 * This is a temporary solution.
+		 * TODO: Fix the issue with cloning an object in withContext method
+		 */
+		$this->updateStaticCacheInstance([
+			'LAST_MESSAGE_ID' => $this->lastMessageId,
+			'MESSAGE_COUNT' => $this->messageCount
+		]);
+
+
+		return new Result();
+	}
+
+	protected function updateStaticCacheInstance(array $fields): void
+	{
+		$id = $this->getChatId();
+		if ($id)
+		{
+			self::getFromStaticCache($id)?->onAfterOrmUpdate($fields);
+		}
+	}
+
+	protected function updateRecentAfterMessageSend(Message $message, SendingConfig $config): Result
+	{
+		if (!$this->shouldAddToRecent())
+		{
+			return new Result();
+		}
+
+		$usersToAddToRecent = $this->getUsersToAddToRecent();
+		$this->updateRecentItems($message);
+
+		if ($config->skipAuthorAddRecent())
+		{
+			unset($usersToAddToRecent[$message->getAuthorId()]);
+		}
+
+		$this->addToRecent($usersToAddToRecent, $message);
+
+		return new Result();
+	}
+
+	protected function getUsersToAddToRecent(): array
+	{
+		return Recent::getUsersOutOfRecent($this);
+	}
+
+	protected function updateRecentItems(Message $message): void
+	{
+		Im\Model\RecentTable::updateByFilter(
+			['=ITEM_CID' => $this->getId()],
+			$this->getUpdatedFieldsForRecent($message)
+		);
+	}
+
+	protected function addToRecent(array $users, Message $message): Result
+	{
+		if (empty($users))
+		{
+			return new Result();
+		}
+
+		$fields = [];
+
+		foreach ($users as $userId)
+		{
+			$field = $this->getFieldsForRecent($userId, $message);
+			if (!empty($field))
+			{
+				$fields[] = $field;
+			}
+		}
+
+		$this->insertRecent($fields);
+
+		return new Result();
+	}
+
+	protected function insertRecent(array $fields): void
+	{
+		Im\Model\RecentTable::multiplyInsertWithoutDuplicate(
+			$fields,
+			['DEADLOCK_SAFE' => true, 'UNIQUE_FIELDS' => ['USER_ID', 'ITEM_TYPE', 'ITEM_ID']]
+		);
+	}
+
+	protected function getFieldsForRecent(int $userId, Message $message): array // todo: refactor
+	{
+		$relationId = $this->getRelations()->getByUserId($userId, $this->getId())?->getId();
+
+		if ($relationId === null)
+		{
+			return [];
+		}
+
+		return [
+			'USER_ID' => $userId,
+			'ITEM_TYPE' => $this->getType(),
+			'ITEM_ID' => $this->getId(),
+			'ITEM_MID' => $message->getId(),
+			'ITEM_CID' => $this->getId(),
+			'ITEM_RID' => $relationId,
+			'DATE_MESSAGE' => $message->getDateCreate(),
+			'DATE_LAST_ACTIVITY' => $message->getDateCreate(),
+			'DATE_UPDATE' => $message->getDateCreate(),
+		];
+	}
+
+	protected function getUpdatedFieldsForRecent(Message $message): array
+	{
+		return [
+			'ITEM_MID' => $message->getId(),
+			'DATE_MESSAGE' => $message->getDateCreate(),
+			'DATE_UPDATE' => $message->getDateCreate(),
+			'DATE_LAST_ACTIVITY' => $message->getDateCreate(),
+		];
+	}
+
+	protected function updateRelationsAfterMessageSend(Message $message): Result
+	{
+		$this->getRelations()
+			->getByUserId($message->getActionContextUserId(), $this->getId())
+			?->setLastId($message->getId())
+			?->setLastSendMessageId($message->getId())
+			?->save()
+		;
+
+		return new Result();
+	}
+
+	protected function updateCountersAfterMessageSend(Message $message, SendingConfig $sendingConfig): Im\V2\Reading\Counter\Entity\UsersCounterMap
+	{
+		$counterRecipients = $this->getCounterRecipients($sendingConfig);
+
+		if ($sendingConfig->skipAuthorAddRecent())
+		{
+			unset($counterRecipients[$message->getAuthorId()]);
+		}
+
+		$pullRecipients = $this->getPullRecipients();
+		$recipientRelations = $pullRecipients
+			->filter(fn (Relation $relation) => isset($counterRecipients[$relation->getUserId()]))
+		;
+
+		return $this->getNewMessageHandler()->handleWithCounters(
+			$message,
+			$recipientRelations,
+			$pullRecipients->getUserIds(),
+		);
+	}
+
+	protected function getCounterRecipients(SendingConfig $sendingConfig): array
+	{
+		if (!$this->isCounterIncrementAllowed() || $sendingConfig->skipCounterIncrements() || !$sendingConfig->addRecent())
+		{
+			return [];
+		}
+
+		$allowedRecipients = $sendingConfig->counterRecipients();
+		$counterRecipients = $this->getUsersToNotify()->getUserIds();
+		if ($allowedRecipients !== null)
+		{
+			$counterRecipients = array_intersect_key($counterRecipients, $allowedRecipients);
+		}
+
+		return $counterRecipients;
+	}
+
+	protected function logToSyncAfterMessageSend(Message $message): Result
+	{
+		if (!$this->shouldAddToRecent())
+		{
+			return new Result();
+		}
+
+		Sync\Logger::getInstance()->add(
+			new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::MESSAGE_ENTITY, $message->getId()),
+			$this->getRelations()->getUserIds(),
+			$this
+		);
+		Sync\Logger::getInstance()->add(
+			new Sync\Event(Sync\Event::ADD_EVENT, Sync\Event::CHAT_ENTITY, $this->getId()),
+			$this->getRelations()->getUserIds(),
+			$this
+		);
+
+		return new Result();
+	}
+
+	protected function getMentionService(SendingConfig $config): MentionService
+	{
+		return new MentionService($config);
+	}
+
+	/**
+	 * @param Message $message
+	 * @return Result
+	 */
+	public function updateMessage(Message $message): Result
+	{
+		$message->setRegistry($this->messageRegistry);
+
+		$result = new Result;
+
+		//todo: updating process here
+
+		return $result;
+	}
+
+	/**
+	 * @param Message $message
+	 * @return Result
+	 */
+	public function deleteMessage(Message $message): Result
+	{
+		//todo: drop process here
+		$result = new Result;
+
+		return $result;
+	}
+
+	/**
+	 * @param static[] $chats
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public static function fillSelfRelations(array $chats, ?int $userId = null): void
+	{
+		$userId ??= Im\V2\Entity\User\User::getCurrent()->getId();
+		$chatIds = [];
+		foreach ($chats as $chat)
+		{
+			$chatIds[] = $chat->getId();
+		}
+
+		if (empty($chatIds))
+		{
+			return;
+		}
+
+		$query = RelationTable::query()
+			->setSelect(RelationCollection::COMMON_FIELDS)
+			->where('USER_ID', $userId)
+			->whereIn('CHAT_ID', $chatIds)
+		;
+
+		ServiceLocator::getInstance()->get(ParentChainFilterFactory::class)
+			->forUser($userId, TreeOrigin::forChat('CHAT'))
+			->apply($query);
+
+		$relationEntities = $query->fetchAll();
+		$relations = new RelationCollection($relationEntities);
+
+		foreach ($chats as $chat)
+		{
+			$chat->getRelationFacade()?->preloadUserRelation($userId, $relations->getByUserId($userId, $chat->getId()));
+		}
+	}
+
+	public function isReadable(int $userId): bool
+	{
+		return true;
+	}
+
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Im\V2\Reading\Reader::readAllInChat
+	 */
+	public function readAllMessages(bool $byEvent = false): Result
+	{
+		return $this->getReader()->readAllInChat($this->getId(), $this->getContext()->getUserId());
+	}
+
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Im\V2\Reading\Reader::read
+	 * or
+	 * @use \Bitrix\Im\V2\Reading\Reader::readAllInChat
+	 */
+	public function readMessages(?MessageCollection $messages, bool $byEvent = false): Result
+	{
+		$result =
+			$messages === null
+				? $this->getReader()->readAllInChat($this->getId(), $this->getContext()->getUserId())
+				: $this->getReader()->read($messages, $this->getContext()->getUserId(), $byEvent)
+		;
+
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		return new Result();
+	}
+
+	public function sendPushUpdateMessage(Message $message): void
+	{
+		return;
+	}
+
+	public function startRecordVoice(): void
+	{
+		if (!Main\Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		$push = Im\V2\Message\PushFormat::formatStartRecordVoice($this);
+		if ($this->getType() === self::IM_TYPE_COMMENT)
+		{
+			\CPullWatch::AddToStack('IM_PUBLIC_COMMENT_'.$this->getParentChatId(), $push);
+		}
+		else
+		{
+			Event::add($this->getUsersForPush(), $push);
+		}
+		if ($this->needToSendPublicPull())
+		{
+			\CPullWatch::AddToStack('IM_PUBLIC_'.$this->getId(), $push);
+		}
+		if ($this->getType() === self::IM_TYPE_OPEN_CHANNEL)
+		{
+			Im\V2\Chat\OpenChannelChat::sendSharedPull($push);
+		}
+	}
+
+	abstract protected function getPushService(Message $message, SendingConfig $config): PushService;
+
+	public function getChatMessageStatus(): string
+	{
+		$lastMessageId = $this->getLastMessageId();
+
+		if ($lastMessageId === 0)
+		{
+			return \IM_MESSAGE_STATUS_RECEIVED;
+		}
+
+		return (new Message($lastMessageId))->isNotifyRead() ? \IM_MESSAGE_STATUS_DELIVERED : \IM_MESSAGE_STATUS_RECEIVED;
+	}
+
+	public function getLastMessageViews(): array
+	{
+		$lastMessageViewsByGroups = $this->getLastMessageViewsByGroups();
+
+		if (isset($lastMessageViewsByGroups['USERS'][$this->getContext()->getUserId()]))
+		{
+			return $lastMessageViewsByGroups['FOR_VIEWERS'];
+		}
+
+		return $lastMessageViewsByGroups['FOR_NOT_VIEWERS'];
+	}
+
+	public function getLastMessageViewsByGroups(): array
+	{
+		$defaultViewInfo = [
+			'MESSAGE_ID' => 0,
+			'FIRST_VIEWERS' => [],
+			'COUNT_OF_VIEWERS' => 0,
+		];
+		$defaultValue = [
+			'USERS' => [],
+			'FOR_VIEWERS' => $defaultViewInfo,
+			'FOR_NOT_VIEWERS' => $defaultViewInfo,
+		];
+
+		$viewProvider = $this->getViewProvider();
+
+		$lastMessageInChat = $this->getLastMessageId() ?? 0;
+
+		if ($lastMessageInChat === 0)
+		{
+			return $defaultValue;
+		}
+
+		$messageViewers = $viewProvider->getViewerIds($lastMessageInChat);
+		$countOfView = count($messageViewers);
+
+		$firstViewers = [];
+
+		foreach ($messageViewers as $messageViewer)
+		{
+			if (count($firstViewers) >= 2)
+			{
+				break;
+			}
+
+			$firstViewers[$messageViewer] = $messageViewer;
+		}
+
+		$datesOfViews = $viewProvider->getDatesViewedByMessageIdsForUsers($lastMessageInChat, $firstViewers);
+
+		$firstViewersWithDate = [];
+
+		foreach ($firstViewers as $viewer)
+		{
+			$firstViewersWithDate[] = [
+				'USER_ID' => $viewer,
+				'USER_NAME' => Im\V2\Entity\User\User::getInstance($viewer)->getName(),
+				'DATE' => $datesOfViews[$viewer] ?? null
+			];
+		}
+
+		$viewsInfoByGroups = ['USERS' => $messageViewers];
+		$viewInfoForViewers = [
+			'MESSAGE_ID' => $lastMessageInChat,
+			'FIRST_VIEWERS' => $firstViewersWithDate,
+			'COUNT_OF_VIEWERS' => $countOfView - 1,
+		];
+		$viewInfoForNotViewers = $viewInfoForViewers;
+		++$viewInfoForNotViewers['COUNT_OF_VIEWERS'];
+		$viewsInfoByGroups['FOR_VIEWERS'] = $viewInfoForViewers;
+		$viewsInfoByGroups['FOR_NOT_VIEWERS'] = $viewInfoForNotViewers;
+
+		return $viewsInfoByGroups;
+	}
+
+	protected function getUsersForPush(bool $skipBot = false, bool $skipSelf = true): array
+	{
+		$userId = $this->getContext()->getUserId();
+		$isLineChat = $this->getEntityType() === self::ENTITY_TYPE_LINE;
+		$relations = $this->getRelations();
+		$userIds = [];
+		foreach ($relations as $relation)
+		{
+			if ($skipSelf && $relation->getUserId() === $userId)
+			{
+				continue;
+			}
+			if ($skipBot && $relation->getUser()->isBot())
+			{
+				continue;
+			}
+			if ($isLineChat && $relation->getUser()->isConnector())
+			{
+				continue;
+			}
+			$userIds[] = $relation->getUserId();
+		}
+
+		return $userIds;
+	}
+
+	//endregion
+
+	//region Data storage
+
+	/**
+	 * @return array<array>
+	 */
+	protected static function mirrorDataEntityFields(): array
+	{
+		return [
+			'ID' => [
+				'primary' => true,
+				'field' => 'chatId', /** @see Chat::$chatId */
+				'set' => 'setChatId', /** @see Chat::setChatId */
+				'get' => 'getChatId', /** @see Chat::getChatId */
+			],
+			'CHAT_ID' => [
+				'alias' => 'ID',
+			],
+			'TYPE' => [
+				'field' => 'type', /** @see Chat::$type */
+				'set' => 'setType', /** @see Chat::setType */
+				'get' => 'getType', /** @see Chat::getType */
+				'default' => 'getDefaultType', /** @see Chat::getDefaultType */
+				'beforeSave' => 'beforeSaveType', /** @see Chat::beforeSaveType */
+			],
+			'AUTHOR_ID' => [
+				'field' => 'authorId', /** @see Chat::$authorId */
+				'set' => 'setAuthorId', /** @see Chat::setAuthorId */
+				'get' => 'getAuthorId', /** @see Chat::getAuthorId */
+			],
+			'CHAT_AUTHOR_ID' => [
+				'alias' => 'AUTHOR_ID',
+			],
+			'COLOR' => [
+				'field' => 'color', /** @see Chat::$color */
+				'get' => 'getColor', /** @see Chat::getColor */
+				'set' => 'setColor', /** @see Chat::setColor */
+				'beforeSave' => 'checkColor', /** @see Chat::checkColor */
+				// 'beforeSave' => 'validateColor', /** @see Chat::validateColor */
+				//'default' => 'getDefaultColor', /** @see Chat::getDefaultColor */
+			],
+			'TITLE' => [
+				'field' => 'title', /** @see Chat::$title */
+				'set' => 'setTitle', /** @see Chat::setTitle */
+				'get' => 'getTitle',  /** @see Chat::getTitle */
+				'beforeSave' => 'checkTitle', /** @see Chat::checkTitle */
+				//'default' => 'getDefaultTitle', /** @see Chat::getDefaultTitle */
+			],
+			'DESCRIPTION' => [
+				'field' => 'description', /** @see Chat::$description */
+				'get' => 'getDescription',  /** @see Chat::getDescription */
+				'set' => 'setDescription',  /** @see Chat::setDescription */
+				'nullable' => true,
+			],
+			'PARENT_ID' => [
+				'field' => 'parentChatId', /** @see Chat::$parentChatId */
+				'get' => 'getParentId',  /** @see Chat::getParentChatId */
+				'set' => 'setParentId',  /** @see Chat::setParentChatId */
+			],
+			'PARENT_MID' => [
+				'field' => 'parentMessageId', /** @see Chat::$parentMessageId */
+				'get' => 'getParentMessageId',  /** @see Chat::getParentMessageId */
+				'set' => 'setParentMessageId',  /** @see Chat::setParentMessageId */
+			],
+			'EXTRANET' => [
+				'field' => 'extranet', /** @see Chat::$extranet */
+				'get' => 'getExtranet',  /** @see Chat::getExtranet */
+				'set' => 'setExtranet',  /** @see Chat::setExtranet */
+				'default' => 'getDefaultExtranet', /** @see Chat::getDefaultExtranet */
+			],
+			'AVATAR' => [
+				'field' => 'avatarId', /** @see Chat::$avatarId */
+				'get' => 'getAvatarId',  /** @see Chat::getAvatarId */
+				'set' => 'setAvatarId',  /** @see Chat::setAvatarId */
+			],
+			'PIN_MESSAGE_ID' => [
+				'field' => 'pinMessageId', /** @see Chat::$pinMessageId */
+				'get' => 'getPinMessageId',  /** @see Chat::getPinMessageId */
+				'set' => 'setPinMessageId',  /** @see Chat::setPinMessageId */
+			],
+			'CALL_TYPE' => [
+				'field' => 'callType', /** @see Chat::$callType */
+				'get' => 'getCallType',  /** @see Chat::getCallType */
+				'set' => 'setCallType',  /** @see Chat::setCallType */
+			],
+			'CALL_NUMBER' => [
+				'field' => 'callNumber', /** @see Chat::$callNumber */
+				'get' => 'getCallNumber',  /** @see Chat::getCallNumber */
+				'set' => 'setCallNumber',  /** @see Chat::setCallNumber */
+			],
+			'ENTITY_TYPE' => [
+				'field' => 'entityType', /** @see Chat::$entityType */
+				'get' => 'getEntityType',  /** @see Chat::getEntityType */
+				'set' => 'setEntityType',  /** @see Chat::setEntityType */
+				'default' => 'getDefaultEntityType', /** @see Chat::getDefaultEntityType */
+			],
+			'ENTITY_ID' => [
+				'field' => 'entityId', /** @see Chat::$entityId */
+				'get' => 'getEntityId',  /** @see Chat::getEntityId */
+				'set' => 'setEntityId',  /** @see Chat::setEntityId */
+			],
+			'ENTITY_DATA_1' => [
+				'field' => 'entityData1', /** @see Chat::$entityData1 */
+				'get' => 'getEntityData1',  /** @see Chat::getEntityData1 */
+				'set' => 'setEntityData1',  /** @see Chat::setEntityData1 */
+			],
+			'ENTITY_DATA_2' => [
+				'field' => 'entityData2', /** @see Chat::$entityData2 */
+				'get' => 'getEntityData2',  /** @see Chat::getEntityData2 */
+				'set' => 'setEntityData2',  /** @see Chat::setEntityData2 */
+			],
+			'ENTITY_DATA_3' => [
+				'field' => 'entityData3', /** @see Chat::$entityData3 */
+				'get' => 'getEntityData3',  /** @see Chat::getEntityData3 */
+				'set' => 'setEntityData3',  /** @see Chat::setEntityData3 */
+			],
+			'DISK_FOLDER_ID' => [
+				'field' => 'diskFolderId', /** @see Chat::$diskFolderId */
+				'get' => 'getDiskFolderId',  /** @see Chat::getDiskFolderId */
+				'set' => 'setDiskFolderId',  /** @see Chat::setDiskFolderId */
+			],
+			'MESSAGE_COUNT' => [
+				'field' => 'messageCount', /** @see Chat::$messageCount */
+				'get' => 'getMessageCount',  /** @see Chat::getMessageCount */
+				'set' => 'setMessageCount',  /** @see Chat::setMessageCount */
+			],
+			'USER_COUNT' => [
+				'field' => 'userCount', /** @see Chat::$userCount */
+				'get' => 'getUserCount',  /** @see Chat::getUserCount */
+				'set' => 'setUserCount',  /** @see Chat::setUserCount */
+			],
+			'PREV_MESSAGE_ID' => [
+				'field' => 'prevMessageId', /** @see Chat::$prevMessageId */
+				'get' => 'getPrevMessageId',  /** @see Chat::getPrevMessageId */
+				'set' => 'setPrevMessageId',  /** @see Chat::setPrevMessageId */
+			],
+			'LAST_MESSAGE_ID' => [
+				'field' => 'lastMessageId', /** @see Chat::$lastMessageId */
+				'get' => 'getLastMessageId',  /** @see Chat::getLastMessageId */
+				'set' => 'setLastMessageId',  /** @see Chat::setLastMessageId */
+			],
+			'LAST_MESSAGE_STATUS' => [
+				'field' => 'lastMessageStatus', /** @see Chat::$lastMessageStatus */
+				'get' => 'getLastMessageStatus',  /** @see Chat::getLastMessageStatus */
+				'set' => 'setLastMessageStatus',  /** @see Chat::setLastMessageStatus */
+				'default' => 'getDefaultLastMessageStatus', /** @see Chat::getDefaultLastMessageStatus */
+			],
+			'DATE_CREATE' => [
+				'field' => 'dateCreate', /** @see Chat::$dateCreate */
+				'get' => 'getDateCreate',  /** @see Chat::getDateCreate */
+				'set' => 'setDateCreate',  /** @see Chat::setDateCreate */
+				'default' => 'getDefaultDateCreate', /** @see Chat::getDefaultDateCreate */
+			],
+			'MANAGE_USERS_ADD' => [
+				'field' => 'manageUsersAdd', /** @see Chat::$manageUsersAdd */
+				'get' => 'getManageUsersAdd',  /** @see Chat::getManageUsersAdd */
+				'set' => 'setManageUsersAdd',  /** @see Chat::setManageUsersAdd */
+				'default' => 'getDefaultManageUsersAdd', /** @see Chat::getDefaultManageUsersAdd */
+			],
+			'MANAGE_USERS_DELETE' => [
+				'field' => 'manageUsersDelete', /** @see Chat::$manageUsersDelete */
+				'get' => 'getManageUsersDelete',  /** @see Chat::getManageUsersDelete */
+				'set' => 'setManageUsersDelete',  /** @see Chat::setManageUsersDelete */
+				'default' => 'getDefaultManageUsersDelete', /** @see Chat::getDefaultManageUsersDelete */
+			],
+			'MANAGE_UI' => [
+				'field' => 'manageUI', /** @see Chat::$manageUI */
+				'get' => 'getManageUI',  /** @see Chat::getManageUI */
+				'set' => 'setManageUI',  /** @see Chat::setManageUI */
+				'default' => 'getDefaultManageUI', /** @see Chat::getDefaultManageUI */
+			],
+			'MANAGE_SETTINGS' => [
+				'field' => 'manageSettings', /** @see Chat::$manageSettings */
+				'get' => 'getManageSettings',  /** @see Chat::getManageSettings */
+				'set' => 'setManageSettings',  /** @see Chat::setManageSettings */
+				'default' => 'getDefaultManageSettings', /** @see Chat::getDefaultManageSettings */
+			],
+			'MANAGE_MESSAGES_AUTO_DELETE' => [
+				'get' => 'getManageMessagesAutoDelete',  /** @see Chat::getManageMessagesAutoDelete */
+				'set' => 'setManageMessagesAutoDelete',  /** @see Chat::setManageMessagesAutoDelete */
+				'default' => 'getDefaultManageMessagesAutoDelete', /** @see Chat::getDefaultManageMessagesAutoDelete */
+				'skipSave' => true,
+			],
+			'DISAPPEARING_TIME' => [
+				'field' => 'messagesAutoDeleteDelay', /** @see Chat::$messagesAutoDeleteDelay */
+				'get' => 'getMessagesAutoDeleteDelay',  /** @see Chat::getMessagesAutoDeleteDelay */
+				'set' => 'setMessagesAutoDeleteDelay',  /** @see Chat::setMessagesAutoDeleteDelay */
+				'default' => 'getDefaultMessagesAutoDeleteDelay', /** @see Chat::getDefaultMessagesAutoDeleteDelay() */
+			],
+			'MESSAGES_AUTO_DELETE_DELAY' => [
+				'alias' => 'DISAPPEARING_TIME',
+			],
+			'CAN_POST' => [
+				'field' => 'manageMessages', /** @see Chat::$manageMessages */
+				'get' => 'getManageMessages',  /** @see Chat::getManageMessages */
+				'set' => 'setManageMessages',  /** @see Chat::setManageMessages */
+				'default' => 'getDefaultManageMessages', /** @see Chat::getDefaultManageMessages */
+			],
+			'MANAGE_MESSAGES' => [
+				'alias' => 'CAN_POST'
+			],
+			'MANAGE_GUEST_INVITES' => [
+				'get' => 'getManageGuestInvites',  /** @see Chat::getManageGuestInvites */
+				'set' => 'setManageGuestInvites',  /** @see Chat::setManageGuestInvites */
+				'default' => 'getDefaultManageGuestInvites', /** @see Chat::getDefaultManageGuestInvites */
+				'skipSave' => true,
+			],
+			'USERS' => [
+				'get' => 'getUserIds',  /** @see Chat::getUserIds */
+				'set' => 'setUserIds',  /** @see Chat::setUserIds */
+			],
+			'ALIAS' => [
+				'field' => 'aliasName',
+				'get' => 'getAliasName',  /** @see Chat::getAliasName */
+				'set' => 'setAliasName',  /** @see Chat::setAliasName */
+				'loadFilter' => 'prepareAliasToLoad', /** @see Chat::prepareAliasToLoad */
+				'skipSave' => true,
+			],
+			'RELATIONS' => [
+				'set' => 'setRelations', /** @see Chat::setRelations */
+				'skipSave' => true,
+			],
+			'CHAT_PARAMS' => [
+				'set' => 'setChatParams', /** @see Chat::setChatParams */
+				'skipSave' => true,
+			],
+		];
+	}
+
+	/**
+	 * @return string|DataManager;
+	 */
+	public static function getDataClass(): string
+	{
+		return ChatTable::class;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	public function getPrimaryId(): ?int
+	{
+		return $this->getChatId();
+	}
+
+	/**
+	 * @param int $primaryId
+	 * @return self
+	 */
+	public function setPrimaryId(int $primaryId): self
+	{
+		return $this->setChatId($primaryId);
+	}
+
+	//endregion
+
+	//region Search
+
+	/**
+	 * Looks for chat by its parameters.
+	 *
+	 * @param array $params
+	 * @param Context|null $context
+	 * @return Result
+	 */
+	public static function find(array $params, ?Context $context = null): Result
+	{
+		$result = new Result;
+
+		if ($params['CHAT_ID'] <= 0)
+		{
+			return $result->addError(new ChatError(ChatError::WRONG_PARAMETER));
+		}
+
+		$connection = \Bitrix\Main\Application::getConnection();
+
+		$context = $context ?? Locator::getContext();
+
+		if ($context->getUserId() == 0)
+		{
+			$res = $connection->query("
+				SELECT
+					C.ID as CHAT_ID,
+					C.PARENT_ID as CHAT_PARENT_ID,
+					C.PARENT_MID as CHAT_PARENT_MID,
+					C.TITLE as CHAT_TITLE,
+					C.AUTHOR_ID as CHAT_AUTHOR_ID,
+					C.TYPE as CHAT_TYPE,
+					C.AVATAR as CHAT_AVATAR,
+					C.COLOR as CHAT_COLOR,
+					C.ENTITY_TYPE as CHAT_ENTITY_TYPE,
+					C.ENTITY_ID as CHAT_ENTITY_ID,
+					C.ENTITY_DATA_1 as CHAT_ENTITY_DATA_1,
+					C.ENTITY_DATA_2 as CHAT_ENTITY_DATA_2,
+					C.ENTITY_DATA_3 as CHAT_ENTITY_DATA_3,
+					C.EXTRANET as CHAT_EXTRANET,
+					C.PREV_MESSAGE_ID as CHAT_PREV_MESSAGE_ID,
+					'1' as RID,
+					'Y' as IS_MANAGER
+				FROM b_im_chat C
+				WHERE C.ID = ".(int)$params['CHAT_ID']."
+			");
+		}
+		else
+		{
+			if (empty($params['FROM_USER_ID']))
+			{
+				$params['FROM_USER_ID'] = $context->getUserId();
+			}
+
+			$params['FROM_USER_ID'] = (int)$params['FROM_USER_ID'];
+			if ($params['FROM_USER_ID'] <= 0)
+			{
+				return $result->addError(new ChatError(ChatError::WRONG_SENDER));
+			}
+
+			$res = $connection->query("
+				SELECT
+					C.ID as CHAT_ID,
+					C.PARENT_ID as CHAT_PARENT_ID,
+					C.PARENT_MID as CHAT_PARENT_MID,
+					C.TITLE as CHAT_TITLE,
+					C.AUTHOR_ID as CHAT_AUTHOR_ID,
+					C.TYPE as CHAT_TYPE,
+					C.AVATAR as CHAT_AVATAR,
+					C.COLOR as CHAT_COLOR,
+					C.ENTITY_TYPE as CHAT_ENTITY_TYPE,
+					C.ENTITY_ID as CHAT_ENTITY_ID,
+					C.ENTITY_DATA_1 as CHAT_ENTITY_DATA_1,
+					C.ENTITY_DATA_2 as CHAT_ENTITY_DATA_2,
+					C.ENTITY_DATA_3 as CHAT_ENTITY_DATA_3,
+					C.EXTRANET as CHAT_EXTRANET,
+					C.PREV_MESSAGE_ID as CHAT_PREV_MESSAGE_ID,
+					R.USER_ID as RID,
+					R.MANAGER as IS_MANAGER
+				FROM b_im_chat C
+				LEFT JOIN b_im_relation R 
+					ON R.CHAT_ID = C.ID 
+					AND R.USER_ID = ".$params['FROM_USER_ID']."
+				WHERE C.ID = ".(int)$params['CHAT_ID']."
+			");
+		}
+
+		if ($row = $res->fetch())
+		{
+			$result->setResult([
+				'ID' => (int)$row['CHAT_ID'],
+				'TYPE' => $row['CHAT_TYPE'],
+				'ENTITY_TYPE' => $row['CHAT_ENTITY_TYPE'],
+				'ENTITY_ID' => $row['CHAT_ENTITY_ID'],
+				/*'RELATIONS' => [
+					(int)$row['RID'] => [
+						'CHAT_ID' => (int)$row['CHAT_ID'],
+						'USER_ID' => (int)$row['RID'],
+						'IS_MANAGER' => $row['IS_MANAGER'],
+					]
+				]*/
+			]);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int $currentUserId
+	 * @param int $userId
+	 * @param int $limit
+	 * @param int $offset
+	 * @return static[]
+	 */
+	public static function getSharedChatsWithUser(int $userId, int $limit = 50, int $offset = 0, ?int $currentUserId = null): array
+	{
+		$currentUserId ??= Im\V2\Entity\User\User::getCurrent()->getId();
+		//todo: change with ChatCollection
+		$chats = [];
+		$types = [
+			self::IM_TYPE_CHAT,
+			self::IM_TYPE_OPEN,
+			self::IM_TYPE_CHANNEL,
+			self::IM_TYPE_OPEN_CHANNEL,
+			self::IM_TYPE_COLLAB,
+			self::IM_TYPE_OPEN_COLLAB,
+		];
+
+		$query = Im\Model\RecentTable::query()
+			->setSelect(['ITEM_ID', 'DATE_MESSAGE'])
+			->registerRuntimeField(
+				new Reference(
+					'RELATION',
+					RelationTable::class,
+					Join::on('this.ITEM_ID', 'ref.CHAT_ID')
+						->where('this.USER_ID', $currentUserId)
+						->where('ref.USER_ID', $userId)
+						->whereIn('this.ITEM_TYPE', $types),
+					['join_type' => Join::TYPE_INNER]
+				)
+			)
+			->setOrder(['DATE_MESSAGE' => 'DESC'])
+			->setLimit($limit)
+			->setOffset($offset)
+		;
+
+		$origin = TreeOrigin::forChat('CHAT');
+		$factory = ServiceLocator::getInstance()->get(ParentChainFilterFactory::class);
+		$factory->forUser($currentUserId, $origin)->apply($query);
+		$factory->forUser($userId, $origin)->apply($query);
+
+		$recentCollection = $query->fetchCollection();
+
+		foreach ($recentCollection as $recentItem)
+		{
+			$chat = self::getInstance($recentItem->getItemId());
+			if ($chat instanceof Im\V2\Chat\NullChat)
+			{
+				continue;
+			}
+			$chat->dateMessage = $recentItem->getDateMessage();
+			$chats[$chat->getId()] = $chat;
+		}
+
+		return $chats;
+	}
+
+	//endregion
+
+
+	//region Setters & Getters
+
+	protected function setChatId(int $chatId): self
+	{
+		if (!$this->chatId)
+		{
+			$this->chatId = $chatId;
+		}
+		return $this;
+	}
+
+	public function getChatId(): ?int
+	{
+		return $this->chatId;
+	}
+
+	public function getId(): ?int
+	{
+		return $this->getChatId();
+	}
+
+	/**
+	 * @param string $dialogId
+	 * @return self
+	 */
+	public function setDialogId(string $dialogId): self
+	{
+		$this->dialogId = $dialogId;
+
+		if (\Bitrix\Im\Common::isChatId($dialogId))
+		{
+			$this->setChatId((int)\Bitrix\Im\Dialog::getChatId($dialogId));
+			if (!$this->getType())
+			{
+				$this->setType(self::IM_TYPE_CHAT);
+			}
+		}
+		else
+		{
+			if (!$this->getType())
+			{
+				$this->setType(self::IM_TYPE_PRIVATE);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Allows to send mention notification.
+	 * @return bool
+	 */
+	abstract public function allowMention(): bool;
+
+	public function allowMentionAllChatNotification(): bool
+	{
+		return true;
+	}
+
+	public function filterUsersToMention(array $userIds): array
+	{
+		$result = [];
+		$relations = $this->getRelationsByUserIds($userIds);
+
+		foreach ($userIds as $userId)
+		{
+			$relation = $relations->getByUserId($userId, $this->getChatId());
+			if (
+				$relation !== null
+				&& $relation->getNotifyBlock()
+				&& \CIMSettings::GetNotifyAccess($userId, 'im', 'mention', \CIMSettings::CLIENT_SITE)
+			)
+			{
+				$result[$userId] = $userId;
+			}
+		}
+
+		return $result;
+	}
+
+	public function getDialogId(?int $contextUserId = null): ?string
+	{
+		if ($this->dialogId || !$this->getChatId())
+		{
+			return $this->dialogId;
+		}
+
+		$this->dialogId = 'chat'. $this->getChatId();
+
+		return $this->dialogId;
+	}
+
+	public function getDialogContextId(): ?string
+	{
+		return $this->getDialogId();
+	}
+
+	/**
+	 * @param string $contextId
+	 * @param int|null $userId
+	 * @return string
+	 *@see Message::getContextId
+	 */
+	public static function getDialogIdByContextId(string $contextId, ?int $userId = null): string
+	{
+		$userId ??= Locator::getContext()->getUserId();
+
+		[$dialogContextId] = explode('/', $contextId);
+		if (str_starts_with($dialogContextId, 'chat'))
+		{
+			return $dialogContextId;
+		}
+
+		$userIds = explode(':', $dialogContextId);
+
+		foreach ($userIds as $contextUserId)
+		{
+			if ((int)$contextUserId !== $userId)
+			{
+				return $contextUserId;
+			}
+		}
+
+		return '0';
+	}
+
+	/**
+	 * @param string $type
+	 * @return self
+	 */
+	public function setType(string $type): self
+	{
+		if (!in_array($type, self::IM_TYPES))
+		{
+			if (in_array($type, array_keys(self::IM_TYPES_TRANSLATE), true))
+			{
+				$type = self::IM_TYPES_TRANSLATE[$type];
+			}
+			else
+			{
+				$type = $this->getDefaultType();
+			}
+		}
+
+		$this->type = $type;
+		return $this;
+	}
+
+	public function getType(): string
+	{
+		if (!$this->type)
+		{
+			$this->type = $this->getDefaultType();
+		}
+
+		return $this->type;
+	}
+
+	abstract protected function getDefaultType(): string;
+
+	public function getChatType(): Chat\Type
+	{
+		return ServiceLocator::getInstance()->get(Chat\Type\TypeRegistry::class)
+			->getByLiteralAndEntity($this->getType(), $this->getEntityType())
+		;
+	}
+
+	public function requiresParentMembership(): bool
+	{
+		return $this->getChatType()->requiresParentMembership;
+	}
+
+	public function getCounterType(): string
+	{
+		return
+			Main\DI\ServiceLocator::getInstance()
+				->get(RecentConfigManager::class)
+				->getByExtendedType($this->getExtendedType(false))
+				->getCounterType()
+		;
+	}
+
+	protected function beforeSaveType(): Result
+	{
+		$check = new Result;
+
+		if (!in_array($this->type, self::IM_TYPES, true))
+		{
+			$check->addError(new ChatError(ChatError::WRONG_TYPE,'Wrong chat type'));
+		}
+
+		return $check;
+	}
+
+	// Author
+	public function setAuthorId(int $authorId): self
+	{
+		$this->authorId = $authorId;
+		return $this;
+	}
+
+	public function getAuthorId(): ?int
+	{
+		return $this->authorId;
+	}
+
+	public function getAuthor(): Entity\User\User
+	{
+		return Im\V2\Entity\User\User::getInstance($this->getAuthorId());
+	}
+
+	// Chat title
+	public function setTitle(?string $title): self
+	{
+		$this->title = $title ? mb_substr(trim($title), 0, 255) : null;
+		return $this;
+	}
+
+	public function getTitle(): ?string
+	{
+		return $this->title;
+	}
+
+	public function getDisplayedTitle(): ?string
+	{
+		return $this->title;
+	}
+
+	// Chat description
+	public function setDescription(?string $description): self
+	{
+		$this->description = $description ? trim($description) : null;
+		return $this;
+	}
+
+	public function getDescription(): ?string
+	{
+		return $this->description;
+	}
+
+	// Chat color
+	public function setColor(?string $color): self
+	{
+		$this->color = $color ? trim($color) : null;
+		return $this;
+	}
+
+	public function getColor(bool $forRest = false): ?string
+	{
+		if ($forRest)
+		{
+			$color = $this->color ?? '';
+			return $color !== '' ? Color::getColor($color) : Color::getColorByNumber($this->getId());
+		}
+
+		return $this->color;
+	}
+
+	public function validateColor(): Result
+	{
+		$check = new Result;
+		if (!Color::isSafeColor($this->color))
+		{
+			$check->addError(new ChatError(ChatError::WRONG_COLOR,'Wrong chat color'));
+		}
+		return $check;
+	}
+
+	public function getDefaultColor(): string
+	{
+		$color = '';
+
+		return $color;
+	}
+
+	// parent chat
+	public function setParentChatId(int $parentChatId): self
+	{
+		$this->parentChatId = $parentChatId > 0 ? $parentChatId : 0;
+		return $this;
+	}
+
+	public function getParentChatId(): ?int
+	{
+		return $this->parentChatId;
+	}
+
+	public function hasParent(): bool
+	{
+		return ($this->getParentChatId() ?? 0) > 0;
+	}
+
+	public function getParentChat(): ?Chat
+	{
+		if (!$this->hasParent())
+		{
+			return null;
+		}
+
+		return Chat::getInstance($this->getParentChatId());
+	}
+
+	public function canHaveChild(Chat $child): bool
+	{
+		return false;
+	}
+
+	// parent message
+	public function setParentMessageId(int $messageId): self
+	{
+		$this->parentMessageId = $messageId > 0 ? $messageId : 0;
+		return $this;
+	}
+
+	public function getParentMessageId(): int
+	{
+		return $this->parentMessageId;
+	}
+
+	// extranet
+	public function setExtranet(?bool $extranet): self
+	{
+		$this->extranet = is_bool($extranet) ? $extranet : null;
+		return $this;
+	}
+
+	public function getExtranet(): ?bool
+	{
+		return $this->extranet;
+	}
+
+	public function getDefaultExtranet(): bool
+	{
+		return false;
+	}
+
+	// avatar's file Id
+	public function setAvatarId(?int $avatarId): self
+	{
+		$this->avatarId = is_integer($avatarId) ? $avatarId : null;
+		return $this;
+	}
+
+	public function getAvatarId(): ?int
+	{
+		return $this->avatarId;
+	}
+
+	public function getAvatar(bool $addBlankPicture = false, bool $withDomain = false): string
+	{
+		return (new Im\V2\Entity\File\ChatAvatar($this))->get($addBlankPicture, $withDomain);
+	}
+
+	// pined message Id
+	public function setPinMessageId(?int $pinMessageId): self
+	{
+		$this->pinMessageId = is_integer($pinMessageId) ? $pinMessageId : null;
+		return $this;
+	}
+
+	public function getPinMessageId(): ?int
+	{
+		return $this->pinMessageId;
+	}
+
+	// callType
+	public function setCallType(?int $callType): self
+	{
+		$this->callType = is_integer($callType) ? $callType : null;
+		return $this;
+	}
+
+	public function getCallType(): ?int
+	{
+		return $this->callType;
+	}
+
+	// callNumber
+	public function setCallNumber(?string $callNumber): self
+	{
+		$this->callNumber = $callNumber ? trim($callNumber) : null;
+		return $this;
+	}
+
+	public function getCallNumber(): ?string
+	{
+		return $this->callNumber;
+	}
+
+	// entity Type
+	public function setEntityType(?string $entityType): self
+	{
+		$this->entityType = $entityType ? trim($entityType) : null;
+		return $this;
+	}
+
+	public function getEntityType(): ?string
+	{
+		if ($this->entityType)
+		{
+			return $this->entityType;
+		}
+
+		return $this->getDefaultEntityType();
+	}
+
+	protected function getDefaultEntityType(): ?string
+	{
+		return null;
+	}
+
+	// entity Id
+	public function setEntityId(?string $entityId): self
+	{
+		$this->entityId = $entityId ? trim($entityId) : null;
+		return $this;
+	}
+
+	public function getEntityId(): ?string
+	{
+		return $this->entityId;
+	}
+
+	// entity Data1
+	public function setEntityData1(?string $entityData1): self
+	{
+		$this->entityData1 = $entityData1 ? trim($entityData1) : null;
+		return $this;
+	}
+
+	public function getEntityData1(): ?string
+	{
+		return $this->entityData1;
+	}
+
+	// entity Data2
+	public function setEntityData2(?string $entityData2): self
+	{
+		$this->entityData2 = $entityData2 ? trim($entityData2) : null;
+		return $this;
+	}
+
+	public function getEntityData2(): ?string
+	{
+		return $this->entityData2;
+	}
+
+	// entityData3
+	public function setEntityData3(?string $entityData3): self
+	{
+		$this->entityData3 = $entityData3 ? trim($entityData3) : null;
+		return $this;
+	}
+
+	public function getEntityData3(): ?string
+	{
+		return $this->entityData3;
+	}
+
+	// disk Folder Id
+	public function setDiskFolderId(?int $diskFolderId): self
+	{
+		$this->diskFolderId = is_integer($diskFolderId) ? $diskFolderId : null;
+		return $this;
+	}
+
+	public function getDiskFolderId(): ?int
+	{
+		return $this->diskFolderId;
+	}
+
+	protected function setDiskFolder(?Folder $folder): void
+	{
+		$this->isDiskFolderFilled = true;
+		$this->diskFolder = $folder;
+	}
+
+	public function getOrCreateDiskFolder(): ?Folder
+	{
+		$folder = $this->getDiskFolder();
+
+		if ($folder === null)
+		{
+			$folder = $this->createDiskFolder();
+			$this->setDiskFolder($folder);
+		}
+
+		return $folder;
+	}
+
+	public function getStorageId(): int
+	{
+		return (int)Option::get('im', 'disk_storage_id', 0);
+	}
+
+	public function getDiskFolder(): ?Folder
+	{
+		if (!Main\Loader::includeModule('disk'))
+		{
+			return null;
+		}
+
+		if ($this->isDiskFolderFilled)
+		{
+			return $this->diskFolder;
+		}
+
+		$diskFolderId = $this->getDiskFolderId();
+		$folder = null;
+
+		if ($diskFolderId !== null && $diskFolderId !== 0)
+		{
+			$folder = \Bitrix\Disk\Folder::getById($diskFolderId);
+			if (!($folder instanceof Folder) || (int)$folder->getStorageId() !== \CIMDisk::GetStorageId($this->chatId))
+			{
+				$folder = null;
+			}
+		}
+
+		$this->setDiskFolder($folder);
+
+		return $folder;
+	}
+
+	protected function createDiskFolder(): ?Folder
+	{
+		$storage = \CIMDisk::GetStorage($this->chatId);
+
+		if (!$storage)
+		{
+			return null;
+		}
+
+		$folderModel = $storage->addFolder(
+			[
+				'NAME' => "chat{$this->getId()}",
+				'CREATED_BY' => $this->getContext()->getUserId(),
+			],
+			$this->getAccessCodesForDiskFolder(),
+			true
+		);
+
+		if ($folderModel)
+		{
+			$this->setDiskFolderId($folderModel->getId())->save();
+			$accessProvider = new \Bitrix\Im\Access\ChatAuthProvider;
+			$accessProvider->updateChatCodesByRelations($this->getId());
+		}
+
+		return $folderModel;
+	}
+
+	protected function getAccessCodesForDiskFolder(): array
+	{
+		$accessProvider = new \Bitrix\Im\Access\ChatAuthProvider;
+		$driver = \Bitrix\Disk\Driver::getInstance();
+		$rightsManager = $driver->getRightsManager();
+		$accessCodes = [];
+		// allow for access code `CHATxxx`
+		$accessCodes[] = [
+			'ACCESS_CODE' => $accessProvider->generateAccessCode($this->getId()),
+			'TASK_ID' => $rightsManager->getTaskIdByName($rightsManager::TASK_EDIT)
+		];
+
+		return $accessCodes;
+	}
+
+	// message Count
+	public function setMessageCount(int $messageCount): self
+	{
+		$this->messageCount = $messageCount > 0 ? $messageCount : 0;
+		return $this;
+	}
+
+	public function getMessageCount(): int
+	{
+		$this->fillNonCachedData();
+
+		return $this->messageCount ?? 0;
+	}
+
+	// user Count
+	public function setUserCount(int $userCount): self
+	{
+		$this->userCount = $userCount > 0 ? $userCount : 0;
+		return $this;
+	}
+
+	public function getUserCount(): int
+	{
+		$this->fillNonCachedData();
+
+		return $this->userCount ?? 0;
+	}
+
+	// prev Message Id
+	public function setPrevMessageId(int $prevMessageId): self
+	{
+		$this->prevMessageId = $prevMessageId > 0 ? $prevMessageId : 0;
+		return $this;
+	}
+
+	public function getPrevMessageId(): int
+	{
+		return $this->prevMessageId;
+	}
+
+	// last Message Id
+	public function setLastMessageId(int $lastMessageId): self
+	{
+		$this->lastMessageId = $lastMessageId > 0 ? $lastMessageId : 0;
+		return $this;
+	}
+
+	public function getLastMessageId(): ?int
+	{
+		$this->fillNonCachedData();
+
+		return $this->lastMessageId;
+	}
+
+	public function getLastMessage(): ?Message
+	{
+		if (empty($this->getLastMessageId()))
+		{
+			return null;
+		}
+
+		return new Message($this->getLastMessageId());
+	}
+
+	public function getLastFileId(): int
+	{
+		$this->lastFileId ??= \CIMDisk::GetMaxFileId($this->getId());
+
+		return $this->lastFileId;
+	}
+
+	// last Message Status
+	public function setLastMessageStatus(?string $lastMessageStatus): self
+	{
+		$this->lastMessageStatus = $lastMessageStatus ? trim($lastMessageStatus) : null;
+		return $this;
+	}
+
+	public function getLastMessageStatus(): ?string
+	{
+		return $this->lastMessageStatus;
+	}
+
+	public function getDefaultLastMessageStatus(): string
+	{
+		return \IM_MESSAGE_STATUS_RECEIVED;
+	}
+
+	// Create date
+	public function setDateCreate(?DateTime $dateCreate): self
+	{
+		$this->dateCreate = $dateCreate ? $dateCreate : null;
+		return $this;
+	}
+
+	public function getDateCreate(): ?DateTime
+	{
+		return $this->dateCreate;
+	}
+
+	public function getDefaultDateCreate(): DateTime
+	{
+		return new DateTime;
+	}
+
+	protected function getReader(): Im\V2\Reading\Reader
+	{
+		return ServiceLocator::getInstance()->get(Im\V2\Reading\Reader::class);
+	}
+
+	protected function getViewProvider(): ViewProvider
+	{
+		return ServiceLocator::getInstance()->get(ViewProvider::class);
+	}
+
+	protected function getCountersProvider(): Im\V2\Reading\Counter\CountersProvider
+	{
+		return ServiceLocator::getInstance()->get(Im\V2\Reading\Counter\CountersProvider::class);
+	}
+
+	protected function getNewMessageHandler(): Im\V2\Reading\Infrastructure\NewMessageHandler
+	{
+		return ServiceLocator::getInstance()->get(Im\V2\Reading\Infrastructure\NewMessageHandler::class);
+	}
+
+	/**
+	 * @param array $options
+	 * @return RelationCollection
+	 */
+	public function getRelations(): RelationCollection
+	{
+		return $this->getRelationFacade()?->get() ?? new RelationCollection();
+	}
+
+	public function getRawRelations(): RelationCollection
+	{
+		return $this->getRelationFacade()?->getRawFullRelations() ?? new RelationCollection();
+	}
+
+	public function getRelationFacade(): ?Im\V2\Relation\ChatRelations
+	{
+		if ($this->getId())
+		{
+			$this->chatRelations ??= Im\V2\Relation\ChatRelations::getInstance($this->getId());
+		}
+
+		return $this->chatRelations;
+	}
+
+	public function getRelationsByUserIds(array $userIds): RelationCollection
+	{
+		return $this->getRelationFacade()?->getByUserIds($userIds) ?? new RelationCollection();
+	}
+
+	public function getRelationByReason(Reason $reason): RelationCollection
+	{
+		return $this->getRelationFacade()?->getByReason($reason) ?? new RelationCollection();
+	}
+
+	public function setRelations(RelationCollection $relations): self
+	{
+		$this->getRelationFacade()?->forceRelations($relations);
+
+		return $this;
+	}
+
+	public function getSelfRelation(): ?Relation
+	{
+		return $this->getRelationFacade()?->getByUserId($this->getContext()->getUserId());
+	}
+
+	public function getRelationByUserId(int $userId): ?Relation
+	{
+		return $this->getRelationFacade()?->getByUserId($userId);
+	}
+
+	public function getRelationProvider(): RelationProvider
+	{
+		$this->relationProvider ??= new RelationProvider($this->getId() ?? 0);
+
+		return $this->relationProvider;
+	}
+
+	public function getBackground(): Background
+	{
+		$this->background ??= new Background((int)$this->getId());
+
+		return $this->background;
+	}
+
+	public function getTextFieldEnabled(): TextFieldEnabled
+	{
+		$this->textFieldEnabled ??= new TextFieldEnabled((int)$this->getId());
+
+		return $this->textFieldEnabled;
+	}
+
+	public function getBotInChat(): array
+	{
+		$botInChat = [];
+		$relations = $this->getRelations()->filterActiveMembers();
+		foreach ($relations as $relation)
+		{
+			if ($relation->getUser()->getExternalAuthId() === Im\Bot::EXTERNAL_AUTH_ID)
+			{
+				$botInChat[$relation->getUserId()] = $relation->getUserId();
+			}
+		}
+
+		return $botInChat;
+	}
+
+	public function isNew(): bool
+	{
+		return false;
+	}
+
+	public function checkTitle(): Result
+	{
+		return new Result;
+	}
+
+	/**
+	 * @param string $manageUsersAdd MEMBER|OWNER|MANAGERS
+	 * @return self
+	 */
+	public function setManageUsersAdd(string $manageUsersAdd): self
+	{
+		$manageUsersAdd = mb_strtoupper($manageUsersAdd);
+		if (!in_array(
+			$manageUsersAdd,
+			[self::MANAGE_RIGHTS_MEMBER, self::MANAGE_RIGHTS_OWNER, self::MANAGE_RIGHTS_MANAGERS],
+			true
+		))
+		{
+			$manageUsersAdd = $this->getDefaultManageUsersAdd();
+		}
+		$this->manageUsersAdd = $manageUsersAdd ;
+
+		return $this;
+	}
+
+	public function getManageUsersAdd(): ?string
+	{
+		return $this->manageUsersAdd;
+	}
+
+
+	public function getDefaultManageUsersAdd(): string
+	{
+		return self::MANAGE_RIGHTS_MEMBER;
+	}
+
+	/**
+	 * @param string $manageUsersDelete MEMBER|OWNER|MANAGERS
+	 * @return self
+	 */
+	public function setManageUsersDelete(string $manageUsersDelete): self
+	{
+		$manageUsersDelete = mb_strtoupper($manageUsersDelete);
+		if (!in_array(
+			$manageUsersDelete,
+			[self::MANAGE_RIGHTS_MEMBER, self::MANAGE_RIGHTS_OWNER, self::MANAGE_RIGHTS_MANAGERS],
+			true
+		))
+		{
+			$manageUsersDelete = $this->getDefaultManageUsersDelete();
+		}
+		$this->manageUsersDelete = $manageUsersDelete ;
+
+		return $this;
+	}
+
+	public function getManageUsersDelete(): ?string
+	{
+		return $this->manageUsersDelete;
+	}
+
+
+	public function getDefaultManageUsersDelete(): string
+	{
+		return self::MANAGE_RIGHTS_MANAGERS;
+	}
+
+	/**
+	 * @param string $manageUI ALL|OWNER|MANAGERS
+	 * @return self
+	 */
+	public function setManageUI(string $manageUI): self
+	{
+		$manageUI = mb_strtoupper($manageUI);
+		if (!in_array(
+			$manageUI,
+			[self::MANAGE_RIGHTS_MEMBER, self::MANAGE_RIGHTS_OWNER, self::MANAGE_RIGHTS_MANAGERS],
+			true
+		))
+		{
+			$manageUI = $this->getDefaultManageUI();
+		}
+		$this->manageUI = $manageUI;
+
+		return $this;
+	}
+
+	public function getManageUI(): ?string
+	{
+		return $this->manageUI;
+	}
+
+	public function getDefaultManageUI(): string
+	{
+		return self::MANAGE_RIGHTS_MEMBER;
+	}
+
+	/**
+	 * @param string $manageSettings OWNER|MANAGERS
+	 * @return self
+	 */
+	public function setManageSettings(string $manageSettings): self
+	{
+		$manageSettings = mb_strtoupper($manageSettings);
+		if (!in_array($manageSettings, [self::MANAGE_RIGHTS_OWNER, self::MANAGE_RIGHTS_MANAGERS], true))
+		{
+			$manageSettings = $this->getDefaultManageSettings();
+		}
+		$this->manageSettings = $manageSettings ;
+
+		return $this;
+	}
+
+	public function getManageSettings(): ?string
+	{
+		return $this->manageSettings;
+	}
+
+	public function getDefaultManageSettings(): string
+	{
+		return self::MANAGE_RIGHTS_OWNER;
+	}
+
+	public function setMessagesAutoDeleteDelay(int $messagesAutoDeleteDelay): self
+	{
+		if (!in_array($messagesAutoDeleteDelay, Im\V2\Message\Delete\DisappearService::TIME_WHITELIST))
+		{
+			$messagesAutoDeleteDelay = $this->getDefaultMessagesAutoDeleteDelay();
+		}
+		$this->messagesAutoDeleteDelay = $messagesAutoDeleteDelay;
+
+		return $this;
+	}
+
+	public function getMessagesAutoDeleteDelay(): int
+	{
+		return $this->messagesAutoDeleteDelay ?? $this->getDefaultMessagesAutoDeleteDelay();
+	}
+
+	public function getDefaultMessagesAutoDeleteDelay(): int
+	{
+		return 0;
+	}
+
+	/**
+	 * @deprecated
+	 * @see self::setManageMessages()
+	 * @param string $canPost
+	 * @return $this
+	 */
+	public function setCanPost(string $canPost): self
+	{
+		return $this->setManageMessages($canPost);
+	}
+
+	/**
+	 * @param string $manageMessages ALL|OWNER|MANAGER
+	 * @return self
+	 */
+	public function setManageMessages(string $manageMessages): self
+	{
+		$manageMessages = mb_strtoupper($manageMessages);
+		if (!in_array(
+			$manageMessages,
+			[
+				self::MANAGE_RIGHTS_NONE,
+				self::MANAGE_RIGHTS_MEMBER,
+				self::MANAGE_RIGHTS_OWNER,
+				self::MANAGE_RIGHTS_MANAGERS
+			],
+			true
+		))
+		{
+			$manageMessages = $this->getDefaultManageMessages();
+		}
+		$this->manageMessages = $manageMessages;
+
+		return $this;
+	}
+
+	public function getManageMessages(): ?string
+	{
+		return $this->manageMessages;
+	}
+
+	public function getDefaultManageMessages(): string
+	{
+		return self::MANAGE_RIGHTS_MEMBER;
+	}
+
+	/**
+	 * @param string $manageGuestInvites NONE|MEMBER|OWNER|MANAGER
+	 * @return self
+	 */
+	public function setManageGuestInvites(string $manageGuestInvites): self
+	{
+		$manageGuestInvites = mb_strtoupper($manageGuestInvites);
+
+		if (!in_array(
+			$manageGuestInvites,
+			[
+				self::MANAGE_RIGHTS_NONE,
+				self::MANAGE_RIGHTS_MEMBER,
+				self::MANAGE_RIGHTS_OWNER,
+				self::MANAGE_RIGHTS_MANAGERS,
+			],
+			true
+		))
+		{
+			return $this;
+		}
+
+		$manageGuestInvites === $this->getDefaultManageGuestInvites()
+			? $this->getChatParams()?->deleteParam(Params::MANAGE_GUEST_INVITES, false)
+			: $this->getChatParams()?->addParamByName(Params::MANAGE_GUEST_INVITES, $manageGuestInvites, false)
+		;
+
+		return $this;
+	}
+
+	public function getManageGuestInvites(): ?string
+	{
+		$manageGuestInvites = $this->getChatParams()?->get(Params::MANAGE_GUEST_INVITES);
+
+		return
+			isset($manageGuestInvites)
+			? (string)$manageGuestInvites->getValue()
+			: $this->getDefaultManageGuestInvites()
+		;
+	}
+
+	public function getDefaultManageGuestInvites(): string
+	{
+		return self::MANAGE_RIGHTS_MANAGERS;
+	}
+
+	public function setManageMessagesAutoDelete(string $manageMessagesAutoDelete): self
+	{
+		$manageMessagesAutoDelete = mb_strtoupper($manageMessagesAutoDelete);
+
+		if (!in_array(
+			$manageMessagesAutoDelete,
+			[
+				self::MANAGE_RIGHTS_NONE,
+				self::MANAGE_RIGHTS_MEMBER,
+				self::MANAGE_RIGHTS_OWNER,
+				self::MANAGE_RIGHTS_MANAGERS,
+			],
+			true
+		))
+		{
+			return $this;
+		}
+
+		if ($manageMessagesAutoDelete === $this->getDefaultManageMessagesAutoDelete())
+		{
+			$this
+				->getChatParams()
+				?->deleteParam(
+					Params::MANAGE_MESSAGES_AUTO_DELETE,
+					false
+				)
+			;
+		}
+		else
+		{
+			$this
+				->getChatParams()
+				?->addParamByName(
+					Params::MANAGE_MESSAGES_AUTO_DELETE,
+					$manageMessagesAutoDelete,
+					false
+				)
+			;
+		}
+
+		return $this;
+	}
+
+	public function getManageMessagesAutoDelete(): ?string
+	{
+		$manageMessagesAutoDelete = $this->getChatParams()?->get(Params::MANAGE_MESSAGES_AUTO_DELETE);
+
+		return
+			isset($manageMessagesAutoDelete)
+			? (string)$manageMessagesAutoDelete->getValue()
+			: $this->getDefaultManageMessagesAutoDelete()
+		;
+	}
+
+	public function getDefaultManageMessagesAutoDelete(): string
+	{
+		return self::MANAGE_RIGHTS_MANAGERS;
+	}
+
+	public static function getCanPostList(): array
+	{
+		return [
+			self::MANAGE_RIGHTS_NONE => Loc::getMessage('IM_CHAT_CAN_POST_NONE'),
+			self::MANAGE_RIGHTS_MEMBER => Loc::getMessage('IM_CHAT_CAN_POST_ALL_MSGVER_1'),
+			self::MANAGE_RIGHTS_OWNER => Loc::getMessage('IM_CHAT_CAN_POST_OWNER_MSGVER_1'),
+			self::MANAGE_RIGHTS_MANAGERS => Loc::getMessage('IM_CHAT_CAN_POST_MANAGERS_MSGVER_1')
+		];
+	}
+
+	public function getCallToken(): CallToken
+	{
+		if (!isset($this->callToken))
+		{
+			$this->callToken = new CallToken($this->getId());
+		}
+
+		return $this->callToken;
+	}
+	//endregion
+
+	public function isAutoJoinEnabled(): bool
+	{
+		return false;
+	}
+
+	public function canUserAutoJoin(?int $userId = null): bool
+	{
+		$userId ??= $this->getContext()->getUserId();
+
+		return $this->isAutoJoinEnabled() && $this->checkAccess($userId)->isSuccess();
+	}
+
+	public function join(bool $withMessage = true, bool $byAutoJoin = false): self
+	{
+		$config = new AddUsersConfig(hideHistory: false, withMessage: $withMessage, byAutoJoin: $byAutoJoin);
+
+		return $this->addUsers([$this->getContext()->getUserId()], $config);
+	}
+
+	public function joinBySharingLink(Im\V2\SharingLink\ChatLink $sharingLink, int $userId): self
+	{
+		$config = (new AddUsersConfig(hideHistory: false, withMessage: true, sharingLink: $sharingLink));
+
+		return $this->addUsers([$userId], $config);
+	}
+
+	/**
+	 * @param array $userIds
+	 * @return self
+	 */
+	public function addUsers(array $userIds, AddUsersConfig $config = new AddUsersConfig()): self
+	{
+		if (empty($userIds) || !$this->getChatId())
+		{
+			return $this;
+		}
+
+		$this->addUsersToParentCascade($userIds, $config);
+
+		if ($this->hasParent() && $this->requiresParentMembership())
+		{
+			$userIds = $this->getParentChat()->getRelationsByUserIds($userIds)->getUserIds();
+			if (empty($userIds))
+			{
+				return $this;
+			}
+		}
+
+		$validUsers = $this->getValidUsersToAdd($userIds);
+		$changes = $this->resolveRelationConflicts($validUsers, $config);
+
+		if ($changes->isEmpty())
+		{
+			return $this;
+		}
+
+		$relations = $this->getRelations();
+		if (!$config->isFakeAdd)
+		{
+			$this->addUsersToRelation($changes->getNewRelations(), $config);
+			$this->processUpdateStateOnRelationsChanged($changes);
+		}
+
+		$this->sendPushUsersAdd($changes->getAll(), $relations);
+		if ($config->withMessage)
+		{
+			$this->sendMessageUsersAdd($changes->getNewMembers(), $config);
+		}
+		$this->disableUserDeleteMessage($config->skipRecent);
+		$this->sendEventUsersAdd($changes->getNewRelations());
+
+		$this->onAfterUsersAdd($changes);
+
+		return $this;
+	}
+
+	protected function addUsersToParentCascade(array $userIds, AddUsersConfig $config): void
+	{
+		if (!$this->shouldAddUsersToParentCascade($config))
+		{
+			return;
+		}
+
+		$userIds = array_map('intval', $userIds);
+		$cascadeUserIds = array_filter($userIds, static fn(int $id) => $id > 0 && !$config->isHidden($id));
+		if (empty($cascadeUserIds))
+		{
+			return;
+		}
+
+		$parentConfig = $this->getConfigForCascadeAddUsers($config);
+		$this->getParentChat()->withContext($this->getContext())->addUsers($cascadeUserIds, $parentConfig);
+	}
+
+	protected function getConfigForCascadeAddUsers(AddUsersConfig $config): AddUsersConfig
+	{
+		return $config->addVisitedChatId($this->getChatId() ?? 0)->withOriginChat($this)->setManagerIds([]);
+	}
+
+	private function shouldAddUsersToParentCascade(AddUsersConfig $config): bool
+	{
+		return $config->cascadeToParent
+			&& $this->hasParent()
+			&& $this->requiresParentMembership()
+			&& !$config->isFakeAdd
+			&& !$config->hasVisited($this->getParentChatId())
+		;
+	}
+
+	protected function processUpdateStateOnRelationsChanged(RelationChangeSet $changes): Result
+	{
+		$this->updateStateAfterRelationsAdd($changes->getNewRelations());
+		$this->updateStateAfterMembersAdd($changes->getNewMembers());
+
+		return $this->save();
+	}
+
+	protected function onAfterUsersAdd(RelationChangeSet $changes): Result
+	{
+		$cleaner = Im\V2\Relation\LazyCleaner::getInstance();
+		foreach ($changes->getNewMembers() as $userId)
+		{
+			$cleaner->unmarkForDeletion($this->getChatId() ?? 0, $userId);
+		}
+
+		return new Result();
+	}
+
+	protected function resolveRelationConflicts(array $userIds, AddUsersConfig $config): RelationChangeSet
+	{
+		$changes = new RelationChangeSet();
+		if (empty($userIds))
+		{
+			return $changes;
+		}
+
+		$usersAlreadyInChat = $this->getRawRelations();
+
+		foreach ($userIds as $userId)
+		{
+			$relation = $usersAlreadyInChat->getByUserId($userId, $this->getId() ?? 0);
+			if (!$relation)
+			{
+				$changes->addNewRelation($userId, $config->isHidden($userId));
+
+				continue;
+			}
+
+			if ($relation->isHidden() && !$config->isHidden($userId))
+			{
+				$changes->addNewMembers($userId);
+				$relation->markAsHidden(false);
+			}
+			if ($config->reason !== Reason::DEFAULT)
+			{
+				$relation->setReason($config->reason);
+			}
+		}
+
+		$usersAlreadyInChat->save(true);
+		$this->getRelationFacade()?->onAfterMembersChange();
+
+		return $changes;
+	}
+
+	protected function sendMessageUsersAdd(array $usersToAdd, AddUsersConfig $config): void
+	{
+		if (empty($usersToAdd))
+		{
+			return;
+		}
+
+		$currentUserId = $this->getContext()->getUserId();
+		$userCodes = [];
+		foreach ($usersToAdd as $userId)
+		{
+			$userCodes[] = "[USER={$userId}][/USER]";
+		}
+		$userCodesString = implode(', ', $userCodes);
+
+		$addsOnlyHimself = count($usersToAdd) === 1 && (isset($usersToAdd[$currentUserId]) || $currentUserId === 0);
+		if ($addsOnlyHimself)
+		{
+			$userIdToAdd = current($usersToAdd);
+			$userToAdd = Im\V2\Entity\User\User::getInstance($userIdToAdd);
+
+			if ($config->bySharingLink())
+			{
+				$linkAuthorBbCode = Message\Text\BbCode\User::build($config->sharingLink->getAuthorId())->compile();
+				$userToAddBbCode = Message\Text\BbCode\User::build($userIdToAdd)->compile();
+
+				$messageText = Loc::getMessage(
+					"IM_CHAT_SELF_JOIN_VIA_SHARING_LINK_{$userToAdd->getGender()}",
+					['#LINK_AUTHOR_NAME#' => $linkAuthorBbCode, '#INVITED_USER_NAME#' => $userToAddBbCode],
+				);
+			}
+			else
+			{
+				$messageText = Loc::getMessage("IM_CHAT_SELF_JOIN_{$userToAdd->getGender()}", ['#USER_NAME#' => $userCodesString]);
+			}
+		}
+		elseif ($currentUserId === 0 && count($usersToAdd) > 1)
+		{
+			$messageText = Loc::getMessage('IM_CHAT_SELF_JOIN', ['#USERS_NAME#' => $userCodesString]);
+		}
+		else
+		{
+			$currentUser = Im\V2\Entity\User\User::getInstance($currentUserId);
+			$type = $this instanceof Im\V2\Chat\ChannelChat ? 'CHANNEL' : 'CHAT';
+			$code = "IM_{$type}_JOIN_{$currentUser->getGender()}";
+			$messageText = Loc::getMessage(
+				$code,
+				[
+					'#USER_1_NAME#' => "[USER={$currentUserId}][/USER]",
+					'#USER_2_NAME#' => $userCodesString
+				]
+			);
+		}
+
+		$params = [
+			"CODE" => 'CHAT_JOIN',
+			"NOTIFY" => $this->getEntityType() === self::ENTITY_TYPE_LINE? 'Y': 'N',
+		];
+
+		if ($config->isFakeAdd)
+		{
+			$params['FAKE_RELATION'] = (int)array_shift($usersToAdd);
+		}
+
+		\CIMChat::AddMessage([
+			'TO_CHAT_ID' => $this->getId(),
+			'MESSAGE' => $messageText,
+			'FROM_USER_ID' => $currentUserId,
+			'SYSTEM' => 'Y',
+			'RECENT_ADD' => $config->skipRecent ? 'N' : 'Y',
+			'PARAMS' => $params,
+			'PUSH' => 'N',
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => $this->getEntityType() === self::ENTITY_TYPE_LINE ? 'N' : 'Y',
+		]);
+	}
+
+	protected function sendPushUsersAdd(array $usersToAdd, RelationCollection $oldRelations): void
+	{
+		if (empty($usersToAdd) || !\Bitrix\Main\Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		(new Im\V2\Pull\Event\ChatUserAdd($this, $usersToAdd))->send();
+	}
+
+	protected function updateStateAfterRelationsAdd(array $usersToAdd): self
+	{
+		if (empty($usersToAdd))
+		{
+			return $this;
+		}
+
+		foreach ($usersToAdd as $userId)
+		{
+			$this->clearLegacyCache((int)$userId);
+		}
+
+		\CIMDisk::ChangeFolderMembers($this->getId(), $usersToAdd);
+		self::cleanAccessCache($this->getId());
+
+		return $this;
+	}
+
+	protected function updateStateAfterMembersAdd(array $newMembers): static
+	{
+		if (empty($newMembers))
+		{
+			return $this;
+		}
+
+		if (!$this->getExtranet() && UserCollection::hasUserByType($newMembers, UserType::EXTRANET))
+		{
+			$this->setExtranet(true);
+		}
+		if (!$this->containsCollaber() && UserCollection::hasUserByType($newMembers, UserType::COLLABER))
+		{
+			$this->getChatParams()->addParamByName(Params::CONTAINS_COLLABER, true);
+		}
+		if (!$this->containsCopilot() && AIHelper::containsCopilotBot($newMembers))
+		{
+			$this->getChatParams()->addParamByName(Chat\Param\Params::IS_COPILOT, true);
+		}
+		if (UserCollection::hasUserByType($newMembers, UserType::GUEST))
+		{
+			if (!$this->containsGuest())
+			{
+				$this->getChatParams()->addParamByName(Params::CONTAINS_GUEST, true);
+			}
+			GuestCounter::cleanCache($this->chatId);
+		}
+
+		$userCount = $this->getRelationFacade()?->getUserCount();
+		$this->setUserCount($userCount);
+		$this->updateIndex();
+
+		return $this;
+	}
+
+	protected function addUsersToRelation(array $usersToAdd, AddUsersConfig $config): void
+	{
+		$usersToAdd = array_filter($usersToAdd);
+
+		if (empty($usersToAdd))
+		{
+			return;
+		}
+
+		$relations = $this->getRelations();
+		foreach ($usersToAdd as $userId)
+		{
+			$relation = $this->createRelation($userId, $config);
+			$relations->add($relation);
+		}
+		$relations->save(true);
+		$this->getRelationFacade()?->onAfterRelationAdd($usersToAdd);
+
+		$chatAnalytics = new Im\V2\Analytics\ChatAnalytics($this);
+
+		foreach ($usersToAdd as $userId)
+		{
+			$chatAnalytics->addAddUser($config);
+		}
+	}
+
+	protected function createRelation(int $userId, AddUsersConfig $config): Relation
+	{
+		$hideHistory = $config->hideHistory ?? false;
+		$hideHistory = (!static::EXTRANET_CAN_SEE_HISTORY && Im\V2\Entity\User\User::getInstance($userId)->isExtranet()) ? true : $hideHistory;
+
+		$relation = new Relation();
+		$relation
+			->setChatId($this->getId())
+			->setMessageType($this->getType())
+			->setUserId($userId)
+			->setLastId($this->getLastMessageId())
+			->setStatus(\IM_STATUS_READ)
+			->setReason($config->reason)
+			->markAsHidden($config->isHidden($userId))
+			->fillRestriction($hideHistory, $this)
+		;
+		if ($config->isManager($userId))
+		{
+			$relation->setManager(true);
+		}
+
+		return $relation;
+	}
+
+	protected function getValidUsersToAdd(array $userIds): array
+	{
+		$userIds = Group::filterAddedUsersToChatBySonetRestriction($userIds, $this->getContext()->getUserId());
+		if ($this->getContext()->getUserId() !== 0)
+		{
+			$userIds = Im\Integration\Socialnetwork\Extranet::filterUserList($userIds, $this->getContext()->getUserId()) ?: [];
+		}
+
+		$usersToAdd = [];
+
+		foreach ($userIds as $userId)
+		{
+			$userId = (int)$userId;
+			if ($this->isValidToAdd($userId))
+			{
+				$usersToAdd[$userId] = $userId;
+			}
+		}
+
+		return $usersToAdd;
+	}
+
+	protected function isValidToAdd(int $userId): bool
+	{
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		$user = Im\V2\Entity\User\User::getInstance($userId);
+
+		return $user->isExist() && $user->isActive();
+	}
+
+	protected function sendEventUsersAdd(array $usersToAdd): void
+	{
+		if (empty($usersToAdd))
+		{
+			return;
+		}
+
+		$dialogId = 'chat' . $this->getId();
+		$chatId = $this->getId();
+		$eventPayload = new \Bitrix\Im\V2\Event\EventPayload();
+		$logger = new EventLog\EventLogger();
+		$allUserIds = $this->getRelations()->getUserIds();
+
+		$eventPayloads = [];
+
+		foreach ($usersToAdd as $userId)
+		{
+			$relation = $this->getRelations()->getByUserId($userId, $chatId);
+			if ($relation === null)
+			{
+				continue;
+			}
+
+			$eventPayloads[] = fn() => $eventPayload->welcomeMessage($dialogId, [
+				'CHAT_ID' => $chatId,
+				'USER_ID' => $userId,
+			]);
+
+			if ($relation->getUser()->isBot())
+			{
+				IM\Bot::onJoinChat($dialogId, [
+					'CHAT_TYPE' => $this->getType(),
+					'MESSAGE_TYPE' => $this->getType(),
+					'BOT_ID' => $userId,
+					'USER_ID' => $this->getContext()->getUserId(),
+					'CHAT_ID' => $this->getId(),
+					"CHAT_AUTHOR_ID" => $this->getAuthorId(),
+					"CHAT_ENTITY_TYPE" => $this->getEntityType(),
+					"CHAT_ENTITY_ID" => $this->getEntityId(),
+					"ACCESS_HISTORY" => (int)$relation->getStartCounter() === 0,
+				]);
+			}
+		}
+
+		try
+		{
+			$logger->logUserChatEvent('ONIMV2JOINCHAT', $eventPayloads, $chatId, $allUserIds);
+		}
+		catch (\Throwable)
+		{
+			// Event logging should not break chat operations.
+		}
+
+		if (!empty($this->getEntityType()))
+		{
+			$converter = new Converter(Converter::TO_CAMEL | Converter::UC_FIRST);
+			$eventCode = $converter->process($this->getEntityType());
+			//$eventCode = str_replace('_', '', ucfirst(ucwords(mb_strtolower($chatEntityType), '_')));
+			foreach(GetModuleEvents("im", "OnChatUserAddEntityType".$eventCode, true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, array([
+					'CHAT_ID' => $this->getId(),
+					'NEW_USERS' => $usersToAdd,
+				]));
+			}
+		}
+
+		// Send universal event for all chat types
+		if (!empty($usersToAdd))
+		{
+			$event = new \Bitrix\Main\Event('im', 'OnChatUserAdd', [
+				'CHAT_ID' => $this->getId(),
+				'NEW_USERS' => $usersToAdd,
+				'CHAT' => $this,
+				'ENTITY_TYPE' => $this->getEntityType(),
+				'ENTITY_ID' => $this->getEntityId(),
+			]);
+			$event->send();
+		}
+	}
+
+	public function deleteUser(int $userId, DeleteUserConfig $config = new DeleteUserConfig()): Result
+	{
+		$relations = clone $this->getRelations();
+		$userRelation = $this->getRawRelations()->getByUserId($userId, $this->getId());
+		if ($userRelation && !$relations->hasUser($userId, $this->getId()))
+		{
+			$relations[] = $userRelation;
+		}
+
+		if ($userRelation === null)
+		{
+			return (new Result())->addError(new UserError(UserError::NOT_FOUND));
+		}
+
+		if (!$config->skipCheckReason && $userRelation->getReason() !== Reason::DEFAULT)
+		{
+			return (new Result())->addError(new UserError(UserError::DELETE_FROM_STRUCTURE_SYNC));
+		}
+
+		if ($this->getAuthorId() === $userId)
+		{
+			$this->changeAuthor();
+		}
+
+		$userRelation->delete();
+		$this->getRelationFacade()?->onAfterRelationDelete($userId);
+
+		$this->processUpdateStateAfterUserDelete($userId, $config)->save();
+		$this->sendPushUserDelete($userId, $relations);
+		$this->sendEventUserDelete($userId);
+		$this->disableUserDeleteMessage($config->skipRecent);
+		$this->sendMessageUserDelete($userId, $config);
+		$this->sendNotificationUserDelete($userId, $config);
+
+		(new Im\V2\Analytics\ChatAnalytics($this))->addDeleteUser();
+
+		return new Result();
+	}
+
+	public function hideUser(int $userId): Result
+	{
+		$relations = $this->getRelations();
+		$relation = $relations->getByUserId($userId, $this->getId());
+		if ($relation === null)
+		{
+			return (new Result())->addError(new UserError(UserError::NOT_FOUND));
+		}
+
+		$relation->markAsHidden(true)->save();
+		$this->getRelationFacade()?->onAfterMembersChange();
+		$this->processUpdateStateAfterMemberDelete($userId, new DeleteUserConfig())->save();
+		$this->sendPushUserDelete($userId, $relations);
+
+		return new Result();
+	}
+
+	protected function needToSendMessageUserDelete(): bool
+	{
+		return false;
+	}
+
+	protected function sendMessageUserDelete(int $userId, DeleteUserConfig $config): void
+	{
+		if (
+			!$config->withMessage
+			|| !$this->needToSendMessageUserDelete()
+			|| $this->getChatParams()->get(Params::USER_DELETE_MESSAGE_DISABLED)?->getValue() ?? false
+			|| $this->getEntityType() === 'ANNOUNCEMENT'
+		)
+		{
+			return;
+		}
+
+		$message = $this->getUserDeleteMessageText($userId);
+		if ($message === '')
+		{
+			return;
+		}
+
+		\CIMChat::AddMessage($this->prepareMessageParamsFromUserDelete($message, $config->skipRecent));
+	}
+
+	protected function prepareMessageParamsFromUserDelete(string $message, bool $skipRecent): array
+	{
+		return [
+			'TO_CHAT_ID' => $this->getId(),
+			'MESSAGE' => $message,
+			'FROM_USER_ID' => $this->getContext()->getUserId(),
+			'SYSTEM' => 'Y',
+			'RECENT_ADD' => $skipRecent ? 'N' : 'Y',
+			'PARAMS' => ['CODE' => 'CHAT_LEAVE', 'NOTIFY' => 'N'],
+			'PUSH' => 'N',
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
+		];
+	}
+
+	protected function sendNotificationUserDelete(int $userId, DeleteUserConfig $config): void
+	{
+		if (!$config->withNotification)
+		{
+			return;
+		}
+
+		if ($userId === $this->getContext()->getUserId() || $this->getContext()->getUserId() === 0)
+		{
+			return;
+		}
+
+		$gender = $this->getContext()->getUser()->getGender();
+		$userName = $this->getContext()->getUser()->getName();
+		$userName = "[USER={$this->getContext()->getUserId()}]{$userName}[/USER]";
+
+		$notificationCallback = fn (?string $languageId = null) => Loc::getMessage(
+			'IM_CHAT_KICK_NOTIFICATION_'. $gender,
+			["#USER_NAME#" => $userName],
+			$languageId
+		);
+
+		$notificationFields = [
+			'TO_USER_ID' => $userId,
+			'FROM_USER_ID' => 0,
+			'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
+			'NOTIFY_MODULE' => 'im',
+			'NOTIFY_TITLE' => htmlspecialcharsback(\Bitrix\Main\Text\Emoji::decode($this->getTitle())),
+			'NOTIFY_MESSAGE' => $notificationCallback,
+		];
+		CIMNotify::Add($notificationFields);
+	}
+
+	public function getUserDeleteMessageText(int $deletedUserId): string
+	{
+		$currentUser = $this->getContext()->getUser();
+		$currentUserId = $this->getContext()->getUserId();
+
+		if (!$currentUser->isExist())
+		{
+			return '';
+		}
+
+		if ($currentUserId === $deletedUserId)
+		{
+			return Loc::getMessage(
+				"IM_CHAT_LEAVE_{$currentUser->getGender()}_MSGVER_1",
+				['#USER_ID#' => $currentUserId]
+			);
+		}
+
+		return Loc::getMessage(
+			"IM_CHAT_KICK_{$currentUser->getGender()}_MSGVER_1",
+			['#CURRENT_USER_ID#' => $currentUserId, '#DELETED_USER_ID#' => $deletedUserId]
+		);
+	}
+
+	protected function processUpdateStateAfterMemberDelete(int $deletedUserId, DeleteUserConfig $config): self
+	{
+		\CIMContactList::DeleteRecent($this->getId(), true, $deletedUserId, $config->withoutRead);
+		\Bitrix\Im\LastSearch::delete($this->getDialogId(), $deletedUserId);
+		$deletedUser = Im\V2\Entity\User\User::getInstance($deletedUserId);
+		$userIds = $this->getRelations()->getUserIds();
+
+		if (
+			$deletedUser->getType() === UserType::EXTRANET
+			&& $this->getExtranet()
+			&& !UserCollection::hasUserByType($userIds, UserType::EXTRANET)
+		)
+		{
+			$this->setExtranet(false);
+		}
+
+		if (
+			$deletedUser->getType() === UserType::COLLABER
+			&& $this->containsCollaber()
+			&& !UserCollection::hasUserByType($userIds, UserType::COLLABER)
+		)
+		{
+			$this->getChatParams()->deleteParam(Params::CONTAINS_COLLABER);
+		}
+
+		if (
+			$deletedUser->getType() === UserType::GUEST
+			&& $this->containsGuest()
+			&& !UserCollection::hasUserByType($userIds, UserType::GUEST)
+		)
+		{
+			$this->getChatParams()->deleteParam(Params::CONTAINS_GUEST);
+		}
+
+		if (AIHelper::containsCopilotBot([$deletedUserId]) && $this->containsCopilot())
+		{
+			$this->getChatParams()->deleteParam(Chat\Param\Params::IS_COPILOT);
+		}
+
+		$userCount = $this->getRelationFacade()?->getUserCount();
+		$this->setUserCount($userCount);
+
+		self::cleanAccessCache($this->getId());
+		$this->updateIndex();
+
+		$this->clearLegacyCache($deletedUserId);
+
+		return $this;
+	}
+
+	protected function processUpdateStateAfterUserDelete(int $deletedUserId, DeleteUserConfig $config): self
+	{
+		$this->processUpdateStateAfterMemberDelete($deletedUserId, $config);
+		\CIMDisk::ChangeFolderMembers($this->getId(), $deletedUserId, false);
+
+		ServiceLocator::getInstance()->get(FolderCascadeHandler::class)
+			->onUserLeave($this->getChatId(), $deletedUserId);
+
+		if (Im\V2\Entity\User\User::getInstance($deletedUserId)->getType() === UserType::GUEST)
+		{
+			GuestCounter::cleanCache($this->chatId);
+		}
+
+		return $this;
+	}
+
+	protected function clearLegacyCache(int $userId): void
+	{
+		CIMContactList::CleanChatCache($userId);
+	}
+
+	protected function sendEventUserDelete(int $userId): void
+	{
+		$user = Im\V2\Entity\User\User::getInstance($userId);
+		if ($user->isBot())
+		{
+			IM\Bot::onLeaveChat('chat'.$this->getId(), [
+				'CHAT_TYPE' => $this->getType(),
+				'MESSAGE_TYPE' => $this->getType(),
+				'BOT_ID' => $userId,
+				'USER_ID' => $this->getContext()->getUserId(),
+				"CHAT_AUTHOR_ID" => $this->getAuthorId(),
+				"CHAT_ENTITY_TYPE" => $this->getEntityType(),
+				"CHAT_ENTITY_ID" => $this->getEntityId(),
+			]);
+		}
+
+		if (!empty($this->getEntityType()))
+		{
+			$converter = new Converter(Converter::TO_CAMEL | Converter::UC_FIRST);
+			$eventCode = $converter->process($this->getEntityType());
+			foreach(GetModuleEvents("im", "OnChatUserDeleteEntityType".$eventCode, true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, array([
+					'CHAT_ID' => $this->getId(),
+					'USER_ID' => $userId,
+				]));
+			}
+		}
+
+		$eventParams = ['chatId' => $this->getId(), 'userIds' => [$userId]];
+		$event = new Main\Event('im', 'OnChatUserDelete', $eventParams);
+		$event->send();
+	}
+
+	protected function sendPushUserDelete(int $userId, RelationCollection $oldRelations): void
+	{
+		if (!\Bitrix\Main\Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		(new Im\V2\Pull\Event\ChatUserLeave($this, $userId, $oldRelations))->send();
+	}
+
+	public function changeAuthor(): void
+	{
+		$currentAuthorId = $this->getAuthorId();
+		$relations = $this->getRelations();
+		$authorRelation = $relations->getByUserId($currentAuthorId, $this->getId());
+		if ($authorRelation !== null)
+		{
+			$authorRelation->setManager(false);
+		}
+		$otherRealUserRelation = $relations->filter(static function (Relation $relation) use ($currentAuthorId) {
+			$user = $relation->getUser();
+
+			return $user->getId() !== $currentAuthorId
+				&& $user->isActive()
+				&& !$user->isBot()
+				&& !$user->isExtranet()
+				&& !$user->isConnector()
+			;
+		})->getAny();
+
+		if (!$otherRealUserRelation instanceof Relation)
+		{
+			return;
+		}
+
+		$this->setAuthorId($otherRealUserRelation->getUserId());
+		$otherRealUserRelation->setManager(true);
+		$relations->save(true);
+	}
+
+	public function setManagers(array $managerIds): self
+	{
+		if (!$this->getChatId() || empty($managerIds) || !count($managerIds))
+		{
+			return $this;
+		}
+
+		$managerIds = filter_var(
+			$managerIds,
+			FILTER_VALIDATE_INT,
+			[
+				'flags' => FILTER_REQUIRE_ARRAY,
+				'options' => ['min_range' => 1],
+			]
+		);
+
+		foreach ($managerIds as $key => $managerId)
+		{
+			if (!is_int($managerId))
+			{
+				unset($managerIds[$key]);
+			}
+		}
+
+		$relations = $this->getRelations();
+
+		$relationIds = [];
+		$unsetManagerIds = [];
+		/** @var Relation $relation */
+		foreach ($relations as $relation)
+		{
+			if (in_array($relation->getUserId(), $managerIds, true))
+			{
+				$relationIds[] = $relation->getPrimaryId();
+			}
+			elseif ($relation->getManager())
+			{
+				$unsetManagerIds[] = $relation->getPrimaryId();
+			}
+
+		}
+
+		if ($unsetManagerIds)
+		{
+			RelationTable::updateMulti(
+				$unsetManagerIds,
+				[
+					'MANAGER' => 'N',
+				]
+			);
+		}
+
+		RelationTable::updateMulti(
+			$relationIds,
+			[
+				'MANAGER' => 'Y',
+			]
+		);
+
+		return $this;
+	}
+
+	/**
+	 * Lazy load message's context phrases.
+	 * @return void
+	 */
+	public static function loadPhrases(): void
+	{
+		Loc::loadMessages(__FILE__);
+	}
+
+	public function setContext(?Context $context): self
+	{
+		$this->defaultSaveContext($context);
+		$this->role = null;
+
+		return $this;
+	}
+
+	public function getLoadContextMessage(bool $ignoreMark = false): Message
+	{
+		if (!$ignoreMark)
+		{
+			$startMessageId = $this->getMarkedId() ?: $this->getLastId();
+		}
+		else
+		{
+			$startMessageId = $this->getLastId();
+		}
+
+		$message = (new Message($startMessageId))->setChatId($this->getId());
+
+		if ($message->getId() === null)
+		{
+			return $message->setDateCreate(null);
+		}
+
+		return $message->setMessageId($startMessageId);
+	}
+
+	public function fillNonCachedData(): self
+	{
+		if ($this->isFilledNonCachedData)
+		{
+			return $this;
+		}
+
+		$this->fillActual(self::NON_CACHED_FIELDS);
+		$this->isFilledNonCachedData = true;
+
+		return $this;
+	}
+
+	public static function getRestEntityName(): string
+	{
+		return 'chat';
+	}
+
+	public function getEntityLink(): Im\V2\Chat\EntityLink
+	{
+		return Im\V2\Chat\EntityLink::getInstance($this);
+	}
+
+	public function getMessageAutoDeleteConfigs(): Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs
+	{
+		return new Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$this->getChatId()]);
+	}
+
+	public function getRecentConfig(): ChatRecentConfig
+	{
+		return new ChatRecentConfig($this);
+	}
+
+	public function getPermissions(): array
+	{
+		return [
+			'manageUsersAdd' => mb_strtolower($this->getManageUsersAdd()),
+			'manageUsersDelete' => mb_strtolower($this->getManageUsersDelete()),
+			'manageUi' => mb_strtolower($this->getManageUI()),
+			'manageSettings' => mb_strtolower($this->getManageSettings()),
+			'manageMessages' => mb_strtolower($this->getManageMessages()),
+			'manageMessagesAutoDelete' => mb_strtolower($this->getManageMessagesAutoDelete()),
+			'manageGuestInvites' => mb_strtolower($this->getManageGuestInvites()),
+			'canPost' => mb_strtolower($this->getManageMessages()),
+		];
+	}
+
+	public function getPopupData(array $excludedList = []): PopupData
+	{
+		return new PopupData([
+			$this->getRecentConfig(),
+			(new Im\V2\Chat\Tree\ParentChatPopupItem($this))->setContext($this->getContext()),
+		], $excludedList);
+	}
+
+	public function toRestFormat(array $option = []): array
+	{
+		$commonFields = [
+			'avatar' => $this->getAvatar(),
+			'color' => $this->getColor(true),
+			'description' => $this->getDescription() ?? '',
+			'dialogId' => $this->getDialogId(),
+			'diskFolderId' => $this->getDiskFolderId(),
+			'entityData1' => $this->getEntityData1() ?? '',
+			'entityData2' => $this->getEntityData2() ?? '',
+			'entityData3' => $this->getEntityData3() ?? '',
+			'entityId' => $this->getEntityId() ?? '',
+			'entityType' => $this->getEntityType() ?? '',
+			'extranet' => $this->getExtranet() ?? false,
+			'containsCollaber' => (bool)$this->getChatParams()->get(Params::CONTAINS_COLLABER)?->getValue(),
+			'id' => $this->getId(),
+			'parentChatId' => $this->getParentChatId(),
+			'parentMessageId' => $this->getParentMessageId(),
+			'name' => $this->getTitle(),
+			'owner' => (int)$this->getAuthorId(),
+			'messageType' => $this->getType(),
+			'role' => mb_strtolower($this->getRole()),
+			'muteList' => $this->getMuteList(),
+			'type' => $this->getExtendedType(),
+			'entityLink' => $this->getEntityLink()->toRestFormat($option),
+			'permissions' => $this->getPermissions(),
+			'isNew' => $this->isNew(),
+			'textFieldEnabled' => $this->getTextFieldEnabled()->get(),
+			'backgroundId' => $this->getBackground()->get(),
+		];
+
+		if ($option['CHAT_WITH_DATE_MESSAGE'] ?? false)
+		{
+			$commonFields['dateMessage'] = $this->dateMessage;
+		}
+		if ($option['CHAT_SHORT_FORMAT'] ?? false)
+		{
+			return $commonFields;
+		}
+
+		$additionalFields = [
+			'dateCreate' => $this->getDateCreate()?->format('c'),
+			'lastMessageId' => $this->getLastMessageId(),
+			'lastMessageViews' => Im\Common::toJson($this->getLastMessageViews()),
+			'lastId' => $this->getLastId(),
+			'managerList' => $this->getManagerList(),
+			'markedId' => $this->getMarkedId(),
+			'messageCount' => $this->getMessageCount(),
+			'public' => $this->getPublicOption() ?? '',
+			'unreadId' => $this->getUnreadId(),
+			'userCounter' => $this->getUserCount(),
+			'guestCount' => $this->containsGuest() ? (new GuestCounter($this))->getGuestCount() : 0,
+		];
+
+		return array_merge($commonFields, $additionalFields);
+	}
+
+	public function toPullFormat(): array
+	{
+		return [
+			'id' => $this->getId(),
+			'dialogId' => $this->getDialogId(),
+			'parent_chat_id' => $this->getParentChatId(),
+			'parent_message_id' => $this->getParentMessageId(),
+			'name' => \Bitrix\Im\Text::decodeEmoji($this->getTitle()),
+			'owner' => $this->getAuthorId(),
+			'color' => $this->getColor(true),
+			'extranet' => $this->getExtranet() ?? false,
+			'contains_collaber' => (bool)$this->getChatParams()->get(Params::CONTAINS_COLLABER)?->getValue(),
+			'avatar' => $this->getAvatar(true),
+			'message_count' => $this->getMessageCount(),
+			'call' => $this->getCallType(),
+			'call_number' => $this->getCallNumber(),
+			'entity_type' => $this->getEntityType(),
+			'entity_id' => $this->getEntityId(),
+			'entity_data_1' => $this->getEntityData1(),
+			'entity_data_2' => $this->getEntityData2(),
+			'entity_data_3' => $this->getEntityData3(),
+			'public' => $this->getPublicOption() ?? '',
+			'mute_list' => $this->getMuteList(true),
+			'manager_list' => $this->getManagerList(),
+			'date_create' => $this->getDateCreate(),
+			'type' => $this->getExtendedType(),
+			'entity_link' => $this->getEntityLink()->toRestFormat(),
+			'permissions' => $this->getPermissions(),
+			'isNew' => $this->isNew(),
+			'message_type' => $this->getType(),
+			'ai_provider' => null,
+			'description' => \Bitrix\Im\Text::decodeEmoji($this->getDescription() ?? ''),
+			'textFieldEnabled' => $this->getTextFieldEnabled()->get(),
+			'backgroundId' => $this->getBackground()->get(),
+			'guestCount' => $this->containsGuest() ? (new GuestCounter($this))->getGuestCount() : 0,
+		];
+	}
+
+	public function getMultidialogData(): array
+	{
+		return [];
+	}
+
+	public function getManagerList(bool $fullList = true): array
+	{
+		if ($fullList)
+		{
+			return array_values($this->getRelationFacade()?->getManagerOnly()->getUserIds() ?? []);
+		}
+
+		if ($this->getSelfRelation()?->getManager() ?? false)
+		{
+			return [$this->getContext()->getUserId()];
+		}
+
+		return [];
+	}
+
+	public function getMuteList(bool $fullList = false): array
+	{
+		if ($fullList)
+		{
+			$list = [];
+			foreach ($this->getRelations() as $relation)
+			{
+				$list[$relation->getUserId()] = $relation->getNotifyBlock();
+			}
+
+			return $list;
+		}
+
+		$selfRelation = $this->getSelfRelation();
+
+		if ($selfRelation === null)
+		{
+			return [];
+		}
+
+		if ($selfRelation->getNotifyBlock() ?? false)
+		{
+			return [$this->getContext()->getUserId()];
+		}
+
+		return [];
+	}
+
+	public function getPublicOption(): ?array
+	{
+		if ($this->getAliasName() === null)
+		{
+			return null;
+		}
+
+		return [
+			'code' => $this->getAliasName(),
+			'link' => Alias::getPublicLink($this->getEntityType(), $this->getAliasName())
+		];
+	}
+
+	public function getExtendedType(bool $forRest = true): string
+	{
+		return Im\Chat::getType(
+			['ID' => $this->getId(), 'TYPE' => $this->getType(), 'ENTITY_TYPE' => $this->getEntityType()],
+			$forRest
+		);
+	}
+
+	public function getUnreadId(): int
+	{
+		$selfRelation = $this->getSelfRelation();
+		if ($selfRelation === null)
+		{
+			return 0;
+		}
+
+		return $selfRelation->getUnreadId() ?? 0;
+	}
+
+	public function getLastId(): int
+	{
+		$selfRelation = $this->getSelfRelation();
+		if ($selfRelation === null)
+		{
+			return $this->getLastMessageId() ?? 0;
+		}
+
+		return $selfRelation->getLastId() ?? 0;
+	}
+
+	protected function addIndex(): self
+	{
+		if (!$this->getChatId())
+		{
+			return $this;
+		}
+
+		$index = \Bitrix\Im\Internals\ChatIndex::create()
+			->setChatId($this->getChatId())
+			->setTitle(mb_substr($this->getTitle() ?? '', 0, 255))
+			->setUserList($this->getUserNamesForIndex())
+		;
+		\Bitrix\Im\Model\ChatTable::addIndexRecord($index);
+
+		return $this;
+	}
+
+	protected function updateIndex(): self
+	{
+		if (!$this->getChatId())
+		{
+			return $this;
+		}
+
+		$index = \Bitrix\Im\Internals\ChatIndex::create()
+			->setChatId($this->getChatId())
+			->setUserList($this->getUserNamesForIndex())
+		;
+		\Bitrix\Im\Model\ChatTable::updateIndexRecord($index);
+
+		return $this;
+	}
+
+	private function getUserNamesForIndex(): array
+	{
+		$relations = RelationCollection::find(['CHAT_ID' => $this->getId()], limit: 100);
+
+		$users = [];
+		foreach ($relations as $relation)
+		{
+			$users[] = $relation->getUser()->getName() ?? '';
+		}
+
+		return $users;
+	}
+
+	public function mute(bool $isMuted = true, ?int $userId = null): Result
+	{
+		$result = new Result();
+		$userId ??= $this->getContext()->getUserId();
+		$relation = $this->getRelationByUserId($userId);
+		if (!$relation)
+		{
+			return $result->addError(new RelationError(RelationError::NOT_FOUND));
+		}
+		if ($relation->getNotifyBlock() === $isMuted)
+		{
+			return $result;
+		}
+
+		$relation->setNotifyBlock($isMuted)->save();
+
+		$this->onAfterMute($isMuted, $userId);
+
+		return $result;
+	}
+
+	protected function onAfterMute(bool $isMuted, int $userId): Result
+	{
+		ServiceLocator::getInstance()->get(CountersEventHandler::class)->onMuteChanged($this->getId(), $userId, $isMuted);
+		$counter = $this->getCountersProvider()->getForUser($this->getId(), $userId);
+		(new Im\V2\Pull\Event\ChatMute($this, $userId, $isMuted, $counter))->send();
+		(new Im\V2\Chat\Event\Legacy\AfterChatMuteNotifyEvent($this, $userId, $isMuted))->send();
+
+		return new Result();
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	public function deleteChat(): Result
+	{
+		$result = new Result();
+
+		if (!$this->chatId)
+		{
+			return $result->addError(new ChatError(ChatError::NOT_FOUND));
+		}
+
+		$currentUserId = Entity\User\User::getCurrent()->getId();
+
+		Application::getInstance()->addBackgroundJob(
+			fn () => (new Im\V2\Chat\Cleanup\ChatContentCollector($this->chatId))
+				->deleteChat($currentUserId)
+		);
+
+		return $result;
+	}
+
+	public function sendMessageUpdateAvatar(bool $skipRecent = false): void
+	{
+		$currentUser = $this->getContext()->getUser();
+		$type = $this instanceof Im\V2\Chat\ChannelChat ? 'CHANNEL' : 'CHAT';
+		$code = "IM_{$type}_AVATAR_CHANGE_{$currentUser->getGender()}";
+
+		$messageText = Loc::getMessage(
+			$code,
+			['#USER_NAME#' => htmlspecialcharsback($currentUser->getName())]
+		);
+
+		if ($messageText === '')
+		{
+			return;
+		}
+
+		\CIMChat::AddMessage([
+			"TO_CHAT_ID" => $this->getId(),
+			"MESSAGE" => $messageText,
+			"FROM_USER_ID" => $this->getContext()->getUserId(),
+			"SYSTEM" => 'Y',
+			"RECENT_ADD" => $skipRecent ? 'N' : 'Y',
+			"PARAMS" => [
+				"CODE" => 'CHAT_LEAVE',
+				"NOTIFY" => $this->getEntityType() === 'LINES' ? 'Y': 'N',
+			],
+			"PUSH" => 'N',
+			"SKIP_USER_CHECK" => "Y",
+		]);
+	}
+
+	protected function disableUserDeleteMessage(bool $skipRecent = false): void
+	{
+		if (
+			$this->canDisableUserDeleteMessage()
+			&& $this->needToSendMessageUserDelete()
+			&& $this->getChatParams()->get(Params::USER_DELETE_MESSAGE_DISABLED)?->getValue() !== true
+			&& $this->getRelationFacade()?->getUserCount() > self::MAX_USERS_TO_DISABLE_DELETE_MESSAGE
+		)
+		{
+			$this->getChatParams()->addParamByName(Params::USER_DELETE_MESSAGE_DISABLED, true);
+			$this->sendMessageOnUserDeleteMessageDisabled($skipRecent);
+		}
+	}
+
+	protected function canDisableUserDeleteMessage(): bool
+	{
+		return Option::get('im', 'chat_user_deletion_message_disabled', 'N') === 'Y';
+	}
+
+	protected function sendMessageOnUserDeleteMessageDisabled(bool $skipRecent): void
+	{
+		$userCount = self::MAX_USERS_TO_DISABLE_DELETE_MESSAGE;
+
+		\CIMChat::AddMessage([
+			'TO_CHAT_ID' => $this->getId(),
+			'MESSAGE' => Loc::getMessage('IM_CHAT_OVERFLOW_DELETE_MESSAGE', ['#USER_COUNT#' => $userCount]),
+			'SYSTEM' => 'Y',
+			'RECENT_ADD' => $skipRecent ? 'N' : 'Y',
+			'PUSH' => 'N',
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
+			'PARAMS' => [
+				Im\V2\Message\Params::NOTIFY => 'N',
+			],
+		]);
+	}
+
+	public function needToSendPublicPull(): bool
+	{
+		return false;
+	}
+
+	public function canDo(Action $action, mixed $target = null): bool
+	{
+		$userId = $this->getContext()->getUserId();
+		$action = Im\V2\Permission::specifyAction($action, $this, $target);
+
+		return ServiceLocator::getInstance()
+			->get(Im\V2\Permission\Policy\ActionAccessPolicyRegistry::class)
+			->getPolicy($action)
+			->check($this, $userId, $action, $target) ?? false
+		;
+	}
+
+	protected static function getFromStaticCache(int $id): ?Chat
+	{
+		return ChatFactory::getInstance()->getChatFromCache($id, Im\V2\Cache\CacheLevel::Static);
+	}
+
+	public static function updateStateAfterOrmEvent(int $id, array $fields): void
+	{
+		self::getFromStaticCache($id)?->onAfterOrmUpdate($fields);
+	}
+
+	public function toCacheRepresentation(): array
+	{
+		$result = $this->toArray();
+		foreach (self::NON_CACHED_FIELDS as $key)
+		{
+			unset($result[$key]);
+		}
+
+		return $result;
+	}
+
+	public function getCacheEntityId(): ?int
+	{
+		return $this->getChatId();
+	}
+
+	public static function getSharingLinkEntityType(): LinkEntityType
+	{
+		return LinkEntityType::Chat;
+	}
+}

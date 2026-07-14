@@ -1,15 +1,18 @@
 import { Event, Loc, Tag } from 'main.core';
-import { Analytics } from '../analytics';
-import { DepartmentControl } from 'intranet.department-control';
-import { InputRowFactory } from '../input-row-factory';
-import { Page } from './page';
-import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
-import { Transport } from '../transport';
 import { EventEmitter } from 'main.core.events';
-import InviteType from '../type/invite-type';
-import { InviteEmailPopup } from '../popup/invite-email-popup';
+import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
+
+import { DepartmentControl } from 'intranet.department-control';
+
+import { Analytics } from '../analytics';
+import { DepartmentControlBlock } from '../elements/department-control-block';
 import { InputRowsContainer } from '../elements/input-rows-container';
+import { InputRowFactory } from '../input-row-factory';
+import { InviteEmailPopup } from '../popup/invite-email-popup';
 import { RestoreFiredUsersPopup } from '../popup/restore-fired-users-popup';
+import { Transport } from '../transport';
+import InviteType from '../type/invite-type';
+import { Page } from './page';
 
 export type InvitePageOptions = {
 	inputsFactory: InputRowFactory;
@@ -26,6 +29,7 @@ export class InvitePage extends Page
 	#container: HTMLElement;
 	#inputsFactory: InputRowFactory;
 	#departmentControl: DepartmentControl;
+	#departmentControlBlock: DepartmentControlBlock;
 	#transport: Transport;
 	#inviteType: InviteType;
 	#inviteEmailPopup: InviteEmailPopup;
@@ -38,6 +42,10 @@ export class InvitePage extends Page
 		super();
 		this.#inputsFactory = options.inputsFactory;
 		this.#departmentControl = options.departmentControl;
+		this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock
+			? options.departmentControlBlock
+			: null
+		;
 		this.#transport = options.transport;
 		this.#inviteType = options.inviteType;
 		this.#showMassInviteButton = options.showMassInviteButton;
@@ -53,16 +61,14 @@ export class InvitePage extends Page
 
 		this.#container = Tag.render`
 			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
+				${this.#departmentControlBlock?.render()}
 				<div class="intranet-invitation-block__content">
 					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
 					${this.#getInputRowsContainer().render()}
 					<span class="intranet-invitation-actions">
 						${this.#getAddButton().render()}
 						${this.#showMassInviteButton ? Tag.render`
-							<span class="intranet-invitation-description ui-text --sm">
+							<span class="ui-text --sm">
 								${Loc.getMessage('INTRANET_INVITE_DIALOG_OR')}
 							</span>
 							${this.#renderMassInviteButton()}

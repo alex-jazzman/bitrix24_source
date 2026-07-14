@@ -4,9 +4,11 @@
 jn.define('calendar/entry', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');
+	const { requireLazy } = require('require-lazy');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { CalendarType } = require('calendar/enums');
+	const { SettingsManager } = require('calendar/data-managers/settings-manager');
 
 	/**
 	 * @class Entry
@@ -46,11 +48,17 @@ jn.define('calendar/entry', (require, exports, module) => {
 		 */
 		static openGroupCalendarView({
 			groupId,
-			title = Loc.getMessage('M_CALENDAR_ENTRY_EVENT_COLLAB_LIST_TITLE'),
+			title = '',
 		})
 		{
+			const resolvedTitle = title || (
+				SettingsManager.isNewProjectsOn()
+					? Loc.getMessage('M_CALENDAR_ENTRY_EVENT_PROJECT_LIST_TITLE')
+					: Loc.getMessage('M_CALENDAR_ENTRY_EVENT_COLLAB_LIST_TITLE')
+			);
+
 			void this.#openCalendarView({
-				title,
+				title: resolvedTitle,
 				calType: CalendarType.GROUP,
 				ownerId: groupId,
 			});

@@ -340,7 +340,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const tariffRestrictionsFieldsConfig = [{
 		fieldName: 'fullChatHistory',
 		targetFieldName: 'fullChatHistory',
-		checkFunction: main_core.Type.isPlainObject
+		checkFunction: main_core.Type.isPlainObject,
+		formatFunction: target => formatFieldsWithConfig(target, tariffFullChatHistoryFieldsConfig)
+	}, {
+		fieldName: 'collab',
+		targetFieldName: 'collabV2',
+		checkFunction: main_core.Type.isPlainObject,
+		formatFunction: target => formatFieldsWithConfig(target, tariffCollabFieldsConfig)
+	}];
+	const tariffFullChatHistoryFieldsConfig = [{
+		fieldName: 'isAvailable',
+		targetFieldName: 'isAvailable',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'limitDays',
+		targetFieldName: 'limitDays',
+		checkFunction: main_core.Type.isNumber
+	}];
+	const tariffCollabFieldsConfig = [{
+		fieldName: 'isAvailable',
+		targetFieldName: 'isAvailable',
+		checkFunction: main_core.Type.isBoolean
+	}, {
+		fieldName: 'isCopyAvailable',
+		targetFieldName: 'isCopyAvailable',
+		checkFunction: main_core.Type.isBoolean
 	}];
 
 	/* eslint-disable no-param-reassign */
@@ -350,6 +374,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				fullChatHistory: {
 					isAvailable: true,
 					limitDays: null
+				},
+				collabV2: {
+					isAvailable: true,
+					isCopyAvailable: true
 				}
 			};
 		}
@@ -362,6 +390,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function application/tariffRestrictions/isHistoryAvailable */
 				isHistoryAvailable: state => {
 					return state.fullChatHistory?.isAvailable ?? false;
+				},
+				/** @function application/tariffRestrictions/isCollabV2Available */
+				isCollabV2Available: state => {
+					return state.collabV2.isAvailable;
+				},
+				/** @function application/tariffRestrictions/isCollabV2CopyAvailable */
+				isCollabV2CopyAvailable: state => {
+					return state.collabV2.isCopyAvailable;
 				}
 			};
 		}
@@ -1002,12 +1038,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const builderFieldsConfig = [{
-		fieldName: 'blocks',
-		targetFieldName: 'blocks',
+		fieldName: 'config',
+		targetFieldName: 'config',
+		checkFunction: main_core.Type.isPlainObject,
+		formatFunction: target => formatFieldsWithConfig(target, configFieldsConfig)
+	}, {
+		fieldName: 'elements',
+		targetFieldName: 'elements',
 		checkFunction: main_core.Type.isArray,
 		formatFunction: target => {
 			return target.map(block => formatFieldsWithConfig(block, blocksBuilderFieldsConfig));
 		}
+	}];
+	const configFieldsConfig = [{
+		fieldName: 'background',
+		targetFieldName: 'background',
+		checkFunction: main_core.Type.isString
 	}];
 	const blocksBuilderFieldsConfig = [{
 		fieldName: 'id',
@@ -1047,6 +1093,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		targetFieldName: 'status',
 		checkFunction: main_core.Type.isString
 	}, {
+		fieldName: 'title',
+		targetFieldName: 'title',
+		checkFunction: main_core.Type.isString
+	}, {
 		fieldName: 'elements',
 		targetFieldName: 'elements',
 		checkFunction: main_core.Type.isArray,
@@ -1064,6 +1114,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isPlainObject,
 		formatFunction: target => formatFieldsWithConfig(target, foldFieldsConfig)
 	}, {
+		fieldName: 'buttons',
+		targetFieldName: 'buttons',
+		checkFunction: main_core.Type.isArray,
+		formatFunction: target => {
+			return target.map(row => row.map(button => {
+				return formatFieldsWithConfig(button, buttonFieldsConfig);
+			}));
+		}
+	}, {
 		fieldName: 'rows',
 		targetFieldName: 'rows',
 		checkFunction: main_core.Type.isArray,
@@ -1072,6 +1131,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return column.map(block => formatFieldsWithConfig(block, blocksBuilderFieldsConfig));
 			});
 		}
+	}, {
+		fieldName: 'fileIds',
+		targetFieldName: 'fileIds',
+		checkFunction: main_core.Type.isArray
 	}];
 	const iconFieldsConfig = [{
 		fieldName: 'type',
@@ -1081,6 +1144,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'color',
 		targetFieldName: 'color',
 		checkFunction: main_core.Type.isString
+	}];
+	const buttonFieldsConfig = [{
+		fieldName: 'type',
+		targetFieldName: 'type',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'title',
+		targetFieldName: 'title',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'url',
+		targetFieldName: 'url',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'design',
+		targetFieldName: 'design',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'actionId',
+		targetFieldName: 'actionId',
+		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'actionParams',
+		targetFieldName: 'actionParams',
+		checkFunction: main_core.Type.isPlainObject
 	}];
 	const sourceItemFieldsConfig = [{
 		fieldName: 'url',
@@ -1111,7 +1199,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isString
 	}];
 
-	/* eslint-disable no-param-reassign */
 	class MessageBuilderModel extends ui_vue3_vuex.BuilderModel {
 		getName() {
 			return 'messageBuilder';
@@ -1123,7 +1210,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getBuilderElementState() {
-			return {};
+			return {
+				background: null
+			};
 		}
 		getBlockElementState() {
 			return {
@@ -1141,6 +1230,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function messages/builder/getBlocks */
 				getBlocks: state => messageId => {
 					return state.blockCollection.get(messageId) ?? [];
+				},
+				/** @function messages/builder/getParams */
+				getParams: state => messageId => {
+					return state.builderCollection.get(messageId) ?? {
+						background: null
+					};
+				},
+				/** @function messages/builder/forceBackground */
+				forceBackground: state => messageId => {
+					const params = state.builderCollection.get(messageId);
+					return params?.background === im_v2_const.MessageBuilderBackgroundPlainToken;
 				}
 			};
 		}
@@ -1149,28 +1249,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function messages/builder/set */
 				set: (store, rawMessages) => {
 					const messages = main_core.Type.isArray(rawMessages) ? rawMessages : [rawMessages];
-					const builderMessages = messages.filter(message => message.builder);
+					const builderMessages = messages.filter(message => message.block);
 					builderMessages.forEach(builderMessage => {
 						const {
 							id: messageId,
-							builder
+							block
 						} = builderMessage;
-						const preparedBuilder = this.#formatFields(builder);
+						const preparedBuilder = this.#formatFields(block);
 						const {
-							blocks
+							elements,
+							config
 						} = preparedBuilder;
-						delete preparedBuilder.blocks;
 						store.commit('addBuilder', {
 							messageId,
 							params: {
 								...this.getBuilderElementState(),
-								...preparedBuilder
+								...config
 							}
 						});
-						const preparedBlocks = blocks.map(block => {
+						const preparedBlocks = elements.map(element => {
 							return {
 								...this.getBlockElementState(),
-								...block
+								...element
 							};
 						});
 						store.commit('addBlocks', {
@@ -1214,6 +1314,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					store.commit('deleteBlock', {
 						messageId,
 						blockId
+					});
+				},
+				/** @function messages/builder/updateWithId */
+				updateWithId: (store, payload) => {
+					const {
+						oldId,
+						newId
+					} = payload;
+					if (!store.state.blockCollection.has(oldId) && !store.state.builderCollection.has(oldId)) {
+						return;
+					}
+					store.commit('updateWithId', {
+						oldId,
+						newId
 					});
 				}
 			};
@@ -1270,6 +1384,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					const filtered = blocks.filter(item => item.id !== blockId);
 					state.blockCollection.set(messageId, filtered);
+				},
+				updateWithId: (state, payload) => {
+					const {
+						oldId,
+						newId
+					} = payload;
+					if (state.blockCollection.has(oldId)) {
+						state.blockCollection.set(newId, state.blockCollection.get(oldId));
+						state.blockCollection.delete(oldId);
+					}
+					if (state.builderCollection.has(oldId)) {
+						state.builderCollection.set(newId, state.builderCollection.get(oldId));
+						state.builderCollection.delete(oldId);
+					}
 				}
 			};
 		}
@@ -3056,13 +3184,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				/** @function chats/get */
 				get: state => (dialogId, getBlank = false) => {
-					if (!state.collection[dialogId] && getBlank) {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem && getBlank) {
 						return this.getElementState();
 					}
-					if (!state.collection[dialogId] && !getBlank) {
+					if (!collectionItem && !getBlank) {
 						return null;
 					}
-					return state.collection[dialogId];
+					return collectionItem;
 				},
 				/** @function chats/getByChatId */
 				getByChatId: state => (chatId, getBlank = false) => {
@@ -3077,26 +3206,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				/** @function chats/getQuoteId */
 				getQuoteId: state => dialogId => {
-					if (!state.collection[dialogId]) {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
 						return 0;
 					}
-					return state.collection[dialogId].quoteId;
-				},
-				/** @function chats/isUser */
-				isUser: state => dialogId => {
-					if (!state.collection[dialogId]) {
-						return false;
-					}
-					return state.collection[dialogId].type === im_v2_const.ChatType.user;
+					return collectionItem.quoteId;
 				},
 				/** @function chats/getLastReadId */
 				getLastReadId: state => dialogId => {
-					if (!state.collection[dialogId]) {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
 						return 0;
 					}
 					const {
 						lastReadId
-					} = state.collection[dialogId];
+					} = collectionItem;
 					const lastReadIdMessage = im_v2_application_core.Core.getStore().getters['messages/getById'](lastReadId);
 					if (!lastReadIdMessage) {
 						return 0;
@@ -3105,41 +3229,60 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				/** @function chats/getInitialMessageId */
 				getInitialMessageId: state => dialogId => {
-					if (!state.collection[dialogId]) {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
 						return 0;
 					}
 					const {
 						lastReadId,
 						markedId
-					} = state.collection[dialogId];
+					} = collectionItem;
 					if (markedId === 0) {
 						return lastReadId;
 					}
 					return Math.min(lastReadId, markedId);
 				},
-				/** @function chats/isSupport */
-				isSupport: state => dialogId => {
-					if (!state.collection[dialogId]) {
-						return false;
-					}
-					return state.collection[dialogId].type === im_v2_const.ChatType.support24Question;
-				},
-				/** @function chats/isSelfChat */
-				isSelfChat: () => dialogId => {
-					return im_v2_application_core.Core.getUserId().toString() === dialogId;
-				},
 				/** @function chats/getBackgroundId */
 				getBackgroundId: state => dialogId => {
-					if (!state.collection[dialogId]) {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
 						return '';
 					}
-					return state.collection[dialogId].backgroundId;
+					return collectionItem.backgroundId;
 				},
 				/** @function chats/getCollectionByChatType */
 				getCollectionByChatType: state => type => {
 					return Object.values(state.collection).filter(item => {
 						return item.type === type;
 					});
+				},
+				/** @function chats/getParent */
+				getParent: () => dialogId => {
+					const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+					if (!chat || chat.parentChatId === 0) {
+						return null;
+					}
+					return im_v2_application_core.Core.getStore().getters['chats/getByChatId'](chat.parentChatId);
+				},
+				/** @function chats/isUser */
+				isUser: state => dialogId => {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
+						return false;
+					}
+					return collectionItem.type === im_v2_const.ChatType.user;
+				},
+				/** @function chats/isSupport */
+				isSupport: state => dialogId => {
+					const collectionItem = state.collection[dialogId];
+					if (!collectionItem) {
+						return false;
+					}
+					return collectionItem.type === im_v2_const.ChatType.support24Question;
+				},
+				/** @function chats/isSelfChat */
+				isSelfChat: () => dialogId => {
+					return im_v2_application_core.Core.getUserId().toString() === dialogId;
 				}
 			};
 		}
@@ -4462,7 +4605,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class RecentModel extends ui_vue3_vuex.BuilderModel {
-		static ROOT_PARENT_ID = 0;
 		getName() {
 			return 'recent';
 		}
@@ -4507,7 +4649,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const {
 						type,
 						unread = false,
-						parentChatId = RecentModel.ROOT_PARENT_ID
+						parentChatId = im_v2_const.ParentChatScope.topLevel
 					} = payload;
 					const index = unread ? state.unreadIndex : state.recentIndex;
 					const parentGroup = index[parentChatId];
@@ -4566,7 +4708,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const {
 						dialogId,
 						type,
-						parentChatId = RecentModel.ROOT_PARENT_ID
+						parentChatId = im_v2_const.ParentChatScope.topLevel
 					} = payload;
 					const parentGroup = state.recentIndex[parentChatId];
 					if (!parentGroup) {
@@ -4591,7 +4733,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						type,
 						items,
 						unread = false,
-						parentChatId = RecentModel.ROOT_PARENT_ID
+						parentChatId = im_v2_const.ParentChatScope.topLevel
 					} = payload;
 					const itemIds = await im_v2_application_core.Core.getStore().dispatch('recent/set', items);
 					const setPayload = {
@@ -4605,7 +4747,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					if (needToAddRootItem) {
 						store.commit('setIndex', {
 							...setPayload,
-							parentChatId: RecentModel.ROOT_PARENT_ID
+							parentChatId: im_v2_const.ParentChatScope.topLevel
 						});
 					}
 				},
@@ -4621,7 +4763,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const {
 						type,
 						unread = false,
-						parentChatId = RecentModel.ROOT_PARENT_ID
+						parentChatId = im_v2_const.ParentChatScope.topLevel
 					} = payload;
 					store.commit('clearCollection', {
 						parentChatId,
@@ -4642,7 +4784,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						dialogId,
 						type,
 						unread = false,
-						parentChatId = RecentModel.ROOT_PARENT_ID
+						parentChatId = im_v2_const.ParentChatScope.topLevel
 					} = payload;
 					store.commit('clearByDialogId', {
 						dialogId,
@@ -4650,6 +4792,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						unread,
 						parentChatId
 					});
+					const needToClearRootItem = im_v2_lib_recent.RecentManager.isTypeWithNestedChats(type) && parentChatId > 0;
+					if (needToClearRootItem) {
+						store.commit('clearByDialogId', {
+							dialogId,
+							type,
+							unread,
+							parentChatId: im_v2_const.ParentChatScope.topLevel
+						});
+					}
 				},
 				/** @function recent/set */
 				set: (store, payload) => {
@@ -7980,7 +8131,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		checkFunction: main_core.Type.isArray
 	}];
 
-	/* eslint-disable sonarjs/prefer-immediate-return */
 	// noinspection UnnecessaryLocalVariableJS
 	class CountersModel extends ui_vue3_vuex.BuilderModel {
 		getName() {
@@ -8025,15 +8175,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				getTotalLinesCounter: (state, getters) => {
 					return getters.getCounterByRecentType(im_v2_const.RecentType.openlines);
 				},
+				/** @function counters/getRecentSectionsByChatId */
+				getRecentSectionsByChatId: state => chatId => {
+					const counterItem = state.collection[chatId];
+					if (!counterItem) {
+						return [];
+					}
+					return counterItem.recentSections;
+				},
 				/** @function counters/getCounterByRecentType */
 				getCounterByRecentType: state => recentType => {
 					let totalCount = 0;
 					const collection = state.collection;
+					const shouldCheckParentMute = !im_v2_lib_recent.RecentManager.isTypeWithNestedChats(recentType);
 					for (const counterItem of Object.values(collection)) {
 						if (!this.#matchesRecentType(collection, counterItem, recentType)) {
 							continue;
 						}
-						if (this.#isMuted(counterItem) || this.#isParentMuted(state.collection, counterItem)) {
+						if (this.#isMuted(counterItem)) {
+							continue;
+						}
+						if (shouldCheckParentMute && this.#isParentMuted(state.collection, counterItem)) {
 							continue;
 						}
 						totalCount += this.#resolveCounter(counterItem);
@@ -8111,7 +8273,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 
 		/* eslint-disable no-param-reassign */
-		/* eslint-disable-next-line max-lines-per-function */
 		getActions() {
 			return {
 				/** @function counters/setCounters */
@@ -8260,7 +8421,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		#matchesRecentType(collection, counterItem, recentType) {
-			return this.#hasRecentType(counterItem, recentType) || this.#hasParentRecentType(collection, counterItem, recentType);
+			// chat's parent has section
+			if (this.#hasParentRecentType(collection, counterItem, recentType)) {
+				return true;
+			}
+			const isNestedChat = counterItem.parentChatId > 0;
+			if (isNestedChat) {
+				const shouldUseChildrenCounter = im_v2_lib_recent.RecentManager.isTypeWithNestedChats(recentType);
+
+				// nested chat has its own section - only for specific recent types
+				return shouldUseChildrenCounter && this.#hasRecentType(counterItem, recentType);
+			}
+
+			// root chat has section
+			return this.#hasRecentType(counterItem, recentType);
 		}
 		#hasRecentType(counterItem, recentType) {
 			return counterItem.recentSections.includes(recentType);
@@ -8331,6 +8505,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		fieldName: 'engine',
 		targetFieldName: 'aiModel',
 		checkFunction: main_core.Type.isString
+	}, {
+		fieldName: 'titleIsCustom',
+		targetFieldName: 'titleIsCustom',
+		checkFunction: main_core.Type.isBoolean
 	}];
 
 	const AI_MODEL_DEFAULT_NAME = 'none';
@@ -8347,8 +8525,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				dialogId: '',
 				role: '',
 				aiModel: '',
+				titleIsCustom: false,
 				reasoningEnabled: false,
 				forceSearchEnabled: false,
+				agentModeEnabled: false,
 				mcpAuth: null
 			};
 		}
@@ -8380,6 +8560,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const currentAiModel = aiModelList.find(aiModel => aiModel.code === chat.aiModel);
 					return currentAiModel ?? AI_MODEL_DEFAULT_NAME;
 				},
+				/** @function copilot/chats/titleIsCustom */
+				titleIsCustom: state => dialogId => {
+					const chat = state.collection[dialogId];
+					if (!chat) {
+						return false;
+					}
+					return state.collection[dialogId].titleIsCustom;
+				},
 				/** @function copilot/chats/isReasoningEnabled */
 				isReasoningEnabled: state => dialogId => {
 					const chat = state.collection[dialogId];
@@ -8395,6 +8583,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return false;
 					}
 					return state.collection[dialogId].forceSearchEnabled;
+				},
+				/** @function copilot/chats/isAgentModeEnabled */
+				isAgentModeEnabled: state => dialogId => {
+					const chat = state.collection[dialogId];
+					if (!chat) {
+						return false;
+					}
+					return state.collection[dialogId].agentModeEnabled;
 				},
 				/** @function copilot/chats/getMcpAuth */
 				getMcpAuth: state => dialogId => {
@@ -8442,6 +8638,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					}
 					store.commit('updateModel', payload);
 				},
+				/** @function copilot/chats/setTitleIsCustom */
+				setTitleIsCustom: (store, payload) => {
+					if (!payload || !store.state.collection[payload.dialogId]) {
+						return;
+					}
+					store.commit('setTitleIsCustom', payload);
+				},
 				/** @function copilot/chats/toggleReasoning */
 				toggleReasoning: (store, dialogId) => {
 					if (!store.state.collection[dialogId]) {
@@ -8455,6 +8658,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return;
 					}
 					store.commit('toggleForceSearch', dialogId);
+				},
+				/** @function copilot/chats/toggleAgentMode */
+				toggleAgentMode: (store, dialogId) => {
+					if (!store.state.collection[dialogId]) {
+						return;
+					}
+					store.commit('toggleAgentMode', dialogId);
 				},
 				/** @function copilot/chats/setMcpAuth */
 				setMcpAuth: (store, payload) => {
@@ -8498,11 +8708,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					} = payload;
 					state.collection[dialogId].aiModel = aiModel;
 				},
+				setTitleIsCustom: (state, payload) => {
+					state.collection[payload.dialogId].titleIsCustom = payload.titleIsCustom;
+				},
 				toggleReasoning: (state, dialogId) => {
 					state.collection[dialogId].reasoningEnabled = !state.collection[dialogId].reasoningEnabled;
 				},
 				toggleForceSearch: (state, dialogId) => {
 					state.collection[dialogId].forceSearchEnabled = !state.collection[dialogId].forceSearchEnabled;
+				},
+				toggleAgentMode: (state, dialogId) => {
+					state.collection[dialogId].agentModeEnabled = !state.collection[dialogId].agentModeEnabled;
 				},
 				setMcpAuth: (state, payload) => {
 					state.collection[payload.dialogId].mcpAuth = payload.mcpAuth;
@@ -8753,7 +8969,71 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const RECOMMENDED_ROLES_LIMIT = 4;
+	const ALLOWED_VOTE_VALUES = new Set(['like', 'dislike']);
+	const votesFieldsConfig = [{
+		fieldName: 'messageId',
+		targetFieldName: 'messageId',
+		checkFunction: value => main_core.Type.isNumber(value) && value > 0
+	}, {
+		fieldName: 'value',
+		targetFieldName: 'value',
+		checkFunction: value => main_core.Type.isString(value) && ALLOWED_VOTE_VALUES.has(value)
+	}];
+
+	/* eslint-disable no-param-reassign */
+	class VotesModel extends ui_vue3_vuex.BuilderModel {
+		getState() {
+			return {
+				collection: {}
+			};
+		}
+		getElementState() {
+			return {
+				messageId: 0,
+				value: 'like'
+			};
+		}
+		getGetters() {
+			return {
+				/** @function copilot/votes/getValue */
+				getValue: state => messageId => {
+					return state.collection[messageId]?.value ?? null;
+				}
+			};
+		}
+		getActions() {
+			return {
+				/** @function copilot/votes/set */
+				set: (store, payload) => {
+					const preparedVote = this.formatFields(payload);
+					if (main_core.Type.isUndefined(preparedVote.messageId) || main_core.Type.isUndefined(preparedVote.value)) {
+						return;
+					}
+					store.commit('set', preparedVote);
+				},
+				/** @function copilot/votes/delete */
+				delete: (store, messageId) => {
+					if (!main_core.Type.isNumber(messageId) || !store.state.collection[messageId]) {
+						return;
+					}
+					store.commit('delete', messageId);
+				}
+			};
+		}
+		getMutations() {
+			return {
+				set: (state, payload) => {
+					state.collection[payload.messageId] = payload;
+				},
+				delete: (state, messageId) => {
+					delete state.collection[messageId];
+				}
+			};
+		}
+		formatFields(fields) {
+			return im_v2_model.formatFieldsWithConfig(fields, votesFieldsConfig);
+		}
+	}
 
 	/* eslint-disable no-param-reassign */
 	class CopilotModel extends ui_vue3_vuex.BuilderModel {
@@ -8761,7 +9041,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				roles: RolesModel,
 				messages: MessagesModel,
-				chats: ChatsModel
+				chats: ChatsModel,
+				votes: VotesModel
 			};
 		}
 		getName() {
@@ -8769,10 +9050,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		getState() {
 			return {
-				recommendedRoles: [],
 				aiProvider: '',
 				availableAIModels: {},
-				name: ''
+				name: '',
+				agentName: '',
+				widgetDialogId: ''
 			};
 		}
 		getGetters() {
@@ -8784,13 +9066,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function copilot/getAIModels */
 				getAIModels: state => {
 					return Object.values(state.availableAIModels);
-				},
-				/** @function copilot/getRecommendedRoles */
-				getRecommendedRoles: state => () => {
-					const roles = state.recommendedRoles.map(roleCode => {
-						return im_v2_application_core.Core.getStore().getters['copilot/roles/getByCode'](roleCode);
-					});
-					return roles.slice(0, RECOMMENDED_ROLES_LIMIT);
 				},
 				/** @function copilot/getDefaultModelName */
 				getDefaultModelName: state => {
@@ -8811,18 +9086,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function copilot/getName */
 				getName: state => {
 					return state.name;
+				},
+				/** @function copilot/getAgentName */
+				getAgentName: state => {
+					return state.agentName;
+				},
+				/** @function copilot/isChatOpenedInWidget */
+				isChatOpenedInWidget: state => dialogId => {
+					return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
 				}
 			};
 		}
 		getActions() {
 			return {
-				/** @function copilot/setRecommendedRoles */
-				setRecommendedRoles: (store, payload) => {
-					if (!main_core.Type.isArrayFilled(payload)) {
-						return;
-					}
-					store.commit('setRecommendedRoles', payload);
-				},
 				/** @function copilot/setProvider */
 				setProvider: (store, payload) => {
 					if (!main_core.Type.isStringFilled(payload)) {
@@ -8845,14 +9121,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return;
 					}
 					store.commit('setName', payload);
+				},
+				/** @function copilot/setAgentName */
+				setAgentName: (store, payload) => {
+					if (!main_core.Type.isStringFilled(payload)) {
+						return;
+					}
+					store.commit('setAgentName', payload);
+				},
+				/** @function copilot/setWidgetDialogId */
+				setWidgetDialogId: (store, payload) => {
+					store.commit('setWidgetDialogId', payload ?? '');
 				}
 			};
 		}
 		getMutations() {
 			return {
-				setRecommendedRoles: (state, payload) => {
-					state.recommendedRoles = payload;
-				},
 				setProvider: (state, payload) => {
 					state.aiProvider = payload;
 				},
@@ -8861,11 +9145,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				setName: (state, payload) => {
 					state.name = payload;
+				},
+				setAgentName: (state, payload) => {
+					state.agentName = payload;
+				},
+				setWidgetDialogId: (state, payload) => {
+					state.widgetDialogId = payload;
 				}
 			};
 		}
 		formatFields(fields) {
-			return im_v2_model.formatFieldsWithConfig(fields, copilotFieldsConfig);
+			return formatFieldsWithConfig(fields, copilotFieldsConfig);
 		}
 	}
 

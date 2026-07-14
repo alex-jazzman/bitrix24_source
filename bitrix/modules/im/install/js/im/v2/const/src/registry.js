@@ -1,7 +1,7 @@
 export { RestMethod } from './rest';
 export { EventType } from './events';
 export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment, DialogIdChatPrefix } from './chat';
-export { FileStatus, FileType, FileIconType, FileViewerContext, AudioPlaybackRate, AudioPlaybackState } from './file';
+export { FileStatus, FileType, FileIconType, FileViewerContext, AudioPlaybackRate, AudioPlaybackState, PlaylistScope } from './file';
 export {
 	MessageType,
 	MessageComponent,
@@ -46,7 +46,8 @@ export { DataAttribute } from './data-attributе';
 export { StickerPackType, StickerType } from './sticker';
 export { TabId } from './tab';
 export { SelectorEntity } from './entity-selector';
-export { MessageBuilderPlainColorToken, MessageBuilderGradientColorToken } from './message-builder.js';
+export { MessageBuilderPlainColorToken, MessageBuilderBackgroundPlainToken, MessageBuilderGradientColorToken } from './message-builder.js';
+export { ParentChatScope } from './parent-chat-scope.js';
 
 export type {
 	OnLayoutChangeEvent,
@@ -91,5 +92,12 @@ export type {
 	SpaceDividerBlockType,
 	TableBlockType,
 	AiAssistantSearchBlockType,
+	CardBlockType,
+	EventButtonBlockType,
+	LinkButtonBlockType,
+	AnyButtonBlock,
+	GalleryBlockType,
 	AnyBlockType,
 } from './message-builder';
+
+export type { SelectorEntityItem } from './entity-selector.js';

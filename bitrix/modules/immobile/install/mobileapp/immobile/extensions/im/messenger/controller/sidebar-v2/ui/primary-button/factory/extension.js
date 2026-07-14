@@ -97,7 +97,9 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 		};
 	};
 
-	const createCopilotRoleButton = ({ onClick, disabled, selected, dialogId, ahaMoment, ...rest }) => {
+	const createCopilotRoleButton = ({
+		onClick, disabled, selected, dialogId, copilotBotId, chatId, ahaMoment, ...rest
+	}) => {
 		const title = Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_COPILOT_ROLE_MSGVER_1');
 		const id = SidebarPrimaryActionButtonId.COPILOT_ROLE;
 
@@ -110,7 +112,8 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 			ahaMoment,
 			renderCustomContent: () => [
 				SidebarAvatar({
-					dialogId,
+					dialogId: copilotBotId ?? dialogId,
+					options: { chatId },
 					size: 32,
 					isNotes: false,
 					style: {

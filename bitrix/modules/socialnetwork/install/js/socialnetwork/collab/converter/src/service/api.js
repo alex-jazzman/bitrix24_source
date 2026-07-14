@@ -3,20 +3,6 @@ import { mapGroupDtoToModel } from './mappers';
 
 class Api
 {
-	async validateGroup(groupId: number): Promise<boolean>
-	{
-		const result = await ajax.runAction('socialnetwork.collab.Converter.validateGroup', {
-			data: {
-				id: groupId,
-			},
-		});
-
-		return {
-			isValid: result.data.isValid,
-			errors: result.errors,
-		};
-	}
-
 	async getGroup(groupId: number): Promise<void>
 	{
 		const result = await ajax.runAction('socialnetwork.api.workgroup.get', {
@@ -38,9 +24,11 @@ class Api
 
 	async convertToCollab(groupId: number): Promise<void>
 	{
-		const result = await ajax.runAction('socialnetwork.collab.Converter.convertToCollab', {
+		const result = await ajax.runAction('socialnetwork.v2.Convert.convertToProject', {
 			data: {
-				id: groupId,
+				group: {
+					id: groupId,
+				},
 			},
 		});
 

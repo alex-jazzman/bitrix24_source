@@ -17,6 +17,7 @@ return [
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/lib/project-access-guard',
 		'im:messenger/provider/services/chat',
 		'im:messenger/provider/services/analytics',
 		'im:messenger/lib/element/chat-avatar',

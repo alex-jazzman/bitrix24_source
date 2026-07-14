@@ -1,16 +1,18 @@
-import { LocalEmailPage } from './page/local-email-page';
+import { Loc, Type } from 'main.core';
+
+import { DepartmentControl, EntityType } from 'intranet.department-control';
+
+import { DepartmentControlBlock } from './elements/department-control-block';
+import { InputRowFactory } from './input-row-factory';
 import { ExtranetPage } from './page/extranet-page';
 import { IntegratorPage } from './page/integrator-page';
-import { LinkPage } from './page/link-page';
 import { InvitePage } from './page/invite-page';
+import { LinkDisabledPage } from './page/link-disabled-page';
+import { LinkPage } from './page/link-page';
 import { MassPage } from './page/mass-page';
 import { RegisterPage } from './page/register-page';
-import { Loc, Type } from 'main.core';
-import { DepartmentControl, EntityType } from 'intranet.department-control';
-import { InputRowFactory } from './input-row-factory';
-import type { PageOptions } from './type/page-options';
-import { LinkDisabledPage } from './page/link-disabled-page';
 import InviteType from './type/invite-type';
+import { type PageOptions } from './type/page-options';
 
 export class PageFactory
 {
@@ -23,26 +25,17 @@ export class PageFactory
 		this.#userOptions = userOptions;
 	}
 
-	createLocalEmailPage(): LocalEmailPage
-	{
-		return new LocalEmailPage({
-			...this.#options,
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'),
-				[EntityType.DEPARTMENT],
-			),
-		});
-	}
-
 	createInvitePage(inviteType: InviteType, showMassInviteButton: Boolean = true): InvitePage
 	{
+		const departmentControl = this.createDepartmentControl(
+			[EntityType.DEPARTMENT, EntityType.GROUP, EntityType.EXTRANET],
+		);
+
 		return new InvitePage({
 			...this.#options,
 			inviteType,
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'),
-				[EntityType.DEPARTMENT, EntityType.GROUP, EntityType.EXTRANET],
-			),
+			departmentControl,
+			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 			inputsFactory: this.createInputRowFactory(inviteType),
 			showMassInviteButton,
 		});
@@ -50,24 +43,28 @@ export class PageFactory
 
 	createExtranetPage(): ExtranetPage
 	{
+		const departmentControl = this.createDepartmentControl(
+			[EntityType.EXTRANET],
+		);
+
 		return new ExtranetPage({
 			...this.#options,
 			inputsFactory: this.createInputRowFactory(InviteType.ALL),
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_EXTRANET'),
-				[EntityType.EXTRANET],
-			),
+			departmentControl,
+			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 		});
 	}
 
 	createRegisterPage(): RegisterPage
 	{
+		const departmentControl = this.createDepartmentControl(
+			[EntityType.DEPARTMENT, EntityType.GROUP, EntityType.EXTRANET],
+		);
+
 		return new RegisterPage({
 			...this.#options,
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'),
-				[EntityType.DEPARTMENT, EntityType.GROUP, EntityType.EXTRANET],
-			),
+			departmentControl,
+			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 			inputsFactory: this.createInputRowFactory(),
 		});
 	}
@@ -81,12 +78,14 @@ export class PageFactory
 
 	createLinkPage(): LinkPage
 	{
+		const departmentControl = this.createDepartmentControl(
+			[EntityType.DEPARTMENT, EntityType.GROUP],
+		);
+
 		return new LinkPage({
 			...this.#options,
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'),
-				[EntityType.DEPARTMENT, EntityType.GROUP],
-			),
+			departmentControl,
+			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 		});
 	}
 
@@ -99,15 +98,25 @@ export class PageFactory
 
 	createMassPage(): MassPage
 	{
+		const departmentControl = this.createDepartmentControl(
+			[EntityType.DEPARTMENT],
+		);
+
 		return new MassPage({
-			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'),
-				[EntityType.DEPARTMENT],
-			),
+			departmentControl,
+			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 		});
 	}
 
-	createDepartmentControl(description: string, entitiesType: Array): DepartmentControl
+	createDepartmentControlBlock(departmentControl: DepartmentControl): DepartmentControlBlock
+	{
+		return new DepartmentControlBlock({
+			departmentControl,
+			canCreateDepartment: this.#options.canCurrentUserCreateDepartment === true,
+		});
+	}
+
+	createDepartmentControl(entitiesType: Array): DepartmentControl
 	{
 		const departmentsId = Type.isArray(this.#userOptions?.departmentList)
 			? this.#userOptions.departmentList
@@ -145,18 +154,21 @@ export class PageFactory
 		return new DepartmentControl({
 			id: 'invite-page-department-control',
 			title: '',
-			description,
+			description: '',
 			entitiesType,
 			groupOptions,
 			preselectedItems,
 			departmentList: departmentsId,
+			showDepartmentCreationFooter: true,
+			showDepartmentCreationFooterInRecentTab: true,
+			showDepartmentCreationFooterInSearchTab: true,
 			dialogOptions: {
 				alwaysShowLabels: true,
 			},
 			rootDepartment: Type.isObject(rootDepartment) ? rootDepartment : null,
 			addButtonCaption: withGroups
-				? Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP')
-				: Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION'),
+				? Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP_MSGVER_1')
+				: Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_MSGVER_1'),
 		});
 	}
 

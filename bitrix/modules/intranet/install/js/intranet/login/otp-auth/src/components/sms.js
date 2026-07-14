@@ -3,7 +3,7 @@ import { Headline } from 'ui.system.typography.vue';
 import { VerificationCode } from './verification-code';
 import { Ajax } from '../api/ajax';
 import { Captcha } from './captcha';
-import { sendData } from 'ui.analytics';
+import { sendOtpAnalytics } from '../analytics';
 import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
 
 // @vue/component
@@ -114,9 +114,7 @@ export const Sms = {
 		},
 		sendAnalytics(event)
 		{
-			sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event,
 			});
 		},

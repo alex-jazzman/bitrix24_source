@@ -1,1 +1,45 @@
-this.BX=this.BX||{},function(t,e,n){"use strict";function i(t,e,n){(function(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")})(t,e),e.set(t,n)}function s(t,e){return t.get(r(t,e))}function o(t,e,n){return t.set(r(t,e),n),n}function r(t,e,n){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:n;throw new TypeError("Private element is not present on this object")}var a=new WeakMap,h=new WeakMap;class c{constructor(){i(this,a,void 0),i(this,h,void 0)}static getInstance(){return r(c,this,u)._||(u._=r(c,this,new this)),r(c,this,u)._}showMenuForLinux(t,i,r){t.preventDefault(),o(h,this,r),o(a,this,s(a,this)||new e.Menu({className:"system-auth-form__popup",bindElement:i,items:[{text:n.Loc.getMessage("B24_BANNER_DOWNLOAD_LINUX_DEB"),href:s(h,this).deb,onclick:t=>{t.close()}},{text:n.Loc.getMessage("B24_BANNER_DOWNLOAD_LINUX_RPM"),href:s(h,this).rpm,onclick:t=>{t.close()}}],angle:!0,offsetLeft:n.Dom.getPosition(i).width/2})),s(a,this).toggle()}}var u={_:void 0};t.Bitrix24Banner=c}(this.BX.Intranet=this.BX.Intranet||{},BX.Main,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_popup, main_core) {
+	'use strict';
+
+	class Bitrix24Banner {
+		#menuLinux;
+		static #instance;
+		#installersForLinux;
+		static getInstance() {
+			if (!this.#instance) {
+				this.#instance = new this();
+			}
+			return this.#instance;
+		}
+		showMenuForLinux(event, target, links) {
+			event.preventDefault();
+			this.#installersForLinux = links;
+			this.#menuLinux = this.#menuLinux || new main_popup.Menu({
+				className: 'system-auth-form__popup',
+				bindElement: target,
+				items: [{
+					text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
+					href: this.#installersForLinux.deb,
+					onclick: element => {
+						element.close();
+					}
+				}, {
+					text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
+					href: this.#installersForLinux.rpm,
+					onclick: element => {
+						element.close();
+					}
+				}],
+				angle: true,
+				offsetLeft: main_core.Dom.getPosition(target).width / 2
+			});
+			this.#menuLinux.toggle();
+		}
+	}
+
+	exports.Bitrix24Banner = Bitrix24Banner;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX.Main, BX);
+//# sourceMappingURL=script.js.map

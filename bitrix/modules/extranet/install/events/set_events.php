@@ -1,4 +1,4 @@
-<?
+<?php
 $langs = CLanguage::GetList();
 while($lang = $langs->Fetch())
 {
@@ -36,6 +36,22 @@ while($lang = $langs->Fetch())
 		"NAME" => GetMessage("EXTRANET_INVITATION_NAME"),
 		"DESCRIPTION" => GetMessage("EXTRANET_INVITATION_DESC"),
 	));
+
+	$et = new CEventType;
+	$et->Add([
+		"LID" => $lid,
+		"EVENT_NAME" => "EXTRANET_PROJECT_TO_ARCHIVE",
+		"NAME" => GetMessage("EXTRANET_PROJECT_TO_ARCHIVE_NAME"),
+		"DESCRIPTION" => GetMessage("EXTRANET_PROJECT_TO_ARCHIVE_DESC"),
+	]);
+
+	$et = new CEventType;
+	$et->Add([
+		"LID" => $lid,
+		"EVENT_NAME" => "EXTRANET_PROJECT_FROM_ARCHIVE",
+		"NAME" => GetMessage("EXTRANET_PROJECT_FROM_ARCHIVE_NAME"),
+		"DESCRIPTION" => GetMessage("EXTRANET_PROJECT_FROM_ARCHIVE_DESC"),
+	]);
 	
 	$arSites = array();
 	$sites = CSite::GetList("", "", Array("LANGUAGE_ID"=>$lid));
@@ -108,6 +124,31 @@ while($lang = $langs->Fetch())
 			'MESSAGE' => '<?EventMessageThemeCompiler::includeComponent("bitrix:intranet.template.mail", "", array("USER_ID" => "{#USER_ID#}","SERVER_NAME" => "{#SERVER_NAME#}","USER_TEXT" => "{#USER_TEXT#}","USER_ID_FROM" => "{#USER_ID_FROM#}","TEMPLATE_TYPE" => "COLLAB_JOIN","FIELDS" => $arParams));?>',
 			'BODY_TYPE' => 'html',
 		));
+
+		$emess = new CEventMessage;
+		$emess->Add([
+			"ACTIVE" => "Y",
+			"EVENT_NAME" => "EXTRANET_PROJECT_TO_ARCHIVE",
+			"LID" => $arSites,
+			"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
+			"EMAIL_TO" => "#MEMBER_EMAIL#",
+			"BCC" => "",
+			"SUBJECT" => GetMessage("EXTRANET_PROJECT_TO_ARCHIVE_SUBJECT"),
+			"MESSAGE" => GetMessage("EXTRANET_PROJECT_TO_ARCHIVE_MESSAGE"),
+			"BODY_TYPE" => "text",
+		]);
+
+		$emess = new CEventMessage;
+		$emess->Add([
+			"ACTIVE" => "Y",
+			"EVENT_NAME" => "EXTRANET_PROJECT_FROM_ARCHIVE",
+			"LID" => $arSites,
+			"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
+			"EMAIL_TO" => "#MEMBER_EMAIL#",
+			"BCC" => "",
+			"SUBJECT" => GetMessage("EXTRANET_PROJECT_FROM_ARCHIVE_SUBJECT"),
+			"MESSAGE" => GetMessage("EXTRANET_PROJECT_FROM_ARCHIVE_MESSAGE"),
+			"BODY_TYPE" => "text",
+		]);
 	}
 }
-?>

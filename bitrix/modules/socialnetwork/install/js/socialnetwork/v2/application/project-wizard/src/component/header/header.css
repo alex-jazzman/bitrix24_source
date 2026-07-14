@@ -1,0 +1,5 @@
+.socialnetwork--project-wizard-header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+}

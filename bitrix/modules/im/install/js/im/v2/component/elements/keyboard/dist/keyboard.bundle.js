@@ -113,11 +113,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			button() {
 				return this.config;
 			},
+			isAiAssistant() {
+				return this.button.bgColorToken === im_v2_const.ColorToken.aiAssistant;
+			},
 			commonAttributes() {
-				return {
+				const attrs = {
 					class: ['bx-im-keyboard-button__container', this.buttonClasses],
 					style: this.buttonStyles
 				};
+				if (this.isAiAssistant) {
+					attrs['data-text'] = this.button.text;
+					attrs.title = this.button.text;
+				}
+				return attrs;
 			},
 			buttonClasses() {
 				const {

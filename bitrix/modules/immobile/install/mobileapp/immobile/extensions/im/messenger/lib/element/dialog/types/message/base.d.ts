@@ -15,7 +15,7 @@ import {CheckInMessageData} from "../../../src/dialog/message/check-in/types/che
 import {CallMessageData} from "../../../src/dialog/message/call/types/call-configuration";
 import {MessageVideoNote} from "./element/video-note";
 import {StickerState} from "../../../../../model/sticker-pack/src/types";
-import {DialogWidgetBuilderItem} from "../../../../../model/messages/src/types/builder";
+import {DialogWidgetBlockItem} from "../../../../../model/messages/src/types/block";
 
 declare type MessageRichLink = {
 	description: string,
@@ -47,7 +47,7 @@ export type DialogWidgetItem = MediaGalleryDialogWidgetItem|FileGalleryDialogWid
 	FileDialogWidgetItem|ImageDialogWidgetItem|VideoDialogWidgetItem|AudioDialogWidgetItem|
 	CopilotDialogWidgetItem|CopilotPromptDialogWidgetItem|CopilotErrorDialogWidgetItem|
 	VoteDialogWidgetItem|CheckInDialogWidgetItem|CallDialogWidgetItem|BannerDialogWidgetItem|
-	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem|AiBizprocDialogWidgetItem|BuilderDialogWidgetItem;
+	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem|AiBizprocDialogWidgetItem|BlockDialogWidgetItem;
 
 export type BaseDialogWidgetItem = {
 	align: 'center' | 'left' | 'right' | null,
@@ -101,6 +101,7 @@ type MessageStyle = {
 		timeColor?: string,
 		linkUnderlined?: boolean,
 		backgroundQuoteColor?: string,
+		quoteExpandIconColor?: string,
 	},
 	file?: {
 		nameColor?: string,
@@ -223,8 +224,9 @@ export type StickerDialogWidgetItem = BaseDialogWidgetItem & {
 	sticker: StickerState,
 }
 
-export type BuilderDialogWidgetItem = BaseDialogWidgetItem & {
-	builder: DialogWidgetBuilderItem,
+export type BlockDialogWidgetItem = BaseDialogWidgetItem & {
+	builder: DialogWidgetBlockItem,
+	mediaList?: Array<MessageVideo | MessageImage>,
 }
 
 export type Speech2Text = {

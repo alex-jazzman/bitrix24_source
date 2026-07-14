@@ -1,0 +1,2 @@
+<?php
+$MESS['SOCNET_FEATURE_MENU_APPLICATIONS'] = 'Приложения';

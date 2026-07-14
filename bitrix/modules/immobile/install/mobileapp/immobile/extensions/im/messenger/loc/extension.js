@@ -4,6 +4,10 @@
 jn.define('im/messenger/loc', (require, exports, module) => {
 	const { Loc: MobileLoc } = require('loc');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { featurePhrases } = require('im/messenger/loc/src/feature-phrases');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+
+	const logger = getLoggerWithContext('loc', 'Loc');
 
 	const IMMOBILE_COPILOT_BOT_NAME_KEY = 'IMMOBILE_COPILOT_BOT_NAME';
 
@@ -20,6 +24,29 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 			Loc.setAiAssistantStatusMessages();
 			Loc.setCopilotBotNameMessage();
 			Loc.setNavigationTabTitles();
+			Loc.applyFeaturePhrases();
+		}
+
+		static applyFeaturePhrases()
+		{
+			for (const { isFeatureEnabled, phrases } of featurePhrases)
+			{
+				if (isFeatureEnabled())
+				{
+					continue;
+				}
+
+				for (const [newPhraseCode, legacyPhraseCode] of Object.entries(phrases))
+				{
+					const legacyValue = Loc.getMessage(legacyPhraseCode);
+					if (!legacyValue || legacyValue === legacyPhraseCode)
+					{
+						logger.error(`applyFeaturePhrases: missing legacy "${legacyPhraseCode}" for "${newPhraseCode}"`);
+						continue;
+					}
+					Loc.setMessage(newPhraseCode, legacyValue);
+				}
+			}
 		}
 
 		/**

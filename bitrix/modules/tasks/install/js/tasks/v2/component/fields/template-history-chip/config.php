@@ -10,13 +10,13 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'main.core.events',
-		'ui.system.chip.vue',
-		'ui.icon-set.api.vue',
-		'ui.vue3.directives.hint',
-		'ui.icon-set.outline',
+		'tasks.v2.component.elements.hint',
 		'tasks.v2.const',
 		'tasks.v2.lib.id-utils',
-		'tasks.v2.component.elements.hint',
+		'ui.icon-set.api.vue',
+		'ui.icon-set.outline',
+		'ui.system.chip.vue',
+		'ui.vue3.directives.hint',
 	],
 	'skip_core' => true,
 ];

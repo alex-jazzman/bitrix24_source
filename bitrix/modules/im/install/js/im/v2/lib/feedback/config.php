@@ -10,6 +10,7 @@ return [
 	],
 	'rel' => [
 		'im.v2.application.core',
+		'im.v2.lib.feature',
 		'main.core',
 	],
 	'skip_core' => false,

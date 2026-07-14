@@ -1,0 +1,21 @@
+/* normalize */
+.tasks-closer-embedded {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+/* normalize end */
+
+.tasks-closer-embedded {
+	margin: var(--margin-button);
+	padding: var(--padding-button);
+	line-height: 0;
+}
+
+.tasks-closer-embedded__icon {
+	--ui-icon-set__icon-color: var(--color-icon);
+	--ui-icon-set__icon-size: var(--size-icon);
+}

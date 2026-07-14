@@ -1,5 +1,9 @@
 .note-editor-root {
 	--note-editor-toolbar-height: 44px;
+	/* Reserved left field for heading anchor controls (#, chevron). The content
+	 * keeps at least this much left padding so the controls never slide off the
+	 * usable area on narrow / mobile viewports. */
+	--note-heading-gutter: 48px;
 	color: var(--ui-color-base-1);
 	width: 100%;
 	height: 100%;
@@ -8,7 +12,7 @@
 	min-height: 0;
 }
 
-.note-editor-toolbar {
+.note-editor-toolbar-wrap {
 	position: sticky;
 	top: var(--note-editor-toolbar-sticky-top, 10px);
 	z-index: 100;
@@ -17,33 +21,62 @@
 	height: 40px;
 	min-height: 40px;
 	margin: 10px auto 0 auto;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-pill, 512px);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-box-shadow-graphic-glass-content-default-x) var(--ui-box-shadow-graphic-glass-content-default-y) 10px var(--ui-box-shadow-graphic-glass-content-default-spread) var(--ui-color-box-shadow-graphic-glass-content-default-color);
+	align-self: center;
+	box-sizing: border-box;
+}
+
+.note-editor-toolbar-fixed {
+	margin: 0;
+}
+
+.note-editor-toolbar {
+	width: 100%;
+	height: 100%;
 	padding: var(--ui-space-stack-xs, 8px) var(--ui-space-inline-md, 16px);
 	display: flex;
 	align-items: center;
 	gap: var(--ui-space-inline-xs, 8px);
 	flex-wrap: nowrap;
-	border: 1px solid var(--ui-color-divider-default);
-	border-radius: var(--ui-border-radius-pill, 512px);
-	background: var(--ui-color-bg-content-primary);
-	box-shadow: var(--ui-box-shadow-graphic-glass-content-default-x) var(--ui-box-shadow-graphic-glass-content-default-y) 10px var(--ui-box-shadow-graphic-glass-content-default-spread) var(--ui-color-box-shadow-graphic-glass-content-default-color);
 	overflow-x: auto;
 	overflow-y: hidden;
-	-webkit-overflow-scrolling: touch;
-	align-self: center;
+	box-sizing: border-box;
+	scrollbar-width: none;
 }
 
 .note-editor-toolbar::-webkit-scrollbar {
-	display: none;
+	height: 0;
+	background: transparent;
 }
 
-@supports not selector(::-webkit-scrollbar) {
-	.note-editor-toolbar {
-		scrollbar-width: none;
-	}
+.note-editor-toolbar-thumb {
+	position: absolute;
+	bottom: 3px;
+	left: 0;
+	width: var(--thumb-width, 0);
+	height: 3px;
+	border-radius: 2px;
+	background: var(--ui-color-base-3);
+	transform: translate3d(var(--thumb-offset, 0), 3px, 0) scaleY(0);
+	transform-origin: bottom center;
+	opacity: 0;
+	pointer-events: none;
+	cursor: grab;
+	touch-action: none;
+	transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.note-editor-toolbar-fixed {
-	margin: 0;
+.note-editor-toolbar-thumb:active {
+	cursor: grabbing;
+}
+
+.note-editor-toolbar-wrap:hover .note-editor-toolbar-thumb {
+	opacity: 0.85;
+	transform: translate3d(var(--thumb-offset, 0), 0, 0) scaleY(1);
+	pointer-events: auto;
 }
 
 .note-editor-toolbar-placeholder {
@@ -219,7 +252,9 @@
 .note-editor-title-block {
 	width: min(100%, 1000px);
 	margin: 0 auto;
-	padding: 1.5rem 1rem 0 1rem;
+	/* Align the title's left edge with the heading text (which is inset by the
+	 * reserved anchor gutter). */
+	padding: 1.5rem 1rem 0 var(--note-heading-gutter, 48px);
 }
 
 .note-editor-title {
@@ -245,7 +280,7 @@
 }
 
 .ProseMirror.note-editor-prose {
-	padding: 1rem;
+	padding: 1rem 1rem 1rem var(--note-heading-gutter, 48px);
 	min-height: 100%;
 	outline: none;
 	color: var(--ui-color-base-1);
@@ -280,6 +315,142 @@
 
 .ProseMirror.note-editor-prose h4 {
 	font-size: 1.1rem;
+}
+
+/* Heading anchor NodeView: editable heading + left gutter with anchor controls. */
+.ProseMirror.note-editor-prose .note-heading {
+	position: relative;
+	margin: 1rem 0 0.5rem;
+	scroll-margin-top: 90px;
+}
+
+.ProseMirror.note-editor-prose .note-heading__text {
+	margin: 0;
+}
+
+.note-heading__gutter {
+	position: absolute;
+	right: calc(100% + var(--note-heading-anchor-inset, 0px));
+	top: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 2px;
+	padding-right: 6px;
+	height: 1.8em;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.note-heading[data-level="1"] .note-heading__gutter {
+	height: 2.4rem;
+}
+
+.note-heading[data-level="2"] .note-heading__gutter {
+	height: 1.8rem;
+}
+
+.note-heading[data-level="3"] .note-heading__gutter {
+	height: 1.5rem;
+}
+
+.note-heading[data-level="4"] .note-heading__gutter {
+	height: 1.32rem;
+}
+
+/* Headings nested in a blockquote or callout are plain: the NodeView renders
+ * them without the gutter (no anchor/collapse controls), so there is nothing to
+ * inset here — they keep only the shared .note-heading text styling above. */
+
+.note-heading__hash {
+	appearance: none;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+	line-height: 1;
+	color: var(--ui-color-base-60, #959ba4);
+	opacity: 0;
+	transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.note-heading:hover .note-heading__hash {
+	opacity: 1;
+}
+
+.note-heading__hash:hover {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.note-heading__hash:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Collapse toggle — chevron matches the sidebar disclosure (.tree-disclosure). */
+.note-heading__toggle {
+	appearance: none;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+	opacity: 0;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Toggle is visible only when the section is collapsed or while editing.
+ * In read mode an expanded heading is collapsed by clicking the heading text
+ * (see HeadingBlockNodeView#onHeadingClick). */
+.note-heading[data-collapsed="true"] .note-heading__toggle,
+.ProseMirror.note-editor-prose[contenteditable="true"] .note-heading__toggle {
+	opacity: 1;
+}
+
+/* On web (hover-capable), reveal the toggle while hovering a heading, even when
+ * the section is expanded. Mobile has no hover and keeps the column rule above. */
+html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
+	opacity: 1;
+}
+
+.note-heading__toggle.is-expanded {
+	transform: rotate(90deg);
+}
+
+.note-heading__toggle:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* !important so the mask always wins over a masked block's own display — e.g. a
+   callout sets `display: flex` at higher specificity and would otherwise stay
+   visible inside a collapsed section. */
+.note-heading-collapsed-block {
+	display: none !important;
+}
+
+/* Collapsed sections must be readable in the printed document. */
+@media print {
+	.note-heading-collapsed-block {
+		display: revert !important;
+	}
 }
 
 .ProseMirror.note-editor-prose a {
@@ -1036,6 +1207,37 @@
 	cursor: zoom-in;
 }
 
+/* Loading skeleton shown while the resolver fetches the file URL (avoids the "Без названия" flash). */
+.ProseMirror.note-editor-prose .note-editor-attachment-skeleton {
+	border-radius: 6px;
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.ProseMirror.note-editor-prose .note-editor-image-attachment-loading {
+	width: 100%;
+	min-height: 7.5rem;
+	border-radius: 8px;
+}
+
+.ProseMirror.note-editor-prose .note-editor-attachment-skeleton--line {
+	display: inline-block;
+	width: 9rem;
+	max-width: 60%;
+	height: 0.9rem;
+	vertical-align: middle;
+}
+
+/* Unavailable placeholder: file that the backend could not resolve (e.g. revoked access). */
+.ProseMirror.note-editor-prose .note-editor-attachment--unavailable {
+	opacity: 0.7;
+}
+
+.ProseMirror.note-editor-prose .note-editor-attachment--unavailable .note-editor-file-attachment-name,
+.ProseMirror.note-editor-prose .note-editor-attachment--unavailable .note-editor-video-name {
+	color: var(--ui-color-base-2);
+	font-weight: 400;
+}
+
 .ProseMirror.note-editor-prose .note-editor-file-attachment-text {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -1327,6 +1529,9 @@
 	display: flex;
 	flex-direction: column;
 	background: none;
+	/* No static bottom padding — feature/create-document-feature.js's
+	   #ensureRoomToScrollTargetToTop tops it up inline only when an anchor
+	   navigation actually needs the extra runway. */
 }
 
 .note-editor-document-host {
@@ -1548,7 +1753,7 @@ html.note-mobile .note-editor-input {
 
 /* ===== Editor content: typography ===== */
 html.note-mobile .note-editor-title-block {
-	padding: 1rem 12px 0 12px;
+	padding: 1rem 12px 0 var(--note-heading-gutter, 40px);
 }
 
 html.note-mobile .note-editor-title {
@@ -1562,7 +1767,7 @@ html.note-mobile .note-editor-title {
  * - media: contained to 100% width.
  */
 html.note-mobile .ProseMirror.note-editor-prose {
-	padding: 12px;
+	padding: 12px 12px 12px var(--note-heading-gutter, 40px);
 	overflow-wrap: anywhere;
 	word-break: break-word;
 }
@@ -1583,4 +1788,64 @@ html.note-mobile .ProseMirror.note-editor-prose .note-table-wrapper {
 	max-width: 100%;
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/* The left field holds only the collapse chevron (reduced width); the link
+ * icon trails the heading text in the content flow. */
+html.note-mobile .note-editor-root {
+	--note-heading-gutter: 40px;
+}
+
+/* Heading row flows inline so the link icon can sit right after the title. */
+html.note-mobile .note-heading {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+}
+
+html.note-mobile .note-heading__text {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+/* Left gutter: just the chevron, kept under the burger icon. The 22px menu
+ * glyph is centered in the 48px header button, i.e. (48 - 22) / 2 = 13px. */
+html.note-mobile .note-heading__gutter {
+	width: var(--note-heading-gutter, 40px);
+	justify-content: flex-start;
+	padding-left: 13px;
+	padding-right: 0;
+}
+
+html.note-mobile .note-heading__toggle {
+	width: 24px;
+	height: 24px;
+}
+
+/* Chevron is revealed by a tap, in addition to the shared rule that shows it
+ * when the section is collapsed or while editing. */
+html.note-mobile .note-heading.is-revealed .note-heading__toggle {
+	opacity: 1;
+}
+
+/* Link icon: hidden until the heading is revealed by a tap, then shown trailing
+ * the heading text (collapsed headings included). */
+html.note-mobile .note-heading__hash {
+	display: none;
+	width: 20px;
+	height: 20px;
+}
+
+html.note-mobile .note-heading.is-revealed .note-heading__hash {
+	display: inline-flex;
+	opacity: 1;
+	color: var(--ui-color-base-2);
+}
+
+/* Toolbar scroll thumb: always visible on mobile, no hover animation. */
+html.note-mobile .note-editor-toolbar-wrap .note-editor-toolbar-thumb {
+	opacity: 0.85;
+	transform: translate3d(var(--thumb-offset, 0), 0, 0) scaleY(1);
+	pointer-events: auto;
+	transition: none;
 }

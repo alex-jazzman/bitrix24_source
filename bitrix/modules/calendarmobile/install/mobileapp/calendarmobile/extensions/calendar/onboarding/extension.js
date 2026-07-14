@@ -10,6 +10,7 @@ jn.define('calendar/onboarding', (require, exports, module) => {
 
 	const { Condition } = require('calendar/onboarding/src/condition');
 	const { CaseName } = require('calendar/onboarding/src/const');
+	const { SettingsManager } = require('calendar/data-managers/settings-manager');
 
 	class Onboarding extends OnboardingBase
 	{
@@ -47,7 +48,11 @@ jn.define('calendar/onboarding', (require, exports, module) => {
 					action: (context, onComplete) => ActionBase.showHint({
 						fadeInDuration: 300,
 						title: Loc.getMessage('M_CALENDAR_AHA_NEW_MENU_TITLE'),
-						description: Loc.getMessage('M_CALENDAR_AHA_NEW_MENU_DESC'),
+						description: Loc.getMessage(
+							SettingsManager.isNewProjectsOn()
+								? 'M_CALENDAR_AHA_NEW_MENU_DESC_MSGVER_1'
+								: 'M_CALENDAR_AHA_NEW_MENU_DESC',
+						),
 						targetRef: 'calendar-more',
 						testId: 'calendar-aha-moment-new-menu',
 						delay: 500,

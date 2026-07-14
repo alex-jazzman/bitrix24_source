@@ -5,6 +5,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
+	const { UnsupportedFeature, UnsupportedFeatureType } = require('tasks/unsupported-feature');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -183,7 +184,8 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		prefetchAssets()
 		{
 			void downloadImages([
-				this.getEmptyListImage(),
+				this.getFlowStatusBlockEmptyStateImage(),
+				this.getFlowUnsupportedFeatureImage(),
 			]);
 		}
 
@@ -355,16 +357,19 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		};
 
 		onItemClick = (flowId) => {
-			const flow = selectById(getState(), flowId);
-			if (!flow)
+			if (flowId === FLOWS_INFO_ITEM_ID)
 			{
 				return;
 			}
 
-			const type = this.getItemType(flow);
-			if (type === ListItemType.SIMILAR_FLOW || type === ListItemType.PROMO_FLOW)
+			const flow = selectById(getState(), flowId);
+			if (flow)
 			{
-				return;
+				const type = this.getItemType(flow);
+				if (type === ListItemType.SIMILAR_FLOW || type === ListItemType.PROMO_FLOW)
+				{
+					return;
+				}
 			}
 
 			void requireLazy('tasks:layout/flow/detail').then(({ FlowDetail }) => {
@@ -667,66 +672,77 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			return [];
 		}
 
-		getEmptyListImage()
+		getFlowStatusBlockEmptyStateImage()
 		{
-			return makeLibraryImagePath('flow-list.svg', 'empty-states', 'tasks');
+			return makeLibraryImagePath('zefir-flow-search.png', 'empty-states', 'tasks');
+		}
+
+		getFlowUnsupportedFeatureImage()
+		{
+			return makeLibraryImagePath('zefir-flow-list.png', 'empty-states', 'tasks');
 		}
 
 		getEmptyListComponent()
 		{
-			const { title, description, uri } = this.getEmptyListProps();
+			if (this.shouldRenderUnsupportedFeature())
+			{
+				return new UnsupportedFeature({
+					layout: this.layout,
+					type: UnsupportedFeatureType.FLOWS,
+				});
+			}
 
-			const imageParams = {
-				resizeMode: 'contain',
-				style: {
-					width: 327,
-					height: 140,
-				},
-				svg: { uri },
-			};
+			const { title, description, image } = this.getStatusBlockEmptyListProps();
 
 			return StatusBlock({
 				testId: 'flow-status-block',
 				title,
 				description,
 				emptyScreen: true,
-				image: Image(imageParams),
+				image: Image(image),
 				onRefresh: this.onPullToRefresh,
 			});
 		}
 
-		getEmptyListProps()
+		shouldRenderUnsupportedFeature()
 		{
-			let title = '';
-			let description = '';
-			const uri = this.getEmptyListImage();
+			return this.isFlowsList()
+				&& this.flowListFilter.isSearchStringEmpty()
+				&& this.flowListFilter.isEmptyCounter()
+				&& this.flowListFilter.isRoleForAll()
+				&& this.flowListFilter.isEmptyPreset();
+		}
 
+		getStatusBlockEmptyListProps()
+		{
 			if (this.isFlowsList())
 			{
-				const isEmptySearch = (
-					this.flowListFilter.isSearchStringEmpty()
-					&& this.flowListFilter.isEmptyCounter()
-					&& this.flowListFilter.isRoleForAll()
-					&& this.flowListFilter.isEmptyPreset()
-				);
-				if (isEmptySearch)
-				{
-					title = Loc.getMessage('M_TASKS_FLOW_LIST_EMPTY_TITLE');
-					description = Loc.getMessage('M_TASKS_FLOW_LIST_EMPTY_DESCRIPTION');
-				}
-				else
-				{
-					title = Loc.getMessage('M_TASKS_FLOW_LIST_TITLE');
-					description = Loc.getMessage('M_TASKS_FLOW_LIST_DESCRIPTION');
-				}
-			}
-			else
-			{
-				title = Loc.getMessage('M_TASKS_FLOW_LIST_SIMILAR_EMPTY_TITLE');
-				description = Loc.getMessage('M_TASKS_FLOW_LIST_SIMILAR_EMPTY_DESCRIPTION');
+				return {
+					title: Loc.getMessage('M_TASKS_FLOW_LIST_SEARCH_EMPTY_TITLE_MSGVER_1'),
+					description: Loc.getMessage('M_TASKS_FLOW_LIST_SEARCH_EMPTY_DESCRIPTION_MSGVER_1'),
+					image: {
+						resizeMode: 'contain',
+						style: {
+							width: 199,
+							height: 158,
+						},
+						uri: this.getFlowStatusBlockEmptyStateImage(),
+					},
+				};
 			}
 
-			return { title, description, uri };
+			return {
+				title: Loc.getMessage('M_TASKS_FLOW_LIST_SIMILAR_EMPTY_TITLE'),
+				description: Loc.getMessage('M_TASKS_FLOW_LIST_SIMILAR_EMPTY_DESCRIPTION'),
+				image: {
+					resizeMode: 'contain',
+					style: {
+						width: 156,
+						height: 140,
+					},
+					uri: this.getFlowStatusBlockEmptyStateImage(),
+				},
+			};
 		}
 	}
 

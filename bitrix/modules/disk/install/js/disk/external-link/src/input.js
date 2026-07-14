@@ -148,6 +148,11 @@ export default class Input
 		return Backend;
 	}
 
+	openSettingsPopup(): mixed
+	{
+		return this.constructor.showPopup(this.objectId, this.data);
+	}
+
 	getContainer(): HTMLElement
 	{
 		return this.cache.remember('main', () => {
@@ -159,7 +164,7 @@ export default class Input
 			});
 
 			const tune = () => {
-				return this.constructor.showPopup(this.objectId, this.data);
+				return this.openSettingsPopup();
 			};
 
 			return Tag.render`

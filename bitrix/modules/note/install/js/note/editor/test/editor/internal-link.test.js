@@ -15,7 +15,32 @@ describe('internal-link', () => {
 		});
 
 		it('parses relative document link with hash', () => {
-			assert.deepStrictEqual(parseInternalNoteLink('/note/document/7/#section'), { type: 'document', id: 7 });
+			assert.deepStrictEqual(
+				parseInternalNoteLink('/note/document/7/#section'),
+				{ type: 'document', id: 7, hash: 'section' },
+			);
+		});
+
+		it('parses relative document link with query and hash', () => {
+			assert.deepStrictEqual(
+				parseInternalNoteLink('/note/document/7/?foo=bar#section'),
+				{ type: 'document', id: 7, hash: 'section' },
+			);
+		});
+
+		it('parses same-origin absolute document link with hash', () => {
+			assert.deepStrictEqual(
+				parseInternalNoteLink('https://portal.test/note/document/9/#intro', 'https://portal.test'),
+				{ type: 'document', id: 9, hash: 'intro' },
+			);
+		});
+
+		it('parses a pure in-document anchor link', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('#getting-started'), { type: 'anchor', hash: 'getting-started' });
+		});
+
+		it('rejects an empty anchor link', () => {
+			assert.strictEqual(parseInternalNoteLink('#'), null);
 		});
 
 		it('accepts same-origin absolute https link (backward compat)', () => {

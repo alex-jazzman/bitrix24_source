@@ -949,11 +949,6 @@
 			return this.data['EVENT_TYPE'] === '#shared#' || this.data['EVENT_TYPE'] === '#shared_crm#';
 		},
 
-		isCollabEvent: function()
-		{
-			return this.data['EVENT_TYPE'] === '#collab#';
-		},
-
 		isSharingCollabEvent: function()
 		{
 			return this.data['EVENT_TYPE'] === '#shared_collab#';

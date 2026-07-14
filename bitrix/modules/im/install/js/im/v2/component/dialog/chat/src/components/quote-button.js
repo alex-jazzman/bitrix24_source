@@ -59,6 +59,7 @@ export const QuoteButton = {
 				height: CONTAINER_HEIGHT,
 				autoHide: true,
 				padding: 0,
+				focusTrap: false,
 			};
 		},
 	},

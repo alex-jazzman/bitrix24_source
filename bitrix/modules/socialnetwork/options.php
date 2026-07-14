@@ -210,11 +210,6 @@ if (!IsModuleInstalled("intranet"))
 	$arAllOptionsCommon[] = array("sonet_log_smart_filter", GetMessage($bIntranet ? "SONET_LOG_SMART_FILTER2" : "SONET_LOG_SMART_FILTER"), "N", Array("checkbox"));
 }
 
-if (IsModuleInstalled("im"))
-{
-	$arAllOptionsCommon[] = array("use_workgroup_chat", GetMessage("SONET_USE_WORKGROUP_CHAT"), "Y", Array("checkbox"));
-}
-
 $fulltextIndexExists = $DB->IndexExists("b_sonet_log_index", array("CONTENT"));
 $arAllOptionsCommon[] = array("use_lf_fulltext_index", GetMessage($bIntranet ? "SONET_USE_LF_FULLTEXT_INDEX3" : "SONET_USE_LF_FULLTEXT_INDEX"), ($fulltextIndexExists ? "Y" : "N"), array("checkbox"));
 

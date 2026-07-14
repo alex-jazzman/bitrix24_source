@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_const, ui_notification, im_public, im_v2_application_core) {
+(function (exports, main_core, im_v2_const, ui_notification, im_public, im_v2_lib_collab) {
 	'use strict';
 
 	const showNotification = (text, params) => {
@@ -113,17 +113,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		onAddToFavoriteComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
 		},
-		onForwardSelfChatComplete(messagesIds) {
+		onForwardComplete(messagesIds, dialogId) {
 			const text = messagesIds.length > 1 ? main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE') : main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE');
-			const dialogId = im_v2_application_core.Core.getUserId().toString();
-			const selfChatOpeningAction = {
+			const openChatAction = {
 				title: main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
 				events: {
 					click: () => im_public.Messenger.openChat(dialogId)
 				}
 			};
 			showNotification(text, {
-				actions: [selfChatOpeningAction]
+				actions: [openChatAction]
 			});
 		},
 		handleLoadContextError(error) {
@@ -150,10 +149,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const NotEmptyCollabErrorCodes = new Set([CollabErrorCode.tasksNotEmpty, CollabErrorCode.diskNotEmpty, CollabErrorCode.calendarNotEmpty]);
 	const CollabNotifier = {
 		onBeforeDelete() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_PROGRESS'));
+			showNotification(im_v2_lib_collab.CollabManager.getBeforeDeleteText());
 		},
 		onUpdateLinkComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_LINK_UPDATE_COMPLETE'));
+		},
+		handleDeleteError(error) {
+			if (NotEmptyCollabErrorCodes.has(error.code)) {
+				showNotification(im_v2_lib_collab.CollabManager.getNotEmptyDeleteErrorText());
+				return;
+			}
+			showNotification(im_v2_lib_collab.CollabManager.getDeleteErrorText());
+		},
+		onLeaveError() {
+			showNotification(im_v2_lib_collab.CollabManager.getLeaveErrorText());
+		},
+		onKickUserError() {
+			showNotification(im_v2_lib_collab.CollabManager.getKickErrorText());
+		},
+		onCollaberNotAcceptInvitation() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
+		},
+		onCopyLinkError() {
+			showNotification(im_v2_lib_collab.CollabManager.getCopyLinkError());
 		},
 		handleCreateError(error) {
 			const NotificationTextByErrorCode = {
@@ -174,25 +192,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 			const notificationText = NotificationTextByErrorCode[error.code] ?? NotificationTextByErrorCode.default;
 			showNotification(notificationText);
-		},
-		handleDeleteError(error) {
-			if (NotEmptyCollabErrorCodes.has(error.code)) {
-				showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_ENTITIES_ERROR'));
-				return;
-			}
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_ERROR'));
-		},
-		onLeaveError() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_LEAVE_ERROR'));
-		},
-		onKickUserError() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_KICK_ERROR'));
-		},
-		onCollaberNotAcceptInvitation() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
-		},
-		onCopyLinkError() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR'));
 		}
 	};
 
@@ -392,5 +391,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Notifier = Notifier;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Const, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Const, BX.UI.Notification, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=notifier.bundle.js.map

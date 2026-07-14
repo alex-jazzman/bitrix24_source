@@ -1,0 +1,27 @@
+.bx-im-list-base__fixed_container {
+	--im-list-base-fixed__background-color_container: var(--ui-color-palette-gray-02);
+	--im-list-base-fixed__background-color_container_hover: #ebf0f5;
+	--im-list-base-fixed__background-color_border: var(--ui-color-palette-gray-10);
+
+	margin: 4px 4px 6px 4px;
+	background-color: var(--im-list-base-fixed__background-color_container);
+	border: 1px solid var(--im-list-base-fixed__background-color_border);
+	border-radius: 10px;
+}
+
+.bx-im-list-base__fixed_container .bx-im-list-recent-item__container {
+	padding-left: 10px;
+	padding-right: 8px;
+}
+
+.bx-im-list-base__fixed_container + .bx-im-list-base__general_container {
+	margin-top: 0;
+}
+
+.bx-im-list-base__fixed_container .bx-im-list-recent-item__wrap:not(.--selected) {
+	background-color: var(--im-list-base-fixed__background-color_container);
+}
+
+.bx-im-list-base__fixed_container .bx-im-list-recent-item__wrap:not(.--selected):hover {
+	background-color: var(--im-list-base-fixed__background-color_container_hover);
+}

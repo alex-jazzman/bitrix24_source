@@ -11,14 +11,14 @@ import {
 	CreateChatHeading,
 	SettingsSection,
 	RightsSection,
+	ChatMemberDiffManager,
 } from 'im.v2.component.content.chat-forms.elements';
-import { ChatType, EventType, PopupType, SidebarDetailBlock, type UserRole } from 'im.v2.const';
+import { ChatType, EventType, PopupType, SidebarDetailBlock, type UserRole, type SelectorEntityItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import { type ImModelChat } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
-import { ChatMemberDiffManager } from '../../classes/chat-member-diff-manager';
 import { getCollapsedUsersElement, type TagSelectorElement } from '../../helpers/get-collapsed-users-element';
 
 type UserRoleItem = $Keys<typeof UserRole>;
@@ -112,7 +112,7 @@ export const GroupChatUpdating = {
 	},
 	methods:
 	{
-		onMembersChange(currentTags: [string, number | string][])
+		onMembersChange(currentTags: SelectorEntityItem[])
 		{
 			this.chatMembers = currentTags;
 		},

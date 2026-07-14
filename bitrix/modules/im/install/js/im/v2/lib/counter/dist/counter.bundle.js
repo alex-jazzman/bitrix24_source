@@ -22,14 +22,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
+	const BaseClearHandlers = [type => im_v2_application_core.Core.getStore().dispatch('counters/clearByRecentType', {
+		recentType: type
+	}), type => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChatsByType', {
+		type
+	}), type => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', {
+		type
+	})];
 	const CounterClearHandlersByChatType = {
-		[im_v2_const.ChatType.taskComments]: [type => im_v2_application_core.Core.getStore().dispatch('counters/clearByRecentType', {
-			recentType: type
-		}), type => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChatsByType', {
-			type
-		}), type => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', {
-			type
-		})]
+		[im_v2_const.ChatType.taskComments]: BaseClearHandlers,
+		[im_v2_const.ChatType.collab]: BaseClearHandlers
 	};
 	const CounterClearActions = [() => im_v2_application_core.Core.getStore().dispatch('counters/clear'), () => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChats'), () => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchors')];
 

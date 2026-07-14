@@ -1,0 +1,71 @@
+
+/* normalize */
+.tasks-popup-button-quote__actions-list {
+	margin: 0;
+	padding: 0;
+}
+.tasks-popup-button-quote__actions-item {
+	list-style: none;
+}
+.tasks-popup-button-quote__action {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+/* normalize end */
+
+
+
+.tasks-popup-button-quote {
+	backdrop-filter: blur(1px);
+}
+.tasks-popup.tasks-popup-button-quote {
+	--opacity-popup-bg: 0.9;
+}
+.tasks-popup.tasks-popup_with-bg.tasks-popup-button-quote {
+	--box-shadow-popup: 0 5px 17px 0 rgba(0, 0, 0, 0.21);
+}
+
+.tasks-popup-button-quote .tasks-popup__content {
+	border-radius: inherit;
+	overflow: hidden;
+}
+
+.tasks-popup-button-quote__actions-list {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-popup-button-quote__actions-item {}
+
+.tasks-popup-button-quote__action {
+	position: relative;
+	padding: 10px 10px 10px 10px;
+	line-height: 0;
+}
+.tasks-popup-button-quote__actions-item:first-of-type .tasks-popup-button-quote__action {
+	padding-left: 15px;
+}
+.tasks-popup-button-quote__actions-item:last-of-type .tasks-popup-button-quote__action {
+	padding-right: 15px;
+}
+
+.tasks-popup-button-quote__action-bg {}
+
+.tasks-popup-button-quote__action-content {
+	position: relative;
+}
+
+.tasks-popup-button-quote__action-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+	--ui-icon-set__icon-size: 24px;
+	transition: opacity 0.1s ease-in-out;
+	opacity: 0.7;
+}
+
+.tasks-popup-button-quote__action:hover .tasks-popup-button-quote__action-icon {
+	opacity: 1;
+}

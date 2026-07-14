@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
-(function (exports, ui_vue3, ui_vue3_pinia, main_core, ui_analytics, ui_vue3_components_button, ui_system_input, ui_system_input_vue, ui_notification, ui_entitySelector, ui_iconSet_api_vue, ui_vue3_components_menu, ui_buttons, ui_dialogs_messagebox, ui_vue3_components_avatar, mail_settingSelector, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint) {
+(function (exports, ui_vue3, ui_vue3_pinia, mail_connecting_settingsConfig, main_core, ui_analytics, ui_vue3_components_button, ui_system_input, ui_system_input_vue, ui_notification, ui_entitySelector, ui_iconSet_api_vue, ui_vue3_components_menu, ui_buttons, ui_dialogs_messagebox, ui_vue3_components_avatar, mail_connecting_mailSyncSettings, mail_connecting_crmIntegration, mail_connecting_calendarIntegration, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint) {
 	'use strict';
 
 	const YES_VALUE = 'Y';
@@ -11,26 +11,6 @@ this.BX.Mail = this.BX.Mail || {};
 		name: 'other'
 	};
 
-	function normalizeOptions(options) {
-		if (!Array.isArray(options)) {
-			return [];
-		}
-		return options.map(option => ({
-			value: String(option.value),
-			label: option.label || String(option.value)
-		}));
-	}
-	function resolveSettingValue(options, currentValue, defaultValue) {
-		const normalizedCurrentValue = currentValue !== null && currentValue !== undefined ? String(currentValue) : '';
-		if (options.some(option => option.value === normalizedCurrentValue)) {
-			return normalizedCurrentValue;
-		}
-		const normalizedDefaultValue = defaultValue !== null && defaultValue !== undefined ? String(defaultValue) : '';
-		if (options.some(option => option.value === normalizedDefaultValue)) {
-			return normalizedDefaultValue;
-		}
-		return options[0]?.value || '';
-	}
 	const useWizardStore = ui_vue3_pinia.defineStore('wizard', {
 		state: () => ({
 			connectionSettings: {
@@ -118,28 +98,24 @@ this.BX.Mail = this.BX.Mail || {};
 				this.crmSettings = newSettings;
 			},
 			setMailboxSettingsConfig(settingsConfig) {
-				const defaults = settingsConfig?.defaults || {};
-				const mailSyncOptions = normalizeOptions(settingsConfig?.mailSyncIntervals);
-				const crmSyncOptions = normalizeOptions(settingsConfig?.crmSyncIntervals);
-				const crmEntityOptions = normalizeOptions(settingsConfig?.crmEntities);
-				const crmSourceOptions = normalizeOptions(settingsConfig?.crmSources);
-				this.mailSyncOptions = mailSyncOptions;
-				this.crmSyncOptions = crmSyncOptions;
-				this.crmEntityOptions = crmEntityOptions;
-				this.crmSourceOptions = crmSourceOptions;
-				this.mailSettings.sync.enabled = defaults.mailSyncEnabled ?? this.mailSettings.sync.enabled;
-				this.mailSettings.sync.periodValue = resolveSettingValue(mailSyncOptions, this.mailSettings.sync.periodValue, defaults.messageMaxAge);
-				this.crmSettings.enabled = defaults.crmEnabled ?? this.crmSettings.enabled;
-				this.crmSettings.sync.enabled = defaults.crmSyncEnabled ?? this.crmSettings.sync.enabled;
-				this.crmSettings.sync.periodValue = resolveSettingValue(crmSyncOptions, this.crmSettings.sync.periodValue, defaults.crmSyncPeriod);
-				this.crmSettings.assignKnownClientEmails = defaults.crmAssignKnownClientEmails ?? this.crmSettings.assignKnownClientEmails;
-				this.crmSettings.incoming.enabled = defaults.crmIncomingCreate ?? this.crmSettings.incoming.enabled;
-				this.crmSettings.incoming.createAction = resolveSettingValue(crmEntityOptions, this.crmSettings.incoming.createAction, defaults.crmIncomingEntity);
-				this.crmSettings.outgoing.enabled = defaults.crmOutgoingCreate ?? this.crmSettings.outgoing.enabled;
-				this.crmSettings.outgoing.createAction = resolveSettingValue(crmEntityOptions, this.crmSettings.outgoing.createAction, defaults.crmOutgoingEntity);
-				this.crmSettings.source = resolveSettingValue(crmSourceOptions, this.crmSettings.source, defaults.crmSource || settingsConfig?.defaultCrmSource);
-				this.calendarSettings.enabled = defaults.calendarAutoAddEvents ?? this.calendarSettings.enabled;
-				this.calendarSettings.autoAddEvents = defaults.calendarAutoAddEvents ?? this.calendarSettings.autoAddEvents;
+				const mapped = mail_connecting_settingsConfig.mapSettingsConfigToState(settingsConfig);
+				this.mailSyncOptions = mapped.mailSyncOptions;
+				this.crmSyncOptions = mapped.crmSyncOptions;
+				this.crmEntityOptions = mapped.crmEntityOptions;
+				this.crmSourceOptions = mapped.crmSourceOptions;
+				this.mailSettings.sync.enabled = mapped.mailSyncEnabled;
+				this.mailSettings.sync.periodValue = mail_connecting_settingsConfig.resolveSettingValue(mapped.mailSyncOptions, this.mailSettings.sync.periodValue, mapped.messageMaxAge);
+				this.crmSettings.enabled = mapped.crmEnabled;
+				this.crmSettings.sync.enabled = mapped.crmSyncEnabled;
+				this.crmSettings.sync.periodValue = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmSyncOptions, this.crmSettings.sync.periodValue, mapped.crmSyncPeriod);
+				this.crmSettings.assignKnownClientEmails = mapped.crmAssignKnownClientEmails;
+				this.crmSettings.incoming.enabled = mapped.crmIncomingCreate;
+				this.crmSettings.incoming.createAction = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmEntityOptions, this.crmSettings.incoming.createAction, mapped.crmIncomingEntity);
+				this.crmSettings.outgoing.enabled = mapped.crmOutgoingCreate;
+				this.crmSettings.outgoing.createAction = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmEntityOptions, this.crmSettings.outgoing.createAction, mapped.crmOutgoingEntity);
+				this.crmSettings.source = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmSourceOptions, this.crmSettings.source, mapped.crmSource);
+				this.calendarSettings.enabled = mapped.calendarAutoAddEvents;
+				this.calendarSettings.autoAddEvents = mapped.calendarAutoAddEvents;
 			},
 			setCalendarSettings(newSettings) {
 				this.calendarSettings = newSettings;
@@ -168,7 +144,7 @@ this.BX.Mail = this.BX.Mail || {};
 				}
 				crmOptions.config.crm_lead_source = this.crmSettings.source;
 				if (this.crmSettings.responsibleQueue.length > 0) {
-					crmOptions.config.crm_lead_resp = this.crmSettings.responsibleQueue.map(item => item.id);
+					crmOptions.config.crm_lead_resp = this.crmSettings.responsibleQueue.map(item => Number(item.id));
 				}
 				if (this.crmSettings.leadCreationAddresses.length > 0) {
 					crmOptions.config.crm_new_lead_for = this.crmSettings.leadCreationAddresses;
@@ -844,6 +820,9 @@ this.BX.Mail = this.BX.Mail || {};
 	const LIMIT_BLOCKED_USERS = 3;
 	const MAX_USERS_PER_LIMIT_REQUEST = 500;
 	const LIMIT_CHECK_NOTIFICATION_ID = 'mail_massconnect__limit_check_progress';
+	function getNotificationCenter$1() {
+		return globalThis.BX?.UI?.Notification?.Center ?? null;
+	}
 
 	// @vue/component
 	const SelectEmployees = {
@@ -1056,7 +1035,7 @@ this.BX.Mail = this.BX.Mail || {};
 						});
 					}
 				} catch {
-					ui_notification.UI.Notification.Center.notify({
+					getNotificationCenter$1()?.notify({
 						content: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_SELECTOR_ADD_ERROR')
 					});
 					return;
@@ -1155,7 +1134,7 @@ this.BX.Mail = this.BX.Mail || {};
 				}
 			},
 			showLimitCheckProgress(processedCount, totalCount, isFinal = false) {
-				ui_notification.UI.Notification.Center.notify({
+				getNotificationCenter$1()?.notify({
 					id: LIMIT_CHECK_NOTIFICATION_ID,
 					content: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_CHECK_PROGRESS', {
 						'#PROCESSED#': String(processedCount),
@@ -1168,7 +1147,7 @@ this.BX.Mail = this.BX.Mail || {};
 				});
 			},
 			hideLimitCheckProgress() {
-				const balloon = ui_notification.UI.Notification.Center.getBalloonById(LIMIT_CHECK_NOTIFICATION_ID);
+				const balloon = getNotificationCenter$1()?.getBalloonById(LIMIT_CHECK_NOTIFICATION_ID);
 				if (balloon) {
 					balloon.close();
 				}
@@ -1300,621 +1279,16 @@ this.BX.Mail = this.BX.Mail || {};
 	`
 	};
 
-	const PreparedIndirectPhraseMixin = {
-		methods: {
-			preparedIndirectPhrase(phraseCode, indirectCode) {
-				const phrase = this.$Bitrix.Loc.getMessage(phraseCode);
-				const parts = phrase.split(indirectCode);
-				return {
-					beforeText: parts[0] || null,
-					afterText: parts[1] || null
-				};
-			}
-		}
-	};
-
-	// @vue/component
-	const BitrixSettingSelector = {
-		props: {
-			modelValue: {
-				type: [String, Number],
-				required: true
-			},
-			options: {
-				type: Array,
-				required: true
-			},
-			dialogOptions: {
-				type: Object,
-				required: false,
-				default: null
-			}
-		},
-		emits: ['update:modelValue'],
-		selectorInstance: null,
-		itemOnSelectHandler: null,
-		watch: {
-			modelValue(newValue) {
-				if (this.selectorInstance && newValue !== this.selectorInstance.getSelected()) {
-					this.selectorInstance.select(newValue);
-				}
-			}
-		},
-		mounted() {
-			const settingsMap = new Map();
-			this.options.forEach(option => {
-				settingsMap.set(option.value, option.label);
-			});
-			const settingSelectorOptions = {
-				settingsMap: Object.fromEntries(settingsMap),
-				selectedOptionKey: this.modelValue
-			};
-			if (this.dialogOptions) {
-				settingSelectorOptions.dialogOptions = this.dialogOptions;
-			}
-			this.selectorInstance = new mail_settingSelector.SettingSelector(settingSelectorOptions);
-			this.itemOnSelectHandler = event => {
-				const {
-					item: selectedItem
-				} = event.getData();
-				this.$emit('update:modelValue', selectedItem.getId());
-			};
-			if (this.selectorInstance.settingDialog) {
-				this.selectorInstance.settingDialog.subscribe('Item:onSelect', this.itemOnSelectHandler);
-			}
-			this.selectorInstance.renderTo(this.$el);
-		},
-		beforeUnmount() {
-			if (this.selectorInstance.settingDialog) {
-				this.selectorInstance.settingDialog.unsubscribe('Item:onSelect', this.itemOnSelectHandler);
-			}
-			if (this.selectorInstance && this.selectorInstance.settingDialog) {
-				this.selectorInstance.settingDialog.destroy();
-			}
-		},
-		template: '<div></div>'
-	};
-
-	// @vue/component
-	const MailIntegration = {
-		name: 'mail-integration',
-		components: {
-			BitrixSettingSelector
-		},
-		mixins: [LocalizationMixin, PreparedIndirectPhraseMixin],
-		props: {
-			/** @type MailIntegrationSettingsType */
-			modelValue: {
-				type: Object,
-				required: true
-			}
-		},
-		emits: ['update:modelValue'],
-		computed: {
-			...ui_vue3_pinia.mapState(useWizardStore, ['mailSyncOptions']),
-			localModelValue: {
-				get() {
-					return this.modelValue;
-				},
-				set(newValue) {
-					this.$emit('update:modelValue', newValue);
-				}
-			},
-			syncLabel() {
-				return this.preparedIndirectPhrase('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_MAIL_SYNC_LABEL', '#PERIOD#');
-			},
-			syncPeriodOptions() {
-				return this.mailSyncOptions;
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="mail_massconnect__integration-block">
-			<div class="mail_massconnect__integration-block_header">
-				<div class="mail_massconnect__integration-block_title_group">
-					<div class="mail_massconnect__integration-block_icon --mail"></div>
-					<span class="mail_massconnect__integration-block_title">
-						{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_MAIL_TITLE') }}
-					</span>
-				</div>
-			</div>
-			<div class="mail_massconnect__integration-block_content-wrapper">
-				<div class="mail_massconnect__integration-block_content">
-					<div class="mail_massconnect__checkbox-group">
-						<input
-							type="checkbox"
-							id="mail_massconnect__mail-sync"
-							v-model="localModelValue.sync.enabled"
-							data-test-id="mail_massconnect__mail-sync_checkbox"
-						/>
-						<div 
-							class="mail_massconnect__indirect-label" 
-							data-test-id="mail_massconnect__mail-sync_label"
-						>
-							<label for="mail_massconnect__mail-sync">
-								<span class="mail_massconnect__label-text_before">
-									{{ syncLabel.beforeText }}
-								</span>
-							</label>
-							<BitrixSettingSelector
-								v-model="localModelValue.sync.periodValue"
-								:options="syncPeriodOptions"
-							/>
-							<label for="mail_massconnect__mail-sync">
-								<span class="mail_massconnect__label-text_after">
-									{{ syncLabel.afterText }}
-								</span>
-							</label>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const UserSelector = {
-		props: {
-			modelValue: {
-				type: Array,
-				default: () => []
-			}
-		},
-		emits: ['update:modelValue'],
-		selectorInstance: null,
-		targetNode: null,
-		watch: {
-			modelValue(newValue) {
-				if (!this.selectorInstance) {
-					return;
-				}
-				const newItemsSet = new Set(newValue.map(item => `${item.entityId}:${item.id}`));
-				const currentTags = this.selectorInstance.getTags();
-				const currentTagsSet = new Set(currentTags.map(tag => `${tag.getEntityId()}:${tag.getId()}`));
-				currentTags.forEach(tag => {
-					const tagId = `${tag.getEntityId()}:${tag.getId()}`;
-					if (!newItemsSet.has(tagId)) {
-						this.selectorInstance.removeTag(tag);
-					}
-				});
-				newValue.forEach(item => {
-					const itemId = `${item.entityId}:${item.id}`;
-					if (!currentTagsSet.has(itemId)) {
-						this.selectorInstance.addTag({
-							id: item.id,
-							entityId: item.entityId,
-							title: item.name
-						});
-					}
-				});
-			}
-		},
-		mounted() {
-			this.selectorInstance = new ui_entitySelector.TagSelector({
-				dialogOptions: {
-					width: 425,
-					height: 320,
-					multiple: true,
-					context: 'MAIL_CRM_QUEUE',
-					preselectedItems: this.modelValue.map(item => [item.entityId, item.id]),
-					entities: [{
-						id: 'user',
-						options: {
-							intranetUsersOnly: true,
-							emailUsers: false,
-							inviteEmployeeLink: false
-						}
-					}, {
-						id: 'department',
-						options: {
-							selectMode: 'departmentsOnly'
-						}
-					}]
-				},
-				events: {
-					onAfterTagAdd: this.onUpdate,
-					onAfterTagRemove: this.onUpdate
-				}
-			});
-			this.selectorInstance.renderTo(this.$el);
-		},
-		beforeUnmount() {
-			const dialog = this.selectorInstance.getDialog();
-			if (dialog) {
-				dialog.destroy();
-			}
-		},
-		methods: {
-			onUpdate() {
-				const selectedItems = this.selectorInstance.getTags().map(tag => ({
-					id: tag.getId(),
-					entityId: tag.getEntityId(),
-					name: tag.getTitle()
-				}));
-				this.$emit('update:modelValue', selectedItems);
-			}
-		},
-		template: '<div></div>'
-	};
-
-	const CRM_LEAD_SOURCE_DIALOG_OPTIONS = Object.freeze({
-		width: 300,
-		height: 300,
-		enableSearch: true
-	});
-
-	// @vue/component
-	const CrmIntegration = {
-		name: 'crm-integration',
-		directives: {
-			hint: ui_vue3_directives_hint.hint
-		},
-		components: {
-			Switcher: ui_vue3_components_switcher.Switcher,
-			BitrixSettingSelector,
-			UserSelector
-		},
-		mixins: [LocalizationMixin, PreparedIndirectPhraseMixin],
-		props: {
-			/** @type CrmIntegrationSettingsType */
-			modelValue: {
-				type: Object,
-				required: true
-			},
-			canEditCrmIntegration: {
-				type: Boolean,
-				default: false
-			}
-		},
-		emits: ['update:modelValue'],
-		data() {
-			return {
-				showAddressTextarea: false,
-				crmLeadSourceDialogOptions: CRM_LEAD_SOURCE_DIALOG_OPTIONS
-			};
-		},
-		computed: {
-			...ui_vue3_pinia.mapState(useWizardStore, ['crmSourceOptions', 'crmSyncOptions', 'crmEntityOptions']),
-			localModelValue: {
-				get() {
-					return this.modelValue;
-				},
-				set(newValue) {
-					this.$emit('update:modelValue', newValue);
-				}
-			},
-			syncLabel() {
-				return this.preparedIndirectPhrase('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SYNC_LABEL', '#PERIOD#');
-			},
-			incomingLabel() {
-				return this.preparedIndirectPhrase('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_INCOMING_LABEL', '#INCOMING#');
-			},
-			outgoingLabel() {
-				return this.preparedIndirectPhrase('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_OUTGOING_LABEL', '#OUTGOING#');
-			},
-			leadSourceIncomingLabel() {
-				return this.preparedIndirectPhrase('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SOURCE_INCOMING_CURRENT_LABEL', '#INCOMING_CURRENT#');
-			},
-			syncPeriodOptions() {
-				return this.crmSyncOptions;
-			},
-			createActionOptions() {
-				return this.crmEntityOptions;
-			},
-			sourceOptions() {
-				return this.crmSourceOptions;
-			},
-			switcherOptions() {
-				return {
-					size: ui_switcher.SwitcherSize.large,
-					showStateTitle: false,
-					useAirDesign: true
-				};
-			},
-			noAccessHintParams() {
-				return {
-					text: this.loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_NO_ACCESS_HINT'),
-					popupOptions: {
-						className: 'mail_massconnect__integration_crm_hint',
-						darkMode: false,
-						offsetTop: 2,
-						background: 'var(--ui-color-bg-content-inapp)',
-						padding: 6,
-						angle: true,
-						targetContainer: document.body,
-						offsetLeft: 20
-					}
-				};
-			}
-		},
-		methods: {
-			handleSwitcherClick() {
-				if (this.canEditCrmIntegration) {
-					this.localModelValue.enabled = !this.localModelValue.enabled;
-				}
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="mail_massconnect__integration-block" :class="{ '--disabled': !localModelValue.enabled }">
-			<div 
-				class="mail_massconnect__integration-block_header"
-				data-test-id="mail_massconnect__settings_crmr-integration_header"
-			>
-				<div class="mail_massconnect__integration-block_title_group">
-					<div class="mail_massconnect__integration-block_icon --crm"></div>
-					<span class="mail_massconnect__integration-block_title">
-						{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_TITLE') }}
-					</span>
-				</div>
-				<div class="mail_massconnect__integration-block_switcher-container" >
-					<Switcher
-						:isChecked="localModelValue.enabled"
-						:isDisabled="!canEditCrmIntegration"
-						:options="switcherOptions"
-						v-hint="!canEditCrmIntegration ? noAccessHintParams : undefined"
-						@click="handleSwitcherClick"
-					/>
-				</div>
-			</div>
-			<transition name="mail_massconnect__integration-block_slide-down">
-				<div v-if="localModelValue.enabled" class="mail_massconnect__integration-block_content-wrapper">
-					<div class="mail_massconnect__integration-block_content">
-						<div class="mail_massconnect__checkbox-group">
-							<input
-								type="checkbox"
-								id="mail_massconnect__crm-sync"
-								v-model="localModelValue.sync.enabled"
-								data-test-id="mail_massconnect__settings_crm-integration_crm-sync_checkbox"
-							/>
-							<div 
-								class="mail_massconnect__indirect-label"
-								data-test-id="mail_massconnect__settings_crm-integration_crm-sync_label"
-							>
-								<label for="mail_massconnect__crm-sync">
-									<span class="mail_massconnect__label-text_before">
-										{{ syncLabel.beforeText }}
-									</span>
-								</label>
-								<BitrixSettingSelector
-									v-model="localModelValue.sync.periodValue"
-									:options="syncPeriodOptions"
-								/>
-								<label for="mail_massconnect__crm-sync">
-									<span class="mail_massconnect__label-text_after">
-										{{ syncLabel.afterText }}
-									</span>
-								</label>
-							</div>
-						</div>
-						<div class="mail_massconnect__integration-hint">
-							{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SYNC_HINT') }}
-						</div>
-						<div class="mail_massconnect__checkbox-group">
-							<input
-								type="checkbox"
-								id="mail_massconnect__assign-known"
-								v-model="localModelValue.assignKnownClientEmails"
-								data-test-id="mail_massconnect__settings_crm-integration_assign-known_checkbox"
-							/>
-							<label for="mail_massconnect__assign-known">
-								<span class="mail_massconnect__label-text">
-									{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_ASSIGN_KNOWN_LABEL') }}
-								</span>
-							</label>
-						</div>
-						<div class="mail_massconnect__checkbox-group">
-							<input
-								type="checkbox"
-								id="mail_massconnect__incoming-new"
-								v-model="localModelValue.incoming.enabled"
-								data-test-id="mail_massconnect__settings_crm-integration_incoming-new_checkbox"
-							/>
-							<div 
-								class="mail_massconnect__indirect-label"
-								data-test-id="mail_massconnect__settings_crm-integration_incoming-new_label"
-							>
-								<label for="mail_massconnect__incoming-new">
-									<span class="mail_massconnect__label-text_before">
-										{{ incomingLabel.beforeText }}
-									</span>
-								</label>
-								<BitrixSettingSelector
-									v-model="localModelValue.incoming.createAction"
-									:options="createActionOptions"
-								/>
-								<label for="mail_massconnect__incoming-new">
-									<span class="mail_massconnect__label-text_after">
-										{{ incomingLabel.afterText }}
-									</span>
-								</label>
-							</div>
-						</div>
-						<div class="mail_massconnect__integration-hint">
-							{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_INCOMING_HINT') }}
-						</div>
-						<div class="mail_massconnect__checkbox-group">
-							<input
-								type="checkbox"
-								id="mail_massconnect__outgoing-new"
-								v-model="localModelValue.outgoing.enabled"
-								data-test-id="mail_massconnect__settings_crm-integration_outgoing-new_checkbox"
-							/>
-							<div 
-								class="mail_massconnect__indirect-label"
-								data-test-id="mail_massconnect__settings_crm-integration_outgoing-new_label"
-							>
-								<label for="mail_massconnect__outgoing-new">
-									<span class="mail_massconnect__label-text_before">
-										{{ outgoingLabel.beforeText }}
-									</span>
-								</label>
-								<BitrixSettingSelector
-									v-model="localModelValue.outgoing.createAction"
-									:options="createActionOptions"
-								/>
-								<label for="mail_massconnect__outgoing-new">
-									<span class="mail_massconnect__label-text_after">
-										{{ outgoingLabel.afterText }}
-									</span>
-								</label>
-							</div>
-						</div>
-						<div class="mail_massconnect__integration-hint">
-							{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_OUTGOING_HINT') }}
-						</div>
-
-						<div 
-							class="mail_massconnect__group-inline"
-							data-test-id="mail_massconnect__settings_source_group"
-						>
-							<span class="mail_massconnect__group-inline_label">
-								<span class="mail_massconnect__label-text">
-									{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SOURCE_LABEL') }}
-								</span>
-							</span>
-							<BitrixSettingSelector
-								v-model="localModelValue.source"
-								:options="sourceOptions"
-								:dialog-options="crmLeadSourceDialogOptions"
-							/>
-						</div>
-
-						<span class="mail_massconnect__group-inline_label">
-							<span class="mail_massconnect__label-text_before">
-								{{ leadSourceIncomingLabel.beforeText }}
-							</span>
-							<a
-								href="#"
-								class="mail_massconnect__set-textarea-show"
-								@click.prevent="showAddressTextarea = !showAddressTextarea"
-								data-test-id="mail_massconnect__settings_show-address-textarea_link"
-							>
-								<span class="mail_massconnect__set-textarea-show_text">
-									{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SOURCE_INCOMING_CURRENT_BUTTON_LABEL') }}
-								</span>
-								<div
-									class="ui-icon-set --chevron-down"
-									style="--ui-icon-set__icon-size: 16px; --ui-icon-set__icon-color: #6a737f;"
-								>
-								</div>
-							</a>
-							<span class="mail_massconnect__label-text_after">
-								{{ leadSourceIncomingLabel.afterText }}
-							</span>
-						</span>
-						<textarea
-							v-if="showAddressTextarea"
-							v-model="localModelValue.leadCreationAddresses"
-							class="mail_massconnect__control-textarea"
-							:placeholder="loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SOURCE_INCOMING_CURRENT_PLACEHOLDER')"
-							data-test-id="mail_massconnect__settings_address-textarea"
-						>
-						</textarea>
-					</div>
-					<div class="mail_massconnect__integration-block_content">
-						<div 
-							class="mail_massconnect__user-selector-group"
-							data-test-id="mail_massconnect__settings_crm-user-queue_group"
-						>
-							<span class="mail_massconnect__group-inline_label">
-								<span class="mail_massconnect__label_user-selector_text">
-									{{ loc('MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_QUEUE_LABEL') }}
-								</span>
-							</span>
-							<UserSelector
-								v-model="localModelValue.responsibleQueue"
-								class="mail_massconnect__control-user-selector"
-							/>
-						</div>
-					</div>
-				</div>
-			</transition>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CalendarIntegration = {
-		name: 'calendar-integration',
-		components: {
-			Switcher: ui_vue3_components_switcher.Switcher
-		},
-		mixins: [LocalizationMixin],
-		props: {
-			/** @type CalendarIntegrationSettingsType */
-			modelValue: {
-				type: Object,
-				required: true
-			}
-		},
-		emits: ['update:modelValue'],
-		computed: {
-			localModelValue: {
-				get() {
-					return this.modelValue;
-				},
-				set(newValue) {
-					this.$emit('update:modelValue', newValue);
-				}
-			},
-			switcherOptions() {
-				return {
-					size: ui_switcher.SwitcherSize.large,
-					showStateTitle: false,
-					useAirDesign: true
-				};
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="mail_massconnect__integration-block" :class="{ '--disabled': !localModelValue.enabled }">
-			<div 
-				class="mail_massconnect__integration-block_header"
-				data-test-id="mail_massconnect__settings_calendar-integration_header"
-			>
-				<div class="mail_massconnect__integration-block_title_group">
-					<div class="mail_massconnect__integration-block_icon --calendar"></div>
-					<span class="mail_massconnect__integration-block_title">
-						{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CALENDAR_TITLE') }}
-					</span>
-				</div>
-				<Switcher
-					:isChecked="localModelValue.enabled"
-					:options="switcherOptions"
-					@click="localModelValue.enabled = !localModelValue.enabled"
-				/>
-			</div>
-			<transition name="mail_massconnect__integration-block_slide-down">
-				<div v-if="localModelValue.enabled" class="mail_massconnect__integration-block_content">
-					<div class="mail_massconnect__checkbox-group">
-						<input
-							type="checkbox"
-							id="mail_massconnect__auto-add-events"
-							v-model="localModelValue.autoAddEvents"
-							data-test-id="mail_massconnect__settings_calendar-integration_auto-add-events-checkbox"
-						/>
-						<label for="mail_massconnect__auto-add-events">
-							{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_CALENDAR_AUTO_ADD') }}
-						</label>
-					</div>
-				</div>
-			</transition>
-		</div>
-	`
-	};
-
 	const MailboxSettings = {
 		components: {
-			MailIntegration,
-			CrmIntegration,
-			CalendarIntegration,
+			MailIntegration: mail_connecting_mailSyncSettings.MailIntegration,
+			CrmIntegration: mail_connecting_crmIntegration.CrmIntegration,
+			CalendarIntegration: mail_connecting_calendarIntegration.CalendarIntegration,
 			Switcher: ui_vue3_components_switcher.Switcher
 		},
 		mixins: [LocalizationMixin],
 		computed: {
-			...ui_vue3_pinia.mapState(useWizardStore, ['mailSettings', 'crmSettings', 'calendarSettings', 'analyticsSource', 'permissions']),
+			...ui_vue3_pinia.mapState(useWizardStore, ['mailSettings', 'crmSettings', 'calendarSettings', 'analyticsSource', 'permissions', 'mailSyncOptions', 'crmSyncOptions', 'crmEntityOptions', 'crmSourceOptions']),
 			switcherOptions() {
 				return {
 					size: ui_switcher.SwitcherSize.large,
@@ -1952,12 +1326,16 @@ this.BX.Mail = this.BX.Mail || {};
 
 			<MailIntegration
 				:model-value="mailSettings"
+				:sync-period-options="mailSyncOptions"
 				@update:model-value="setMailSettings($event)"
 			/>
 
 			<CrmIntegration
 				:model-value="crmSettings"
 				:can-edit-crm-integration="permissions.canEditCrmIntegration"
+				:sync-period-options="crmSyncOptions"
+				:entity-options="crmEntityOptions"
+				:source-options="crmSourceOptions"
 				@update:model-value="setCrmSettings($event)"
 			/>
 
@@ -1973,6 +1351,10 @@ this.BX.Mail = this.BX.Mail || {};
 		MAILBOX_APPEND_SUCCESS: 'mail-massconnect-mailboxes-append-success',
 		PASSWORDLESS_REQUESTS_SENT: 'mail-massconnect-passwordless-requests-sent'
 	};
+
+	function getNotificationCenter() {
+		return globalThis.BX?.UI?.Notification?.Center ?? null;
+	}
 
 	// @vue/component
 	const ConnectionStatus = {
@@ -2344,7 +1726,7 @@ this.BX.Mail = this.BX.Mail || {};
 			handleCancel() {
 				this.isCancelled = true;
 				this.isFinished = true;
-				ui_notification.UI.Notification.Center.notify({
+				getNotificationCenter()?.notify({
 					id: 'mail_massconnect_connection_cancelled',
 					content: this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_CANCELLED_MESSAGE')
 				});
@@ -2496,6 +1878,19 @@ this.BX.Mail = this.BX.Mail || {};
 			</div>
 		</div>
 	`
+	};
+
+	const PreparedIndirectPhraseMixin = {
+		methods: {
+			preparedIndirectPhrase(phraseCode, indirectCode) {
+				const phrase = this.$Bitrix.Loc.getMessage(phraseCode);
+				const parts = phrase.split(indirectCode);
+				return {
+					beforeText: parts[0] || null,
+					afterText: parts[1] || null
+				};
+			}
+		}
 	};
 
 	// @vue/component
@@ -2771,5 +2166,5 @@ this.BX.Mail = this.BX.Mail || {};
 
 	exports.MassconnectForm = MassconnectForm;
 
-})(this.BX.Mail.Massconnect = this.BX.Mail.Massconnect || {}, BX.Vue3, BX.Vue3.Pinia, BX, BX.UI.Analytics, BX.Vue3.Components, BX.UI.System.Input, BX.UI.System.Input.Vue, BX, BX.UI.EntitySelector, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI, BX.UI.Dialogs, BX.UI.Vue3.Components, BX.Mail, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives);
+})(this.BX.Mail.Massconnect = this.BX.Mail.Massconnect || {}, BX.Vue3, BX.Vue3.Pinia, BX.Mail.Connecting.SettingsConfig, BX, BX.UI.Analytics, BX.Vue3.Components, BX.UI.System.Input, BX.UI.System.Input.Vue, BX.UI.Notification, BX.UI.EntitySelector, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI, BX.UI.Dialogs, BX.UI.Vue3.Components, BX.Mail.Connecting.MailSyncSettings, BX.Mail.Connecting.CrmIntegration, BX.Mail.Connecting.CalendarIntegration, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives);
 //# sourceMappingURL=massconnect-form.bundle.js.map

@@ -254,6 +254,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			} else if (command === im_v2_const.DesktopBxLink.chatCreation) {
 				void im_public.Messenger.openChatCreation(params.chatType);
+			} else if (command === im_v2_const.DesktopBxLink.chatUpdate) {
+				const {
+					dialogId
+				} = params;
+				void im_public.Messenger.openChatUpdate(dialogId);
 			} else if (command === im_v2_const.DesktopBxLink.openLayout) {
 				const {
 					id,
@@ -873,6 +878,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		redirectToChatCreation(chatType) {
 			im_v2_lib_logger.Logger.warn('Desktop: redirectToChatCreation', chatType);
 			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.chatCreation}/chatType/${chatType}/`);
+			return Promise.resolve();
+		}
+		redirectToChatUpdate(dialogId) {
+			im_v2_lib_logger.Logger.warn('Desktop: redirectToChatEdit', dialogId);
+			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.chatUpdate}/dialogId/${dialogId}`);
 			return Promise.resolve();
 		}
 		redirectToVideoCall(dialogId = '', withVideo = true) {

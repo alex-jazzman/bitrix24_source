@@ -7,6 +7,7 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { ChatType, EventType, UserType } from 'im.v2.const';
 import { AddToChatSearch as AddToChat } from 'im.v2.component.search';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { ChatAccessManager } from 'im.v2.lib.access';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import './add-to-chat-content.css';
@@ -22,15 +23,12 @@ export const AddToChatContent = {
 			type: String,
 			required: true,
 		},
-		isLoading: {
-			type: Boolean,
-			required: false,
-		},
 	},
 	emits: ['inviteMembers', 'close'],
 	data(): JsonObject
 	{
 		return {
+			isLoading: false,
 			searchQuery: '',
 			showHistory: true,
 			selectedItems: new Set(),
@@ -183,9 +181,20 @@ export const AddToChatContent = {
 				avatar: user.avatar.length > 0 ? user.avatar : null,
 			};
 		},
-		onInviteClick()
+		async onInviteClick()
 		{
 			const members = [...this.selectedItems];
+
+			this.isLoading = true;
+			const canAdd = await ChatAccessManager.canAddUsers(this.dialogId, members);
+			if (!canAdd)
+			{
+				this.isLoading = false;
+
+				return;
+			}
+
+			this.isLoading = false;
 			this.$emit('inviteMembers', { members, showHistory: this.showHistory });
 		},
 		getEmitter(): EventEmitter
@@ -220,8 +229,8 @@ export const AddToChatContent = {
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_BUTTON')"
 					:loading="isLoading"
 					:disabled="selectedItems.size === 0"
-					@click="onInviteClick"
 					:style="ButtonStyle.FILLED"
+					@click="onInviteClick"
 				/>
 				<UiButton
 					:size="ButtonSize.LARGE"

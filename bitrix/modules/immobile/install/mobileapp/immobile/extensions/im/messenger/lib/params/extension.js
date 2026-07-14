@@ -4,6 +4,9 @@
 
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 	const { Type } = require('type');
+	const { isMessengerContext } = require('im/messenger/lib/params/src/shared-storage');
+	const { MessengerParamsWriter } = require('im/messenger/lib/params/src/writer');
+	const { MessengerParamsReader } = require('im/messenger/lib/params/src/reader');
 
 	/**
 	 * @type {ImFeatures}
@@ -32,12 +35,18 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		videoNoteTranscriptionAvailable: false,
 		isBitrixGptV2Available: false,
 		aiAssistantMcpSelectorAvailable: false,
+		isAiAssistantAgentModeAvailable: false,
+		isCopilotForceSearchAvailable: false,
+		isCopilotWebSearchEnabledByAdmin: false,
+		isCopilotWebSearchAllowedByTariff: false,
 		isAddingUserByMentionAvailable: false,
 		isMessageBuilderAvailable: false,
 		isNestedChatAvailable: false,
 		isExternalChatMessageForwardingAvailable: false,
 		isChatFoldersAvailable: false,
 		chatSharingLinkAvailable: false,
+		isAiAssistantFeedbackAvailable: false,
+		isAiAssistantRegenerateAvailable: false,
 	};
 
 	/**
@@ -48,6 +57,34 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		/** @type {ImFeatures} */
 		#imFeatures;
 
+		/** @type {(() => void) | null} */
+		#onUpdate = null;
+
+		/** @type {object | null} */
+		#localParams = null;
+
+		/** @type {boolean | null} */
+		#isMessengerCtx = null;
+
+		/**
+		 * @param {() => void} notifier
+		 */
+		setUpdateNotifier(notifier)
+		{
+			this.#onUpdate = notifier;
+		}
+
+		/**
+		 * @param {object} snapshot
+		 * @description Replaces the local read-only source with a fresh snapshot from the messenger context.
+		 * Called by MessengerParamsReader after hydrate / on storage 'changed' events.
+		 */
+		setLocalParams(snapshot)
+		{
+			this.#localParams = { ...snapshot };
+			this.invalidateImFeaturesCache();
+		}
+
 		/**
 		 * @param {string} key
 		 * @param defaultValue
@@ -55,7 +92,17 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		 */
 		get(key, defaultValue)
 		{
-			return BX.componentParameters.get(key, defaultValue);
+			if (this.#getIsMessengerContext())
+			{
+				return BX.componentParameters.get(key, defaultValue);
+			}
+
+			if (this.#localParams && key in this.#localParams)
+			{
+				return this.#localParams[key];
+			}
+
+			return typeof defaultValue === 'undefined' ? null : defaultValue;
 		}
 
 		/**
@@ -64,7 +111,15 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		 */
 		set(key, value)
 		{
-			BX.componentParameters.set(key, value);
+			if (this.#getIsMessengerContext())
+			{
+				BX.componentParameters.set(key, value);
+
+				return;
+			}
+
+			this.#localParams = this.#localParams ?? {};
+			this.#localParams[key] = value;
 		}
 
 		getSiteDir()
@@ -83,12 +138,13 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		 *
-		 * @return {string || ''}
+		 * @return {string}
+		 * @description Always reads from BX.componentParameters directly — COMPONENT_CODE
+		 * is per-context (current app), not part of the synced messenger snapshot.
 		 */
 		getComponentCode()
 		{
-			return this.get('COMPONENT_CODE', '');
+			return BX.componentParameters.get('COMPONENT_CODE', '');
 		}
 
 		setGeneralChatId(id)
@@ -127,14 +183,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		canUseTelephony()
 		{
 			return this.get('CAN_USE_TELEPHONY', false);
-		}
-
-		/**
-		 * @return boolean
-		 */
-		isAiAssistantMcpSelectorAvailable()
-		{
-			return this.get('IS_AI_ASSISTANT_MCP_SELECTOR_AVAILABLE', false);
 		}
 
 		/**
@@ -220,6 +268,16 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
+		 * @desc Drops the cached ImFeatures snapshot.
+		 * Used after the underlying BX.componentParameters value changes
+		 * (e.g., after MessengerParamsWriter.dump or after a cross-context update).
+		 */
+		invalidateImFeaturesCache()
+		{
+			this.#imFeatures = null;
+		}
+
+		/**
 		 * @param {Partial<ImFeatures>} features
 		 */
 		updateExistingImFeatures(features)
@@ -234,6 +292,9 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			});
 
 			this.set('IM_FEATURES', actualFeatures);
+			this.invalidateImFeaturesCache();
+
+			this.#onUpdate?.();
 		}
 
 		/**
@@ -286,19 +347,9 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('COPILOT_BOT_NAME', '');
 		}
 
-		getCopilotMCPButtonAvailable()
+		isMarketAvailable()
 		{
-			return this.get('IS_COPILOT_MCP_BUTTON_AVAILABLE', false);
-		}
-
-		getSearchModeButtonAvailable()
-		{
-			return this.get('IS_SEARCH_MODE_BUTTON_AVAILABLE', false);
-		}
-
-		getAgentButtonAvailable()
-		{
-			return this.get('IS_AGENT_BUTTON_AVAILABLE', false);
+			return this.get('IS_MARKET_AVAILABLE', false);
 		}
 
 		canUseAudioPanel()
@@ -329,9 +380,29 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('IS_AUTO_TASKS_UI_AVAILABLE', false);
 		}
+
+		#getIsMessengerContext()
+		{
+			if (this.#isMessengerCtx === null)
+			{
+				this.#isMessengerCtx = isMessengerContext();
+			}
+
+			return this.#isMessengerCtx;
+		}
 	}
 
+	const messengerParams = new MessengerParams();
+	const messengerParamsWriter = new MessengerParamsWriter(messengerParams);
+	const messengerParamsReader = new MessengerParamsReader(messengerParams);
+
+	messengerParams.setUpdateNotifier(() => {
+		void messengerParamsWriter.dump();
+	});
+
 	module.exports = {
-		MessengerParams: new MessengerParams(),
+		MessengerParams: messengerParams,
+		MessengerParamsWriter: messengerParamsWriter,
+		MessengerParamsReader: messengerParamsReader,
 	};
 });

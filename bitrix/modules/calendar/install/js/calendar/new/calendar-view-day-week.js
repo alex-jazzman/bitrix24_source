@@ -1427,8 +1427,13 @@
 				;
 				if (collab && !isCurrentCollabCalendar)
 				{
+					const messageKey = (
+						this.calendar.isNewProjectsOn
+							? 'EC_VIEW_PROJECT_PREFIXED_NAME'
+							: 'EC_VIEW_COLLAB_PREFIXED_NAME'
+					);
 					const prefixedTitle = BX.Loc.getMessage(
-						'EC_VIEW_COLLAB_PREFIXED_NAME',
+						messageKey,
 						{
 							'#TITLE#': collab.getName(),
 							'[collab_prefix]': '<span class="collab-prefix">',

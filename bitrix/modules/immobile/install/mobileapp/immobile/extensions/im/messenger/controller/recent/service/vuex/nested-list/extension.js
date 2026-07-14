@@ -3,9 +3,13 @@
  */
 jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, exports, module) => {
 	const { Type } = require('type');
-	const { NavigationTabId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
+	const { debounce } = require('utils/function');
+	const { EventType, NavigationTabId, RecentTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
+	const { RecentFilteredSync } = require('im/messenger/controller/recent/service/vuex/lib/sync/filter');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	const REFRESH_DEBOUNCE_MS = 50;
 
 	/**
 	 * @implements {IVuexService}
@@ -13,10 +17,18 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 	 */
 	class NestedListVuexService extends BaseRecentService
 	{
+		#hadPinnedChildren = false;
+		#isSubscribed = false;
+		#filterDirty = false;
+		#scheduleRefreshFirstPage = null;
+
 		onInit()
 		{
 			this.logger.log('onInit');
+			this.recentFilteredSync = new RecentFilteredSync(this.recentLocator, this.logger);
 
+			this.#scheduleRefreshFirstPage = debounce(() => this.#refreshFirstPage(), REFRESH_DEBOUNCE_MS);
+			this.#hadPinnedChildren = this.#computeHasPinnedChildren();
 			this.#subscribeStoreMutation();
 		}
 
@@ -26,6 +38,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		get storeManager()
 		{
 			return serviceLocator.get('core').getStoreManager();
+		}
+
+		get #emitter()
+		{
+			return serviceLocator.get('emitter');
 		}
 
 		subscribeEvents()
@@ -40,12 +57,23 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 		#subscribeStoreMutation()
 		{
+			if (this.#isSubscribed)
+			{
+				return;
+			}
+			this.#isSubscribed = true;
+
+			this.recentFilteredSync.subscribeStoreMutation();
+			this.#emitter.on(EventType.recentManager.resumeController, this.#resumeControllerHandler);
 			this.storeManager
 				.on('recentModel/add', this.recentAddHandler)
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
 				.on('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
 				.on('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.on('recentModel/recentFilteredModel/setCurrentFilter', this.filterChangeHandler)
+				.on('recentModel/recentFilteredModel/setIdCollection', this.filteredIdCollectionChangeHandler)
+				.on('recentModel/recentFilteredModel/clearIdCollection', this.filteredIdCollectionChangeHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('counterModel/set', this.#counterSetHandler)
@@ -58,12 +86,23 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 		#unsubscribeStoreMutation()
 		{
+			if (!this.#isSubscribed)
+			{
+				return;
+			}
+			this.#isSubscribed = false;
+
+			this.recentFilteredSync.unsubscribeStoreMutation();
+			this.#emitter.off(EventType.recentManager.resumeController, this.#resumeControllerHandler);
 			this.storeManager
 				.off('recentModel/add', this.recentAddHandler)
 				.off('recentModel/update', this.recentUpdateHandler)
 				.off('recentModel/delete', this.recentDeleteHandler)
 				.off('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
 				.off('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.off('recentModel/recentFilteredModel/setCurrentFilter', this.filterChangeHandler)
+				.off('recentModel/recentFilteredModel/setIdCollection', this.filteredIdCollectionChangeHandler)
+				.off('recentModel/recentFilteredModel/clearIdCollection', this.filteredIdCollectionChangeHandler)
 				.off('dialoguesModel/add', this.dialogUpdateHandler)
 				.off('dialoguesModel/update', this.dialogUpdateHandler)
 				.off('counterModel/set', this.#counterSetHandler)
@@ -111,7 +150,71 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
-			this.recentLocator.get('render').upsertItems([item]);
+			const render = this.recentLocator.get('render');
+			if (!this.#shouldRenderParentFakeItem())
+			{
+				if (render.hasItemRendered(String(item.id)))
+				{
+					render.deleteItems([{ id: String(item.id) }]);
+				}
+
+				return;
+			}
+
+			render.upsertItems([item]);
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		#shouldRenderParentFakeItem()
+		{
+			return NestedListVuexService.shouldRenderParentFakeItem(
+				this.storeManager.store.getters,
+				this.recentLocator.get('id'),
+				this.recentLocator.get('parentChatId'),
+			);
+		}
+
+		/**
+		 * Pure decision: must the synthetic parent chat item be rendered in the nested list.
+		 * Parent chat is always pinned to the top of the project's default nested list,
+		 * regardless of filter state and counters — matches the web im messenger behavior.
+		 *
+		 * @param {object} _rootGetters
+		 * @param {string} tabId
+		 * @param {number} _parentChatId
+		 * @returns {boolean}
+		 */
+		static shouldRenderParentFakeItem(_rootGetters, tabId, _parentChatId)
+		{
+			return tabId === NavigationTabId.collabDefault;
+		}
+
+		#computeHasPinnedChildren()
+		{
+			const recentSection = this.recentLocator.get('recentSection');
+			if (recentSection !== RecentTab.collabDefault)
+			{
+				return false;
+			}
+
+			const parentChatId = this.recentLocator.get('parentChatId');
+
+			return this.storeManager.store.getters['recentModel/hasPinnedItemInSection'](recentSection, parentChatId);
+		}
+
+		#refreshParentFakeIfPinnedToggled()
+		{
+			const has = this.#computeHasPinnedChildren();
+			if (has === this.#hadPinnedChildren)
+			{
+				return;
+			}
+
+			this.logger.log('#refreshParentFakeIfPinnedToggled: pinned state changed', { has });
+			this.#hadPinnedChildren = has;
+			this.#upsertParentChatFakeItem();
 		}
 
 		/**
@@ -181,6 +284,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			}
 
 			this.#updateItems(recentItems);
+			this.#refreshParentFakeIfPinnedToggled();
 		};
 
 		/**
@@ -196,6 +300,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			}
 
 			this.#updateItems(recentItems);
+			this.#refreshParentFakeIfPinnedToggled();
 		};
 
 		/**
@@ -222,6 +327,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
+			this.#hadPinnedChildren = this.#computeHasPinnedChildren();
+
 			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
 			const firstPageItems = this.storeManager.store.getters['recentModel/getFirstPageByIdCollection'](collection);
 
@@ -237,12 +344,141 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
-			const parentFakeItem = tabId === NavigationTabId.collabDefault ? this.#parentRecentItem : null;
+			const parentFakeItem = this.#shouldRenderParentFakeItem() ? this.#parentRecentItem : null;
 			const allItems = parentFakeItem ? [parentFakeItem, ...firstPageItems] : firstPageItems;
 
 			this.recentLocator.get('render').setItems(allItems);
 			void this.recentLocator.get('render').renderInstant();
 		};
+
+		/**
+		 * @param {MutationPayload<{tabId: string, filterId: FilterId}, 'setCurrentFilter'>} payload
+		 */
+		filterChangeHandler = ({ payload }) => {
+			this.logger.log('filterChangeHandler', payload);
+
+			const tabId = this.recentLocator.get('id');
+			const parentChatId = this.recentLocator.get('parentChatId');
+			if (payload?.data?.tabId !== tabId || (payload?.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== parentChatId)
+			{
+				return;
+			}
+
+			if (!this.#isInActiveProject())
+			{
+				this.logger.log('filterChangeHandler: not in active project, marking dirty');
+				this.#filterDirty = true;
+
+				return;
+			}
+
+			serviceLocator.get('messenger-header-manager').redrawNestedRightButtonsIfNeeded(this.recentLocator.get('id'));
+		};
+
+		/**
+		 * @param {MutationPayload<RecentFilteredSetIdCollectionData>} payload
+		 */
+		filteredIdCollectionChangeHandler = ({ payload }) => {
+			this.logger.log('filteredIdCollectionChangeHandler', payload);
+
+			const tabId = this.recentLocator.get('id');
+			const parentChatId = this.recentLocator.get('parentChatId');
+			if (payload?.data?.tabId !== tabId || (payload?.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== parentChatId)
+			{
+				return;
+			}
+
+			if (!this.#isInActiveProject())
+			{
+				this.logger.log('filteredIdCollectionChangeHandler: not in active project, marking dirty');
+				this.#filterDirty = true;
+
+				return;
+			}
+
+			this.#scheduleRefreshFirstPage();
+		};
+
+		/**
+		 * @returns {boolean} true when this nested service belongs to the project currently
+		 * visible to the user. Paused projects skip UI work and set #filterDirty instead;
+		 * #compensateFilterIfNeeded catches up when the project becomes active again.
+		 */
+		#isInActiveProject()
+		{
+			const active = serviceLocator.get('recent-manager').getActiveNestedRecent();
+			if (!active)
+			{
+				return false;
+			}
+
+			return active.getParentChatId() === this.recentLocator.get('parentChatId');
+		}
+
+		/**
+		 * @returns {boolean} true if compensation was triggered
+		 */
+		#compensateFilterIfNeeded()
+		{
+			if (!this.#filterDirty || !this.#isInActiveProject())
+			{
+				return false;
+			}
+
+			this.logger.log('#compensateFilterIfNeeded: refreshing after project resume');
+			this.#filterDirty = false;
+			this.#scheduleRefreshFirstPage();
+			serviceLocator.get('messenger-header-manager').redrawNestedRightButtonsIfNeeded(this.recentLocator.get('id'));
+
+			return true;
+		}
+
+		/**
+		 * @param {string} recentId
+		 * @param {RecentController} controller
+		 * @param {number} parentChatId
+		 */
+		#resumeControllerHandler = (recentId, controller, parentChatId) => {
+			if (parentChatId !== this.recentLocator.get('parentChatId'))
+			{
+				return;
+			}
+
+			this.#compensateFilterIfNeeded();
+		};
+
+		/**
+		 * @returns {boolean}
+		 */
+		#isFilterActive()
+		{
+			const tabId = this.recentLocator.get('id');
+			const parentChatId = this.recentLocator.get('parentChatId');
+
+			return this.storeManager.store.getters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId, parentChatId);
+		}
+
+		#refreshFirstPage()
+		{
+			if (!this.recentLocator.has('render'))
+			{
+				this.logger.log('#refreshFirstPage: render is not ready, skipping');
+
+				return;
+			}
+
+			const parentChatId = this.recentLocator.get('parentChatId');
+			const tabId = this.recentLocator.get('id');
+
+			const collection = this.storeManager.store.getters['recentModel/getIdCollection'](tabId, parentChatId);
+			const firstPageItems = this.storeManager.store.getters['recentModel/getFirstPageByIdCollection'](collection);
+
+			const parentFakeItem = this.#shouldRenderParentFakeItem() ? this.#parentRecentItem : null;
+			const allItems = parentFakeItem ? [parentFakeItem, ...firstPageItems] : firstPageItems;
+
+			this.recentLocator.get('render').setItems(allItems);
+			void this.recentLocator.get('render').renderInstant();
+		}
 
 		/**
 		 * @param {MutationPayload<RecentDeleteData>} payload
@@ -257,6 +493,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 
 				return;
 			}
+
+			this.#refreshParentFakeIfPinnedToggled();
 
 			if (!this.recentLocator.has('render'))
 			{
@@ -291,6 +529,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			{
 				return;
 			}
+
+			this.#refreshParentFakeIfPinnedToggled();
 
 			const itemId = payload?.data?.id;
 			if (!itemId)
@@ -425,6 +665,13 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		#counterSetHandler = ({ payload }) => {
 			this.logger.log('#counterSetHandler', payload);
 
+			if (this.#isFilterActive())
+			{
+				this.logger.log('#counterSetHandler: filter active, full refresh handled by filteredIdCollectionChangeHandler');
+
+				return;
+			}
+
 			const { counterList } = payload.data;
 			if (!Type.isArrayFilled(counterList))
 			{
@@ -457,6 +704,13 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		 */
 		#counterDeleteHandler = ({ payload }) => {
 			this.logger.log('#counterDeleteHandler', payload);
+
+			if (this.#isFilterActive())
+			{
+				this.logger.log('#counterDeleteHandler: filter active, full refresh handled by filteredIdCollectionChangeHandler');
+
+				return;
+			}
 
 			if (!['clear', 'clearByType', 'delete'].includes(payload.actionName))
 			{
@@ -499,6 +753,11 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		 */
 		#updateItems(items)
 		{
+			if (this.#compensateFilterIfNeeded())
+			{
+				return;
+			}
+
 			if (!this.recentLocator.has('render'))
 			{
 				this.logger.error('#updateItems: render is not ready, skipping');

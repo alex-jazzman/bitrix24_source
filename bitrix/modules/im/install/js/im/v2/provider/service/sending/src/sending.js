@@ -1,5 +1,6 @@
 import { Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { PageContext } from 'ui.page-context';
 import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
@@ -403,6 +404,7 @@ export class SendingService
 			id: oldId,
 			fields: { id: newId },
 		});
+		void this.#store.dispatch('messages/builder/updateWithId', { oldId, newId });
 		void this.#store.dispatch('chats/update', {
 			dialogId,
 			fields: {
@@ -535,10 +537,27 @@ export class SendingService
 				prepared.stickerParams = this.#store.getters['stickers/messages/getStickerByMessageId'](messageId);
 			}
 
+			this.#copyBuilderBlocks(messageId, uuid);
+
 			preparedMessages.push(prepared);
 		});
 
 		return preparedMessages;
+	}
+
+	#copyBuilderBlocks(sourceMessageId: number | string, targetMessageId: string)
+	{
+		const originalBlocks = this.#store.getters['messages/builder/getBlocks'](sourceMessageId);
+		if (!Type.isArrayFilled(originalBlocks))
+		{
+			return;
+		}
+
+		const originalParams = this.#store.getters['messages/builder/getParams'](sourceMessageId);
+		void this.#store.dispatch('messages/builder/set', {
+			id: targetMessageId,
+			block: { config: originalParams, elements: originalBlocks },
+		});
 	}
 
 	#prepareForwardParams(messageId: number): { id: string, userId: number, chatType: string, chatTitle: string }
@@ -652,11 +671,18 @@ export class SendingService
 		return Promise.resolve();
 	}
 
-	#prepareCopilotMessageParams(dialogId: string): { copilot: CopilotModeParams }
+	#prepareCopilotMessageParams(dialogId: string): { copilot?: CopilotModeParams }
 	{
+		const isAiAssistantChat = this.#getDialog(dialogId).type === ChatType.copilot;
+		if (!isAiAssistantChat)
+		{
+			return {};
+		}
+
 		const store = Core.getStore();
 		const isReasoningEnabled = store.getters['copilot/chats/isReasoningEnabled'](dialogId);
 		const isForceSearchEnabled = store.getters['copilot/chats/isForceSearchEnabled'](dialogId);
+		const isAgentModeEnabled = store.getters['copilot/chats/isAgentModeEnabled'](dialogId);
 		const mcpAuthId = store.getters['copilot/chats/getMcpAuth'](dialogId)?.id;
 
 		const copilot = {};
@@ -670,10 +696,17 @@ export class SendingService
 			copilot.forceSearch = 'Y';
 		}
 
+		if (isAgentModeEnabled)
+		{
+			copilot.agentMode = 'Y';
+		}
+
 		if (mcpAuthId)
 		{
 			copilot.mcpAuthId = mcpAuthId;
 		}
+
+		copilot.pageContext = PageContext.getAll();
 
 		return { copilot };
 	}

@@ -3,4 +3,5 @@ module.exports = {
 	output: 'dist/registry.bundle.js',
 	namespace: 'BX.Messenger.v2.Component.Content',
 	browserslist: true,
+	safeNamespaces: true,
 };

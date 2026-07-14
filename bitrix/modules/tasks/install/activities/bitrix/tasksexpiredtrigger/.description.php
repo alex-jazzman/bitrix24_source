@@ -17,6 +17,7 @@ if (
 	|| \Bitrix\Bizproc\Activity\Enum\ActivityColorIndex::tryFrom(1) == null
 	|| !enum_exists('\Bitrix\Ui\Public\Enum\IconSet\Outline')
 	|| \Bitrix\Ui\Public\Enum\IconSet\Outline::tryFrom('o-important-task') == null
+	|| !\Bitrix\Main\Loader::includeModule('tasks')
 )
 {
 	return;
@@ -28,7 +29,15 @@ use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\Bizproc\Document\Task;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
+
+$documentType = Task::resolveDocumentType();
+$document = [
+	'Name' => \CBPRuntime::getRuntime()->getDocumentService()->getDocumentTypeName($documentType),
+	'Type' => FieldType::DOCUMENT,
+	'Default' => $documentType,
+];
 
 $arActivityDescription =
 	(new ActivityDescription(
@@ -37,7 +46,11 @@ $arActivityDescription =
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('TasksExpiredTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::TASK_MANAGEMENT->value,
+			ActivityGroup::TASK_DISTRIBUTION->value,
+		])
 		->setReturn([
 			'TASK_ID' => [
 				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_ID'),
@@ -59,6 +72,7 @@ $arActivityDescription =
 				'Name' => Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_URL'),
 				'Type' => FieldType::STRING,
 			],
+			'ReturnDocument' => $document,
 		])
 		->setIcon(Outline::IMPORTANT_TASK->name)
 		->setColorIndex(ActivityColorIndex::BLUE->value)

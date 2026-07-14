@@ -17,6 +17,8 @@ return [
 		'ui.icon-set.outline',
 		'ui.notification',
 		'ui.progressbar',
+		'ui.system.alert',
+		'ui.system.alert.vue',
 		'ui.system.checkbox',
 		'ui.system.dialog',
 		'ui.system.input.vue',

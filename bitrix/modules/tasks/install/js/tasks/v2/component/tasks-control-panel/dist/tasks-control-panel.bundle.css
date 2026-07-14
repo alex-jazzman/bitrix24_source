@@ -1,0 +1,256 @@
+.tasks-control-panel {
+	--whitespace: 20px;
+	--transition-controls: all 0.1s ease-in-out;
+	position: relative;
+	border-radius: inherit;
+}
+
+.tasks-control-panel__bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	border-radius: inherit;
+	width: 100%;
+	height: 100%;
+	background-color: var(--ui-color-divider-default);
+	opacity: 0.6;
+}
+
+.tasks-control-panel__content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	border-radius: inherit;
+}
+
+
+/* normalize */
+.tasks-control-panel-section__content,
+.tasks-control-panel-section__item-vis { box-sizing: border-box; }
+.tasks-control-panel-section__item-action {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+.tasks-control-panel-section__item-text {	margin: 0; }
+.tasks-control-panel-section__list { margin: 0; padding: 0; }
+.tasks-control-panel-section__item { list-style: none; }
+/* normalize end */
+
+.tasks-control-panel-section {
+	--color-bgc: var(--ui-color-base-8);
+	position: relative;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+	border-radius: inherit;
+	width: 100%;
+}
+.tasks-control-panel-section + .tasks-control-panel-section {
+	margin-top: var(--whitespace);
+}
+
+.tasks-control-panel-section__bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	border-radius: inherit;
+	width: 100%;
+	height: 100%;
+	background-color: var(--color-bgc);
+}
+
+.tasks-control-panel-section__content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: var(--whitespace);
+	width: 100%;
+}
+
+.tasks-control-panel-section__list {
+	display: flex;
+	width: 100%;
+	gap: 10px;
+}
+
+.tasks-control-panel-section__item {
+	width: 100%;
+}
+
+.tasks-control-panel-section__item-action {
+	--color-section-control: var(--ui-color-accent-soft-blue-1);
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+}
+.tasks-control-panel-section__item-action:hover {
+	--color-section-control: var(--ui-color-accent-brand-blue);
+}
+.tasks-control-panel-section__item-action[disabled] {
+	cursor: auto;
+	opacity: 0.5;
+}
+.tasks-control-panel-section__item-action[disabled],
+.tasks-control-panel-section__item-action[disabled]:hover {
+	--color-section-control: var(--ui-color-accent-soft-blue-1);
+}
+
+.tasks-control-panel-section__item-action-status {
+	position: absolute;
+	left: -1px;
+	top: -1px;
+	background-color: var(--color-bgc);
+}
+
+.tasks-control-panel-section__item-action-status-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+}
+
+.tasks-control-panel-section__item-vis {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border: 1px solid var(--color-section-control);
+	border-radius: 10px;
+	padding: 5px 20px 5px 20px;
+	width: 100%;
+	min-height: 50px;
+	transition: var(--transition-controls);
+}
+
+.tasks-control-panel-section__item-vis-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+	--ui-icon-set__icon-size: 34px;
+	transition: none;
+}
+
+.tasks-control-panel-section__item-text {
+	color: var(--ui-color-base-1);
+	text-align: center;
+}
+
+
+/* normalize */
+.tasks-control-panel-menu__content,
+.tasks-control-panel-menu__list,
+.tasks-control-panel-menu__action-content { box-sizing: border-box; }
+.tasks-control-panel-menu__action {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+.tasks-control-panel-menu__list { margin: 0; padding: 0; }
+.tasks-control-panel-menu__item { list-style: none; }
+/* normalize end */
+
+.tasks-control-panel-menu {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__bg {}
+
+.tasks-control-panel-menu__content {
+	position: relative;
+	padding: 0 var(--whitespace) var(--whitespace) var(--whitespace);
+	width: 100%;
+}
+.tasks-control-panel-menu:first-of-type .tasks-control-panel-menu__content,
+.tasks-control-panel-section + .tasks-control-panel-menu .tasks-control-panel-menu__content {
+	padding-top: var(--whitespace);
+}
+
+.tasks-control-panel-menu__list {
+	--whitespace: 16px;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+	border-radius: 10px;
+	padding: calc(var(--whitespace) / 2) 0 calc(var(--whitespace) / 2) 0;
+	width: 100%;
+	background-color: #FFFFFF;
+}
+
+.tasks-control-panel-menu__item {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__action {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__action-bg {}
+
+.tasks-control-panel-menu__action-content {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 3px var(--whitespace) 3px var(--whitespace);
+	width: 100%;
+	min-height: 42px;
+}
+
+.tasks-control-panel-menu__action-text {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-control-panel-menu__action-text-icon {
+	--ui-icon-set__icon-size: 26px;
+	flex-shrink: 0;
+}
+
+.tasks-control-panel-menu__action-text-title {
+	font-size: 13px;
+}
+
+.tasks-control-panel-menu__action-vis {
+	line-height: 0;
+}
+
+.tasks-control-panel-menu__action-vis-icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+	flex-shrink: 0;
+	opacity: 0.4;
+	transform-origin: center center;
+	transform: rotate(0deg);
+	transition: var(--transition-controls);
+}
+.tasks-control-panel-menu__action:hover .tasks-control-panel-menu__action-vis-icon {
+	opacity: 1;
+}
+.tasks-control-panel-menu__action:active .tasks-control-panel-menu__action-vis-icon,
+.tasks-control-panel-menu__action.tasks-control-panel-menu__action_active .tasks-control-panel-menu__action-vis-icon {
+	opacity: 1;
+}
+
+/* normalize */
+.tasks-control-panel-info { box-sizing: border-box; }
+/* normalize end */
+
+.tasks-control-panel-info {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--whitespace);
+	padding: 0 var(--whitespace) var(--whitespace) var(--whitespace);
+	width: 100%;
+}
+.tasks-control-panel-info:first-of-type,
+.tasks-control-panel-section + .tasks-control-panel-info {
+	padding-top: var(--whitespace);
+}

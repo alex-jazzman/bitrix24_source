@@ -40,3 +40,4 @@ return [
 		'isRenamedMarket' => \Bitrix\Rest\Integration\Market\Label::isRenamedMarket(),
 	]
 ];
+

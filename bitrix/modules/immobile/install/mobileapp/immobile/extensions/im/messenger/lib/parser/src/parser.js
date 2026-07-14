@@ -162,6 +162,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
 			}
 
+			if (this.isBlockWithoutText(modelMessage))
+			{
+				return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_ATTACH')}]`;
+			}
+
 			return this.simplify({
 				text: modelMessage.text,
 				attach: modelMessage.params && modelMessage.params.ATTACH ? modelMessage.params.ATTACH : false,
@@ -281,6 +286,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			const attach = params.ATTACH || false;
 			const files = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
+
+			if (this.isBlockWithoutText(modelMessage))
+			{
+				return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_ATTACH')}]`;
+			}
 			text = text.trim();
 
 			text = parserMention.simplify(text);
@@ -320,6 +330,17 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		isUrlTag(part)
 		{
 			return parserUrl.isUrlTag(part);
+		},
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {boolean}
+		 */
+		isBlockWithoutText(modelMessage)
+		{
+			return Type.isPlainObject(modelMessage.block)
+				&& Type.isArrayFilled(modelMessage.block?.elements)
+				&& !Type.isStringFilled(modelMessage.text);
 		},
 	};
 

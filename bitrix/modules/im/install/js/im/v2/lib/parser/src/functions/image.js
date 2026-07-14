@@ -257,7 +257,7 @@ export const ParserImage = {
 				const isValidSize = size && Object.values(ImageBbCodeSizes).includes(size.toLowerCase());
 				const isInvalidUrl = ['/docs/pub/', 'logout=yes'].includes(url.toLowerCase());
 				const isSafeUrl = getUtils().text.checkUrl(url);
-				const isImage = isImageUrl(url);
+				const isImage = getUtils().text.isUrlImageLike(url);
 				const hasNestedItems = hasNestedImgBbCodes(url);
 
 				if (!isValidSize || isInvalidUrl || !isSafeUrl || !isImage || hasNestedItems)
@@ -323,11 +323,6 @@ function canPurifyLink(symbolBeforeUrl: string, url: string): boolean
 		&& !isLinkFromDisk(url)
 		&& !isLogoutLink(url)
 		&& !hasLeadingTextBeforeUrl(symbolBeforeUrl);
-}
-
-function isImageUrl(url: string): boolean
-{
-	return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url.trim());
 }
 
 function hasNestedImgBbCodes(url: string): boolean

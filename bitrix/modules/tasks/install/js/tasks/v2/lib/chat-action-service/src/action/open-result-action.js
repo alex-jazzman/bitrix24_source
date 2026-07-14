@@ -48,7 +48,7 @@ class OpenResultAction extends BaseAction
 
 	#showNoResultHint(payload: ActionPayload): void
 	{
-		void chatHint.show(Loc.getMessage('TASKS_V2_CHAT_ACTION_RESULT_NOT_FOUND'), payload);
+		void chatHint.show(Loc.getMessage('TASKS_V2_CHAT_ACTION_RESULT_NOT_FOUND_MSGVER_1'), payload);
 	}
 
 	#emitOpenResultEvent(payload: ActionPayload): void

@@ -8,7 +8,7 @@ export type RecentFilterElement = {
 };
 
 export type RecentFilteredModelCollection = {
-	collection: Record<string, RecentFilterElement>;
+	collection: Record<number, Record<string, RecentFilterElement>>;
 };
 
 export type RecentFilteredMessengerModel = MessengerModel<RecentFilteredModelCollection>;
@@ -26,18 +26,21 @@ export type RecentFilteredModelMutation =
 export interface RecentFilteredSetCurrentFilterData extends PayloadData
 {
 	tabId: string;
+	parentChatId: number;
 	filterId: FilterId;
 }
 
 export interface RecentFilteredSetIdCollectionData extends PayloadData
 {
 	tabId: string;
+	parentChatId: number;
 	itemIds: Array<string>;
 }
 
 export interface RecentFilteredClearIdCollectionData extends PayloadData
 {
 	tabId: string;
+	parentChatId: number;
 }
 
 export type RecentFilteredModelActionParams = {

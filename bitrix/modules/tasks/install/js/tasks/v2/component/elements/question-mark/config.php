@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/question-mark.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.directives.hint',
+		'tasks.v2.component.elements.hint',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
-		'tasks.v2.component.elements.hint',
+		'ui.vue3.directives.hint',
 	],
 	'skip_core' => true,
 ];

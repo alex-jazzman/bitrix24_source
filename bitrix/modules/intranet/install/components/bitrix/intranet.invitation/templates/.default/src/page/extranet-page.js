@@ -1,13 +1,16 @@
 import { Tag, Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
+
+import { DepartmentControl, EntityType } from 'intranet.department-control';
+
 import { Analytics } from '../analytics';
+import { DepartmentControlBlock } from '../elements/department-control-block';
+import { InputRow } from '../elements/input-row';
 import { InputRowFactory } from '../input-row-factory';
 import { RestoreFiredUsersPopup } from '../popup/restore-fired-users-popup';
-import { Page } from './page';
-import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
-import { InputRow } from '../elements/input-row';
 import { Transport } from '../transport';
-import { DepartmentControl, EntityType } from 'intranet.department-control';
-import { EventEmitter } from 'main.core.events';
+import { Page } from './page';
 
 export class ExtranetPage extends Page
 {
@@ -16,6 +19,7 @@ export class ExtranetPage extends Page
 	#inputsRows: Array;
 	#transport: Transport;
 	#departmentControl: DepartmentControl;
+	#departmentControlBlock: DepartmentControlBlock;
 
 	constructor(options)
 	{
@@ -24,6 +28,10 @@ export class ExtranetPage extends Page
 		this.#transport = options.transport;
 		this.#inputsFactory = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
 		this.#departmentControl = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
+		this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock
+			? options.departmentControlBlock
+			: null
+		;
 	}
 
 	render(): HTMLElement
@@ -46,9 +54,7 @@ export class ExtranetPage extends Page
 
 		this.#container = Tag.render`
 			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
+				${this.#departmentControlBlock?.render()}
 				<div class="intranet-invitation-block__content">
 					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
 					${rowsContainer}

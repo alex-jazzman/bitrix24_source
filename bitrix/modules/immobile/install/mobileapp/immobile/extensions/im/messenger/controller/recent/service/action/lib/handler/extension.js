@@ -305,7 +305,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 					const { Alert, ButtonType } = require('alert');
 					Alert.confirm(
 						null,
-						Loc.getMessage('IMMOBILE_MESSENGER_CONTROLLER_RECENT_SERVICE_ACTION_PIN_ERROR_MAX_PINNED'),
+						Loc.getMessage('IMMOBILE_MESSENGER_CONTROLLER_RECENT_SERVICE_ACTION_PIN_ERROR_MAX_PINNED_V2'),
 						[{ type: ButtonType.DEFAULT }],
 					);
 				}

@@ -42,7 +42,8 @@
 .bx-im-keyboard-button__container.alert,
 .bx-im-keyboard-button__container.secondary,
 .bx-im-keyboard-button__container.primary,
-.bx-im-keyboard-button__container.base {
+.bx-im-keyboard-button__container.base,
+.bx-im-keyboard-button__container.ai-assistant {
 	transition: background-color .2s, color .2s;
 }
 
@@ -79,6 +80,46 @@
 
 .bx-im-keyboard-button__container.secondary:hover {
 	color: var(--im-keyboard__font-color-secondary-hover);
+}
+
+.bx-im-keyboard-button__container.ai-assistant {
+	position: relative;
+	border-radius: 18px;
+	box-shadow: none;
+	font-weight: inherit;
+	background: linear-gradient(
+			268deg,
+			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4) 1.77%,
+			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, #FCEFF8) 14.06%,
+			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #F1F0FF) 48.82%,
+			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #F0F7FF) 98.35%
+	);
+	color: transparent;
+	white-space: nowrap;
+}
+
+.bx-im-keyboard-button__container.ai-assistant::after {
+	content: attr(data-text);
+	position: absolute;
+	inset: 0;
+	padding: inherit;
+	box-sizing: border-box;
+	display: block;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background: linear-gradient(
+			251deg,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4, #F046B7) 21.82%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3, #9D48FF) 52.44%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2, #3F68FF) 76.41%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1, #0098EA) 97.21%
+	);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
 }
 
 .bx-im-keyboard-button__container.alert {

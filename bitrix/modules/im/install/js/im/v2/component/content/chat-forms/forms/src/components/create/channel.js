@@ -15,7 +15,7 @@ import {
 	PrivacySection,
 } from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -98,7 +98,7 @@ export const ChannelCreation = {
 	},
 	methods:
 	{
-		onMembersChange(currentTags: [string, number | string][])
+		onMembersChange(currentTags: SelectorEntityItem[])
 		{
 			this.chatMembers = currentTags;
 		},

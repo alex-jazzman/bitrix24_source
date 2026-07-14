@@ -1,4 +1,4 @@
-/**
+	/**
  * @module im/messenger/controller/recent/service/server-load/nested-list
  */
 jn.define('im/messenger/controller/recent/service/server-load/nested-list', (require, exports, module) => {
@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 	const { Type } = require('type');
 	const { uniqBy } = require('utils/array');
 
-	const { MessengerInitRestMethod } = require('im/messenger/const');
+	const { MessengerInitRestMethod, RecentFilterId } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentRest } = require('im/messenger/provider/rest');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
@@ -37,16 +37,22 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @param {ServerLoadRequestContext} [context]
 		 * @return {object}
 		 */
-		getInitRequestOptions(mode)
+		getInitRequestOptions(mode, { currentFilterId } = {})
 		{
-			return {
-				filter: {
-					parentId: this.recentLocator.get('parentChatId'),
-					recentSection: this.props.recentSection,
-				},
+			const filter = {
+				parentId: this.recentLocator.get('parentChatId'),
+				recentSection: this.props.recentSection,
 			};
+
+			if (currentFilterId === RecentFilterId.unread)
+			{
+				filter.unread = 'Y';
+			}
+
+			return { filter };
 		}
 
 		/**
@@ -117,6 +123,10 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 			}
 
 			const modelData = this.prepareDataForModels(recentData);
+			const { regular: regularRecentItems, fixed: fixedRecentItems } = this.#partitionByFixed(
+				modelData.recent,
+				recentData.sectionMeta,
+			);
 
 			try
 			{
@@ -124,7 +134,8 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 					? 'recentModel/setFirstPageByRecentSection'
 					: 'recentModel/setByRecentSection'
 				;
-				await Promise.all([
+
+				const dispatches = [
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('messagesModel/store', modelData.messages),
 					this.store.dispatch('filesModel/set', modelData.files),
@@ -133,11 +144,25 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 						recentAction,
 						{
 							recentSection: this.recentLocator.get('recentSection'),
-							itemList: modelData.recent,
+							itemList: regularRecentItems,
 							parentChatId: this.recentLocator.get('parentChatId'),
 						},
 					),
-				]);
+				];
+
+				if (Type.isArrayFilled(fixedRecentItems))
+				{
+					// Put fixed items into collection (for #parentRecentItem and counter updates),
+					// but not into nestedIdCollection — they are rendered separately as fake items.
+					dispatches.push(this.store.dispatch('recentModel/set', fixedRecentItems));
+				}
+
+				await Promise.all(dispatches);
+
+				const section = this.recentLocator.get('recentSection');
+				const dialogIds = regularRecentItems.map((item) => String(item.dialogId));
+				await serviceLocator.get('core').getRepository().recent
+					.ensureSectionForDialogIds(dialogIds, section);
 
 				if (recentData.hasNextPage)
 				{
@@ -232,6 +257,40 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 		}
 
 		/**
+		 * Splits recentItems into regular (scrollable list) and fixed (rendered separately).
+		 * Fixed items go into state.collection for Vuex reactivity but NOT into nestedIdCollection.
+		 *
+		 * @param {Array} recentItems
+		 * @param {object|undefined} sectionMeta
+		 * @return {{ regular: Array, fixed: Array }}
+		 */
+		#partitionByFixed(recentItems, sectionMeta)
+		{
+			const fixedChatIds = sectionMeta?.fixedChatIds;
+			if (!Type.isArrayFilled(fixedChatIds))
+			{
+				return { regular: recentItems, fixed: [] };
+			}
+
+			const fixedSet = new Set(fixedChatIds.map(Number));
+			const regular = [];
+			const fixed = [];
+
+			recentItems.forEach((item) => {
+				if (fixedSet.has(Number(item.chatId)))
+				{
+					fixed.push(item);
+				}
+				else
+				{
+					regular.push(item);
+				}
+			});
+
+			return { regular, fixed };
+		}
+
+		/**
 		 * @param {object} initResultList
 		 */
 		setPaginationState(initResultList)
@@ -250,54 +309,56 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 
 		/**
 		 * @param {object} restResult
-		 * @return {{lastMessageDate: string}}
+		 * @return {{lastActivityDate: string} | null}
 		 */
 		#getLastItem(restResult)
 		{
-			return { lastMessageDate: this.#getLastMessageDate(restResult) };
-		}
-
-		/**
-		 * @param {object} restResult
-		 * @return {string}
-		 */
-		#getLastMessageDate(restResult)
-		{
-			const messages = this.#filterPinnedItemsMessages(restResult);
-			if (messages.length === 0)
+			const candidates = this.#getCursorCandidates(restResult);
+			if (candidates.length === 0)
 			{
-				return '';
+				return null;
 			}
 
-			let firstMessageDate = messages[0].date;
-			messages.forEach((message) => {
-				if (message.date < firstMessageDate)
+			let oldest = candidates[0];
+			candidates.forEach((item) => {
+				const itemTime = new Date(item.dateLastActivity).getTime();
+				const oldestTime = new Date(oldest.dateLastActivity).getTime();
+				if (!Number.isNaN(itemTime) && (Number.isNaN(oldestTime) || itemTime < oldestTime))
 				{
-					firstMessageDate = message.date;
+					oldest = item;
 				}
 			});
 
-			return firstMessageDate;
+			return { lastActivityDate: oldest.dateLastActivity ?? null };
 		}
 
 		/**
 		 * @param {object} restResult
 		 * @return {Array}
 		 */
-		#filterPinnedItemsMessages(restResult)
+		#getCursorCandidates(restResult)
 		{
-			const { messages, recentItems } = restResult;
-
-			if (!Type.isArray(messages) || !Type.isArray(recentItems))
+			const { recentItems, sectionMeta } = restResult;
+			if (!Type.isArray(recentItems))
 			{
 				return [];
 			}
 
-			return messages.filter((message) => {
-				const chatId = message.chat_id;
-				const recentItem = recentItems.find((item) => item.chatId === chatId);
+			const fixedChatIds = (sectionMeta?.fixedChatIds ?? []).map(Number);
+			const fixedSet = new Set(fixedChatIds)
 
-				return recentItem?.pinned === false;
+			return recentItems.filter((item) => {
+				if (item.pinned === true)
+				{
+					return false;
+				}
+
+				if (fixedSet.has(Number(item.chatId)))
+				{
+					return false;
+				}
+
+				return true;
 			});
 		}
 
@@ -317,14 +378,20 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 				this.logger.error('loadNextPage currentLastItem is invalid, load aborted', currentLastItem);
 				throw new Error('loadNextPage currentLastItem is invalid, load aborted');
 			}
+			const filter = {
+				lastActivityDate: currentLastItem.lastActivityDate,
+				parentId: this.recentLocator.get('parentChatId'),
+				recentSection: this.props.recentSection,
+			};
+
+			if (this.recentLocator.get('filter')?.getCurrentFilterId() === RecentFilterId.unread)
+			{
+				filter.unread = 'Y';
+			}
 
 			const restOptions = {
 				limit: REST_PAGE_TAIL_LIMIT,
-				filter: {
-					lastMessageDate: currentLastItem.lastMessageDate,
-					parentId: this.recentLocator.get('parentChatId'),
-					recentSection: this.props.recentSection,
-				},
+				filter,
 			};
 
 			const resultRequestData = await this.#createRequest(restOptions);

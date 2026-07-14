@@ -96,3 +96,4 @@ export class MarketExpiredCurtain
 		sendData(params);
 	}
 }
+

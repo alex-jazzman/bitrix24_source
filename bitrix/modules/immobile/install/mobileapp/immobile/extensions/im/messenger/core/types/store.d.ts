@@ -35,7 +35,7 @@ import {
 	RecentFilteredModelActions,
 	RecentFilteredModelMutation
 } from "../../model/recent/src/filter/types";
-import {BuilderMessengerModelActions, BuilderMessengerModelMutation} from "../../model/messages/src/builder/types";
+import {BlockMessengerModelActions, BlockMessengerModelMutation} from "../../model/messages/src/block/types";
 
 export type MessengerStoreActions =
 	FilesModelActions
@@ -62,7 +62,7 @@ export type MessengerStoreActions =
 	| OpenlinesModelActions
 	| StickerPackActions
 	| RecentFilteredModelActions
-	| BuilderMessengerModelActions
+	| BlockMessengerModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -89,7 +89,7 @@ export type MessengerStoreMutation =
 	| OpenlinesModelMutation
 	| StickerPackMutation
 	| RecentFilteredModelMutation
-	| BuilderMessengerModelMutation
+	| BlockMessengerModelMutation
 
 export type AllActionParams =
 	StickerPackActionParams

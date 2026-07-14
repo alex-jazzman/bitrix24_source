@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\Helper\Feature;
 
 if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
 {
@@ -24,5 +25,13 @@ return [
 	'rel' => [
 		'sidepanel',
 		'ui.fonts.opensans',
+		'im.public'
+	],
+	'settings' => [
+		'isNewProjectsOn' => \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn(),
+		'isOldPortal' => \Bitrix\Socialnetwork\V2\Feature::isOldPortalForNewProject(),
+		'isRestricted' => !Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS)
+			&& !Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS)
+		,
 	],
 ];

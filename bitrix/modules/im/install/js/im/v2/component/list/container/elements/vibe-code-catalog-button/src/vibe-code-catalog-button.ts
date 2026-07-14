@@ -18,7 +18,7 @@ const AVAILABLE_LAYOUTS = new Set([Layout.chat, Layout.notification]);
 // @vue/component
 export const VibeCodeCatalogButton = defineComponent({
 	name: 'VibeCodeCatalogButton',
-	components: { BIcon },
+	components: { BIcon } as { BIcon: typeof BIcon },
 	data(): State
 	{
 		return {

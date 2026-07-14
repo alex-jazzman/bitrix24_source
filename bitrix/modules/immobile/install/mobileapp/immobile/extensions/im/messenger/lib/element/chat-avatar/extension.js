@@ -100,7 +100,9 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.type = null;
 			this.dialogId = dialogId;
 			this.extranet = false;
+			this.containsCollaber = false;
 			this.isCurrentUser = UserHelper.isCurrentUser(dialogId);
+			this.useCopilotRadialGradient = false;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -196,12 +198,17 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.type = dialogModel.type;
 			this.extranet = dialogModel.extranet;
 
+			if (Feature.isNestedChatAvailable)
+			{
+				this.containsCollaber = dialogModel.containsCollaber === true;
+			}
+
 			if (this.extranet)
 			{
 				this.color = Theme.colors.accentExtraOrange;
 			}
 
-			if (this.type === DialogType.collab)
+			if (this.type === DialogType.collab && (!Feature.isNestedChatAvailable || this.containsCollaber))
 			{
 				this.color = Theme.colors.collabAccentPrimary;
 			}
@@ -234,8 +241,27 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (this.type === DialogType.copilot)
 			{
+				const mainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogModel.dialogId);
 				const avatarPng = Feature.isBitrixGptV2Available ? 'avatar_copilot_v2.png' : 'avatar_copilot_assistant.png';
-				this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || `${ChatAvatar.getImagePath()}${avatarPng}`;
+				const defaultAvatar = `${ChatAvatar.getImagePath()}${avatarPng}`;
+
+				const isNotUniversalRole = mainRole?.code !== CopilotRoleType.copilotUniversalRole;
+				if (isNotUniversalRole)
+				{
+					this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || defaultAvatar;
+
+					return;
+				}
+
+				if (this.#isCopilotChatTitleCustom() && Feature.isAvatarRadialGradientEnabled)
+				{
+					this.avatar = null;
+					this.useCopilotRadialGradient = true;
+
+					return;
+				}
+
+				this.avatar = defaultAvatar;
 			}
 		}
 
@@ -674,6 +700,11 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		#getAvatarMainRoleCopilotFields()
 		{
+			if (this.useCopilotRadialGradient)
+			{
+				return this.#getAvatarRadialGradientCopilotFields();
+			}
+
 			const defaultFields = this.#getAvatarDefaultFields();
 
 			return {
@@ -686,9 +717,31 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 * @private
 		 * @return {AvatarDetail}
 		 */
+		#getAvatarRadialGradientCopilotFields()
+		{
+			const defaultFields = this.#getAvatarDefaultFields();
+			const radialGradient = this.#copilotRadialGradient;
+
+			return {
+				...defaultFields,
+				uri: null,
+				hideOutline: false,
+				backBorderWidth: 2,
+				accentColorRadialGradient: radialGradient,
+				placeholder: {
+					...defaultFields.placeholder,
+					backgroundColorRadialGradient: radialGradient,
+				},
+			};
+		}
+
+		/**
+		 * @private
+		 * @return {AvatarDetail}
+		 */
 		#getAvatarCopilotFields()
 		{
-			const copilotRoleData = this.#getCopilotRoleData();
+			const copilotRoleData = this.#getCopilotRoleData() ?? this.#getCopilotMainRoleData();
 			const smallRoleAvatar = copilotRoleData?.avatar?.small;
 			if (smallRoleAvatar)
 			{
@@ -696,6 +749,16 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			const defaultFields = this.#getAvatarDefaultFields();
+
+			// For a bot avatar the outline is driven by the role of a specific message (messageId)
+			// when available, otherwise it falls back to the chat's main role.
+			// The universal-role check lives here (not in #getCopilotFields) because that branch
+			// always uses the chat's main role and doesn't consider per-message roles.
+			const isUniversalRole = copilotRoleData?.code === CopilotRoleType.copilotUniversalRole;
+			if (Feature.isBitrixGptV2Available && isUniversalRole)
+			{
+				return defaultFields;
+			}
 
 			return {
 				...defaultFields,
@@ -711,11 +774,23 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
 
-			return {
+			const result = {
 				...defaultFields,
 				...this.#getCollabFields(),
 				type: AvatarShape.HEXAGON.value,
 			};
+
+			if (Feature.isNestedChatAvailable)
+			{
+				delete result.accentType;
+
+				result.accentColor = this.containsCollaber
+					? Color.collabAccentPrimary.toHex()
+					: Color.accentMainPrimaryalt.toHex()
+				;
+			}
+
+			return result;
 		}
 
 		/**
@@ -784,7 +859,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return {};
 			}
 
-			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.dialogId);
+			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.#getCopilotChatDialogId());
 			const isUniversalRole = copilotMainRole?.code === CopilotRoleType.copilotUniversalRole;
 			if (Feature.isBitrixGptV2Available && isUniversalRole)
 			{
@@ -946,6 +1021,18 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		/**
 		 * @return {object}
 		 */
+		get #copilotRadialGradient()
+		{
+			return {
+				colors: ['#0098EA', '#3F68FF', '#9D48FF', '#F046B7', '#F96269', '#FFB61A', '#0098EA'],
+				angularColorPositions: [7.2, 54, 126, 180, 234, 288, 352.8],
+				rotationAngle: 42,
+			};
+		}
+
+		/**
+		 * @return {object}
+		 */
 		static get #defaultAvatarFields()
 		{
 			const { accentType, placeholderType } = AvatarDetailFields;
@@ -1022,6 +1109,49 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			return serviceLocator.get('core')
 				.getStore().getters['dialoguesModel/copilotModel/getRoleByMessageId'](`chat${this.options?.chatId}`, this.options?.messageId);
+		}
+
+		/**
+		 * @private
+		 * @return {object|null}
+		 */
+		#getCopilotMainRoleData()
+		{
+			const chatId = this.options?.chatId;
+			if (!chatId)
+			{
+				return null;
+			}
+
+			return serviceLocator.get('core')
+				.getStore().getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](`chat${chatId}`);
+		}
+
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		#isCopilotChatTitleCustom()
+		{
+			const copilotData = this.store.getters['dialoguesModel/copilotModel/getByDialogId'](this.dialogId);
+
+			return copilotData?.chats?.[0]?.titleIsCustom === true;
+		}
+
+		/**
+		 * @private
+		 * @return {?DialogId}
+		 */
+		#getCopilotChatDialogId()
+		{
+			if (!this.options?.chatId)
+			{
+				return this.dialogId;
+			}
+
+			const dialogModel = this.store.getters['dialoguesModel/getByChatId'](this.options.chatId);
+
+			return dialogModel?.dialogId || this.dialogId;
 		}
 
 		#getDefaultUserNamedIcon()

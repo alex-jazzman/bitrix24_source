@@ -52,6 +52,11 @@ export class TalkingService
 
 		if (eventData.fieldName === 'talking')
 		{
+			if (eventData.newValue && !eventData.user.isConnected)
+			{
+				return;
+			}
+
 			this.updateQueue({ user: eventData.user.data, isUserTalking: eventData.newValue });
 		}
 		else if (eventData.fieldName === 'order')

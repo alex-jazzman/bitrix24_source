@@ -82,6 +82,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageSearch: 'im.v2.Chat.Message.search',
 		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
 		imV2ChatMemberFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
+		imV2ChatMemberCheckMembership: 'im.v2.Chat.Member.checkMembership',
 
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatPinCount: 'im.v2.Chat.Pin.count',
@@ -106,6 +107,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
 		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
 		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
+
+		imV2ChatMessageVoteSend: 'im.v2.Chat.Message.Vote.send',
+		imV2CopilotMessageRegenerate: 'im.v2.Copilot.Message.regenerate',
 
 		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
 		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',

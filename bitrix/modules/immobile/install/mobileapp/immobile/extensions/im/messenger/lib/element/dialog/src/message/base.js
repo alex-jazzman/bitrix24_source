@@ -636,6 +636,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
+			if (!modelMessage?.authorId)
+			{
+				return this;
+			}
+
 			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
@@ -1019,6 +1024,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				timeColor: Color.chatOtherBase1_1.toHex(),
 				linkUnderlined: false,
 				backgroundQuoteColor: Color.chatOverallMessageTech.toHex(),
+				quoteExpandIconColor: Color.chatMyBase1_2.toHex(),
 			};
 
 			return this;

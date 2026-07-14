@@ -6,17 +6,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const UnreadModeManager = {
-		removeItemFromList(recentType, dialogId) {
+		removeItemFromList(params) {
 			const {
 				chatId,
 				isMuted
-			} = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			} = im_v2_application_core.Core.getStore().getters['chats/get'](params.dialogId);
 			if (!isMuted && hasChatCounter(chatId)) {
 				return;
 			}
-			this.clearByDialogId(recentType, dialogId);
+			this.removeDialogIdBySections(params);
 		},
-		clearClosedChats(recentType) {
+		removeDialogIdBySections(params) {
+			const {
+				recentSections,
+				dialogId,
+				parentChatId
+			} = params;
+			recentSections.forEach(type => {
+				void im_v2_application_core.Core.getStore().dispatch('recent/clearByDialogId', {
+					dialogId,
+					parentChatId,
+					type,
+					unread: true
+				});
+			});
+		},
+		removeClosedChats(recentType) {
 			const collection = im_v2_application_core.Core.getStore().getters['recent/getUnreadCollection']({
 				type: recentType
 			});
@@ -27,26 +42,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return !im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
 			});
 			dialogIdsToRemove.forEach(dialogId => {
-				this.clearByDialogId(recentType, dialogId);
-			});
-		},
-		clearDialogIdBySections(sections, dialogId) {
-			sections.forEach(recentSection => {
-				this.clearByDialogId(recentSection, dialogId);
-			});
-		},
-		clearByDialogId(recentType, dialogId) {
-			void im_v2_application_core.Core.getStore().dispatch('recent/clearByDialogId', {
-				dialogId,
-				type: recentType,
-				unread: true
+				this.removeDialogIdBySections({
+					recentSections: [recentType],
+					dialogId
+				});
 			});
 		}
 	};
 	function hasChatCounter(chatId) {
 		const hasUnreadMessage = im_v2_application_core.Core.getStore().getters['messages/getFirstUnread'](chatId);
 		const hasUnreadStatus = im_v2_application_core.Core.getStore().getters['counters/getUnreadStatus'](chatId);
-		return hasUnreadMessage || hasUnreadStatus;
+		const hasChildrenCounter = im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](chatId) > 0;
+		return hasUnreadMessage || hasUnreadStatus || hasChildrenCounter;
 	}
 
 	exports.UnreadModeManager = UnreadModeManager;

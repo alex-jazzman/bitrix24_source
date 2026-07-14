@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_utils, im_v2_provider_service_message) {
+(function (exports, main_core, main_core_events, ui_pageContext, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_utils, im_v2_provider_service_message) {
 	'use strict';
 
 	class SendingService {
@@ -333,6 +333,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					id: newId
 				}
 			});
+			void this.#store.dispatch('messages/builder/updateWithId', {
+				oldId,
+				newId
+			});
 			void this.#store.dispatch('chats/update', {
 				dialogId,
 				fields: {
@@ -466,9 +470,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (isSticker) {
 					prepared.stickerParams = this.#store.getters['stickers/messages/getStickerByMessageId'](messageId);
 				}
+				this.#copyBuilderBlocks(messageId, uuid);
 				preparedMessages.push(prepared);
 			});
 			return preparedMessages;
+		}
+		#copyBuilderBlocks(sourceMessageId, targetMessageId) {
+			const originalBlocks = this.#store.getters['messages/builder/getBlocks'](sourceMessageId);
+			if (!main_core.Type.isArrayFilled(originalBlocks)) {
+				return;
+			}
+			const originalParams = this.#store.getters['messages/builder/getParams'](sourceMessageId);
+			void this.#store.dispatch('messages/builder/set', {
+				id: targetMessageId,
+				block: {
+					config: originalParams,
+					elements: originalBlocks
+				}
+			});
 		}
 		#prepareForwardParams(messageId) {
 			const message = this.#store.getters['messages/getById'](messageId);
@@ -563,9 +582,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return Promise.resolve();
 		}
 		#prepareCopilotMessageParams(dialogId) {
+			const isAiAssistantChat = this.#getDialog(dialogId).type === im_v2_const.ChatType.copilot;
+			if (!isAiAssistantChat) {
+				return {};
+			}
 			const store = im_v2_application_core.Core.getStore();
 			const isReasoningEnabled = store.getters['copilot/chats/isReasoningEnabled'](dialogId);
 			const isForceSearchEnabled = store.getters['copilot/chats/isForceSearchEnabled'](dialogId);
+			const isAgentModeEnabled = store.getters['copilot/chats/isAgentModeEnabled'](dialogId);
 			const mcpAuthId = store.getters['copilot/chats/getMcpAuth'](dialogId)?.id;
 			const copilot = {};
 			if (isReasoningEnabled) {
@@ -574,9 +598,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (isForceSearchEnabled) {
 				copilot.forceSearch = 'Y';
 			}
+			if (isAgentModeEnabled) {
+				copilot.agentMode = 'Y';
+			}
 			if (mcpAuthId) {
 				copilot.mcpAuthId = mcpAuthId;
 			}
+			copilot.pageContext = ui_pageContext.PageContext.getAll();
 			return {
 				copilot
 			};
@@ -600,5 +628,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.SendingService = SendingService;
 
-})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX, BX.Event, BX.UI.PageContext, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=sending.bundle.js.map

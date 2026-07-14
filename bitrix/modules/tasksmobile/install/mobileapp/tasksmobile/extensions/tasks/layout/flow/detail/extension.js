@@ -37,14 +37,17 @@ jn.define('tasks/layout/flow/detail', (require, exports, module) => {
 
 		render()
 		{
+			const flow = selectById(store.getState(), this.props.flowId);
+
 			return View(
 				{
 					style: {
+						flex: 1,
 						width: '100%',
 						backgroundColor: Color.bgSecondary.toHex(),
 					},
 				},
-				this.renderTabsHeader(),
+				flow && this.renderTabsHeader(),
 				this.renderTabContent(),
 			);
 		}

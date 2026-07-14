@@ -307,7 +307,7 @@ $templateData['SIGNED_PARAMETERS'] = $signedParams;
 		BTN_MESSAGE_LAZY_LOAD_WAITER: '<?=GetMessageJS('CT_BCS_CATALOG_BTN_MESSAGE_LAZY_LOAD_WAITER')?>',
 		SITE_ID: '<?=CUtil::JSEscape($component->getSiteId())?>'
 	});
-	var <?=$obName?> = new JCCatalogSectionComponent({
+	var <?=$obName?> = new JCCatalogSectionComponentStoreV3({
 		siteId: '<?=CUtil::JSEscape($component->getSiteId())?>',
 		componentPath: '<?=CUtil::JSEscape($componentPath)?>',
 		navParams: <?=CUtil::PhpToJSObject($navParams)?>,

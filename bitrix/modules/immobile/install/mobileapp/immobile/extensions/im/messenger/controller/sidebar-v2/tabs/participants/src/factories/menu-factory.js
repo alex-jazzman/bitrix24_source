@@ -9,10 +9,14 @@ jn.define(
 		const { ParticipantsDirectMenu } = require(
 			'im/messenger/controller/sidebar-v2/tabs/participants/src/menu/direct',
 		);
+		const { ParticipantsProjectMenu } = require(
+			'im/messenger/controller/sidebar-v2/tabs/participants/src/menu/project',
+		);
 
 		const ParticipantMenuImplementation = {
 			[SidebarType.groupChat]: ParticipantsGroupMenu,
 			[SidebarType.directChat]: ParticipantsDirectMenu,
+			[SidebarType.collab]: ParticipantsProjectMenu,
 		};
 
 		function menuFactory(props)

@@ -72,6 +72,16 @@
 	gap: 8px;
 	position: relative;
 	overflow: hidden;
+	min-width: 0;
+}
+
+.mailbox-grid_email-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
 }
 
 .mailbox-grid_email-text {
@@ -79,7 +89,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
-	flex: 1;
+	flex: 0 1 auto;
 }
 
 .mailbox-grid_counter-container {

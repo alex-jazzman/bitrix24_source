@@ -1,10 +1,11 @@
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { TextMd } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
+import { Model, EventName } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { SettingsLabel } from 'tasks.v2.component.elements.settings-label';
@@ -60,6 +61,8 @@ export const TimeTracking = {
 			isPopupShown: false,
 			isFieldHovered: false,
 			localTimeSpent: 0,
+			highlightElapsedId: null,
+			highlightRequestKey: 0,
 		};
 	},
 	computed: {
@@ -96,6 +99,14 @@ export const TimeTracking = {
 			return !Core.getParams().restrictions.timeTracking.available;
 		},
 	},
+	mounted(): void
+	{
+		EventEmitter.subscribe(EventName.OpenTimeTrackingPopup, this.handleOpenTimeTrackingPopup);
+	},
+	beforeUnmount(): void
+	{
+		EventEmitter.unsubscribe(EventName.OpenTimeTrackingPopup, this.handleOpenTimeTrackingPopup);
+	},
 	methods: {
 		handleClick(): void
 		{
@@ -110,6 +121,23 @@ export const TimeTracking = {
 			{
 				this.setSheetShown(true);
 			}
+		},
+		handleOpenTimeTrackingPopup(event: BaseEvent): void
+		{
+			if (this.readonly)
+			{
+				return;
+			}
+
+			this.highlightElapsedId = event.getData()?.entityId ?? null;
+			this.highlightRequestKey += 1;
+
+			this.handleClick();
+		},
+		handleSheetClose(): void
+		{
+			this.highlightElapsedId = null;
+			this.setSheetShown(false);
 		},
 		handleClosePopup(): void
 		{
@@ -142,8 +170,8 @@ export const TimeTracking = {
 		},
 	},
 	template: `
-		<div 
-			class="tasks-task-time-tracking" 
+		<div
+			class="tasks-task-time-tracking"
 			:data-task-field-id="timeTrackingMeta.id"
 			@mouseover="isFieldHovered = true"
 			@mouseleave="isFieldHovered = false"
@@ -161,8 +189,8 @@ export const TimeTracking = {
 					@update="handleTimerUpdate"
 				/>
 			</HoverPill>
-			<div 
-				v-if="task.rights.edit && !isTimeTrackingLocked" 
+			<div
+				v-if="task.rights.edit && !isTimeTrackingLocked"
 				class="tasks-task-time-tracking-settings"
 				ref="settings"
 			>
@@ -184,7 +212,9 @@ export const TimeTracking = {
 			:sheetBindProps
 			:timeSpent
 			:isTimerRunning="Boolean(timer)"
-			@close="setSheetShown(false)"
+			:highlightElapsedId
+			:highlightRequestKey
+			@close="handleSheetClose"
 		/>
 	`,
 };

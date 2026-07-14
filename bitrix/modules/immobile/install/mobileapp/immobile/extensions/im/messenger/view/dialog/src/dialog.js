@@ -401,7 +401,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					return false;
 				}
 
-				const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
+				const modelMessage = serviceLocator.get('core')?.getStore()?.getters['messagesModel/getById']?.(messageId);
+				if (!modelMessage)
+				{
+					return false;
+				}
 
 				if (this.chatId && modelMessage.chatId !== this.chatId)
 				{
@@ -1957,7 +1961,13 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 						&& !String(messageId).startsWith(MessageIdType.templateSeparatorDate);
 				})
 			;
-			const hasPushUnreadMessage = serviceLocator.get('core').getStore()
+			const store = serviceLocator.get('core')?.getStore();
+			if (!store)
+			{
+				return;
+			}
+
+			const hasPushUnreadMessage = store
 				.getters['messagesModel/hasUnreadPushMessage'](messageIdList)
 			;
 

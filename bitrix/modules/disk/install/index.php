@@ -188,8 +188,16 @@ Class disk extends CModule
 
 		\Bitrix\Main\Config\Option::set('disk', 'unified_link.enabled', 'Y');
 		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_document_handler_onlyoffice', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_2', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_3', 'Y');
 		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_4', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_5', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_6', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_7', 'Y');
 		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_8', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_9', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_10', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_11', 'Y');
 		\Bitrix\Main\Config\Option::set("disk", 'unified_link.allow_type_12', 'Y');
 		\Bitrix\Main\Config\Option::set('disk', 'custom_servers_enabled', 'Y');
 

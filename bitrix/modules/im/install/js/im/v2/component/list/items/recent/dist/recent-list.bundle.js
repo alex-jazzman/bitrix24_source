@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_component_list_items_elements_createChatStatus, im_v2_const, im_v2_lib_createChat, im_v2_lib_draft, im_v2_lib_menu, im_v2_provider_service_recent, main_core_events, im_v2_application_core, call_component_activeCallList, im_v2_component_elements_button, im_v2_lib_feature, im_v2_lib_invite, im_v2_component_list_items_elements_emptyState, im_v2_lib_unreadMode) {
+(function (exports, im_v2_component_list_items_base, im_v2_component_list_items_elements_createChatStatus, im_v2_const, im_v2_lib_createChat, im_v2_lib_draft, im_v2_lib_menu, im_v2_provider_service_recent, main_core_events, im_v2_application_core, call_component_activeCallList, ui_vue3_components_button, ui_iconSet_api_core, im_v2_lib_feature, im_v2_lib_invite, im_v2_component_list_items_elements_emptyState, im_v2_lib_unreadMode) {
 	'use strict';
 
 	class LikeManager {
@@ -56,12 +56,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const EmptyState = {
 		name: 'EmptyState',
 		components: {
-			ChatButton: im_v2_component_elements_button.ChatButton,
-			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState,
+			UiButton: ui_vue3_components_button.Button
 		},
 		computed: {
-			ButtonSize: () => im_v2_component_elements_button.ButtonSize,
-			ButtonColor: () => im_v2_component_elements_button.ButtonColor,
+			RecentType: () => im_v2_const.RecentType,
+			AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle,
+			OutlineIcons: () => ui_iconSet_api_core.Outline,
+			ButtonSize: () => ui_vue3_components_button.ButtonSize,
 			canInviteUsers() {
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.intranetInviteAvailable);
 			}
@@ -76,13 +78,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<RecentEmptyState
-			:title="loc('IM_LIST_RECENT_EMPTY_STATE_TITLE')"
-			:subtitle="loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE')"
+			:title="loc('IM_LIST_RECENT_EMPTY_STATE_TITLE_MSGVER_1')"
+			:subtitle="loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1')"
+			:recentSection="RecentType.default"
 		>
-			<ChatButton
+			<UiButton
 				v-if="canInviteUsers"
-				:size="ButtonSize.L"
-				:isRounded="true"
+				:style="AirButtonStyle.FILLED"
+				:leftIcon="OutlineIcons.PLUS_L"
 				:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"
 				@click="onInviteUsersClick"
 			/>
@@ -120,6 +123,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
 				emitter: this.getEmitter()
 			});
+			this.clearCollection();
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 			this.getEmitter().subscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
@@ -129,11 +133,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
 		},
 		methods: {
+			clearCollection() {
+				this.$store.dispatch('recent/clearUnreadCollection', {
+					type: im_v2_const.RecentType.default
+				});
+			},
 			onCloseChat(event) {
 				const {
 					dialogId
 				} = event.getData();
-				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList(im_v2_const.RecentType.default, dialogId);
+				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList({
+					recentSections: [im_v2_const.RecentType.default],
+					dialogId
+				});
 			},
 			async loadInitialItems() {
 				if (this.firstPageLoaded || this.isLoading) {
@@ -165,9 +177,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				event.preventDefault();
 				const context = {
 					dialogId: item.dialogId,
-					recentItem: item,
-					compactMode: false,
-					recentSection: im_v2_const.RecentType.default
+					recentItem: item
 				};
 				this.contextMenuManager.openMenu(context, {
 					left: event.pageX,
@@ -201,7 +211,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<RecentEmptyState :title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE')" />
+				<RecentEmptyState 
+					:title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE_MSGVER_1')"
+					:subtitle="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_SUBTITLE')"
+				/>
 			</template>
 		</BaseRecentList>
 	`
@@ -284,8 +297,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				event.preventDefault();
 				const context = {
 					dialogId: item.dialogId,
-					recentItem: item,
-					compactMode: false
+					recentItem: item
 				};
 				this.contextMenuManager.openMenu(context, {
 					left: event.pageX,
@@ -298,7 +310,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onCallClick({
 				item
 			}) {
-				this.onClick(item);
+				this.onSelectChat(item.dialogId);
 			},
 			initLikeManager() {
 				this.likeManager = new LikeManager();
@@ -343,8 +355,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 		>
-			<template #before-list>
+			<template #before-scroll>
 				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
+			<template #before-list>
 				<CreateChatStatus v-if="isCreatingChat" />
 			</template>
 			<template #empty-state>
@@ -357,5 +371,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.RecentList = RecentList;
 	exports.RecentUnreadList = RecentUnreadList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Event??{}, BX?.Messenger?.v2?.Application??{}, BX?.Call?.Component??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Event??{}, BX?.Messenger?.v2?.Application??{}, BX?.Call?.Component??{}, BX?.Vue3?.Components??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.List??{}, BX?.Messenger?.v2?.Lib??{});
 //# sourceMappingURL=recent-list.bundle.js.map

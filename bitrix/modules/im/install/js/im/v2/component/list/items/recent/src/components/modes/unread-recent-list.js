@@ -37,8 +37,8 @@ export const RecentUnreadList = {
 	{
 		this.contextMenuManager = new RecentMenu({ emitter: this.getEmitter() });
 
+		this.clearCollection();
 		await this.loadInitialItems();
-
 		void DraftManager.getInstance().initDraftHistory();
 
 		this.getEmitter().subscribe(EventType.dialog.onCloseChat, this.onCloseChat);
@@ -50,11 +50,18 @@ export const RecentUnreadList = {
 		this.getEmitter().unsubscribe(EventType.dialog.onCloseChat, this.onCloseChat);
 	},
 	methods: {
+		clearCollection()
+		{
+			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.default });
+		},
 		onCloseChat(event: BaseEvent<{ dialogId: string }>)
 		{
 			const { dialogId } = event.getData();
 
-			UnreadModeManager.removeItemFromList(RecentType.default, dialogId);
+			UnreadModeManager.removeItemFromList({
+				recentSections: [RecentType.default],
+				dialogId,
+			});
 		},
 		async loadInitialItems()
 		{
@@ -91,8 +98,6 @@ export const RecentUnreadList = {
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
-				compactMode: false,
-				recentSection: RecentType.default,
 			};
 
 			this.contextMenuManager.openMenu(context, {
@@ -133,7 +138,10 @@ export const RecentUnreadList = {
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<RecentEmptyState :title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE')" />
+				<RecentEmptyState 
+					:title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE_MSGVER_1')"
+					:subtitle="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_SUBTITLE')"
+				/>
 			</template>
 		</BaseRecentList>
 	`,

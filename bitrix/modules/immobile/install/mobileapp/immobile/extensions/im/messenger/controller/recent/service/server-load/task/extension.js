@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 		MessengerInitRestMethod,
 		NavigationTabId,
 		DialogType,
+		RecentFilterId,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentRest } = require('im/messenger/provider/rest');
@@ -48,11 +49,12 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @param {ServerLoadRequestContext} [context]
 		 * @return {object}
 		 */
-		getInitRequestOptions(mode)
+		getInitRequestOptions(mode, { currentFilterId } = {})
 		{
-			return {};
+			return currentFilterId === RecentFilterId.unread ? { unreadOnly: 'Y' } : {};
 		}
 
 		/**
@@ -234,6 +236,11 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 						},
 					),
 				]);
+
+				const section = this.recentLocator.get('recentSection');
+				const dialogIds = modelData.recent.map((item) => String(item.dialogId));
+				await serviceLocator.get('core').getRepository().recent
+					.ensureSectionForDialogIds(dialogIds, section);
 
 				this.showLoaderByRestResult(recentData);
 			}

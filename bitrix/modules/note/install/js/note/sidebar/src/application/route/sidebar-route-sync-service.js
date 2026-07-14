@@ -60,6 +60,8 @@ export class SidebarRouteSyncService
 	{
 		if (skipInitialCollectionsLoad)
 		{
+			this.#subscribeToPullEvents();
+
 			return;
 		}
 
@@ -71,11 +73,44 @@ export class SidebarRouteSyncService
 		{
 			// store already handles load errors
 		}
+
+		this.#subscribeToPullEvents();
+	}
+
+	#subscribeToPullEvents(): void
+	{
+		const subscribe = this.#store.actions?.subscribeToPullEvents;
+		if (typeof subscribe !== 'function')
+		{
+			return;
+		}
+
+		try
+		{
+			subscribe();
+		}
+		catch
+		{
+			// Pull subscription is best-effort — never break bootstrap.
+		}
 	}
 
 	destroy(): void
 	{
-		// no-op
+		const unsubscribe = this.#store.actions?.unsubscribeFromPullEvents;
+		if (typeof unsubscribe !== 'function')
+		{
+			return;
+		}
+
+		try
+		{
+			unsubscribe();
+		}
+		catch
+		{
+			// Best-effort teardown — never throw on destroy.
+		}
 	}
 
 	getRouteDocumentId(route: Object = this.#router?.currentRoute?.value): number

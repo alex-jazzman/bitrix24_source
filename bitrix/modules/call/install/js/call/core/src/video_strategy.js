@@ -1,6 +1,7 @@
 import {Type} from 'main.core';
 import {CallEvent, UserMnemonic} from './engine/engine';
-import {View} from './view/view';
+import { View } from './view/view';
+import type {CallView} from './view/call-view-port';
 
 const StrategyType = {
 	AllowAll: 'AllowAll',
@@ -16,7 +17,7 @@ export class VideoStrategy
 	static Type = StrategyType
 
 	call: VoximplantCall
-	callView: View
+	callView: CallView
 	strategyType: $Keys<typeof StrategyType>
 	users: {[string]: User}
 

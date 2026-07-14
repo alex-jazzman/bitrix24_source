@@ -23,7 +23,9 @@ export const TextUtil = {
 
 	convertCamelToSnakeCase(text: string): string
 	{
-		return text.replaceAll(/([A-Z])/g, (match) => `_${match.toLowerCase()}`);
+		return text
+			.replaceAll(/([A-Z])/g, (match) => `_${match.toLowerCase()}`)
+			.replaceAll(/([a-z])(\d+)/g, '$1_$2');
 	},
 
 	escapeRegex(string): string
@@ -151,6 +153,16 @@ export const TextUtil = {
 		const element = Dom.create({ tag: 'a', attrs: { href: url }});
 
 		return allowList.indexOf(element.protocol) > -1;
+	},
+
+	isUrlImageLike(url: string): boolean
+	{
+		if (!Type.isStringFilled(url))
+		{
+			return false;
+		}
+
+		return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url.trim());
 	},
 
 	isEmojiOnly(messageText: string): boolean

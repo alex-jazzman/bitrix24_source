@@ -64,8 +64,10 @@ export const ChatPreview = {
 				<ChatMembersAvatars :showMembers="areChatMembersEnabled" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__settings">
-				<SharedLink v-if="isSharedLinkCopyAllowed" :dialogId="dialogId" />
-				<SettingsSeparator />
+				<template v-if="isSharedLinkCopyAllowed">
+					<SharedLink :dialogId="dialogId" />
+					<SettingsSeparator />
+				</template>
 				<MuteChat :dialogId="dialogId" />
 				<AutoDelete v-if="isAutoDeleteEnabled" :dialogId="dialogId" />
 			</div>

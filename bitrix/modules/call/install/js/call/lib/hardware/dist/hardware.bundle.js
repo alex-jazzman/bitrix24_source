@@ -300,6 +300,19 @@ this.BX.Call = this.BX.Call || {};
 	      }
 	    });
 	  }
+	  async checkMicrophonePermission() {
+	    if (!navigator.permissions) {
+	      return;
+	    }
+	    const micPermissions = await navigator.permissions.query({
+	      name: 'microphone'
+	    });
+	    if (micPermissions.state === 'denied') {
+	      const error = new Error('Permission denied');
+	      error.code = 'NotAllowedError';
+	      throw error;
+	    }
+	  }
 	}
 
 	exports.HardwareManager = HardwareManager;

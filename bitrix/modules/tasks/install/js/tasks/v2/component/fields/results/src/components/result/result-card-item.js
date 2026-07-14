@@ -1,5 +1,5 @@
 import { Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { shallowRef } from 'ui.vue3';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
@@ -9,6 +9,10 @@ import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.component
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
 import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import {
+	TasksPopupButtonQuote,
+	TYPES_DEFAULT_QUOTE_ACTIONS,
+} from 'tasks.v2.component.tasks-popup-button-quote';
 
 import { EventName, Model, Option } from 'tasks.v2.const';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
@@ -28,6 +32,10 @@ import { resultsMeta } from '../../results-meta';
 import './result.css';
 import '../../results.css';
 
+const TYPES_QUOTE_ACTIONS = {
+	MESSAGE: TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE,
+};
+
 // @vue/component
 export const ResultCardItem = {
 	components: {
@@ -36,6 +44,7 @@ export const ResultCardItem = {
 		UserAvatar,
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 		EntityCollapsibleText,
+		TasksPopupButtonQuote,
 		TextSm,
 		TextXs,
 		TextMd,
@@ -43,6 +52,7 @@ export const ResultCardItem = {
 	},
 	directives: { hint },
 	inject: {
+		task: {},
 		taskId: {},
 	},
 	props: {
@@ -70,6 +80,8 @@ export const ResultCardItem = {
 	data(): Object
 	{
 		return {
+			elementAnchorQuote: null,
+			elementScrollContainerQuote: null,
 			opened: false,
 			isMenuShown: false,
 			showResultFromMessageHint: false,
@@ -77,6 +89,15 @@ export const ResultCardItem = {
 		};
 	},
 	computed: {
+		actionsQuote(): []
+		{
+			const actionQuoteMessage = {
+				type: TYPES_QUOTE_ACTIONS.MESSAGE,
+				chatId: this.task.chatId,
+			};
+
+			return [actionQuoteMessage];
+		},
 		result(): ResultModel
 		{
 			return this.$store.getters[`${Model.Results}/getById`](this.resultId);
@@ -193,6 +214,8 @@ export const ResultCardItem = {
 	mounted(): void
 	{
 		EventEmitter.subscribe(EventName.ResultFromMessageAdded, this.handleResultFromMessageAdded);
+		this.elementAnchorQuote = this.$refs.collapsible.$el.parentNode?.querySelector('.tasks-card-entity-collapsible-text');
+		this.elementScrollContainerQuote = this.elementAnchorQuote?.closest('.tasks-full-card-content');
 	},
 	beforeUnmount(): void
 	{
@@ -334,6 +357,13 @@ export const ResultCardItem = {
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
 			</div>
+			<TasksPopupButtonQuote
+				v-if="elementAnchorQuote"
+				:isQuoteTrimmed="true"
+				:elementAnchor="elementAnchorQuote"
+				:elementScrollContainer="elementScrollContainerQuote"
+				:actions="actionsQuote"
+			/>
 		</div>
 	`,
 };

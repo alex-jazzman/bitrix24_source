@@ -8,10 +8,13 @@ return [
     'js' => './dist/vibe-code-catalog-button.bundle.js',
     'css' => './dist/vibe-code-catalog-button.bundle.css',
     'rel' => [
-		'main.polyfill.core',
+		'im.v2.const',
+		'main.core',
+		'ui.icon-set.api.vue',
+		'ui.vue3',
 	],
 	'settings' => [
 		'isAvailable' => \Bitrix\Main\Config\Option::get('vibecodeconnector', 'is_ready', 'N') === 'Y',
 	],
-    'skip_core' => true,
+    'skip_core' => false,
 ];

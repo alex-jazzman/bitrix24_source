@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 	const { withPressed } = require('utils/color');
 	const { Loc } = require('im/messenger/loc');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text5 } = require('ui-system/typography/text');
 	const { Color } = require('tokens');
 
@@ -24,6 +25,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 			testId = '',
 			textStyle = {},
 			isNew = false,
+			isLocked = false,
 			iconSize = 40,
 		} = params;
 		const imageIcon = iconSvg
@@ -101,6 +103,14 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 						style: {
 							marginLeft: 4,
 							top: 1,
+						},
+					}),
+					isLocked && IconView({
+						size: 20,
+						icon: Icon.LOCK,
+						color: Color.accentMainPrimary,
+						style: {
+							marginLeft: 4,
 						},
 					}),
 				),

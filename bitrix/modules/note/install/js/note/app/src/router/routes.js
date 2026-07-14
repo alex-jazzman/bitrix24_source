@@ -71,6 +71,8 @@ export const routes: RouteConfig[] = [
 		redirect: (to) => ({
 			name: ROUTE_NAME_DOCUMENT,
 			params: { id: to.params.id },
+			hash: to.hash,
+			query: to.query,
 		}),
 	},
 	{
@@ -84,6 +86,8 @@ export const routes: RouteConfig[] = [
 		redirect: (to) => ({
 			name: ROUTE_NAME_WORKSPACE,
 			params: { id: to.params.id },
+			hash: to.hash,
+			query: to.query,
 		}),
 	},
 	{

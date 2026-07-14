@@ -1,0 +1,19 @@
+.socialnetwork--ui-textarea {
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.socialnetwork--ui-textarea--textarea {
+	height: 1.5em;
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	overflow: hidden;
+	white-space: pre-wrap;
+	background: transparent;
+	border: none;
+	outline: none;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9mNUdBSEIiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL2Y1R0FIQiIsInNvdXJjZXNDb250ZW50IjpbIi5zb2NpYWxuZXR3b3JrLS11aS10ZXh0YXJlYSB7XG5cdHBhZGRpbmc6IHZhcigtLXVpLXNwYWNlLWluc2V0LXNtMikgdmFyKC0tdWktc3BhY2UtaW5zZXQtbWQyKTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0d2lkdGg6IDEwMCU7XG59XG5cbi5zb2NpYWxuZXR3b3JrLS11aS10ZXh0YXJlYS0tdGV4dGFyZWEge1xuXHRoZWlnaHQ6IDEuNWVtO1xuXHR3aWR0aDogMTAwJTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0cmVzaXplOiBub25lO1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHR3aGl0ZS1zcGFjZTogcHJlLXdyYXA7XG5cdGJhY2tncm91bmQ6IHRyYW5zcGFyZW50O1xuXHRib3JkZXI6IG5vbmU7XG5cdG91dGxpbmU6IG5vbmU7XG59XG4iXX0= */

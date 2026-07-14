@@ -18,4 +18,9 @@ export const chatFieldsConfig: FieldsConfig = [
 		targetFieldName: 'aiModel',
 		checkFunction: Type.isString,
 	},
+	{
+		fieldName: 'titleIsCustom',
+		targetFieldName: 'titleIsCustom',
+		checkFunction: Type.isBoolean,
+	},
 ];

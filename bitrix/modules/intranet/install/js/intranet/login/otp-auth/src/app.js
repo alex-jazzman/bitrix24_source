@@ -9,6 +9,7 @@ import { RecoverAccess } from './components/recover-access';
 import { ApplicationOfflineCode } from './components/application-offline-code';
 import { Captcha } from './components/captcha';
 import { usePushOtpStore } from './store/push-otp-store';
+import { configureOtpAnalytics } from './analytics';
 
 // @vue/component
 export const Main = {
@@ -23,10 +24,6 @@ export const Main = {
 		Captcha,
 	},
 	props: {
-		signedUserId: {
-			type: String,
-			default: '',
-		},
 		rootNode: {
 			type: HTMLElement,
 			default: null,
@@ -103,6 +100,10 @@ export const Main = {
 			type: Boolean,
 			default: true,
 		},
+		userId: {
+			type: Number,
+			default: 0,
+		},
 	},
 	setup(): Object
 	{
@@ -145,6 +146,10 @@ export const Main = {
 
 			return components[this.currentAuthStep] || 'LegacyOtp';
 		},
+	},
+	created()
+	{
+		configureOtpAnalytics({ userId: this.userId });
 	},
 	mounted()
 	{
@@ -290,7 +295,6 @@ export const Main = {
 		 :recoveryCodesHelpLink="recoveryCodesHelpLink"
 		 :errorMessage="errorMessage"
 		 :isAlternativeMethodsAvailable="isAlternativeMethodsAvailable"
-		 :signedUserId="signedUserId"
 		 :canSendRequestRecoverAccess="canSendRequestRecoverAccess"
 		 @form-submit="onSubmitForm"
 		 @show-alternatives="onShowAlternatives"

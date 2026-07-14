@@ -1,1 +1,37 @@
-.tasks-field-crm{display:flex;flex-direction:column;gap:var(--ui-space-stack-xs)}.tasks-field-crm-item{z-index:1}.tasks-field-crm-item-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:var(--ui-space-stack-3xs) 0}.tasks-field-crm-skeleton{display:flex;flex-direction:column;padding:4px 0;gap:16px}.tasks-field-crm-anchor{position:-webkit-sticky;position:sticky;bottom:0;left:0}.tasks-field-crm-expand{z-index:1;color:var(--ui-color-base-4);cursor:pointer}
+.tasks-field-crm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.tasks-field-crm-item {
+	z-index: 1;
+}
+
+.tasks-field-crm-item-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: var(--ui-space-stack-3xs) 0;
+}
+
+.tasks-field-crm-skeleton {
+	display: flex;
+	flex-direction: column;
+	padding: 4px 0;
+	gap: 16px;
+}
+
+.tasks-field-crm-anchor {
+	position: sticky;
+	bottom: 0;
+	left: 0;
+}
+
+.tasks-field-crm-expand {
+	z-index: 1;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC92NjJQQXIiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL3Y2MlBBciIsInNvdXJjZXNDb250ZW50IjpbIi50YXNrcy1maWVsZC1jcm0ge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xuXHRnYXA6IHZhcigtLXVpLXNwYWNlLXN0YWNrLXhzKTtcbn1cblxuLnRhc2tzLWZpZWxkLWNybS1pdGVtIHtcblx0ei1pbmRleDogMTtcbn1cblxuLnRhc2tzLWZpZWxkLWNybS1pdGVtLXRleHQge1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHR0ZXh0LW92ZXJmbG93OiBlbGxpcHNpcztcblx0d2hpdGUtc3BhY2U6IG5vd3JhcDtcblx0cGFkZGluZzogdmFyKC0tdWktc3BhY2Utc3RhY2stM3hzKSAwO1xufVxuXG4udGFza3MtZmllbGQtY3JtLXNrZWxldG9uIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0cGFkZGluZzogNHB4IDA7XG5cdGdhcDogMTZweDtcbn1cblxuLnRhc2tzLWZpZWxkLWNybS1hbmNob3Ige1xuXHRwb3NpdGlvbjogc3RpY2t5O1xuXHRib3R0b206IDA7XG5cdGxlZnQ6IDA7XG59XG5cbi50YXNrcy1maWVsZC1jcm0tZXhwYW5kIHtcblx0ei1pbmRleDogMTtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtNCk7XG5cdGN1cnNvcjogcG9pbnRlcjtcbn1cbiJdfQ== */

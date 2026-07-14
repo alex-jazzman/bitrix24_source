@@ -1,27 +1,17 @@
-import { Loc } from 'main.core';
+import { Loc, type JsonObject } from 'main.core';
 
 import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Parser } from 'im.v2.lib.parser';
 import { SidebarManager } from 'im.v2.lib.sidebar';
+import { CollabManager } from 'im.v2.lib.collab';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import './chat-description.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 const MAX_DESCRIPTION_SYMBOLS = 50;
 const VISIBLE_DESCRIPTION_LINES = 2;
 const NEW_LINE_SYMBOL = '\n';
-
-const DescriptionByChatType = {
-	[ChatType.user]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
-	[ChatType.channel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
-	[ChatType.openChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
-	[ChatType.generalChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
-	[ChatType.comment]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
-	[ChatType.taskComments]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'),
-	default: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
-};
 
 // @vue/component
 export const ChatDescription = {
@@ -55,44 +45,54 @@ export const ChatDescription = {
 
 			return user.type === UserType.bot;
 		},
-		isCollabChat(): boolean
-		{
-			return this.dialog.type === ChatType.collab;
-		},
 		customDescription(): string
 		{
 			const sidebarConfig = SidebarManager.getInstance().getConfig(this.dialogId);
 
 			return sidebarConfig.getCustomDescription();
 		},
-		isCopilotChat(): boolean
+		purifiedDescription(): string
 		{
-			return (new CopilotManager()).isCopilotChat(this.dialogId);
+			return Parser.purify({ text: this.dialog.description, removeNewLines: false });
 		},
 		isLongDescription(): boolean
 		{
-			const lineBreakCount = this.dialog.description.split(NEW_LINE_SYMBOL).length - 1;
+			const lineBreakCount = this.purifiedDescription.split(NEW_LINE_SYMBOL).length - 1;
 			const hasSeveralLines = lineBreakCount > VISIBLE_DESCRIPTION_LINES;
 
-			return (this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS) || hasSeveralLines;
+			return (this.purifiedDescription.length > MAX_DESCRIPTION_SYMBOLS) || hasSeveralLines;
 		},
 		previewDescription(): string
 		{
-			if (this.dialog.description.length === 0)
+			if (this.purifiedDescription.length === 0)
 			{
 				return this.chatTypeText;
 			}
 
 			if (this.isLongDescription)
 			{
-				return `${this.dialog.description.slice(0, MAX_DESCRIPTION_SYMBOLS)}...`;
+				return `${this.purifiedDescription.slice(0, MAX_DESCRIPTION_SYMBOLS)}...`;
 			}
 
-			return this.dialog.description;
+			return this.purifiedDescription;
 		},
 		descriptionToShow(): string
 		{
-			return this.expanded ? this.dialog.description : this.previewDescription;
+			return this.expanded ? this.purifiedDescription : this.previewDescription;
+		},
+		descriptionByChatType(): Record<string, () => string>
+		{
+			return {
+				[ChatType.user]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
+				[ChatType.channel]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+				[ChatType.openChannel]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+				[ChatType.generalChannel]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+				[ChatType.comment]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
+				[ChatType.taskComments]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'),
+				[ChatType.copilot]: () => (new CopilotManager()).getAIModelName(this.dialogId),
+				[ChatType.collab]: () => CollabManager.getSidebarChatTypeText(),
+				default: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
+			};
 		},
 		chatTypeText(): string
 		{
@@ -101,22 +101,14 @@ export const ChatDescription = {
 				return this.customDescription;
 			}
 
-			if (this.isCopilotChat)
-			{
-				return (new CopilotManager()).getAIModelName(this.dialogId);
-			}
-
 			if (this.isBot)
 			{
 				return this.loc('IM_SIDEBAR_CHAT_TYPE_BOT');
 			}
 
-			if (this.isCollabChat)
-			{
-				return this.loc('IM_SIDEBAR_CHAT_TYPE_COLLAB');
-			}
+			const handler = this.descriptionByChatType[this.dialog.type] ?? this.descriptionByChatType.default;
 
-			return DescriptionByChatType[this.dialog.type] ?? DescriptionByChatType.default;
+			return handler();
 		},
 		showExpandButton(): boolean
 		{

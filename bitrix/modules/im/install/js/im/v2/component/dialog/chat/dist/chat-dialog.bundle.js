@@ -987,7 +987,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					width: CONTAINER_WIDTH,
 					height: CONTAINER_HEIGHT,
 					autoHide: true,
-					padding: 0
+					padding: 0,
+					focusTrap: false
 				};
 			}
 		},
@@ -1187,6 +1188,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
+			isChatOpenedInWidget() {
+				return this.$store.getters['copilot/isChatOpenedInWidget'](this.dialogId);
+			},
 			dialogInited() {
 				return this.dialog.inited;
 			},
@@ -1372,12 +1376,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const {
 					hasAccess,
 					errorCode
-				} = await im_v2_lib_access.AccessManager.checkMessageAccess(messageId);
+				} = await im_v2_lib_access.MessageAccessManager.checkMessageAccess(messageId);
 				if (!hasAccess && errorCode === im_v2_const.ErrorCode.message.accessDeniedByTariff) {
 					im_v2_lib_analytics.Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({
 						dialogId: this.dialogId
 					});
-					im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+					im_v2_lib_feature.TariffManager.chatHistory.openFeatureSlider();
 					return;
 				}
 				this.showLoadingBar();
@@ -1473,9 +1477,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				void this.$nextTick(() => {
 					this.getChatService().clearDialogMark(this.dialogId);
 				});
-				main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onDialogInited, {
-					dialogId: this.dialogId
-				});
+				this.sendInitEvents();
 			},
 			async onScrollTriggerUp() {
 				if (!this.dialogInited || !this.getContainer()) {
@@ -1809,6 +1811,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.dialogReadUsers)?.close();
 				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.messageBaseFileMenu)?.close();
 			},
+			sendInitEvents() {
+				const payload = {
+					dialogId: this.dialogId,
+					chat: this.dialog
+				};
+				main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onDialogInited, payload);
+				this.getEmitter().emit(im_v2_const.EventType.dialog.onDialogInited, payload);
+			},
 			subscribeToEvents() {
 				main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.scrollToBottom, this.onScrollToBottom);
 				main_core_events.EventEmitter.subscribe(im_v2_const.EventType.call.onFold, this.onCallFold);
@@ -1871,6 +1881,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				v-if="forwardPopup.show"
 				:messagesIds="forwardPopup.messagesIds"
 				:dialogId="dialogId"
+				:directForward="isChatOpenedInWidget"
 				@close="onCloseForwardPopup"
 			/>
 			<QuoteButton

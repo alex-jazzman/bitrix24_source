@@ -7,11 +7,13 @@ import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { showLimit } from 'tasks.v2.lib.show-limit';
-import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
+import { usersDialog, type UserDialogItem } from 'tasks.v2.lib.user-selector-dialog';
+import { loadUsersAbsenceInfo } from 'tasks.v2.component.absence-popup';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { accomplicesMeta } from './accomplices-meta';
+import { registerPendingAbsenceArm } from './pending-absence-arm';
 
 // @vue/component
 export const AccomplicesChip = {
@@ -71,7 +73,7 @@ export const AccomplicesChip = {
 				onClose: this.handleClose,
 			});
 		},
-		handleClose(accomplicesIds: number[]): void
+		handleClose(accomplicesIds: number[], items: UserDialogItem[]): void
 		{
 			if (!this.isSelected && accomplicesIds.length > 0)
 			{
@@ -83,6 +85,8 @@ export const AccomplicesChip = {
 					viewersCount: this.task.auditorsIds?.length ?? 0,
 					coexecutorsCount: accomplicesIds.length,
 				});
+
+				registerPendingAbsenceArm(this.taskId, loadUsersAbsenceInfo(items));
 			}
 
 			void taskService.update(this.taskId, { accomplicesIds });

@@ -3,12 +3,15 @@ import { Loc, Type } from 'main.core';
 import { VueAttachmentNodeView } from './node-view';
 import { normalizeFileSize } from '../../utils/file-size';
 
+type AssetType = 'image' | 'file' | 'video';
+
 type NodeConfig = {
 	name: string,
 	dataType: string,
 	className: string,
 	defaultNameMessage: string,
 	defaultTypeMessage: string,
+	assetType: AssetType,
 	commandName?: string,
 	nodeViewComponent?: Object | null,
 	extraAttrs?: (() => Object) | Object,
@@ -53,6 +56,11 @@ function buildBaseAttributes(config: NodeConfig): Object
 		},
 		viewerAttrs: {
 			default: null,
+		},
+		// Set when the backend reports the fileId as unresolvable (not linked / missing source).
+		// Session-transient: cleared on a successful re-resolve, so access granted later recovers.
+		unavailable: {
+			default: false,
 		},
 	};
 }
@@ -178,6 +186,16 @@ export class FileAssetNodeFactory
 				});
 			},
 			addCommands: createCommandFactory(config),
+			renderMarkdown(node)
+			{
+				const fileId = Number(node?.attrs?.fileId);
+				if (!Number.isInteger(fileId) || fileId <= 0)
+				{
+					return '';
+				}
+
+				return `[[${config.assetType} fileId=${fileId}]]`;
+			},
 		});
 	}
 

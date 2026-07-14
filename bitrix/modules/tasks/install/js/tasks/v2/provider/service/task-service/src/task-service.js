@@ -663,6 +663,14 @@ export const taskService = new class
 			mergedTask[field] = { ...mergedTask?.[field], ...currentTask?.[field] };
 		});
 
+		const deadlineFields = ['maxDeadlineChanges', 'deadlineChangeCount'];
+		deadlineFields.forEach((field: string) => {
+			if (!Type.isUndefined(currentTask?.[field]))
+			{
+				mergedTask[field] = currentTask[field];
+			}
+		});
+
 		return mergedTask;
 	}
 

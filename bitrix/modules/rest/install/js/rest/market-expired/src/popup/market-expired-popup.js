@@ -226,3 +226,4 @@ export class MarketExpiredPopup extends EventEmitter
 		`;
 	}
 }
+

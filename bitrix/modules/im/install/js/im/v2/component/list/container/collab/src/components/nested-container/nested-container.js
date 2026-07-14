@@ -1,76 +1,68 @@
-import { Loc, type JsonObject } from 'main.core';
-import { type BitrixVueComponentProps } from 'ui.vue3';
+import { Event, type JsonObject } from 'main.core';
+import { type ComponentOptions } from 'ui.vue3';
 
-import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { RecentListSlider } from 'im.v2.component.list.container.elements.list-slider';
-import { CollabNestedTaskList, CollabNestedDefaultList, CollabNestedCalendarList, CollabNestedChatList } from 'im.v2.component.list.items.collab';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { type ImModelChat, type ImModelLayout } from 'im.v2.model';
+import { RecentSearch } from 'im.v2.component.search';
+import { RecentType, type RecentTypeItem } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
+import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
 
-import { NestedListNavigation } from './components/navigation';
-import { NestedListToolbar } from './components/toolbar';
-import { NestedListHeader } from './components/header';
+import { CollabPromoManager } from './classes/promo-manager.js';
+import { CollabCard } from './components/collab-card/collab-card';
+import { CardLoader } from './components/collab-card/components/card-loader';
+import { CollabHeader } from './components/header/header';
+import { CollabNavigation } from './components/navigation/navigation';
+import { CollabSectionConfig, type CollabSectionItem } from './const/section-config';
 
 import './css/nested-container.css';
-
-export type CollabSectionItem = {
-	type: RecentTypeItem,
-	title: string,
-	component: BitrixVueComponentProps,
-};
-
-const CollabSections: Record<RecentTypeItem, CollabSectionItem> = {
-	[RecentType.collabDefault]: {
-		type: RecentType.collabDefault,
-		title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_SECTION_DEFAULT'),
-		component: CollabNestedDefaultList,
-	},
-	[RecentType.taskComments]: {
-		type: RecentType.taskComments,
-		title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_SECTION_TASK_COMMENTS'),
-		component: CollabNestedTaskList,
-	},
-	[RecentType.collabChat]: {
-		type: RecentType.collabChat,
-		title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_SECTION_CHATS_MSGVER_2'),
-		component: CollabNestedChatList,
-	},
-	[RecentType.calendar]: {
-		type: RecentType.calendar,
-		title: Loc.getMessage('IM_LIST_CONTAINER_COLLAB_SECTION_CALENDAR'),
-		component: CollabNestedCalendarList,
-	},
-};
 
 // @vue/component
 export const CollabNestedListContainer = {
 	name: 'CollabNestedListContainer',
-	components: { RecentListSlider, NestedListNavigation, NestedListHeader, NestedListToolbar },
+	components: {
+		RecentListSlider,
+		CollabNavigation,
+		CollabHeader,
+		CollabCard,
+		CardLoader,
+		RecentSearch,
+	},
+	provide(): { promoManager: CollabPromoManager }
+	{
+		return {
+			promoManager: this.getPromoManager(),
+		};
+	},
 	props: {
 		parentChatId: {
 			type: Number,
 			required: true,
+		},
+		compactMode: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['selectChat', 'close'],
 	data(): JsonObject
 	{
 		return {
+			searchMode: false,
+			searchQuery: '',
+			isSearchLoading: false,
 			currentSection: RecentType.collabDefault,
+			unreadMode: false,
 		};
 	},
 	computed: {
+		RecentType: () => RecentType,
 		layout(): ImModelLayout
 		{
 			return this.$store.getters['application/getLayout'];
 		},
-		parentChat(): ImModelChat
+		listComponent(): ?ComponentOptions
 		{
-			return this.$store.getters['chats/getByChatId'](this.parentChatId, true);
-		},
-		listComponent(): ?BitrixVueComponentProps
-		{
-			const matchingItem = CollabSections[this.currentSection];
+			const matchingItem = CollabSectionConfig[this.currentSection];
 			if (!matchingItem)
 			{
 				return null;
@@ -78,20 +70,91 @@ export const CollabNestedListContainer = {
 
 			return matchingItem.component;
 		},
+		listUnreadComponent(): ?ComponentOptions
+		{
+			const matchingItem = CollabSectionConfig[this.currentSection];
+			if (!matchingItem)
+			{
+				return null;
+			}
+
+			return matchingItem.unreadComponent;
+		},
 		navigationSections(): CollabSectionItem[]
 		{
-			return Object.values(CollabSections);
+			return Object.values(CollabSectionConfig);
+		},
+		parentChat(): ?ImModelChat
+		{
+			return this.$store.getters['chats/getByChatId'](this.parentChatId);
+		},
+		isParentChatLoaded(): boolean
+		{
+			return Boolean(this.parentChat);
 		},
 	},
-	methods: {
-		onBeforeClose()
-		{
-			if (LayoutManager.getInstance().isChatLayout(this.layout.name))
+	watch: {
+		isParentChatLoaded: {
+			immediate: true,
+			handler(isLoaded: boolean)
 			{
-				LayoutManager.getInstance().clearCurrentLayoutEntityId();
+				if (!isLoaded)
+				{
+					return;
+				}
+
+				this.getPromoManager().init();
+			},
+		},
+	},
+	created()
+	{
+		Logger.warn('List: Collab nested container created');
+
+		Event.bind(document, 'mousedown', this.onDocumentClick);
+	},
+	beforeUnmount()
+	{
+		this.promoManager?.stop();
+		Event.unbind(document, 'mousedown', this.onDocumentClick);
+	},
+	methods: {
+		onDocumentClick(event: MouseEvent)
+		{
+			const sliderContainer = this.$refs.slider.$el;
+			const clickOnRecentContainer = event.composedPath().includes(sliderContainer);
+			if (!clickOnRecentContainer)
+			{
+				this.onCloseSearch();
 			}
 		},
-		onAfterClose()
+		onOpenSearch()
+		{
+			this.searchMode = true;
+		},
+		onCloseSearch()
+		{
+			this.searchMode = false;
+			this.searchQuery = '';
+		},
+		onUpdateSearch(query: string)
+		{
+			this.searchMode = true;
+			this.searchQuery = query;
+		},
+		onSearchLoading(value: boolean)
+		{
+			this.isSearchLoading = value;
+		},
+		onOpenSearchItem(event: { dialogId: string })
+		{
+			const { dialogId } = event;
+
+			this.currentSection = RecentType.collabDefault;
+
+			this.$emit('selectChat', dialogId);
+		},
+		onClose()
 		{
 			this.$emit('close');
 		},
@@ -99,15 +162,43 @@ export const CollabNestedListContainer = {
 		{
 			this.currentSection = selectedSection;
 		},
+		onToggleUnreadMode()
+		{
+			this.unreadMode = !this.unreadMode;
+		},
+		getPromoManager(): CollabPromoManager
+		{
+			if (!this.promoManager)
+			{
+				this.promoManager = new CollabPromoManager(this.parentChatId);
+			}
+
+			return this.promoManager;
+		},
 	},
 	template: `
-		<RecentListSlider @beforeClose="onBeforeClose" @afterClose="onAfterClose">
+		<RecentListSlider ref="slider" :compactMode="compactMode" @close="onClose">
 			<template #header>
-				<NestedListHeader :title="parentChat.name" />
+				<CollabHeader
+					:unreadMode="unreadMode"
+					:currentSection="currentSection"
+					:parentChatId="parentChatId"
+					:searchMode="searchMode"
+					:isSearchLoading="isSearchLoading"
+					@openSearch="onOpenSearch"
+					@closeSearch="onCloseSearch"
+					@updateSearch="onUpdateSearch"
+					@toggleUnreadMode="onToggleUnreadMode"
+				/>
 			</template>
-			<template #subheader>
-				<NestedListToolbar :parentChatId="parentChatId" />
-				<NestedListNavigation
+			<template v-if="!searchMode" #subheader>
+				<CardLoader v-if="!isParentChatLoaded" />
+				<CollabCard
+					v-else
+					:parentChatId="parentChatId"
+					:withNewTabButton="compactMode"
+				/>
+				<CollabNavigation
 					:parentChatId="parentChatId"
 					:sections="navigationSections"
 					:currentSection="currentSection"
@@ -115,7 +206,18 @@ export const CollabNestedListContainer = {
 				/>
 			</template>
 			<template #content>
-				<KeepAlive>
+				<RecentSearch
+					v-show="searchMode"
+					:searchMode="searchMode"
+					:query="searchQuery"
+					:parentChatId="parentChatId"
+					:showUsersCarousel="false"
+					:recentSectionType="RecentType.collabDefault"
+					@loading="onSearchLoading"
+					@openItem="onOpenSearchItem"
+					@closeSearch="onCloseSearch"
+				/>
+				<KeepAlive v-show="!searchMode && !unreadMode">
 					<component
 						:is="listComponent"
 						:parentChatId="parentChatId"
@@ -123,6 +225,13 @@ export const CollabNestedListContainer = {
 						@loadError="$emit('close')"
 					/>
 				</KeepAlive>
+				<component
+					v-if="unreadMode"
+					:is="listUnreadComponent"
+					:parentChatId="parentChatId"
+					@selectChat="$emit('selectChat', $event)"
+					@loadError="$emit('close')"
+				/>
 			</template>
 		</RecentListSlider>
 	`,

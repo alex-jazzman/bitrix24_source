@@ -52,7 +52,7 @@ if ($detailUrl)
 			'USE_PRODUCT_QUANTITY' => $classBlock->get('USE_PRODUCT_QUANTITY'),
 			'SHOW_DISCOUNT_PERCENT' => $classBlock->get('SHOW_DISCOUNT_PERCENT'),
 			'SHOW_OLD_PRICE' => $classBlock->get('SHOW_OLD_PRICE'),
-			'ADD_TO_BASKET_ACTION' => 'BUY',
+			'ADD_TO_BASKET_ACTION' => $classBlock->get('ADD_TO_BASKET_ACTION'),
 			'MESS_BTN_BUY' => '',
 			'MESS_BTN_ADD_TO_BASKET' => '',
 			'MESS_BTN_SUBSCRIBE' => '',

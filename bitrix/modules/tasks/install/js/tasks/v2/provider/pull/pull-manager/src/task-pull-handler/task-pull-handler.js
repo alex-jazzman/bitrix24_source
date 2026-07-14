@@ -16,7 +16,7 @@ import type { StageModel } from 'tasks.v2.model.stages';
 
 import { BasePullHandler } from '../handler/base-pull-handler';
 import { mapInstantFields, mapPushToModel } from './mappers';
-import type { PushData } from './types';
+import type { PushData, StopTimerPush } from './types';
 
 export class TaskPullHandler extends BasePullHandler
 {
@@ -27,6 +27,7 @@ export class TaskPullHandler extends BasePullHandler
 			task_view: this.#handleTaskViewed,
 			task_remove: this.#handleTaskDeleted,
 			default_deadline_changed: this.#handleDefaultDeadlineChanged,
+			task_timer_stop: this.#handleStopOfTimer,
 		};
 	}
 
@@ -40,6 +41,7 @@ export class TaskPullHandler extends BasePullHandler
 	#handleTaskUpdated = (data: PushData): void => {
 		data.AFTER.UF_CRM_TASK_DELETED = data.BEFORE.UF_CRM_TASK_DELETED;
 		data.AFTER.taskRequireResult = data.taskRequireResult;
+		data.AFTER.taskRequireDeadlineChangeReason = data.requireDeadlineChangeReason;
 
 		const task = mapPushToModel(data.TASK_ID, data.AFTER);
 		const taskBefore = mapPushToModel(data.TASK_ID, data.BEFORE);
@@ -128,6 +130,20 @@ export class TaskPullHandler extends BasePullHandler
 
 	#handleDefaultDeadlineChanged = ({ deadlineUserOption }): void => {
 		void this.$store.dispatch(`${Model.Interface}/updateDeadlineUserOption`, deadlineUserOption);
+	};
+
+	#handleStopOfTimer = async (data: StopTimerPush): void => {
+		if (!data.taskId || !taskService.hasStoreTask(data.taskId))
+		{
+			return;
+		}
+
+		const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
+
+		if (!TaskFullCard.isOpened(data.taskId))
+		{
+			void taskService.get(data.taskId);
+		}
 	};
 
 	#upsertStage(stageDto: StageDto): void

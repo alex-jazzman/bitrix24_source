@@ -3,6 +3,7 @@ import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import {
 	AnalyticsCategory,
@@ -22,6 +23,8 @@ const CopilotEntryPoint = Object.freeze({
 
 export class Copilot
 {
+	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+
 	onCreateChat(chatId: number): void
 	{
 		sendData({
@@ -89,16 +92,22 @@ export class Copilot
 		const aiModelName = aiModel.name ?? aiModel;
 		const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
 
-		sendData({
+		const params = {
 			event: AnalyticsEvent.audioUse,
 			tool: AnalyticsTool.ai,
 			category: AnalyticsCategory.chatOperations,
 			c_section: `${currentLayout}_tab`,
-			p2: `provider_${aiModelName}`,
 			p3: copilotChatType,
 			p4: `role_${Text.toCamelCase(role.code)}`,
 			p5: `chatId_${dialog.chatId}`,
-		});
+		};
+
+		if (!this.#isBitrixGptV2Available)
+		{
+			params.p2 = `provider_${aiModelName}`;
+		}
+
+		sendData(params);
 	}
 
 	onToggleReasoning(dialogId: string): void
@@ -112,17 +121,23 @@ export class Copilot
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 		const aiModelName = aiModel.name ?? aiModel;
 
-		sendData({
+		const params = {
 			event,
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.copilot,
 			type: AnalyticsType.think,
 			c_section: `${currentLayout}_tab`,
 			p1: getChatType(chat),
-			p2: `provider_${aiModelName}`,
 			p4: `role_${Text.toCamelCase(role.code)}`,
 			p5: `chatId_${chat.chatId}`,
-		});
+		};
+
+		if (!this.#isBitrixGptV2Available)
+		{
+			params.p2 = `provider_${aiModelName}`;
+		}
+
+		sendData(params);
 	}
 
 	#sendDataForCopilotCreation(params: { c_sub_section: string }): void

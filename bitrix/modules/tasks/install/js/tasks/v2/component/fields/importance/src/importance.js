@@ -67,7 +67,7 @@ export const Importance = {
 		},
 	},
 	template: `
-		<div
+		<button
 			v-if="!readonly || (isResponsible && task.isImportant)"
 			v-hint="tooltip"
 			class="tasks-field-importance"
@@ -77,7 +77,11 @@ export const Importance = {
 			:data-task-field-value="task.isImportant"
 			@click="handleClick"
 		>
-			<BIcon :name="task.isImportant ? Outline.FIRE_SOLID : Outline.FIRE"/>
-		</div>
+			<BIcon
+				:hoverable="!readonly"
+				:name="task.isImportant ? Outline.FIRE_SOLID : Outline.FIRE"
+				class="tasks-field-importance__icon"
+			/>
+		</button>
 	`,
 };

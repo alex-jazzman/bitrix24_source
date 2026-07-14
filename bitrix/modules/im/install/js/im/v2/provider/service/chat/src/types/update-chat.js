@@ -1,34 +1,14 @@
 import { type JsonObject } from 'main.core';
 
-import { MemberEntity, RoleItem } from './create-chat';
+import { type SelectorEntityItem } from 'im.v2.const';
+
+import { RoleItem } from './create-chat';
 
 export type ChatUpdateConfig =
 	GroupChatUpdateConfig
 	| ChannelUpdateConfig
 	| CollabChatUpdateConfig
 	| CollabUpdateConfig;
-
-type BaseUpdateConfig = {
-	title: string,
-	avatar: File | string,
-	ownerId: number,
-	description: string,
-	manageUsersAdd: RoleItem,
-	manageUsersDelete: RoleItem,
-	manageUi: RoleItem,
-	manageMessages: RoleItem,
-
-	addedMemberEntities: MemberEntity[],
-	deletedMemberEntities?: MemberEntity[],
-	addedManagers?: number[],
-	deletedManagers?: number[],
-};
-
-type GroupChatUpdateConfig = BaseUpdateConfig & { searchable: boolean };
-
-type ChannelUpdateConfig = BaseUpdateConfig & { searchable: boolean };
-
-type CollabChatUpdateConfig = BaseUpdateConfig;
 
 export type CollabUpdateConfig = {
 	title: string,
@@ -42,6 +22,28 @@ export type CollabUpdateConfig = {
 		options: JsonObject
 	},
 };
+
+type BaseUpdateConfig = {
+	title: string,
+	avatar: File | string,
+	ownerId: number,
+	description: string,
+	manageUsersAdd: RoleItem,
+	manageUsersDelete: RoleItem,
+	manageUi: RoleItem,
+	manageMessages: RoleItem,
+
+	addedMemberEntities: SelectorEntityItem[],
+	deletedMemberEntities?: SelectorEntityItem[],
+	addedManagers?: number[],
+	deletedManagers?: number[],
+};
+
+type GroupChatUpdateConfig = BaseUpdateConfig & { searchable: boolean };
+
+type ChannelUpdateConfig = BaseUpdateConfig & { searchable: boolean };
+
+type CollabChatUpdateConfig = BaseUpdateConfig;
 
 export type GetMemberEntitiesConfig = {
 	memberEntities: Array<[string, number]>,

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'im.v2.application.core',
+		'im.v2.component.animation',
 		'im.v2.component.elements.avatar',
 		'im.v2.component.elements.chat-title',
 		'im.v2.component.elements.list-loading-state',

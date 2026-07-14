@@ -12,7 +12,13 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $APPLICATION->SetTitle(Loc::getMessage("SLLS_TEMPLATE_PAGE_TITLE"));
 
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.buttons.icons", "sidepanel"]);
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons',
+	'sidepanel',
+	'im.public',
+	'socialnetwork.v2.application.project-wizard',
+]);
 
 $isProjectFeatureEnabled = (
 	Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS)
@@ -23,6 +29,8 @@ if (!$isProjectFeatureEnabled)
 {
 	\Bitrix\Main\UI\Extension::load(['socialnetwork.limit']);
 }
+
+$isNewProjectsOn = \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn();
 
 ?><script>
 	BX.message({
@@ -36,6 +44,7 @@ if (!$isProjectFeatureEnabled)
 			)?>,
 			urlToGroupCreate: '<?=\CUtil::jsEscape($arResult["URL_GROUP_CREATE"])?>',
 			isProjectFeatureEnabled: <?= \Bitrix\Main\Web\Json::encode($isProjectFeatureEnabled) ?>,
+			isNewProjectsOn: <?= \Bitrix\Main\Web\Json::encode($isNewProjectsOn) ?>,
 		});
 	});
 </script><?

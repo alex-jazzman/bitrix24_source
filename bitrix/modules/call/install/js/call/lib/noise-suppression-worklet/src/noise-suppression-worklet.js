@@ -95,7 +95,7 @@ class NoiseSuppressorWorklet extends AudioWorkletProcessor {
 	 * false will terminate it.
 	 */
 	process(inputs, outputs) {
-
+	
 		// We expect the incoming track to be mono, if a stereo track is passed only on of its channels will get
 		// denoised and sent pack.
 		// TODO Technically we can denoise both channel however this might require a new rnnoise context, some more
@@ -150,6 +150,10 @@ class NoiseSuppressorWorklet extends AudioWorkletProcessor {
 			);
 
 			outData.set(denoisedFrame, 0);
+			if (outputs[0][1])
+			{
+				outputs[0][1].set(denoisedFrame, 0);
+			}
 			this._denoisedBufferIndx += outData.length;
 		}
 

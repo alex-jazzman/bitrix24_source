@@ -1,28 +1,23 @@
-import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
-
-import { Core } from 'im.v2.application.core';
-import { formatFieldsWithConfig } from 'im.v2.model';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree, type NestedModuleTree, type Store } from 'ui.vue3.vuex';
 
 import { copilotFieldsConfig } from './format/field-config';
 import { ChatsModel } from './nested-modules/chats/chats';
 import { MessagesModel } from './nested-modules/messages/messages';
 import { RolesModel } from './nested-modules/roles/roles';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelCopilotRole, ImModelCopilotAIModel } from '../registry';
-import type { GetterTree, ActionTree, MutationTree, NestedModuleTree, Store } from 'ui.vue3.vuex';
+import { VotesModel } from './nested-modules/votes/votes';
+import { formatFieldsWithConfig, type ImModelCopilotAIModel } from '../registry';
 
 type CopilotModelState = {
 	recommendedRoles: string[],
 	aiProvider: string,
 	availableAIModels: {
-		[code: string]: ImModelCopilotAIModel[]
+		[code: string]: ImModelCopilotAIModel
 	},
 	name: string,
+	agentName: string,
+	widgetDialogId: string,
 };
-
-const RECOMMENDED_ROLES_LIMIT = 4;
 
 /* eslint-disable no-param-reassign */
 export class CopilotModel extends BuilderModel
@@ -33,6 +28,7 @@ export class CopilotModel extends BuilderModel
 			roles: RolesModel,
 			messages: MessagesModel,
 			chats: ChatsModel,
+			votes: VotesModel,
 		};
 	}
 
@@ -44,10 +40,11 @@ export class CopilotModel extends BuilderModel
 	getState(): CopilotModelState
 	{
 		return {
-			recommendedRoles: [],
 			aiProvider: '',
 			availableAIModels: {},
 			name: '',
+			agentName: '',
+			widgetDialogId: '',
 		};
 	}
 
@@ -61,14 +58,6 @@ export class CopilotModel extends BuilderModel
 			/** @function copilot/getAIModels */
 			getAIModels: (state: CopilotModelState): ImModelCopilotAIModel[] => {
 				return Object.values(state.availableAIModels);
-			},
-			/** @function copilot/getRecommendedRoles */
-			getRecommendedRoles: (state: CopilotModelState) => (): ImModelCopilotRole[] => {
-				const roles = state.recommendedRoles.map((roleCode) => {
-					return Core.getStore().getters['copilot/roles/getByCode'](roleCode);
-				});
-
-				return roles.slice(0, RECOMMENDED_ROLES_LIMIT);
 			},
 			/** @function copilot/getDefaultModelName */
 			getDefaultModelName: (state: CopilotModelState): string => {
@@ -94,21 +83,20 @@ export class CopilotModel extends BuilderModel
 			getName: (state: CopilotModelState): string => {
 				return state.name;
 			},
+			/** @function copilot/getAgentName */
+			getAgentName: (state: CopilotModelState): string => {
+				return state.agentName;
+			},
+			/** @function copilot/isChatOpenedInWidget */
+			isChatOpenedInWidget: (state: CopilotModelState) => (dialogId: string): boolean => {
+				return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
+			},
 		};
 	}
 
 	getActions(): ActionTree
 	{
 		return {
-			/** @function copilot/setRecommendedRoles */
-			setRecommendedRoles: (store: Store, payload) => {
-				if (!Type.isArrayFilled(payload))
-				{
-					return;
-				}
-
-				store.commit('setRecommendedRoles', payload);
-			},
 			/** @function copilot/setProvider */
 			setProvider: (store: Store, payload: string) => {
 				if (!Type.isStringFilled(payload))
@@ -138,15 +126,25 @@ export class CopilotModel extends BuilderModel
 
 				store.commit('setName', payload);
 			},
+			/** @function copilot/setAgentName */
+			setAgentName: (store: Store, payload: string) => {
+				if (!Type.isStringFilled(payload))
+				{
+					return;
+				}
+
+				store.commit('setAgentName', payload);
+			},
+			/** @function copilot/setWidgetDialogId */
+			setWidgetDialogId: (store: Store, payload: string) => {
+				store.commit('setWidgetDialogId', payload ?? '');
+			},
 		};
 	}
 
 	getMutations(): MutationTree
 	{
 		return {
-			setRecommendedRoles: (state: CopilotModelState, payload) => {
-				state.recommendedRoles = payload;
-			},
 			setProvider: (state: CopilotModelState, payload) => {
 				state.aiProvider = payload;
 			},
@@ -155,6 +153,12 @@ export class CopilotModel extends BuilderModel
 			},
 			setName: (state: CopilotModelState, payload: string) => {
 				state.name = payload;
+			},
+			setAgentName: (state: CopilotModelState, payload: string) => {
+				state.agentName = payload;
+			},
+			setWidgetDialogId: (state: CopilotModelState, payload: string) => {
+				state.widgetDialogId = payload;
 			},
 		};
 	}

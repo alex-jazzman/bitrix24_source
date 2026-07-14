@@ -4,6 +4,7 @@
 jn.define('calendar/booking/detail/fields/manager', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
 	const { NotifyManager } = require('notify-manager');
+	const { requireLazy } = require('require-lazy');
 
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { Icon, IconView } = require('ui-system/blocks/icon');

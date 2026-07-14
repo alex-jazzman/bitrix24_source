@@ -3,7 +3,7 @@ import { type ImModelChat } from 'im.v2.model';
 
 import { GroupChatUpdating } from './components/update/group-chat';
 import { ChannelUpdating } from './components/update/channel';
-import { CollabUpdating } from './components/update/collab';
+import { CollabUpdatingWrapper } from './components/update/collab/collab-wrapper';
 import { CollabChatUpdating } from './components/update/collab-chat';
 
 import './css/chat-forms-content.css';
@@ -11,7 +11,7 @@ import './css/chat-forms-content.css';
 // @vue/component
 export const UpdateChatContent = {
 	name: 'UpdateChatContent',
-	components: { GroupChatUpdating, ChannelUpdating, CollabUpdating, CollabChatUpdating },
+	components: { GroupChatUpdating, ChannelUpdating, CollabUpdatingWrapper, CollabChatUpdating },
 	props:
 	{
 		entityId: {
@@ -65,7 +65,7 @@ export const UpdateChatContent = {
 		<div class="bx-im-content-chat-forms__container">
 			<GroupChatUpdating v-if="isChat" :dialogId="entityId" />
 			<ChannelUpdating v-else-if="isChannel" :dialogId="entityId" />
-			<CollabUpdating v-else-if="isCollab" :dialogId="entityId" />
+			<CollabUpdatingWrapper v-else-if="isCollab" :dialogId="entityId" />
 			<CollabChatUpdating v-else-if="isCollabNestedChat" :dialogId="entityId" />
 		</div>
 	`,

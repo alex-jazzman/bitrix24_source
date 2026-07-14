@@ -9,10 +9,6 @@ return [
 	'js' => 'dist/list-slider.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.component.animation',
-		'im.v2.const',
-		'im.v2.lib.esc-manager',
-		'main.core.events',
 		'ui.icon-set.api.vue',
 	],
 	'skip_core' => true,

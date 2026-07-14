@@ -19,6 +19,10 @@ export type TaskV2Params = {
 	UF_TASK_WEBDAV_FILES: string[],
 };
 
+type FlowParams = {
+	groupId?: number,
+};
+
 export class EntityCreator
 {
 	#chatId: number = 0;
@@ -32,16 +36,26 @@ export class EntityCreator
 		this.#chatId = chatId;
 	}
 
-	openTaskCreationForm(): void
+	openCollabTaskCreationForm(collabId: number): void
+	{
+		this.openTaskCreationForm({ groupId: collabId });
+	}
+
+	openCollabMeetingCreationSlider(collabId: number): void
+	{
+		this.#openCalendarSlider({ type: 'group', ownerId: collabId });
+	}
+
+	openTaskCreationForm(additionalParams: JsonObject = {}): void
 	{
 		this.#openTaskV2Card({
 			analytics: {
 				context: 'chat',
 				element: 'create_button',
 			},
+			...additionalParams,
 		});
 	}
-
 	createTaskForChat(): Promise
 	{
 		return this.#createTask();
@@ -55,6 +69,11 @@ export class EntityCreator
 	createMeetingForChat(): Promise
 	{
 		return this.#createMeeting();
+	}
+
+	createFlowForChat(): Promise
+	{
+		return this.#createFlow();
 	}
 
 	createMeetingForMessage(messageId: number): Promise
@@ -99,6 +118,19 @@ export class EntityCreator
 				? this.#openPrefilledTaskV2Card(params)
 				: this.#openTaskSlider(link, params)
 			;
+		});
+	}
+
+	#createFlow(): Promise
+	{
+		const config = {
+			data: { chatId: this.#chatId },
+		};
+
+		return runAction(RestMethod.imV2ChatFlowPrepare, config).then(async (params: FlowParams) => {
+			const { EditForm } = await Runtime.loadExtension('tasks.flow.edit-form');
+
+			return EditForm.createInstance({ groupId: params.groupId });
 		});
 	}
 

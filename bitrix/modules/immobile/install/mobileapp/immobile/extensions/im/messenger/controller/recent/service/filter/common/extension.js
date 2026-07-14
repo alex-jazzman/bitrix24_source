@@ -32,17 +32,26 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 			return this.recentLocator.get('id');
 		}
 
+		/**
+		 * @returns {number}
+		 */
+		get parentChatId()
+		{
+			return this.recentLocator.get('parentChatId');
+		}
+
 		onInit()
 		{
 			this.logger.log('onInit');
 
 			const defaultFilterId = this.props?.defaultFilterId ?? RecentFilterId.all;
-			const currentFilterId = this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId);
+			const currentFilterId = this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId, this.parentChatId);
 
 			if (!currentFilterId || currentFilterId === RecentFilterId.all)
 			{
 				void this.store.dispatch('recentModel/recentFilteredModel/setCurrentFilter', {
 					tabId: this.tabId,
+					parentChatId: this.parentChatId,
 					filterId: defaultFilterId,
 				});
 			}
@@ -67,7 +76,7 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 				return;
 			}
 
-			const currentFilterId = this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId);
+			const currentFilterId = this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId, this.parentChatId);
 			let effectiveFilterId = filterId;
 
 			if (currentFilterId === filterId && filterId !== RecentFilterId.all)
@@ -84,6 +93,7 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 
 			await this.store.dispatch('recentModel/recentFilteredModel/setCurrentFilter', {
 				tabId: this.tabId,
+				parentChatId: this.parentChatId,
 				filterId: effectiveFilterId,
 			});
 
@@ -103,7 +113,7 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 		 */
 		getCurrentFilterId()
 		{
-			return this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId);
+			return this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId, this.parentChatId);
 		}
 
 		/**
@@ -111,7 +121,7 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 		 */
 		hasSelectedFilter()
 		{
-			return this.store.getters['recentModel/recentFilteredModel/hasSelectedFilter'](this.tabId);
+			return this.store.getters['recentModel/recentFilteredModel/hasSelectedFilter'](this.tabId, this.parentChatId);
 		}
 
 		/**

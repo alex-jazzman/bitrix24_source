@@ -14,6 +14,8 @@
 	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
+	const { FeatureFlagType, checkFeatureFlag } = require('feature-flag');
+	const { requireLazy } = require('require-lazy');
 
 	const platform = Application.getPlatform();
 
@@ -226,6 +228,7 @@
 				.setHandler((response) => {
 					this.counters = {};
 					this.total = 0;
+					const projectsTotal = response.data.projectsTotal;
 
 					Object.entries(response.data).forEach(([type, value]) => {
 						this.counters[type] = value;
@@ -240,6 +243,11 @@
 							this.total += value;
 						}
 					});
+
+					if (!this.list.isScrum() && Number.isInteger(projectsTotal))
+					{
+						this.total = projectsTotal;
+					}
 
 					this.setVisualCounters();
 					this.saveCache();
@@ -259,7 +267,7 @@
 		setVisualCounters()
 		{
 			Application.setBadges({
-				[`${this.list.mode}_MoreButton`]: this.total,
+				[`${this.list.mode}_MoreButton`]: 0,
 			});
 			BX.postComponentEvent(`${this.list.getTabName()}:setVisualCounter`, [{ value: this.total }], 'tasks.tabs');
 		}
@@ -1182,6 +1190,7 @@
 				'IS_PINNED',
 				'SCRUM_MASTER_ID',
 				'IS_EXTRANET',
+				'TYPE',
 				'ACTIONS',
 				'MEMBERS',
 				'COUNTERS',
@@ -1200,6 +1209,7 @@
 		static get avatarTypes()
 		{
 			return {
+				collab: 'status_task_public',
 				public: 'status_task_public',
 				private: 'status_task_private',
 				secret: 'status_task_secret',
@@ -1660,6 +1670,7 @@
 				const projectItem = {
 					id: project.id,
 					title: project.name,
+					type: project.type,
 					params: {
 						avatar: project.image,
 						initiatedByType: project.additionalData.initiatedByType,
@@ -1667,6 +1678,8 @@
 						membersCount: (project.getHeadCount() + project.getMemberCount()),
 						role: project.additionalData.role,
 						opened: project.isOpened,
+						dialogId: project.additionalData.dialogId,
+						isCollab: project.isCollab(),
 					},
 				};
 				const params = {
@@ -1678,11 +1691,71 @@
 					currentUserId: parseInt(this.userId || 0, 10),
 				};
 
-				void ProjectOpener.open({
-					item: projectItem,
-					...params,
-				});
+				void this.openCollabProject(project, projectItem, params);
 			}
+		}
+
+		async openCollabProject(project, projectItem, params)
+		{
+			const isProjectV2enabled = await checkFeatureFlag(FeatureFlagType.PROJECTS_V2);
+
+			let chatId = Number(project.additionalData.chatId || 0);
+
+			if (isProjectV2enabled && (!chatId || project.isCollab()))
+			{
+				try
+				{
+					const response = await (new RunActionExecutor('mobile.Project.getChatId', {
+						projectId: project.id,
+					}))
+					.enableJson()
+					.call(false);
+
+					if (response?.errors?.length > 0)
+					{
+						logger.error('ProjectList.getChatId', {
+							projectId: project.id,
+							errors: response.errors,
+						});
+					}
+					else
+					{
+						chatId = Number(response.data?.chatId || 0);
+						project.additionalData.chatId = chatId;
+					}
+				}
+				catch (error)
+				{
+					logger.error('ProjectList.getChatId', {
+						projectId: project.id,
+						error,
+					});
+				}
+			}
+
+			if (chatId > 0 && isProjectV2enabled)
+			{
+				try
+				{
+					const { openNestedNavigation } = await requireLazy('im:messenger/api/navigation');
+					await openNestedNavigation(chatId);
+
+					return;
+				}
+				catch (error)
+				{
+					logger.error('ProjectList.openNestedNavigation', {
+						projectId: project.id,
+						chatId,
+						error,
+					});
+				}
+			}
+
+			void ProjectOpener.open({
+				item: projectItem,
+				...params,
+			});
 		}
 
 		addProject()

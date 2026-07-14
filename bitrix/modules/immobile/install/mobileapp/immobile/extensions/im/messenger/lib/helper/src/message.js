@@ -12,6 +12,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent,
 		TranscriptStatus,
 		DialogType,
+		BlockElementType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -88,12 +89,12 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		{
 			this.messageModel = messageModel;
 			this.voteModel = messageModel.vote;
-			this.#setBuilder(messageModel);
+			this.#setBlock(messageModel);
 		}
 
-		#setBuilder(messageModel)
+		#setBlock(messageModel)
 		{
-			this.builderModel = messageModel.builder ?? serviceLocator.get('core').getStore().getters['messagesModel/builderModel/getByMessageId'](messageModel.id);
+			this.blockModel = messageModel.block ?? serviceLocator.get('core').getStore().getters['messagesModel/blockModel/getByMessageId'](messageModel.id);
 		}
 
 		/**
@@ -478,11 +479,39 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		/**
 		 * @returns {boolean}
 		 */
-		get isBuilder()
+		get isBlock()
 		{
-			return Type.isPlainObject(this.builderModel)
-				&& Type.isArrayFilled(this.builderModel.blocks)
+			return Type.isPlainObject(this.blockModel)
+				&& Type.isArrayFilled(this.blockModel.elements)
 				&& !this.isDeleted;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get hasBlockGallery()
+		{
+			return this.isBlock
+				&& this.blockModel.elements.some((block) => block.type === BlockElementType.gallery);
+		}
+
+		/**
+		 * @return {Array<FilesModelState>}
+		 */
+		getBlockMediaFiles()
+		{
+			if (!this.hasBlockGallery)
+			{
+				return [];
+			}
+
+			const fileIds = this.blockModel.elements
+				.filter((block) => block.type === BlockElementType.gallery)
+				.flatMap((block) => block.fileIds ?? []);
+
+			return fileIds
+				.map((fileId) => this.#store.getters['filesModel/getById'](Number(fileId)))
+				.filter(Boolean);
 		}
 
 		/**
@@ -504,7 +533,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				MessageComponent.call,
 				MessageComponent.vote,
 				MessageComponent.aiAssistant,
-				MessageComponent.builderMessage,
+				MessageComponent.blockMessage,
 			];
 
 			return unsupportedComponentIds.includes(this.getComponentId());
@@ -540,9 +569,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return MessageComponent.smile;
 			}
 
-			if (this.isBuilder)
+			if (this.isBlock)
 			{
-				return MessageComponent.builderMessage;
+				return MessageComponent.blockMessage;
 			}
 
 			return MessageComponent.default;

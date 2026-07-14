@@ -1,6 +1,8 @@
 <?php
+
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MEMBERS_TITLE_MSGVER_1'] = 'Добавить в чат';
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE'] = 'Добавить в коллабу';
+$MESS['IM_ENTITY_SELECTOR_ADD_TO_COLLAB_V2_TITLE'] = 'Добавить в проект';
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY_MSGVER_1'] = 'Показывать историю переписки';
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MSGVER_1'] = 'Добавить пользователя';
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MORE'] = 'Добавить';
@@ -14,8 +16,11 @@ $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER"] = "Введит
 
 $MESS["IM_ENTITY_SELECTOR_GUESTS_TAB"] = "Гости";
 $MESS["IM_ENTITY_SELECTOR_EMPLOYEES_TAB"] = "Сотрудники";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_V2_DESCRIPTION_TITLE_EMPLOYEE"] = "Пригласите гостей в проект";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TITLE_GUEST"] = "Пригласите других участников";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_V2_DESCRIPTION_TEXT_EMPLOYEE"] = "Гостями могут быть подрядчики, партнёры, клиенты. Приглашайте их, когда нужно быстро обсудить что-то вместе с командой. У гостя будет доступ только к этому проекту";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TEXT_GUEST"] = "В пару кликов добавьте нужных людей, чтобы вместе работать в коллабе и не пересылать сообщения в разные мессенджеры";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_V2_DESCRIPTION_TEXT_GUEST"] = "В пару кликов добавьте нужных людей, чтобы вместе работать в проекте и не пересылать сообщения в разные мессенджеры";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_LANGUAGE_TITLE"] = "Язык приглашения:";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DEFAULT_LANGUAGE_TITLE"] = "#LANG_NAME# (по умолчанию)";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LANGUAGE_SELECTOR_HINT"] = "Выберите язык приглашения и интерфейса гостя. Для других участников язык не изменится";

@@ -485,6 +485,17 @@ class call extends \CModule
 			'Y',
 			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + \rand(600, 900), 'FULL')
 		);
+
+		/** @see \Bitrix\Call\Agent\Userlog\CallUserLogCleaner::run */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Agent\Userlog\CallUserLogCleaner::run();',
+			'call',
+			'N',
+			86400,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + \rand(4320, 86400), 'FULL')
+		);
 	}
 
 	public function unInstallAgents(): void

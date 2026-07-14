@@ -8,36 +8,36 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const Checkbox = {
-	  props: {
-	    important: {
-	      type: Boolean,
-	      default: false
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    },
-	    checked: {
-	      type: Boolean,
-	      default: false
-	    },
-	    highlight: {
-	      type: Boolean,
-	      default: false
-	    },
-	    tag: {
-	      type: String,
-	      default: 'label'
-	    }
-	  },
-	  emits: ['click'],
-	  methods: {
-	    handleClick(event) {
-	      event.stopPropagation();
-	      this.$emit('click', event);
-	    }
-	  },
-	  template: `
+		props: {
+			important: {
+				type: Boolean,
+				default: false
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			checked: {
+				type: Boolean,
+				default: false
+			},
+			highlight: {
+				type: Boolean,
+				default: false
+			},
+			tag: {
+				type: String,
+				default: 'label'
+			}
+		},
+		emits: ['click'],
+		methods: {
+			handleClick(event) {
+				event.stopPropagation();
+				this.$emit('click', event);
+			}
+		},
+		template: `
 		<component
 			:is="tag"
 			class="tasks-card-checkbox"
@@ -63,5 +63,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	exports.Checkbox = Checkbox;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {})));
+})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {});
 //# sourceMappingURL=checkbox.bundle.js.map

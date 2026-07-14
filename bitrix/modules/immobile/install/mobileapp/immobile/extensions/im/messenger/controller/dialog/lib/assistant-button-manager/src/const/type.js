@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 		search: 'search',
 		menu: 'menu',
 		agent: 'agent',
+		market: 'market',
 	};
 
 	const AssistantButtonDesign = {

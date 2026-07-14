@@ -53,6 +53,7 @@ export class LocalSearch
 		const recentListItems = getRecentListItems({
 			withFakeUsers: true,
 			searchRecentSection: this.#searchConfig.searchRecentSection,
+			parentChatId: this.#searchConfig.parentId,
 		});
 
 		return recentListItems.map((item) => {

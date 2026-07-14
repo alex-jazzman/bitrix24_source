@@ -15,12 +15,18 @@ import type {
 } from './type';
 
 export const SOURCE_TYPE_OUTLINE = 'outline';
+export const SOURCE_TYPE_WIKI = 'wiki';
 export const IMPORT_POLL_INTERVAL_MS = 5000;
 
 export const SOURCE_TYPES = Object.freeze([
 	Object.freeze({
 		id: SOURCE_TYPE_OUTLINE,
 		label: Loc.getMessage('NOTE_IMPORT_SOURCE_OUTLINE'),
+		enabled: true,
+	}),
+	Object.freeze({
+		id: SOURCE_TYPE_WIKI,
+		label: Loc.getMessage('NOTE_IMPORT_SOURCE_WIKI'),
 		enabled: true,
 	}),
 ]);

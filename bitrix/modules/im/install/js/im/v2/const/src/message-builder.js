@@ -1,3 +1,5 @@
+import { type AirButtonStyle } from 'ui.vue3.components.button';
+
 type BaseBlock = {
 	id: string | number,
 	type: string,
@@ -60,9 +62,39 @@ export type TableBlockType = BaseBlock & {
 	rows: Array<Array<{ text: string }>>,
 };
 
+type BaseButton = {
+	title: string,
+	design: $Keys<typeof AirButtonStyle>,
+};
+
+export type EventButtonBlockType = BaseButton & {
+	type: 'eventButton',
+	actionId: string,
+	actionParams?: { [string]: any },
+};
+
+export type LinkButtonBlockType = BaseButton & {
+	type: 'linkButton',
+	url: string,
+};
+
+export type AnyButtonBlock = EventButtonBlockType | LinkButtonBlockType;
+
+export type CardBlockType = BaseBlock & {
+	imageUrl?: string,
+	title: string,
+	text?: string,
+	buttons?: EventButtonBlockType[],
+};
+
 export type AiAssistantSearchBlockType = BaseBlock & {
 	title: string,
 	text: string,
+};
+
+export type GalleryBlockType = BaseBlock & {
+	title: string,
+	fileIds: number[],
 };
 
 export type AnyBlockType =
@@ -74,6 +106,8 @@ export type AnyBlockType =
 	| LineDividerBlockType
 	| SpaceDividerBlockType
 	| TableBlockType
+	| CardBlockType
+	| GalleryBlockType
 	| AiAssistantSearchBlockType;
 
 export const MessageBuilderPlainColorToken = {
@@ -88,3 +122,5 @@ export const MessageBuilderPlainColorToken = {
 export const MessageBuilderGradientColorToken = {
 	'ai-assistant': 'ai-assistant',
 };
+
+export const MessageBuilderBackgroundPlainToken = 'plain';

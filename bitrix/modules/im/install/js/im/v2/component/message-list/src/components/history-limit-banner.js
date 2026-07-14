@@ -1,5 +1,5 @@
 import { Analytics } from 'im.v2.lib.analytics';
-import { FeatureManager } from 'im.v2.lib.feature';
+import { TariffManager } from 'im.v2.lib.feature';
 
 import '../css/history-limit-banner.css';
 
@@ -21,15 +21,15 @@ export const HistoryLimitBanner = {
 	{
 		title(): string
 		{
-			return FeatureManager.chatHistory.getLimitTitle();
+			return TariffManager.chatHistory.getLimitTitle();
 		},
 		subtitle(): string
 		{
-			return FeatureManager.chatHistory.getLimitSubtitle();
+			return TariffManager.chatHistory.getLimitSubtitle();
 		},
 		buttonText(): string
 		{
-			return FeatureManager.chatHistory.getLearnMoreText();
+			return TariffManager.chatHistory.getLearnMoreText();
 		},
 	},
 	mounted()
@@ -41,7 +41,7 @@ export const HistoryLimitBanner = {
 		onButtonClick(): void
 		{
 			Analytics.getInstance().historyLimit.onDialogBannerClick({ dialogId: this.dialogId });
-			FeatureManager.chatHistory.openFeatureSlider();
+			TariffManager.chatHistory.openFeatureSlider();
 		},
 		sendAnalytics()
 		{

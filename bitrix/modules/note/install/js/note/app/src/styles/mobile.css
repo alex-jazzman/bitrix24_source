@@ -37,6 +37,7 @@ html.note-mobile {
 
 html.note-mobile,
 html.note-mobile body {
+	/* @chef-ignore */
 	overscroll-behavior: auto;
 	height: auto;
 	min-height: 100%;
@@ -50,7 +51,9 @@ html.note-mobile .popup-window-overlay {
 	height: 100dvh !important;
 }
 
+/* @chef-ignore */
 html.note-mobile:has(> body .popup-window-overlay),
+/* @chef-ignore */
 html.note-mobile:has(> body .popup-window-overlay) body {
 	overflow: hidden !important;
 	height: 100dvh !important;
@@ -69,6 +72,7 @@ html.note-mobile .main-layout {
 
 html.note-mobile .content {
 	overflow: visible;
+	/* @chef-ignore */
 	overscroll-behavior: auto;
 	max-width: 100vw;
 }
@@ -101,6 +105,7 @@ html.note-mobile .main-layout {
 	transition: padding-top 200ms ease;
 }
 
+/* @chef-ignore */
 html.note-mobile:has(.note-page-header.is-compact) {
 	--note-mobile-header-h: 0px;
 }
@@ -181,6 +186,7 @@ html.note-mobile .popup-window.ui-message-box {
 	min-width: 0 !important;
 }
 
+/* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) {
 	width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter)) !important;
 	max-width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter)) !important;
@@ -194,12 +200,15 @@ html.note-mobile .ui-selector-dialog {
 	box-sizing: border-box;
 }
 
+/* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) {
 	max-height: calc(100dvh - var(--note-popup-vh-gutter)) !important;
 	overflow: visible;
 }
 
+/* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) .ui-selector-dialog,
+/* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) .ui-selector-tab-content {
 	max-height: 100%;
 	overflow-y: auto;

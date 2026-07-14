@@ -16,21 +16,13 @@ export class Ajax
 		});
 	}
 
-	static sendRequestRecoverAccess(signedUserId: string): Promise
+	static sendRequestRecoverAccess(): Promise
 	{
-		return ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {
-			data: {
-				signedUserId,
-			},
-		});
+		return ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {});
 	}
 
-	static resetOtpSession(signedUserId: string): Promise
+	static resetOtpSession(): Promise
 	{
-		return ajax.runAction('intranet.v2.Otp.resetOtpSession', {
-			data: {
-				signedUserId,
-			},
-		});
+		return ajax.runAction('intranet.v2.Otp.resetOtpSession', {});
 	}
 }

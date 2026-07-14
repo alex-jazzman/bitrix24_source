@@ -1,0 +1,8 @@
+.bx-im-nested-list-collab-card__loader {
+	height: 136px;
+	margin-bottom: 10px;
+	background-image: url('./images/loader.svg?v2');
+	background-size: cover;
+	background-position: center;
+	border-radius: 10px;
+}

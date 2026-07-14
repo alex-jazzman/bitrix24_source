@@ -1,9 +1,15 @@
 import { Loc, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import 'ui.notification';
 import { DocumentList } from 'note.ui.document-list';
+import { NoteEvent } from 'note.sidebar';
 import { SharedService } from './services/shared-service';
 
 const PAGE_SIZE = 50;
+// Debounce window for cross-route pull-driven refetch; jitter desynchronises
+// reconnecting clients hitting REST after a burst of `collectionListInvalidated`.
+const REFETCH_DEBOUNCE_MIN_MS = 80;
+const REFETCH_DEBOUNCE_JITTER_MS = 220;
 
 export const NoteSharedPageComponent = {
 	name: 'NoteSharedPage',
@@ -54,7 +60,23 @@ export const NoteSharedPageComponent = {
 	created()
 	{
 		this.service = new SharedService();
+		this.refetchTimer = null;
+		this.handlePullEvent = (event) => this.onPullEvent(event);
+		EventEmitter.subscribe(NoteEvent.PULL_EVENT, this.handlePullEvent);
 		void this.loadPage(false);
+	},
+	beforeUnmount()
+	{
+		if (this.refetchTimer)
+		{
+			clearTimeout(this.refetchTimer);
+			this.refetchTimer = null;
+		}
+		if (this.handlePullEvent)
+		{
+			EventEmitter.unsubscribe(NoteEvent.PULL_EVENT, this.handlePullEvent);
+			this.handlePullEvent = null;
+		}
 	},
 	methods: {
 		goRoot(): void
@@ -119,6 +141,26 @@ export const NoteSharedPageComponent = {
 			}
 
 			void this.loadPage(true);
+		},
+		onPullEvent(event: Object): void
+		{
+			const payload = event?.getData ? event.getData() : null;
+			const command = payload?.command;
+			if (command !== 'collectionListInvalidated' && command !== 'collectionCapabilities')
+			{
+				return;
+			}
+
+			if (this.refetchTimer)
+			{
+				clearTimeout(this.refetchTimer);
+			}
+
+			const delay = REFETCH_DEBOUNCE_MIN_MS + Math.floor(Math.random() * REFETCH_DEBOUNCE_JITTER_MS);
+			this.refetchTimer = setTimeout(() => {
+				this.refetchTimer = null;
+				void this.loadPage(false);
+			}, delay);
 		},
 		onOpen(item): void
 		{

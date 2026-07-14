@@ -1,5 +1,7 @@
+import { EventEmitter } from 'main.core.events';
+
 import { Core } from 'im.v2.application.core';
-import { RecentType, type RecentTypeItem } from 'im.v2.const';
+import { RecentType, EventType, type RecentTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { type ImModelRecentItem, type ImModelMessage } from 'im.v2.model';
@@ -128,6 +130,7 @@ export class RecentPullHandler
 		}
 
 		void Core.getStore().dispatch('recent/hide', { dialogId });
+		EventEmitter.emit(EventType.recent.closeNestedList, { dialogId });
 	}
 
 	handleChatUserLeave(params: ChatUserLeaveParams)
@@ -192,7 +195,8 @@ export class RecentPullHandler
 		manager.addToRecentCollection();
 	}
 
-	#deleteLastMessage(dialogId: number, newLastMessage: RawMessage) {
+	#deleteLastMessage(dialogId: number, newLastMessage: RawMessage)
+	{
 		const lastMessageWasDeleted = Boolean(newLastMessage);
 
 		if (lastMessageWasDeleted)

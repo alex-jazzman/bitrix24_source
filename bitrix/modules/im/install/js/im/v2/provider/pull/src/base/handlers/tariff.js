@@ -14,11 +14,6 @@ export class TariffPullHandler
 			return;
 		}
 
-		if (tariffRestrictions.fullChatHistory?.isAvailable === true)
-		{
-			return;
-		}
-
 		void Core.getStore().dispatch('application/tariffRestrictions/set', tariffRestrictions);
 	}
 }

@@ -23,6 +23,7 @@ export const ActionByRole = Object.freeze({
 	setReaction: 'setReaction',
 	createMeeting: 'createMeeting',
 	createTask: 'createTask',
+	createChildChat: 'createChildChat',
 	openAvatarMenu: 'openAvatarMenu',
 	openMessageMenu: 'openMessageMenu',
 	openSidebarMenu: 'openSidebarMenu',

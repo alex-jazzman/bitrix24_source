@@ -1,32 +1,29 @@
 import { Loc, Type } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
-import { MenuItemDesign } from 'ui.system.menu';
+import { MenuItemDesign, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { Core } from 'im.v2.application.core';
-import { EventType, PlacementType, ActionByRole, PromoId } from 'im.v2.const';
+import { EventType, PlacementType, ActionByRole, PromoId, type ApplicationContext } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatManager } from 'im.v2.lib.chat';
+import { showDeleteChannelPostConfirm, showDownloadAllFilesConfirm } from 'im.v2.lib.confirm';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { MarketManager } from 'im.v2.lib.market';
 import { MessageManager } from 'im.v2.lib.message';
+import { Notifier } from 'im.v2.lib.notifier';
 import { Parser } from 'im.v2.lib.parser';
+import { PermissionManager } from 'im.v2.lib.permission';
 import { PromoManager } from 'im.v2.lib.promo';
 import { Utils } from 'im.v2.lib.utils';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { showDeleteChannelPostConfirm, showDownloadAllFilesConfirm } from 'im.v2.lib.confirm';
-import { Notifier } from 'im.v2.lib.notifier';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
-import { CopilotManager } from 'im.v2.lib.copilot';
+import { type ImModelMessage, type ImModelChat, type ImModelFile } from 'im.v2.model';
 import { DiskService } from 'im.v2.provider.service.disk';
 import { MessageService } from 'im.v2.provider.service.message';
 
 import { BaseMenu } from '../../base/base';
-
-import type { EventEmitter } from 'main.core.events';
-import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
-import type { ImModelMessage, ImModelChat, ImModelFile } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
 
 export type MessageMenuContext = ImModelMessage & { dialogId: string };
 
@@ -421,10 +418,14 @@ export class MessageMenu extends BaseMenu
 			'#COPILOT_NAME#': (new CopilotManager()).getName(),
 		});
 
+		const isBGPTv2 = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		const icon = isBGPTv2 ? OutlineIcons.BITRIX_GPT : OutlineIcons.COPILOT;
+		const design = isBGPTv2 ? MenuItemDesign.BitrixGPT : MenuItemDesign.Copilot;
+
 		return {
 			title,
-			icon: OutlineIcons.COPILOT,
-			design: MenuItemDesign.Copilot,
+			icon,
+			design,
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onAskCopilot(this.context.dialogId);
 				this.emitter.emit(EventType.textarea.insertMention, {

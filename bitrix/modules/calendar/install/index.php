@@ -354,13 +354,6 @@ class calendar extends CModule
 			toMethod: 'onCollabAdd',
 		);
 
-		$eventManager->registerEventHandler(
-			fromModuleId: 'socialnetwork',
-			eventType: 'OnWorkgroupConvert',
-			toModuleId: 'calendar',
-			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\Converter\ConverterEventHandler',
-			toMethod: 'onConvert',
-		);
 	}
 
 	function InstallAgents()
@@ -518,13 +511,6 @@ class calendar extends CModule
 			toMethod: 'onCollabAdd',
 		);
 
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'socialnetwork',
-			eventType: 'OnWorkgroupConvert',
-			toModuleId: 'calendar',
-			toClass: '\Bitrix\Calendar\Integration\SocialNetwork\Collab\Converter\ConverterEventHandler',
-			toMethod: 'onConvert',
-		);
 	}
 
 	function UnInstallAgents()

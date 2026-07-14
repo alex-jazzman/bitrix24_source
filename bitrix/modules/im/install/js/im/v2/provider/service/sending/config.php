@@ -17,6 +17,7 @@ return [
 		'im.v2.provider.service.message',
 		'main.core',
 		'main.core.events',
+		'ui.page-context',
 	],
 	'skip_core' => false,
 ];

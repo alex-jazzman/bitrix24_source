@@ -66,6 +66,13 @@ return [
 					return new Rest\Internal\Repository\Application\AppRepository();
 				},
 			],
+			Rest\Internal\Service\Application\ApplicationInstaller::class => [
+				'constructor' => static function () {
+					return new Rest\Internal\Service\Application\ApplicationInstaller(
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('rest.repository.app'),
+					);
+				},
+			],
 			'rest.repository.integration' => [
 				'constructor' => static function () {
 					return new \Bitrix\Rest\Repository\IntegrationRepository(

@@ -10,6 +10,7 @@
 	margin-right: 5px;
 }
 
+
 .mail-signature-binding-type-field:focus-visible {
 	outline: 1px solid var(--ui-color-accent-main-link);
 	outline-offset: 2px;

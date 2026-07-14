@@ -11,8 +11,8 @@ import { showLimit } from 'tasks.v2.lib.show-limit';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { GroupModel } from 'tasks.v2.model.groups';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type GroupModel } from 'tasks.v2.model.groups';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { groupMeta } from './group-meta';
 import { groupDialog } from './group-dialog';
@@ -31,6 +31,7 @@ export const GroupChip = {
 		cardType: {},
 		task: {},
 		taskId: {},
+		embedded: {},
 	},
 	props: {
 		isAutonomous: {
@@ -190,6 +191,17 @@ export const GroupChip = {
 				});
 			}
 		},
+		async openGroup(): void
+		{
+			if (this.embedded)
+			{
+				void groupDialog.openProject(this.group);
+			}
+			else
+			{
+				void groupDialog.openGroup(this.isAutonomous, this.group, this.taskId);
+			}
+		},
 		highlightField(): void
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(groupMeta.id);
@@ -225,6 +237,10 @@ export const GroupChip = {
 		>
 			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
-		<GroupPopup v-if="isAutonomous" :getBindElement="() => $refs.chip.$el"/>
+		<GroupPopup
+			v-if="isAutonomous"
+			:getBindElement="() => $refs.chip.$el"
+			@openGroup="openGroup"
+		/>
 	`,
 };

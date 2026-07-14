@@ -18,6 +18,14 @@ export const ItemCounters = {
 			type: Boolean,
 			required: true,
 		},
+		withPinStatus: {
+			type: Boolean,
+			default: true,
+		},
+		withChildrenCounter: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed:
 	{
@@ -59,6 +67,11 @@ export const ItemCounters = {
 		},
 		childrenCounter(): number
 		{
+			if (!this.withChildrenCounter)
+			{
+				return 0;
+			}
+
 			return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
 		},
 		formattedCounter(): string
@@ -71,6 +84,11 @@ export const ItemCounters = {
 		},
 		showPinnedIcon(): boolean
 		{
+			if (!this.withPinStatus)
+			{
+				return false;
+			}
+
 			const noCounters = this.totalCounter === 0;
 
 			return this.recentItem.pinned && noCounters && !this.isChatMarkedUnread;

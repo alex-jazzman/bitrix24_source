@@ -1269,7 +1269,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				return;
 			}
 
-			if (field.isReadOnly() && !field.getCustomContentClickHandler({ layout: this.layout }))
+			if (field.isReadOnly() && !field.getCustomContentClickHandler?.({ layout: this.layout }))
 			{
 				this.accessToast.showByFieldId(field.getId());
 			}
@@ -1319,7 +1319,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		{
 			const { loading, ahaMoments = [] } = this.state;
 
-			const shouldShowAhaMoment = loading ? false : (Type.isArrayFilled(ahaMoments) && ahaMoments.includes('chat_button_moment_enabled'));
+			const shouldShowAhaMoment = loading ? false : (Type.isArrayFilled(ahaMoments) && ahaMoments.includes(
+				'chat_button_moment_enabled',
+			));
 
 			if (this.props.isChatFeatureEnabled)
 			{
@@ -1414,7 +1416,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 					break;
 
-				case Field.DEADLINE: {
+				case Field.DEADLINE:
+				{
 					const deadline = Type.isObject(value) ? value.deadline : value;
 					const reason = Type.isObject(value) ? value.reason : null;
 
@@ -1429,7 +1432,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					break;
 				}
 
-				case Field.AUDITORS: {
+				case Field.AUDITORS:
+				{
 					const oldAuditors = (this.#task.auditors || []).map(Number);
 					const newAuditors = (value || []).map(Number);
 

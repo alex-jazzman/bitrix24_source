@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_date, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_inputActionIndicator, im_v2_const, im_v2_lib_dateFormatter, im_v2_lib_recent, im_v2_lib_layout, im_v2_application_core, im_v2_lib_counter, main_core, im_v2_lib_utils, im_v2_lib_parser, ui_vue3_components_richLoc, im_v2_component_elements_listLoadingState) {
+(function (exports, main_date, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_inputActionIndicator, im_v2_const, im_v2_lib_dateFormatter, im_v2_lib_recent, im_v2_lib_layout, im_v2_application_core, im_v2_lib_counter, main_core, im_v2_lib_utils, im_v2_lib_parser, ui_vue3_components_richLoc, im_v2_component_elements_listLoadingState, im_v2_component_animation) {
 	'use strict';
 
 	// @vue/component
@@ -17,6 +17,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isChatMuted: {
 				type: Boolean,
 				required: true
+			},
+			withPinStatus: {
+				type: Boolean,
+				default: true
+			},
+			withChildrenCounter: {
+				type: Boolean,
+				default: true
 			}
 		},
 		computed: {
@@ -48,6 +56,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
 			},
 			childrenCounter() {
+				if (!this.withChildrenCounter) {
+					return 0;
+				}
 				return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
 			},
 			formattedCounter() {
@@ -57,6 +68,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return !this.invitation.isActive;
 			},
 			showPinnedIcon() {
+				if (!this.withPinStatus) {
+					return false;
+				}
 				const noCounters = this.totalCounter === 0;
 				return this.recentItem.pinned && noCounters && !this.isChatMarkedUnread;
 			},
@@ -447,11 +461,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Object,
 				required: true
 			},
-			withCounters: {
+			withCounter: {
+				type: Boolean,
+				default: true
+			},
+			withChildrenCounter: {
 				type: Boolean,
 				default: true
 			},
 			withMessageStatus: {
+				type: Boolean,
+				default: true
+			},
+			withPinStatus: {
 				type: Boolean,
 				default: true
 			},
@@ -567,7 +589,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<div class="bx-im-list-recent-item__content_bottom">
 						<MessageText :item="recentItem" :withDraft="withDraft" />
 						<ItemCounters
-							v-if="withCounters"
+							v-if="withCounter"
+							:withPinStatus="withPinStatus"
+							:withChildrenCounter="withChildrenCounter"
 							:item="recentItem"
 							:isChatMuted="dialog.isMuted"
 						/>
@@ -579,11 +603,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const FixedItemContainer = {
+		name: 'FixedItemContainer',
+		template: `
+		<div class="bx-im-list-base__fixed_container">
+			<slot></slot>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const BaseRecentList = {
 		name: 'BaseRecentList',
 		components: {
 			LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
-			BaseRecentItem
+			BaseRecentItem,
+			FixedItemContainer,
+			FadeAnimation: im_v2_component_animation.FadeAnimation
 		},
 		props: {
 			collection: {
@@ -649,40 +685,44 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-list-base__container">
-			<slot name="before-list"></slot>
+			<slot name="before-scroll"></slot>
 			<LoadingState v-if="showMainLoader" />
-			<div v-else @scroll="onScroll" class="bx-im-list-base__scroll-container">
-				<slot v-if="isEmptyCollection" name="empty-state" />
-				<div v-if="showPinnedItems" class="bx-im-list-base__pinned_container">
-					<template v-for="item in pinnedItems" :key="item.dialogId">
-						<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
-							<BaseRecentItem
-								:item="item"
-								@click="onClick(item)"
-								@click.right="onRightClick(item, $event)"
-							/>
-						</slot>
-					</template>
+			<FadeAnimation :duration="200">
+				<div v-if="!showMainLoader" @scroll="onScroll" class="bx-im-list-base__scroll-container">
+					<slot name="before-list"></slot>
+					<slot v-if="isEmptyCollection" name="empty-state" />
+					<FixedItemContainer v-if="showPinnedItems" class="bx-im-list-base__pinned_container">
+						<template v-for="item in pinnedItems" :key="item.dialogId">
+							<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
+								<BaseRecentItem
+									:item="item"
+									@click="onClick(item)"
+									@click.right="onRightClick(item, $event)"
+								/>
+							</slot>
+						</template>
+					</FixedItemContainer>
+					<div class="bx-im-list-base__general_container">
+						<template v-for="item in generalItems" :key="item.dialogId">
+							<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
+								<BaseRecentItem
+									:item="item"
+									@click="onClick(item)"
+									@click.right="onRightClick(item, $event)"
+								/>
+							</slot>
+						</template>
+					</div>
+					<LoadingState v-if="showBottomLoader" />
 				</div>
-				<div class="bx-im-list-base__general_container">
-					<template v-for="item in generalItems" :key="item.dialogId">
-						<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
-							<BaseRecentItem
-								:item="item"
-								@click="onClick(item)"
-								@click.right="onRightClick(item, $event)"
-							/>
-						</slot>
-					</template>
-				</div>
-				<LoadingState v-if="showBottomLoader" />
-			</div>
+			</FadeAnimation>
 		</div>
 	`
 	};
 
 	exports.BaseRecentItem = BaseRecentItem;
 	exports.BaseRecentList = BaseRecentList;
+	exports.FixedItemContainer = FixedItemContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Main, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Main, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation);
 //# sourceMappingURL=registry.bundle.js.map

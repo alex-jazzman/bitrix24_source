@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_import, note_permissions, main_core_events, ui_buttons, ui_entitySelector, ui_system_dialog, note_ui_themeContext, ui_dialogs_messagebox) {
+(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_import, note_permissions, main_core_events, ui_buttons, ui_entitySelector, ui_system_dialog, note_ui_themeContext, pull_client, ui_dialogs_messagebox) {
 	'use strict';
 
 	const SidebarLoader = {
@@ -1040,6 +1040,7 @@ this.BX.Note = this.BX.Note || {};
 						throw new TypeError('note.import extension API is not available');
 					}
 					const dialog = new note_import.ImportDialog({
+						wikiImportEnabled: Boolean(this.state?.permissions?.canImportWiki),
 						onComplete: async () => {
 							if (main_core.Type.isFunction(this.actions?.refreshCollections)) {
 								await this.actions.refreshCollections();
@@ -2241,7 +2242,14 @@ this.BX.Note = this.BX.Note || {};
 		DOCUMENT_RENAMED: 'Note:documentRenamed',
 		COLLECTION_RENAMED: 'Note:collectionRenamed',
 		DOCUMENT_CHILDREN_CHANGED: 'Note:documentChildrenChanged',
-		DOCUMENTS_BULK_RESTORED: 'Note:documentsBulkRestored'
+		DOCUMENTS_BULK_RESTORED: 'Note:documentsBulkRestored',
+		// Cross-route bus: sidebar re-emits selected pull commands so other pages
+		// (e.g. /shared/) can react without subscribing to BX.PULL directly.
+		PULL_EVENT: 'Note:pullEvent',
+		// Editor → app: after a push-driven capability refetch, app-level
+		// routeDocumentContext.document needs the new recycleBinId/canRestore/etc
+		// so menu actions (restoreFromTrash, hardDelete) can read them.
+		DOCUMENT_ACCESS_SYNCED: 'Note:documentAccessSynced'
 	};
 
 	class DocumentDndService {
@@ -2801,6 +2809,7 @@ this.BX.Note = this.BX.Note || {};
 			skipInitialCollectionsLoad = false
 		} = {}) {
 			if (skipInitialCollectionsLoad) {
+				this.#subscribeToPullEvents();
 				return;
 			}
 			try {
@@ -2808,9 +2817,29 @@ this.BX.Note = this.BX.Note || {};
 			} catch {
 				// store already handles load errors
 			}
+			this.#subscribeToPullEvents();
+		}
+		#subscribeToPullEvents() {
+			const subscribe = this.#store.actions?.subscribeToPullEvents;
+			if (typeof subscribe !== 'function') {
+				return;
+			}
+			try {
+				subscribe();
+			} catch {
+				// Pull subscription is best-effort — never break bootstrap.
+			}
 		}
 		destroy() {
-			// no-op
+			const unsubscribe = this.#store.actions?.unsubscribeFromPullEvents;
+			if (typeof unsubscribe !== 'function') {
+				return;
+			}
+			try {
+				unsubscribe();
+			} catch {
+				// Best-effort teardown — never throw on destroy.
+			}
 		}
 		getRouteDocumentId(route = this.#router?.currentRoute?.value) {
 			if (!route || route.name !== this.#documentRouteName) {
@@ -3773,6 +3802,17 @@ this.BX.Note = this.BX.Note || {};
 					const inserted = this.#store.actions.insertDocumentLocal(restoredDoc, {
 						forceCreateBranch: true
 					});
+
+					// Expand the collection and ancestor chain so the restored doc is visible.
+					this.#uiState.expandedCollections[restoredDoc.collectionId] = true;
+					let ancestorId = restoredDoc.parentId;
+					const visited = new Set();
+					while (Number.isInteger(ancestorId) && ancestorId > 0 && !visited.has(ancestorId)) {
+						visited.add(ancestorId);
+						this.#store.state.expandedDocs[ancestorId] = true;
+						const ancestorDoc = this.#store.queries.findLoadedDocument(restoredDoc.collectionId, ancestorId);
+						ancestorId = ancestorDoc?.parentId === null || ancestorDoc?.parentId === undefined ? null : Number(ancestorDoc.parentId);
+					}
 					if (restoredDoc.parentId !== null) {
 						main_core_events.EventEmitter.emit(NoteEvent.DOCUMENT_CHILDREN_CHANGED, new main_core_events.BaseEvent({
 							data: {
@@ -3945,24 +3985,36 @@ this.BX.Note = this.BX.Note || {};
 
 	const PAGE_SIZE$1 = 50;
 
+	// Debounce window for capability and list refresh — collapses bursts of ACL
+	// updates on the same collection (or list-invalidations during a multi-step
+	// admin operation) and adds random jitter to desynchronise reconnecting clients.
+	const REFRESH_DEBOUNCE_MIN_MS = 80;
+	const REFRESH_DEBOUNCE_JITTER_MS = 220;
 	class SidebarCollectionActions {
 		#api;
 		#state;
 		#setError;
 		#setGlobalPermissions;
 		#removeBranch;
+		#refreshCollectionWatches;
+		#capabilityRefreshTimers;
+		#listRefetchTimer;
 		constructor({
 			api,
 			state,
 			setError,
 			setGlobalPermissions,
-			removeBranch
+			removeBranch,
+			refreshCollectionWatches
 		}) {
 			this.#api = api;
 			this.#state = state;
 			this.#setError = setError;
 			this.#setGlobalPermissions = setGlobalPermissions;
 			this.#removeBranch = removeBranch;
+			this.#refreshCollectionWatches = typeof refreshCollectionWatches === 'function' ? refreshCollectionWatches : () => {};
+			this.#capabilityRefreshTimers = new Map();
+			this.#listRefetchTimer = null;
 		}
 		insertCollectionLocal(collection) {
 			if (!collection) {
@@ -4027,6 +4079,140 @@ this.BX.Note = this.BX.Note || {};
 			};
 			this.#state.collections.value = next;
 			return true;
+		}
+		async applyCollectionCreate() {
+			await this.loadCollections(false);
+			this.#refreshCollectionWatches();
+		}
+		applyCollectionDelete(params) {
+			if (!params) {
+				return false;
+			}
+			const collectionId = Number(params.collectionId);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return false;
+			}
+			return this.removeCollectionLocal(collectionId);
+		}
+		applyCollectionArchive(params) {
+			if (!params) {
+				return false;
+			}
+			const collectionId = Number(params.collectionId);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return false;
+			}
+
+			// Archived collection lives on under /note/archive/ — lazy-refetch when user opens that view.
+			return this.removeCollectionLocal(collectionId);
+		}
+		applyCollectionRestore(params) {
+			if (!params) {
+				return null;
+			}
+			const collectionId = Number(params.collectionId);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return null;
+			}
+			const inserted = this.insertCollectionLocal({
+				id: collectionId,
+				name: typeof params.name === 'string' ? params.name : '',
+				position: Number.isFinite(Number(params.position)) ? Number(params.position) : 0,
+				policyLevel: Number.isFinite(Number(params.policyLevel)) ? Number(params.policyLevel) : 0
+			});
+			if (inserted) {
+				this.#refreshCollectionWatches();
+			}
+			return inserted;
+		}
+		applyCollectionCapabilities(params) {
+			const collectionId = Number(params?.collectionId);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return;
+			}
+			this.#scheduleCapabilityRefresh(collectionId);
+		}
+		applyCollectionListInvalidated() {
+			this.#scheduleListRefetch();
+		}
+		patchCollectionCapabilities(collectionId, capabilities) {
+			const normalizedId = Number(collectionId);
+			if (!Number.isInteger(normalizedId) || normalizedId <= 0) {
+				return false;
+			}
+			const patch = {};
+			if (typeof capabilities.policyLevel === 'string') {
+				patch.policyLevel = capabilities.policyLevel;
+			}
+			if (typeof capabilities.canEditCollection === 'boolean') {
+				patch.canEditCollection = capabilities.canEditCollection;
+			}
+			if (typeof capabilities.canManagePermissions === 'boolean') {
+				patch.canManagePermissions = capabilities.canManagePermissions;
+			}
+			if (Object.keys(patch).length === 0) {
+				return false;
+			}
+			return this.updateCollectionLocal(normalizedId, patch);
+		}
+		#scheduleCapabilityRefresh(collectionId) {
+			const existing = this.#capabilityRefreshTimers.get(collectionId);
+			if (existing) {
+				clearTimeout(existing);
+			}
+			const delay = REFRESH_DEBOUNCE_MIN_MS + Math.floor(Math.random() * REFRESH_DEBOUNCE_JITTER_MS);
+			const timer = setTimeout(() => {
+				this.#capabilityRefreshTimers.delete(collectionId);
+				this.#fetchAndApplyCapabilities(collectionId);
+			}, delay);
+			this.#capabilityRefreshTimers.set(collectionId, timer);
+		}
+		async #fetchAndApplyCapabilities(collectionId) {
+			try {
+				const access = await this.#api.getMyCollectionAccess(collectionId);
+				if (!access) {
+					return;
+				}
+				if (access.level === 'none') {
+					// Lost-access path: collection drops out of the sidebar; /shared/ takes over via list-invalidation.
+					this.removeCollectionLocal(collectionId);
+					return;
+				}
+				this.patchCollectionCapabilities(collectionId, {
+					policyLevel: access.policyLevel,
+					canEditCollection: access.canEditCollection,
+					canManagePermissions: access.canManagePermissions
+				});
+			} catch (error) {
+				console.warn('[NOTE PULL SIDEBAR] capability refresh failed', collectionId, error);
+			}
+		}
+		#scheduleListRefetch() {
+			if (this.#listRefetchTimer) {
+				clearTimeout(this.#listRefetchTimer);
+			}
+			const delay = REFRESH_DEBOUNCE_MIN_MS + Math.floor(Math.random() * REFRESH_DEBOUNCE_JITTER_MS);
+			this.#listRefetchTimer = setTimeout(() => {
+				this.#listRefetchTimer = null;
+				this.loadCollections(false).then(() => this.#refreshCollectionWatches()).catch(error => console.warn('[NOTE PULL SIDEBAR] list refetch failed', error));
+			}, delay);
+		}
+		applyCollectionUpdate(params) {
+			if (!params) {
+				return false;
+			}
+			const collectionId = Number(params.collectionId);
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return false;
+			}
+			const patch = {};
+			if (typeof params.name === 'string') {
+				patch.name = params.name;
+			}
+			if (Object.keys(patch).length === 0) {
+				return false;
+			}
+			return this.updateCollectionLocal(collectionId, patch);
 		}
 		removeCollectionLocal(collectionId) {
 			const normalizedId = Number(collectionId);
@@ -4126,6 +4312,19 @@ this.BX.Note = this.BX.Note || {};
 			});
 			this.#state.collections.value = this.#sortCollections(next);
 		}
+		async applyCollectionMove(params) {
+			if (!params) {
+				return;
+			}
+			if (params.requestRefetch === true) {
+				await this.loadCollections(false);
+				return;
+			}
+			const entries = Array.isArray(params.affectedPositions) ? params.affectedPositions : [];
+			if (entries.length > 0) {
+				this.applyCollectionPositions(entries);
+			}
+		}
 		async loadCollections(append = false) {
 			this.#state.collectionsLoading.value = true;
 			try {
@@ -4138,7 +4337,7 @@ this.BX.Note = this.BX.Note || {};
 				if (this.#setGlobalPermissions && response?.permissions) {
 					this.#setGlobalPermissions(response.permissions);
 				}
-				this.#state.collections.value = effectiveAppend ? this.#mergeCollections(this.#state.collections.value, response.items) : this.#sortCollections(response.items);
+				this.#state.collections.value = this.#mergeCollections(this.#state.collections.value, response.items);
 				this.#state.collectionsCursor.value = response.nextCursor;
 				this.#state.collectionsHasNextPage.value = response.hasNextPage;
 			} catch (error) {
@@ -4215,8 +4414,66 @@ this.BX.Note = this.BX.Note || {};
 			this.#state.docsCursorByParent[key] = null;
 			this.#state.docsHasNextPageByParent[key] = true;
 		}
+
+		// Hard reset for a branch: drop cached docs in addition to cursor/hydration flags.
+		// Used by realtime handlers when the server signals a branch needs full refetch.
+		invalidateBranch(collectionId, parentId = null) {
+			const key = this.#keyOf(collectionId, parentId);
+			this.#state.docsByParent[key] = [];
+			this.#state.docsHydratedByParent[key] = false;
+			this.#state.docsStaleByParent[key] = true;
+			this.#state.docsOffsetByParent[key] = 0;
+			this.#state.docsCursorByParent[key] = null;
+			this.#state.docsHasNextPageByParent[key] = true;
+		}
 		invalidateAllChildren() {
 			for (const key of Object.keys(this.#state.docsHydratedByParent)) {
+				this.#state.docsHydratedByParent[key] = false;
+				this.#state.docsStaleByParent[key] = true;
+				this.#state.docsOffsetByParent[key] = 0;
+				this.#state.docsCursorByParent[key] = null;
+				this.#state.docsHasNextPageByParent[key] = true;
+			}
+		}
+
+		// Cascade reset for an entire collection — used when a cascade push requests refetch
+		// and the loaded sub-branches under the root must also be invalidated.
+		invalidateCollectionTree(collectionId) {
+			const cid = Number(collectionId);
+			if (!Number.isFinite(cid) || cid <= 0) {
+				return;
+			}
+			const prefix = `${cid}:`;
+			for (const key of Object.keys(this.#state.docsByParent)) {
+				if (!key.startsWith(prefix)) {
+					continue;
+				}
+				this.#state.docsByParent[key] = [];
+				this.#state.docsHydratedByParent[key] = false;
+				this.#state.docsStaleByParent[key] = true;
+				this.#state.docsOffsetByParent[key] = 0;
+				this.#state.docsCursorByParent[key] = null;
+				this.#state.docsHasNextPageByParent[key] = true;
+			}
+		}
+
+		// Drop child-branch caches keyed by every id in `parentIds` — used after cascade
+		// archive/delete so loaded sub-branches under each removed doc are also flushed.
+		invalidateBranchesByParentIds(collectionId, parentIds) {
+			const cid = Number(collectionId);
+			if (!Number.isFinite(cid) || cid <= 0 || !Array.isArray(parentIds)) {
+				return;
+			}
+			for (const rawId of parentIds) {
+				const pid = Number(rawId);
+				if (!Number.isFinite(pid) || pid <= 0) {
+					continue;
+				}
+				const key = this.#keyOf(cid, pid);
+				if (this.#state.docsByParent[key] === undefined) {
+					continue;
+				}
+				this.#state.docsByParent[key] = [];
 				this.#state.docsHydratedByParent[key] = false;
 				this.#state.docsStaleByParent[key] = true;
 				this.#state.docsOffsetByParent[key] = 0;
@@ -4270,6 +4527,232 @@ this.BX.Note = this.BX.Note || {};
 				this.#setParentHasChildren(normalized.collectionId, parentId, true);
 			}
 			return normalized;
+		}
+
+		// Applies a documentUpdate push payload to local docs. Idempotent:
+		// patches by id across every loaded branch via updateDocumentLocal.
+		applyDocumentUpdate(params) {
+			if (!params || typeof params !== 'object') {
+				return false;
+			}
+			const documentId = Number(params.documentId);
+			if (!Number.isFinite(documentId) || documentId <= 0) {
+				return false;
+			}
+			const patch = {};
+			if (typeof params.title === 'string' && params.title !== '') {
+				patch.title = params.title;
+			}
+			if (Object.keys(patch).length === 0) {
+				return false;
+			}
+			const collectionId = Number(params.collectionId);
+			const options = Number.isFinite(collectionId) && collectionId > 0 ? {
+				collectionId
+			} : {};
+			return this.updateDocumentLocal(documentId, patch, options);
+		}
+
+		// forceCreateBranch is intentionally absent: materialising a collapsed
+		// branch from a single sibling would mask the rest until full reload.
+		applyDocumentCreate(params) {
+			if (!params || typeof params !== 'object') {
+				return false;
+			}
+			const documentId = Number(params.documentId);
+			const collectionId = Number(params.collectionId);
+			if (!Number.isFinite(documentId) || documentId <= 0) {
+				return false;
+			}
+			if (!Number.isFinite(collectionId) || collectionId <= 0) {
+				return false;
+			}
+			const parentId = this.#normalizeParentId(params.parentId);
+			const position = Number.isFinite(Number(params.position)) ? Number(params.position) : 0;
+			const title = typeof params.title === 'string' ? params.title : '';
+			const hasChildren = params.hasChildren === true;
+			const inserted = this.insertDocumentLocal({
+				id: documentId,
+				collectionId,
+				parentId,
+				position,
+				title,
+				hasChildren
+			});
+			return inserted !== null;
+		}
+
+		// Applies a documentRestore push payload. Idempotent:
+		// upserts the doc into the loaded branch by id. For Phase 1 wired to
+		// DOCUMENT_RESTORE only — Phase 2 will add DOCUMENT_CREATE.
+		applyDocumentActive(params) {
+			if (!params || typeof params !== 'object') {
+				return false;
+			}
+			const documentId = Number(params.documentId);
+			const collectionId = Number(params.collectionId);
+			if (!Number.isFinite(documentId) || documentId <= 0) {
+				return false;
+			}
+			if (!Number.isFinite(collectionId) || collectionId <= 0) {
+				return false;
+			}
+			const parentId = this.#normalizeParentId(params.parentId);
+			const position = Number.isFinite(Number(params.position)) ? Number(params.position) : 0;
+			const title = typeof params.title === 'string' ? params.title : '';
+			const hasChildren = params.hasChildren === true;
+			const inserted = this.insertDocumentLocal({
+				id: documentId,
+				collectionId,
+				parentId,
+				position,
+				title,
+				hasChildren
+			}, {
+				forceCreateBranch: true
+			});
+			return inserted !== null;
+		}
+
+		// Applies a documentArchive / documentDelete push payload. Both events
+		// share the same "remove these ids from sidebar" shape — only the editor
+		// reacts differently (archived vs recycle-bin freeze).
+		async applyDocumentRemoval(params) {
+			if (!params || typeof params !== 'object') {
+				return false;
+			}
+			const collectionId = Number(params.collectionId);
+			if (!Number.isFinite(collectionId) || collectionId <= 0) {
+				return false;
+			}
+			if (params.requestRefetch === true) {
+				// Tree-wide invalidate: the cascade may have pruned sub-branches that were already
+				// hydrated under collapsed parents — a root-only reset would leave stale child caches.
+				this.invalidateCollectionTree(collectionId);
+				await this.loadDocuments(collectionId, null, false);
+				return true;
+			}
+			const documentIds = Array.isArray(params.documentIds) ? params.documentIds : null;
+			if (!documentIds || documentIds.length === 0) {
+				return false;
+			}
+			let removed = false;
+			for (const rawId of documentIds) {
+				const documentId = Number(rawId);
+				if (!Number.isFinite(documentId) || documentId <= 0) {
+					continue;
+				}
+				const located = this.#queries.findLoadedDocumentAnywhere(documentId);
+				const parentId = located ? this.#normalizeParentId(located.parentId) : null;
+				if (this.removeDocumentLocal(collectionId, parentId, documentId)) {
+					removed = true;
+				}
+			}
+
+			// Each removed doc may itself parent a hydrated branch — drop those caches so a later
+			// expand doesn't render documents already swept by the cascade.
+			this.invalidateBranchesByParentIds(collectionId, documentIds);
+			return removed;
+		}
+
+		// Applies a list of {id, position} entries across loaded branches and
+		// resorts those branches. Symmetric with applyCollectionPositions.
+		applyDocumentPositions(entries) {
+			if (!Array.isArray(entries) || entries.length === 0) {
+				return false;
+			}
+			const patchById = new Map();
+			for (const entry of entries) {
+				const id = Number(entry?.id);
+				const position = Number(entry?.position);
+				if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(position)) {
+					continue;
+				}
+				patchById.set(id, position);
+			}
+			if (patchById.size === 0) {
+				return false;
+			}
+			let changed = false;
+			for (const [key, docs] of Object.entries(this.#state.docsByParent)) {
+				if (!Array.isArray(docs)) {
+					continue;
+				}
+				let branchChanged = false;
+				const nextDocs = docs.map(doc => {
+					const id = Number(doc?.id);
+					if (!patchById.has(id)) {
+						return doc;
+					}
+					branchChanged = true;
+					return {
+						...doc,
+						position: patchById.get(id)
+					};
+				});
+				if (!branchChanged) {
+					continue;
+				}
+				this.#state.docsByParent[key] = sortDocuments(nextDocs);
+				changed = true;
+			}
+			return changed;
+		}
+
+		// Applies a documentMove push payload. Handles two shapes:
+		// - requestRefetch=true: fall back to invalidate+reload of both branches.
+		// - Standard: optimistic move + applyDocumentPositions for siblings.
+		async applyDocumentMove(params) {
+			if (!params || typeof params !== 'object') {
+				return false;
+			}
+			const documentId = Number(params.documentId);
+			const toCollectionId = Number(params.collectionId);
+			if (!Number.isFinite(documentId) || documentId <= 0 || !Number.isFinite(toCollectionId) || toCollectionId <= 0) {
+				return false;
+			}
+			const fromCollectionId = Number.isFinite(Number(params.fromCollectionId)) ? Number(params.fromCollectionId) : toCollectionId;
+			const toParentId = this.#normalizeParentId(params.parentId);
+			const fromParentId = this.#normalizeParentId(params.fromParentId);
+			if (params.requestRefetch === true) {
+				this.invalidateBranch(fromCollectionId, fromParentId);
+				if (fromCollectionId !== toCollectionId || fromParentId !== toParentId) {
+					this.invalidateBranch(toCollectionId, toParentId);
+				}
+				const reloads = [this.loadDocuments(fromCollectionId, fromParentId, false)];
+				if (fromCollectionId !== toCollectionId || fromParentId !== toParentId) {
+					reloads.push(this.loadDocuments(toCollectionId, toParentId, false));
+				}
+				await Promise.all(reloads);
+				return true;
+			}
+			const fallbackDoc = {
+				id: documentId,
+				collectionId: toCollectionId,
+				parentId: toParentId,
+				position: Number.isFinite(Number(params.position)) ? Number(params.position) : 0,
+				title: typeof params.title === 'string' ? params.title : '',
+				hasChildren: Boolean(params.hasChildren)
+			};
+			const moved = this.moveDocumentLocal({
+				docId: documentId,
+				fromCollectionId,
+				fromParentId,
+				toCollectionId,
+				toParentId,
+				fallbackDoc
+			});
+			if (Array.isArray(params.affectedPositions) && params.affectedPositions.length > 0) {
+				this.applyDocumentPositions(params.affectedPositions);
+			}
+
+			// Server tells us authoritatively whether fromParent still has children —
+			// covers the case where receiver never loaded that branch, so local
+			// `handleParentBecameEmpty` can't decide.
+			if (fromParentId !== null && typeof params.fromParentHasChildren === 'boolean') {
+				this.#setParentHasChildren(fromCollectionId, fromParentId, params.fromParentHasChildren);
+			}
+			return moved !== null;
 		}
 		updateDocumentLocal(docId, patch = {}, options = {}) {
 			const normalizedDocId = Number(docId);
@@ -4643,6 +5126,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#state.globalPermissions.canEditCollections = normalized.canEditCollections;
 			this.#state.globalPermissions.canEditGlobalPermissions = normalized.canEditGlobalPermissions;
 			this.#state.globalPermissions.canImport = normalized.canImport;
+			this.#state.globalPermissions.canImportWiki = normalized.canImportWiki;
 			this.#state.globalPermissions.hasManageableCollection = normalized.hasManageableCollection;
 		}
 		#hydrateBranches(rawBranches, fallbackCollectionId) {
@@ -4752,6 +5236,7 @@ this.BX.Note = this.BX.Note || {};
 					canEditCollections: false,
 					canEditGlobalPermissions: false,
 					canImport: false,
+					canImportWiki: false,
 					hasManageableCollection: false
 				};
 			}
@@ -4759,8 +5244,111 @@ this.BX.Note = this.BX.Note || {};
 				canEditCollections: Boolean(rawPermissions.canEditCollections),
 				canEditGlobalPermissions: Boolean(rawPermissions.canEditGlobalPermissions),
 				canImport: Boolean(rawPermissions.canImport),
+				canImportWiki: Boolean(rawPermissions.canImportWiki),
 				hasManageableCollection: Boolean(rawPermissions.hasManageableCollection)
 			};
+		}
+	}
+
+	const PullCommand = Object.freeze({
+		DOCUMENT_CREATE: 'documentCreate',
+		DOCUMENT_UPDATE: 'documentUpdate',
+		DOCUMENT_MOVE: 'documentMove',
+		DOCUMENT_ARCHIVE: 'documentArchive',
+		DOCUMENT_RESTORE: 'documentRestore',
+		DOCUMENT_DELETE: 'documentDelete',
+		DOCUMENT_HARD_DELETE: 'documentHardDelete',
+		COLLECTION_CREATE: 'collectionCreate',
+		COLLECTION_UPDATE: 'collectionUpdate',
+		COLLECTION_MOVE: 'collectionMove',
+		COLLECTION_ARCHIVE: 'collectionArchive',
+		COLLECTION_RESTORE: 'collectionRestore',
+		COLLECTION_DELETE: 'collectionDelete',
+		COLLECTION_CAPABILITIES: 'collectionCapabilities',
+		COLLECTION_LIST_INVALIDATED: 'collectionListInvalidated'
+	});
+	class SidebarPullActions {
+		#state;
+		#handlers;
+		#subscriptions;
+		#subscribed;
+		constructor({
+			state,
+			handlers
+		}) {
+			this.#state = state;
+			this.#handlers = handlers || {};
+			this.#subscriptions = [];
+			this.#subscribed = false;
+		}
+		subscribeToPullEvents() {
+			if (this.#subscribed) {
+				this.#refreshCollectionWatches();
+				return;
+			}
+			if (!main_core.Type.isFunction(BX?.PULL?.subscribe)) {
+				return;
+			}
+			const knownCommands = new Set(Object.values(PullCommand));
+			const handler = data => {
+				// Drop foreign/out-of-spec pushes before any bus traffic or warn noise —
+				// only commands declared in PullCommand are routed.
+				if (!data || !knownCommands.has(data.command)) {
+					return;
+				}
+
+				// Cross-route bus: re-emit on EventEmitter so non-sidebar pages
+				// (e.g. /shared/) can react without subscribing to BX.PULL directly.
+				main_core_events.EventEmitter.emit(NoteEvent.PULL_EVENT, new main_core_events.BaseEvent({
+					data: {
+						command: data.command,
+						params: data.params || {}
+					}
+				}));
+				const dispatch = this.#handlers[data.command];
+				if (typeof dispatch !== 'function') {
+					console.warn('[NOTE PULL SIDEBAR] no handler for', data.command);
+					return;
+				}
+				dispatch(data.params || {});
+			};
+			const unsubscribeServer = BX.PULL.subscribe({
+				type: pull_client.PullClient.SubscriptionType.Server,
+				moduleId: 'note',
+				callback: handler
+			});
+			if (main_core.Type.isFunction(unsubscribeServer)) {
+				this.#subscriptions.push(unsubscribeServer);
+			}
+			BX.PULL.extendWatch('NOTE_GLOBAL');
+			this.#refreshCollectionWatches();
+			this.#subscribed = true;
+		}
+		unsubscribeFromPullEvents() {
+			for (const unsub of this.#subscriptions) {
+				if (main_core.Type.isFunction(unsub)) {
+					unsub();
+				}
+			}
+			this.#subscriptions = [];
+			this.#subscribed = false;
+		}
+		refreshCollectionWatches() {
+			this.#refreshCollectionWatches();
+		}
+		#refreshCollectionWatches() {
+			if (!main_core.Type.isFunction(BX?.PULL?.extendWatch)) {
+				return;
+			}
+			const collections = this.#state.collections.value || [];
+			for (const collection of collections) {
+				const id = Number(collection?.id);
+				if (!Number.isInteger(id) || id <= 0) {
+					continue;
+				}
+				BX.PULL.extendWatch(`NOTE_COLLECTION_${id}`);
+				BX.PULL.extendWatch(`NOTE_COLLECTION_${id}_ACL`);
+			}
 		}
 	}
 
@@ -5012,6 +5600,7 @@ this.BX.Note = this.BX.Note || {};
 				canEditCollections: false,
 				canEditGlobalPermissions: false,
 				canImport: false,
+				canImportWiki: false,
 				hasManageableCollection: false
 			});
 			this.selectedCollectionId = ui_vue3.ref(null);
@@ -5062,12 +5651,16 @@ this.BX.Note = this.BX.Note || {};
 				keyOf,
 				normalizeParentId
 			});
+
+			// Late-bound: pullActions is constructed below after the dispatch table is built.
+			let pullActionsRef = null;
 			const collectionActions = new SidebarCollectionActions({
 				api,
 				state: internalState,
 				setError,
 				setGlobalPermissions: bind(hydrationActions, 'setGlobalPermissions'),
-				removeBranch
+				removeBranch,
+				refreshCollectionWatches: () => pullActionsRef?.refreshCollectionWatches()
 			});
 			const ensureChildrenLoaded = bind(documentActions, 'ensureChildrenLoaded');
 			const selectionActions = new SidebarSelectionActions({
@@ -5079,6 +5672,99 @@ this.BX.Note = this.BX.Note || {};
 				getChildren: bind(queryService, 'getChildren'),
 				ensureChildrenLoaded
 			});
+
+			// Pull-router dispatch table. Phase 1 handlers are wired below;
+			// noop slots reserve commands that arrive earlier than their phase ships.
+			const noop = () => {};
+			const applyDocumentUpdate = bind(documentActions, 'applyDocumentUpdate');
+			const applyDocumentMove = bind(documentActions, 'applyDocumentMove');
+			const applyDocumentRemoval = bind(documentActions, 'applyDocumentRemoval');
+			const applyDocumentActive = bind(documentActions, 'applyDocumentActive');
+			const applyDocumentCreate = bind(documentActions, 'applyDocumentCreate');
+			const applyCollectionCreate = bind(collectionActions, 'applyCollectionCreate');
+			const applyCollectionDelete = bind(collectionActions, 'applyCollectionDelete');
+			const applyCollectionArchive = bind(collectionActions, 'applyCollectionArchive');
+			const applyCollectionRestore = bind(collectionActions, 'applyCollectionRestore');
+			const applyCollectionUpdate = bind(collectionActions, 'applyCollectionUpdate');
+			const applyCollectionMove = bind(collectionActions, 'applyCollectionMove');
+			const applyCollectionCapabilities = bind(collectionActions, 'applyCollectionCapabilities');
+			const applyCollectionListInvalidated = bind(collectionActions, 'applyCollectionListInvalidated');
+			// Pull-driven applies: emit DOCUMENT_CHILDREN_CHANGED for affected parents so
+			// editor children-block (note-app subscription) refreshes on remote events.
+			const emitChildrenChanged = (collectionId, parentId) => {
+				const pid = Number(parentId);
+				const cid = Number(collectionId);
+				if (!Number.isFinite(pid) || pid <= 0 || !Number.isFinite(cid) || cid <= 0) {
+					return;
+				}
+				main_core_events.EventEmitter.emit(NoteEvent.DOCUMENT_CHILDREN_CHANGED, new main_core_events.BaseEvent({
+					data: {
+						parentId: pid,
+						collectionId: cid
+					}
+				}));
+			};
+			const pullDocumentCreate = async params => {
+				const result = await applyDocumentCreate(params);
+				emitChildrenChanged(params?.collectionId, params?.parentId);
+				return result;
+			};
+			const pullDocumentMove = async params => {
+				const result = await applyDocumentMove(params);
+				emitChildrenChanged(params?.fromCollectionId ?? params?.collectionId, params?.fromParentId);
+				emitChildrenChanged(params?.collectionId, params?.parentId);
+				return result;
+			};
+			const pullDocumentActive = async params => {
+				const result = await applyDocumentActive(params);
+				emitChildrenChanged(params?.collectionId, params?.parentId);
+				return result;
+			};
+			const pullDocumentRemoval = async params => {
+				// Pre-compute affected parents from store before removal mutates it.
+				const affectedParents = [];
+				const ids = Array.isArray(params?.documentIds) ? params.documentIds : [];
+				for (const rawId of ids) {
+					const id = Number(rawId);
+					if (!Number.isFinite(id) || id <= 0) {
+						continue;
+					}
+					const found = queryService.findLoadedDocumentAnywhere(id);
+					if (found && Number(found.parentId) > 0) {
+						affectedParents.push({
+							collectionId: Number(found.collectionId),
+							parentId: Number(found.parentId)
+						});
+					}
+				}
+				const result = await applyDocumentRemoval(params);
+				for (const ap of affectedParents) {
+					emitChildrenChanged(ap.collectionId, ap.parentId);
+				}
+				return result;
+			};
+			const handlers = {
+				[PullCommand.DOCUMENT_CREATE]: pullDocumentCreate,
+				[PullCommand.DOCUMENT_UPDATE]: applyDocumentUpdate,
+				[PullCommand.DOCUMENT_MOVE]: pullDocumentMove,
+				[PullCommand.DOCUMENT_ARCHIVE]: pullDocumentRemoval,
+				[PullCommand.DOCUMENT_RESTORE]: pullDocumentActive,
+				[PullCommand.DOCUMENT_DELETE]: pullDocumentRemoval,
+				[PullCommand.DOCUMENT_HARD_DELETE]: noop,
+				[PullCommand.COLLECTION_CREATE]: applyCollectionCreate,
+				[PullCommand.COLLECTION_UPDATE]: applyCollectionUpdate,
+				[PullCommand.COLLECTION_MOVE]: applyCollectionMove,
+				[PullCommand.COLLECTION_ARCHIVE]: applyCollectionArchive,
+				[PullCommand.COLLECTION_RESTORE]: applyCollectionRestore,
+				[PullCommand.COLLECTION_DELETE]: applyCollectionDelete,
+				[PullCommand.COLLECTION_CAPABILITIES]: applyCollectionCapabilities,
+				[PullCommand.COLLECTION_LIST_INVALIDATED]: applyCollectionListInvalidated
+			};
+			const pullActions = new SidebarPullActions({
+				state: internalState,
+				handlers
+			});
+			pullActionsRef = pullActions;
 			this.state = {
 				collections: internalState.collections,
 				collectionsLoading: internalState.collectionsLoading,
@@ -5098,10 +5784,17 @@ this.BX.Note = this.BX.Note || {};
 				hydrateInitialCollections: bind(hydrationActions, 'hydrateInitialCollections'),
 				setGlobalPermissions: bind(hydrationActions, 'setGlobalPermissions'),
 				invalidateChildren: bind(documentActions, 'invalidateChildren'),
+				invalidateBranch: bind(documentActions, 'invalidateBranch'),
 				invalidateAllChildren: bind(documentActions, 'invalidateAllChildren'),
 				setParentHasChildrenLocal: bind(documentActions, 'setParentHasChildrenLocal'),
 				insertDocumentLocal: bind(documentActions, 'insertDocumentLocal'),
 				updateDocumentLocal: bind(documentActions, 'updateDocumentLocal'),
+				applyDocumentUpdate,
+				applyDocumentMove,
+				applyDocumentPositions: bind(documentActions, 'applyDocumentPositions'),
+				applyDocumentRemoval,
+				applyDocumentActive,
+				applyDocumentCreate,
 				removeDocumentLocal: bind(documentActions, 'removeDocumentLocal'),
 				moveDocumentLocal: bind(documentActions, 'moveDocumentLocal'),
 				loadDocuments: bind(documentActions, 'loadDocuments'),
@@ -5109,6 +5802,15 @@ this.BX.Note = this.BX.Note || {};
 				ensureChildrenLoaded,
 				insertCollectionLocal: bind(collectionActions, 'insertCollectionLocal'),
 				updateCollectionLocal: bind(collectionActions, 'updateCollectionLocal'),
+				applyCollectionCreate,
+				applyCollectionDelete,
+				applyCollectionArchive,
+				applyCollectionRestore,
+				applyCollectionUpdate,
+				applyCollectionMove,
+				applyCollectionCapabilities,
+				applyCollectionListInvalidated,
+				patchCollectionCapabilities: bind(collectionActions, 'patchCollectionCapabilities'),
 				removeCollectionLocal: bind(collectionActions, 'removeCollectionLocal'),
 				moveCollectionLocal: bind(collectionActions, 'moveCollectionLocal'),
 				applyCollectionPositions: bind(collectionActions, 'applyCollectionPositions'),
@@ -5121,7 +5823,9 @@ this.BX.Note = this.BX.Note || {};
 				setArchiveView: bind(selectionActions, 'setArchiveView'),
 				setRecycleBinView: bind(selectionActions, 'setRecycleBinView'),
 				toggleDocExpanded: bind(expansionActions, 'toggleDocExpanded'),
-				clearCollectionExpandedDocs: bind(expansionActions, 'clearCollectionExpandedDocs')
+				clearCollectionExpandedDocs: bind(expansionActions, 'clearCollectionExpandedDocs'),
+				subscribeToPullEvents: bind(pullActions, 'subscribeToPullEvents'),
+				unsubscribeFromPullEvents: bind(pullActions, 'unsubscribeFromPullEvents')
 			};
 			this.queries = {
 				getChildren: bind(queryService, 'getChildren'),
@@ -5476,6 +6180,21 @@ this.BX.Note = this.BX.Note || {};
 			return this.#client.run('note.infrastructure.CollectionController.archive', {
 				id
 			});
+		}
+		async getMyCollectionAccess(id) {
+			const data = await this.#client.run('note.infrastructure.CollectionController.getMyAccess', {
+				id
+			});
+			if (!main_core.Type.isPlainObject(data)) {
+				return null;
+			}
+			return {
+				collectionId: Number(data.collectionId) || id,
+				level: typeof data.level === 'string' ? data.level : 'none',
+				policyLevel: typeof data.policyLevel === 'string' ? data.policyLevel : 'none',
+				canEditCollection: Boolean(data.canEditCollection),
+				canManagePermissions: Boolean(data.canManagePermissions)
+			};
 		}
 		async moveCollection(id, position) {
 			const data = await this.#client.run('note.infrastructure.CollectionController.move', {
@@ -5949,6 +6668,15 @@ this.BX.Note = this.BX.Note || {};
 		}, {
 			flush: 'post'
 		});
+		// Prune expandedCollections for ids no longer present (NONE→VIEW must enter collapsed).
+		ui_vue3.watch(() => store.state.collections.value.map(c => Number(c?.id)), currentIds => {
+			const presentIds = new Set(currentIds.filter(id => Number.isInteger(id) && id > 0));
+			for (const key of Object.keys(uiState.expandedCollections)) {
+				if (!presentIds.has(Number(key))) {
+					delete uiState.expandedCollections[key];
+				}
+			}
+		});
 		const routeSyncService = new SidebarRouteSyncService({
 			store,
 			router,
@@ -6080,5 +6808,5 @@ this.BX.Note = this.BX.Note || {};
 	exports.SidebarRootComponent = SidebarRootComponent;
 	exports.createSidebarFeature = createSidebarFeature;
 
-})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Import, BX.Note.Permissions, BX.Event, BX.UI, BX.UI.EntitySelector, BX.UI.System, BX.Note.Ui, BX.UI.Dialogs);
+})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Import, BX.Note.Permissions, BX.Event, BX.UI, BX.UI.EntitySelector, BX.UI.System, BX.Note.Ui, BX, BX.UI.Dialogs);
 //# sourceMappingURL=sidebar.bundle.js.map

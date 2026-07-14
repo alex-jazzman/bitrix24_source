@@ -14,6 +14,9 @@ use Bitrix\Disk\Document\Flipchart\Configuration;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die;
 
+/** @global CMain $APPLICATION */
+global $APPLICATION;
+
 $containerId = 'flipchart-wrapper';
 
 Loader::includeModule('socialnetwork');
@@ -35,30 +38,13 @@ $APPLICATION->SetTitle($arResult['DOCUMENT_NAME']);
 
 $isMobile = $arResult['DISPLAY_VARIANT'] === 'mobile';
 
+$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
+$frameOpenUrl = (new Bitrix\Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
+
 $sharingButtonHtml = '';
 if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 {
 	$setupSharingButton = Button::create();
-	$wayToSharing = [
-		[
-			'id' => 'ext-link',
-			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-				. '<div class="ui-icon-set --share-1"></div>'
-				. '<div> ' . Loc::getMessage("DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1") . ' </div>'
-				. '</div>',
-			'dataset' => [
-				'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
-				'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
-			],
-		],
-		[
-			'id' => 'sharing',
-			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-				. '<div class="ui-icon-set --person-plus-3"></div>'
-				. '<div> ' . Loc::getMessage('DISK_BOARDS_HEADER_BTN_SHARING_SHARE_MSGVER_1') . ' </div>'
-				. '</div>',
-		],
-	];
 
 	$setupSharingButton
 		->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS_MSGVER_1'))
@@ -66,20 +52,14 @@ if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 		->setSize(Size::SMALL)
 		->setColor(Color::PRIMARY)
 		->setRound()
-		->setDropdown()
-		->setMenu([
-			'className' => 'disk-fe-flipchart__popup',
-			'autoHide' => true,
-			'closeEsc' => true,
-			'offsetTop' => 5,
-			'offsetLeft' => 0,
-			'animation' => 'fading-slide',
-			'overlay' => [
-				'opacity' => 0,
-			],
-			'disableScroll' => true,
-			'items' => $wayToSharing,
-		])
+		->addAttribute(
+			'data-should-block-external-link-feature',
+			$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] ? 'true' : 'false',
+		)
+		->addAttribute(
+			'data-blocker-external-link-feature',
+			(string)$arResult['BLOCKER_EXTERNAL_LINK_FEATURE'],
+		)
 	;
 
 	$sharingButtonHtml = $setupSharingButton->render(false);
@@ -286,4 +266,11 @@ if ($isMobile)
 		}
 	})
 
+</script>
+<script>
+	BX.Helper.init({
+		frameOpenUrl: '<?=$frameOpenUrl?>',
+		langId: '<?=LANGUAGE_ID?>',
+		isNewHelpdesk: '<?= \Bitrix\Main\Config\Option::get('intranet', 'isNewHelpdesk', 'N') === 'Y' ? 'Y' : 'N' ?>',
+	});
 </script>

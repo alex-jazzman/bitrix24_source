@@ -48,6 +48,7 @@ $MESS['IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'] = "Посмотреть в чат
 $MESS['IM_SIDEBAR_MENU_INVITE_MEMBERS_V2'] = "Добавить участников";
 $MESS['IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS'] = "Добавить подписчиков";
 $MESS['IM_SIDEBAR_MENU_UPDATE_CHAT'] = "Редактировать";
+$MESS['IM_SIDEBAR_MENU_COPY_CHAT'] = "Копировать";
 $MESS['IM_SIDEBAR_MENU_DELETE_CHAT'] = "Удалить";
 $MESS['IM_SIDEBAR_MENU_JOIN_CHAT'] = "Присоединиться к чату";
 $MESS['IM_SIDEBAR_MENU_KICK_FROM_CHAT'] = "Исключить из чата";
@@ -92,6 +93,7 @@ $MESS['IM_SIDEBAR_CHAT_TYPE_BOT'] = "Чат-бот";
 $MESS['IM_SIDEBAR_CHAT_TYPE_CHANNEL'] = "Канал";
 $MESS['IM_SIDEBAR_CHAT_TYPE_COMMENTS'] = "Комментарии";
 $MESS['IM_SIDEBAR_CHAT_TYPE_COLLAB'] = "Коллаба";
+$MESS['IM_SIDEBAR_CHAT_TYPE_COLLAB_V2'] = "Проект";
 $MESS['IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'] = "Чат задачи";
 
 //support statuses

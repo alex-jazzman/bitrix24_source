@@ -75,3 +75,27 @@ tr[data-mailbox-connection-request='true']:hover > .main-grid-cell {
 .mail-mailbox-list-page div[id^="wait_comp_"] {
 	display: none !important;
 }
+
+.mail-mailbox-list-connect-access-denied-slider-wrapper {
+	margin-top: 160px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 26px;
+}
+
+.mail-mailbox-list-connect-access-denied-slider-icon {
+	width: 269px;
+	height: 195px;
+	background-image: url(images/access_denied.png);
+	background-size: cover;
+}
+
+.mail-mailbox-list-connect-access-denied-slider-text {
+	color: var(--ui-color-palette-black-base, #333);
+	text-align: center;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans)) sans-serif;
+	font-size: var(--ui-size-md, 16px);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md, 23px);
+}

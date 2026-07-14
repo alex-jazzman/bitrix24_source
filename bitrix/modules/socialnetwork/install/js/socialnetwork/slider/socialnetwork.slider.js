@@ -18,6 +18,24 @@ const siteDir = ('/' + (BX.message.SITE_DIR || '/')
 	.replace(/\/+/g, '/')
 ;
 
+const settings = BX.Extension.getSettings('socialnetwork.slider');
+const isNewProjectsOn = Boolean(settings.get('isNewProjectsOn'));
+const isOldPortal = Boolean(settings.get('isOldPortal'));
+const isRestricted = Boolean(settings.get('isRestricted'));
+
+if (isNewProjectsOn && isOldPortal)
+{
+	BX.Event.EventEmitter.subscribe('IM:Collab:onFirstOpen', (baseEvent) => {
+		const parentChatId = parseInt(baseEvent.getData()?.parentChatId, 10);
+
+		void BX.Runtime.loadExtension('socialnetwork.feature-menu').then((exports) => {
+			const { FeatureMenu } = exports;
+
+			void FeatureMenu.navigateToBaseFeature(parentChatId);
+		});
+	});
+}
+
 const rules = [
 	{
 		condition: [
@@ -26,6 +44,14 @@ const rules = [
 		loader: 'group-loader',
 		options: {
 			width: 1200,
+		},
+	},
+	{
+		condition: [
+			BX.message('SONET_SLIDER_USER_SEF') + 'user/(\\d+)/blog/(\\d+)/'
+		],
+		options: {
+			cacheable: false,
 		},
 	},
 	{
@@ -131,8 +157,32 @@ const rules = [
 	},
 ];
 
-rules.push(
-	{
+let groupRule;
+if (isNewProjectsOn)
+{
+	groupRule = {
+		condition: [
+			'(?<url>/workgroups/group/(?<groupId>\\d+)/?)$',
+		],
+		handler: (event, link) => {
+			event.preventDefault();
+
+			if (isRestricted)
+			{
+				BX.UI.FeaturePromotersRegistry.getPromoter({ featureId: 'socialnetwork_projects_groups' }).show();
+
+				return;
+			}
+
+			const groupId = parseInt(link.matches.groups.groupId, 10);
+
+			BX.Messenger.v2.Lib.Messenger.openCollab(`sg${groupId}`);
+		},
+	};
+}
+else
+{
+	groupRule = {
 		condition: [
 			new RegExp(`${siteDir}workgroups/group/[0-9]+/$`, 'i'),
 		],
@@ -144,7 +194,11 @@ rules.push(
 			newWindowLabel: true,
 			copyLinkLabel: true,
 		},
-	},
+	};
+}
+
+rules.push(
+	groupRule,
 	{
 		condition: [
 			new RegExp(`${siteDir}workgroups/group/[0-9]+/tasks/$`, 'i'),

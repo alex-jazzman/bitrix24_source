@@ -28,6 +28,10 @@ export const EmbeddedChatPromoEmptyState = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.intranetInviteAvailable);
 		},
+		isCopilotAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+		},
 		preparedTitle(): string
 		{
 			return Loc.getMessage('IM_CONTENT_EMBEDDED_CHAT_START_TITLE', {
@@ -43,6 +47,15 @@ export const EmbeddedChatPromoEmptyState = {
 				'[action]': `<span class="bx-im-embedded-promo-start__invite-action" onclick="${openInviteSliderHandler}">`,
 				'[/action]': '</span>',
 			});
+		},
+		copilotFeatureText(): string
+		{
+			if (!this.isCopilotAvailable)
+			{
+				return this.loc('IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_TEAM_CONTEXT');
+			}
+
+			return this.loc('IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_AI');
 		},
 	},
 	mounted(): void
@@ -78,7 +91,7 @@ export const EmbeddedChatPromoEmptyState = {
 						</div>
 						<div class="bx-im-embedded-promo-start__feature_item">
 							<div class="bx-im-embedded-promo-start__feature_icon --ai"></div>
-							<div class="bx-im-embedded-promo-start__feature_text">{{ loc('IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_AI') }}</div>
+							<div class="bx-im-embedded-promo-start__feature_text">{{ copilotFeatureText }}</div>
 						</div>
 					</div>
 					<div v-if="canInviteUsers" v-html="preparedInviteText" class="bx-im-embedded-promo-start__invite_item"></div>

@@ -7,6 +7,7 @@ import {
 	type RawRecentItem,
 	type RawUser,
 	type RawCopilot,
+	type RawCollabInfo,
 } from 'im.v2.provider.service.types';
 
 export type BaseRecentQueryParams = {
@@ -22,7 +23,16 @@ export type BaseRecentFilterParams = {
 	unread: boolean,
 };
 
-export type RecentRestResult = {
+export type RecentRestResult = BaseRecentRestResult | RecentFirstPageRestResult;
+
+export type RecentFirstPageRestResult = BaseRecentRestResult & {
+	sectionMeta?: {
+		fixedChatIds: number[],
+		collabInfo: RawCollabInfo,
+	},
+};
+
+type BaseRecentRestResult = {
 	hasNextPage: boolean,
 	chats: RawChat[],
 	files: RawFile[],

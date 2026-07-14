@@ -12,3 +12,7 @@ declare type CommonFloatingButtonServiceProps = {
     checkShouldShowButton?: () => boolean,
     onTap: () => Promise<void>,
 }
+
+declare type NestedFloatingButtonServiceProps = {
+    checkShouldShowButton?: () => boolean,
+}

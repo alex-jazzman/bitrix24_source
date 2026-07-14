@@ -25,6 +25,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { ProjectCreateManager } = require('layout/socialnetwork/project-v2/create');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { isModuleInstalled } = require('module');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 
@@ -97,12 +99,19 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					{
 						this.expandLayoutForSubScreen();
 
-						const { openCollabCreate } = await requireLazy('collab/create');
+						if (Feature.isNestedChatAvailable)
+						{
+							this.sendAnalyticsStartCreate(Analytics.Category.project, Analytics.Type.project);
+							await ProjectCreateManager.open({
+								rootLayoutWidget: this.layout,
+							}, this.layout);
 
+							return;
+						}
+
+						const { openCollabCreate } = await requireLazy('collab/create');
 						this.sendAnalyticsStartCreate(Analytics.Category.collab, Analytics.Type.collab);
-						await openCollabCreate({
-							// todo provide some analytics here
-						}, this.layout);
+						await openCollabCreate({}, this.layout);
 					}
 					catch (error)
 					{

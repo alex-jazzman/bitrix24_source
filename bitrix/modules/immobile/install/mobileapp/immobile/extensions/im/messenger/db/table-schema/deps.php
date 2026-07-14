@@ -15,5 +15,7 @@ return [
 		'./src/folder',
 		'./src/folder-chat',
 		'./src/recent',
+		'./src/recent-section',
+		'./src/user',
 	],
 ];

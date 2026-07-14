@@ -189,7 +189,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/content', (r
 
 			if (this.isGroupDialog())
 			{
-				result.items = this.convertToSortedList(participants);
+				const visibleParticipants = type === DialogType.copilot
+					? participants
+					: this.filterHiddenBots(participants);
+
+				result.items = this.convertToSortedList(visibleParticipants);
 			}
 			else if (type === DialogType.user)
 			{
@@ -200,6 +204,18 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/content', (r
 			}
 
 			return result;
+		}
+
+		/**
+		 * @private
+		 */
+		filterHiddenBots(participantIds)
+		{
+			return participantIds.filter((userId) => {
+				const user = this.store.getters['usersModel/getById'](userId);
+
+				return user?.botData?.isHidden !== true;
+			});
 		}
 
 		getDialogId()

@@ -1,0 +1,13 @@
+.socialnetwork--project-wizard--project-dates-field {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.socialnetwork--project-wizard--project-dates-field_separator {
+	flex-shrink: 0;
+	width: 12px;
+	height: 1px;
+	background: var(--ui-color-base-5, #c9ccd0);
+}

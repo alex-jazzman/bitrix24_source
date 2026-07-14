@@ -50,11 +50,11 @@ export class ConferenceTextareaUploadHandler extends TextareaUploadHandler
 
 	getActionCommitFile(): ?string
 	{
-		return 'call.disk.commit';
+		return 'call.Disk.commit';
 	}
 
 	getActionUploadChunk(): ?string
 	{
-		return 'call.disk.upload';
+		return 'call.Disk.upload';
 	}
 }

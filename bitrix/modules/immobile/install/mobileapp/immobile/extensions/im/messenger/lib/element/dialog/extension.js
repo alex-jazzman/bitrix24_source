@@ -43,8 +43,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { DeletedStickerMessage } = require('im/messenger/lib/element/dialog/message/deleted-sticker');
 	const { AiBizprocMessage } = require('im/messenger/lib/element/dialog/message/ai-bizproc/message');
 	const { AiBizprocMessageHandler } = require('im/messenger/lib/element/dialog/message/ai-bizproc/handler');
-	const { BuilderMessageFactory } = require('im/messenger/lib/element/dialog/message/builder/factory');
-	const { BuilderMessageHandler } = require('im/messenger/lib/element/dialog/message/builder/handler');
+	const { BlockMessageFactory } = require('im/messenger/lib/element/dialog/message/block/factory');
+	const { BlockMessageHandler } = require('im/messenger/lib/element/dialog/message/block/handler');
 
 	module.exports = {
 		Message,
@@ -85,8 +85,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		DeletedStickerMessage,
 		AiBizprocMessage,
 		AiBizprocMessageHandler,
-		BuilderMessageFactory,
-		BuilderMessageHandler,
+		BlockMessageFactory,
+		BlockMessageHandler,
 		EmptyMessage,
 	};
 });

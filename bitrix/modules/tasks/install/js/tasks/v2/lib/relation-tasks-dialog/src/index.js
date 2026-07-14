@@ -1,4 +1,3 @@
-export { Item } from 'tasks.v2.lib.entity-selector-dialog';
 import { RelationTasksDialog } from './relation-tasks-dialog';
 import { subTasksMeta, relatedTasksMeta, ganttMeta } from './meta';
 

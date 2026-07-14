@@ -5,9 +5,9 @@ import { CallTokenManager } from 'call.lib.call-token-manager';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { RestMethod, Layout } from 'im.v2.const';
+import { RestMethod, Layout, ErrorCode } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Notifier } from 'im.v2.lib.notifier';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
@@ -25,6 +25,8 @@ type UpdateModelsResult = {
 	dialogId: string,
 	chatId: number,
 };
+
+type ChatActionResult = RunActionError | ChatLoadRestResult;
 
 export class LoadService
 {
@@ -150,13 +152,21 @@ export class LoadService
 	async #requestChat(actionName: string, params: Object<string, any>): Promise<{ dialogId: string, chatId: number }>
 	{
 		const { dialogId, messageId } = params;
-		this.#markDialogAsLoading(dialogId);
+		if (this.#affectsDialogLoadingState(actionName))
+		{
+			this.#markDialogAsLoading(dialogId);
+		}
 
 		const actionResult = await runAction(actionName, { data: params })
 			.catch(([error]: RunActionError[]) => {
 				console.error('ChatService: Load: error loading chat', error);
-				Notifier.chat.handleLoadError(error);
+				if (this.#isTariffError(error))
+				{
+					return error;
+				}
+
 				this.#markDialogAsNotLoaded(dialogId);
+				Notifier.chat.handleLoadError(error);
 				throw error;
 			});
 
@@ -185,7 +195,7 @@ export class LoadService
 			CallTokenManager.setToken(callInfo.chatId, callInfo.token);
 		}
 
-		if (this.#isDialogLoadedMarkNeeded(actionName))
+		if (this.#affectsDialogLoadingState(actionName))
 		{
 			await this.#markDialogAsLoaded(loadedDialogId);
 		}
@@ -220,7 +230,7 @@ export class LoadService
 		});
 	}
 
-	#isDialogLoadedMarkNeeded(actionName: string): boolean
+	#affectsDialogLoadingState(actionName: string): boolean
 	{
 		return actionName !== RestMethod.imV2ChatShallowLoad;
 	}
@@ -316,23 +326,34 @@ export class LoadService
 		return extractor.isOpenlinesChat() && Type.isStringFilled(extractor.getDialogId());
 	}
 
-	#checkFeatureDisabled(actionResult: ChatLoadRestResult): boolean
+	#isTariffError(actionResult: ChatActionResult): boolean
 	{
-		return this.#checkCollabFeatureDisabled(actionResult);
+		const errors = new Set([ErrorCode.collabV2.tariffRestricted]);
+
+		return errors.has(actionResult.code);
 	}
 
-	#checkCollabFeatureDisabled(actionResult: ChatLoadRestResult): boolean
+	#checkCollabFeatureDisabled(actionResult: ChatActionResult): boolean
 	{
 		const extractor = new ChatDataExtractor(actionResult);
 
-		return extractor.isCollabChat() && !FeatureManager.collab.isAvailable();
+		return extractor.isCollabChat() && !TariffManager.collab.isAvailable();
 	}
 
-	#openFeatureSlider(actionResult: ChatLoadRestResult)
+	#checkFeatureDisabled(actionResult: ChatActionResult): boolean
 	{
-		if (this.#checkCollabFeatureDisabled(actionResult))
+		return this.#isTariffError(actionResult) || this.#checkCollabFeatureDisabled(actionResult);
+	}
+
+	#openFeatureSlider(actionResult: ChatActionResult)
+	{
+		if (actionResult.code === ErrorCode.collabV2.tariffRestricted)
 		{
-			FeatureManager.collab.openFeatureSlider();
+			TariffManager.collabV2.openFeatureSlider();
+
+			return;
 		}
+
+		TariffManager.collab.openFeatureSlider();
 	}
 }

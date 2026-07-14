@@ -29,6 +29,8 @@ if ($isV2Form)
 	Extension::load('tasks.v2.application.task-card');
 }
 
+Extension::load('im.public');
+
 $isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
 $arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24')
 	&& preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""))
@@ -151,25 +153,39 @@ if ($isProjectLimitExceeded)
 }
 else
 {
-	$projectHandler = "BX.SidePanel.Instance.open('{$createGroupLink}')";
+	if (\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
+	{
+		$projectHandler = "BX.Messenger.Public.openChatCreation('collab');";
+	}
+	else
+	{
+		$projectHandler = "BX.SidePanel.Instance.open('{$createGroupLink}')";
+	}
 }
 
 $isCollaber = User::isCollaber($arParams['USER_ID']);
 
 if (!$isCollaber)
 {
-$arResult['ITEMS'][] = [
-	"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
-	"URL" => $projectsUrl,
-	"ID" => "view_projects",
-	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
-	'SUB_LINK' => [
-		'CLASS' => '',
-		'ON_CLICK' => $projectHandler,
-	],
-	'COUNTER' => $arResult['PROJECTS_COUNTER'],
-	'COUNTER_ID' => 'tasks_projects_counter',
-];
+	$canCreateProject = \Bitrix\Socialnetwork\Helper\Workgroup\Access::canCreate();
+	$subLink = (
+		$canCreateProject
+			? [
+				'CLASS' => '',
+				'ON_CLICK' => $projectHandler,
+			]
+			: []
+	);
+
+	$arResult['ITEMS'][] = [
+		"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
+		"URL" => $projectsUrl,
+		"ID" => "view_projects",
+		"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
+		'SUB_LINK' => $subLink,
+		'COUNTER' => $arResult['PROJECTS_COUNTER'],
+		'COUNTER_ID' => 'tasks_projects_counter',
+	];
 }
 
 if (FlowFeature::isOn() && !$isCollaber)

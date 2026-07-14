@@ -515,6 +515,72 @@ describe.only('CountersModel', () => {
 			const totalCounter = store.getters['counters/getTotalChatCounter'];
 			assert.equal(totalCounter, 4);
 		});
+
+		it('should not account for nested chat with own section for non-nested type', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.copilot] }),
+				getCounterItem({ chatId: 2, counter: 3, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 3, counter: 10, parentChatId: 2, recentSections: [RecentType.copilot] }),
+			];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const totalCounter = store.getters['counters/getTotalCopilotCounter'];
+			assert.equal(totalCounter, 5);
+		});
+
+		it('should account for nested chat with own section for nested type', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.taskComments] }),
+				getCounterItem({ chatId: 2, counter: 3, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 3, counter: 10, parentChatId: 2, recentSections: [RecentType.taskComments] }),
+			];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const totalCounter = store.getters['counters/getTotalTaskCounter'];
+			assert.equal(totalCounter, 15);
+		});
+	});
+	describe('getRecentSectionsByChatId', () => {
+		it('should return recent sections by chatId', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, recentSections: [RecentType.default, RecentType.copilot] }),
+				getCounterItem({ chatId: 2, recentSections: [RecentType.collab] }),
+			];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const sections = store.getters['counters/getRecentSectionsByChatId'](1);
+			assert.deepStrictEqual(sections, [RecentType.default, RecentType.copilot]);
+		});
+
+		it('should return single recent section by chatId', async () => {
+			const counters = [getCounterItem({ chatId: 1, recentSections: [RecentType.collab] })];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const sections = store.getters['counters/getRecentSectionsByChatId'](1);
+			assert.deepStrictEqual(sections, [RecentType.collab]);
+		});
+
+		it('should return empty array if there is no entry by chatId', async () => {
+			const counters = [getCounterItem({ chatId: 1, recentSections: [RecentType.default] })];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const sections = store.getters['counters/getRecentSectionsByChatId'](99);
+			assert.deepStrictEqual(sections, []);
+		});
+
+		it('should return empty array if chat has no recent sections', async () => {
+			const counters = [getCounterItem({ chatId: 1, recentSections: [] })];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const sections = store.getters['counters/getRecentSectionsByChatId'](1);
+			assert.deepStrictEqual(sections, []);
+		});
 	});
 });
 

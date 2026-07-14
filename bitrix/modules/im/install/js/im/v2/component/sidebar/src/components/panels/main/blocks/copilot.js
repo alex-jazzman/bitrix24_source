@@ -2,6 +2,7 @@ import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelChat } from 'im.v2.model';
 
 import { CopilotRole } from '../../../elements/copilot-role/copilot-role';
 import { AIModel } from '../../../elements/ai-model/ai-model';
@@ -12,8 +13,6 @@ import { isSharedLinkCopyAllowed } from '../../../../helpers/shared-link';
 import { SettingsSeparator } from '../components/settings-separator';
 
 import '../css/copilot-preview.css';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CopilotPreview = {
@@ -53,6 +52,10 @@ export const CopilotPreview = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isAIModelChangeAllowed);
 		},
+		isBitrixGptV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
 		isSharedLinkCopyAllowed(): boolean
 		{
 			return isSharedLinkCopyAllowed(this.dialogId);
@@ -73,10 +76,12 @@ export const CopilotPreview = {
 				<ChatMembersAvatars :showMembers="showMembers" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-copilot-preview-group-chat__settings">
-				<SharedLink v-if="isSharedLinkCopyAllowed" :dialogId="dialogId" />
-				<SettingsSeparator />
+				<template v-if="isSharedLinkCopyAllowed">
+					<SharedLink :dialogId="dialogId" />
+					<SettingsSeparator />
+				</template>
 				<CopilotRole :dialogId="dialogId" />
-				<AIModel v-if="isAIModelChangeAllowed" :dialogId="dialogId" />
+				<AIModel v-if="isAIModelChangeAllowed && !isBitrixGptV2Available" :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />
 			</div>
 		</div>

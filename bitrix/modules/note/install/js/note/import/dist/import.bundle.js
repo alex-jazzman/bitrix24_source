@@ -1,14 +1,19 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_progressbar, main_core, ui_buttons, ui_system_dialog, ui_notification, note_ui_themeContext, ui_system_checkbox, ui_iconSet_api_core, ui_iconSet_outline, note_ui_loader, ui_vue3, ui_system_input_vue, ui_system_menu) {
+(function (exports, ui_progressbar, main_core, ui_buttons, ui_system_dialog, ui_notification, note_ui_themeContext, ui_system_checkbox, ui_iconSet_api_core, ui_iconSet_outline, note_ui_loader, ui_vue3, ui_system_input_vue, ui_system_menu, ui_system_alert_vue, ui_system_alert) {
 	'use strict';
 
 	const SOURCE_TYPE_OUTLINE = 'outline';
+	const SOURCE_TYPE_WIKI = 'wiki';
 	const IMPORT_POLL_INTERVAL_MS = 5000;
 	const SOURCE_TYPES = Object.freeze([Object.freeze({
 		id: SOURCE_TYPE_OUTLINE,
 		label: main_core.Loc.getMessage('NOTE_IMPORT_SOURCE_OUTLINE'),
+		enabled: true
+	}), Object.freeze({
+		id: SOURCE_TYPE_WIKI,
+		label: main_core.Loc.getMessage('NOTE_IMPORT_SOURCE_WIKI'),
 		enabled: true
 	})]);
 	const IMPORT_SCREEN = Object.freeze({
@@ -498,14 +503,15 @@ this.BX.Note = this.BX.Note || {};
 		return container;
 	}
 
-	function createConnectionScreen(handlers) {
+	function createConnectionScreen(handlers, sources) {
 		const element = document.createElement('div');
 		element.className = 'note-import-screen note-import-screen-connection';
 		let sourceMenu = null;
 		const ConnectionForm = {
 			name: 'NoteImportConnectionForm',
 			components: {
-				BInput: ui_system_input_vue.BInput
+				BInput: ui_system_input_vue.BInput,
+				Alert: ui_system_alert_vue.Alert
 			},
 			data() {
 				return {
@@ -516,13 +522,16 @@ this.BX.Note = this.BX.Note || {};
 					sourceError: '',
 					urlError: '',
 					tokenError: '',
+					isWiki: false,
+					noticeDesign: ui_system_alert.AlertDesign.tintedWarning,
 					labels: {
 						source: main_core.Loc.getMessage('NOTE_IMPORT_SOURCE_LABEL'),
 						sourcePlaceholder: main_core.Loc.getMessage('NOTE_IMPORT_SOURCE_PLACEHOLDER'),
 						url: main_core.Loc.getMessage('NOTE_IMPORT_URL_LABEL'),
 						urlPlaceholder: main_core.Loc.getMessage('NOTE_IMPORT_CONNECTION_PLACEHOLDER'),
 						token: main_core.Loc.getMessage('NOTE_IMPORT_TOKEN_LABEL'),
-						tokenPlaceholder: main_core.Loc.getMessage('NOTE_IMPORT_TOKEN_PLACEHOLDER')
+						tokenPlaceholder: main_core.Loc.getMessage('NOTE_IMPORT_TOKEN_PLACEHOLDER'),
+						wikiNotice: main_core.Loc.getMessage('NOTE_IMPORT_WIKI_LOSS_NOTICE')
 					},
 					inputSize: ui_system_input_vue.InputSize.Lg,
 					inputDesign: ui_system_input_vue.InputDesign.Grey
@@ -544,7 +553,7 @@ this.BX.Note = this.BX.Note || {};
 					handlers.onTokenBlur();
 				},
 				handleSourceClick() {
-					const enabled = SOURCE_TYPES.filter(source => source.enabled);
+					const enabled = sources.filter(source => source.enabled);
 					if (enabled.length === 0) {
 						return;
 					}
@@ -600,7 +609,11 @@ this.BX.Note = this.BX.Note || {};
 					readonly
 					@click="handleSourceClick"
 				/>
+				<Alert v-if="isWiki" :design="noticeDesign">
+					{{ labels.wikiNotice }}
+				</Alert>
 				<BInput
+					v-if="!isWiki"
 					ref="urlInput"
 					:modelValue="url"
 					@update:modelValue="handleUrlUpdate"
@@ -615,6 +628,7 @@ this.BX.Note = this.BX.Note || {};
 					@blur="handleUrlBlur"
 				/>
 				<BInput
+					v-if="!isWiki"
 					ref="tokenInput"
 					:modelValue="token"
 					@update:modelValue="handleTokenUpdate"
@@ -635,9 +649,10 @@ this.BX.Note = this.BX.Note || {};
 		const vm = app.mount(element);
 		function applyState(state) {
 			const sourceType = state.sourceType ?? '';
-			const source = SOURCE_TYPES.find(item => item.id === sourceType);
+			const source = sources.find(item => item.id === sourceType);
 			vm.sourceType = sourceType;
 			vm.sourceLabel = source ? source.label : '';
+			vm.isWiki = sourceType === SOURCE_TYPE_WIKI;
 			const nextUrl = String(state.url ?? '');
 			if (vm.url !== nextUrl) {
 				vm.url = nextUrl;
@@ -949,6 +964,7 @@ this.BX.Note = this.BX.Note || {};
 		#destroyed;
 		#requestId;
 		#onComplete;
+		#availableSources;
 		constructor(options = {}) {
 			this.#dialog = null;
 			this.#api = new ImportApi();
@@ -969,6 +985,8 @@ this.BX.Note = this.BX.Note || {};
 			this.#destroyed = false;
 			this.#requestId = 0;
 			this.#onComplete = main_core.Type.isFunction(options.onComplete) ? options.onComplete : null;
+			const wikiImportEnabled = options.wikiImportEnabled === true;
+			this.#availableSources = SOURCE_TYPES.filter(source => source.id !== SOURCE_TYPE_WIKI || wikiImportEnabled);
 		}
 		show() {
 			if (this.#dialog) {
@@ -1046,6 +1064,11 @@ this.BX.Note = this.BX.Note || {};
 				return;
 			}
 			if (field === 'url') {
+				// Wiki reads local bases — no URL/token needed.
+				if (this.#isWikiSource()) {
+					errors.url = '';
+					return;
+				}
 				const value = String(this.#connectionForm.url || '').trim();
 				if (value === '') {
 					errors.url = main_core.Loc.getMessage('NOTE_IMPORT_URL_REQUIRED');
@@ -1059,9 +1082,16 @@ this.BX.Note = this.BX.Note || {};
 				return;
 			}
 			if (field === 'token') {
+				if (this.#isWikiSource()) {
+					errors.token = '';
+					return;
+				}
 				const value = String(this.#connectionForm.token || '').trim();
 				errors.token = value === '' ? main_core.Loc.getMessage('NOTE_IMPORT_TOKEN_REQUIRED') : '';
 			}
+		}
+		#isWikiSource() {
+			return String(this.#connectionForm.sourceType || this.#sourceType || '').trim() === SOURCE_TYPE_WIKI;
 		}
 		#validateAllConnectionFields() {
 			this.#validateConnectionField('sourceType');
@@ -1142,6 +1172,10 @@ this.BX.Note = this.BX.Note || {};
 			try {
 				const response = await this.#api.getCollections(buildGetCollectionsPayload(this.#sourceType, this.#sourceUrl, this.#sourceToken));
 				this.#collectionsState.collections = response.collections;
+				// Pre-select every base by default: importing all of them is the common
+				// case, so the user only has to deselect what they don't want instead of
+				// ticking each base manually.
+				this.#collectionsState.selectedCollectionIds = new Set(response.collections.map(collection => collection.id));
 			} catch (error) {
 				this.#collectionsState.errorMessage = String(error?.message || main_core.Loc.getMessage('NOTE_IMPORT_COLLECTIONS_LOAD_ERROR'));
 			} finally {
@@ -1454,7 +1488,7 @@ this.BX.Note = this.BX.Note || {};
 					onSubmit: () => {
 						this.#onConnect();
 					}
-				});
+				}, this.#availableSources);
 			}
 			this.#connectionScreen.applyState(this.#connectionForm);
 			return this.#connectionScreen.element;
@@ -1468,7 +1502,8 @@ this.BX.Note = this.BX.Note || {};
 					size: ui_buttons.ButtonSize.LARGE,
 					style: ui_buttons.AirButtonStyle.FILLED,
 					useAirDesign: true,
-					text: main_core.Loc.getMessage('NOTE_IMPORT_CONNECT'),
+					// Wiki has no connection step — the action just reveals the bases to pick.
+					text: this.#isWikiSource() ? main_core.Loc.getMessage('NOTE_IMPORT_SELECT') : main_core.Loc.getMessage('NOTE_IMPORT_CONNECT'),
 					onclick: () => {
 						this.#onConnect();
 					}
@@ -1630,9 +1665,17 @@ this.BX.Note = this.BX.Note || {};
 				return false;
 			}
 			const sourceType = String(this.#connectionForm.sourceType || this.#sourceType || '').trim();
+			if (sourceType === '') {
+				return false;
+			}
+
+			// Wiki needs no URL/token — selecting the source is enough to connect.
+			if (sourceType === SOURCE_TYPE_WIKI) {
+				return true;
+			}
 			const url = String(this.#connectionForm.url || '').trim();
 			const token = String(this.#connectionForm.token || '').trim();
-			if (sourceType === '' || url === '' || token === '') {
+			if (url === '' || token === '') {
 				return false;
 			}
 
@@ -1645,5 +1688,5 @@ this.BX.Note = this.BX.Note || {};
 
 	exports.ImportDialog = ImportDialog;
 
-})(this.BX.Note.Import = this.BX.Note.Import || {}, BX.UI, BX, BX.UI, BX.UI.System, BX.UI.Notification, BX.Note.Ui, BX.UI.System.Checkbox, BX.UI.IconSet, window, BX.Note.Ui, BX.Vue3, BX.UI.System.Input.Vue, BX.UI.System);
+})(this.BX.Note.Import = this.BX.Note.Import || {}, BX.UI, BX, BX.UI, BX.UI.System, BX.UI.Notification, BX.Note.Ui, BX.UI.System.Checkbox, BX.UI.IconSet, window, BX.Note.Ui, BX.Vue3, BX.UI.System.Input.Vue, BX.UI.System, BX.UI.System.Alert.Vue, BX.UI.System.Alert);
 //# sourceMappingURL=import.bundle.js.map

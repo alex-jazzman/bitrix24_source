@@ -1,5 +1,6 @@
 <?php
 $MESS["M_CALENDAR_AHA_NEW_MENU_DESC"] = "Follow events from company, workgroup and collab calendars.";
+$MESS["M_CALENDAR_AHA_NEW_MENU_DESC_MSGVER_1"] = "Follow events from company and project calendars.";
 $MESS["M_CALENDAR_AHA_NEW_MENU_TITLE"] = "New menu";
 $MESS["M_CALENDAR_AHA_SYNC_CALENDAR_DESC"] = "Merge your calendar with Google, iCloud or other calendars to further improve your time management";
 $MESS["M_CALENDAR_AHA_SYNC_CALENDAR_TITLE"] = "Synchronize calendar";

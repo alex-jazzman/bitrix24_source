@@ -9,6 +9,7 @@ import { CommentsPullHandler } from './handlers/comments';
 import { ApplicationPullHandler } from './handlers/application';
 import { CollabPullHandler } from './handlers/collab';
 import { AiPullHandler } from './handlers/ai';
+import { type AiAssistantTitleParams } from '../types/ai';
 
 export class BasePullHandler
 {
@@ -120,19 +121,19 @@ export class BasePullHandler
 		this.#messageHandler.handlePinDelete(params);
 	}
 
-	handleBuilderBlockAppend(params)
+	handleMessageBlockElementAppend(params)
 	{
-		this.#messageHandler.handleBuilderBlockAppend(params);
+		this.#messageHandler.handleMessageBlockElementAppend(params);
 	}
 
-	handleBuilderBlockUpdate(params)
+	handleMessageBlockElementUpdate(params)
 	{
-		this.#messageHandler.handleBuilderBlockUpdate(params);
+		this.#messageHandler.handleMessageBlockElementUpdate(params);
 	}
 
-	handleBuilderBlockDelete(params)
+	handleMessageBlockElementDelete(params)
 	{
-		this.#messageHandler.handleBuilderBlockDelete(params);
+		this.#messageHandler.handleMessageBlockElementDelete(params);
 	}
 	// endregion 'message'
 
@@ -298,6 +299,11 @@ export class BasePullHandler
 	handleChatCopilotRoleUpdate(params)
 	{
 		this.#aiPullHandler.handleChatCopilotRoleUpdate(params);
+	}
+
+	handleSetCopilotTitle(params: AiAssistantTitleParams)
+	{
+		this.#aiPullHandler.handleSetCopilotTitle(params);
 	}
 	// endregion 'ai'
 }

@@ -17,7 +17,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		{
 			super.initRouters();
 			this.storeRouter = this.storeRouter.bind(this);
-			this.builderUpdateRouter = this.builderUpdateRouter.bind(this);
+			this.blockUpdateRouter = this.blockUpdateRouter.bind(this);
 		}
 
 		subscribeEvents()
@@ -28,7 +28,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				.on('messagesModel/update', this.updateRouter)
 				.on('messagesModel/updateWithId', this.updateWithIdRouter)
 				.on('messagesModel/delete', this.deleteRouter)
-				.on('messagesModel/builderModel/update', this.builderUpdateRouter)
+				.on('messagesModel/blockModel/update', this.blockUpdateRouter)
 			;
 		}
 
@@ -40,7 +40,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				.off('messagesModel/update', this.updateRouter)
 				.off('messagesModel/updateWithId', this.updateWithIdRouter)
 				.off('messagesModel/delete', this.deleteRouter)
-				.off('messagesModel/builderModel/update', this.builderUpdateRouter)
+				.off('messagesModel/blockModel/update', this.blockUpdateRouter)
 			;
 		}
 
@@ -145,7 +145,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			;
 		}
 
-		async builderUpdateRouter(mutation)
+		async blockUpdateRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
 			{
@@ -155,9 +155,9 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			const actionName = mutation?.payload?.actionName;
 			const data = mutation?.payload?.data || {};
 			const updateActions = [
-				'appendBlock',
-				'updateBlock',
-				'deleteBlock',
+				'appendElement',
+				'updateElement',
+				'deleteElement',
 			];
 			if (!updateActions.includes(actionName))
 			{
@@ -168,7 +168,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			const message = this.store.getters['messagesModel/getById'](messageId);
 			if (!message || !Type.isNumber(message.id))
 			{
-				Logger.warn(`MessageWriter.builderUpdateRouter: there is no message with id "${messageId}" in model`);
+				Logger.warn(`MessageWriter.blockUpdateRouter: there is no message with id "${messageId}" in model`);
 
 				return;
 			}
@@ -181,7 +181,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			await this.repository.message.saveFromModel([message])
-				.catch((error) => Logger.error('MessageWriter.builderUpdateRouter.saveFromModel.catch:', error))
+				.catch((error) => Logger.error('MessageWriter.blockUpdateRouter.saveFromModel.catch:', error))
 			;
 		}
 

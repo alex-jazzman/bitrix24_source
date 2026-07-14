@@ -1,5 +1,5 @@
 import { Loc, Text, Validation } from 'main.core';
-import { UI } from 'ui.notification';
+import 'ui.notification';
 import { mapState, mapActions } from 'ui.vue3.pinia';
 import { Dialog, type Item } from 'ui.entity-selector';
 import { Set as IconSet, Outline, BIcon } from 'ui.icon-set.api.vue';
@@ -18,6 +18,11 @@ import './select-employees.css';
 const LIMIT_BLOCKED_USERS = 3;
 const MAX_USERS_PER_LIMIT_REQUEST = 500;
 const LIMIT_CHECK_NOTIFICATION_ID = 'mail_massconnect__limit_check_progress';
+
+function getNotificationCenter()
+{
+	return globalThis.BX?.UI?.Notification?.Center ?? null;
+}
 
 // @vue/component
 export const SelectEmployees = {
@@ -319,7 +324,7 @@ export const SelectEmployees = {
 			}
 			catch
 			{
-				UI.Notification.Center.notify({
+				getNotificationCenter()?.notify({
 					content: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_SELECTOR_ADD_ERROR'),
 				});
 
@@ -459,7 +464,7 @@ export const SelectEmployees = {
 		},
 		showLimitCheckProgress(processedCount: number, totalCount: number, isFinal: boolean = false): void
 		{
-			UI.Notification.Center.notify({
+			getNotificationCenter()?.notify({
 				id: LIMIT_CHECK_NOTIFICATION_ID,
 				content: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_CHECK_PROGRESS', {
 					'#PROCESSED#': String(processedCount),
@@ -473,7 +478,7 @@ export const SelectEmployees = {
 		},
 		hideLimitCheckProgress(): void
 		{
-			const balloon = UI.Notification.Center.getBalloonById(LIMIT_CHECK_NOTIFICATION_ID);
+			const balloon = getNotificationCenter()?.getBalloonById(LIMIT_CHECK_NOTIFICATION_ID);
 			if (balloon)
 			{
 				balloon.close();

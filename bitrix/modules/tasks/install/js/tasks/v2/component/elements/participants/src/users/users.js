@@ -2,6 +2,7 @@ import { User } from '../user/user';
 
 // @vue/component
 export const Users = {
+	name: 'TaskUsers',
 	components: {
 		User,
 	},
@@ -66,7 +67,7 @@ export const Users = {
 				'--overflow': fromPopup,
 			}"
 		>
-			<template v-for="userId in userIds">
+			<template v-for="(userId, index) in userIds" :key="userId">
 				<User
 					:taskId
 					:userId
@@ -76,7 +77,11 @@ export const Users = {
 					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
-				/>
+				>
+					<template v-slot="slotProps">
+						<slot name="user" :userId="userId" :index="index" v-bind="slotProps"/>
+					</template>
+				</User>
 			</template>
 		</div>
 	`,

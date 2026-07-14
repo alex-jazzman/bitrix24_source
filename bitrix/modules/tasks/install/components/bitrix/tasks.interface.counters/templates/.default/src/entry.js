@@ -1,6 +1,6 @@
 import { Loc, Runtime, Event, ajax as Ajax } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Button, AirButtonStyle, ButtonSize, ButtonCounterStyle } from 'ui.buttons';
+import { Button, AirButtonStyle, ButtonSize, ButtonCounterStyle, ButtonIcon } from 'ui.buttons';
 import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import { Filter } from './counters-helper';
 import { Controller as Viewed } from 'tasks.viewed';
@@ -715,6 +715,7 @@ export class Counters extends CounterPanel
 		this.chatButton = new Button({
 			text: Loc.getMessage('TASKS_COUNTERS_CHAT_BUTTON'),
 			onclick: () => this.handleChatButtonClick(),
+			collapsedIcon: ButtonIcon.CHATS,
 			style: AirButtonStyle.OUTLINE,
 			size: ButtonSize.SMALL,
 			useAirDesign: true,

@@ -1,5 +1,6 @@
 import { Dom, Event, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+
 import { ActiveDirectory } from './active-directory';
 import { Analytics } from './analytics';
 import { MessageBar } from './message-bar';
@@ -44,9 +45,11 @@ export default class Form extends EventEmitter
 		this.analyticsLabel = params.analyticsLabel;
 		this.projectLimitExceeded = Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 		this.projectLimitFeatureId = Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
+		this.invitationLink = Type.isString(params.invitationLink) ? params.invitationLink : '';
 		this.whitelistValue = Type.isStringFilled(params.whitelistValue) ? params.whitelistValue : '';
 		this.isCollabEnabled = params.isCollabEnabled === 'Y';
 		this.registerNeedConfirm = params.registerConfirm === true;
+		this.canCurrentUserCreateDepartment = params.canCurrentUserCreateDepartment === true;
 		this.useLocalEmailProgram = params.useLocalEmailProgram === true;
 	}
 
@@ -221,11 +224,13 @@ export default class Form extends EventEmitter
 					useLocalEmailProgram: this.useLocalEmailProgram,
 					isAdmin: this.isAdmin,
 					needConfirmRegistration: this.registerNeedConfirm,
+					invitationLink: this.invitationLink,
 					whiteList: this.whitelistValue,
 					isCloud: this.isCloud,
 					linkRegisterEnabled: this.isSelfRegisterEnabled,
 					isExtranetInstalled: this.isExtranetInstalled,
 					canCurrentUserInvite: this.canCurrentUserInvite,
+					canCurrentUserCreateDepartment: this.canCurrentUserCreateDepartment,
 				},
 				this.userOptions,
 			)).provide(),

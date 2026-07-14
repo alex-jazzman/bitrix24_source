@@ -195,7 +195,7 @@ if ($detailUrl)
 						'SET_BROWSER_TITLE' => 'Y',
 						'SHOW_CLOSE_POPUP' => 'Y',
 						'MESS_BTN_COMPARE' => '',
-						'ADD_TO_BASKET_ACTION' => 'BUY',
+						'ADD_TO_BASKET_ACTION' => $classBlock->get('ADD_TO_BASKET_ACTION'),
 						'COMPONENT_TEMPLATE' => '.default',
 						'SEF_MODE' => 'N',
 						'SET_LAST_MODIFIED' => 'N',

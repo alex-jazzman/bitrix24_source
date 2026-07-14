@@ -1,0 +1,31 @@
+.socialnetwork--project-wizard--ui-field {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	gap: var(--ui-space-stack-xs);
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.socialnetwork--project-wizard--ui-field_label-wrapper {
+	display: flex;
+	flex-direction: row;
+	gap: var(--ui-space-inline-2xs);
+	align-items: center;
+}
+
+.socialnetwork--project-wizard--ui-field_label {
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-lg);
+}
+
+.socialnetwork--project-wizard--ui-field_field {
+	border-radius: var(--ui-border-radius-md, 10px);
+	background: var(--ui-color-bg-content-primary, #FFF);
+	box-sizing: border-box;
+	width: inherit;
+}
+
+.socialnetwork--project-wizard--field-shadow {
+	box-shadow: var(--ui-box-shadow-contrast-default-x, 0) var(--ui-box-shadow-contrast-default-y, 1px) 1px 0 rgba(0, 0, 0, 0.04);
+}

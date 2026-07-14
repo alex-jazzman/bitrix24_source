@@ -13,7 +13,7 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 	{
 		const result = {};
 
-		if (!Type.isUndefined(fields.chats) && !Type.isNull(fields.chats))
+		if (!Type.isNil(fields.chats))
 		{
 			result.chats = fields.chats;
 		}

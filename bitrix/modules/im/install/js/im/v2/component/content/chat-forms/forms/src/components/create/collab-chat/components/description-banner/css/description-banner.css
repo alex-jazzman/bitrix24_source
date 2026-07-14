@@ -29,7 +29,7 @@
 }
 
 .bx-im-create-collab-chat-description-banner__text {
-	max-width: 60%;
+	max-width: 75%;
 	font: var(--im-font-size-sm)/17px var(--im-font-family-system);
 	color: var(--ui-color-base-2);
 	white-space: pre-line;

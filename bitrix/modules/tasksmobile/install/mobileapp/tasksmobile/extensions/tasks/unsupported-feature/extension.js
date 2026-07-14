@@ -5,13 +5,11 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 	const { Type } = require('type');
 	const { createTestIdGenerator } = require('utils/test');
 	const { PureComponent } = require('layout/pure-component');
-	const { Color, Component, Corner, Indent } = require('tokens');
+	const { Color, Corner, Indent } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
-	const { Area } = require('ui-system/layout/area');
-	const { H3 } = require('ui-system/typography/heading');
-	const { Text2, Text4 } = require('ui-system/typography/text');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { Text4 } = require('ui-system/typography/text');
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { UnsupportedFeatureType } = require('tasks/unsupported-feature/src/type-enum');
 	const { openQRAuth } = require('qrauth/utils');
 	const { Loc } = require('loc');
@@ -50,17 +48,12 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 						bottom: true,
 					},
 				},
-				Area(
-					{
-						testId: this.getTestId('area'),
-						style: {
-							flex: 1,
-							alignItems: 'center',
-						},
-					},
-					this.#renderImage(),
-					this.#renderInfo(),
-				),
+				StatusBlock({
+					testId: this.getTestId(),
+					image: this.#renderImage(),
+					title: this.type.getTitle(),
+					list: this.type.getItems(),
+				}),
 				this.#renderBottomBlock(),
 			);
 		}
@@ -87,23 +80,6 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 			});
 		}
 
-		#renderInfo()
-		{
-			return View(
-				{
-					testId: this.getTestId('info'),
-					style: {
-						width: '100%',
-						marginTop: Indent.XL2.toNumber(),
-						paddingHorizontal: Component.paddingLrMore.toNumber(),
-						alignItems: 'center',
-					},
-				},
-				this.#renderTitle(),
-				this.#renderList(),
-			);
-		}
-
 		#renderBottomBlock()
 		{
 			return View(
@@ -120,79 +96,6 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 			);
 		}
 
-		#renderTitle()
-		{
-			const title = this.type.getTitle();
-
-			if (!Type.isStringFilled(title))
-			{
-				return null;
-			}
-
-			return H3({
-				testId: this.getTestId('title'),
-				text: title,
-				color: Color.base1,
-				style: {
-					alignSelf: 'stretch',
-					textAlign: 'center',
-				},
-			});
-		}
-
-		#renderList()
-		{
-			const items = this.type.getItems();
-
-			if (!Type.isArrayFilled(items))
-			{
-				return null;
-			}
-
-			return View(
-				{
-					testId: this.getTestId('list'),
-					style: {
-						width: '100%',
-						marginTop: Indent.L.toNumber(),
-						paddingTop: Indent.XL.toNumber(),
-					},
-				},
-				...items.map((item, index) => this.#renderListItem(item, index)),
-			);
-		}
-
-		#renderListItem(item, index)
-		{
-			return View(
-				{
-					testId: this.getTestId(`list-item-${index}`),
-					style: {
-						width: '100%',
-						flexDirection: 'row',
-						alignItems: 'flex-start',
-						marginTop: index === 0 ? 0 : Indent.L.toNumber(),
-					},
-				},
-				IconView({
-					testId: this.getTestId(`list-item-${index}-icon`),
-					icon: item.icon,
-					size: 26,
-					color: Color.accentMainPrimary,
-					style: {
-						marginRight: Indent.M.toNumber(),
-					},
-				}),
-				Text2({
-					testId: this.getTestId(`list-item-${index}-text`),
-					text: item.text,
-					color: Color.base2,
-					style: {
-						flexShrink: 1,
-					},
-				}),
-			);
-		}
 
 		#renderFootnote()
 		{

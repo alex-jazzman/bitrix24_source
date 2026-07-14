@@ -94,6 +94,18 @@ jn.define('im/messenger/controller/messenger-header/src/manager', (require, expo
 		{
 			this.#globalController?.redrawRightButtonsIfNeeded(tabId);
 		}
+
+		/**
+		 * Redraws right buttons on every registered nested controller for the given tab.
+		 * @param {string} tabId
+		 */
+		redrawNestedRightButtonsIfNeeded(tabId)
+		{
+			for (const controller of this.#nestedControllers)
+			{
+				controller.redrawRightButtonsIfNeeded(tabId);
+			}
+		}
 	}
 
 	module.exports = { MessengerHeaderManager };

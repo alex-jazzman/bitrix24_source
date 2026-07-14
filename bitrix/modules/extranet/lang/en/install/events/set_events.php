@@ -24,6 +24,51 @@ This message has been generated automatically.
 ";
 $MESS["EXTRANET_INVITATION_NAME"] = "New Site User Invitation";
 $MESS["EXTRANET_INVITATION_SUBJECT"] = "You've been invited to Bitrix24";
+$MESS["EXTRANET_PROJECT_FROM_ARCHIVE_DESC"] = "#WG_ID#: Project ID
+#WG_NAME#: Project name
+#MEMBER_EMAIL#: Project participant email
+#MEMBER_NAME#: Project participant first name
+#MEMBER_LAST_NAME#: Project participant last name
+#SITE_NAME#: Site name";
+$MESS["EXTRANET_PROJECT_FROM_ARCHIVE_MESSAGE"] = "Message from #SITE_NAME#
+------------------------------------------
+
+Hello #MEMBER_NAME#!
+
+Project '#WG_NAME#' [#WG_ID#] has been restored from archive on #SITE_NAME#.
+---------------------------------------------------------------------------
+
+This project is now available for editing.
+
+Use this link to access the project:
+https://#SERVER_NAME#/extranet/workgroups/group/#WG_ID#/
+
+This message was sent by a robot.";
+$MESS["EXTRANET_PROJECT_FROM_ARCHIVE_NAME"] = "Project restored from archive";
+$MESS["EXTRANET_PROJECT_FROM_ARCHIVE_SUBJECT"] = "#SITE_NAME#: Project '#WG_NAME#' restored from archive";
+$MESS["EXTRANET_PROJECT_TO_ARCHIVE_DESC"] = "#WG_ID#: Project ID
+#WG_NAME#: Project name
+#MEMBER_EMAIL#: Project participant email
+#MEMBER_NAME#: Project participant first name
+#MEMBER_LAST_NAME#: Project participant last name
+#SITE_NAME#: Site name";
+$MESS["EXTRANET_PROJECT_TO_ARCHIVE_MESSAGE"] = "Message from #SITE_NAME#
+------------------------------------------
+
+Hello #MEMBER_NAME#!
+
+Project '#WG_NAME#' [#WG_ID#] has been moved to archive on #SITE_NAME#.
+---------------------------------------------------------------------------
+
+This project is now read-only.
+
+Use this link to view the project:
+https://#SERVER_NAME#/extranet/workgroups/group/#WG_ID#/
+
+
+This message was sent by a robot.";
+$MESS["EXTRANET_PROJECT_TO_ARCHIVE_NAME"] = "Project moved to archive";
+$MESS["EXTRANET_PROJECT_TO_ARCHIVE_SUBJECT"] = "#SITE_NAME#: Project '#WG_NAME#' moved to archive";
 $MESS["EXTRANET_WG_FROM_ARCHIVE_DESC"] = "#WG_ID# - workgroup ID
 #WG_NAME# - workgroup name
 #MEMBER_EMAIL# - workgroup members' e-mails

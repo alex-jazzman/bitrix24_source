@@ -25,6 +25,7 @@ type Opener = {
 	openSettings: ({ onlyPanel?: string }) => Promise,
 	openConference: ({ code?: string, link?: string }) => Promise,
 	openChatCreation: (chatType: CreatableChatTypeItem) => Promise,
+	openChatUpdate: (dialogId: string) => Promise,
 	startVideoCall: (dialogId?: string, withVideo?: boolean) => Promise,
 	startPhoneCall: (number: string, params: JsonObject) => Promise,
 	startCallList: (callListId: number, params: JsonObject) => Promise,
@@ -307,6 +308,18 @@ class Messenger
 		}
 
 		return getOpener()?.openChatCreation(chatType, params);
+	}
+
+	async openChatUpdate(dialogId: string): Promise
+	{
+		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+		if (isRedirectAllowed)
+		{
+			return DesktopManager?.getInstance().redirectToChatUpdate(dialogId);
+		}
+
+		return getOpener()?.openChatUpdate(dialogId);
 	}
 
 	async startVideoCall(dialogId: string = '', withVideo: boolean = true): Promise

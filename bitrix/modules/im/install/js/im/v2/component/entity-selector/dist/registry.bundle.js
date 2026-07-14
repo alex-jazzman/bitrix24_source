@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_public, im_v2_application_core, im_v2_const, im_v2_lib_feature, im_v2_lib_localStorage, im_v2_component_elements_popup, im_v2_lib_notifier, im_v2_lib_utils, im_v2_lib_permission, im_v2_provider_service_chat, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, im_v2_component_elements_button, ui_entitySelector, im_v2_lib_analytics, im_v2_component_search, im_v2_lib_channel, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_rest, ui_infoHelper, intranet_invitationInput, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending) {
+(function (exports, main_core, im_public, im_v2_application_core, im_v2_const, im_v2_lib_feature, im_v2_lib_localStorage, im_v2_component_elements_popup, im_v2_lib_notifier, im_v2_lib_utils, im_v2_lib_permission, im_v2_provider_service_chat, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, im_v2_component_elements_button, ui_entitySelector, im_v2_lib_analytics, im_v2_component_search, im_v2_lib_channel, im_v2_lib_access, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_rest, ui_infoHelper, intranet_invitationInput, im_v2_lib_collab, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending) {
 	'use strict';
 
 	const ITEM_CLASS = 'bx-im-add-guests-tab__language-selector_item';
@@ -350,15 +350,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialogId: {
 				type: String,
 				required: true
-			},
-			isLoading: {
-				type: Boolean,
-				required: false
 			}
 		},
 		emits: ['inviteMembers', 'close'],
 		data() {
 			return {
+				isLoading: false,
 				searchQuery: '',
 				showHistory: true,
 				selectedItems: new Set()
@@ -500,8 +497,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					avatar: user.avatar.length > 0 ? user.avatar : null
 				};
 			},
-			onInviteClick() {
+			async onInviteClick() {
 				const members = [...this.selectedItems];
+				this.isLoading = true;
+				const canAdd = await im_v2_lib_access.ChatAccessManager.canAddUsers(this.dialogId, members);
+				if (!canAdd) {
+					this.isLoading = false;
+					return;
+				}
+				this.isLoading = false;
 				this.$emit('inviteMembers', {
 					members,
 					showHistory: this.showHistory
@@ -537,8 +541,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_BUTTON')"
 					:loading="isLoading"
 					:disabled="selectedItems.size === 0"
-					@click="onInviteClick"
 					:style="ButtonStyle.FILLED"
+					@click="onInviteClick"
 				/>
 				<UiButton
 					:size="ButtonSize.LARGE"
@@ -734,7 +738,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const POPUP_ID$2 = 'im-add-to-chat-popup';
-	const ARTICLE_CODE$1 = '28188420';
+	const ARTICLE_CODE = '28188420';
 
 	// @vue/component
 	const AddToChat = {
@@ -774,7 +778,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			POPUP_ID: () => POPUP_ID$2,
-			ARTICLE_CODE: () => ARTICLE_CODE$1,
+			ARTICLE_CODE: () => ARTICLE_CODE,
 			config() {
 				return {
 					titleBar: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MEMBERS_TITLE_MSGVER_1'),
@@ -989,7 +993,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const POPUP_ID$1 = 'im-add-to-collab-popup';
-	const ARTICLE_CODE = '22706836';
 
 	// @vue/component
 	const AddToCollab = {
@@ -1028,10 +1031,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			POPUP_ID: () => POPUP_ID$1,
-			ARTICLE_CODE: () => ARTICLE_CODE,
 			config() {
 				return {
-					titleBar: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE'),
+					titleBar: im_v2_lib_collab.CollabManager.getInviteHeaderText(),
 					closeIcon: true,
 					bindElement: this.bindElement,
 					offsetTop: this.popupConfig.offsetTop,
@@ -1051,6 +1053,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isEnabledCollabersInvitation() {
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.enabledCollabersInvitation);
 			},
+			isCollabV2Available() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabV2Available);
+			},
 			chatId() {
 				const chat = this.$store.getters['chats/get'](this.dialogId, true);
 				return chat.chatId;
@@ -1059,39 +1064,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const collab = this.$store.getters['chats/collabs/getByChatId'](this.chatId);
 				return collab.collabId;
 			},
-			isCurrentUserCollaber() {
-				const currentUser = this.$store.getters['users/get'](im_v2_application_core.Core.getUserId(), true);
-				return currentUser.type === im_v2_const.UserType.collaber;
-			},
 			guestDescription() {
-				if (this.isCurrentUserCollaber) {
-					return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TEXT_GUEST');
-				}
-				return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST');
+				return im_v2_lib_collab.CollabManager.getInviteDescriptionText();
 			},
 			guestDescriptionTitle() {
-				if (this.isCurrentUserCollaber) {
-					return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TITLE_GUEST');
-				}
-				return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TITLE_EMPLOYEE');
+				return im_v2_lib_collab.CollabManager.getInviteTitleText();
+			},
+			helpdeskArticleCode() {
+				return im_v2_lib_collab.CollabManager.getInviteArticleCode();
 			},
 			canUpdateLink() {
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.updateInviteLink, this.dialogId);
 			}
 		},
+		watch: {
+			activeTabId() {
+				this.initInvitationInput();
+			}
+		},
 		created() {
-			this.initInvitationInput();
-			this.activeTabId = this.isEnabledCollabersInvitation ? im_v2_const.TabId.guests : im_v2_const.TabId.employees;
+			this.setInitialActiveTab();
 		},
 		mounted() {
-			this.invitationGuests.renderTo(this.$refs['collab-invitation-input']);
-			this.invitationLangCode = this.defaultLanguageCode;
+			this.initInvitationInput();
 		},
 		beforeUnmount() {
-			this.invitationGuests.unsubscribe('onReadySave', this.onReadySaveInputHandler);
-			this.invitationGuests.unsubscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+			this.destroyInvitationInput();
 		},
 		methods: {
+			setInitialActiveTab() {
+				if (this.isEnabledCollabersInvitation && !this.isCollabV2Available) {
+					this.activeTabId = im_v2_const.TabId.guests;
+				}
+			},
 			onTabSwitch(tabId) {
 				this.activeTabId = tabId;
 			},
@@ -1144,9 +1149,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.isInvitingGuests = false;
 			},
 			initInvitationInput() {
+				if (this.invitationGuests || this.activeTabId !== im_v2_const.TabId.guests) {
+					return;
+				}
 				this.invitationGuests = new intranet_invitationInput.InvitationInput();
 				this.invitationGuests.subscribe('onReadySave', this.onReadySaveInputHandler);
 				this.invitationGuests.subscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+				void this.renderInvitationInput();
+			},
+			destroyInvitationInput() {
+				if (!this.invitationGuests) {
+					return;
+				}
+				this.invitationGuests.unsubscribe('onReadySave', this.onReadySaveInputHandler);
+				this.invitationGuests.unsubscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+			},
+			async renderInvitationInput() {
+				await this.$nextTick();
+				this.invitationGuests.renderTo(this.$refs['collab-invitation-input']);
+				this.invitationLangCode = this.defaultLanguageCode;
 			},
 			async addGuest() {
 				this.isInvitingGuests = true;
@@ -1173,7 +1194,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<AddGuestContent
 					v-if="isGuestTab"
 					:chatId="chatId"
-					:articleCode="ARTICLE_CODE"
+					:articleCode="helpdeskArticleCode"
 					:guestTitle="guestDescriptionTitle"
 					:guestDescription="guestDescription"
 					:isAddButtonDisabled="isAddButtonDisabled"
@@ -1222,6 +1243,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialogId: {
 				type: String,
 				required: true
+			},
+			directForward: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['close'],
@@ -1247,12 +1272,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isSelfChat(dialogId) {
 				return this.$store.getters['chats/isSelfChat'](dialogId);
 			},
-			async forwardToSelfChat(forwardDialogId) {
+			async forwardDirectly(forwardDialogId) {
 				await im_v2_provider_service_sending.SendingService.getInstance().forwardMessages({
 					forwardIds: this.messagesIds,
 					dialogId: forwardDialogId
 				});
-				im_v2_lib_notifier.Notifier.message.onForwardSelfChatComplete(this.messagesIds);
+				im_v2_lib_notifier.Notifier.message.onForwardComplete(this.messagesIds, forwardDialogId);
 				im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
 			},
 			async onSelectItem(event) {
@@ -1264,8 +1289,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				const isSelfChatForward = this.isSelfChat(forwardDialogId);
 				const isSelfChatOpen = this.isSelfChat(this.dialogId);
-				if (isSelfChatForward && !isSelfChatOpen) {
-					void this.forwardToSelfChat(forwardDialogId);
+				if (this.directForward || isSelfChatForward && !isSelfChatOpen) {
+					void this.forwardDirectly(forwardDialogId);
 				} else {
 					await im_public.Messenger.openChat(forwardDialogId);
 					this.getEmitter().emit(im_v2_const.EventType.textarea.insertForward, {
@@ -1319,6 +1344,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			dialogId: {
 				type: String,
 				required: true
+			},
+			directForward: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['close'],
@@ -1356,7 +1385,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		>
 			<ForwardContent
 				:dialogId="dialogId"
-				:messagesIds="messagesIds" 
+				:messagesIds="messagesIds"
+				:directForward="directForward"
 				@close="$emit('close')"
 			/>
 		</MessengerPopup>
@@ -1367,5 +1397,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.Messenger.v2.Component.Elements, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.UI, BX.Intranet, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.Messenger.v2.Component.Elements, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.UI, BX.Intranet, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=registry.bundle.js.map

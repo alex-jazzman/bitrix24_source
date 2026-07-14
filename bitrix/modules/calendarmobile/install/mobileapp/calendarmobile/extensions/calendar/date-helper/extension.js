@@ -141,7 +141,7 @@ jn.define('calendar/date-helper', (require, exports, module) => {
 			const format = moment.inThisYear ? dayOfWeekMonth() : fullDate();
 			const dateString = moment.format(format);
 
-			return dateString.at(0).toUpperCase() + dateString.slice(1);
+			return dateString.charAt(0).toUpperCase() + dateString.slice(1);
 		}
 
 		static getDatetimeFormat(timestamp)

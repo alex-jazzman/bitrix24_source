@@ -42,6 +42,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/project-access-guard',
 		'im:messenger/lib/rest',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/ui/base/item',

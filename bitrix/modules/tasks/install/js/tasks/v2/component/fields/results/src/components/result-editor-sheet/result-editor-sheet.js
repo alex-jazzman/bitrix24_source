@@ -1,5 +1,5 @@
 import { Text } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Core } from 'tasks.v2.core';
 import { EventName, Model } from 'tasks.v2.const';

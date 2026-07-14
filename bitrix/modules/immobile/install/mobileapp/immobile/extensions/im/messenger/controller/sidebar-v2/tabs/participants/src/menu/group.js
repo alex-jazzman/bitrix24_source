@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 
 		ownerAction()
 		{
-			if (!this.canChangeOwner())
+			if (!this.canChangeManagers())
 			{
 				return null;
 			}
@@ -93,19 +93,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 				&& this.permissionManager.canRemoveParticipants();
 		}
 
-		isOwner()
-		{
-			return this.dialogHelper.isCurrentUserOwner;
-		}
-
 		isManager()
 		{
 			return this.dialogHelper.dialogModel.managerList.includes(this.getUserId());
 		}
 
-		canChangeOwner()
+		canChangeManagers()
 		{
-			return this.permissionManager.canChangeOwner() && this.isOwner();
+			return !this.isAdmin() && this.permissionManager.canChangeManagers();
 		}
 
 		onAddManager = () => onAddManager(this.getDialogId(), this.getUserId());

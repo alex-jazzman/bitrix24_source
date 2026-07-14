@@ -1,7 +1,8 @@
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+
 import { PageFactory } from './page-factory';
-import type { PageOptions } from './type/page-options';
-import { BaseEvent, EventEmitter } from 'main.core.events';
 import InviteType from './type/invite-type';
+import { type PageOptions } from './type/page-options';
 
 export class PageProvider
 {
@@ -22,26 +23,11 @@ export class PageProvider
 
 		if (this.#options.canCurrentUserInvite)
 		{
-			if (this.#options.useLocalEmailProgram)
-			{
-				this.#pages.set(
-					'invite-email',
-					this.#options.isSelfRegisterEnabled
-						? this.#pageFactory.createLocalEmailPage()
-						: this.#pageFactory.createInvitePage(InviteType.EMAIL),
-				);
-				this.#pages.set('invite', this.#pageFactory.createInvitePage(InviteType.PHONE));
-				this.#pages.set('invite-with-group-dp', this.#pageFactory.createInvitePage(InviteType.EMAIL, false));
-			}
-			else
-			{
-				this.#pages.set('invite', this.#pageFactory.createInvitePage(
-					this.#options.smsAvailable
-						? InviteType.ALL
-						: InviteType.EMAIL,
-				));
-			}
-
+			this.#pages.set('invite', this.#pageFactory.createInvitePage(
+				this.#options.smsAvailable
+					? InviteType.ALL
+					: InviteType.EMAIL,
+			));
 			this.#pages.set('add', this.#pageFactory.createRegisterPage());
 			this.#pages.set('self', this.#options.isSelfRegisterEnabled
 				? this.#pageFactory.createLinkPage()
@@ -73,16 +59,10 @@ export class PageProvider
 			return;
 		}
 
-		if (event.data?.selfEnabled)
-		{
-			this.#pages.set('invite-email', this.#pageFactory.createLocalEmailPage());
-			this.#pages.set('self', this.#pageFactory.createLinkPage());
-		}
-		else
-		{
-			this.#pages.set('invite-email', this.#pageFactory.createInvitePage(InviteType.EMAIL));
-			this.#pages.set('self', this.#pageFactory.createLinkDisabledPage());
-		}
+		this.#pages.set(
+			'self',
+			event.data?.selfEnabled ? this.#pageFactory.createLinkPage() : this.#pageFactory.createLinkDisabledPage(),
+		);
 
 		EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:pageUpdate', {
 			pages: this.#pages,

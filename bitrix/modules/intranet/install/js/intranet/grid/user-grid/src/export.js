@@ -5,6 +5,7 @@ import { EmployeeField } from './field/employee-field';
 import { ConnectField } from './field/connect-field';
 import { ActivityField } from './field/activity-field';
 import { DepartmentField } from './field/department-field';
+import { OtpStatusField } from './field/otp-status-field';
 import { GridManager } from './grid-manager';
 import { Panel } from './panel';
 import './style.css';
@@ -17,6 +18,7 @@ export {
 	ConnectField,
 	ActivityField,
 	DepartmentField,
+	OtpStatusField,
 	GridManager,
 	Panel,
 };

@@ -1,7 +1,4 @@
 <?php
-
-use Bitrix\Socialnetwork\Collab\Registry\CollabRegistry;
-
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -18,6 +15,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 $component = $this->getComponent();
 $pageId = "group";
 $blogPageId = '';
+
+$groupId = (int)($arResult['VARIABLES']['group_id'] ?? 0);
 
 $componentParams = [
 	"PATH_TO_USER" => $arParams["PATH_TO_USER"],
@@ -43,7 +42,7 @@ $componentParams = [
 	"SET_NAV_CHAIN" => $arResult["SET_NAV_CHAIN"],
 	"SET_TITLE" => $arResult["SET_TITLE"],
 	"USER_ID" => $arResult["VARIABLES"]["user_id"] ?? 0,
-	"GROUP_ID" => $arResult["VARIABLES"]["group_id"] ?? 0,
+	"GROUP_ID" => $groupId,
 	"ITEMS_COUNT" => $arParams["ITEM_MAIN_COUNT"],
 	"PATH_TO_GROUP_BLOG_POST" => $arResult["PATH_TO_GROUP_BLOG_POST"],
 	"PATH_TO_GROUP_BLOG" => $arResult["PATH_TO_GROUP_BLOG"],
@@ -105,6 +104,11 @@ if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 }
 include("util_group_limit.php");
 
+if (include('util_project_navigation.php'))
+{
+	return;
+}
+
 $favoritesTitleTemplate = (
 	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
 		? ''
@@ -120,7 +124,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => $componentParams,
 		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
-		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
+		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $groupId,
 		'POPUP_COMPONENT_PARENT' => $this->getComponent(),
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_PADDING' => false,

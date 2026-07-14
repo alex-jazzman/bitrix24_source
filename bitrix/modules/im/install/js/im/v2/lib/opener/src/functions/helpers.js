@@ -1,11 +1,10 @@
 import { Type } from 'main.core';
-import { SidePanel } from 'main.sidepanel';
+import { SidePanel, type SliderManager } from 'main.sidepanel';
 
 import { GetParameter, NavigationMenuItem, Path } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Utils } from 'im.v2.lib.utils';
-
-import type { SliderManager } from 'main.sidepanel';
+import { MessengerSlider } from 'im.v2.lib.slider';
 
 type NavigationItem = $Values<typeof NavigationMenuItem>;
 type GetParameterType = $Values<typeof GetParameter>;
@@ -43,13 +42,35 @@ export const normalizeEntityId = (entityId: any): string => {
 	return '';
 };
 
-export const isEmbeddedModeWithActiveSlider = (): boolean => {
+export const handleOpenTarget = async (config: OpenChatConfig): void => {
+	if (shouldOpenNewTab())
+	{
+		openChatInNewTab(config);
+
+		return;
+	}
+
+	await openChatInSlider(config);
+};
+
+const shouldOpenNewTab = (): boolean => {
+	if (isEmbeddedModeWithActiveSlider())
+	{
+		return true;
+	}
+
+	const messengerSlider = MessengerSlider.getInstance();
+
+	return messengerSlider.isOpened() && !messengerSlider.isFocused();
+};
+
+const isEmbeddedModeWithActiveSlider = (): boolean => {
 	const sidePanelManager: SliderManager = SidePanel.Instance;
 
 	return LayoutManager.getInstance().isEmbeddedMode() && sidePanelManager.getOpenSlidersCount() > 0;
 };
 
-export const openChatInNewTab = ({ navigationItem, dialogId, messageId }: OpenChatConfig): void => {
+const openChatInNewTab = ({ navigationItem, dialogId, messageId }: OpenChatConfig): void => {
 	const getParams = new URLSearchParams();
 
 	const urlParameter = getUrlParameterForNavigation(navigationItem);
@@ -66,10 +87,27 @@ export const openChatInNewTab = ({ navigationItem, dialogId, messageId }: OpenCh
 	Utils.browser.openLink(`${Path.online}?${getParams.toString()}`);
 };
 
+const openChatInSlider = async ({ navigationItem, dialogId, messageId }: OpenChatConfig): void => {
+	await MessengerSlider.getInstance().openSlider();
+
+	const layoutParams = {
+		name: navigationItem,
+		entityId: dialogId,
+	};
+
+	if (messageId > 0)
+	{
+		layoutParams.contextId = messageId;
+	}
+
+	await LayoutManager.getInstance().setLayout(layoutParams);
+};
+
 const getUrlParameterForNavigation = (navigationItem: NavigationItem): GetParameterType => {
 	const navigationToGetParameterMap = {
 		[NavigationMenuItem.chat]: GetParameter.openChat,
 		[NavigationMenuItem.openlines]: GetParameter.openLines,
+		[NavigationMenuItem.openlinesV2]: GetParameter.openLines,
 	};
 
 	return navigationToGetParameterMap[navigationItem] ?? GetParameter.openChat;

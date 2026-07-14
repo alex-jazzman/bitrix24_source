@@ -28,10 +28,45 @@ jn.define('disk/opener/unified-link/rest', (require, exports, module) => {
 		return BX.ajax.runAction(
 			'disk.api.UnifiedLinkActions.get',
 			{ data },
-		).catch(console.error);
+		);
+	}
+
+	/**
+	 * @param {string} uniqueCode
+	 * @param {string} password
+	 * @param {string|number} [versionId]
+	 * @returns {Promise<Object>}
+	 */
+	function validateUnifiedLinkPassword(uniqueCode, password, versionId)
+	{
+		if (!Type.isStringFilled(uniqueCode?.trim()))
+		{
+			return Promise.reject(new Error('uniqueCode is required'));
+		}
+
+		if (!Type.isStringFilled(password?.trim()))
+		{
+			return Promise.reject(new Error('password is required'));
+		}
+
+		const data = {
+			uniqueCode,
+			password,
+		};
+
+		if (versionId)
+		{
+			data.versionId = versionId;
+		}
+
+		return BX.ajax.runAction(
+			'disk.api.UnifiedLinkActions.validatePassword',
+			{ data },
+		);
 	}
 
 	module.exports = {
 		getUnifiedLinkData,
+		validateUnifiedLinkPassword,
 	};
 });

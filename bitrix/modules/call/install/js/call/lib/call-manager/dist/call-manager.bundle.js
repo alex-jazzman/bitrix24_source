@@ -1,15 +1,20 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,main_core_events,call_core,im_public,im_v2_provider_service_chat,im_v2_lib_slider,im_v2_const,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,im_v2_lib_desktopApi,rest_client,call_lib_callSliderManager,im_call_compatible,main_core,ui_buttons,im_v2_application_core) {
+(function (exports,main_core_events,call_core,im_public,im_v2_provider_service_chat,im_v2_lib_slider,im_v2_const,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,im_v2_lib_desktopApi,rest_client,call_lib_callSliderManager,im_call_compatible,main_core,ui_buttons,im_v2_application_core,im_v2_lib_access) {
 	'use strict';
 
 	let _ = t => t,
 	  _t;
 	const openCallUserSelector = async params => {
-	  const handleAddCLick = () => {
+	  const handleAddClick = async () => {
 	    const selectedItems = dialog.getSelectedItems();
 	    const preparedItems = prepareUser(selectedItems);
+	    const userIds = preparedItems.map(item => String(item.id));
+	    const canAddChatUsers = await im_v2_lib_access.ChatAccessManager.canAddUsers(params.dialogId, userIds);
+	    if (!canAddChatUsers) {
+	      return;
+	    }
 	    params.onSelect({
 	      users: preparedItems
 	    });
@@ -43,7 +48,7 @@ this.BX.Call = this.BX.Call || {};
 	        id: 'im.userDataFilter'
 	      }]
 	    }],
-	    footer: getFooter(handleAddCLick, handleCancelCLick),
+	    footer: getFooter(handleAddClick, handleCancelCLick),
 	    popupOptions: {
 	      targetContainer: params.targetContainer
 	    }
@@ -66,13 +71,13 @@ this.BX.Call = this.BX.Call || {};
 	    };
 	  });
 	};
-	const getFooter = (handleAddCLick, handleCancelCLick) => {
+	const getFooter = (handleAddClick, handleCancelCLick) => {
 	  const addButtonTitle = main_core.Loc.getMessage('CALL_LIB_CALL_ADD_BUTTON');
 	  const cancelButtonTitle = main_core.Loc.getMessage('CALL_LIB_CALL_CANCEL_BUTTON');
 	  return main_core.Tag.render(_t || (_t = _`
 		<button class="ui-btn ui-btn-xs ui-btn-primary" onclick="${0}">${0}</button>
 		<button class="ui-btn ui-btn-xs ui-btn-light-border" onclick="${0}">${0}</button>
-	`), handleAddCLick, addButtonTitle, handleCancelCLick, cancelButtonTitle);
+	`), handleAddClick, addButtonTitle, handleCancelCLick, cancelButtonTitle);
 	};
 
 	var _controller = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("controller");
@@ -602,5 +607,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallManager = CallManager;
 
-}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Event,BX.Call,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Call.Lib,BX,BX,BX.UI,BX.Messenger.v2.Application));
+}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Event,BX.Call,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Call.Lib,BX,BX,BX.UI,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
 //# sourceMappingURL=call-manager.bundle.js.map

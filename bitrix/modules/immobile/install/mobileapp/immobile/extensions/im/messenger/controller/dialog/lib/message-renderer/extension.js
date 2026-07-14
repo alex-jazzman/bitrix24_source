@@ -530,16 +530,23 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.updateMessageIndex(messageList);
 			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList));
 
-			viewMessageList.unshift(this.viewMessageCollection[this.messageIdsStack[0]]);
+			const firstStackMessage = this.viewMessageCollection[this.messageIdsStack[0]];
+			if (firstStackMessage)
+			{
+				viewMessageList.unshift(firstStackMessage);
+			}
 
 			let viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 			viewMessageListWithTemplate = this.insertMarkedSeparator(messageList, viewMessageListWithTemplate);
 
 			const viewMessageListToPush = this.processTopNearbyMessages([...viewMessageListWithTemplate]);
 
-			const updateMessage = viewMessageListToPush.shift();
+			const updateMessage = firstStackMessage ? viewMessageListToPush.shift() : null;
 			this.putMessageIdToStackStart(viewMessageListToPush);
-			await this.updateViewMessages([updateMessage]);
+			if (updateMessage)
+			{
+				await this.updateViewMessages([updateMessage]);
+			}
 
 			await this.view.pushMessages(viewMessageListToPush);
 
@@ -566,10 +573,20 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList));
 			const endedMessage = this.getBottomMessage();
 
-			viewMessageList.unshift(endedMessage);
+			if (endedMessage)
+			{
+				viewMessageList.unshift(endedMessage);
+			}
 			let viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList.reverse());
-			viewMessageListWithTemplate = viewMessageListWithTemplate.filter((mes) => mes.id !== endedMessage.id);
+			if (endedMessage)
+			{
+				viewMessageListWithTemplate = viewMessageListWithTemplate.filter((mes) => mes.id !== endedMessage.id);
+			}
 			this.putMessageIdToStack([...viewMessageListWithTemplate].reverse());
+
+			viewMessageListWithTemplate.forEach((message) => {
+				this.viewMessageCollection[message.id] = message;
+			});
 
 			const packAuthorPreviousMessages = this.getPackAuthorPreviousMessages(messageList[0]);
 			this.messageList.push(...messageList);
@@ -588,10 +605,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			{
 				await this.#addNewMessages(viewMessageListToAdd);
 			}
-
-			viewMessageListWithTemplate.forEach((message) => {
-				this.viewMessageCollection[message.id] = message;
-			});
 
 			if (this.#shouldScrollLastMessageToTop(messageList))
 			{
@@ -864,6 +877,23 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		/**
 		 * @private
+		 * @param {MessagesModelState | null | undefined} modelMessage
+		 * @return {Message | null}
+		 */
+		#getViewMessageByModel(modelMessage)
+		{
+			if (!modelMessage)
+			{
+				return null;
+			}
+
+			return this.viewMessageCollection[modelMessage.id]
+				|| this.viewMessageCollection[modelMessage.templateId]
+				|| null;
+		}
+
+		/**
+		 * @private
 		 * @desc Returns previous pack messages ( find by authorId )
 		 * @param {MessagesModelState} currentModelMessage
 		 * @return {Array<Message>} packMessage
@@ -894,14 +924,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					break;
 				}
 
-				if (String(this.messageIdsStack[i]) === this.idAfterUnreadSeparatorMessage)
+				const viewMessage = this.#getViewMessageByModel(modelMessage);
+				if (!viewMessage)
 				{
-					packPreviousMessage.push(this.viewMessageCollection[modelMessage.id]
-						|| this.viewMessageCollection[modelMessage.templateId]);
 					break;
 				}
-				packPreviousMessage.push(this.viewMessageCollection[modelMessage.id]
-					|| this.viewMessageCollection[modelMessage.templateId]);
+				if (String(this.messageIdsStack[i]) === this.idAfterUnreadSeparatorMessage)
+				{
+					packPreviousMessage.push(viewMessage);
+					break;
+				}
+				packPreviousMessage.push(viewMessage);
 			}
 
 			return packPreviousMessage;
@@ -926,9 +959,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				return [];
 			}
 
-			const centerMessage = this.viewMessageCollection[modelMessageId]
-				|| this.viewMessageCollection[modelMessageIdStr]
-				|| this.viewMessageCollection[modelMessageTemplateId];
+			const centerMessage = this.#getViewMessageByModel(currentModelMessage);
+			if (!centerMessage)
+			{
+				return [];
+			}
+
 			const packMessage = [centerMessage]; // push center message on start iterable
 			for (let i = indexMessage + 1; i < this.messageIdsStack.length; i++) // get newest messages
 			{
@@ -944,8 +980,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					break;
 				}
 
-				const viewMessage = this.viewMessageCollection[modelMessage.id]
-					|| this.viewMessageCollection[modelMessage.templateId];
+				const viewMessage = this.#getViewMessageByModel(modelMessage);
+				if (!viewMessage)
+				{
+					break;
+				}
 				packMessage.push(viewMessage);
 			}
 
@@ -974,14 +1013,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					break;
 				}
 
-				if (String(this.messageIdsStack[i]) === this.idAfterUnreadSeparatorMessage)
+				const viewMessage = this.#getViewMessageByModel(modelMessage);
+				if (!viewMessage)
 				{
-					packMessage.unshift(this.viewMessageCollection[modelMessage.id]
-						|| this.viewMessageCollection[modelMessage.templateId]);
 					break;
 				}
-				packMessage.unshift(this.viewMessageCollection[modelMessage.id]
-					|| this.viewMessageCollection[modelMessage.templateId]);
+				if (String(this.messageIdsStack[i]) === this.idAfterUnreadSeparatorMessage)
+				{
+					packMessage.unshift(viewMessage);
+					break;
+				}
+				packMessage.unshift(viewMessage);
 			}
 
 			return packMessage;
@@ -1155,8 +1197,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 						return listMessage;
 					});
-					const messageIdsStackIndex = this.messageIdsStack.indexOf(message.templateId);// TODO add if
-					this.messageIdsStack.splice(messageIdsStackIndex, 1, String(message.id));
+					const messageIdsStackIndex = this.messageIdsStack.indexOf(message.templateId);
+					if (messageIdsStackIndex !== -1)
+					{
+						this.messageIdsStack.splice(messageIdsStackIndex, 1, String(message.id));
+					}
 				}
 			});
 
@@ -1533,6 +1578,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					const oldestMessage = this.getMessage(message.id);
 					if (!oldestMessage)
 					{
+						messageListWithTemplate.push(message);
+
 						return;
 					}
 
@@ -1560,10 +1607,19 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const isNewestMessage = index === messageList.length - 1;
 				if (isNewestMessage)
 				{
-					const previousMessage = this.getMessage(messageList[index - 1].id);
+					const previousNeighbor = messageList[index - 1];
+					if (Type.isNil(previousNeighbor))
+					{
+						messageListWithTemplate.push(message);
+
+						return;
+					}
+					const previousMessage = this.getMessage(previousNeighbor.id);
 					const newestMessage = this.getMessage(messageList[index].id);
 					if (!previousMessage?.date || !newestMessage?.date)
 					{
+						messageListWithTemplate.push(message);
+
 						return;
 					}
 					const previousMessageDate = this.toDateCode(previousMessage.date);
@@ -1597,10 +1653,20 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					return;
 				}
 
-				const previousMessage = this.getMessage(messageList[index - 1].id);
-				const currentMessage = this.getMessage(messageList[index].id);
-				if (!previousMessage || !currentMessage)
+				const previousNeighbor = messageList[index - 1];
+				const currentNeighbor = messageList[index];
+				if (Type.isNil(previousNeighbor) || Type.isNil(currentNeighbor))
 				{
+					messageListWithTemplate.push(message);
+
+					return;
+				}
+				const previousMessage = this.getMessage(previousNeighbor.id);
+				const currentMessage = this.getMessage(currentNeighbor.id);
+				if (!previousMessage?.date || !currentMessage?.date)
+				{
+					messageListWithTemplate.push(message);
+
 					return;
 				}
 
@@ -1660,6 +1726,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		processNearbyMessagesList(messageList)
 		{
 			return messageList
+				.filter((message) => !Type.isNil(message))
 				.reverse()
 				.map((message, index, list) => {
 					const previousMessage = list[index - 1];
@@ -1677,6 +1744,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		processTopNearbyMessages(messageList)
 		{
 			return messageList
+				.filter((message) => !Type.isNil(message))
 				.reverse()
 				.map((message, index, list) => {
 					const previousMessage = list[index - 1];
@@ -1695,6 +1763,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		processBottomNearbyMessages(messageList)
 		{
 			return messageList
+				.filter((message) => !Type.isNil(message))
 				.reverse()
 				.map((message, index, list) => {
 					const previousMessage = index === 0 ? this.getPreviousMessage(message.id) : list[index - 1];
@@ -1724,43 +1793,36 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const isPrivateDialog = dialogType === DialogType.user || dialogType === DialogType.private;
 			if (!previousMessage)
 			{
-				message.setAuthorTopMessage(false);
-				message.setAuthorBottomMessage(false);
-
-				const previousModelMessage = this.getMessage(previousMessage?.id);
 				const modelMessage = this.getMessage(message?.id);
 				const nextModelMessage = this.getMessage(nextMessage?.id);
 
+				// Current is the top of chat -> top of author group by definition.
+				message.setAuthorTopMessage(true);
+				message.setAuthorBottomMessage(false);
+
 				/** margins block */
-				this.setMargins(previousModelMessage, modelMessage, nextModelMessage, message);
+				this.setMargins(null, modelMessage, nextModelMessage, message);
+
+				const sameAuthorBelow = !Type.isNil(nextModelMessage?.authorId)
+					&& nextModelMessage.authorId === modelMessage?.authorId;
 
 				/** avatar block */
-				if (nextModelMessage?.authorId === modelMessage?.authorId)
+				if (sameAuthorBelow)
 				{
+					// Top of multi-message group: avatar lives on the bottom message.
 					message.setShowAvatar(modelMessage, false);
-					message.setAuthorBottomMessage(false);
-					message.setAuthorTopMessage(false);
 				}
-
-				if (
-					!Type.isNil(nextModelMessage?.authorId)
-					&& nextModelMessage?.authorId !== modelMessage?.authorId
-					&& (dialogModelState.parentMessageId !== 0 && modelMessage.id !== dialogModelState.parentMessageId)
-					// scenario for comments chat when initial message is your
-				)
+				else
 				{
+					// Solo group: different author below or no next message at all.
+					message.setAuthorBottomMessage(true);
 					message.setShowAvatar(modelMessage, true);
 				}
 
-				if (!nextMessage)
+				const isYourMessage = modelMessage?.authorId === this.currentUserId;
+				if (isYourMessage)
 				{
-					message.setAuthorTopMessage(true);
-					message.setAuthorBottomMessage(true);
-				}
-
-				if (nextModelMessage?.authorId !== modelMessage?.authorId)
-				{
-					message.setAuthorBottomMessage(true);
+					message.setShowAvatar(modelMessage, false);
 				}
 
 				if (message.type === MessageType.systemText)
@@ -1788,7 +1850,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				message.setAuthorTopMessage(true);
 				message.setAuthorBottomMessage(true);
 
-				if (previousModelMessage.authorId === modelMessage.authorId
+				if (previousModelMessage?.authorId
+					&& previousModelMessage.authorId === modelMessage?.authorId
 					&& previousModelMessage.id !== modelMessage.id)
 				{
 					message.setAuthorTopMessage(false);
@@ -1799,7 +1862,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					this.preparePrivateMessage(message, modelMessage);
 				}
-				else
+				else if (modelMessage?.authorId)
 				{
 					message.setShowAvatar(modelMessage, true);
 				}

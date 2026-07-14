@@ -3,9 +3,6 @@
  */
 jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const {
-		AnchorType,
-	} = require('im/messenger/const');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
 	const { RecentItemSectionCode } = require('im/messenger/lib/element/recent/item/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -46,7 +43,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 			this.params.model = {
 				...this.params.model,
-				commentsCounter: channelCounters,
+				childrenCounter: channelCounters,
 			};
 
 			return this;
@@ -85,9 +82,9 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			{
 				this.messageCount = counter;
 			}
-			else if (this.getCommentsCounterItem())
+			else if (this.getChildrenCounter())
 			{
-				this.messageCount = this.getCommentsCounterItem();
+				this.messageCount = this.getChildrenCounter();
 			}
 
 			return this;
@@ -123,7 +120,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			if (this.getCommentsCounterItem() > 0 && !counter)
+			if (this.getChildrenCounter() > 0 && !counter)
 			{
 				this.styles.counter.backgroundColor = Theme.colors.accentMainSuccess;
 
@@ -143,11 +140,11 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		 */
 		createCounterTestId()
 		{
-			const commentCounters = this.getCommentsCounterItem();
+			const childrenCounter = this.getChildrenCounter();
 			const dialog = this.getDialogItem();
 			const dialogCounters = dialog.counter;
 
-			if (this.messageCount === 0 && !this.unread && commentCounters === 0)
+			if (this.messageCount === 0 && !this.unread && childrenCounter === 0)
 			{
 				this.counterTestId = null;
 
@@ -155,7 +152,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			}
 
 			const prefix = CounterPrefix.listItemCounter;
-			const value = dialogCounters > 0 || commentCounters > 0 ? dialogCounters || commentCounters : CounterValue.unread;
+			const value = dialogCounters > 0 || childrenCounter > 0 ? dialogCounters || childrenCounter : CounterValue.unread;
 
 			let postfix = '';
 			if (this.isMute)
@@ -172,7 +169,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			}
 
 			const dialogId = this.getModelItem().id;
-			const suffix = (this.getCommentsCounterItem() > 0 && !dialog.counter)
+			const suffix = (this.getChildrenCounter() > 0 && !dialog.counter)
 				? CounterSuffix.comments
 				: CounterSuffix.posts;
 
@@ -205,19 +202,17 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		/**
 		 * @return {number}
 		 */
-		getCommentsCounterItem()
+		getChildrenCounter()
 		{
-			return this.params.model.commentsCounter;
+			return this.params.model.childrenCounter;
 		}
 
 		createCommentsStyle()
 		{
-			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](this.dialog?.chatId, AnchorType.mention);
-
 			if (
-				this.getCommentsCounterItem()
+				this.getChildrenCounter()
 				&& this.getCounter()
-				&& !hasMention
+				&& !this.hasMention()
 			)
 			{
 				this.styles.comments = {
@@ -259,9 +254,9 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 		needShowLikes()
 		{
-			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](this.dialog?.chatId, AnchorType.mention);
+			const hasMention = this.hasMention();
 			const showCounter = Boolean(this.getDialogItem().counter);
-			const showComments = this.getCommentsCounterItem() && showCounter && !hasMention;
+			const showComments = this.getChildrenCounter() && showCounter && !hasMention;
 
 			let entitiesCount = 0;
 			entitiesCount = showCounter ? entitiesCount + 1 : entitiesCount;

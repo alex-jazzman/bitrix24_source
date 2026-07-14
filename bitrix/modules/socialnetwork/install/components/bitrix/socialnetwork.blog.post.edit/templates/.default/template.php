@@ -460,8 +460,7 @@ HTML;
 	}
 
 	?><div class="feed-add-post-micro" id="micro<?=$jsObjName?>" onclick="
-
-		BX.Socialnetwork.Livefeed.PostForm.getInstance().get({
+		BX.Socialnetwork?.Livefeed?.PostForm.getInstance().get({
 			callback: function() {
 				BX.onCustomEvent(BX('div<?=$jsObjName?>'), 'OnControlClick');
 				if (BX('div<?=$jsObjName?>').style.display == 'none')

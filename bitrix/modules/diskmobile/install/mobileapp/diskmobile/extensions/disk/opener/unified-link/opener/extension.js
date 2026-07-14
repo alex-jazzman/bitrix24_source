@@ -7,9 +7,28 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	const { FileType } = require('disk/enum');
 	const { withCurrentDomain } = require('utils/url');
 	const { requireLazy } = require('require-lazy');
-	const { getUnifiedLinkData } = require('disk/opener/unified-link/rest');
+	const { showErrorToast, showToast } = require('toast');
+	const { PasswordInputBox } = require('layout/ui/password-input-box');
+	const {
+		getUnifiedLinkData,
+		validateUnifiedLinkPassword,
+	} = require('disk/opener/unified-link/rest');
+	const { Icon } = require('ui-system/blocks/icon');
+	const { Loc } = require('loc');
 
-	const supportedFileTypes = new Set([FileType.FLIPCHART, FileType.DOCUMENT, FileType.PDF]);
+	const supportedFileTypes = new Set([
+		FileType.IMAGE,
+		FileType.VIDEO,
+		FileType.DOCUMENT,
+		FileType.ARCHIVE,
+		FileType.SCRIPTS,
+		FileType.UNKNOWN,
+		FileType.PDF,
+		FileType.AUDIO,
+		FileType.KNOWN,
+		FileType.VECTOR_IMAGE,
+		FileType.FLIPCHART,
+	]);
 
 	/**
 	 * @class UnifiedOpener
@@ -33,7 +52,7 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		constructor(props)
 		{
 			this.#props = props ?? {};
-			this.#uniqueCode = props.uniqueCode || null;
+			this.#uniqueCode = props.uniqueCode ? props.uniqueCode.replace('#__bx_android_click_detect__', '') : null;
 		}
 
 		async open()
@@ -43,8 +62,35 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 				return Promise.reject(new Error('uniqueCode is required'));
 			}
 
-			const linkData = await this.#getUnifiedLinkData().catch(console.error);
+			let linkData = null;
+			try
+			{
+				linkData = await this.#getUnifiedLinkData();
+			}
+			catch (error)
+			{
+				if (this.#shouldOpenPasswordInputBox(error))
+				{
+					return this.#openPasswordInputBox();
+				}
 
+				if (error?.errors?.some((ajaxError) => Boolean(ajaxError?.code === 'FORBIDDEN')))
+				{
+					this.#showForbiddenToast();
+
+					return Promise.reject(error);
+				}
+
+				this.#showErrorToast(error);
+
+				return Promise.reject(error);
+			}
+
+			return this.#openLinkData(linkData);
+		}
+
+		#openLinkData(linkData)
+		{
 			if (isEmpty(linkData) || linkData.status !== 'success')
 			{
 				void showInternalAlert();
@@ -77,13 +123,19 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 			{
 				case FileType.FLIPCHART:
 					return this.#openBoard(fileData);
-				case FileType.PDF:
-				case FileType.DOCUMENT:
-					return viewer.openDocument(fileLink, name);
 				case FileType.IMAGE:
 					return viewer.openImage(fileLink, name);
 				case FileType.VIDEO:
 					return viewer.openVideo(fileLink);
+				case FileType.PDF:
+				case FileType.DOCUMENT:
+				case FileType.AUDIO:
+				case FileType.ARCHIVE:
+				case FileType.SCRIPTS:
+				case FileType.UNKNOWN:
+				case FileType.KNOWN:
+				case FileType.VECTOR_IMAGE:
+					return viewer.openDocument(fileLink, name);
 				default:
 					return Application.openUrl(fileLink);
 			}
@@ -95,11 +147,95 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 			return getUnifiedLinkData(this.#uniqueCode, attachedId, version || versionId);
 		};
 
+		#validateUnifiedLinkPassword = (password) => {
+			const { version, versionId } = this.#getQueryParams();
+
+			return validateUnifiedLinkPassword(this.#uniqueCode, password, version || versionId);
+		};
+
+		#shouldOpenPasswordInputBox(error)
+		{
+			return error?.errors?.some((ajaxError) => ajaxError?.customData?.hasPassword === true);
+		}
+
+		#openPasswordInputBox()
+		{
+			return new Promise((resolve, reject) => {
+				let isClosed = false;
+
+				void PasswordInputBox
+					.open(
+						{
+							testId: 'disk-unified-link-password-input-box',
+							onClose: () => {
+								isClosed = true;
+								resolve(null);
+							},
+							onConfirm: async (password) => {
+								const linkData = await this.#validateUnifiedLinkPassword(password)
+									.catch((error) => {
+										this.#showErrorToast(error);
+
+										throw error;
+									})
+								;
+								if (isClosed)
+								{
+									return null;
+								}
+
+								const result = await this.#openLinkData(linkData);
+
+								if (!isClosed)
+								{
+									resolve(result);
+								}
+
+								return result;
+							},
+						},
+						this.#getParentWidget(),
+					)
+					.catch((error) => {
+						console.error(error);
+						void showInternalAlert();
+						reject(error);
+					})
+				;
+			});
+		}
+
+		#showErrorToast(error)
+		{
+			const message = error?.errors?.find((ajaxError) => Boolean(ajaxError?.message))?.message;
+
+			showErrorToast(
+				message ? { message } : {},
+				this.#getParentWidget(),
+			);
+		}
+
+		#showForbiddenToast(error)
+		{
+			showToast(
+				{
+					message: Loc.getMessage('M_DISK_UNIFIED_LINK_OPENER_FORBIDDEN_TOAST'),
+					icon: Icon.LOCK,
+				},
+				this.#getParentWidget(),
+			);
+		}
+
+		#getParentWidget()
+		{
+			return this.#props.parentWidget;
+		}
+
 		#getQueryParams()
 		{
 			const { queryParams } = this.#props;
 
-			return queryParams;
+			return queryParams ?? {};
 		}
 
 		async #openBoard(fileData)

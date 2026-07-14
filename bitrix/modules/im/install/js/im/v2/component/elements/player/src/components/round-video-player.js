@@ -5,7 +5,7 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Outline as OutlineIcons, BIcon } from 'ui.icon-set.api.vue';
 
 import { Utils } from 'im.v2.lib.utils';
-import { Color, EventType } from 'im.v2.const';
+import { Color, EventType, PlaylistScope } from 'im.v2.const';
 import { FadeAnimation } from 'im.v2.component.animation';
 
 import { Playlist } from '../classes/playlist';
@@ -115,12 +115,12 @@ export const RoundVideoPlayer = {
 	},
 	created()
 	{
-		Playlist.getInstance().register(this.file);
+		Playlist.getInstance(PlaylistScope.chat).register(this.file);
 	},
 	mounted()
 	{
 		this.getObserver().observe(this.$refs.body);
-		this.getEmitter().subscribe(EventType.roundVideoPlayer.playNext, this.handlePlayNextRequest);
+		this.getEmitter().subscribe(EventType.player.playNext, this.handlePlayNextRequest);
 		this.getEmitter().subscribe(EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
 
 		if (this.startWithSound)
@@ -132,8 +132,8 @@ export const RoundVideoPlayer = {
 	{
 		this.stopProgressAnimation();
 		this.getObserver().unobserve(this.$refs.body);
-		Playlist.getInstance().unregister(this.file);
-		this.getEmitter().unsubscribe(EventType.roundVideoPlayer.playNext, this.handlePlayNextRequest);
+		Playlist.getInstance(PlaylistScope.chat).unregister(this.file);
+		this.getEmitter().unsubscribe(EventType.player.playNext, this.handlePlayNextRequest);
 		this.getEmitter().unsubscribe(EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
 	},
 	methods: {
@@ -192,7 +192,7 @@ export const RoundVideoPlayer = {
 		handleEnded()
 		{
 			this.switchToAutoplayMode();
-			Playlist.getInstance().onFileEnded({
+			Playlist.getInstance(PlaylistScope.chat).onFileEnded({
 				file: this.file,
 				context: { emitter: this.getEmitter() },
 			});
@@ -208,10 +208,10 @@ export const RoundVideoPlayer = {
 			this.duration = 0;
 			this.stopProgressAnimation();
 		},
-		handlePlayNextRequest(event: BaseEvent<{fileId: string}>)
+		handlePlayNextRequest(event: BaseEvent<{fileId: string, scope: string}>)
 		{
-			const { fileId } = event.getData();
-			if (fileId !== this.file.id)
+			const { fileId, scope } = event.getData();
+			if (fileId !== this.file.id || scope !== PlaylistScope.chat)
 			{
 				return;
 			}

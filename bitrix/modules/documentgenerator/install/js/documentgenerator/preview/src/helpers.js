@@ -1,28 +1,18 @@
-import { Dom, Loc, Type } from 'main.core';
+import { Dom, Loc, Type, Uri } from 'main.core';
 import { MenuManager, Popup, PopupWindowButton } from 'main.popup';
 
 export function parseUrl(url, key): JsonObject
 {
-	const parser = document.createElement('a');
-	const params = {};
-	let split = null;
-	let i = null;
-	parser.href = url;
-	const queries = parser.search.replace(/^\?/, '').split('&');
-	for (i = 0; i < queries.length; i++)
-	{
-		split = queries[i].split('=');
-		params[split[0]] = split[1];
-	}
+	const uri = new Uri(url);
 	const result = {
-		protocol: parser.protocol,
-		host: parser.host,
-		hostname: parser.hostname,
-		port: parser.port,
-		pathname: parser.pathname,
-		search: parser.search,
-		params,
-		hash: parser.hash,
+		protocol: uri.getSchema() ? `${uri.getSchema()}:` : '',
+		host: uri.getHost() || '',
+		hostname: uri.getHost() || '',
+		port: uri.getPort() || '',
+		pathname: uri.getPath(),
+		search: uri.getQuery() ? `?${uri.getQuery()}` : '',
+		params: uri.getQueryParams(),
+		hash: uri.getFragment() ? `#${uri.getFragment()}` : '',
 	};
 
 	if (key && Object.hasOwn(result, key))

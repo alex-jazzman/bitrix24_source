@@ -1,0 +1,4 @@
+<?php
+$MESS["SONET_V2_NOTIFY_LIVE_FEED_NEW_POST_F"] = "#USER_NAME# added a [URL=#LINK#]Feed post[/URL]";
+$MESS["SONET_V2_NOTIFY_LIVE_FEED_NEW_POST_M"] = "#USER_NAME# added a [URL=#LINK#]Feed post[/URL]";
+$MESS["SONET_V2_NOTIFY_LIVE_FEED_NEW_POST_N"] = "#USER_NAME# added a [URL=#LINK#]Feed post[/URL]";

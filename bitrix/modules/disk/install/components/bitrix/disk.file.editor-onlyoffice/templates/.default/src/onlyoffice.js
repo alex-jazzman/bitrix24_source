@@ -1,4 +1,4 @@
-import { ajax as Ajax, Runtime, Type, userOptions } from 'main.core';
+import { ajax as Ajax, Runtime, Type, userOptions, Event } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuItem } from 'main.popup';
 import { PULL, PullClient } from 'pull.client';
@@ -7,7 +7,7 @@ import { ButtonManager, Button, SplitButton } from 'ui.buttons';
 import ClientCommandHandler from './client-command-handler';
 import ServerCommandHandler from './server-command-handler';
 import UserManager from './user-manager';
-import { LegacyPopup, SharingControlType } from 'disk.sharing-legacy-popup';
+import { SharingControlType } from 'disk.sharing-legacy-popup';
 import { ExternalLink, ExternalLinkForUnifiedLink } from 'disk.external-link';
 import CustomErrorControl from './custom-error-controls';
 import { Factory as PromoBoostFactory, Checker as PromoBoostChecker } from 'disk.promo-boost';
@@ -200,18 +200,11 @@ export default class OnlyOffice
 
 		if (this.setupSharingButton)
 		{
-			const menuWindow = this.setupSharingButton.getMenuWindow();
-			const extLinkOptions = menuWindow.getMenuItem('ext-link').options;
-			extLinkOptions.onclick = this.handleClickSharingByExternalLink.bind(this);
-
-			menuWindow.removeMenuItem('ext-link');
-			menuWindow.addMenuItem(extLinkOptions);
-
-			const sharingOptions = menuWindow.getMenuItem('sharing').options;
-			sharingOptions.onclick = this.handleClickSharing.bind(this);
-
-			menuWindow.removeMenuItem('sharing');
-			menuWindow.addMenuItem(sharingOptions);
+			Event.bind(
+				this.setupSharingButton.getContainer(),
+				'click',
+				this.handleClickSharingAccessPopup.bind(this),
+			);
 		}
 
 		PULL.subscribe(new ClientCommandHandler({
@@ -370,50 +363,17 @@ export default class OnlyOffice
 		}
 	}
 
-	handleClickSharing(): void
+	handleClickSharingAccessPopup(): void
 	{
-		switch (this.sharingControlType)
-		{
-			case SharingControlType.WITH_CHANGE_RIGHTS:
-				(new LegacyPopup()).showSharingDetailWithChangeRights({
-					object: this.context.object,
-				});
-				break;
-			case SharingControlType.WITH_SHARING:
-				(new LegacyPopup()).showSharingDetailWithChangeRights({
-					object: this.context.object,
-				});
-				break;
-			case SharingControlType.WITHOUT_EDIT:
-				(new LegacyPopup()).showSharingDetailWithoutEdit({
-					object: this.context.object,
-				});
-				break;
-			case SharingControlType.BLOCKED_BY_FEATURE:
-				BX.UI.InfoHelper.show('limit_office_files_access_permissions');
-				break;
-			default:
-				console.warn('Unknown sharingControlType', this.sharingControlType);
-		}
-	}
+		const popupParams = {
+			objectId: this.context.object.id,
+			uniqueCode: this.context.object.uniqueCode ?? null,
+		};
 
-	handleClickSharingByExternalLink(event, menuItem: MenuItem): void
-	{
-		if (menuItem.dataset.shouldBlockExternalLinkFeature)
-		{
-			eval(menuItem.dataset.blockerExternalLinkFeature);
-
-			return;
-		}
-
-		if (this.unifiedLinkAccessOnly)
-		{
-			ExternalLinkForUnifiedLink.showPopup(this.context.object.uniqueCode);
-		}
-		else
-		{
-			ExternalLink.showPopup(this.context.object.id);
-		}
+		Runtime.loadExtension('disk.sharing-access-popup').then(({ SharingPopupDialog }) => {
+			const popup = new SharingPopupDialog();
+			popup.open(popupParams);
+		});
 	}
 
 	handleClickEditSubItems(event, menuItem: MenuItem): void

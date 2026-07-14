@@ -19,7 +19,11 @@ export type DepartmentEmployee = {
 	avatar: string,
 };
 
-export type ResponsibleQueueItem = BaseUser;
+export type ResponsibleQueueItem = {
+	id: number,
+	entityId: string,
+	name: string,
+};
 
 export type SettingOption = {
 	label: string,

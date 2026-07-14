@@ -19,6 +19,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 	const { SidebarParticipantsTab } = require('im/messenger/controller/sidebar-v2/tabs/participants');
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { onDeleteChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
+	const { onLeaveChat } = require('im/messenger/controller/sidebar-v2/user-actions/user');
 	const {
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
@@ -157,6 +158,14 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 		/**
 		 * @override
 		 */
+		handleLeaveDialogAction()
+		{
+			onLeaveChat(this.dialogId);
+		}
+
+		/**
+		 * @override
+		 */
 		handleDeleteDialogAction()
 		{
 			onDeleteChat(this.dialogId);
@@ -202,10 +211,14 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 		{
 			const muted = this.dialogHelper.isMuted;
 			const dialogId = this.dialogHelper.dialogId;
+			const copilotBotId = this.store.getters['usersModel/getCopilotData']()?.id;
+			const chatId = this.store.getters['dialoguesModel/getById'](dialogId)?.chatId;
 
 			const buttons = [
 				createCopilotRoleButton({
 					dialogId,
+					copilotBotId,
+					chatId,
 					ahaMoment: this.ahaMomentRoleButton,
 					onClick: () => this.handleSelectCopilotRoleAction(),
 				}),
@@ -218,7 +231,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 				}),
 			];
 
-			if (Feature.isCopilotSelectModelEnabled)
+			if (Feature.isCopilotSelectModelEnabled && !Feature.isBitrixGptV2Enabled)
 			{
 				const modelButton = this.isChangeEngineProcessing
 					? createCopilotChangeModelStateButton({
@@ -533,6 +546,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 			try
 			{
 				const result = await CopilotRoleSelector.open({
+					isBitrixGptV2Enabled: Feature.isBitrixGptV2Enabled,
 					showOpenFeedbackItem: true,
 					openWidgetConfig: {
 						backdrop: {

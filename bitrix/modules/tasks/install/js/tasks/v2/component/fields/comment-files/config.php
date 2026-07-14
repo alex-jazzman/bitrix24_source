@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/comment-files.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.system.chip.vue',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
+		'ui.system.chip.vue',
 	],
 	'skip_core' => false,
 ];

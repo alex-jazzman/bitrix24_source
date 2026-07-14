@@ -8,6 +8,7 @@ return [
 		'layout/ui/info-helper',
 		'settings/disabled-tools',
 		'calendar:enums',
+		'calendar:data-managers/settings-manager',
 	],
 	'components' => [
 		'calendar:calendar.event.list',

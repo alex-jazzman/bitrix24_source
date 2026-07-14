@@ -1,10 +1,10 @@
 import { Core } from 'im.v2.application.core';
 import { GetParameter, Path, ChatType } from 'im.v2.const';
-
-import type { ImModelChat } from 'im.v2.model';
+import { type ImModelChat } from 'im.v2.model';
 
 const GetParameterByChatType = {
 	[ChatType.taskComments]: GetParameter.openTaskComments,
+	[ChatType.collab]: GetParameter.openCollab,
 };
 
 export const ChatManager = {

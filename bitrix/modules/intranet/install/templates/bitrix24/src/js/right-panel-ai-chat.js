@@ -2,9 +2,9 @@ import { Dom, Tag, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 
-import type { RightPanel } from './right-panel';
-import type { RightBar } from './right-bar';
-import type { SiteTemplate } from './site-template';
+import { type RightPanel } from './right-panel';
+import { type RightBar } from './right-bar';
+import { type SiteTemplate } from './site-template';
 
 export class RightPanelAiChat extends EventEmitter
 {
@@ -33,10 +33,18 @@ export class RightPanelAiChat extends EventEmitter
 		return this.#isExpanded;
 	}
 
-	expand(params: { chatId: number }): void
+	expand(params: { chatId?: number, dialogId?: string }): void
 	{
 		if (this.#isExpanded)
 		{
+			this.#loadChatExtension()
+				.then((application) => {
+					void application.changeDialog({ dialogId: params.dialogId, chatId: params.chatId });
+				})
+				.catch((error) => {
+					console.error(error);
+				});
+
 			return;
 		}
 
@@ -50,7 +58,7 @@ export class RightPanelAiChat extends EventEmitter
 				}
 
 				const chatBackground = ThemeManager.getBackgroundStyleById(
-					SpecialBackground.aiAssistantWidget || SpecialBackground.aiAssistant,
+					SpecialBackground.transparent || SpecialBackground.aiAssistant,
 				);
 
 				if (!this.#container)
@@ -60,8 +68,7 @@ export class RightPanelAiChat extends EventEmitter
 
 				this.#showSidebar();
 
-				const avatarBg = SpecialBackground.aiAssistantWidget ? '#4c40a8' : '#ffffff';
-				this.#mountVueApp(params.chatId, avatarBg);
+				this.#mountVueApp(params, 'transparent');
 
 				this.emit('onExpand');
 
@@ -132,7 +139,7 @@ export class RightPanelAiChat extends EventEmitter
 		loader.show();
 
 		this.#container = Tag.render`
-			<div class="right-panel-ai-chat --ui-context-content-light">
+			<div class="right-panel-ai-chat">
 				${this.#contentContainer}
 				<div class="right-panel-ai-chat__background"
 					style="
@@ -142,12 +149,14 @@ export class RightPanelAiChat extends EventEmitter
 						background-repeat: ${chatBackground.backgroundRepeat};
 						background-size: ${chatBackground.backgroundSize};
 					"
-				></div>
+				>
+					<div class="right-panel-ai-chat__background_header"></div>
+				</div>
 			</div>
 		`;
 	}
 
-	async #mountVueApp(chatId: number, avatarBg: string): void
+	async #mountVueApp(initialChat: { chatId?: number, dialogId?: string }, avatarBg: string): void
 	{
 		try
 		{
@@ -160,8 +169,10 @@ export class RightPanelAiChat extends EventEmitter
 
 			this.#vueApp = application;
 
-			application.mount({
-				aiAssistantBotId: chatId,
+			await application.mount({
+				dialogId: initialChat.dialogId,
+				chatId: initialChat.chatId,
+				aiAssistantBotId: initialChat.chatId,
 				rootContainer: this.#contentContainer,
 			});
 

@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BasePushMessageHandler } = require('im/messenger/provider/push/message-handler/base');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 
 	/**
 	 * @class DatabasePushMessageHandler
@@ -121,6 +122,38 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 			return this.messageRepository.saveFromPush(messages);
 		}
 
+		/**
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
+		 * @return {Array<{recentItem: object, sections: Array<string>}>}
+		 */
+		prepareRecentItems(items)
+		{
+			/** @type {Map<string, {recentItem: object, sections: Array<string>}>} */
+			const uniqueRecentItems = new Map();
+
+			for (const { event, helper } of items)
+			{
+				const message = this.prepareRecentMessage({ event, helper });
+				const sections = helper.getRecentSections();
+
+				const recentItem = RecentDataConverter.fromPushToModel({
+					id: String(helper.getDialogId()),
+					chat: helper.getChat(),
+					user: helper.getSender(),
+					lines: event.params.lines,
+					counter: event.params.counter,
+					liked: false,
+					lastActivityDate: event.params.message.date,
+					dateMessage: event.params.message.date,
+					message,
+				});
+
+				uniqueRecentItems.set(recentItem.id, { recentItem, sections });
+			}
+
+			return [...uniqueRecentItems.values()];
+		}
+
 		async setRecent(recentItems = [])
 		{
 			if (!Type.isArrayFilled(recentItems))
@@ -128,7 +161,14 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 				return Promise.resolve();
 			}
 
-			return this.recentRepository.saveFromPush(recentItems);
+			const recentRepository = serviceLocator.get('core').getRepository().recent;
+			await Promise.all(
+				recentItems.map(({ recentItem, sections }) =>
+					recentRepository.setSections(String(recentItem.id), sections),
+				),
+			);
+
+			return this.recentRepository.saveFromPush(recentItems.map(({ recentItem }) => recentItem));
 		}
 
 		/**

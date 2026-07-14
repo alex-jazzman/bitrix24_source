@@ -2,9 +2,13 @@ import { UserType } from '../../../const/types/user';
 
 export type PlanLimits = {
 	fullChatHistory?: {
-			isAvailable: boolean,
-			limitDays: number | null,
-		}
+		isAvailable: boolean,
+		limitDays: number | null,
+	},
+	collab?: {
+		isAvailable: boolean,
+		isCopyAvailable: boolean,
+	},
 }
 
 declare type ImFeatures = {
@@ -21,7 +25,6 @@ declare type ImFeatures = {
 	zoomActive: boolean,
 	zoomAvailable: boolean,
 	intranetInviteAvailable: boolean,
-	isBitrixGptV2Available: boolean,
 	messagesAutoDeleteEnabled: boolean,
 	voteCreationAvailable: boolean,
 	aiFileTranscriptionAvailable: boolean,
@@ -33,11 +36,17 @@ declare type ImFeatures = {
 	stickersAvailable: boolean,
 	isBitrixGptV2Available: boolean,
 	aiAssistantMcpSelectorAvailable: boolean,
+	isAiAssistantAgentModeAvailable: boolean,
+	isCopilotForceSearchAvailable: boolean,
+	isCopilotWebSearchEnabledByAdmin: boolean,
+	isCopilotWebSearchAllowedByTariff: boolean,
 	isAddingUserByMentionAvailable: boolean,
 	isMessageBuilderAvailable: boolean,
 	isNestedChatAvailable: boolean,
 	isExternalChatMessageForwardingAvailable: boolean,
 	isChatFoldersAvailable: boolean,
+	isAiAssistantFeedbackAvailable: boolean,
+	isAiAssistantRegenerateAvailable: boolean,
 }
 
 declare type UserInfo = {

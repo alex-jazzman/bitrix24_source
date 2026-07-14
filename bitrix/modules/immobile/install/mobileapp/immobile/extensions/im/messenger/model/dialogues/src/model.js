@@ -42,6 +42,14 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @function dialoguesModel/getList
+			 * @return {Array<DialoguesModelState>}
+			 */
+			getList: (state) => () => {
+				return Object.values(state.collection);
+			},
+
+			/**
 			 * @function dialoguesModel/getByIdList
 			 * @return {Array<DialoguesModelState>}
 			 */
@@ -204,6 +212,14 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 			 */
 			setFromSync: (store, dialogList) => {
 				return store.dispatch('set', { itemList: dialogList, actionName: 'setFromSync' });
+			},
+
+			/**
+			 * Saves dialogs to Vuex store only, without writing to the local database.
+			 * @function dialoguesModel/setShortFormat
+			 */
+			setShortFormat: (store, payload) => {
+				return store.dispatch('set', { itemList: payload, actionName: 'setShortFormat' });
 			},
 
 			/** @function dialoguesModel/set */

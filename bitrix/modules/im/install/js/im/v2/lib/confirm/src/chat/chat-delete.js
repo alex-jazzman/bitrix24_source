@@ -3,6 +3,7 @@ import { Loc } from 'main.core';
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { CollabManager } from 'im.v2.lib.collab';
 
 import { showTwoButtonConfirm, type ConfirmParams } from '../base/base';
 
@@ -26,8 +27,8 @@ const getPhrases = (dialogId: string): ConfirmParams => {
 	if (isCollab(dialogId))
 	{
 		return {
-			title: Loc.getMessage('IM_LIB_CONFIRM_DELETE_COLLAB_TITLE'),
-			text: Loc.getMessage('IM_LIB_CONFIRM_DELETE_COLLAB_TEXT'),
+			title: CollabManager.getDeleteConfirmTitleText(),
+			text: CollabManager.getDeleteConfirmText(),
 			firstButtonCaption: Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM'),
 		};
 	}

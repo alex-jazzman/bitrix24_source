@@ -1531,6 +1531,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		expand(params) {
 			if (this.#isExpanded) {
+				this.#loadChatExtension().then(application => {
+					void application.changeDialog({
+						dialogId: params.dialogId,
+						chatId: params.chatId
+					});
+				}).catch(error => {
+					console.error(error);
+				});
 				return;
 			}
 			this.#isExpanded = true;
@@ -1541,13 +1549,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				if (!this.#isExpanded) {
 					return;
 				}
-				const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.aiAssistantWidget || SpecialBackground.aiAssistant);
+				const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.transparent || SpecialBackground.aiAssistant);
 				if (!this.#container) {
 					this.#initContainer(chatBackground);
 				}
 				this.#showSidebar();
-				const avatarBg = SpecialBackground.aiAssistantWidget ? '#4c40a8' : '#ffffff';
-				this.#mountVueApp(params.chatId, avatarBg);
+				this.#mountVueApp(params, 'transparent');
 				this.emit('onExpand');
 				main_core_events.EventEmitter.subscribeOnce('IM.AiAssistantWidget:minimize', () => {
 					this.collapse();
@@ -1596,7 +1603,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 			loader.show();
 			this.#container = main_core.Tag.render`
-			<div class="right-panel-ai-chat --ui-context-content-light">
+			<div class="right-panel-ai-chat">
 				${this.#contentContainer}
 				<div class="right-panel-ai-chat__background"
 					style="
@@ -1606,19 +1613,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 						background-repeat: ${chatBackground.backgroundRepeat};
 						background-size: ${chatBackground.backgroundSize};
 					"
-				></div>
+				>
+					<div class="right-panel-ai-chat__background_header"></div>
+				</div>
 			</div>
 		`;
 		}
-		async #mountVueApp(chatId, avatarBg) {
+		async #mountVueApp(initialChat, avatarBg) {
 			try {
 				const application = await this.#loadChatExtension();
 				if (!this.#isExpanded) {
 					return;
 				}
 				this.#vueApp = application;
-				application.mount({
-					aiAssistantBotId: chatId,
+				await application.mount({
+					dialogId: initialChat.dialogId,
+					chatId: initialChat.chatId,
+					aiAssistantBotId: initialChat.chatId,
 					rootContainer: this.#contentContainer
 				});
 				this.#siteTemplate.setAvatarBlockBackground({
@@ -1720,10 +1731,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			if (this.#rightBar.getContainer() === null) {
 				return;
 			}
-			if (this.#rightPanel.isExpanded()) {
-				main_core.Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');
-				main_core.Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
-			} else if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() > 0) {
+			if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() > 0) {
 				main_core.Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
 				main_core.Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');
 			} else {
@@ -2222,7 +2230,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#options = options;
 			this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 			this.#button = this.#buttonWrapper.querySelector('button');
-			this.#setEventHandlers();
+			this.#setEventHandlers(this.#button);
 			if (this.#options.isCloud) {
 				this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount, this.#options.counters.highlightIntegrator);
 			}
@@ -2351,7 +2359,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.#getCounter().renderTo(this.#getCounterWrapper());
 			}
 		}
-		static #setEventHandlers() {
+		static #setEventHandlers(licenseButton) {
 			if (this.#options.isCloud && this.#options.isSidePanelDemoLicense) {
 				BX.SidePanel.Instance.bindAnchors({
 					rules: [{
@@ -2376,8 +2384,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 					});
 					this.#openWidget();
 				});
-			}
-			if (this.#options.isCloud) {
 				pull_client.PULL.subscribe({
 					moduleId: 'bitrix24',
 					command: 'updateCountOrdersAwaitingPayment',
@@ -2388,6 +2394,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', this.#showInfrastructureSlider.bind(this));
 				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', this.#resetHighlightIntegrator.bind(this));
 			}
+			this.#initUnpaidOrdersPopup(licenseButton);
 		}
 		static #resetHighlightIntegrator() {
 			this.#options.counters.highlightIntegrator = 0;
@@ -2472,6 +2479,44 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}) => {
 				sendData(params);
 			});
+		}
+		static #initUnpaidOrdersPopup(licenseButton) {
+			if (this.#options.ordersPopup?.shouldShow && this.#options.isCloud && this.#options.personalTotalCount + this.#options.commonTotalCount > 0) {
+				const orders = {
+					inCheckout: {
+						ordersCount: this.#options.counters.inCheckout,
+						path: this.#options.ordersInfo.checkoutPath
+					},
+					awaitingPayment: {
+						ordersCount: this.#options.counters.awaitingPayment,
+						path: this.#options.ordersInfo.checkoutPath
+					},
+					awaitingInvoice: {
+						ordersCount: this.#options.counters.awaitingInvoice,
+						path: this.#options.ordersInfo.invoicePath
+					},
+					failedPayment: {
+						ordersCount: this.#options.counters.failedPayment,
+						path: this.#options.ordersInfo.checkoutPath
+					}
+				};
+				main_core.Runtime.loadExtension(['bitrix24.unpaid-orders-popup', 'ui.banner-dispatcher']).then(({
+					BannerDispatcher
+				}) => {
+					BannerDispatcher.low.toQueue(async onDone => {
+						const popup = new BX.Bitrix24.UnpaidOrdersPopup().get(licenseButton, orders);
+						if (!popup) {
+							onDone();
+							return;
+						}
+						popup.subscribe('onClose', () => {
+							BX.userOptions.save('bitrix24', 'show_unpaid_orders_popup', null, this.#options.ordersPopup?.signature);
+							onDone();
+						});
+						popup.show();
+					});
+				});
+			}
 		}
 	}
 

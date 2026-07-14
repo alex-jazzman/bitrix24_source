@@ -2,8 +2,9 @@
  * @module im/messenger/controller/recent/config/src/nested/collab-default
  */
 jn.define('im/messenger/controller/recent/config/src/nested/collab-default', (require, exports, module) => {
-	const { RecentTab } = require('im/messenger/const');
+	const { RecentTab, ChatSearchSelectorSection, ActionByUserType } = require('im/messenger/const');
 	const { RecentServiceName } = require('im/messenger/controller/recent/const');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
 
 	const CollabDefaultConfig = {
 		services: {
@@ -13,6 +14,16 @@ jn.define('im/messenger/controller/recent/config/src/nested/collab-default', (re
 					sections: ['parentChat', 'pinned', 'general'],
 					defaultSection: 'general',
 					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/collab-default',
+				},
+			},
+			[RecentServiceName.databaseLoad]: {
+				extension: 'im/messenger/controller/recent/service/database-load/common',
+				props: {
+					savePageAction: 'recentModel/setByRecentSection',
+					filter: {
+						limit: 50,
+					},
+					fetchFixedParentChat: true,
 				},
 			},
 			[RecentServiceName.serverLoad]: {
@@ -31,7 +42,9 @@ jn.define('im/messenger/controller/recent/config/src/nested/collab-default', (re
 			},
 			[RecentServiceName.floatingButton]: {
 				extension: 'im/messenger/controller/recent/service/floating-button/nested',
-				props: {},
+				props: {
+					checkShouldShowButton: () => UserPermission.canPerformActionByUserType(ActionByUserType.createChat),
+				},
 			},
 			[RecentServiceName.select]: {
 				extension: 'im/messenger/controller/recent/service/select/common',
@@ -41,9 +54,20 @@ jn.define('im/messenger/controller/recent/config/src/nested/collab-default', (re
 				extension: 'im/messenger/controller/recent/service/pagination/common',
 				props: {},
 			},
+			[RecentServiceName.filter]: {
+				extension: 'im/messenger/controller/recent/service/filter/common',
+				props: {},
+			},
 			[RecentServiceName.action]: {
 				extension: 'im/messenger/controller/recent/service/action/common',
 				props: {},
+			},
+			[RecentServiceName.search]: {
+				extension: 'im/messenger/controller/recent/service/search/common',
+				props: {
+					recentTab: RecentTab.collabDefault,
+					sections: [ChatSearchSelectorSection.recent, ChatSearchSelectorSection.common],
+				},
 			},
 		},
 	};

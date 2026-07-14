@@ -2,11 +2,12 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_lib_utils, im_v2_application_core, im_v2_const, im_v2_lib_smileManager, imopenlines_v2_lib_openlines) {
+(function (exports, imopenlines_v2_lib_openlines, im_v2_application_core, im_v2_const, im_v2_lib_smileManager, im_v2_lib_utils) {
 	'use strict';
 
-	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.admin, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage, im_v2_const.MessageComponent.sticker, im_v2_const.MessageComponent.aiBizprocMessage]);
+	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.admin, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage, im_v2_const.MessageComponent.collabCreationMessage, im_v2_const.MessageComponent.sticker, im_v2_const.MessageComponent.aiBizprocMessage]);
 	const demoComponentList = new Set([im_v2_const.MessageComponent.taskChatCreationMessage]);
+
 	class MessageComponentManager {
 		#message;
 		#store;
@@ -15,9 +16,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#store = im_v2_application_core.Core.getStore();
 		}
 		getName() {
-			const openLinesMessageName = imopenlines_v2_lib_openlines.OpenLinesManager?.getMessageName(this.#message);
-			if (openLinesMessageName) {
-				return openLinesMessageName;
+			if (this.#isOpenLinesComponent()) {
+				return this.#getOpenLinesComponent();
 			}
 			if (this.#isDeletedMessage()) {
 				return im_v2_const.MessageComponent.deleted;
@@ -34,10 +34,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (this.#hasSticker()) {
 				return im_v2_const.MessageComponent.sticker;
 			}
-			if (this.#hasBuilderBlocks()) {
-				return im_v2_const.MessageComponent.builderMessage;
-			}
 			return im_v2_const.MessageComponent.default;
+		}
+		#isOpenLinesComponent() {
+			return Boolean(imopenlines_v2_lib_openlines.OpenLinesManager?.getMessageName(this.#message));
+		}
+		#getOpenLinesComponent() {
+			return imopenlines_v2_lib_openlines.OpenLinesManager.getMessageName(this.#message);
 		}
 		#isServerComponent() {
 			return serverComponentList.has(this.#message.componentId);
@@ -116,5 +119,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessageComponentManager = MessageComponentManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.OpenLines?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX?.OpenLines?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});
 //# sourceMappingURL=message-component.bundle.js.map

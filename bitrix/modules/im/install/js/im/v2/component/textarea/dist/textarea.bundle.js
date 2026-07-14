@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_uploader_core, ui_iconSet_outline, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_application_core, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
+(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_uploader_core, ui_iconSet_outline, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_application_core, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_collab, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_lib_access, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
 	'use strict';
 
 	const EVENT_NAMESPACE$1 = 'BX.Messenger.v2.Textarea.FormatToolbarManager';
@@ -4962,11 +4962,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const ItemTextByChatType = {
-		[im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-		[im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-		[im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
-		[im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
-		default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
+		[im_v2_const.ChatType.openChannel]: () => main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.generalChannel]: () => main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.channel]: () => main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.collab]: () => im_v2_lib_collab.CollabManager.getMentionItemSubtitleText(),
+		default: () => main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
 	};
 	class MentionItemFormatter {
 		constructor(dialogId) {
@@ -4988,7 +4988,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (dialog.type === im_v2_const.ChatType.user) {
 				return im_v2_application_core.Core.getStore().getters['users/getPosition'](this.dialogId) ?? main_core.Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
 			}
-			return ItemTextByChatType[dialog.type] ?? ItemTextByChatType.default;
+			const handler = ItemTextByChatType[dialog.type] ?? ItemTextByChatType.default;
+			return handler();
 		}
 		#getDialog() {
 			return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
@@ -5474,6 +5475,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				await this.#createChatFromUser();
 				return;
 			}
+			const canAdd = await im_v2_lib_access.ChatAccessManager.canAddUsers(this.context.dialogId, [this.context.userId]);
+			if (!canAdd) {
+				return;
+			}
 			await this.#addUserToChat();
 			im_v2_lib_notifier.Notifier.chat.handleUserAddComplete(this.#getChatType());
 		}
@@ -5899,6 +5904,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			searchChats: {
 				type: Boolean,
 				default: true
+			},
+			withCopilot: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['close', 'adjustPosition'],
@@ -5991,6 +6000,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.$store.getters['users/bots/getCopilotBotDialogId'];
 			},
 			needToShowFixedCopilot() {
+				if (!this.withCopilot) {
+					return false;
+				}
 				const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 				const isCopilotChat = new im_v2_lib_copilot.CopilotManager().isCopilotChat(this.dialogId);
 				if (isChannel || isCopilotChat) {
@@ -6161,6 +6173,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			query: {
 				type: String,
 				default: ''
+			},
+			withCopilot: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['close', 'onFocusTextarea'],
@@ -6226,6 +6242,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:dialogId="dialogId"
 				:query="query"
 				:searchChats="searchChats"
+				:withCopilot="withCopilot"
 				@close="$emit('close');"
 				@adjustPosition="adjustPosition()"
 			/>
@@ -8024,6 +8041,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			withMention: {
 				type: Boolean,
 				default: true
+			},
+			withCopilot: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['mounted'],
@@ -8814,6 +8835,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:bindElement="$refs['textarea-content']"
 				:dialogId="dialogId"
 				:query="mentionQuery"
+				:withCopilot="withCopilot"
 				@close="closeMentionPopup"
 				@onFocusTextarea="focus"
 			/>
@@ -8832,5 +8854,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.BeforeSendMessageAction = BeforeSendMessageAction;
 	exports.ChatTextarea = ChatTextarea;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, BX?.UI?.Uploader??{}, window??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, BX?.UI?.Uploader??{}, window??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
 //# sourceMappingURL=textarea.bundle.js.map

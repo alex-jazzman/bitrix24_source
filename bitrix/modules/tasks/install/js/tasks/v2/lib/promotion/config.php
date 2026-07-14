@@ -8,12 +8,12 @@ return [
 	'js' => 'dist/promotion.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'main.popup',
-		'main.ajax',
-		'ui.promo-video-popup',
 		'ai.copilot-promo-popup',
-		'tasks.v2.lib.aha-moments',
+		'main.ajax',
+		'main.popup',
 		'tasks.v2.const',
+		'tasks.v2.lib.aha-moments',
+		'ui.promo-video-popup',
 	],
 	'skip_core' => true,
 ];

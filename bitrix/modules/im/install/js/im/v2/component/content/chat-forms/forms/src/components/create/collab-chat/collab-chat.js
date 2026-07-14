@@ -12,8 +12,9 @@ import {
 	SettingsSection,
 	RightsSection,
 	AppearanceSection,
+	checkParentAccess,
 } from 'im.v2.component.content.chat-forms.elements';
-import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -91,7 +92,7 @@ export const CollabChatCreation = {
 		this.saveFields();
 	},
 	methods: {
-		onMembersChange(currentTags: [string, number | string][])
+		onMembersChange(currentTags: SelectorEntityItem[])
 		{
 			this.chatMembers = currentTags;
 		},
@@ -130,6 +131,20 @@ export const CollabChatCreation = {
 		async onCreateClick()
 		{
 			this.isCreating = true;
+
+			const canAddToParent = await checkParentAccess({
+				parentChatId: this.parentChatId,
+				memberEntities: this.chatMembers,
+				managerIds: this.rights.managerIds,
+				ownerId: this.rights.ownerId,
+			});
+
+			if (!canAddToParent)
+			{
+				this.isCreating = false;
+
+				return;
+			}
 
 			const { newDialogId } = await this.getChatService().createChat({
 				parentChatId: this.parentChatId,

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Mail\Access\Install\AccessInstaller;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -254,6 +256,8 @@ Class mail extends CModule
 		{
 			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/install/db/".$connection->getType()."/uninstall.sql");
 
+			$this->deleteOptions();
+
 			if (\Bitrix\Main\Loader::includeModule('mail'))
 			{
 				\Bitrix\Mail\MailMessageTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT', false);
@@ -388,5 +392,12 @@ Class mail extends CModule
 
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", "mail", "\\Bitrix\\Mail\\MailPullSchema", "OnGetDependentModule" );
 		UnRegisterModuleDependences('tasks', 'OnTaskDelete', 'mail', '\\Bitrix\\Mail\\Integration\\Intranet\\Secretary', 'onTaskDelete');
+	}
+
+	function deleteOptions(): void
+	{
+		Option::delete('mail', ['name' => 'mail_access_version']);
+		Option::delete('mail', ['name' => 'passwordless_sent_total_count']);
+		Option::delete('mail', ['name' => 'mailbox_connection_request_pending_count']);
 	}
 }

@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, PlacementType, SidebarMainPanelBlock } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { MarketManager } from 'im.v2.lib.market';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -61,7 +61,7 @@ export class BlockFilter
 		const isChannelCommentsChat = ChatType.comment === this.#chat.type;
 		const isChannelChat = ChannelManager.isChannel(this.#dialogId);
 
-		if (isChannelChat || isChannelCommentsChat || FeatureManager.chatHistory.isAvailable())
+		if (isChannelChat || isChannelCommentsChat || TariffManager.chatHistory.isAvailable())
 		{
 			return false;
 		}

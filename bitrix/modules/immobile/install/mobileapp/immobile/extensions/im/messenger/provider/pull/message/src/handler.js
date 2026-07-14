@@ -561,68 +561,74 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockAppendParams} params
+		 * @param {{ messageId: number, text: string, element: object, files?: Array<RawFile> }} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockAppend(params, extra)
+		async handleMessageBlockElementAppend(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockAppend:', params);
+			this.logger.info('handleMessageBlockElementAppend:', params);
 
-			const { messageId, block, text } = params;
+			await this.#setFiles(params);
 
-			await this.store.dispatch('messagesModel/builderModel/appendBlock', {
+			const { messageId, element, text, files } = params;
+
+			await this.store.dispatch('messagesModel/blockModel/appendElement', {
 				messageId,
-				block,
+				element,
 				text,
+				files: files?.map((file) => file.id),
 			});
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockUpdateParams} params
+		 * @param {{ messageId: number, text: string, elementId: string, element: object, files?: Array<RawFile> }} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockUpdate(params, extra)
+		async handleMessageBlockElementUpdate(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockUpdate:', params);
+			this.logger.info('handleMessageBlockElementUpdate:', params);
 
-			const { messageId, blockId, block, text } = params;
+			await this.#setFiles(params);
 
-			await this.store.dispatch('messagesModel/builderModel/updateBlock', {
+			const { messageId, elementId, element, text, files } = params;
+
+			await this.store.dispatch('messagesModel/blockModel/updateElement', {
 				messageId,
-				blockId,
-				block,
+				elementId,
+				element,
 				text,
+				files: files?.map((file) => file.id),
 			});
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockDeleteParams} params
+		 * @param {{ messageId: number, text: string, elementId: string }} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockDelete(params, extra)
+		async handleMessageBlockElementDelete(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockDelete:', params);
+			this.logger.info('handleMessageBlockElementDelete:', params);
 
-			const { messageId, blockId, text } = params;
+			const { messageId, elementId, text } = params;
 
-			await this.store.dispatch('messagesModel/builderModel/deleteBlock', {
+			await this.store.dispatch('messagesModel/blockModel/deleteElement', {
 				messageId,
-				blockId,
+				elementId,
 				text,
 			});
 		}
@@ -1524,7 +1530,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		 */
 		async #updateMessage(updateParams)
 		{
-			const { params, text, id, builder = {} } = updateParams;
+			const { params, text, id, block = {} } = updateParams;
 
 			const message = this.getMessage(id);
 			if (!message)
@@ -1544,7 +1550,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				fields: {
 					text,
 					params,
-					builder,
+					block,
 				},
 			});
 		}

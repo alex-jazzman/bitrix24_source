@@ -28,6 +28,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			RecentType: () => im_v2_const.RecentType,
+			ParentChatScope: () => im_v2_const.ParentChatScope,
 			layout() {
 				return this.$store.getters['application/getLayout'];
 			},
@@ -87,9 +88,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 			},
 			onToggleUnreadMode() {
-				this.$store.dispatch('recent/clearUnreadCollection', {
-					type: im_v2_const.RecentType.taskComments
-				});
 				this.unreadMode = !this.unreadMode;
 			},
 			loc(phraseCode) {
@@ -122,14 +120,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						v-show="searchMode"
 						:searchMode="searchMode"
 						:query="searchQuery"
+						:parentChatId="ParentChatScope.all"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.taskComments"
 						@loading="onLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<TaskList v-if="!unreadMode" @selectChat="onSelectChat" />
-					<TaskUnreadList v-else @selectChat="onSelectChat" />
+					<TaskList v-show="!searchMode && !unreadMode" @selectChat="onSelectChat" />
+					<TaskUnreadList v-if="unreadMode" @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

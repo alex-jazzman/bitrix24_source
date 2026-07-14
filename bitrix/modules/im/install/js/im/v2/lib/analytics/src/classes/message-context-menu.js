@@ -1,3 +1,4 @@
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Text } from 'main.core';
 import { sendData } from 'ui.analytics';
 
@@ -37,23 +38,29 @@ export class MessageContextMenu
 {
 	messageForward: MessageForward = new MessageForward();
 	messagePins: MessagePins = new MessagePins();
+	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
 
 	onSendFeedback(dialogId: string): void
 	{
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;
 		const role = Core.getStore().getters['copilot/chats/getRole'](dialogId);
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
-
 		const aiModelName = aiModel.name ?? aiModel;
 
-		sendData({
+		const params = {
 			category: AnalyticsCategory.copilot,
 			event: AnalyticsEvent.addFeedback,
 			c_section: `${currentLayout}_tab`,
-			p2: `provider_${aiModelName}`,
 			p4: `role_${Text.toCamelCase(role.code)}`,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		if (!this.#isBitrixGptV2Available)
+		{
+			params.p2 = `provider_${aiModelName}`;
+		}
+
+		sendData(params);
 	}
 
 	onDelete({ messageId, dialogId }: {messageId: string | number, dialogId: string}): void
@@ -336,16 +343,22 @@ export class MessageContextMenu
 
 		const aiModelName = aiModel.name ?? aiModel;
 
-		sendData({
+		const params = {
 			category: AnalyticsCategory.copilot,
 			event: AnalyticsEvent.copyMessage,
 			type,
 			c_section: `${currentLayout}_tab`,
-			p2: `provider_${aiModelName}`,
 			p4: `role_${Text.toCamelCase(role.code)}`,
 			p5: `chatId_${chat.chatId}`,
 			...this.#getBaseParams(dialogId),
-		});
+		};
+
+		if (!this.#isBitrixGptV2Available)
+		{
+			params.p2 = `provider_${aiModelName}`;
+		}
+
+		sendData(params);
 	}
 
 	#getFilesAmountParam(messageId: string | number): string

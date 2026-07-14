@@ -1,0 +1,17 @@
+.socialnetwork--ui-textarea {
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.socialnetwork--ui-textarea--textarea {
+	height: 1.5em;
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	overflow: hidden;
+	white-space: pre-wrap;
+	background: transparent;
+	border: none;
+	outline: none;
+}

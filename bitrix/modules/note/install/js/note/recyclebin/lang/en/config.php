@@ -1,5 +1,5 @@
 <?php
-$MESS["NOTE_RECYCLEBIN_BREADCRUMB_ROOT"] = "Recycle bin";
+$MESS["NOTE_RECYCLEBIN_BREADCRUMB_ROOT"] = "Recycle Bin";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_ORPHAN_HINT"] = "These include articles (#COUNT#) whose original containing space was deleted. Select a new parent space for these articles.";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_TEXT"] = "All #COUNT# articles will be restored from the Recycle Bin.";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_TITLE"] = "Restore articles";
@@ -23,4 +23,4 @@ $MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS"] = "Articles restored: #COUNT#"
 $MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS_WITH_SKIPPED"] = "Articles restored: #COUNT#. Skipped #SKIPPED# articles because they need a new space.";
 $MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_SUCCESS"] = "Article has been restored.";
 $MESS["NOTE_RECYCLEBIN_PAGE_SUBTITLE"] = "Articles are kept in the Recycle Bin for 30 days. After the 30-day retention period, they will be wiped permanently.";
-$MESS["NOTE_RECYCLEBIN_PAGE_TITLE"] = "Recycle bin";
+$MESS["NOTE_RECYCLEBIN_PAGE_TITLE"] = "Recycle Bin";

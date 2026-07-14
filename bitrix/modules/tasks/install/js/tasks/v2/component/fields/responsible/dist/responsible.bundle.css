@@ -13,7 +13,6 @@
 
 .tasks-field-responsible-many-aha span {
 	margin-top: 12px;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 	color: inherit;
 	border-bottom: 1px dashed;
@@ -29,7 +28,6 @@
 	display: flex;
 	gap: var(--ui-space-inline-xs);
 	align-items: center;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 	margin-top: 8px;
 	padding: 0 2px;

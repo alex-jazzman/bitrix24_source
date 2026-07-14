@@ -20,6 +20,7 @@ export type ApplicationData = {
 	copilot: {
 		availableEngines: ImModelCopilotAIModel[],
 		botName: string,
+		agentName: string,
 	},
 	counters: ImModelCounter[],
 	notificationCounter: number,

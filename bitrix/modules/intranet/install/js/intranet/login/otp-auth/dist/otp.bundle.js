@@ -280,20 +280,32 @@ this.BX.Intranet = this.BX.Intranet || {};
 				}
 			});
 		}
-		static sendRequestRecoverAccess(signedUserId) {
-			return main_core.ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {
-				data: {
-					signedUserId
-				}
-			});
+		static sendRequestRecoverAccess() {
+			return main_core.ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {});
 		}
-		static resetOtpSession(signedUserId) {
-			return main_core.ajax.runAction('intranet.v2.Otp.resetOtpSession', {
-				data: {
-					signedUserId
-				}
-			});
+		static resetOtpSession() {
+			return main_core.ajax.runAction('intranet.v2.Otp.resetOtpSession', {});
 		}
+	}
+
+	let userId = null;
+	function configureOtpAnalytics(options = {}) {
+		const normalizedUserId = Number(options.userId);
+		userId = Number.isFinite(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : null;
+	}
+	function prepareOtpAnalyticsData(data) {
+		const preparedData = {
+			tool: 'security',
+			category: 'fa_auth_form',
+			...data
+		};
+		if (userId !== null) {
+			preparedData.p5 = String(userId);
+		}
+		return preparedData;
+	}
+	function sendOtpAnalytics(data) {
+		ui_analytics.sendData(prepareOtpAnalyticsData(data));
 	}
 
 	const usePushOtpStore = ui_vue3_pinia.defineStore('pushOtp', {
@@ -416,9 +428,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		},
 		mounted() {
-			ui_analytics.sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'show'
 			});
 		},
@@ -443,9 +453,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				} else {
 					this.$emit('show-recover-access');
 				}
-				ui_analytics.sendData({
-					tool: 'security',
-					category: 'fa_auth_form',
+				sendOtpAnalytics({
 					event: 'other_type_click'
 				});
 			},
@@ -567,14 +575,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 			},
 			sendAnalytics(event, type = null) {
 				const options = {
-					tool: 'security',
-					category: 'fa_auth_form',
 					event
 				};
 				if (type) {
 					options.type = type;
 				}
-				ui_analytics.sendData(options);
+				sendOtpAnalytics(options);
 			}
 		},
 		template: `
@@ -971,9 +977,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				this.$emit('show-alternatives');
 			},
 			sendAnalytics(event) {
-				ui_analytics.sendData({
-					tool: 'security',
-					category: 'fa_auth_form',
+				sendOtpAnalytics({
 					event
 				});
 			}
@@ -1310,9 +1314,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		},
 		mounted() {
 			BX.UI.Hint.init(this.rootNode);
-			ui_analytics.sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'form_code_show'
 			});
 		},
@@ -1427,10 +1429,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			};
 		},
 		props: {
-			signedUserId: {
-				type: String,
-				default: ''
-			},
 			isAlternativeMethodsAvailable: {
 				type: Boolean,
 				default: false
@@ -1449,9 +1447,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 		},
 		mounted() {
-			ui_analytics.sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'restore_access_show'
 			});
 		},
@@ -1465,23 +1461,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 			},
 			requestAccess() {
 				this.store.setRequesting(true);
-				Ajax.sendRequestRecoverAccess(this.signedUserId).then(() => {
+				Ajax.sendRequestRecoverAccess().then(() => {
 					this.store.setRequestSent();
 					this.store.setRequesting(false);
 				}).catch(() => {
 					this.store.setRequesting(false);
 				});
-				ui_analytics.sendData({
-					tool: 'security',
-					category: 'fa_auth_form',
+				sendOtpAnalytics({
 					event: 'click_admin_restore_access'
 				});
 			},
 			resetSessionAndReload() {
 				this.store.setRequesting(true);
-				ui_analytics.sendData({
-					tool: 'security',
-					category: 'fa_auth_form',
+				sendOtpAnalytics({
 					event: 'click_reload_after_restore_access'
 				});
 				Ajax.resetOtpSession().then(() => {
@@ -1680,10 +1672,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			Captcha
 		},
 		props: {
-			signedUserId: {
-				type: String,
-				default: ''
-			},
 			rootNode: {
 				type: HTMLElement,
 				default: null
@@ -1759,6 +1747,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			canSendRequestRecoverAccess: {
 				type: Boolean,
 				default: true
+			},
+			userId: {
+				type: Number,
+				default: 0
 			}
 		},
 		setup() {
@@ -1794,6 +1786,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 				};
 				return components[this.currentAuthStep] || 'LegacyOtp';
 			}
+		},
+		created() {
+			configureOtpAnalytics({
+				userId: this.userId
+			});
 		},
 		mounted() {
 			if (this.pushOtpConfig) {
@@ -1905,7 +1902,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 :recoveryCodesHelpLink="recoveryCodesHelpLink"
 		 :errorMessage="errorMessage"
 		 :isAlternativeMethodsAvailable="isAlternativeMethodsAvailable"
-		 :signedUserId="signedUserId"
 		 :canSendRequestRecoverAccess="canSendRequestRecoverAccess"
 		 @form-submit="onSubmitForm"
 		 @show-alternatives="onShowAlternatives"
@@ -1929,7 +1925,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 				return;
 			}
 			this.#application = ui_vue3.BitrixVue.createApp(Main, {
-				signedUserId: params.signedUserId,
 				rootNode: this.#rootNode,
 				pushOtpConfig: params.pushOtpConfig,
 				authUrl: params.authUrl,
@@ -1947,7 +1942,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 				currentStep: params.currentStep,
 				recoveryCodesHelpLink: params.recoveryCodesHelpLink,
 				errorMessageText: params.errorMessage,
-				canSendRequestRecoverAccess: params.canSendRequestRecoverAccess
+				canSendRequestRecoverAccess: params.canSendRequestRecoverAccess,
+				userId: params.userId
 			});
 			const pinia = ui_vue3_pinia.createPinia();
 			this.#application.use(pinia);

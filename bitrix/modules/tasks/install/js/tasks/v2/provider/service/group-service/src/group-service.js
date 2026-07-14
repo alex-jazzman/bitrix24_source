@@ -2,15 +2,20 @@ import { Core } from 'tasks.v2.core';
 import { GroupType, Model, Endpoint } from 'tasks.v2.const';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { GroupModel } from 'tasks.v2.model.groups';
+import { type GroupModel } from 'tasks.v2.model.groups';
 
 import { mapDtoToModel, mapStageDtoToModel } from './mappers';
-import type { GroupInfo } from './types';
+import { type GroupInfo } from './types';
 
 class GroupService
 {
 	async getUrl(id: number, type: string): Promise<string>
 	{
+		if (Core.getParams().features.isNewProjectsOn)
+		{
+			return this.getProjectUrl(id, type);
+		}
+
 		if (type !== GroupType.Collab)
 		{
 			return `/workgroups/group/${id}/`;
@@ -177,10 +182,24 @@ class GroupService
 		}
 		catch (error)
 		{
+			const emptyGroupInfo = {};
+
+			this.#groupInfoPromises[groupId].resolve(emptyGroupInfo);
+
 			console.error('GroupService: getGroupInfo error', error);
 
-			return {};
+			return emptyGroupInfo;
 		}
+	}
+
+	getProjectUrl(id: number, type: string): string
+	{
+		if (type === GroupType.Scrum)
+		{
+			return `/workgroups/group/${id}/tasks/?scrum=y`;
+		}
+
+		return `/workgroups/group/${id}/`;
 	}
 }
 

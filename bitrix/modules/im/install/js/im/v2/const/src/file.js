@@ -47,3 +47,8 @@ export const AudioPlaybackState = Object.freeze({
 	stop: 'stop',
 	none: 'none',
 });
+
+export const PlaylistScope = {
+	chat: 'chat',
+	sidebar: 'sidebar',
+};

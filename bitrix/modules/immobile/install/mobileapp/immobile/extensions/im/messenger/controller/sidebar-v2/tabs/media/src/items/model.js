@@ -9,6 +9,10 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 	 */
 	class SidebarTabMediaItemModel
 	{
+		/**
+		 * @param {MessengerCoreStore} store
+		 * @param {SidebarFile} data
+		 */
 		constructor(store, data = {})
 		{
 			this.data = data;
@@ -89,7 +93,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 		 */
 		getMessageId()
 		{
-			return this.file.messageId;
+			return this.data.messageId ?? this.file.messageId;
 		}
 
 		/**
@@ -98,7 +102,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 		 */
 		getSortKey()
 		{
-			return -(new Date(this.file.date)).getTime();
+			return -this.data.id;
 		}
 
 		/**
@@ -107,7 +111,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 		 */
 		getSectionId()
 		{
-			const date = new Date(this.file.date);
+			const date = new Date(this.data.dateCreate ?? this.file.date);
 			date.setDate(1);
 			date.setHours(0, 0, 0, 0);
 
@@ -135,7 +139,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 			}
 
 			return {
-				fileId: this.getFileId(),
+				fileId: this.data.id,
 				type: this.getType(),
 				name: this.getName(),
 				urlShow: this.getUrlShow(),
@@ -144,6 +148,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (requ
 				sectionId: this.getSectionId(),
 				insideSectionSortKey: this.getSortKey(),
 				customData: {
+					mediaId: this.getFileId(),
 					messageId: this.getMessageId(),
 				},
 			};

@@ -8,6 +8,7 @@ export type NavigationButtonProps = {
 	testId?: string,
 	textStyle?: TextStyle,
 	isNew?: boolean,
+	isLocked?: boolean,
 } & NavigationButtonIcon
 
 type NavigationButtonIcon = IconPng | IconSvg

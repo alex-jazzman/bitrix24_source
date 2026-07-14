@@ -106,4 +106,6 @@ export const Endpoint = Object.freeze({
 	TemplateStateSet: 'Template.State.set',
 	TemplateUpdate: 'Template.update',
 	UserList: 'User.list',
+	AbsenceGet: 'Absence.get',
+	AbsenceView: 'Absence.view',
 });

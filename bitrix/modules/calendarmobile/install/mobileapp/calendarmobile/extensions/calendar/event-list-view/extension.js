@@ -3,6 +3,7 @@
  */
 jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { Type } = require('type');
+	const { requireLazy } = require('require-lazy');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
@@ -24,7 +25,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		CalendarType,
 		EventMeetingStatus,
 		PullCommand,
-		AhaMomentEvent,
 	} = require('calendar/enums');
 
 	/**

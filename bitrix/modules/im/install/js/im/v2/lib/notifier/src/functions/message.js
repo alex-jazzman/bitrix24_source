@@ -1,7 +1,6 @@
 import { Loc } from 'main.core';
 
 import { Messenger } from 'im.public';
-import { Core } from 'im.v2.application.core';
 import { ErrorCode } from 'im.v2.const';
 import { type CallBatchError } from 'im.v2.lib.rest';
 
@@ -23,15 +22,13 @@ export const MessageNotifier = {
 		showNotification(Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
 	},
 
-	onForwardSelfChatComplete(messagesIds: number[]): void
+	onForwardComplete(messagesIds: number[], dialogId: string): void
 	{
 		const text = messagesIds.length > 1
 			? Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE')
 			: Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE');
 
-		const dialogId = Core.getUserId().toString();
-
-		const selfChatOpeningAction: NotificationAction = {
+		const openChatAction: NotificationAction = {
 			title: Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
 			events: {
 				click: () => Messenger.openChat(dialogId),
@@ -39,7 +36,7 @@ export const MessageNotifier = {
 		};
 
 		showNotification(text, {
-			actions: [selfChatOpeningAction],
+			actions: [openChatAction],
 		});
 	},
 

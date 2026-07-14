@@ -154,7 +154,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return areCommentsOpened;
 		}
 		async #handleAdditionalRecentLists() {
-			const eventResult = await main_core_events.EventEmitter.emitAsync(im_v2_const.EventType.recent.closeListSlider);
+			const eventResult = await main_core_events.EventEmitter.emitAsync(im_v2_const.EventType.recent.closeNestedList);
 			return eventResult.includes(EscEventAction.handled);
 		}
 	}

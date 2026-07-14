@@ -1,21 +1,29 @@
 import { EventEmitter, type BaseEvent } from 'main.core.events';
-import { type BitrixVueComponentProps } from 'ui.vue3';
+import { type JsonObject } from 'main.core';
 
-import { ChatType, EventType, Layout, type LayoutType, type ChatTypeItem } from 'im.v2.const';
+import { EventType, Layout, type LayoutType } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
-import { CollabNestedListContainer } from 'im.v2.component.list.container.collab';
+import { SlideAnimation, SlideEntrySide } from 'im.v2.component.animation';
+import { EscEventAction } from 'im.v2.lib.esc-manager';
+import { Utils } from 'im.v2.lib.utils';
+import { CollabNestedListContainer, NestedListLoadingState } from 'im.v2.component.list.container.collab';
+import { TariffManager } from 'im.v2.lib.feature';
 
-type NestedListContext = { chatType: ChatTypeItem, parentChatId: number };
+import { NestedListManager } from './classes/nested-list-manager';
+import { chatMatchesChatId } from './functions/matches-chat-id';
 
-const NestedListComponentByChatType = {
-	[ChatType.collab]: CollabNestedListContainer,
-};
+import './css/navigator.css';
+
+export type NestedListPayload = { parentDialogId: string };
+
+type SelectChatPayload = { layoutName: LayoutType, dialogId: string };
+type CloseNestedListPayload = ?{ dialogId: string };
 
 // @vue/component
 export const ListNavigator = {
 	name: 'ListNavigator',
+	components: { SlideAnimation, CollabNestedListContainer, NestedListLoadingState },
 	props: {
 		listComponent: {
 			type: Object,
@@ -23,38 +31,35 @@ export const ListNavigator = {
 		},
 	},
 	emits: ['selectChat'],
-	data(): { nestedListContext: ?NestedListContext }
+	data(): JsonObject
 	{
 		return {
-			nestedListContext: null,
+			isLoading: false,
+			nestedListParentChatId: 0,
 		};
 	},
 	computed: {
+		SlideEntrySide: () => SlideEntrySide,
 		layout(): ImModelLayout
 		{
 			return this.$store.getters['application/getLayout'];
 		},
 		isNestedListActive(): boolean
 		{
-			return this.nestedListContext !== null;
+			return this.nestedListParentChatId > 0;
 		},
-		isNestedListAvailable(): boolean
+		nestedListCompactMode(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.isNestedListAvailable);
+			return NestedListManager.isCompactModeLayout();
 		},
-		nestedListComponent(): ?BitrixVueComponentProps
+		nestedListClasses(): Record<string, boolean>
 		{
-			return NestedListComponentByChatType[this.nestedListContext.chatType] ?? null;
+			return { '--compact-mode': this.nestedListCompactMode };
 		},
 	},
 	watch: {
 		layout(newLayout: ImModelLayout, prevLayout: ImModelLayout)
 		{
-			if (LayoutManager.getInstance().isChatLayout(newLayout.name))
-			{
-				this.onChatChange(newLayout.entityId);
-			}
-
 			if (newLayout.name !== prevLayout.name)
 			{
 				this.onLayoutChange(prevLayout.name, newLayout.name);
@@ -63,41 +68,78 @@ export const ListNavigator = {
 	},
 	created()
 	{
-		EventEmitter.subscribe(EventType.recent.openNestedList, this.onOpenNestedList);
+		EventEmitter.subscribe(EventType.recent.openNestedList, this.onOpenNestedListEvent);
+		EventEmitter.subscribe(EventType.recent.closeNestedList, this.onCloseNestedListEvent);
+
+		this.getEmitter().subscribe(EventType.dialog.onDialogInited, this.onDialogInited);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.recent.openNestedList, this.onOpenNestedList);
+		EventEmitter.unsubscribe(EventType.recent.openNestedList, this.onOpenNestedListEvent);
+		EventEmitter.unsubscribe(EventType.recent.closeNestedList, this.onCloseNestedListEvent);
+
+		this.getEmitter().unsubscribe(EventType.dialog.onDialogInited, this.onDialogInited);
 	},
 	methods: {
-		openNestedList(params: NestedListContext)
+		async openNestedList(parentDialogId: string)
 		{
-			this.nestedListContext = params;
+			this.isLoading = true;
+			const parentChatId = await NestedListManager.prepareParentChatId(parentDialogId);
+			const listWasClosed = !this.isLoading;
+			if (listWasClosed)
+			{
+				return;
+			}
+			this.nestedListParentChatId = parentChatId;
+			this.isLoading = false;
 		},
 		closeNestedList()
 		{
 			if (LayoutManager.getInstance().isChatFormLayout(this.layout.name))
 			{
-				this.$emit('selectChat', { layoutName: Layout.chat, dialogId: '' });
+				this.openLayout(Layout.chat);
 			}
 
-			this.nestedListContext = null;
+			this.nestedListParentChatId = 0;
+			this.isLoading = false;
 		},
-		async onSelectChat(event: { layoutName: LayoutType, dialogId: string })
+		openLayout(layoutName: LayoutType)
 		{
-			const { dialogId, layoutName } = event;
+			this.$emit('selectChat', { layoutName, dialogId: '' });
+		},
+		openChat(payload: SelectChatPayload)
+		{
+			this.$emit('selectChat', payload);
+		},
+		async onSelectChat(initialEvent: SelectChatPayload)
+		{
+			const { dialogId, layoutName } = initialEvent;
 
-			const { type, chatId }: ImModelChat = this.$store.getters['chats/get'](dialogId, true);
-			if (!this.needToShowNestedListByType(type) || !this.isNestedListAvailable)
+			const { type }: ImModelChat = this.$store.getters['chats/get'](dialogId, true);
+
+			const canOpenNestedList = NestedListManager.isSupportedChatType(type) && NestedListManager.isFeatureAvailable();
+			if (!canOpenNestedList)
 			{
-				this.$emit('selectChat', event);
+				if (this.isNestedListActive)
+				{
+					this.closeNestedList();
+				}
+
+				this.openChat(initialEvent);
 
 				return;
 			}
 
-			this.$emit('selectChat', { layoutName, dialogId: '' });
+			if (!TariffManager.collabV2.isAvailable())
+			{
+				TariffManager.collabV2.openFeatureSlider();
+
+				return;
+			}
+
+			this.openLayout(layoutName);
 			await this.$nextTick();
-			this.openNestedList({ chatType: type, parentChatId: chatId });
+			void this.openNestedList(dialogId);
 		},
 		onNestedListSelectChat(dialogId: string)
 		{
@@ -107,24 +149,36 @@ export const ListNavigator = {
 				layoutName = Layout.chat;
 			}
 
-			this.$emit('selectChat', { layoutName, dialogId });
+			this.openChat({ layoutName, dialogId });
 		},
-		onChatChange(newDialogId: string)
+		onDialogInited(event: BaseEvent<{ dialogId: string, chat: ImModelChat }>)
 		{
-			if (!this.isNestedListActive || newDialogId === '')
+			const { chat } = event.getData();
+
+			if (!NestedListManager.isFeatureAvailable() || !TariffManager.collabV2.isAvailable())
 			{
 				return;
 			}
 
-			const newChat: ImModelChat = this.$store.getters['chats/get'](newDialogId, true);
-			const nestedListParentChatId = this.nestedListContext.parentChatId;
-
-			const hasCurrentParent = newChat.parentChatId === nestedListParentChatId;
-			const isCurrentParent = newChat.chatId === nestedListParentChatId;
-			if (!hasCurrentParent && !isCurrentParent)
+			if (this.isNestedListOpenedForChat(chat))
 			{
-				this.closeNestedList();
+				return;
 			}
+
+			const manager = new NestedListManager({ initedChat: chat });
+			if (manager.shouldOpen())
+			{
+				void this.openNestedList(manager.getDialogIdToOpen());
+
+				return;
+			}
+
+			if (!this.isNestedListActive)
+			{
+				return;
+			}
+
+			this.closeNestedList();
 		},
 		onLayoutChange(prevLayoutName: LayoutType, newLayoutName: LayoutType)
 		{
@@ -142,26 +196,78 @@ export const ListNavigator = {
 
 			this.closeNestedList();
 		},
-		onOpenNestedList(event: BaseEvent<NestedListContext>)
+		onOpenNestedListEvent(event: BaseEvent<NestedListPayload>)
 		{
-			const payload = event.getData();
-			this.openNestedList(payload);
+			const { parentDialogId } = event.getData();
+			void this.openNestedList(parentDialogId);
 		},
-		needToShowNestedListByType(chatType: string): boolean
+		onCloseNestedListEvent(event: BaseEvent<CloseNestedListPayload>): $Values<typeof EscEventAction>
 		{
-			return Boolean(NestedListComponentByChatType[chatType]);
+			if (!this.closeEventMatchesActiveList(event))
+			{
+				return EscEventAction.ignored;
+			}
+
+			this.closeNestedList();
+
+			return EscEventAction.handled;
+		},
+		onCloseNestedListClick()
+		{
+			if (LayoutManager.getInstance().isChatLayout(this.layout.name))
+			{
+				LayoutManager.getInstance().clearCurrentLayoutEntityId();
+			}
+
+			this.closeNestedList();
+		},
+		closeEventMatchesActiveList(event: BaseEvent<CloseNestedListPayload>): boolean
+		{
+			if (!this.isNestedListActive)
+			{
+				return false;
+			}
+
+			const { dialogId } = event.getData() ?? {};
+			if (!dialogId)
+			{
+				return true;
+			}
+
+			const currentParentChatId = this.nestedListParentChatId;
+			const currentDialogId = Utils.dialog.buildChatDialogId(currentParentChatId);
+
+			return currentDialogId === dialogId;
+		},
+		isNestedListOpenedForChat(chat: ImModelChat): boolean
+		{
+			if (!this.isNestedListActive)
+			{
+				return false;
+			}
+
+			return chatMatchesChatId(chat, this.nestedListParentChatId);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `
 		<KeepAlive>
 			<component :is="listComponent" @selectChat="onSelectChat" />
 		</KeepAlive>
-		<component
-			v-if="isNestedListActive"
-			:is="nestedListComponent"
-			:parentChatId="nestedListContext.parentChatId"
-			@close="closeNestedList"
-			@selectChat="onNestedListSelectChat"
-		/>
+		<SlideAnimation :entrySide="SlideEntrySide.right">
+			<div v-if="isLoading || isNestedListActive" :class="nestedListClasses" class="bx-im-list-navigator-nested-list__container">
+				<NestedListLoadingState v-if="isLoading" :compactMode="nestedListCompactMode" @close="onCloseNestedListClick" />
+				<CollabNestedListContainer
+					v-else-if="isNestedListActive"
+					:parentChatId="nestedListParentChatId"
+					:compactMode="nestedListCompactMode"
+					@close="onCloseNestedListClick"
+					@selectChat="onNestedListSelectChat"
+				/>
+			</div>
+		</SlideAnimation>
 	`,
 };

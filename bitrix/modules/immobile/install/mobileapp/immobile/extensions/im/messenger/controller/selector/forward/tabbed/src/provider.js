@@ -8,7 +8,12 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 	const { Loc } = require('im/messenger/loc');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatSearchProvider } = require('im/messenger/lib/chat-search');
+	const {
+		ChatSearchProvider,
+		ChatSearchConfig,
+		RecentSectionLocalSearchStrategy,
+		DefaultServerSearchStrategy,
+	} = require('im/messenger/lib/chat-search');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { RestMethod, RecentTabByNavigationTab, DialogType } = require('im/messenger/const');
@@ -323,11 +328,28 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 			}
 
 			const tabId = this.activeTab;
-			const config = forwardTabRegistry.get(tabId);
+			this.searchProvider = this.#createSearchProviderForTab(tabId);
+			this.searchProviderTab = tabId;
+		}
 
-			this.searchProvider = new ChatSearchProvider({
-				filter: config.filter,
-				recentTab: config.recentTab,
+		/**
+		 * @private
+		 * @param {string} tabId
+		 * @return {ChatSearchProvider}
+		 */
+		#createSearchProviderForTab(tabId)
+		{
+			const recentTab = forwardTabRegistry.get(tabId).recentTab;
+
+			return new ChatSearchProvider({
+				localStrategy: new RecentSectionLocalSearchStrategy({
+					section: recentTab,
+					parentChatId: null,
+				}),
+				serverStrategy: new DefaultServerSearchStrategy({
+					config: new ChatSearchConfig(null),
+					recentTab,
+				}),
 				loadSearchProcessed: (itemIdList, needSearchOnServer) => {
 					if (this.activeTab !== tabId)
 					{
@@ -345,8 +367,6 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 					this.onSearchServerComplete(itemIdList);
 				},
 			});
-
-			this.searchProviderTab = tabId;
 		}
 
 		/**

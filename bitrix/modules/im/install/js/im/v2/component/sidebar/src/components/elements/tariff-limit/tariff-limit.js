@@ -1,9 +1,8 @@
-import { FeatureManager } from 'im.v2.lib.feature';
+import { TariffManager } from 'im.v2.lib.feature';
 import { Analytics } from 'im.v2.lib.analytics';
+import { type ImModelChat } from 'im.v2.model';
 
 import './tariff-limit.css';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const TariffLimit = {
@@ -27,17 +26,17 @@ export const TariffLimit = {
 		},
 		title(): string
 		{
-			return FeatureManager.chatHistory.getLimitTitle();
+			return TariffManager.chatHistory.getLimitTitle();
 		},
 		preparedDescription(): string
 		{
-			return FeatureManager.chatHistory.getLimitSubtitle(true)
+			return TariffManager.chatHistory.getLimitSubtitle(true)
 				.replace('[action_emphasis]', '<em class="bx-im-sidebar-elements-tariff-limit__description-accent">')
 				.replace('[/action_emphasis]', '</em>');
 		},
 		tooltipText(): string
 		{
-			return FeatureManager.chatHistory.getTooltipText();
+			return TariffManager.chatHistory.getTooltipText();
 		},
 	},
 	watch:
@@ -60,7 +59,7 @@ export const TariffLimit = {
 		onDetailClick()
 		{
 			this.sendAnalyticsOnClick();
-			FeatureManager.chatHistory.openFeatureSlider();
+			TariffManager.chatHistory.openFeatureSlider();
 		},
 		loc(phraseCode: string): string
 		{

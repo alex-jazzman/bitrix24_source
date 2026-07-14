@@ -2,11 +2,10 @@ import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ActionByRole, ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
+import { type AuthorGroupItem } from '../../classes/collection-manager/collection-manager';
 import { MessageSelectButton } from './message-select-button';
-
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
-import type { AuthorGroupItem } from '../../classes/collection-manager/collection-manager';
 
 // @vue/component
 export const AuthorGroup = {
@@ -145,6 +144,7 @@ export const AuthorGroup = {
 				</Transition>
 				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar">
 					<MessageAvatar
+						:contextDialogId="contextDialogId"
 						:messageId="firstMessageIdInAuthorGroup"
 						:authorId="authorGroup.avatar.avatarId"
 						:size="AvatarSize.L"

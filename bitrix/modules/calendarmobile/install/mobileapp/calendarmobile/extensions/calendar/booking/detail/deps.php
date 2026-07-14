@@ -9,6 +9,7 @@ return [
 		'in-app-url',
 		'utils/skeleton',
 		'toast',
+		'require-lazy',
 
 		'layout/ui/form',
 		'layout/ui/user/avatar',

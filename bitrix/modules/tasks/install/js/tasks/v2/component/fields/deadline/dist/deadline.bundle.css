@@ -34,7 +34,6 @@
 }
 
 .tasks-field-deadline-expired {
-	max-width: -webkit-max-content;
 	max-width: max-content;
 	display: block;
 	margin-top: 5px;
@@ -54,59 +53,6 @@
 
 .tasks-field-deadline-chip.--read-only {
 	pointer-events: none;
-}
-
-.tasks-deadline-change-reason-popup-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.tasks-deadline-change-reason-popup-title {
-	color: var(--ui-color-base-1);
-	font-size: var(--ui-font-size-xl);
-	font-weight: var(--ui-font-weight-medium);
-}
-
-.tasks-deadline-change-reason-popup-close-icon {
-	--ui-icon-set__icon-size: 24px;
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-	cursor: pointer;
-}
-
-.tasks-deadline-change-reason-popup-content {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	margin-top: 4px;
-}
-
-.tasks-deadline-change-reason-popup-message {
-	width: 94%;
-	padding-bottom: 14px;
-	color: var(--ui-color-base-4);
-	font-size: var(--ui-font-size-sm);
-	font-weight: var(--ui-font-weight-normal);
-	line-height: 17px;
-}
-
-.tasks-deadline-change-reason-popup-footer {
-	display: flex;
-	justify-content: right;
-	align-items: center;
-	gap: 12px;
-	padding-top: 24px;
-}
-
-.tasks-field-deadline-after-header {
-	display: flex;
-}
-
-.tasks-field-deadline-after-chips {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	margin: 15px 0;
 }
 
 .tasks-field-deadline-popup {
@@ -168,4 +114,57 @@
 .tasks-field-deadline-date-picker-hint {
 	padding-left: 12px;
 	padding-bottom: 4px;
+}
+
+.tasks-deadline-change-reason-popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tasks-deadline-change-reason-popup-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-deadline-change-reason-popup-close-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-deadline-change-reason-popup-content {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 4px;
+}
+
+.tasks-deadline-change-reason-popup-message {
+	width: 94%;
+	padding-bottom: 14px;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 17px;
+}
+
+.tasks-deadline-change-reason-popup-footer {
+	display: flex;
+	justify-content: right;
+	align-items: center;
+	gap: 12px;
+	padding-top: 24px;
+}
+
+.tasks-field-deadline-after-header {
+	display: flex;
+}
+
+.tasks-field-deadline-after-chips {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 15px 0;
 }

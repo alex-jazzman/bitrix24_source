@@ -14,7 +14,6 @@ import {
 	ActionByUserType,
 	UserRole,
 	type ApplicationContext,
-	type RecentTypeItem,
 } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
@@ -33,7 +32,6 @@ type MenuItemContext = {
 	dialogId: string,
 	compactMode?: boolean,
 	recentItem?: ImModelRecentItem,
-	recentSection?: RecentTypeItem,
 }
 
 const MenuSectionCode = {
@@ -138,16 +136,12 @@ export class RecentMenu extends BaseMenu
 	getUnreadMessageItem(): ?MenuItemOptions
 	{
 		const { recentItem, dialogId } = this.context;
-		if (!recentItem)
+		if (!recentItem || this.isGuestRole())
 		{
 			return null;
 		}
 
-		const { chatId }: ImModelChat = this.store.getters['chats/get'](dialogId, true);
-		const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
-		const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
-		const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
-		const showReadOption = isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
+		const showReadOption = this.hasCounter();
 
 		return {
 			title: showReadOption ? Loc.getMessage('IM_LIB_MENU_READ') : Loc.getMessage('IM_LIB_MENU_UNREAD'),
@@ -420,6 +414,18 @@ export class RecentMenu extends BaseMenu
 	isChatWithCurrentUser(): boolean
 	{
 		return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
+	}
+
+	hasCounter(): boolean
+	{
+		const { dialogId } = this.context;
+		const { chatId }: ImModelChat = this.store.getters['chats/get'](dialogId, true);
+
+		const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
+		const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
+		const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
+
+		return isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
 	}
 
 	#leaveChat(): ?MenuItemOptions

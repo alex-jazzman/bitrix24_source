@@ -4,5 +4,9 @@ export type ChangeTariffParams = {
 			isAvailable: boolean,
 			limitDays: number | null,
 		},
+		collab: {
+			isAvailable: boolean,
+			isCopyAvailable: boolean
+		},
 	},
 };

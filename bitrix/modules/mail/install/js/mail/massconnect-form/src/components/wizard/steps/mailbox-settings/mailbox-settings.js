@@ -1,8 +1,8 @@
 import { useWizardStore } from '../../../../store/wizard';
 import { mapState, mapActions } from 'ui.vue3.pinia';
-import { MailIntegration } from '../../../integrations/mail-integration';
-import { CrmIntegration } from '../../../integrations/crm-integration';
-import { CalendarIntegration } from '../../../integrations/calendar-integration';
+import { MailIntegration } from 'mail.connecting.mail-sync-settings';
+import { CrmIntegration } from 'mail.connecting.crm-integration';
+import { CalendarIntegration } from 'mail.connecting.calendar-integration';
 import { Switcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize } from 'ui.switcher';
 import { LocalizationMixin } from '../../../../mixins/localization-mixin';
@@ -28,6 +28,10 @@ export const MailboxSettings = {
 				'calendarSettings',
 				'analyticsSource',
 				'permissions',
+				'mailSyncOptions',
+				'crmSyncOptions',
+				'crmEntityOptions',
+				'crmSourceOptions',
 			],
 		),
 		switcherOptions(): Object
@@ -72,12 +76,16 @@ export const MailboxSettings = {
 
 			<MailIntegration
 				:model-value="mailSettings"
+				:sync-period-options="mailSyncOptions"
 				@update:model-value="setMailSettings($event)"
 			/>
 
 			<CrmIntegration
 				:model-value="crmSettings"
 				:can-edit-crm-integration="permissions.canEditCrmIntegration"
+				:sync-period-options="crmSyncOptions"
+				:entity-options="crmEntityOptions"
+				:source-options="crmSourceOptions"
 				@update:model-value="setCrmSettings($event)"
 			/>
 

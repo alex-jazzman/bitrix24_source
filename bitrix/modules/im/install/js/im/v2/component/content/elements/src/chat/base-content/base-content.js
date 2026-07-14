@@ -13,6 +13,7 @@ import { type ImModelChat } from 'im.v2.model';
 
 import { ChatHeader } from '../header/chat-header';
 import { BulkActionsPanel } from './components/bulk-actions-panel';
+import { ChatContentDisclaimer } from './components/chat-content-disclaimer/chat-content-disclaimer';
 import { DropArea } from './components/drop-area';
 import { JoinPanel } from './components/join-panel';
 import { LoadingBar } from './components/loading-bar';
@@ -33,6 +34,7 @@ export const BaseChatContent = {
 		ChatDialog,
 		ChatTextarea,
 		ChatSidebar,
+		ChatContentDisclaimer,
 		DropArea,
 		MutePanel,
 		JoinPanel,
@@ -62,6 +64,10 @@ export const BaseChatContent = {
 			default: true,
 		},
 		withDropArea: {
+			type: Boolean,
+			default: true,
+		},
+		withChatContentDisclaimer: {
 			type: Boolean,
 			default: true,
 		},
@@ -251,7 +257,9 @@ export const BaseChatContent = {
 							/>
 						</slot>
 						<div class="bx-im-content-chat__after-textarea_container">
-							<slot name="after-textarea"></slot>
+							<slot name="after-textarea">
+								<ChatContentDisclaimer v-if="withChatContentDisclaimer"/>
+							</slot>
 						</div>
 					</div>
 					<slot v-else-if="isGuest" name="join-panel">

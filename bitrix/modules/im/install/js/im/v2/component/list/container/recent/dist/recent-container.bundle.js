@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, main_core_events, im_v2_component_list_items_recent, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_logger, im_v2_lib_permission, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_container_elements_vibeCodeCatalogButton, ui_infoHelper, im_public, im_v2_component_elements_copilotRolesDialog, im_v2_component_elements_menu, im_v2_component_list_container_elements_createChatPromo, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_promo, im_v2_provider_service_copilot, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_invite) {
+(function (exports, main_core, main_core_events, im_v2_component_list_items_recent, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_logger, im_v2_lib_permission, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_container_elements_vibeCodeCatalogButton, ui_infoHelper, im_public, im_v2_component_elements_copilotRolesDialog, im_v2_component_elements_menu, im_v2_component_list_container_elements_createChatPromo, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_promo, im_v2_provider_service_copilot, im_v2_lib_copilot, ui_iconSet_api_vue, im_v2_lib_helpdesk, im_v2_lib_invite) {
 	'use strict';
 
 	// @vue/component
@@ -28,7 +28,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const CopilotRoleSelectionButton = {
+		name: 'CopilotRoleSelectionButton',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			title() {
 				return this.loc('IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE_MSGVER_1', {
 					'#COPILOT_NAME#': this.copilotManager.getName()
@@ -45,7 +50,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-create-chat-menu-item__button --copilot" :title="title">
-			<div class="bx-im-create-chat-menu-item__icon-more"></div>
+			<BIcon 
+				:name="OutlineIcons.MORE_L" 
+				:hoverable="true"
+				class="bx-im-create-chat-menu-item__icon-more"
+			/>
 		</div>
 	`
 	};
@@ -122,19 +131,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			MenuItem: im_v2_component_elements_menu.MenuItem,
 			CreateChatHelp,
 			CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo,
-			DescriptionBanner,
 			CopilotRoleSelectionButton,
 			CopilotRolesDialog: im_v2_component_elements_copilotRolesDialog.CopilotRolesDialog,
-			InvitePromo
+			InvitePromo,
+			DescriptionBanner
 		},
 		data() {
 			return {
 				showMenu: false,
 				chatTypeToCreate: '',
 				showCreateChatPromo: false,
-				showCollabPromo: false,
 				showInvitePromo: false,
 				showCopilotRolesDialog: false,
+				showCollabPromo: false,
 				isLoading: false
 			};
 		},
@@ -149,6 +158,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					offsetTop: 4,
 					padding: 0
 				};
+			},
+			isCollabV2Available() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabV2Available);
+			},
+			isBitrixGptV2Available() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			},
+			copilotIcon() {
+				if (this.isBitrixGptV2Available) {
+					return im_v2_component_elements_menu.MenuItemIcon.aiAssistant;
+				}
+				return im_v2_component_elements_menu.MenuItemIcon.copilot;
+			},
+			isCollabV2AvailableByTariff() {
+				return im_v2_lib_feature.TariffManager.collabV2.isAvailable();
 			},
 			collabAvailable() {
 				const hasAccess = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCollab);
@@ -207,6 +231,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.startChatCreation();
 				this.showMenu = false;
 			},
+			onCollabV2CreateClick() {
+				if (!this.isCollabV2AvailableByTariff) {
+					im_v2_lib_feature.TariffManager.collabV2.openFeatureSlider();
+					return;
+				}
+				this.onChatCreateClick(im_v2_const.ChatType.collab);
+			},
 			showCopilotPromoter() {
 				const promoter = new ui_infoHelper.FeaturePromoter({
 					code: im_v2_const.SliderCode.copilotDisabled
@@ -234,6 +265,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				} catch {
 					this.isLoading = false;
 				}
+			},
+			onCollabDescriptionClose() {
+				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.createCollabDescription);
+				this.showCollabPromo = false;
 			},
 			onCopilotRoleSelectClick() {
 				if (!this.checkCopilotActive()) {
@@ -264,10 +299,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.showCreateChatPromo = false;
 				this.showMenu = false;
 				this.chatTypeToCreate = '';
-			},
-			onCollabDescriptionClose() {
-				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.createCollabDescription);
-				this.showCollabPromo = false;
 			},
 			startChatCreation() {
 				if (im_v2_lib_createChat.CreateChatManager.getInstance().isCreationLayoutActive(this.chatTypeToCreate)) {
@@ -314,7 +345,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			/>
 			<MenuItem
 				v-if="isCopilotAvailableAndCreatable"
-				:icon="MenuItemIcon.copilot"
+				:icon="copilotIcon"
 				:title="createCopilotTitle"
 				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1')"
 				@click.stop="onDefaultCopilotCreateClick"
@@ -330,17 +361,27 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1')"
 				@click="onChatCreateClick(ChatType.channel)"
 			/>
-			<MenuItem
-				v-if="collabAvailable"
-				:icon="MenuItemIcon.collab"
-				:title="loc('IM_RECENT_CREATE_COLLAB_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
-				@click="onChatCreateClick(ChatType.collab)"
-			>
-				<template #below-content>
-					<DescriptionBanner v-if="showCollabPromo" @close="onCollabDescriptionClose" />
-				</template>
-			</MenuItem>
+			<template v-if="collabAvailable">
+				<MenuItem
+					v-if="isCollabV2Available"
+					:disabled="!isCollabV2AvailableByTariff"
+					:icon="MenuItemIcon.collabV2"
+					:title="loc('IM_RECENT_CREATE_COLLAB_V2_TITLE')"
+					:subtitle="loc('IM_RECENT_CREATE_COLLAB_V2_SUBTITLE')"
+					@click="onCollabV2CreateClick"
+				/>
+				<MenuItem
+					v-else
+					:icon="MenuItemIcon.collab"
+					:title="loc('IM_RECENT_CREATE_COLLAB_TITLE')"
+					:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
+					@click="onChatCreateClick(ChatType.collab)"
+				>
+					<template #below-content>
+						<DescriptionBanner v-if="showCollabPromo" @close="onCollabDescriptionClose"/>
+					</template>
+				</MenuItem>
+			</template>
 			<MenuItem
 				v-if="canCreateConference"
 				:icon="MenuItemIcon.conference"
@@ -453,9 +494,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.onSelectChat(dialogId);
 			},
 			onToggleUnreadMode() {
-				this.$store.dispatch('recent/clearUnreadCollection', {
-					type: im_v2_const.RecentType.default
-				});
 				this.unreadMode = !this.unreadMode;
 			}
 		},
@@ -489,8 +527,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<RecentList v-if="!unreadMode" @selectChat="onSelectChat" />
-					<RecentUnreadList v-else @selectChat="onSelectChat" />
+					<RecentList v-show="!searchMode && !unreadMode" @selectChat="onSelectChat" />
+					<RecentUnreadList v-if="unreadMode" @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>
@@ -499,5 +537,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.UI, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.UI, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=recent-container.bundle.js.map

@@ -1,0 +1,30 @@
+.sonet--project-wizard--legacy-tools {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm, 12px);
+	padding: var(--ui-space-inline-3xs, 2px) 0;
+}
+
+.sonet--project-wizard--legacy-tools-description {
+	color: var(--ui-color-base-3);
+	margin: 0;
+}
+
+.sonet--project-wizard--legacy-tools-list {
+	display: grid;
+	gap: var(--ui-space-inline-sm, 12px) var(--ui-space-inline-2xl, 28px);
+	grid-template-columns: 1fr 1fr;
+}
+
+.sonet--project-wizard--legacy-tools-item {
+	align-items: center;
+	display: flex;
+	gap: var(--ui-space-inline-xs, 8px);
+	min-width: 0;
+}
+
+@media (max-width: 1024px) {
+	.sonet--project-wizard--legacy-tools-list {
+		grid-template-columns: 1fr;
+	}
+}

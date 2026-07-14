@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/const', (require, exports, module) => {
 	const { AiAssistantButtonType } = require('im/messenger/const/ai-assistant-button');
+	const { MessageActionType, MessageActionVoteValue } = require('im/messenger/const/message-action');
 	const { AiTasksStatusType } = require('im/messenger/const/ai-task');
 	const { AppStatus } = require('im/messenger/const/app-status');
 	const {
@@ -85,6 +86,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { Setting } = require('im/messenger/const/setting');
 	const { SidebarFileType, SidebarTab } = require('im/messenger/const/sidebar');
 	const { Promo, PromoType } = require('im/messenger/const/promo');
+	const {
+		ButtonDesignType,
+	} = require('im/messenger/const/button');
+	const {
+		BlockElementType,
+		BlockButtonType,
+		BlockButtonDesignMap,
+	} = require('im/messenger/const/block');
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { CopilotRoleType } = require('im/messenger/const/copilot-role');
 	const { ComponentCode } = require('im/messenger/const/component-code');
@@ -128,6 +137,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 
 	module.exports = {
 		AiAssistantButtonType,
+		MessageActionType,
+		MessageActionVoteValue,
 		AiTasksStatusType,
 		AppStatus,
 		AudioEvents,
@@ -193,6 +204,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		PinCount,
 		Promo,
 		PromoType,
+		BlockElementType,
+		BlockButtonType,
+		BlockButtonDesignMap,
+		ButtonDesignType,
 		CopilotButtonType,
 		CopilotPromptType,
 		CopilotRoleType,

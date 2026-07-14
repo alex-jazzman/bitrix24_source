@@ -60,6 +60,16 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 					break;
 			}
 
+			const noButton = Boolean(call.noButton);
+			if (noButton)
+			{
+				itemConfig = {
+					text: '',
+					background: 'transparent',
+					canJoin: false,
+				};
+			}
+
 			this.id = `call${call.associatedEntity.id}`;
 			this.title = call.associatedEntity.name;
 			this.subtitle = itemConfig.text;
@@ -90,6 +100,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 				},
 				isLocal: callStatus === 'local',
 				canJoin: itemConfig.canJoin,
+				disableTap: noButton,
 				type: 'call',
 			};
 

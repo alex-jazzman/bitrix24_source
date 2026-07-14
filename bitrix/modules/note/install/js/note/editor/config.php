@@ -19,6 +19,7 @@ return [
 		'note.ui.loader',
 		'note.ui.theme-context',
 		'pull.client',
+		'translit',
 		'ui.buttons',
 		'ui.entity-selector',
 		'ui.icon-set.api.vue',

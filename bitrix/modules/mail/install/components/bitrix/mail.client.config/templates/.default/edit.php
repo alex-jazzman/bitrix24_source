@@ -360,6 +360,29 @@ $senderNameBlockHtml = '
 				</div>
 			</div>
 		</div>
+		<?php if (
+			!empty($mailbox)
+			&& \Bitrix\Mail\Helper\MailAccess::hasCurrentUserAdminAccess()
+			&& \Bitrix\Mail\Helper\OrphanedMailboxLifecycle::isOrphan($mailbox)
+		): ?>
+		<div class="ui-slider-section">
+			<div class="mail-connect-section-block">
+				<div class="mail-connect-title-block">
+					<div class="mail-connect-title"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OWNER') ?></div>
+				</div>
+				<div class="mail-connect-option-email mail-connect-form-check-hidden">
+					<div id="mail-owner-selector-container"></div>
+				</div>
+				<input
+					type="hidden"
+					id="mail-owner-id-input"
+					name="fields[owner_id]"
+					value="<?= $arParams['OWNER_ACCESS_CODE'] ?>"
+				>
+			</div>
+		</div>
+		<?php endif; ?>
+
 		<? if (!empty($arParams['IS_SMTP_AVAILABLE'])): ?>
 			<div class="ui-slider-section">
 				<?php $hasSmtpFields = empty($settings['smtp']['server']) || !$settings['smtp']['login'] || !$settings['smtp']['password']; ?>
@@ -708,29 +731,6 @@ $senderNameBlockHtml = '
 			</div>
 		</div>
 
-		<?php if (
-			(\Bitrix\Main\Config\Option::get('mail', 'enable_mailbox_owner_change', 'N') === 'Y')
-		&& !empty($mailbox)
-		&& $USER->isAdmin()): ?>
-		<div class="ui-slider-section">
-			<div class="mail-connect-section-block">
-				<div class="mail-connect-title-block">
-					<div class="mail-connect-title"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OWNER') ?></div>
-				</div>
-				<div class="mail-connect-option-email mail-connect-form-check-hidden">
-					<div id="mail-owner-selector-container"></div>
-				</div>
-				<input
-					type="hidden"
-					id="mail-owner-id-input"
-					name="fields[owner_id]"
-					value="<?= $arParams['OWNER_ACCESS_CODE'] ?>"
-				>
-			</div>
-			</div>
-		</div>
-		<?php endif; ?>
-
 		<div class="mail-connect-footer mail-connect-footer-fixed">
 			<div id="mail_connect_form_error"></div>
 			<div class="mail-connect-footer-container">
@@ -903,6 +903,7 @@ $arJsParams = [
 				dialogOptions: {
 					context: 'MAIL_CLIENT_CONFIG_OWNER',
 					preselectedItems: preselectedItems,
+					undeselectedItems: preselectedItems,
 					entities: [{
 						id: 'user',
 						options: {
@@ -914,12 +915,8 @@ $arJsParams = [
 						'Item:onSelect': function (event) {
 							const selectedItem = event.getData().item;
 							ownerInputNode.value = 'U' + selectedItem.getId();
+							selectedItem.setDeselectable(false);
 						}
-					}
-				},
-				events: {
-					'onBeforeTagRemove': function () {
-						ownerInputNode.value = '';
 					}
 				}
 			});

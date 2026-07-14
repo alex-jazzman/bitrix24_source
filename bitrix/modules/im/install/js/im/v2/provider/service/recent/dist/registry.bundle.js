@@ -362,10 +362,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const ParentChatScope = {
-		all: null,
-		topLevel: 0
-	};
 	class BaseRecentService {
 		#unreadMode = false;
 		#parentChatId = 0;
@@ -377,7 +373,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		constructor(params = {}) {
 			const {
 				unreadMode = false,
-				parentChatId = ParentChatScope.topLevel
+				parentChatId = im_v2_const.ParentChatScope.topLevel
 			} = params;
 			this.#unreadMode = unreadMode;
 			this.#parentChatId = parentChatId;
@@ -401,22 +397,38 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getItemsPerPage() {
 			return this.#itemsPerPage;
 		}
-		getRestMethodName() {
+		getRestMethodName(firstPage) {
+			if (firstPage) {
+				return im_v2_const.RestMethod.imV2RecentLoad;
+			}
 			return im_v2_const.RestMethod.imV2RecentTail;
 		}
 		getRecentType() {
 			return im_v2_const.RecentType.default;
 		}
-		saveRecentItems(recentItems) {
+		getUnreadMode() {
+			return this.#unreadMode;
+		}
+		getParentChatId() {
+			return this.#parentChatId;
+		}
+		saveRecentItems(restResult) {
+			const {
+				recentItems
+			} = restResult;
 			const setPayload = {
 				type: this.getRecentType(),
 				items: recentItems,
-				unread: this.#unreadMode
+				unread: this.getUnreadMode()
 			};
-			if (this.#parentChatId !== null) {
-				setPayload.parentChatId = this.#parentChatId;
+			if (this.getParentChatId() !== null) {
+				setPayload.parentChatId = this.getParentChatId();
 			}
 			return im_v2_application_core.Core.getStore().dispatch('recent/setCollection', setPayload);
+		}
+		saveFirstPageData(restResult) {
+			// The base class does nothing here
+			return Promise.resolve();
 		}
 		getQueryParams(firstPage = false) {
 			return {
@@ -428,8 +440,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				lastMessageDate: firstPage ? null : this.#lastMessageDate,
 				recentSection: this.getRecentType(),
-				parentId: this.#parentChatId,
-				unread: this.#unreadMode
+				parentId: this.getParentChatId(),
+				unread: this.getUnreadMode()
 			};
 		}
 		handlePaginationField(result) {
@@ -444,7 +456,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const queryParams = {
 				data: this.getQueryParams(firstPage)
 			};
-			const result = await im_v2_lib_rest.runAction(this.getRestMethodName(), queryParams).catch(([error]) => {
+			const result = await im_v2_lib_rest.runAction(this.getRestMethodName(firstPage), queryParams).catch(([error]) => {
 				console.error('BaseRecentList: page request error', error);
 				throw error;
 			});
@@ -457,7 +469,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#hasMoreItemsToLoad = hasNextPage;
 			this.#isLoading = false;
 			this.onAfterRequest(firstPage);
-			return this.#updateModels(result);
+			if (firstPage) {
+				await this.saveFirstPageData(result);
+			}
+			return this.#updateModels(result, firstPage);
 		}
 		#updateModels(restResult) {
 			const {
@@ -477,7 +492,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const autoDeletePromise = im_v2_application_core.Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 			const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 			const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
-			const recentPromise = this.saveRecentItems(recentItems);
+			const recentPromise = this.saveRecentItems(restResult);
 			const copilotManager = new im_v2_lib_copilot.CopilotManager();
 			const copilotPromise = copilotManager.handleRecentListResponse(copilot);
 			return Promise.all([usersPromise, chatsPromise, messagesPromise, filesPromise, recentPromise, autoDeletePromise, copilotPromise]);
@@ -520,14 +535,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#filterPinnedItemsMessages(restResult) {
 			const {
 				messages,
-				recentItems
+				recentItems,
+				sectionMeta
 			} = restResult;
+			const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
 			return messages.filter(message => {
 				const chatId = message.chat_id;
 				const recentItem = recentItems.find(item => {
 					return item.chatId === chatId;
 				});
-				return recentItem.pinned === false;
+				const isPinnedItem = recentItem.pinned === true;
+				const isFixedItem = fixedChatIds.includes(chatId);
+				return !isPinnedItem && !isFixedItem;
 			});
 		}
 	}
@@ -547,7 +566,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.BaseRecentService = BaseRecentService;
 	exports.CalendarRecentService = CalendarRecentService;
 	exports.LegacyRecentService = LegacyRecentService;
-	exports.ParentChatScope = ParentChatScope;
 	exports.TaskRecentService = TaskRecentService;
 	exports.UnreadRecentService = UnreadRecentService;
 

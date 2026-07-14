@@ -108,9 +108,9 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			{
 				methodParams.filter = {};
 
-				if (Type.isNumber(options.filter.lastMessageDate) || Type.isStringFilled(options.filter.lastMessageDate))
+				if (Type.isNumber(options.filter.lastActivityDate) || Type.isStringFilled(options.filter.lastActivityDate))
 				{
-					methodParams.filter.lastMessageDate = options.filter.lastMessageDate;
+					methodParams.filter.lastMessageDate = options.filter.lastActivityDate;
 				}
 
 				if (Type.isNumber(options.filter.parentId))

@@ -40,8 +40,15 @@ $MESS['TASKS_GET_INFO_SELECT_FIELD_IS_OVERDUE'] = 'Просрочена';
 $MESS['TASKS_GET_INFO_SELECT_FIELD_URL'] = 'Ссылка';
 $MESS['TASKS_GET_INFO_SELECT_FIELD_PRIORITY'] = 'Приоритет';
 $MESS['TASKS_GET_INFO_SELECT_FIELD_PROJECT'] = 'Проект';
-$MESS['TASKS_GET_INFO_SELECT_FIELD_DAYS_WITHOUT_UPDATES'] = 'Дней без обновлений';
-$MESS['TASKS_GET_INFO_SELECT_FIELD_DAYS_ON_CONTROL'] = 'Дней на контроле';
+$MESS['TASKS_GET_INFO_SELECT_FIELD_DAYS_WITHOUT_UPDATES'] = 'Дни без обновлений';
+$MESS['TASKS_GET_INFO_SELECT_FIELD_DAYS_ON_CONTROL'] = 'Дни на контроле';
 
 $MESS['TASKS_GET_INFO_FIELD_TASK_STATUS_FILTER'] = 'Статусы задач';
 $MESS['TASKS_GET_INFO_FIELD_TASK_STATUS_FILTER_NAME'] = 'Статусы задач';
+$MESS['TASKS_GET_INFO_FIELD_ONLY_OVERDUE'] = 'Только просроченные';
+$MESS['TASKS_GET_INFO_FIELD_ONLY_OVERDUE_NAME'] = 'Только просроченные';
+$MESS['TASKS_GET_INFO_FIELD_EXCLUDE_RESPONSIBLE_ROLE'] = 'Исключить задачи, в которых сотрудник также является ответственным';
+$MESS['TASKS_GET_INFO_FIELD_EXCLUDE_RESPONSIBLE_ROLE_NAME'] = 'Исключить задачи, в которых сотрудник также является ответственным';
+
+$MESS['TASKS_GET_INFO_FIELD_CONDITION'] = 'Условия фильтрации задач';
+$MESS['TASKS_GET_INFO_FIELD_CONDITION_COLLAPSED'] = 'Настроить условия';

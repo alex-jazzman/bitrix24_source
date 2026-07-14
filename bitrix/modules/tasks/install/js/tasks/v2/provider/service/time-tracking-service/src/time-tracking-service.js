@@ -75,11 +75,62 @@ export class TimeTrackingService
 		}
 	}
 
+	getById(entityId: number | string): ?ElapsedTimeModel
+	{
+		return this.$store.getters[`${Model.ElapsedTimes}/getById`](entityId);
+	}
+
+	getIds(taskId: number): Array<number | string>
+	{
+		return this.$store.getters[`${Model.ElapsedTimes}/getIds`](taskId);
+	}
+
+	getLoadedIds(taskId: number): number[]
+	{
+		return this.getIds(taskId).filter((id: number | string): boolean => Number.isInteger(id));
+	}
+
 	isLoading(taskId: number): boolean
 	{
 		const state = this.#state[taskId];
 
 		return state && state.isLoading;
+	}
+
+	hasLoaded(taskId: number): boolean
+	{
+		const state = this.#state[taskId];
+
+		return Boolean(state?.page > 0);
+	}
+
+	hasLoadedAll(taskId: number): boolean
+	{
+		const task = taskService.getStoreTask(taskId);
+
+		if (!task)
+		{
+			return false;
+		}
+
+		return this.getLoadedIds(taskId).length >= task.numberOfElapsedTimes;
+	}
+
+	isOutOfLoadedRange(taskId: number, entityId: number): boolean
+	{
+		if (!Number.isInteger(entityId))
+		{
+			return false;
+		}
+
+		const loadedIds = this.getLoadedIds(taskId);
+
+		if (loadedIds.length === 0)
+		{
+			return false;
+		}
+
+		return entityId < loadedIds[loadedIds.length - 1];
 	}
 
 	async listParticipants(taskId: number): Promise<[UserModel[], []]>

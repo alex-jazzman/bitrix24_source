@@ -54,3 +54,4 @@ export class MarketSubscriptionCurtain extends MarketExpiredCurtain
 		}
 	}
 }
+

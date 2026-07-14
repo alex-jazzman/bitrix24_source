@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier) {
+(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_lib_collab, im_v2_component_list_items_elements_emptyState, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_lib_unreadMode, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier, im_v2_application_core, main_core, main_core_events, im_v2_lib_utils) {
 	'use strict';
 
 	class CollabService extends im_v2_provider_service_recent.BaseRecentService {
@@ -19,29 +19,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	// @vue/component
-	const EmptyState = {
-		name: 'EmptyState',
-		methods: {
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<div class="bx-im-list-collab__empty">
-			<div class="bx-im-list-collab__empty_icon"></div>
-			<div class="bx-im-list-collab__empty_text">
-				{{ loc('IM_LIST_COLLAB_EMPTY_V2') }}
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CollabList = {
-		name: 'CollabList',
+	const CollabUnreadList = {
+		name: 'CollabUnreadList',
 		components: {
-			EmptyState,
-			BaseRecentList: im_v2_component_list_items_base.BaseRecentList
+			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
 		emits: ['selectChat'],
 		data() {
@@ -53,9 +35,139 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			collection() {
+				return this.$store.getters['recent/getSortedUnreadCollection']({
+					type: im_v2_const.RecentType.collab
+				});
+			}
+		},
+		async created() {
+			this.contextMenuManager = new CollabRecentMenu({
+				emitter: this.getEmitter()
+			});
+			this.clearCollection();
+			await this.loadInitialItems();
+			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		methods: {
+			clearCollection() {
+				this.$store.dispatch('recent/clearUnreadCollection', {
+					type: im_v2_const.RecentType.collab
+				});
+			},
+			onCloseChat(event) {
+				const {
+					dialogId
+				} = event.getData();
+				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList({
+					recentSections: [im_v2_const.RecentType.collab],
+					dialogId
+				});
+			},
+			async loadInitialItems() {
+				if (this.firstPageLoaded || this.isLoading) {
+					return;
+				}
+				this.isLoading = true;
+				await this.getCollabUnreadService().loadFirstPage();
+				this.firstPageLoaded = true;
+				this.isLoading = false;
+			},
+			async onLoadNextPage() {
+				if (this.isLoadingNextPage || !this.getCollabUnreadService().hasMoreItemsToLoad()) {
+					return;
+				}
+				this.isLoadingNextPage = true;
+				await this.getCollabUnreadService().loadNextPage();
+				this.isLoadingNextPage = false;
+			},
+			onSelectChat(dialogId) {
+				this.$emit('selectChat', dialogId);
+			},
+			onItemRightClick(payload) {
+				const {
+					item,
+					event
+				} = payload;
+				event.preventDefault();
+				const context = {
+					dialogId: item.dialogId,
+					recentItem: item
+				};
+				this.contextMenuManager.openMenu(context, {
+					left: event.pageX,
+					top: event.pageY
+				});
+			},
+			onCloseMenu() {
+				this.contextMenuManager.close();
+			},
+			getCollabUnreadService() {
+				if (!this.service) {
+					this.service = new CollabService({
+						unreadMode: true
+					});
+				}
+				return this.service;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<RecentEmptyState 
+					:title="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_TITLE')" 
+					:subtitle="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_SUBTITLE')"
+				/>
+			</template>
+		</BaseRecentList>
+	`
+	};
+
+	// @vue/component
+	const CollabList = {
+		name: 'CollabList',
+		components: {
+			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		emits: ['selectChat'],
+		data() {
+			return {
+				isLoading: false,
+				isLoadingNextPage: false,
+				firstPageLoaded: false
+			};
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType,
+			collection() {
 				return this.$store.getters['recent/getSortedCollection']({
 					type: im_v2_const.RecentType.collab
 				});
+			},
+			emptyStateTitle() {
+				return im_v2_lib_collab.CollabManager.getListEmptyStateText();
+			},
+			emptyStateSubtitle() {
+				return im_v2_lib_collab.CollabManager.getListEmptyStateSubtitleText();
 			}
 		},
 		async created() {
@@ -128,15 +240,69 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<EmptyState />
+				<RecentEmptyState 
+					:title="emptyStateTitle"
+					:subtitle="emptyStateSubtitle"
+					:recentSection="RecentType.collab"
+				/>
 			</template>
 		</BaseRecentList>
 	`
 	};
 
+	class CollabNestedRecentMenu extends im_v2_lib_menu.RecentMenu {
+		getMenuItems() {
+			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getHideItem(), this.getLeaveItem()];
+		}
+	}
+
 	class CollabDefaultService extends im_v2_provider_service_recent.BaseRecentService {
 		getRecentType() {
 			return im_v2_const.RecentType.collabDefault;
+		}
+		saveRecentItems(restResult) {
+			const {
+				collectionItems,
+				fixedItems
+			} = this.#extractFixedItems(restResult);
+			const setPayload = {
+				type: this.getRecentType(),
+				items: collectionItems,
+				unread: this.getUnreadMode(),
+				parentChatId: this.getParentChatId()
+			};
+			return Promise.all([im_v2_application_core.Core.getStore().dispatch('recent/set', fixedItems), im_v2_application_core.Core.getStore().dispatch('recent/setCollection', setPayload)]);
+		}
+		saveFirstPageData(restResult) {
+			const {
+				sectionMeta: {
+					collabInfo
+				}
+			} = restResult;
+			return im_v2_application_core.Core.getStore().dispatch('chats/collabs/set', {
+				chatId: this.getParentChatId(),
+				collabInfo
+			});
+		}
+		#extractFixedItems(restResult) {
+			const {
+				recentItems,
+				sectionMeta
+			} = restResult;
+			const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
+			const collectionItems = [];
+			const fixedItems = [];
+			recentItems.forEach(item => {
+				if (fixedChatIds.includes(item.chatId)) {
+					fixedItems.push(item);
+					return;
+				}
+				collectionItems.push(item);
+			});
+			return {
+				collectionItems,
+				fixedItems
+			};
 		}
 	}
 
@@ -145,6 +311,42 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return im_v2_const.RecentType.collabChat;
 		}
 	}
+
+	const TitleByType = {
+		[im_v2_const.RecentType.taskComments]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_TITLE'),
+		[im_v2_const.RecentType.collabChat]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'),
+		[im_v2_const.RecentType.calendar]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE')
+	};
+	const SubtitleByType = {
+		[im_v2_const.RecentType.taskComments]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_SUBTITLE'),
+		[im_v2_const.RecentType.collabChat]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'),
+		[im_v2_const.RecentType.calendar]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE')
+	};
+
+	// @vue/component
+	const CollabNestedEmptyState = {
+		name: 'CollabNestedEmptyState',
+		components: {
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		props: {
+			type: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			title() {
+				return TitleByType[this.type];
+			},
+			subtitle() {
+				return SubtitleByType[this.type];
+			}
+		},
+		template: `
+		<RecentEmptyState :title="title" :subtitle="subtitle" :recentSection="type" />
+	`
+	};
 
 	const ServiceByRecentType = {
 		[im_v2_const.RecentType.collabDefault]: CollabDefaultService,
@@ -157,7 +359,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const BaseCollabNestedList = {
 		name: 'BaseCollabNestedList',
 		components: {
-			EmptyState,
+			CollabNestedEmptyState,
 			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
 			CreateChatStatus: im_v2_component_list_items_elements_createChatStatus.CreateChatStatus
 		},
@@ -173,9 +375,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			creatableChatType: {
 				type: String,
 				default: ''
+			},
+			withEmptyState: {
+				type: Boolean,
+				default: true
 			}
 		},
-		emits: ['selectChat', 'loadComplete', 'loadError'],
+		emits: ['selectChat', 'loadError'],
 		data() {
 			return {
 				isLoading: false,
@@ -197,7 +403,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		async created() {
 			this.initCreateChatManager();
-			this.contextMenuManager = new CollabRecentMenu({
+			this.contextMenuManager = new CollabNestedRecentMenu({
 				emitter: this.getEmitter()
 			});
 			await this.loadInitialItems();
@@ -219,7 +425,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				this.firstPageLoaded = true;
 				this.isLoading = false;
-				this.$emit('loadComplete');
 			},
 			async onLoadNextPage() {
 				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
@@ -289,10 +494,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #before-list>
+				<slot name="fixed-chats"></slot>
 				<CreateChatStatus v-if="showCreationStatus" :allowedTypes="[creatableChatType]" />
 			</template>
 			<template #empty-state>
-				<EmptyState />
+				<CollabNestedEmptyState v-if="withEmptyState" :type="type" />
 			</template>
 		</BaseRecentList>
 	`
@@ -318,11 +524,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	class FixedParentRecentMenu extends im_v2_lib_menu.RecentMenu {
+		getMenuItems() {
+			return [this.getUnreadMessageItem(), this.getMuteItem()];
+		}
+		hasCounter() {
+			const {
+				chatId
+			} = this.store.getters['chats/get'](this.context.dialogId, true);
+			const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
+			const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
+			return isChatMarkedUnread || chatCounter > 0;
+		}
+	}
+
 	// @vue/component
-	const CollabNestedDefaultList = {
-		name: 'CollabNestedDefaultList',
+	const FixedParentItem = {
+		name: 'FixedParentItem',
 		components: {
-			BaseCollabNestedList
+			FixedItemContainer: im_v2_component_list_items_base.FixedItemContainer,
+			BaseRecentItem: im_v2_component_list_items_base.BaseRecentItem
 		},
 		props: {
 			parentChatId: {
@@ -331,18 +552,97 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
-			RecentType: () => im_v2_const.RecentType,
-			CreatableChatType: () => im_v2_lib_createChat.CreatableChatType,
-			parentChat() {
-				return this.$store.getters['chats/getByChatId'](this.parentChatId);
+			parentDialogId() {
+				return im_v2_lib_utils.Utils.dialog.buildChatDialogId(this.parentChatId);
+			},
+			parentRecentItem() {
+				return this.$store.getters['recent/get'](this.parentDialogId);
 			}
 		},
+		created() {
+			this.contextMenuManager = new FixedParentRecentMenu({
+				emitter: this.getEmitter()
+			});
+		},
 		methods: {
-			onLoadComplete() {
-				this.selectParentChat();
+			onRightClick(event) {
+				event.preventDefault();
+				const context = {
+					dialogId: this.parentRecentItem.dialogId,
+					recentItem: this.parentRecentItem
+				};
+				this.contextMenuManager.openMenu(context, {
+					left: event.pageX,
+					top: event.pageY
+				});
 			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			}
+		},
+		template: `
+		<FixedItemContainer  class="bx-im-collab-nested-list__fixed-items_container">
+			<BaseRecentItem
+				:item="parentRecentItem"
+				:withPinStatus="false"
+				:withChildrenCounter="false"
+				@click.right="onRightClick"
+			/>
+		</FixedItemContainer>
+	`
+	};
+
+	// @vue/component
+	const CollabNestedDefaultList = {
+		name: 'CollabNestedDefaultList',
+		components: {
+			BaseCollabNestedList,
+			FixedParentItem
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['selectChat'],
+		computed: {
+			RecentType: () => im_v2_const.RecentType,
+			CreatableChatType: () => im_v2_lib_createChat.CreatableChatType,
+			layout() {
+				return this.$store.getters['application/getLayout'];
+			},
+			parentDialogId() {
+				return im_v2_lib_utils.Utils.dialog.buildChatDialogId(this.parentChatId);
+			}
+		},
+		mounted() {
+			if (this.shouldSelectParentChat()) {
+				this.selectParentChat();
+			}
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.collab.onFirstOpen, {
+				parentChatId: this.parentChatId
+			});
+		},
+		methods: {
 			selectParentChat() {
-				this.$emit('selectChat', this.parentChat.dialogId);
+				this.$emit('selectChat', this.parentDialogId);
+			},
+			shouldSelectParentChat() {
+				const currentDialogId = this.layout.entityId;
+				if (!currentDialogId) {
+					return true;
+				}
+				const currentChat = this.$store.getters['chats/get'](currentDialogId, true);
+				const isNestedChatOpen = currentChat.parentChatId === this.parentChatId;
+				// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+				if (isNestedChatOpen) {
+					return false;
+				}
+				return true;
+			},
+			onParentItemClick() {
+				this.selectParentChat();
 			}
 		},
 		template: `
@@ -350,8 +650,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:type="RecentType.collabDefault"
 			:parentChatId="parentChatId"
 			:creatableChatType="CreatableChatType.collabChat"
-			@loadComplete="onLoadComplete"
-		/>
+			:withEmptyState="false"
+			@selectChat="$emit('selectChat', $event)"
+		>
+			<template #fixed-chats>
+				<FixedParentItem :parentChatId="parentChatId" @click="onParentItemClick" />
+			</template>
+		</BaseCollabNestedList>
 	`
 	};
 
@@ -400,11 +705,264 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const BaseCollabNestedUnreadList = {
+		name: 'BaseCollabNestedUnreadList',
+		components: {
+			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			},
+			type: {
+				type: String,
+				required: true
+			},
+			withEmptyState: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['selectChat', 'loadError'],
+		data() {
+			return {
+				isLoading: false,
+				isLoadingNextPage: false,
+				firstPageLoaded: false
+			};
+		},
+		computed: {
+			collection() {
+				return this.$store.getters['recent/getSortedUnreadCollection']({
+					parentChatId: this.parentChatId,
+					type: this.type
+				});
+			}
+		},
+		async created() {
+			this.contextMenuManager = new CollabNestedRecentMenu({
+				emitter: this.getEmitter()
+			});
+			this.clearCollection();
+			await this.loadInitialItems();
+			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		methods: {
+			clearCollection() {
+				this.$store.dispatch('recent/clearUnreadCollection', {
+					parentChatId: this.parentChatId,
+					type: this.type
+				});
+			},
+			async loadInitialItems() {
+				if (this.firstPageLoaded || this.isLoading) {
+					return;
+				}
+				this.isLoading = true;
+				await this.getUnreadRecentService().loadFirstPage().catch(error => {
+					im_v2_lib_notifier.Notifier.chat.handleLoadError(error);
+					this.$emit('loadError');
+				});
+				this.firstPageLoaded = true;
+				this.isLoading = false;
+			},
+			async onLoadNextPage() {
+				if (this.isLoadingNextPage || !this.getUnreadRecentService().hasMoreItemsToLoad()) {
+					return;
+				}
+				this.isLoadingNextPage = true;
+				await this.getUnreadRecentService().loadNextPage();
+				this.isLoadingNextPage = false;
+			},
+			onSelectChat(dialogId) {
+				this.$emit('selectChat', dialogId);
+			},
+			onItemRightClick(payload) {
+				const {
+					item,
+					event
+				} = payload;
+				event.preventDefault();
+				const context = {
+					dialogId: item.dialogId,
+					recentItem: item
+				};
+				this.contextMenuManager.openMenu(context, {
+					left: event.pageX,
+					top: event.pageY
+				});
+			},
+			onCloseMenu() {
+				this.contextMenuManager.close();
+			},
+			onCloseChat(event) {
+				const {
+					dialogId
+				} = event.getData();
+				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList({
+					recentSections: [this.type],
+					dialogId,
+					parentChatId: this.parentChatId
+				});
+			},
+			getUnreadRecentService() {
+				if (!this.service) {
+					const ServiceClass = ServiceByRecentType[this.type];
+					this.service = new ServiceClass({
+						unreadMode: true,
+						parentChatId: this.parentChatId
+					});
+				}
+				return this.service;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #before-list>
+				<slot name="fixed-chats"></slot>
+			</template>
+			<template #empty-state>
+				<RecentEmptyState 
+					v-if="withEmptyState" 
+					:title="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_TITLE')"
+					:subtitle="loc('IM_LIST_COLLAB_UNREAD_EMPTY_STATE_SUBTITLE')"
+				/>
+			</template>
+		</BaseRecentList>
+	`
+	};
+
+	// @vue/component
+	const CollabNestedTaskUnreadList = {
+		name: 'CollabNestedTaskUnreadList',
+		components: {
+			BaseCollabNestedUnreadList
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
+		template: `
+		<BaseCollabNestedUnreadList :type="RecentType.taskComments" :parentChatId="parentChatId" />
+	`
+	};
+
+	// @vue/component
+	const CollabNestedDefaultUnreadList = {
+		name: 'CollabNestedDefaultUnreadList',
+		components: {
+			BaseCollabNestedUnreadList,
+			FixedParentItem
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['selectChat'],
+		computed: {
+			RecentType: () => im_v2_const.RecentType,
+			parentDialogId() {
+				return im_v2_lib_utils.Utils.dialog.buildChatDialogId(this.parentChatId);
+			}
+		},
+		methods: {
+			onParentItemClick() {
+				this.$emit('selectChat', this.parentDialogId);
+			}
+		},
+		template: `
+		<BaseCollabNestedUnreadList 
+			:type="RecentType.collabDefault" 
+			:parentChatId="parentChatId"
+			:withEmptyState="false"
+			@selectChat="$emit('selectChat', $event)"
+		>
+			<template #fixed-chats>
+				<FixedParentItem :parentChatId="parentChatId" @click="onParentItemClick" />
+			</template>
+		</BaseCollabNestedUnreadList>
+	`
+	};
+
+	// @vue/component
+	const CollabNestedCalendarUnreadList = {
+		name: 'CollabNestedCalendarUnreadList',
+		components: {
+			BaseCollabNestedUnreadList
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
+		template: `
+		<BaseCollabNestedUnreadList :type="RecentType.calendar" :parentChatId="parentChatId" />
+	`
+	};
+
+	// @vue/component
+	const CollabNestedChatUnreadList = {
+		name: 'CollabNestedChatUnreadList',
+		components: {
+			BaseCollabNestedUnreadList
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
+		template: `
+		<BaseCollabNestedUnreadList :type="RecentType.collabChat" :parentChatId="parentChatId" />
+	`
+	};
+
 	exports.CollabList = CollabList;
 	exports.CollabNestedCalendarList = CollabNestedCalendarList;
+	exports.CollabNestedCalendarUnreadList = CollabNestedCalendarUnreadList;
 	exports.CollabNestedChatList = CollabNestedChatList;
+	exports.CollabNestedChatUnreadList = CollabNestedChatUnreadList;
 	exports.CollabNestedDefaultList = CollabNestedDefaultList;
+	exports.CollabNestedDefaultUnreadList = CollabNestedDefaultUnreadList;
 	exports.CollabNestedTaskList = CollabNestedTaskList;
+	exports.CollabNestedTaskUnreadList = CollabNestedTaskUnreadList;
+	exports.CollabUnreadList = CollabUnreadList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Event, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

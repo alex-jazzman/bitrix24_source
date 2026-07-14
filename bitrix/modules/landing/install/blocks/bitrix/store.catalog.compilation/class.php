@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Landing\Hook\Page\Settings;
+use Bitrix\Landing\Node\Component\Store\AddToBasketActionTrait;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Landing;
@@ -12,6 +13,8 @@ use Bitrix\Catalog;
 
 class StoreCatalogCompilation extends \Bitrix\Landing\LandingBlock
 {
+	use AddToBasketActionTrait;
+
 	protected $catalogIncluded;
 
 	/**
@@ -84,6 +87,11 @@ class StoreCatalogCompilation extends \Bitrix\Landing\LandingBlock
 					}
 			}
 		}
+	}
+
+	public function getAddToBasketActionSyspageType(\Bitrix\Landing\Block $block): ?string
+	{
+		return 'order';
 	}
 
 	/**
@@ -170,14 +178,16 @@ class StoreCatalogCompilation extends \Bitrix\Landing\LandingBlock
 
 		// check for show cart, personal section, and compare
 		$showCart = false;
+		$addToBasketAction = $this->getConfiguredAddToBasketAction();
+		$addToBasketActionSyspageType = $this->resolveAddToBasketActionSyspageType($params);
 		$this->params['SHOW_PERSONAL_LINK'] = 'N';
-		$this->params['ADD_TO_BASKET_ACTION'] = 'BUY';
 		$this->params['SECTION_URL'] = '#system_catalog#SECTION_CODE_PATH#/';
 		$this->params['DETAIL_URL'] = '#system_catalogitem/#ELEMENT_CODE#/';
 		if (!$editMode && ModuleManager::isModuleInstalled('sale'))
 		{
 			$syspages = Landing\Syspage::get(
-				$params['site_id']
+				$params['site_id'],
+				$this->shouldUseActiveAddToBasketActionSyspages($params)
 			);
 			if (
 				isset($syspages['compare']) &&
@@ -190,10 +200,16 @@ class StoreCatalogCompilation extends \Bitrix\Landing\LandingBlock
 			{
 				$this->params['DISPLAY_COMPARE'] = 'N';
 			}
-			if (isset($syspages['order']))
+			if (
+				$addToBasketActionSyspageType !== null &&
+				isset($syspages[$addToBasketActionSyspageType])
+			)
 			{
 				$showCart = true;
-				$this->params['ADD_TO_BASKET_ACTION'] = 'ADD';
+				if ($addToBasketAction === 'AUTO')
+				{
+					$addToBasketAction = 'ADD';
+				}
 			}
 			if (isset($syspages['personal']))
 			{
@@ -208,6 +224,11 @@ class StoreCatalogCompilation extends \Bitrix\Landing\LandingBlock
 		{
 			$this->params['DISPLAY_COMPARE'] = 'N';
 		}
+		$addToBasketAction = $this->resolveAddToBasketActionForCartAvailability(
+			$addToBasketAction,
+			$showCart
+		);
+		$this->params['ADD_TO_BASKET_ACTION'] = $addToBasketAction;
 
 		$this->params['HIDE_DETAIL_URL'] = ($this->params['DETAIL_URL'] == '') ? 'Y' : 'N';
 

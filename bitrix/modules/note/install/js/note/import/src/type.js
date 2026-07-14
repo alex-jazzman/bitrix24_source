@@ -156,4 +156,5 @@ export type ProgressScreenState = {
 
 export type ImportDialogOptions = {
 	onComplete?: () => void | Promise<void>,
+	wikiImportEnabled?: boolean,
 };

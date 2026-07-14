@@ -2,6 +2,7 @@ export const Layout = {
 	chat: 'chat',
 	createChat: 'createChat',
 	updateChat: 'updateChat',
+	copyCollab: 'copyCollab',
 	channel: 'channel',
 	notification: 'notification',
 	openlines: 'openlines',

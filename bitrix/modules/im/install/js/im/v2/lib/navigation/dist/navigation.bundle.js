@@ -169,7 +169,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		if (!entityId && lastOpenedElement) {
 			entityId = lastOpenedElement;
 		}
-		main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeListSlider);
+		main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList);
 		void layoutManager.setLayout({
 			name: layoutName,
 			entityId

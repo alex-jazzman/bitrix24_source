@@ -1209,7 +1209,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 
 			const messageHelper = MessageHelper.createById(messageId);
 
-			if (!messageHelper.isWithFile)
+			if (!messageHelper.isWithFile && !messageHelper.hasBlockGallery)
 			{
 				return;
 			}

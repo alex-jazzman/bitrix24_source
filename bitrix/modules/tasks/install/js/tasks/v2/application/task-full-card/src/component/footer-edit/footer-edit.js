@@ -255,9 +255,9 @@ export const FooterEdit = {
 		},
 		async waitStatus(statusPromise: Promise): Promise<void>
 		{
-			this.loading = true;
+			this.isLoadingActions = true;
 			await statusPromise;
-			this.loading = false;
+			this.isLoadingActions = false;
 		},
 		createTaskFromTemplate(): void
 		{

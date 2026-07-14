@@ -1,7 +1,7 @@
 import { Type, Event } from 'main.core';
 
 import { mapGetters } from 'ui.vue3.vuex';
-import { TextEditor } from 'ui.text-editor';
+import { type TextEditor } from 'ui.text-editor';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';

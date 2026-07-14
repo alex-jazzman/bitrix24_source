@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 	const { isEqual } = require('utils/object');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
 	const CommonFilterEmptyScreen = require('im/messenger/controller/recent/service/empty-state/lib/filter/common');
 
@@ -77,7 +78,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 		{
 			this.logger.log('show');
 			await this.uiReadyPromise;
-			this.renderWelcomeScreenIfNeeded();
+			this.renderWelcomeScreen();
 		}
 
 		/**
@@ -148,23 +149,49 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 		/**
 		 * @private
 		 */
-		renderWelcomeScreenIfNeeded()
+		renderWelcomeScreen()
 		{
-			const WelcomeScreenClass = this.hasSelectedFilter ? CommonFilterEmptyScreen : this.WelcomeScreenClass;
-			const welcomeScreen = new WelcomeScreenClass();
+			const welcomeScreen = this.#getWelcomeScreen();
 
 			if (isEqual(welcomeScreen, this.renderedWelcomeScreen))
 			{
-				this.logger.log('renderWelcomeScreenIfNeeded skipped');
+				return;
+			}
+
+			this.ui.welcomeScreen.hide();
+			this.#showWelcomeScreen(welcomeScreen);
+
+			this.renderedWelcomeScreen = welcomeScreen;
+			this.logger.log('renderWelcomeScreen complete');
+		}
+
+		/**
+		 * @private
+		 */
+		#showWelcomeScreen(welcomeScreen)
+		{
+			const useLayout = Feature.isWelcomeScreenLayoutComponentSupported
+				&& welcomeScreen.isLayoutComponentSupported?.();
+
+			if (useLayout)
+			{
+				this.ui.welcomeScreen.showLayout(welcomeScreen.toLayoutComponent());
 
 				return;
 			}
 
-			this.ui.welcomeScreen.hide(); // hide for show new welcomeScreen
 			this.ui.welcomeScreen.show(welcomeScreen.toChatRecentWidgetItem());
+		}
 
-			this.renderedWelcomeScreen = welcomeScreen;
-			this.logger.log('renderWelcomeScreenIfNeeded complete');
+		/**
+		 * @return {IWelcomeScreen}
+		 */
+		#getWelcomeScreen()
+		{
+			const WelcomeScreenClass = this.hasSelectedFilter ? CommonFilterEmptyScreen : this.WelcomeScreenClass;
+			const welcomeScreenProps = this.props.welcomeScreenProps ?? {};
+
+			return new WelcomeScreenClass(welcomeScreenProps);
 		}
 	}
 

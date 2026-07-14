@@ -1,0 +1,4 @@
+<?php
+
+$MESS['MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CALENDAR_TITLE'] = 'Интеграция с Календарем';
+$MESS['MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_CALENDAR_AUTO_ADD'] = 'Автоматически добавлять событие в календарь';

@@ -1,7 +1,7 @@
 <?php
-$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_ADMIN_MSGVER_1"] = "You have to accept the Terms of Service to use #COPILOT_NAME#. [URL=#LINK#]Learn more[/URL]";
-$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_BOX_MSGVER_1"] = "You have to accept the Bitrix24 #COPILOT_NAME# Additional Terms to use #COPILOT_NAME#. [URL=#LINK#]Learn more[/URL]";
-$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_USER_MSGVER_1"] = "#COPILOT_NAME# is not available until the administrator accepts the Terms of Service.";
+$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_ADMIN_MSGVER_1"] = "You have to accept the Bitrix24 AI Tools Terms of Use. [URL=#LINK#]Learn more[/URL]";
+$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_BOX_MSGVER_1"] = "You have to accept the Bitrix24 AI Tools Terms of Use to use #COPILOT_NAME#. [URL=#LINK#]Learn more[/URL]";
+$MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_USER_MSGVER_1"] = "#COPILOT_NAME# is not available until the administrator accepts the Bitrix24 AI Tools Terms of Use.";
 $MESS["IMBOT_COPILOT_BOT_NAME_MSGVER_1"] = "#COPILOT_NAME#";
 $MESS["IMBOT_COPILOT_ERROR_LIMIT_BAAS_MSGVER_1"] = "You're out of free training queries. You can upgrade by purchasing [URL=#LINK#]#COPILOT_NAME# credits[/URL].";
 $MESS["IMBOT_COPILOT_ERROR_NETWORK_MSGVER_1"] = "Request to AI provider timed out. Please try again later.";

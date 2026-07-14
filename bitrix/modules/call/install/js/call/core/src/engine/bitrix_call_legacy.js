@@ -12,7 +12,8 @@ import {
 	Provider
 } from './engine';
 import { CallEngineLegacy } from './engine_legacy';
-import {Call, CALL_STATE, MediaStreamsKinds} from '../call_api.js';
+import { CALL_STATE, MediaStreamsKinds } from '../call_api.js';
+import { CallLegacy } from '../call-api-legacy.js';
 import { MediaRenderer } from '../view/media-renderer';
 import {SimpleVAD} from './simple_vad'
 import {Hardware} from '../call_hardware';
@@ -79,13 +80,6 @@ const BitrixCallEvent = {
 	onCallConference: 'BitrixCall::onCallConference'
 };
 
-const MediaKinds = {
-	[MediaStreamsKinds.Camera]: 'video',
-	[MediaStreamsKinds.Microphone]: 'audio',
-	[MediaStreamsKinds.Screen]: 'sharing',
-	[MediaStreamsKinds.ScreenAudio]: 'sharingAudio',
-};
-
 const pingPeriod = 5000;
 const backendPingPeriod = 25000;
 const reinvitePeriod = 5500;
@@ -121,6 +115,12 @@ export class BitrixCallLegacy extends AbstractCall
 		this.videoAllowedFrom = UserMnemonic.all;
 		this.direction = EndpointDirection.SendRecv;
 		this.floorRequestActive = false;
+
+		this.vads = {};
+		this.getUserMediaFulfilled = {
+			video: true,
+			audio: true,
+		};
 
 		this.microphoneLevelInterval = null;
 
@@ -574,17 +574,22 @@ export class BitrixCallLegacy extends AbstractCall
 		}
 	}
 
-	setMainStream(userId)
+	setMainStream(users)
 	{
-		if (userId && userId !== this.userId)
+		if (!this.BitrixCall)
 		{
-			const participant = this.peers[userId]?.participant;
+			return;
+		}
+
+		if (users.userId && users.userId !== this.userId)
+		{
+			const participant = this.peers[users.userId]?.participant;
 			const kind = participant?.screenSharingEnabled ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
-			this.BitrixCall.setMainStream(userId, kind);
+			this.BitrixCall.setMainStream(users, kind);
 		}
 		else
 		{
-			this.BitrixCall.resetMainStream();
+			this.BitrixCall.resetMainStream(users);
 		}
 	}
 
@@ -709,10 +714,10 @@ export class BitrixCallLegacy extends AbstractCall
 		return this.screenShared || this.waitingLocalScreenShare;
 	};
 
-	isGetUserMediaFulfilled()
+	isGetUserMediaFulfilled(kind: string): Boolean
 	{
-		return this.getUserMediaFulfilled;
-	};
+		return Boolean(this.getUserMediaFulfilled[kind]);
+	}
 
 	/**
 	 * Invites users to participate in the call.
@@ -950,7 +955,7 @@ export class BitrixCallLegacy extends AbstractCall
 			try
 			{
 				this.localUserState = UserState.Connecting;
-				this.BitrixCall = new Call(this.userId);
+				this.BitrixCall = new CallLegacy(this.userId);
 
 				/*if (Hardware.isCameraOn) // transfered to #onCallConnected
 				{
@@ -1072,6 +1077,8 @@ export class BitrixCallLegacy extends AbstractCall
 		this.BitrixCall.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
 		this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
 		this.BitrixCall.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
+		this.BitrixCall.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
+		this.BitrixCall.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
 		this.BitrixCall.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
 		this.BitrixCall.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
 		this.BitrixCall.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
@@ -1113,6 +1120,8 @@ export class BitrixCallLegacy extends AbstractCall
 			this.BitrixCall.on('PublishFailed', BX.DoNothing);
 			this.BitrixCall.on('PublishEnded', BX.DoNothing);
 			this.BitrixCall.on('GetUserMediaEnded', BX.DoNothing);
+			this.BitrixCall.on('RemoteMediaAvailable',  BX.DoNothing);
+			this.BitrixCall.on('RemoteMediaUnavailable',  BX.DoNothing);
 			this.BitrixCall.on('RemoteMediaAdded', BX.DoNothing);
 			this.BitrixCall.on('RemoteMediaRemoved', BX.DoNothing);
 			this.BitrixCall.on('ParticipantJoined', BX.DoNothing);
@@ -1213,9 +1222,11 @@ export class BitrixCallLegacy extends AbstractCall
 		}
 	};
 
-	toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle = false) {
-		if (this.BitrixCall) {
-			this.BitrixCall.toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle)
+	toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false)
+	{
+		if (this.BitrixCall)
+		{
+			this.BitrixCall.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
 		}
 	}
 
@@ -1460,7 +1471,7 @@ export class BitrixCallLegacy extends AbstractCall
 	}
 
 	#onLocalMediaRendererAdded = (mediaStreamsKind) => {
-		const kind = MediaKinds[mediaStreamsKind];
+		const kind = Util.MediaKind[mediaStreamsKind];
 		if (!kind)
 		{
 			this.log(`Wrong kind for local mediaRenderer: ${mediaStreamsKind}`);
@@ -1544,7 +1555,7 @@ export class BitrixCallLegacy extends AbstractCall
 
 	#onLocalMediaRendererEnded = (e, interrupted) =>
 	{
-		const kind = MediaKinds[e];
+		const kind = Util.MediaKind[e];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${e}`);
@@ -1571,42 +1582,69 @@ export class BitrixCallLegacy extends AbstractCall
 		}
 	}
 
-	#onGetUserMediaStarted = (options) =>
-	{
-		this.getUserMediaFulfilled = false;
-
+	#onGetUserMediaStarted = (options) => {
 		if (options.video)
 		{
+			this.getUserMediaFulfilled.video = false;
 			this.signaling.sendCameraState(false);
 		}
 
 		if (options.audio)
 		{
+			this.getUserMediaFulfilled.audio = false;
 			this.signaling.sendMicrophoneState(false);
 		}
 	};
 
-	#onGetUserMediaSuccess = (options) =>
-	{
-		if (options.video)
+	#onGetUserMediaSuccess = (options) => {
+		if (options.video && Hardware.isCameraOn)
 		{
+			this.getUserMediaFulfilled.video = false;
 			this.signaling.sendCameraState(true);
+		}
+
+		if (options.audio && !Hardware.isMicrophoneMuted)
+		{
+			this.getUserMediaFulfilled.audio = false;
+			this.signaling.sendMicrophoneState(true);
 		}
 
 		if (options.audio)
 		{
-			this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
+			this.getUserMediaFulfilled.audio = false;
+			this.signaling.sendMicrophoneState(true);
 		}
-	}
+	};
 
-	#onGetUserMediaEnded = () =>
-	{
-		this.getUserMediaFulfilled = true;
+	#onGetUserMediaEnded = (options) => {
+		if (options.video)
+		{
+			this.#setPublishingState(MediaStreamsKinds.Camera, false);
+			this.getUserMediaFulfilled.video = true;
+		}
+
+		if (options.audio)
+		{
+			this.getUserMediaFulfilled.audio = true;
+		}
+	};
+
+	#onGetUserMediaFailed = (data: any): void => {
+		this.runCallback(CallEvent.onGetUserMediaFailed, data);
+		if (data.options.video)
+		{
+			this.getUserMediaFulfilled.video = true;
+		}
+
+		if (data.options.audio)
+		{
+			this.getUserMediaFulfilled.audio = true;
+		}
 	};
 
 	#onBeforeLocalMediaRendererRemoved = (e) =>
 	{
-		const kind = MediaKinds[e];
+		const kind = Util.MediaKind[e];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${e}`);
@@ -1656,9 +1694,43 @@ export class BitrixCallLegacy extends AbstractCall
 		}
 	};
 
+	#onRemoteMediaAvailable = (p, t) =>
+	{
+		const kind = Util.MediaKind[t.source];
+		if (!kind)
+		{
+			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
+			return;
+
+		}
+
+		this.runCallback(CallEvent.onRemoteMediaAvailable, {
+			userId: parseInt(p.userId),
+			kind: kind,
+			available: true,
+		});
+	}
+
+	#onRemoteMediaUnavailable = (p, t) =>
+	{
+		const kind = Util.MediaKind[t.source];
+		if (!kind)
+		{
+			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
+			return;
+
+		}
+
+		this.runCallback(CallEvent.onRemoteMediaUnavailable, {
+			userId: parseInt(p.userId),
+			kind: kind,
+			available: false,
+		});
+	}
+
 	#onRemoteMediaAdded = (p, t) =>
 	{
-		const kind = MediaKinds[t.source];
+		const kind = Util.MediaKind[t.source];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
@@ -1675,6 +1747,27 @@ export class BitrixCallLegacy extends AbstractCall
 		const peer = this.peers[p.userId];
 		if (peer)
 		{
+
+			if (kind === 'audio')
+			{
+				if (this.vads[p.userId])
+				{
+					this.vads[p.userId].destroy();
+				}
+
+				this.vads[p.userId] = new SimpleVAD({
+					mediaStream: e.mediaRenderer.stream,
+					onVoiceStarted: () =>
+					{
+						this.#onEndpointVoiceStart({userId: p.userId});
+					},
+					onVoiceStopped: () =>
+					{
+						this.#onEndpointVoiceEnd({userId: p.userId});
+					},
+				});
+			}
+
 			// temporary solution to play new streams
 			// todo: need to find what cause the problem itself
 			if (!peer.participant)
@@ -1702,16 +1795,25 @@ export class BitrixCallLegacy extends AbstractCall
 				break;
 		}
 
-		console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
+		console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${kind}`)
 	};
 
 	#onRemoteMediaRemoved = (p, t) =>
 	{
-		const kind = MediaKinds[t.source];
+		const kind = Util.MediaKind[t.source];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${t.source}`);
 			return;
+		}
+
+		if (kind === 'audio')
+		{
+			if (this.vads[p.userId])
+			{
+				this.vads[p.userId].destroy();
+				delete this.vads[p.userId];
+			}
 		}
 
 		const e = {
@@ -1735,13 +1837,23 @@ export class BitrixCallLegacy extends AbstractCall
 			});
 		}
 
-		console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
+		console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${kind}`)
 	};
 
 	#onRemoteMediaMuteToggled = (p, t) =>
 	{
 		if (t.source === MediaStreamsKinds.Microphone)
 		{
+			const vad = this.vads[p.userId];
+			if (vad && p.isMutedAudio)
+			{
+				vad.pause();
+			}
+			else if (vad && !p.isMutedAudio)
+			{
+				vad.resume();
+			}
+
 			this.runCallback(CallEvent.onUserMicrophoneState, {
 				userId: p.userId,
 				microphoneState: !p.isMutedAudio
@@ -1779,7 +1891,7 @@ export class BitrixCallLegacy extends AbstractCall
 			}
 
 			peer.participant = p;
-			peer.updateCalculatedState();
+			peer.setReady(true);
 
 			if (this.commonRecordState.state !== CallCommonRecordState.Stopped
 				&& this.commonRecordState.userId === this.userId)
@@ -1798,7 +1910,7 @@ export class BitrixCallLegacy extends AbstractCall
 			for (let type in MediaStreamsKinds)
 			{
 				const source = MediaStreamsKinds[type];
-				const kind = MediaKinds[source];
+				const kind = Util.MediaKind[source];
 				const e = {
 					mediaRenderer: new MediaRenderer({
 						kind,
@@ -1859,7 +1971,7 @@ export class BitrixCallLegacy extends AbstractCall
 				for (let type in MediaStreamsKinds)
 				{
 					const source = MediaStreamsKinds[type];
-					const kind = MediaKinds[source];
+					const kind = Util.MediaKind[source];
 					const e = {
 						mediaRenderer: new MediaRenderer({
 							kind,
@@ -2025,8 +2137,9 @@ export class BitrixCallLegacy extends AbstractCall
 		const usersToSendReports = {};
 		// to order local stats by track quality
 		const statsIndexByRid = { f: 2, h: 1, q: 0 };
+		const mediaServers = {};
 
-		stats.sender.forEach((report) =>
+		stats.publisher?.forEach((report) =>
 		{
 			if (report.userId && (report.kind === 'video' || report.kind === 'audio'))
 			{
@@ -2049,10 +2162,11 @@ export class BitrixCallLegacy extends AbstractCall
 				{
 					usersToSendReports[report.userId][report.source] = report;
 				}
+				mediaServers[report.userId] = report.mediaServerId;
 			}
 		});
 
-		stats.recipient.forEach((report) =>
+		stats?.subscriber?.forEach((report) =>
 		{
 			if (report.userId && (report.kind === 'video' || report.kind === 'audio'))
 			{
@@ -2061,6 +2175,7 @@ export class BitrixCallLegacy extends AbstractCall
 					usersToSendReports[report.userId] = {};
 				}
 				usersToSendReports[report.userId][report.source] = report;
+				mediaServers[report.userId] = report.mediaServerId;
 			}
 		});
 
@@ -2068,7 +2183,8 @@ export class BitrixCallLegacy extends AbstractCall
 		{
 			this.runCallback(CallEvent.onUserStatsReceived, {
 				userId,
-				report: usersToSendReports[userId]
+				report: usersToSendReports[userId],
+				mediaServerId: mediaServers[userId],
 			});
 		}
 
@@ -2323,6 +2439,16 @@ export class BitrixCallLegacy extends AbstractCall
 			this.localVAD.destroy();
 			this.localVAD = null;
 		}
+
+		for (let userId in this.vads)
+		{
+			if (this.vads[userId])
+			{
+				this.vads[userId].destroy();
+				delete this.vads[userId];
+			}
+		}
+
 		clearInterval(this.microphoneLevelInterval);
 		if (this.BitrixCall)
 		{

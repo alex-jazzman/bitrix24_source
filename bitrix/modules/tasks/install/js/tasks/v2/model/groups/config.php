@@ -8,9 +8,9 @@ return [
 	'js' => 'dist/groups.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
 		'tasks.v2.const',
 		'tasks.v2.provider.service.group-service',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => true,
 ];

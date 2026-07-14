@@ -60,7 +60,7 @@ jn.define('im/messenger/controller/sidebar/collab/profile-info', (require, expor
 				},
 				numberOfLines: 1,
 				ellipsize: 'end',
-				text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_COLLAB_DESCRIPTION'),
+				text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROJECT_DESCRIPTION'),
 				testId: 'SIDEBAR_DESCRIPTION',
 			});
 		}

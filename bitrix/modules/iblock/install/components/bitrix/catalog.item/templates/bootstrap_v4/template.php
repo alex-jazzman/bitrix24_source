@@ -308,7 +308,7 @@ if (isset($arResult['ITEM']))
 		}
 		?>
 		<script>
-			var <?=$obName?> = new JCCatalogItem(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
+			var <?=$obName?> = new JCCatalogItemBootstrapV4(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
 		</script>
 	</div>
 	<?php

@@ -16,6 +16,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 	const { DatabaseConnection } = require('im/messenger/db/connection');
 	const {
+		RecentSectionSchema,
 		FolderSchema,
 		FolderChatSchema,
 	} = require('im/messenger/db/table-schema');
@@ -212,6 +213,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.counter.counterTable.drop();
 				this.repository.counter.counterPendingOperationInternalTable.drop();
 
+				DatabaseConnection.getInstance().dropSchema(RecentSectionSchema);
 				DatabaseConnection.getInstance().dropSchema(FolderSchema);
 				DatabaseConnection.getInstance().dropSchema(FolderChatSchema);
 

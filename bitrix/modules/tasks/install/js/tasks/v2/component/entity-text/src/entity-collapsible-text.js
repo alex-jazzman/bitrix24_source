@@ -1,11 +1,12 @@
+import { Event } from 'main.core';
 import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
-import { TextMd } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
+import { TextMd } from 'ui.system.typography.vue';
 
+import { CollapseButton } from './collapsible-action/collapse-button';
 import { EditButton } from './collapsible-action/edit-button';
 import { ExpandButton } from './collapsible-action/expand-button';
-import { CollapseButton } from './collapsible-action/collapse-button';
 import { EntityCollapsibleTextEvent } from './const';
 
 import './entity-text.css';
@@ -20,6 +21,9 @@ export const EntityCollapsibleText = {
 		EditButton,
 		ExpandButton,
 		CollapseButton,
+	},
+	inject: {
+		task: {},
 	},
 	props: {
 		content: {
@@ -68,11 +72,13 @@ export const EntityCollapsibleText = {
 		return {
 			isOverflowing: false,
 			isOverflowChecked: false,
-			isMouseDown: false,
-			selectionMade: false,
 		};
 	},
 	computed: {
+		formatData(): number
+		{
+			return { files: this.files };
+		},
 		filesCount(): number
 		{
 			return this.files.length;
@@ -133,6 +139,8 @@ export const EntityCollapsibleText = {
 	},
 	async mounted(): Promise<void>
 	{
+		this.addHandlerSelectionStart();
+
 		await this.$nextTick();
 
 		this.updateIsOverflowing();
@@ -141,6 +149,10 @@ export const EntityCollapsibleText = {
 		{
 			this.setPreviewShown(true, EntityCollapsibleTextEvent.ByDefault);
 		}
+	},
+	beforeUnmount(): void
+	{
+		this.removeHandlerSelectionStart();
 	},
 	methods: {
 		updateIsOverflowing(): void
@@ -169,67 +181,99 @@ export const EntityCollapsibleText = {
 				this.setPreviewShown(false, EntityCollapsibleTextEvent.UpdateIsContentOverflowing);
 			}
 		},
-		onPreviewClick(targetEvent: string): void
+		processSelection(): void
 		{
-			if (this.hidden)
+			if (this.opened)
 			{
-				this.setPreviewShown(true, targetEvent);
+				return;
 			}
+
+			// waiting for selection event to get calculated
+			setTimeout(() => {
+				const selection = window.getSelection();
+				const textSelected = selection?.toString();
+				const textSelectedTrimmed = textSelected?.trim();
+				if (textSelectedTrimmed)
+				{
+					const sel = window.getSelection();
+
+					if (!sel.rangeCount)
+					{
+						return;
+					}
+
+					const rangeFresh = sel.getRangeAt(0).cloneRange();
+					const isIntersectingPreview = rangeFresh.intersectsNode(this.$refs.preview);
+
+					if (!isIntersectingPreview)
+					{
+						return;
+					}
+
+					const rectPreview = this.$refs.preview.getBoundingClientRect();
+					const rectsRange = rangeFresh.getClientRects();
+					const rectIndexToOrientate = rectsRange.length - 1;
+					const rectRange = rectsRange[rectIndexToOrientate];
+
+					if ((rectPreview.length <= 0) || (rectRange.length <= 0))
+					{
+						return;
+					}
+
+					const topLowestPreview = rectPreview.top + rectPreview.height;
+					const topLowestRange = rectRange.top + rectRange.height;
+					const isSelectionLowerThanContainer = topLowestRange > topLowestPreview;
+
+					if (isSelectionLowerThanContainer)
+					{
+						this.setPreviewShown(true);
+					}
+				}
+			}, 0);
 		},
 		setPreviewShown(isShown: boolean, targetEvent: string): void
 		{
 			this.$emit('update:opened', isShown, targetEvent);
 		},
-		onMouseDown(event): void
+		handleClickOpener(targetEvent: string): void
 		{
-			if (this.opened)
-			{
-				return;
-			}
-
-			if (event.button === 0)
-			{
-				this.isMouseDown = true;
-				this.selectionMade = false;
-			}
+			this.setPreviewShown(true, targetEvent);
 		},
-		onMouseMove(): void
+		handleClickCollapser(targetEvent: string): void
 		{
-			if (this.selectionMade || this.opened)
-			{
-				return;
-			}
-
-			if (this.isMouseDown)
-			{
-				const selection = window.getSelection();
-				if (selection.toString().length > 0)
-				{
-					this.selectionMade = true;
-				}
-			}
+			this.setPreviewShown(false, targetEvent);
 		},
-		onMouseUp(event): void
+		handleMouseDownText(): void
+		{},
+		handleMouseMoveText(): void
+		{},
+		handleMouseUpText(): void
+		{},
+		handleSelectionStart(): void
 		{
-			if (this.opened)
-			{
-				return;
-			}
-
-			this.isMouseDown = false;
-			if (!this.selectionMade)
-			{
-				const target = event.target;
-				const isLinkClick = target.tagName === 'A' || target.closest('a');
-				const isButtonClick = target.tagName === 'BUTTON' || target.closest('button');
-				const isImageClick = target.tagName === 'IMG' || target.closest('img');
-				const isVideoClick = target.tagName === 'VIDEO' || target.closest('video');
-
-				if (!isLinkClick && !isButtonClick && !isImageClick && !isVideoClick)
-				{
-					this.onPreviewClick(EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp);
-				}
-			}
+			this.removeHandlerSelectionFinish();
+			this.addHandlerSelectionFinish();
+		},
+		handleSelectionFinish(): void
+		{
+			this.removeHandlerSelectionFinish();
+			this.processSelection();
+		},
+		addHandlerSelectionStart(): void
+		{
+			Event.bind(document, 'selectstart', this.handleSelectionStart);
+		},
+		removeHandlerSelectionStart(): void
+		{
+			Event.unbind(document, 'selectstart', this.handleSelectionStart);
+		},
+		addHandlerSelectionFinish(): void
+		{
+			Event.bind(document, 'mouseup', this.handleSelectionFinish);
+		},
+		removeHandlerSelectionFinish(): void
+		{
+			Event.unbind(document, 'mouseup', this.handleSelectionFinish);
 		},
 	},
 	template: `
@@ -243,17 +287,18 @@ export const EntityCollapsibleText = {
 			<HtmlFormatterComponent
 				:bbcode="content"
 				:options="{ fileMode: 'disk' }"
-				:formatData="{ files }"
+				:formatData
 				ref="htmlFormatter"
-				@mousedown="onMouseDown"
-				@mousemove="onMouseMove"
-				@mouseup="onMouseUp"
+				@mousedown="handleMouseDownText"
+				@mousemove="handleMouseMoveText"
+				@mouseup="handleMouseUpText"
 			/>
-			<template v-if="hidden && isOverflowing">
-				<div class="tasks-card-entity-collapsible-shadow print-ignore">
-					<div class="tasks-card-entity-collapsible-shadow-white-bottom"/>
-				</div>
-			</template>
+			<div
+				v-if="hidden && isOverflowing"
+				class="tasks-card-entity-collapsible-shadow print-ignore"
+			>
+				<div class="tasks-card-entity-collapsible-shadow-white-bottom" />
+			</div>
 		</div>
 		<slot/>
 		<div
@@ -266,9 +311,9 @@ export const EntityCollapsibleText = {
 				'--sticky': stickyFooter,
 			}"
 		>
-			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')"/>
-			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="onPreviewClick(EntityCollapsibleTextEvent.ExpandButtonClick)"/>
-			<CollapseButton v-if="showCollapseButton" @click="setPreviewShown(false, EntityCollapsibleTextEvent.CollapseButtonClick)"/>
+			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')" />
+			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="handleClickOpener(EntityCollapsibleTextEvent.ExpandButtonClick)" />
+			<CollapseButton v-if="showCollapseButton" @click="handleClickCollapser(EntityCollapsibleTextEvent.CollapseButtonClick)" />
 		</div>
 	`,
 };

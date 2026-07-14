@@ -354,7 +354,7 @@ BitrixVue.component('bx-im-component-conference-public',
 				},
 				onBeforeUnload(event)
 				{
-					if (!this.getApplication().callView)
+					if (!this.getApplication().viewPort)
 					{
 						return;
 					}

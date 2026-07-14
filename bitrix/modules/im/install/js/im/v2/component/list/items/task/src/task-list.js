@@ -2,10 +2,10 @@ import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 
 import { BaseRecentList } from 'im.v2.component.list.items.base';
-import { RecentType } from 'im.v2.const';
+import { RecentType, ParentChatScope } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { type ImModelRecentItem } from 'im.v2.model';
-import { TaskRecentService, ParentChatScope } from 'im.v2.provider.service.recent';
+import { TaskRecentService } from 'im.v2.provider.service.recent';
 
 import { TaskRecentMenu } from './classes/context-menu-manager';
 import { EmptyState } from './components/empty-state';

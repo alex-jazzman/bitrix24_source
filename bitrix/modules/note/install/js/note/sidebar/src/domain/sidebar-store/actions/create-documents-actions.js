@@ -55,10 +55,78 @@ export class SidebarDocumentActions
 		this.#state.docsHasNextPageByParent[key] = true;
 	}
 
+	// Hard reset for a branch: drop cached docs in addition to cursor/hydration flags.
+	// Used by realtime handlers when the server signals a branch needs full refetch.
+	invalidateBranch(collectionId: number, parentId: number | null = null): void
+	{
+		const key = this.#keyOf(collectionId, parentId);
+		this.#state.docsByParent[key] = [];
+		this.#state.docsHydratedByParent[key] = false;
+		this.#state.docsStaleByParent[key] = true;
+		this.#state.docsOffsetByParent[key] = 0;
+		this.#state.docsCursorByParent[key] = null;
+		this.#state.docsHasNextPageByParent[key] = true;
+	}
+
 	invalidateAllChildren(): void
 	{
 		for (const key of Object.keys(this.#state.docsHydratedByParent))
 		{
+			this.#state.docsHydratedByParent[key] = false;
+			this.#state.docsStaleByParent[key] = true;
+			this.#state.docsOffsetByParent[key] = 0;
+			this.#state.docsCursorByParent[key] = null;
+			this.#state.docsHasNextPageByParent[key] = true;
+		}
+	}
+
+	// Cascade reset for an entire collection — used when a cascade push requests refetch
+	// and the loaded sub-branches under the root must also be invalidated.
+	invalidateCollectionTree(collectionId: number): void
+	{
+		const cid = Number(collectionId);
+		if (!Number.isFinite(cid) || cid <= 0)
+		{
+			return;
+		}
+		const prefix = `${cid}:`;
+		for (const key of Object.keys(this.#state.docsByParent))
+		{
+			if (!key.startsWith(prefix))
+			{
+				continue;
+			}
+			this.#state.docsByParent[key] = [];
+			this.#state.docsHydratedByParent[key] = false;
+			this.#state.docsStaleByParent[key] = true;
+			this.#state.docsOffsetByParent[key] = 0;
+			this.#state.docsCursorByParent[key] = null;
+			this.#state.docsHasNextPageByParent[key] = true;
+		}
+	}
+
+	// Drop child-branch caches keyed by every id in `parentIds` — used after cascade
+	// archive/delete so loaded sub-branches under each removed doc are also flushed.
+	invalidateBranchesByParentIds(collectionId: number, parentIds: Array<number>): void
+	{
+		const cid = Number(collectionId);
+		if (!Number.isFinite(cid) || cid <= 0 || !Array.isArray(parentIds))
+		{
+			return;
+		}
+		for (const rawId of parentIds)
+		{
+			const pid = Number(rawId);
+			if (!Number.isFinite(pid) || pid <= 0)
+			{
+				continue;
+			}
+			const key = this.#keyOf(cid, pid);
+			if (this.#state.docsByParent[key] === undefined)
+			{
+				continue;
+			}
+			this.#state.docsByParent[key] = [];
 			this.#state.docsHydratedByParent[key] = false;
 			this.#state.docsStaleByParent[key] = true;
 			this.#state.docsOffsetByParent[key] = 0;
@@ -75,7 +143,7 @@ export class SidebarDocumentActions
 			return;
 		}
 
-		this.#updateDocumentInCollection(collectionId, (doc) => {
+		const changed = this.#updateDocumentInCollection(collectionId, (doc) => {
 			if (Number(doc.id) !== Number(normalizedParentId) || Boolean(doc.hasChildren) === Boolean(value))
 			{
 				return doc;
@@ -128,6 +196,307 @@ export class SidebarDocumentActions
 		}
 
 		return normalized;
+	}
+
+	// Applies a documentUpdate push payload to local docs. Idempotent:
+	// patches by id across every loaded branch via updateDocumentLocal.
+	applyDocumentUpdate(params: Object): boolean
+	{
+		if (!params || typeof params !== 'object')
+		{
+			return false;
+		}
+
+		const documentId = Number(params.documentId);
+		if (!Number.isFinite(documentId) || documentId <= 0)
+		{
+			return false;
+		}
+
+		const patch = {};
+		if (typeof params.title === 'string' && params.title !== '')
+		{
+			patch.title = params.title;
+		}
+		if (Object.keys(patch).length === 0)
+		{
+			return false;
+		}
+
+		const collectionId = Number(params.collectionId);
+		const options = Number.isFinite(collectionId) && collectionId > 0 ? { collectionId } : {};
+
+		return this.updateDocumentLocal(documentId, patch, options);
+	}
+
+	// forceCreateBranch is intentionally absent: materialising a collapsed
+	// branch from a single sibling would mask the rest until full reload.
+	applyDocumentCreate(params: Object): boolean
+	{
+		if (!params || typeof params !== 'object')
+		{
+			return false;
+		}
+
+		const documentId = Number(params.documentId);
+		const collectionId = Number(params.collectionId);
+		if (!Number.isFinite(documentId) || documentId <= 0)
+		{
+			return false;
+		}
+		if (!Number.isFinite(collectionId) || collectionId <= 0)
+		{
+			return false;
+		}
+
+		const parentId = this.#normalizeParentId(params.parentId);
+		const position = Number.isFinite(Number(params.position)) ? Number(params.position) : 0;
+		const title = typeof params.title === 'string' ? params.title : '';
+		const hasChildren = params.hasChildren === true;
+
+		const inserted = this.insertDocumentLocal({
+			id: documentId,
+			collectionId,
+			parentId,
+			position,
+			title,
+			hasChildren,
+		});
+
+		return inserted !== null;
+	}
+
+	// Applies a documentRestore push payload. Idempotent:
+	// upserts the doc into the loaded branch by id. For Phase 1 wired to
+	// DOCUMENT_RESTORE only — Phase 2 will add DOCUMENT_CREATE.
+	applyDocumentActive(params: Object): boolean
+	{
+		if (!params || typeof params !== 'object')
+		{
+			return false;
+		}
+
+		const documentId = Number(params.documentId);
+		const collectionId = Number(params.collectionId);
+		if (!Number.isFinite(documentId) || documentId <= 0)
+		{
+			return false;
+		}
+		if (!Number.isFinite(collectionId) || collectionId <= 0)
+		{
+			return false;
+		}
+
+		const parentId = this.#normalizeParentId(params.parentId);
+		const position = Number.isFinite(Number(params.position)) ? Number(params.position) : 0;
+		const title = typeof params.title === 'string' ? params.title : '';
+		const hasChildren = params.hasChildren === true;
+
+		const inserted = this.insertDocumentLocal(
+			{
+				id: documentId,
+				collectionId,
+				parentId,
+				position,
+				title,
+				hasChildren,
+			},
+			{ forceCreateBranch: true },
+		);
+
+		return inserted !== null;
+	}
+
+	// Applies a documentArchive / documentDelete push payload. Both events
+	// share the same "remove these ids from sidebar" shape — only the editor
+	// reacts differently (archived vs recycle-bin freeze).
+	async applyDocumentRemoval(params: Object): Promise<boolean>
+	{
+		if (!params || typeof params !== 'object')
+		{
+			return false;
+		}
+
+		const collectionId = Number(params.collectionId);
+		if (!Number.isFinite(collectionId) || collectionId <= 0)
+		{
+			return false;
+		}
+
+		if (params.requestRefetch === true)
+		{
+			// Tree-wide invalidate: the cascade may have pruned sub-branches that were already
+			// hydrated under collapsed parents — a root-only reset would leave stale child caches.
+			this.invalidateCollectionTree(collectionId);
+			await this.loadDocuments(collectionId, null, false);
+
+			return true;
+		}
+
+		const documentIds = Array.isArray(params.documentIds) ? params.documentIds : null;
+		if (!documentIds || documentIds.length === 0)
+		{
+			return false;
+		}
+
+		let removed = false;
+		for (const rawId of documentIds)
+		{
+			const documentId = Number(rawId);
+			if (!Number.isFinite(documentId) || documentId <= 0)
+			{
+				continue;
+			}
+
+			const located = this.#queries.findLoadedDocumentAnywhere(documentId);
+			const parentId = located ? this.#normalizeParentId(located.parentId) : null;
+			if (this.removeDocumentLocal(collectionId, parentId, documentId))
+			{
+				removed = true;
+			}
+		}
+
+		// Each removed doc may itself parent a hydrated branch — drop those caches so a later
+		// expand doesn't render documents already swept by the cascade.
+		this.invalidateBranchesByParentIds(collectionId, documentIds);
+
+		return removed;
+	}
+
+	// Applies a list of {id, position} entries across loaded branches and
+	// resorts those branches. Symmetric with applyCollectionPositions.
+	applyDocumentPositions(entries: Array<{ id: number, position: number }>): boolean
+	{
+		if (!Array.isArray(entries) || entries.length === 0)
+		{
+			return false;
+		}
+
+		const patchById = new Map();
+		for (const entry of entries)
+		{
+			const id = Number(entry?.id);
+			const position = Number(entry?.position);
+			if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(position))
+			{
+				continue;
+			}
+			patchById.set(id, position);
+		}
+
+		if (patchById.size === 0)
+		{
+			return false;
+		}
+
+		let changed = false;
+		for (const [key, docs] of Object.entries(this.#state.docsByParent))
+		{
+			if (!Array.isArray(docs))
+			{
+				continue;
+			}
+
+			let branchChanged = false;
+			const nextDocs = docs.map((doc) => {
+				const id = Number(doc?.id);
+				if (!patchById.has(id))
+				{
+					return doc;
+				}
+
+				branchChanged = true;
+
+				return { ...doc, position: patchById.get(id) };
+			});
+			if (!branchChanged)
+			{
+				continue;
+			}
+
+			this.#state.docsByParent[key] = sortDocuments(nextDocs);
+			changed = true;
+		}
+
+		return changed;
+	}
+
+	// Applies a documentMove push payload. Handles two shapes:
+	// - requestRefetch=true: fall back to invalidate+reload of both branches.
+	// - Standard: optimistic move + applyDocumentPositions for siblings.
+	async applyDocumentMove(params: Object): Promise<boolean>
+	{
+		if (!params || typeof params !== 'object')
+		{
+			return false;
+		}
+
+		const documentId = Number(params.documentId);
+		const toCollectionId = Number(params.collectionId);
+		if (
+			!Number.isFinite(documentId) || documentId <= 0
+			|| !Number.isFinite(toCollectionId) || toCollectionId <= 0
+		)
+		{
+			return false;
+		}
+
+		const fromCollectionId = Number.isFinite(Number(params.fromCollectionId))
+			? Number(params.fromCollectionId)
+			: toCollectionId;
+		const toParentId = this.#normalizeParentId(params.parentId);
+		const fromParentId = this.#normalizeParentId(params.fromParentId);
+
+		if (params.requestRefetch === true)
+		{
+			this.invalidateBranch(fromCollectionId, fromParentId);
+			if (fromCollectionId !== toCollectionId || fromParentId !== toParentId)
+			{
+				this.invalidateBranch(toCollectionId, toParentId);
+			}
+
+			const reloads = [this.loadDocuments(fromCollectionId, fromParentId, false)];
+			if (fromCollectionId !== toCollectionId || fromParentId !== toParentId)
+			{
+				reloads.push(this.loadDocuments(toCollectionId, toParentId, false));
+			}
+			await Promise.all(reloads);
+
+			return true;
+		}
+
+		const fallbackDoc = {
+			id: documentId,
+			collectionId: toCollectionId,
+			parentId: toParentId,
+			position: Number.isFinite(Number(params.position)) ? Number(params.position) : 0,
+			title: typeof params.title === 'string' ? params.title : '',
+			hasChildren: Boolean(params.hasChildren),
+		};
+
+		const moved = this.moveDocumentLocal({
+			docId: documentId,
+			fromCollectionId,
+			fromParentId,
+			toCollectionId,
+			toParentId,
+			fallbackDoc,
+		});
+
+		if (Array.isArray(params.affectedPositions) && params.affectedPositions.length > 0)
+		{
+			this.applyDocumentPositions(params.affectedPositions);
+		}
+
+		// Server tells us authoritatively whether fromParent still has children —
+		// covers the case where receiver never loaded that branch, so local
+		// `handleParentBecameEmpty` can't decide.
+		if (fromParentId !== null && typeof params.fromParentHasChildren === 'boolean')
+		{
+			this.#setParentHasChildren(fromCollectionId, fromParentId, params.fromParentHasChildren);
+		}
+
+		return moved !== null;
 	}
 
 	updateDocumentLocal(docId: number, patch: Object = {}, options: { collectionId?: number } = {}): boolean

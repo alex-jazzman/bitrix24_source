@@ -1,6 +1,7 @@
 import { Type, Extension } from 'main.core';
 import { CallEngine, Provider, RoomType } from './engine/engine';
 import { CallEngineLegacy } from './engine/engine_legacy';
+import { lpad, getDateForLog, getTimeForLog, getLogMessage, logToString, isConsoleLogsEnabled, setConsoleLogsEnabled } from './log-helpers';
 import {
 	ClientPlatform,
 	ClientVersion,
@@ -57,12 +58,17 @@ let userPermissions =
 	view_users: false,
 };
 
-const UsersRoles =
-{
+const UsersRoles = {
 	ADMIN: 'ADMIN', // chat admin
 	MANAGER: 'MANAGER', // aka moderator
 	USER: 'USER', // regular user
-}
+};
+
+const MediaPermissions = {
+	MICROPHONE: 'mic',
+	CAMERA: 'cam',
+	SCREEN_SHARE: 'screenshare',
+};
 
 const regularUserRoles = [UsersRoles.USER]; // TODO got this from signaling in future
 
@@ -178,21 +184,27 @@ function havePermissionToBroadcast(type)
 
 	switch (type)
 	{
-		case 'mic':
-
+		case MediaPermissions.MICROPHONE:
 			havePermission = userPermissions.audio;
 			break;
-		case 'cam':
 
+		case MediaPermissions.CAMERA:
 			havePermission = userPermissions.video;
 			break;
-		case 'screenshare':
 
+		case MediaPermissions.SCREEN_SHARE:
 			havePermission = userPermissions.screen_share;
 			break;
 	}
 
 	return havePermission;
+}
+
+function isBroadcastDisabled()
+{
+	return !havePermissionToBroadcast(MediaPermissions.MICROPHONE)
+		&& !havePermissionToBroadcast(MediaPermissions.CAMERA)
+		&& !havePermissionToBroadcast(MediaPermissions.SCREEN_SHARE);
 }
 
 function canControlChangeSettings()
@@ -268,46 +280,13 @@ function updateUserData(callId, users)
 
 function setUserData(users)
 {
+	// Merge instead of replace so partial updates don't drop fields that were populated by a previous fetch
 	for (let userId in users)
 	{
-		userData[userId] = users[userId];
-
+		userData[userId] = { ...(userData[userId] ?? {}), ...users[userId] };
 	}
 
 	//setCurrentUserRole(userData[CallEngine.getCurrentUserId()].role);
-}
-
-const getDateForLog = () =>
-{
-	const d = new Date();
-
-	return d.getFullYear() + "-" + lpad(d.getMonth() + 1, 2, '0') + "-" + lpad(d.getDate(), 2, '0') + " " + lpad(d.getHours(), 2, '0') + ":" + lpad(d.getMinutes(), 2, '0') + ":" + lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
-}
-
-const getTimeForLog = () =>
-{
-	const d = new Date();
-
-	return lpad(d.getHours(), 2, '0') + ":" + lpad(d.getMinutes(), 2, '0') + ":" + lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
-}
-
-function lpad(str, length, chr)
-{
-	str = str.toString();
-	chr = chr || ' ';
-
-	if (str.length > length)
-	{
-		return str;
-	}
-
-	let result = '';
-	for (let i = 0; i < length - str.length; i++)
-	{
-		result += chr;
-	}
-
-	return result + str;
 }
 
 function getUser(callId, userId)
@@ -617,31 +596,6 @@ const getCallFeatures = () => {
 	return BX.message('call_features')
 }
 
-function getLogMessage ()
-{
-	let text = getDateForLog();
-
-	for (let i = 0; i < arguments.length; i++)
-	{
-		if (arguments[i] instanceof Error)
-		{
-			text = arguments[i].message + "\n" + arguments[i].stack
-		}
-		else
-		{
-			try
-			{
-				text = text + ' | ' + (typeof (arguments[i]) == 'object' ? JSON.stringify(arguments[i]) : arguments[i]);
-			} catch (e)
-			{
-				text = text + ' | (circular structure)';
-			}
-		}
-	}
-
-	return text;
-}
-
 const getUuidv4 = () =>
 {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) =>
@@ -750,6 +704,25 @@ function getConferenceProvider(): string{
 
 	return Provider.Plain;
 }
+
+const getRoomType = (provider: string, chatId?: number): RoomType => {
+	if (isLargeCallEnabled())
+	{
+		return RoomType.Large;
+	}
+
+	if (chatId)
+	{
+		const bigRoomChats = Extension.getSettings('call.core')?.call?.bigRoomChats || [];
+
+		if (bigRoomChats.includes(chatId))
+		{
+			return RoomType.Large;
+		}
+	}
+
+	return RoomType.Small;
+};
 
 function getCurrentBitrixCall()
 {
@@ -873,6 +846,29 @@ function calcRemotePacketsLost(currentReport, prevReport)
 function formatPacketsLostData(data)
 {
 	return `${data.currentPacketsLost} - ${data.currentPercentPacketLost}% (total: ${data.totalPacketsLost} - ${data.totalPercentPacketLost}%)`;
+}
+
+function calcConnectionScore(dataLoss)
+{
+	if (dataLoss <= 10)
+	{
+		return 4;
+	}
+
+	if (dataLoss > 10 && dataLoss <= 20)
+	{
+		return 3;
+	}
+
+	if (dataLoss > 20 && dataLoss <= 30)
+	{
+		return 2;
+	}
+
+	if (dataLoss > 30)
+	{
+		return 1;
+	}
 }
 
 function getAvatarBackground()
@@ -1039,7 +1035,7 @@ function getCallConnectionErrorMessage(error)
 const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
 	if (!Type.isPlainObject(callOptions))
 	{
-		callOptions = {};
+		return Promise.reject(new Error('Incorrect type of callOptions'));
 	}
 
 	return new Promise(async (resolve, reject) =>
@@ -1052,11 +1048,9 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 
 			const userToken = await CallTokenManager.getUserToken(chatId);
 			const isPlainCall = callOptions.provider === Provider.Plain;
-			const roomType = RoomType.Small;
 
 			const data = JSON.stringify({
 				userToken,
-				roomType,
 				isOneToOne: isPlainCall,
 				clientVersion: ClientVersion,
 				clientPlatform: ClientPlatform,
@@ -1103,6 +1097,27 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 					{
 						if (response?.error)
 						{
+							// Stuck call on join (mustCreate=false): the media room is gone,
+							// finish the DB record silently so it disappears from recent.
+							// On mustCreate=true the same codes mean "can not create" — skip.
+							const errorCode = response.error?.code;
+							if (
+								mustCreate === false
+								&& callOptions.callUuid
+								&& (
+									errorCode === JoinRequestFailedCodes.RoomNotFound
+									|| errorCode === JoinRequestFailedCodes.CanNotCreateRoom
+								)
+							)
+							{
+								BX.ajax.runAction('call.CallManager.finish', {
+									data: {
+										callUuid: callOptions.callUuid,
+										silent: true,
+									},
+								});
+							}
+
 							throw new JoinResponseError(response?.error?.message, response?.error?.code);
 						}
 						else
@@ -1143,18 +1158,25 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 };
 
 const getCallConnectionDataById = async (callUuid) => {
-	const call = await CallEngine.getCallWithId(callUuid);
+	try
+	{
+		const call = await CallEngine.getCallWithId(callUuid);
+		const chatId = call.call.associatedEntity.chatId;
+		const roomType = getRoomType(call.call.provider, chatId);
 
-	return getCallConnectionData(
-		{
+		return getCallConnectionData({
+			roomType,
 			callType: call.call.type,
 			instanceId: call.call.instanceId,
 			provider: call.call.provider,
-			callToken: CallTokenManager.getTokenCached(call.call.associatedEntity.chatId),
-		},
-		call.call.associatedEntity.chatId,
-		false,
-	);
+			callToken: CallTokenManager.getTokenCached(chatId),
+			callUuid,
+		}, call.call.associatedEntity.chatId, false);
+	}
+	catch (error)
+	{
+		throw error;
+	}
 };
 
 const abortGetCallConnectionData = () => {
@@ -1194,6 +1216,15 @@ const getAiSettings = () =>
 {
 	return Extension.getSettings('call.core')?.ai || {};
 }
+
+const isLargeCallEnabled = () => {
+	return BX.message('force_large_calls') === 'Y';
+};
+
+const canUseNewCallApi = (roomType) => {
+	return roomType === RoomType.Large
+		|| (isLargeCallEnabled() && roomType !== RoomType.Small);
+};
 
 const getCloudRecordSettings = () => {
 	return Extension.getSettings('call.core')?.cloudRecord || {}
@@ -1237,18 +1268,6 @@ const isMetricsLogsEnabled = () =>
 const isKibanaLogsEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isKibanaLogsEnabled;
-}
-
-let localConsoleLogsEnabled = false;
-
-const setConsoleLogsEnabled = (enabled: boolean = true) =>
-{
-	localConsoleLogsEnabled = !!enabled;
-}
-
-const isConsoleLogsEnabled = () =>
-{
-	return Extension.getSettings('call.core')?.isConsoleLogsEnabled || localConsoleLogsEnabled;
 }
 
 const isChatMountInPage = () =>
@@ -1348,6 +1367,7 @@ export default {
 	getUserLimit,
 	getClientSelfTestUrl,
 	getLogMessage,
+	logToString,
 	getUuidv4,
 	reportConnectionResult,
 	sendTelemetryEvent,
@@ -1355,9 +1375,10 @@ export default {
 	getBrowserForStatistics,
 	isBlank,
 	stopMediaStream,
-    stopMediaStreamVideoTracks,
-    stopMediaStreamAudioTracks,
+	stopMediaStreamVideoTracks,
+	stopMediaStreamAudioTracks,
 	getConferenceProvider,
+	getRoomType,
 	getCurrentBitrixCall,
 	setCodecToReport,
 	saveReportWithoutCodecs,
@@ -1367,6 +1388,7 @@ export default {
 	calcLocalPacketsLost,
 	calcRemotePacketsLost,
 	formatPacketsLostData,
+	calcConnectionScore,
 	getCallFeatures,
 	getAvatarBackground,
 	getRecordTimeText,
@@ -1380,6 +1402,8 @@ export default {
 	useTcpSdp,
 	openArticle,
 	getAiSettings,
+	isLargeCallEnabled,
+	canUseNewCallApi,
 	isStreamQualityFeatureEnabled,
 	getCloudRecordSettings,
 	isUserControlFeatureEnabled,
@@ -1391,6 +1415,7 @@ export default {
 	roomPermissions,
 	getCurrentUserRole,
 	havePermissionToBroadcast,
+	isBroadcastDisabled,
 	setRoomPermissions,
 	getRoomPermissions,
 	setUserPermissions,

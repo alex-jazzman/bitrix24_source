@@ -18,7 +18,19 @@ Extension::load([
 	'ui.notification',
 ]);
 
-if(!empty($arResult['SESSION_EXPIRED']))
+$unifiedLink = $arResult['UNIFIED_LINK'];
+
+if (!$arResult['FROM_UNIFIED_LINK'] && is_string($unifiedLink))
+{
+	$this->SetViewTarget('below_page');
+	echo <<<JS
+		<script>
+			window.history.replaceState({}, '', '$unifiedLink');
+		</script>
+	JS;
+	$this->EndViewTarget();
+}
+elseif(!empty($arResult['SESSION_EXPIRED']))
 {
 	Loc::loadMessages(__DIR__ . '/template.php');
 	$sessionExpireMessage = GetMessageJS('DISK_EXT_SESSION_EXPIRED');

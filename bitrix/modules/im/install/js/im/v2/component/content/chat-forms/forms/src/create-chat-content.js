@@ -4,7 +4,7 @@ import { ChatType, type ChatTypeItem } from 'im.v2.const';
 import { CreatableChatType } from 'im.v2.lib.create-chat';
 
 import { ChannelCreation } from './components/create/channel';
-import { CollabCreation } from './components/create/collab/collab';
+import { CollabCreationWrapper } from './components/create/collab/collab-wrapper.js';
 import { CollabChatCreation } from './components/create/collab-chat/collab-chat';
 import { ConferenceCreation } from './components/create/conference';
 import { GroupChatCreation } from './components/create/group-chat';
@@ -15,7 +15,7 @@ const CreationComponentByChatType = {
 	[CreatableChatType.chat]: GroupChatCreation,
 	[CreatableChatType.videoconf]: ConferenceCreation,
 	[CreatableChatType.channel]: ChannelCreation,
-	[CreatableChatType.collab]: CollabCreation,
+	[CreatableChatType.collab]: CollabCreationWrapper,
 	[CreatableChatType.collabChat]: CollabChatCreation,
 	default: GroupChatCreation,
 };
@@ -23,7 +23,7 @@ const CreationComponentByChatType = {
 // @vue/component
 export const CreateChatContent = {
 	name: 'CreateChatContent',
-	components: { GroupChatCreation, ConferenceCreation, ChannelCreation, CollabCreation },
+	components: { GroupChatCreation, ConferenceCreation, ChannelCreation, CollabCreationWrapper },
 	props:
 	{
 		entityId: {

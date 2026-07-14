@@ -1,16 +1,16 @@
+import { type JsonObject } from 'main.core';
 import { CloseIconSize } from 'main.popup';
 import { Tooltip } from 'ui.dialogs.tooltip';
+
 import { AddToCollab } from 'im.v2.component.entity-selector';
 import { PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { PromoManager } from 'im.v2.lib.promo';
+import { type ImModelChat } from 'im.v2.model';
+import { type PromoParams } from 'im.v2.provider.pull';
 
-import { CollabTooltipContent } from '../classes/tooltip-content/tooltip-content';
 import { IconKey } from '../classes/tooltip-content/icon-key';
-
-import type { ImModelChat } from 'im.v2.model';
-import type { PromoParams } from 'im.v2.provider.pull';
-import type { JsonObject } from 'main.core';
+import { CollabTooltipContent } from '../classes/tooltip-content/tooltip-content';
 
 const PromoMessages = {
 	[PromoId.membersNotInvitedOneDayToCollab]: {
@@ -33,10 +33,6 @@ export const AddToChatButton = {
 			type: String,
 			default: '',
 		},
-		withAnimation: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	emits: ['close'],
 	data(): JsonObject
@@ -50,6 +46,13 @@ export const AddToChatButton = {
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
+		},
+		iconClasses(): Record<string, boolean>
+		{
+			return {
+				'--active': this.showAddToChatPopup,
+				'--with-guest': this.dialog.containsCollaber,
+			};
 		},
 	},
 	mounted(): void
@@ -117,7 +120,7 @@ export const AddToChatButton = {
 	template: `
 		<div
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
-			:class="{'--active': showAddToChatPopup}"
+			:class="iconClasses"
 			class="bx-im-collab-header__add-people-icon"
 			@click="openAddToChatPopup"
 			ref="add-members"

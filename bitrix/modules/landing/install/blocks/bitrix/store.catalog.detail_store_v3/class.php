@@ -6,12 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Hook\Page\Settings;
+use Bitrix\Landing\Node\Component\Store\AddToBasketActionTrait;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Catalog;
 
 class StoreCatalogDetailBlockStoreV3 extends \Bitrix\Landing\LandingBlock
 {
+	use AddToBasketActionTrait;
+
 	protected $catalogIncluded;
 
 	/**
@@ -86,6 +89,16 @@ class StoreCatalogDetailBlockStoreV3 extends \Bitrix\Landing\LandingBlock
 		}
 	}
 
+	public function getAddToBasketActionSyspageType(\Bitrix\Landing\Block $block): ?string
+	{
+		return 'order';
+	}
+
+	public function isAddToBasketActionSyspageActiveOnly(\Bitrix\Landing\Block $block): bool
+	{
+		return true;
+	}
+
 	/**
 	 * Method, which will be called once time.
 	 * @param array Params array.
@@ -142,12 +155,14 @@ class StoreCatalogDetailBlockStoreV3 extends \Bitrix\Landing\LandingBlock
 
 		// check for show cart and compare
 		$showCart = false;
+		$addToBasketAction = $this->getConfiguredAddToBasketAction();
+		$addToBasketActionSyspageType = $this->resolveAddToBasketActionSyspageType($params);
 		$this->params['SHOW_PERSONAL_LINK'] = 'N';
 		if (!$editMode && ModuleManager::isModuleInstalled('sale'))
 		{
 			$syspages = \Bitrix\Landing\Syspage::get(
 				$params['site_id'],
-				true
+				$this->shouldUseActiveAddToBasketActionSyspages($params)
 			);
 			if (
 				isset($syspages['compare']) &&
@@ -160,9 +175,16 @@ class StoreCatalogDetailBlockStoreV3 extends \Bitrix\Landing\LandingBlock
 			{
 				$this->params['DISPLAY_COMPARE'] = 'N';
 			}
-			if (isset($syspages['order']))
+			if (
+				$addToBasketActionSyspageType !== null &&
+				isset($syspages[$addToBasketActionSyspageType])
+			)
 			{
 				$showCart = true;
+				if ($addToBasketAction === 'AUTO')
+				{
+					$addToBasketAction = 'ADD';
+				}
 			}
 			if (isset($syspages['personal']))
 			{
@@ -173,6 +195,16 @@ class StoreCatalogDetailBlockStoreV3 extends \Bitrix\Landing\LandingBlock
 		{
 			$this->params['DISPLAY_COMPARE'] = 'N';
 		}
+		$addToBasketAction = $this->resolveAddToBasketActionForCartAvailability(
+			$addToBasketAction,
+			$showCart
+		);
+		$this->params['ADD_TO_BASKET_ACTION'] = [
+			$addToBasketAction,
+		];
+		$this->params['ADD_TO_BASKET_ACTION_PRIMARY'] = [
+			$addToBasketAction,
+		];
 
 
 		$this->params['ELEMENT_CODE'] = $elementCode;

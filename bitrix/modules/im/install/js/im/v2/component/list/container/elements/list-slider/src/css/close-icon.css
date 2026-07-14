@@ -1,0 +1,47 @@
+.bx-im-list-container-slider__close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 24px;
+
+	margin-right: 13px;
+	cursor: pointer;
+}
+
+/* Compact mode */
+.bx-im-list-container-slider.--compact-mode .bx-im-list-container-slider__close-container {
+	position: absolute;
+	left: -50px;
+	top: 15px;
+	width: 40px;
+	height: 34px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--ui-color-design-outline-a2-bg);
+	border: 1px solid var(--ui-color-design-outline-a2-stroke);
+	border-radius: 512px;
+	cursor: pointer;
+	transition: background-color ease 200ms;
+}
+
+.bx-im-list-container-slider.--compact-mode .bx-im-list-container-slider__close-container::before {
+	content: '';
+	position: absolute;
+	width: 80px;
+	height: 64px;
+	left: -16px;
+	z-index: -1;
+	background: linear-gradient(270deg, var(--ui-color-base-white-fixed) 86.88%, var(--ui-color-design-plain-a-bg) 100%);
+	cursor: default;
+}
+
+.bx-im-list-container-slider.--compact-mode .bx-im-list-container-slider__close-container:hover {
+	background-color: var(--ui-color-divider-less);
+}
+
+.bx-im-list-container-slider.--compact-mode .bx-im-list-container-slider__close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-a2-content-icon);
+	--ui-icon-set__icon-size: 20px;
+
+	margin-right: 0;
+	cursor: pointer;
+}

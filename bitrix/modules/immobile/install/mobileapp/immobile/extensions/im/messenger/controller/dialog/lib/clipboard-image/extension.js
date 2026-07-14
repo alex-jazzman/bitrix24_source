@@ -269,7 +269,7 @@ jn.define('im/messenger/controller/dialog/lib/clipboard-image', (require, export
 		#getWidgetParams()
 		{
 			return {
-				dialogType: this.dialog.getDialogType(),
+				dialogType: this.dialog.getDialogWidgetType(),
 				backdrop: {
 					swipeAllowed: true,
 					swipeContentAllowed: false,

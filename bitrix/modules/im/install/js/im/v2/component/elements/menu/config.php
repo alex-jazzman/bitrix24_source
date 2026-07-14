@@ -11,7 +11,9 @@ return [
 		'main.polyfill.core',
 		'im.v2.component.elements.popup',
 		'im.v2.lib.counter',
+		'im.v2.lib.feature',
 		'im.v2.lib.utils',
+		'ui.icon-set.api.vue',
 	],
 	'skip_core' => true,
 ];

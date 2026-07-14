@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/user-label.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'tasks.v2.component.elements.user-avatar',
 		'ui.system.skeleton.vue',
 		'ui.tooltip',
-		'tasks.v2.component.elements.user-avatar',
 	],
 	'skip_core' => true,
 ];

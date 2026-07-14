@@ -1,6 +1,6 @@
 // @vue/component
 import { Headline } from 'ui.system.typography.vue';
-import { sendData } from 'ui.analytics';
+import { sendOtpAnalytics } from '../analytics';
 
 export const AlternativeMethods = {
 	components: {
@@ -48,8 +48,6 @@ export const AlternativeMethods = {
 		sendAnalytics(event, type = null)
 		{
 			const options = {
-				tool: 'security',
-				category: 'fa_auth_form',
 				event,
 			};
 
@@ -58,7 +56,7 @@ export const AlternativeMethods = {
 				options.type = type;
 			}
 
-			sendData(options);
+			sendOtpAnalytics(options);
 		},
 	},
 	template: `

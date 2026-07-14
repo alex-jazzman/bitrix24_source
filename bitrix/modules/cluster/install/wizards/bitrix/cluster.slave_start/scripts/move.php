@@ -48,6 +48,7 @@ elseif ($STEP < 2)
 {
 	$DB->Query('DELETE FROM b_cluster_table', false, '', ['fixed_connection' => true]);
 	$strError = CreateNodeTable($DB, $nodeDB, 'b_cluster_table');
+	$nodeDB->Query('DELETE FROM b_cluster_table', false, '', ['fixed_connection' => true]);
 
 	$rsTables = $DB->Query('show tables', false, '', ['fixed_connection' => true]);
 	while ($arTable = $rsTables->Fetch())
@@ -162,7 +163,7 @@ else
 				SELECT *
 				FROM ' . $arTable['TABLE_NAME'] . '
 				' . ($arTable['LAST_ID'] <> '' ? 'WHERE ' . $arTable['KEY_COLUMN'] . " > '" . $arTable['LAST_ID'] . "'" : '') . '
-				ORDER BY ' . $arTable['KEY_COLUMN'] . '
+				ORDER BY ' . $DB->quote($arTable['KEY_COLUMN']) . '
 				LIMIT 1000
 			';
 		}

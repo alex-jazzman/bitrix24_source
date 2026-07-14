@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_lib_utils, im_v2_component_elements_popup, im_v2_lib_counter) {
+(function (exports, im_v2_lib_utils, im_v2_component_elements_popup, ui_iconSet_api_vue, im_v2_lib_feature, im_v2_lib_counter) {
 	'use strict';
 
 	const ID_PREFIX = 'im-v2-menu';
@@ -53,6 +53,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		chat: 'chat',
 		channel: 'channel',
 		collab: 'collab',
+		collabV2: 'collab-v2',
 		conference: 'conference',
 		upload: 'upload',
 		file: 'file',
@@ -65,12 +66,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		copilot: 'copilot',
 		calendarSlot: 'calendar-slot',
 		documentSign: 'document-sign',
-		b24: 'b24'
+		b24: 'b24',
+		aiAssistant: 'ai-assistant',
+		lock: 'lock'
 	};
 
 	// @vue/component
 	const MenuItem = {
 		name: 'MenuItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		props: {
 			icon: {
 				type: String,
@@ -103,26 +109,46 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			formattedCounter() {
 				if (this.counter === 0) {
 					return '';
 				}
 				return im_v2_lib_counter.CounterManager.formatCounter(this.counter);
 			},
+			preparedIcon() {
+				return this.disabled ? MenuItemIcon.lock : this.icon;
+			},
 			containerClasses() {
 				return {
 					'--disabled': this.disabled,
 					'--bottom-border': this.withBottomBorder
 				};
+			},
+			isAiAssistantItem() {
+				if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+					return false;
+				}
+				return this.icon === MenuItemIcon.aiAssistant;
 			}
 		},
 		template: `
 		<div class="bx-im-menu-item__container" :class="containerClasses">
-			<div class="bx-im-menu-item__content" :class="{'--with-icon': !!icon}">
-				<div v-if="icon" class="bx-im-menu_item__icon" :class="'--' + icon"></div>
+			<div class="bx-im-menu-item__content" :class="{'--with-icon': !!preparedIcon}">
+				<BIcon
+					v-if="isAiAssistantItem"
+					:name="OutlineIcons.BITRIX_GPT"
+					class="bx-im-menu_item__ai-assistant-icon"
+				/>
+				<div v-else-if="preparedIcon" class="bx-im-menu_item__icon" :class="'--' + preparedIcon"></div>
 				<div class="bx-im-menu-item__text-content" :class="{'--with-subtitle': !!subtitle}">
 					<div class="bx-im-menu-item__title">
-						<div class="bx-im-menu-item__title_text">{{ title }}</div>
+						<div 
+							class="bx-im-menu-item__title_text"
+							:class="{ '--ai-assistant': isAiAssistantItem }"
+						>
+							{{ title }}
+						</div>
 						<slot name="after-title"></slot>
 						<div v-if="counter" class="bx-im-menu-item__title_counter">{{ formattedCounter }}</div>
 					</div>
@@ -139,5 +165,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MenuItemIcon = MenuItemIcon;
 	exports.MessengerMenu = MessengerMenu;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

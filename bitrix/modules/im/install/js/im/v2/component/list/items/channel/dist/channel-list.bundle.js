@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_application_core, im_v2_provider_service_recent, main_core, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_rest, im_v2_component_elements_chatTitle) {
+(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_application_core, im_v2_provider_service_recent, main_core, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_rest, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_emptyState) {
 	'use strict';
 
 	class ChannelService extends im_v2_provider_service_recent.BaseRecentService {
@@ -101,7 +101,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		template: `
 		<BaseRecentItem
 			:item="item"
-			:withCounters="false"
+			:withCounter="false"
 			:withMessageStatus="false"
 			:withInputIndicator="false"
 			:withDraft="false"
@@ -116,16 +116,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const EmptyState = {
 		name: 'EmptyState',
+		components: {
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
 		methods: {
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<div class="bx-im-list-channel__empty">
-			<div class="bx-im-list-channel__empty_icon"></div>
-			<div class="bx-im-list-channel__empty_text">{{ loc('IM_LIST_CHANNEL_EMPTY') }}</div>
-		</div>
+		<RecentEmptyState 
+			:title="loc('IM_LIST_CHANNEL_EMPTY_TITLE')"
+			:subtitle="loc('IM_LIST_CHANNEL_EMPTY_SUBTITLE')"
+			:recentSection="RecentType.openChannel" 
+		/>
 	`
 	};
 
@@ -252,5 +259,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelList = ChannelList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=channel-list.bundle.js.map

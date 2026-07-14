@@ -26,6 +26,7 @@ return [
 		'main.core',
 		'ui.buttons',
 		'im.v2.application.core',
+		'im.v2.lib.access',
 	],
 	'skip_core' => false,
 ];

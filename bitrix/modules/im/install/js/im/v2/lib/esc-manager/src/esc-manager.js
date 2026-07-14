@@ -238,7 +238,7 @@ export class EscManager
 
 	async #handleAdditionalRecentLists(): Promise<boolean>
 	{
-		const eventResult = await EventEmitter.emitAsync(EventType.recent.closeListSlider);
+		const eventResult = await EventEmitter.emitAsync(EventType.recent.closeNestedList);
 
 		return eventResult.includes(EscEventAction.handled);
 	}

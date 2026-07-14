@@ -3,7 +3,6 @@
 	--min-row-height: 25px;
 	position: relative;
 	display: grid;
-	grid-template-columns: -webkit-max-content auto;
 	grid-template-columns: max-content auto;
 	gap: var(--gap) 0;
 	align-items: center;

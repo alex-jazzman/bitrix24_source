@@ -68,7 +68,6 @@
 
 .tasks-card-entity-collapsible-footer.--sticky {
 	box-sizing: content-box;
-	position: -webkit-sticky;
 	position: sticky;
 	align-items: end;
 	height: 34px;

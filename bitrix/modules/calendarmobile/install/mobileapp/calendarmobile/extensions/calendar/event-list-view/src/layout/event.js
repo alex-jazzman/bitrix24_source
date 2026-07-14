@@ -13,6 +13,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 	const { State } = require('calendar/event-list-view/state');
 	const { DateHelper } = require('calendar/date-helper');
+	const { SettingsManager } = require('calendar/data-managers/settings-manager');
 	const { EventView } = require('calendar/event-view-form');
 	const { LocationManager } = require('calendar/data-managers/location-manager');
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
@@ -353,10 +354,15 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		renderCollabName()
 		{
+			const collabNameMessageCode = SettingsManager.isNewProjectsOn()
+				? 'M_CALENDAR_EVENT_LIST_PROJECT_NAME'
+				: 'M_CALENDAR_EVENT_LIST_COLLAB_NAME'
+			;
+
 			return Text5({
 				testId: `event_${this.event.getId()}_collab_name`,
 				color: Color.collabAccentPrimaryAlt,
-				text: Loc.getMessage('M_CALENDAR_EVENT_LIST_COLLAB_NAME', {
+				text: Loc.getMessage(collabNameMessageCode, {
 					'#NAME#': CollabManager.getCollabName(this.event.getCollabId()),
 				}),
 				numberOfLines: 1,

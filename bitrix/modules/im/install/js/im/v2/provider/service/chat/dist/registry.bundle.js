@@ -77,6 +77,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		isCollabChat() {
 			return this.#restResult.chat.type === im_v2_const.ChatType.collab;
 		}
+		getParentChat() {
+			return this.#restResult.parentChat;
+		}
 		getChats() {
 			const mainChat = {
 				...this.#restResult.chat,
@@ -97,6 +100,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					chats[user.id] = im_v2_lib_user.UserManager.getDialogForUser(user);
 				}
 			});
+			const parentChat = this.getParentChat();
+			if (parentChat) {
+				chats[parentChat.dialogId] = parentChat;
+			}
 			return Object.values(chats);
 		}
 		getFiles() {
@@ -266,13 +273,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				dialogId,
 				messageId
 			} = params;
-			this.#markDialogAsLoading(dialogId);
+			if (this.#affectsDialogLoadingState(actionName)) {
+				this.#markDialogAsLoading(dialogId);
+			}
 			const actionResult = await im_v2_lib_rest.runAction(actionName, {
 				data: params
 			}).catch(([error]) => {
 				console.error('ChatService: Load: error loading chat', error);
-				im_v2_lib_notifier.Notifier.chat.handleLoadError(error);
+				if (this.#isTariffError(error)) {
+					return error;
+				}
 				this.#markDialogAsNotLoaded(dialogId);
+				im_v2_lib_notifier.Notifier.chat.handleLoadError(error);
 				throw error;
 			});
 			if (this.#checkFeatureDisabled(actionResult)) {
@@ -293,7 +305,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (callInstalled) {
 				call_lib_callTokenManager.CallTokenManager.setToken(callInfo.chatId, callInfo.token);
 			}
-			if (this.#isDialogLoadedMarkNeeded(actionName)) {
+			if (this.#affectsDialogLoadingState(actionName)) {
 				await this.#markDialogAsLoaded(loadedDialogId);
 			}
 			return {
@@ -326,7 +338,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			});
 		}
-		#isDialogLoadedMarkNeeded(actionName) {
+		#affectsDialogLoadingState(actionName) {
 			return actionName !== im_v2_const.RestMethod.imV2ChatShallowLoad;
 		}
 		async #updateModels(restResult) {
@@ -377,17 +389,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const extractor = new ChatDataExtractor(actionResult);
 			return extractor.isOpenlinesChat() && main_core.Type.isStringFilled(extractor.getDialogId());
 		}
-		#checkFeatureDisabled(actionResult) {
-			return this.#checkCollabFeatureDisabled(actionResult);
+		#isTariffError(actionResult) {
+			const errors = new Set([im_v2_const.ErrorCode.collabV2.tariffRestricted]);
+			return errors.has(actionResult.code);
 		}
 		#checkCollabFeatureDisabled(actionResult) {
 			const extractor = new ChatDataExtractor(actionResult);
-			return extractor.isCollabChat() && !im_v2_lib_feature.FeatureManager.collab.isAvailable();
+			return extractor.isCollabChat() && !im_v2_lib_feature.TariffManager.collab.isAvailable();
+		}
+		#checkFeatureDisabled(actionResult) {
+			return this.#isTariffError(actionResult) || this.#checkCollabFeatureDisabled(actionResult);
 		}
 		#openFeatureSlider(actionResult) {
-			if (this.#checkCollabFeatureDisabled(actionResult)) {
-				im_v2_lib_feature.FeatureManager.collab.openFeatureSlider();
+			if (actionResult.code === im_v2_const.ErrorCode.collabV2.tariffRestricted) {
+				im_v2_lib_feature.TariffManager.collabV2.openFeatureSlider();
+				return;
 			}
+			im_v2_lib_feature.TariffManager.collab.openFeatureSlider();
 		}
 	}
 
@@ -1134,7 +1152,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const [config] = response.messagesAutoDeleteConfigs;
 			// if we set some delay and server returns 0 delay, then auto delete is disabled by admin
 			if (delay !== config.delay && config.delay === im_v2_const.AutoDeleteDelay.Off) {
-				im_v2_lib_feature.FeatureManager.messagesAutoDelete.openFeatureSlider();
+				im_v2_lib_feature.TariffManager.messagesAutoDelete.openFeatureSlider();
 			}
 			void this.#store.dispatch('chats/autoDelete/set', {
 				chatId: config.chatId,
@@ -1215,11 +1233,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		changeAvatar(chatId, avatarFile) {
 			return this.#updateService.changeAvatar(chatId, avatarFile);
 		}
-		updateChat(chatId, chatConfig) {
-			return this.#updateService.updateChat(chatId, chatConfig);
-		}
 		updateCollab(dialogId, collabConfig) {
 			return this.#updateService.updateCollab(dialogId, collabConfig);
+		}
+		updateChat(chatId, chatConfig) {
+			return this.#updateService.updateChat(chatId, chatConfig);
 		}
 		getMemberEntities(chatId) {
 			return this.#updateService.getMemberEntities(chatId);

@@ -17,7 +17,7 @@ html.note-mobile .note-editor-input {
 
 /* ===== Editor content: typography ===== */
 html.note-mobile .note-editor-title-block {
-	padding: 1rem 12px 0 12px;
+	padding: 1rem 12px 0 var(--note-heading-gutter, 40px);
 }
 
 html.note-mobile .note-editor-title {
@@ -31,7 +31,7 @@ html.note-mobile .note-editor-title {
  * - media: contained to 100% width.
  */
 html.note-mobile .ProseMirror.note-editor-prose {
-	padding: 12px;
+	padding: 12px 12px 12px var(--note-heading-gutter, 40px);
 	overflow-wrap: anywhere;
 	word-break: break-word;
 }
@@ -52,4 +52,64 @@ html.note-mobile .ProseMirror.note-editor-prose .note-table-wrapper {
 	max-width: 100%;
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/* The left field holds only the collapse chevron (reduced width); the link
+ * icon trails the heading text in the content flow. */
+html.note-mobile .note-editor-root {
+	--note-heading-gutter: 40px;
+}
+
+/* Heading row flows inline so the link icon can sit right after the title. */
+html.note-mobile .note-heading {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+}
+
+html.note-mobile .note-heading__text {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+/* Left gutter: just the chevron, kept under the burger icon. The 22px menu
+ * glyph is centered in the 48px header button, i.e. (48 - 22) / 2 = 13px. */
+html.note-mobile .note-heading__gutter {
+	width: var(--note-heading-gutter, 40px);
+	justify-content: flex-start;
+	padding-left: 13px;
+	padding-right: 0;
+}
+
+html.note-mobile .note-heading__toggle {
+	width: 24px;
+	height: 24px;
+}
+
+/* Chevron is revealed by a tap, in addition to the shared rule that shows it
+ * when the section is collapsed or while editing. */
+html.note-mobile .note-heading.is-revealed .note-heading__toggle {
+	opacity: 1;
+}
+
+/* Link icon: hidden until the heading is revealed by a tap, then shown trailing
+ * the heading text (collapsed headings included). */
+html.note-mobile .note-heading__hash {
+	display: none;
+	width: 20px;
+	height: 20px;
+}
+
+html.note-mobile .note-heading.is-revealed .note-heading__hash {
+	display: inline-flex;
+	opacity: 1;
+	color: var(--ui-color-base-2);
+}
+
+/* Toolbar scroll thumb: always visible on mobile, no hover animation. */
+html.note-mobile .note-editor-toolbar-wrap .note-editor-toolbar-thumb {
+	opacity: 0.85;
+	transform: translate3d(var(--thumb-offset, 0), 0, 0) scaleY(1);
+	pointer-events: auto;
+	transition: none;
 }

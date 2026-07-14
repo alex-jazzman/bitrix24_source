@@ -31,3 +31,4 @@ DROP TABLE IF EXISTS b_disk_document_session;
 DROP TABLE IF EXISTS b_disk_document_info;
 DROP TABLE IF EXISTS b_disk_document_restriction_log;
 DROP TABLE IF EXISTS b_disk_unified_link_access;
+DROP TABLE IF EXISTS b_disk_object_options;

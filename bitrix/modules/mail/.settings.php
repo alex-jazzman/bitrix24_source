@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Mail\Internal\Async\Receiver\MailboxAccessNotificationReceiver;
+use Bitrix\Mail\Internal\Async\Receiver\OrphanedMailboxAutoDisconnectNotificationReceiver;
+use Bitrix\Mail\Internal\Async\Receiver\RepairConnectionRequestChatsReceiver;
 use Bitrix\Mail\Integration\UI\EntitySelector\AddressBookProvider;
 use Bitrix\Mail\Integration\UI\EntitySelector\MailCrmRecipientProvider;
 use Bitrix\Mail\Integration\UI\EntitySelector\MailUserRecipientAppearanceFilter;
@@ -78,6 +80,12 @@ return array(
 			'queues' => [
 				'mail_access_notification' => [
 					'handler' => MailboxAccessNotificationReceiver::class,
+				],
+				'mail_orphan_autodisconnect_notification' => [
+					'handler' => OrphanedMailboxAutoDisconnectNotificationReceiver::class,
+				],
+				'mail_connection_request_chats_repair' => [
+					'handler' => RepairConnectionRequestChatsReceiver::class,
 				],
 			],
 		],

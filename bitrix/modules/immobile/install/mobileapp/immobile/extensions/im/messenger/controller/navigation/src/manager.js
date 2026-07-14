@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NestedTabCounters } = require('im/messenger/lib/counters/tab-counters');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	const { TabSwitcher } = require('im/messenger/controller/navigation/tab-switcher');
 	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
@@ -22,6 +23,9 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 	const { NestedNavigationContext } = require('im/messenger/controller/navigation/src/nested/context');
 	const { AsyncQueue, withTimeout } = require('im/messenger/lib/utils');
 	const { NestedMutationHandler } = require('im/messenger/controller/navigation/src/nested/mutation-handler');
+	const {
+		ProjectsTariffRestrictionFilter,
+	} = require('im/messenger/controller/navigation/src/nested/open-filter/projects-tariff-restriction');
 
 	const logger = getLoggerWithContext('navigation--manager', 'NavigationManager');
 
@@ -44,6 +48,10 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 		#apiHandler = null;
 		/** @type {FolderTabsController|null} */
 		#folderTabsController = null;
+		/** @type {BaseNestedNavigationOpenFilter[]} */
+		#openFilters = [
+			new ProjectsTariffRestrictionFilter(),
+		];
 
 		/**
 		 * Initializes the global tab switcher for the main tabs widget.
@@ -129,6 +137,15 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 		}
 
 		/**
+		 * Returns the NestedTabCounters of the topmost nested navigation, or null.
+		 * @return {NestedTabCounters|null}
+		 */
+		getActiveNestedTabCounters()
+		{
+			return this.#topNestedContext?.tabCounters ?? null;
+		}
+
+		/**
 		 * Returns whether the topmost nested navigation belongs to the given parent chat.
 		 * @param {number} chatId
 		 * @return {boolean}
@@ -155,6 +172,11 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 				logger.warn('openNestedNavigation: already open for chatId', chatId);
 
 				return this.#topNestedContext.widget;
+			}
+
+			if (!await this.#applyOpenFilters({ chatId }))
+			{
+				return null;
 			}
 
 			const recentManager = serviceLocator.get('recent-manager');
@@ -207,6 +229,39 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 			this.#nestedContexts.push(context);
 
 			return context.widget;
+		}
+
+		/**
+		 * @param {NestedNavigationOpenFilterContext} context
+		 * @return {Promise<boolean>}
+		 */
+		async #applyOpenFilters(context)
+		{
+			// Sequential with early exit. Filters enforce business policy and may have
+			// side effects, so subsequent filters never run after a block or a failure.
+			// A filter that throws is treated as a block: state is unknown, policy could
+			// be bypassed otherwise. Surface a generic error toast.
+			for (const filter of this.#openFilters)
+			{
+				try
+				{
+					// eslint-disable-next-line no-await-in-loop
+					const allowed = await filter.allow(context);
+					if (!allowed)
+					{
+						return false;
+					}
+				}
+				catch (error)
+				{
+					logger.error('applyOpenFilters: filter threw, blocking open', error);
+					Notification.showErrorToast();
+
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		/**

@@ -1,8 +1,6 @@
 import { Core } from 'im.v2.application.core';
 
-import { ChatHistoryManager } from './classes/chat-history';
-import { MessagesAutoDelete } from './classes/messages-auto-delete';
-import { CollabManager } from './classes/collab';
+export { TariffManager } from './tariff';
 
 export const Feature = {
 	chatV2: 'chatV2',
@@ -43,16 +41,17 @@ export const Feature = {
 	isTaskCardAvailable: 'isMountedTasksCardAvailable',
 	isBitrixGptV2Available: 'isBitrixGptV2Available',
 	isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
-	isNestedListAvailable: 'isNestedChatAvailable',
+	isCollabV2Available: 'isNestedChatAvailable',
 	isChatWithGuestsAvailable: 'isChatWithGuestsAvailable',
 	isCopilotForceSearchAvailable: 'isCopilotForceSearchAvailable',
+	isCopilotWebSearchEnabledByAdmin: 'isCopilotWebSearchEnabledByAdmin',
+	isCopilotWebSearchAllowedByTariff: 'isCopilotWebSearchAllowedByTariff',
+	isAiAssistantFeedbackAvailable: 'isAiAssistantFeedbackAvailable',
+	isAiAssistantRegenerateAvailable: 'isAiAssistantRegenerateAvailable',
+	isAiAssistantAgentModeAvailable: 'isAiAssistantAgentModeAvailable',
 };
 
 export const FeatureManager = {
-	chatHistory: ChatHistoryManager,
-	messagesAutoDelete: MessagesAutoDelete,
-	collab: CollabManager,
-
 	isFeatureAvailable(featureName: $Values<typeof Feature>): boolean
 	{
 		const { featureOptions = {} } = Core.getApplicationData();

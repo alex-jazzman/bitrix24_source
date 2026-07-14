@@ -25,7 +25,7 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 		VideoNoteTextMessage,
 		StickerMessage,
 		DeletedStickerMessage,
-		BuilderMessageFactory,
+		BlockMessageFactory,
 		AiBizprocMessage,
 		UnsupportedMessage,
 	} = require('im/messenger/lib/element/dialog');
@@ -96,10 +96,17 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 	};
 
 	/** @type {MessageTypeRule} */
-	const BuilderMessageRule = {
-		type: MessageType.builder,
-		isSuitable: (helper) => helper.isBuilder && BuilderMessageFactory.checkSuitableForDisplay(),
-		create: (model, options) => BuilderMessageFactory.create(model, options),
+	const CopilotBlockMessageRule = {
+		type: MessageType.block,
+		isSuitable: (helper) => helper.isCopilot && helper.isBlock && BlockMessageFactory.checkSuitableForDisplay(),
+		create: (model, options) => BlockMessageFactory.createCopilot(model, options),
+	};
+
+	/** @type {MessageTypeRule} */
+	const BlockMessageRule = {
+		type: MessageType.block,
+		isSuitable: (helper) => helper.isBlock && BlockMessageFactory.checkSuitableForDisplay(),
+		create: (model, options) => BlockMessageFactory.create(model, options),
 	};
 
 	/** @type {MessageTypeRule} */
@@ -241,10 +248,11 @@ jn.define('im/messenger/lib/converter/ui/message/src/message-type-rules', (requi
 		AiAssistantMessageRule,
 		StickerMessageRule,
 		DeletedStickerMessageRule,
+		CopilotBlockMessageRule,
+		BlockMessageRule,
 		SystemTextMessageRule,
 		DeletedMessageRule,
 		ErrorMessageRule,
-		BuilderMessageRule,
 		AiBizprocRule,
 		CopilotMessageRule,
 		ConvertCollabSystemTextMessageRule,

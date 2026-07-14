@@ -312,7 +312,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 		},
 		convertCamelToSnakeCase(text) {
-			return text.replaceAll(/([A-Z])/g, match => `_${match.toLowerCase()}`);
+			return text.replaceAll(/([A-Z])/g, match => `_${match.toLowerCase()}`).replaceAll(/([a-z])(\d+)/g, '$1_$2');
 		},
 		escapeRegex(string) {
 			return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -394,6 +394,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 			});
 			return allowList.indexOf(element.protocol) > -1;
+		},
+		isUrlImageLike(url) {
+			if (!main_core.Type.isStringFilled(url)) {
+				return false;
+			}
+			return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(url.trim());
 		},
 		isEmojiOnly(messageText) {
 			const text = messageText.replaceAll(emojiRegex, '');

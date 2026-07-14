@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, main_core_events, note_sidebar, ui_notification, pull_client, note_ui_actionMenu, note_permissions, note_ui_loader, ui_buttons, ui_iconSet_outline, note_ui_documentList) {
+(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, translit, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, ui_notification, main_core_events, note_sidebar, pull_client, note_ui_actionMenu, note_permissions, note_ui_loader, ui_buttons, ui_iconSet_outline, note_ui_documentList) {
 	'use strict';
 
 	function syncPopoverPositions({
@@ -1511,6 +1511,7 @@ this.BX.Note = this.BX.Note || {};
 				capture: true,
 				passive: true
 			});
+			this.$nextTick(() => this.updateScrollIndicator());
 		},
 		beforeUnmount() {
 			main_core.Event.unbind(document, 'click', this.handleDocumentClick, true);
@@ -1548,11 +1549,53 @@ this.BX.Note = this.BX.Note || {};
 				if (this.openMenu) {
 					this.schedulePopoverPositionSync();
 				}
+				this.updateScrollIndicator();
 			},
 			handleWindowResize() {
 				if (this.openMenu) {
 					this.schedulePopoverPositionSync();
 				}
+				this.updateScrollIndicator();
+			},
+			updateScrollIndicator() {
+				const s = this.$refs.toolbarScroll;
+				const r = this.$refs.toolbarRoot;
+				if (!s || !r) {
+					return;
+				}
+				const overflow = s.scrollWidth - s.clientWidth;
+				const track = Math.max(0, s.clientWidth - 32);
+				const thumb = overflow > 1 ? Math.max(24, Math.min(track, s.clientWidth / s.scrollWidth * track)) : 0;
+				const offset = overflow > 1 ? 16 + s.scrollLeft / overflow * (track - thumb) : 0;
+				r.style.setProperty('--thumb-width', `${Math.round(thumb)}px`);
+				r.style.setProperty('--thumb-offset', `${Math.round(offset)}px`);
+			},
+			handleThumbPointerDown(event) {
+				const s = this.$refs.toolbarScroll;
+				const overflow = s ? s.scrollWidth - s.clientWidth : 0;
+				if (overflow <= 1) {
+					return;
+				}
+				const track = Math.max(0, s.clientWidth - 32);
+				const thumb = Math.max(24, Math.min(track, s.clientWidth / s.scrollWidth * track));
+				const ratio = overflow / Math.max(1, track - thumb);
+				const startX = event.clientX;
+				const startScroll = s.scrollLeft;
+				const target = event.currentTarget;
+				target.setPointerCapture?.(event.pointerId);
+				const move = e => {
+					s.scrollLeft = startScroll + (e.clientX - startX) * ratio;
+				};
+				const up = e => {
+					target.releasePointerCapture?.(e.pointerId);
+					target.removeEventListener('pointermove', move);
+					target.removeEventListener('pointerup', up);
+					target.removeEventListener('pointercancel', up);
+				};
+				target.addEventListener('pointermove', move);
+				target.addEventListener('pointerup', up);
+				target.addEventListener('pointercancel', up);
+				event.preventDefault();
 			},
 			handleWindowScroll() {
 				if (this.openMenu) {
@@ -1672,15 +1715,15 @@ this.BX.Note = this.BX.Note || {};
 		template: `
 		<div
 			ref="toolbarRoot"
-			class="note-editor-toolbar"
+			class="note-editor-toolbar-wrap"
 			:class="{
 				'note-editor-toolbar-fixed': fixed,
 				'note-editor-toolbar-menu-open': hasOpenMenu,
 			}"
 			:style="toolbarStyle"
 			@mousedown="handleToolbarMouseDown"
-			@scroll.passive="handleToolbarScroll"
 		>
+			<div ref="toolbarScroll" class="note-editor-toolbar" @scroll.passive="handleToolbarScroll">
 			<ToolbarHistoryGroupComponent :can-undo="canUndo" :can-redo="canRedo" :on-undo="undo" :on-redo="redo" />
 			<div class="note-editor-toolbar-separator"></div>
 
@@ -1758,6 +1801,8 @@ this.BX.Note = this.BX.Note || {};
 				:on-insert-image="insertImageStub"
 				:on-insert-video="insertVideoStub"
 			/>
+			</div>
+			<div class="note-editor-toolbar-thumb" aria-hidden="true" @pointerdown="handleThumbPointerDown"></div>
 		</div>
 	`
 	};
@@ -2610,7 +2655,7 @@ this.BX.Note = this.BX.Note || {};
 		static fromJSON(schema, value) {
 			if (!value) return Fragment.empty;
 			if (!Array.isArray(value)) throw new RangeError("Invalid input for Fragment.fromJSON");
-			return new Fragment(value.map(schema.nodeFromJSON));
+			return Fragment.fromArray(value.map(schema.nodeFromJSON));
 		}
 		/**
 		Build a fragment from an array of nodes. Ensures that adjacent
@@ -2807,17 +2852,6 @@ this.BX.Note = this.BX.Note || {};
 	given an invalid replacement.
 	*/
 	class ReplaceError extends Error {}
-	/*
-	ReplaceError = function(this: any, message: string) {
-		let err = Error.call(this, message)
-		;(err as any).__proto__ = ReplaceError.prototype
-		return err
-	} as any
-
-	ReplaceError.prototype = Object.create(Error.prototype)
-	ReplaceError.prototype.constructor = ReplaceError
-	ReplaceError.prototype.name = "ReplaceError"
-	*/
 	/**
 	A slice represents a piece cut out of a larger document. It
 	stores not only a fragment, but also the depth up to which nodes on
@@ -2863,7 +2897,7 @@ this.BX.Note = this.BX.Note || {};
 		@internal
 		*/
 		insertAt(pos, fragment) {
-			let content = insertInto(this.content, pos + this.openStart, fragment);
+			let content = insertInto(this.content, pos + this.openStart, fragment, this.openStart + 1, this.openEnd + 1);
 			return content && new Slice(content, this.openStart, this.openEnd);
 		}
 		/**
@@ -2939,17 +2973,17 @@ this.BX.Note = this.BX.Note || {};
 		if (index != indexTo) throw new RangeError("Removing non-flat range");
 		return content.replaceChild(index, child.copy(removeRange(child.content, from - offset - 1, to - offset - 1)));
 	}
-	function insertInto(content, dist, insert, parent) {
+	function insertInto(content, dist, insert, openStart, openEnd, parent) {
 		let {
 				index,
 				offset
 			} = content.findIndex(dist),
 			child = content.maybeChild(index);
 		if (offset == dist || child.isText) {
-			if (parent && !parent.canReplace(index, index, insert)) return null;
+			if (parent && openStart <= 0 && openEnd <= 0 && !parent.canReplace(index, index, insert)) return null;
 			return content.cut(0, dist).append(insert).append(content.cut(dist));
 		}
-		let inner = insertInto(child.content, dist - offset - 1, insert, child);
+		let inner = insertInto(child.content, dist - offset - 1, insert, index == 0 ? openStart - 1 : 0, index == content.childCount - 1 ? openEnd - 1 : 0, child);
 		return inner && content.replaceChild(index, child.copy(inner));
 	}
 	function replace($from, $to, slice) {
@@ -3490,10 +3524,11 @@ this.BX.Note = this.BX.Note || {};
 			this.content.forEach(f);
 		}
 		/**
-		Invoke a callback for all descendant nodes recursively between
+		Invoke a callback for all descendant nodes recursively overlapping
 		the given two positions that are relative to start of this
-		node's content. The callback is invoked with the node, its
-		position relative to the original node (method receiver),
+		node's content. This includes all ancestors of the nodes
+		containing the two positions. The callback is invoked with the
+		node, its position relative to the original node (method receiver),
 		its parent node, and its child index. When the callback returns
 		false for a given node, that node's children will not be
 		recursed over. The last parameter can be used to specify a
@@ -5508,6 +5543,7 @@ this.BX.Note = this.BX.Note || {};
 		@internal
 		*/
 		serializeNodeInner(node, options) {
+			if (node.isText) return doc$2(options).createTextNode(node.text);
 			let {
 				dom,
 				contentDOM
@@ -5544,6 +5580,10 @@ this.BX.Note = this.BX.Note || {};
 			return toDOM && renderSpec(doc$2(options), toDOM(mark, inline), null, mark.attrs);
 		}
 		static renderSpec(doc, structure, xmlNS = null, blockArraysIn) {
+			// Kludge for backwards-compatibility with accidental original behavious
+			if (typeof structure == "string") return {
+				dom: doc.createTextNode(structure)
+			};
 			return renderSpec(doc, structure, xmlNS, blockArraysIn);
 		}
 		/**
@@ -5606,13 +5646,10 @@ this.BX.Note = this.BX.Note || {};
 		return result;
 	}
 	function renderSpec(doc, structure, xmlNS, blockArraysIn) {
-		if (typeof structure == "string") return {
-			dom: doc.createTextNode(structure)
-		};
-		if (structure.nodeType != null) return {
+		if (structure.nodeType == 1) return {
 			dom: structure
 		};
-		if (structure.dom && structure.dom.nodeType != null) return structure;
+		if (structure.dom && structure.dom.nodeType == 1) return structure;
 		let tagName = structure[0],
 			suspicious;
 		if (typeof tagName != "string") throw new RangeError("Invalid array passed to renderSpec");
@@ -5641,6 +5678,8 @@ this.BX.Note = this.BX.Note || {};
 					dom,
 					contentDOM: dom
 				};
+			} else if (typeof child == "string") {
+				dom.appendChild(doc.createTextNode(child));
 			} else {
 				let {
 					dom: inner,
@@ -6392,8 +6431,8 @@ this.BX.Note = this.BX.Note || {};
 			return new ReplaceStep(this.from, this.from + this.slice.size, doc.slice(this.from, this.to));
 		}
 		map(mapping) {
-			let from = mapping.mapResult(this.from, 1),
-				to = mapping.mapResult(this.to, -1);
+			let to = mapping.mapResult(this.to, -1);
+			let from = this.from == this.to && ReplaceStep.MAP_BIAS < 0 ? to : mapping.mapResult(this.from, 1);
 			if (from.deletedAcross && to.deletedAcross) return null;
 			return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice, this.structure);
 		}
@@ -6427,6 +6466,15 @@ this.BX.Note = this.BX.Note || {};
 			return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure);
 		}
 	}
+	/**
+	By default, for backwards compatibility, an inserting step
+	mapped over an insertion at that same position fill move after
+	the inserted content. In a collaborative editing situation, that
+	can make redone insertions appear in unexpected places. You can
+	set this to -1 to make such mapping keep the step before the
+	insertion instead.
+	*/
+	ReplaceStep.MAP_BIAS = 1;
 	Step.jsonID("replace", ReplaceStep);
 	/**
 	Replace a part of the document with a slice of content, but
@@ -7405,6 +7453,20 @@ this.BX.Note = this.BX.Note || {};
 	function deleteRange$1(tr, from, to) {
 		let $from = tr.doc.resolve(from),
 			$to = tr.doc.resolve(to);
+		// When the deleted range spans from the start of one textblock to
+		// the start of another one, move out of the start of both blocks.
+		if ($from.parent.isTextblock && $to.parent.isTextblock && $from.start() != $to.start() && $from.parentOffset == 0 && $to.parentOffset == 0) {
+			let shared = $from.sharedDepth(to),
+				isolated = false;
+			for (let d = $from.depth; d > shared; d--) if ($from.node(d).type.spec.isolating) isolated = true;
+			for (let d = $to.depth; d > shared; d--) if ($to.node(d).type.spec.isolating) isolated = true;
+			if (!isolated) {
+				for (let d = $from.depth; d > 0 && from == $from.start(d); d--) from = $from.before(d);
+				for (let d = $to.depth; d > 0 && to == $to.start(d); d--) to = $to.before(d);
+				$from = tr.doc.resolve(from);
+				$to = tr.doc.resolve(to);
+			}
+		}
 		let covered = coveredDepths($from, $to);
 		for (let i = 0; i < covered.length; i++) {
 			let depth = covered[i],
@@ -12850,7 +12912,7 @@ this.BX.Note = this.BX.Note || {};
 			let {
 				selection
 			} = view.state;
-			if (event.button == 0 && targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos) this.mightDrag = {
+			if (event.button == 0 && (targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos)) this.mightDrag = {
 				node: targetNode,
 				pos: targetPos,
 				addAttr: !!(this.target && !this.target.draggable),
@@ -13152,8 +13214,11 @@ this.BX.Note = this.BX.Note || {};
 	}
 	const dragCopyModifier = mac$2 ? "altKey" : "ctrlKey";
 	function dragMoves(view, event) {
-		let moves = view.someProp("dragCopies", test => !test(event));
-		return moves != null ? moves : !event[dragCopyModifier];
+		let copy;
+		view.someProp("dragCopies", test => {
+			copy = copy || test(event);
+		});
+		return copy != null ? !copy : !event[dragCopyModifier];
 	}
 	handlers.dragstart = (view, _event) => {
 		let event = _event;
@@ -13178,7 +13243,7 @@ this.BX.Note = this.BX.Note || {};
 		// Pre-120 Chrome versions clear files when calling `clearData` (#1472)
 		if (!event.dataTransfer.files.length || !chrome || chrome_version > 120) event.dataTransfer.clearData();
 		event.dataTransfer.setData(brokenClipboardAPI ? "Text" : "text/html", dom.innerHTML);
-		// See https://github.com/ProseMirror/prosemirror/issues/1156
+		// See https://code.haverbeke.berlin/prosemirror/prosemirror/issues/1156
 		event.dataTransfer.effectAllowed = "copyMove";
 		if (!brokenClipboardAPI) event.dataTransfer.setData("text/plain", text);
 		view.dragging = new Dragging(slice, dragMoves(view, event), node);
@@ -14088,7 +14153,13 @@ this.BX.Note = this.BX.Note || {};
 				// backspace out the last bit of text before an inline-flex node (#1552)
 				for (let node of added) if (node.nodeName == "BR" && node.parentNode) {
 					let after = node.nextSibling;
-					if (after && after.nodeType == 1 && after.contentEditable == "false") node.parentNode.removeChild(node);
+					while (after && after.nodeType == 1) {
+						if (after.contentEditable == "false") {
+							node.parentNode.removeChild(node);
+							break;
+						}
+						after = after.firstChild;
+					}
 				}
 			} else if (gecko && added.length) {
 				let brs = added.filter(n => n.nodeName == "BR");
@@ -14687,7 +14758,7 @@ this.BX.Note = this.BX.Note || {};
 			this.pluginViews = [];
 			/**
 			Holds `true` when a hack node is needed in Firefox to prevent the
-			[space is eaten issue](https://github.com/ProseMirror/prosemirror/issues/651)
+			[space is eaten issue](https://code.haverbeke.berlin/prosemirror/prosemirror/issues/651)
 			@internal
 			*/
 			this.requiresGeckoHackNode = false;
@@ -14881,11 +14952,11 @@ this.BX.Note = this.BX.Note || {};
 		updateDraggedNode(dragging, prev) {
 			let sel = dragging.node,
 				found = -1;
-			if (this.state.doc.nodeAt(sel.from) == sel.node) {
+			if (sel.from < this.state.doc.content.size && this.state.doc.nodeAt(sel.from) == sel.node) {
 				found = sel.from;
 			} else {
 				let movedPos = sel.from + (this.state.doc.content.size - prev.doc.content.size);
-				let moved = movedPos > 0 && this.state.doc.nodeAt(movedPos);
+				let moved = movedPos > 0 && movedPos < this.state.doc.content.size && this.state.doc.nodeAt(movedPos);
 				if (moved == sel.node) found = movedPos;
 			}
 			this.dragging = new Dragging(dragging.slice, dragging.move, found < 0 ? undefined : NodeSelection.create(this.state.doc, found));
@@ -25503,99 +25574,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	// src/heading.ts
-	var Heading = Node3.create({
-		name: "heading",
-		addOptions() {
-			return {
-				levels: [1, 2, 3, 4, 5, 6],
-				HTMLAttributes: {}
-			};
-		},
-		content: "inline*",
-		group: "block",
-		defining: true,
-		addAttributes() {
-			return {
-				level: {
-					default: 1,
-					rendered: false
-				}
-			};
-		},
-		parseHTML() {
-			return this.options.levels.map(level => ({
-				tag: `h${level}`,
-				attrs: {
-					level
-				}
-			}));
-		},
-		renderHTML({
-			node,
-			HTMLAttributes
-		}) {
-			const hasLevel = this.options.levels.includes(node.attrs.level);
-			const level = hasLevel ? node.attrs.level : this.options.levels[0];
-			return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
-		},
-		parseMarkdown: (token, helpers) => {
-			return helpers.createNode("heading", {
-				level: token.depth || 1
-			}, helpers.parseInline(token.tokens || []));
-		},
-		renderMarkdown: (node, h) => {
-			var _a;
-			const level = ((_a = node.attrs) == null ? void 0 : _a.level) ? parseInt(node.attrs.level, 10) : 1;
-			const headingChars = "#".repeat(level);
-			if (!node.content) {
-				return "";
-			}
-			return `${headingChars} ${h.renderChildren(node.content)}`;
-		},
-		addCommands() {
-			return {
-				setHeading: attributes => ({
-					commands
-				}) => {
-					if (!this.options.levels.includes(attributes.level)) {
-						return false;
-					}
-					return commands.setNode(this.name, attributes);
-				},
-				toggleHeading: attributes => ({
-					commands
-				}) => {
-					if (!this.options.levels.includes(attributes.level)) {
-						return false;
-					}
-					return commands.toggleNode(this.name, "paragraph", attributes);
-				}
-			};
-		},
-		addKeyboardShortcuts() {
-			return this.options.levels.reduce((items, level) => ({
-				...items,
-				...{
-					[`Mod-Alt-${level}`]: () => this.editor.commands.toggleHeading({
-						level
-					})
-				}
-			}), {});
-		},
-		addInputRules() {
-			return this.options.levels.map(level => {
-				return textblockTypeInputRule({
-					find: new RegExp(`^(#{${Math.min(...this.options.levels)},${level}})\\s$`),
-					type: this.type,
-					getAttributes: {
-						level
-					}
-				});
-			});
-		}
-	});
-
 	/**
 	Create a plugin that, when added to a ProseMirror instance,
 	causes a decoration to show up at the drop position when something
@@ -25798,7 +25776,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		*/
 		static valid($pos) {
 			let parent = $pos.parent;
-			if (parent.isTextblock || !closedBefore($pos) || !closedAfter($pos)) return false;
+			if (parent.inlineContent || !closedBefore($pos) || !closedAfter($pos)) return false;
 			let override = parent.type.spec.allowGapCursor;
 			if (override != null) return override;
 			let deflt = parent.contentMatchAt($pos.index()).defaultType;
@@ -27012,12 +26990,980 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
-	function createCoreExtensions({
-		hasCollaborationProvider
+	// src/heading.ts
+	var Heading = Node3.create({
+		name: "heading",
+		addOptions() {
+			return {
+				levels: [1, 2, 3, 4, 5, 6],
+				HTMLAttributes: {}
+			};
+		},
+		content: "inline*",
+		group: "block",
+		defining: true,
+		addAttributes() {
+			return {
+				level: {
+					default: 1,
+					rendered: false
+				}
+			};
+		},
+		parseHTML() {
+			return this.options.levels.map(level => ({
+				tag: `h${level}`,
+				attrs: {
+					level
+				}
+			}));
+		},
+		renderHTML({
+			node,
+			HTMLAttributes
+		}) {
+			const hasLevel = this.options.levels.includes(node.attrs.level);
+			const level = hasLevel ? node.attrs.level : this.options.levels[0];
+			return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+		},
+		parseMarkdown: (token, helpers) => {
+			return helpers.createNode("heading", {
+				level: token.depth || 1
+			}, helpers.parseInline(token.tokens || []));
+		},
+		renderMarkdown: (node, h) => {
+			var _a;
+			const level = ((_a = node.attrs) == null ? void 0 : _a.level) ? parseInt(node.attrs.level, 10) : 1;
+			const headingChars = "#".repeat(level);
+			if (!node.content) {
+				return "";
+			}
+			return `${headingChars} ${h.renderChildren(node.content)}`;
+		},
+		addCommands() {
+			return {
+				setHeading: attributes => ({
+					commands
+				}) => {
+					if (!this.options.levels.includes(attributes.level)) {
+						return false;
+					}
+					return commands.setNode(this.name, attributes);
+				},
+				toggleHeading: attributes => ({
+					commands
+				}) => {
+					if (!this.options.levels.includes(attributes.level)) {
+						return false;
+					}
+					return commands.toggleNode(this.name, "paragraph", attributes);
+				}
+			};
+		},
+		addKeyboardShortcuts() {
+			return this.options.levels.reduce((items, level) => ({
+				...items,
+				...{
+					[`Mod-Alt-${level}`]: () => this.editor.commands.toggleHeading({
+						level
+					})
+				}
+			}), {});
+		},
+		addInputRules() {
+			return this.options.levels.map(level => {
+				return textblockTypeInputRule({
+					find: new RegExp(`^(#{${Math.min(...this.options.levels)},${level}})\\s$`),
+					type: this.type,
+					getAttributes: {
+						level
+					}
+				});
+			});
+		}
+	});
+
+	// Heading anchor slugs (Outline-style): slugify heading text and assign
+	// collision-free ids across a document, deterministically.
+	//
+	// Transliteration (cyrillic/foreign -> latin) is delegated to the kernel
+	// `BX.translit` (the `translit` extension above) — we don't keep our own table.
+	// Non-dictionary characters are left untouched (`replace_space_and_other: false`)
+	// so the local NFKD pass can fold latin accents and the final regex strips the
+	// rest uniformly.
+
+	const MAX_SLUG_LENGTH = 200;
+	const EMPTY_SLUG = 'heading';
+	function transliterate(text) {
+		const translit = typeof BX !== 'undefined' && typeof BX?.translit === 'function' ? BX.translit : null;
+		if (!translit) {
+			return text;
+		}
+		return translit(text, {
+			change_case: 'L',
+			replace_space: '-',
+			replace_space_and_other: false,
+			delete_repeat_replace: false,
+			max_len: 100000
+		});
+	}
+	function slugify(text) {
+		if (typeof text !== 'string' || text === '') {
+			return EMPTY_SLUG;
+		}
+		let result = transliterate(text);
+		// Fold latin accents (é -> e + combining mark) and drop the marks.
+		result = result.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+		// Everything that is not a-z0-9 collapses into a single hyphen.
+		result = result.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+		if (result.length > MAX_SLUG_LENGTH) {
+			result = result.slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, '');
+		}
+		return result === '' ? EMPTY_SLUG : result;
+	}
+	// Block types whose nested headings are "plain": no gutter controls, no part in
+	// the collapse mechanic. A blockquote/callout heading is decorative section
+	// structure, not a foldable document section.
+	const PLAIN_HEADING_CONTAINERS = new Set(['blockquote', 'callout']);
+
+	// True when the resolved position sits anywhere inside a table.
+	function isInsideTable($pos) {
+		for (let depth = $pos.depth; depth > 0; depth--) {
+			if ($pos.node(depth).type.name === 'table') {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// True when the heading at `$pos` lives inside a blockquote or callout.
+	function isInBlockquoteOrCallout($pos) {
+		for (let depth = $pos.depth; depth > 0; depth--) {
+			if (PLAIN_HEADING_CONTAINERS.has($pos.node(depth).type.name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// True when the heading at `$pos` sits in any "plain" context — a table,
+	// blockquote or callout. Plain headings keep their anchor id but take no part in
+	// the collapse mechanic and render without the gutter controls: they don't hide
+	// anything, don't terminate an outer collapsed range and carry no anchor/collapse
+	// buttons.
+	function isPlainHeadingContext($pos) {
+		return isInsideTable($pos) || isInBlockquoteOrCallout($pos);
+	}
+
+	// Resolves the collapse container of the heading at `pos`: the block that
+	// directly holds it. A direct child of the doc reports the root sentinel `-1`
+	// and the whole document as its end; a heading nested in a blockquote/callout
+	// (or table cell) reports that node's start as the key and its content end as
+	// the boundary. Used to scope collapse ranges so they never cross a container.
+	function resolveHeadingContainer(doc, pos) {
+		const $pos = doc.resolve(pos);
+		const depth = $pos.depth;
+		if (depth <= 0) {
+			return {
+				containerKey: -1,
+				containerEnd: doc.content.size
+			};
+		}
+		return {
+			containerKey: $pos.before(depth),
+			containerEnd: $pos.end(depth)
+		};
+	}
+
+	// Walks the document, computes a deterministic, collision-free slug for every
+	// heading. Collisions within one document get an incremental "-2/-3/..." suffix
+	// in order of appearance, while also avoiding clashes with literal slugs.
+	function computeHeadingEntries(doc) {
+		const entries = [];
+		const used = new Set();
+		const counts = new Map();
+		// descendants() walks in document order, so any heading at pos < tableEnd
+		// sits inside a table. Container scope still needs a resolve() per heading;
+		// headings are few, so the extra cost is negligible.
+		let tableEnd = -1;
+		doc.descendants((node, pos) => {
+			if (node?.type?.name === 'table') {
+				tableEnd = Math.max(tableEnd, pos + node.nodeSize);
+				return undefined;
+			}
+			if (!node || !node.type || node.type.name !== 'heading') {
+				return undefined;
+			}
+			const base = slugify(node.textContent);
+			let slug = base;
+			if (used.has(slug)) {
+				let next = (counts.get(base) || 1) + 1;
+				while (used.has(`${base}-${next}`)) {
+					next += 1;
+				}
+				slug = `${base}-${next}`;
+				counts.set(base, next);
+			} else {
+				counts.set(base, 1);
+			}
+			used.add(slug);
+			const {
+				containerKey,
+				containerEnd
+			} = resolveHeadingContainer(doc, pos);
+			entries.push({
+				pos,
+				endPos: pos + node.nodeSize,
+				level: Number(node.attrs?.level) || 1,
+				collapsed: Boolean(node.attrs?.collapsed),
+				// In a table (cheap doc-order check) or in a blockquote/callout (needs a
+				// resolve, same one container scope already pays for).
+				plain: pos < tableEnd || isInBlockquoteOrCallout(doc.resolve(pos)),
+				containerKey,
+				containerEnd,
+				slug
+			});
+
+			// Headings only hold inline content — no need to descend.
+			return false;
+		});
+		return entries;
+	}
+
+	const headingAnchorPluginKey = new PluginKey('note-heading-anchor');
+
+	// End of the collapsed section for entries[i]: the next heading of the same or
+	// shallower level *in the same container*, or that container's content end. Only
+	// a same-container sibling can cut a section short — a heading nested in a
+	// blockquote/callout inside the section is a different scope and is hidden whole
+	// with its container, never terminating the outer range. Plain headings (table,
+	// blockquote, callout) take no part in the mechanic: such a container folds as
+	// one block of its own section.
+	function sectionEnd(entries, i) {
+		const entry = entries[i];
+		for (let j = i + 1; j < entries.length; j++) {
+			const next = entries[j];
+			if (next.plain || next.containerKey !== entry.containerKey) {
+				continue;
+			}
+			if (next.level <= entry.level) {
+				return next.pos;
+			}
+		}
+		return entry.containerEnd;
+	}
+
+	// For every collapsed heading, returns the [start, end) document range whose
+	// blocks must be hidden: everything after the heading up to the section end
+	// (see sectionEnd). `revealed` holds heading positions force-expanded locally
+	// (anchor navigation in view mode) — they are treated as expanded so nothing of
+	// theirs is masked, without touching the persisted `collapsed` attribute.
+	function collectCollapsedRanges(entries, revealed) {
+		const ranges = [];
+		for (let i = 0; i < entries.length; i++) {
+			const entry = entries[i];
+			if (!entry.collapsed || entry.plain || revealed !== null && revealed.has(entry.pos)) {
+				continue;
+			}
+			const to = sectionEnd(entries, i);
+			if (to > entry.endPos) {
+				ranges.push({
+					from: entry.endPos,
+					to
+				});
+			}
+		}
+		return ranges;
+	}
+	function buildHeadingDecorationSet(doc, revealed = null) {
+		const entries = computeHeadingEntries(doc);
+		if (entries.length === 0) {
+			return DecorationSet.empty;
+		}
+		const decorations = [];
+
+		// Anchor id on every heading node.
+		for (const entry of entries) {
+			decorations.push(Decoration.node(entry.pos, entry.endPos, {
+				id: entry.slug
+			}));
+		}
+
+		// Hide blocks that live under a collapsed heading.
+		const ranges = collectCollapsedRanges(entries, revealed);
+		for (const range of ranges) {
+			doc.nodesBetween(range.from, range.to, (node, pos) => {
+				if (pos < range.from) {
+					return true;
+				}
+				decorations.push(Decoration.node(pos, pos + node.nodeSize, {
+					class: 'note-heading-collapsed-block'
+				}));
+
+				// Top-level blocks only — no need to descend into their children.
+				return false;
+			});
+		}
+		return DecorationSet.create(doc, decorations);
+	}
+
+	// When the selection lands inside a collapsed section (e.g. cursor moved in,
+	// search, remote edit), reveal it by expanding the covering collapsed headings.
+	function expandSelectionAncestors(transactions, newState) {
+		// Only react to pure caret moves. Skipping doc changes avoids fighting an
+		// explicit collapse toggle and a collaborator collapsing a section the local
+		// caret happens to sit in (both arrive as document changes).
+		if (transactions.some(tr => tr.docChanged)) {
+			return null;
+		}
+		if (!transactions.some(tr => tr.selectionSet)) {
+			return null;
+		}
+		const entries = computeHeadingEntries(newState.doc);
+		const selectionPos = newState.selection.from;
+		let tr = null;
+		for (let i = 0; i < entries.length; i++) {
+			const entry = entries[i];
+			if (!entry.collapsed || entry.plain) {
+				continue;
+			}
+			const rangeEnd = sectionEnd(entries, i);
+			if (selectionPos > entry.endPos && selectionPos < rangeEnd) {
+				const node = newState.doc.nodeAt(entry.pos);
+				if (node) {
+					tr = tr ?? newState.tr;
+					tr.setNodeMarkup(entry.pos, undefined, {
+						...node.attrs,
+						collapsed: false
+					});
+				}
+			}
+		}
+		return tr;
+	}
+	function headingAnchorPlugin() {
+		return new Plugin({
+			key: headingAnchorPluginKey,
+			state: {
+				// Plugin state = { revealed: Set<pos>, decorations }. `revealed` are
+				// heading positions force-expanded locally (anchor navigation in view
+				// mode) — a non-persisted override of the collapse mask. It is fed via
+				// a meta transaction that carries no document steps, so nothing syncs.
+				init(_config, state) {
+					return {
+						revealed: new Set(),
+						decorations: buildHeadingDecorationSet(state.doc)
+					};
+				},
+				apply(tr, prev, _oldState, newState) {
+					let revealed = prev.revealed;
+					let changed = false;
+					if (tr.docChanged) {
+						const mapped = new Set();
+						prev.revealed.forEach(pos => {
+							const result = tr.mapping.mapResult(pos);
+							if (!result.deleted) {
+								mapped.add(result.pos);
+							}
+						});
+						revealed = mapped;
+						changed = true;
+					}
+					const meta = tr.getMeta(headingAnchorPluginKey);
+					if (meta && Array.isArray(meta.reveal) && meta.reveal.length > 0) {
+						revealed = new Set(revealed);
+						meta.reveal.forEach(pos => revealed.add(pos));
+						changed = true;
+					}
+					if (!changed) {
+						return prev;
+					}
+					return {
+						revealed,
+						decorations: buildHeadingDecorationSet(newState.doc, revealed)
+					};
+				}
+			},
+			appendTransaction(transactions, _oldState, newState) {
+				return expandSelectionAncestors(transactions, newState);
+			},
+			props: {
+				decorations(state) {
+					return headingAnchorPluginKey.getState(state).decorations;
+				}
+			}
+		});
+	}
+
+	async function copyTextToClipboard(text) {
+		try {
+			if (navigator?.clipboard?.writeText) {
+				await navigator.clipboard.writeText(text);
+				return true;
+			}
+		} catch {
+			// fall through to legacy fallback
+		}
+		try {
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'absolute';
+			textarea.style.left = '-9999px';
+			document.body.appendChild(textarea);
+			textarea.select();
+			document.execCommand('copy');
+			document.body.removeChild(textarea);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	// Height + opacity collapse/expand animation for a group of sibling blocks
+	// hidden under a heading. Uses the same timing as note.sidebar's
+	// ExpandTransition (DURATION_MS / EASING kept in sync).
+	//
+	// Built on the Web Animations API on purpose: WAAPI keyframes don't touch the
+	// elements' style attribute. In edit mode ProseMirror's DOM observer treats
+	// style mutations as potential input — it marks the mutated blocks dirty and
+	// redraws them, wiping inline styles mid-flight, so a transition-based
+	// animation never gets to run there (read mode ignores DOM mutations).
+
+	const DURATION_MS = 275;
+	const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
+	// Safety net if `finished` never settles (block redrawn/detached mid-flight).
+	const FALLBACK_MS = DURATION_MS + 100;
+
+	// Forwards-filling collapse animations, held until the collapse decoration
+	// hides the block with display:none (see cancelCollapseAnimation).
+	const heldAnimations = new WeakMap();
+	function expandedKeyframe(el) {
+		const computed = window.getComputedStyle(el);
+		return {
+			height: `${el.scrollHeight}px`,
+			opacity: 1,
+			marginTop: computed.marginTop,
+			marginBottom: computed.marginBottom,
+			paddingTop: computed.paddingTop,
+			paddingBottom: computed.paddingBottom,
+			overflow: 'hidden'
+		};
+	}
+	function collapsedKeyframe() {
+		return {
+			height: '0px',
+			opacity: 0,
+			marginTop: '0px',
+			marginBottom: '0px',
+			paddingTop: '0px',
+			paddingBottom: '0px',
+			overflow: 'hidden'
+		};
+	}
+
+	// Releases the filling collapse animation once the caller has hidden the
+	// block, handing the element back to CSS-driven layout.
+	function cancelCollapseAnimation(el) {
+		if (!(el instanceof HTMLElement)) {
+			return;
+		}
+		const animation = heldAnimations.get(el);
+		if (animation) {
+			heldAnimations.delete(el);
+			animation.cancel();
+		}
+	}
+
+	// Animates `blocks` between expanded and collapsed.
+	//   collapsing=true  : current height -> 0, held at 0 (fill: forwards) until
+	//                      the caller hides the blocks and cancels the animations
+	//                      via cancelCollapseAnimation.
+	//   collapsing=false : 0 -> natural height; no fill, the block lands back on
+	//                      CSS-driven layout by itself.
+	// The caller must have already made the blocks renderable (no display:none)
+	// when expanding, so their natural height can be measured.
+	function animateCollapse(blocks, {
+		collapsing
 	}) {
-		return [Document, Paragraph, Text$1, HardBreak, Heading.configure({
-			levels: [1, 2, 3, 4]
-		}), Dropcursor, NoteGapcursor, ...(hasCollaborationProvider ? [] : [UndoRedo])];
+		const elements = (Array.isArray(blocks) ? blocks : []).filter(el => el instanceof HTMLElement);
+		if (elements.length === 0 || typeof window === 'undefined' || typeof Element.prototype.animate !== 'function') {
+			return Promise.resolve();
+		}
+		const settled = elements.map(el => {
+			cancelCollapseAnimation(el);
+			const expanded = expandedKeyframe(el);
+			const animation = el.animate(collapsing ? [expanded, collapsedKeyframe()] : [collapsedKeyframe(), expanded], {
+				duration: DURATION_MS,
+				easing: EASING,
+				fill: collapsing ? 'forwards' : 'none'
+			});
+			if (collapsing) {
+				heldAnimations.set(el, animation);
+			}
+			return new Promise(resolve => {
+				const timer = setTimeout(resolve, FALLBACK_MS);
+				const settle = () => {
+					clearTimeout(timer);
+					resolve();
+				};
+				// Settles on finish and on cancel alike — the caller only needs to
+				// know the visual phase is over.
+				animation.finished.then(settle, settle);
+			});
+		});
+		return Promise.all(settled).then(() => {});
+	}
+
+	const HEADING_TAGS = {
+		1: 'h1',
+		2: 'h2',
+		3: 'h3',
+		4: 'h4'
+	};
+	const DEFAULT_LEVEL = 2;
+	function resolveLevel(node) {
+		const level = Number(node?.attrs?.level);
+		return level >= 1 && level <= 4 ? level : DEFAULT_LEVEL;
+	}
+	function isMobileLayout() {
+		return typeof document !== 'undefined' && document.documentElement.classList.contains('note-mobile');
+	}
+
+	// Plain ProseMirror NodeView for headings: a wrapper around the editable heading
+	// element (`contentDOM`) plus a non-editable gutter holding the anchor controls.
+	// No `@tiptap/vue-3` here — the codebase builds NodeViews as plain classes.
+	class HeadingBlockNodeView {
+		#animating;
+		#plain;
+		constructor({
+			node,
+			editor,
+			getPos,
+			documentId
+		}) {
+			this.node = node;
+			this.editor = editor;
+			this.getPos = getPos;
+			this.documentId = Number(documentId) || 0;
+			this.#animating = false;
+			this.#plain = this.#resolvePlain();
+			const level = resolveLevel(node);
+			this.dom = document.createElement('div');
+			this.dom.className = 'note-heading';
+			this.dom.setAttribute('data-level', String(level));
+			this.contentDOM = document.createElement(HEADING_TAGS[level] ?? HEADING_TAGS[DEFAULT_LEVEL]);
+			this.contentDOM.className = 'note-heading__text';
+
+			// Headings inside a table, blockquote or callout stay plain: they are
+			// decorative section structure, not foldable document sections, so they
+			// carry neither the anchor (link) control nor the collapse chevron and take
+			// no part in the collapse mask. The anchor id decoration still applies, so
+			// existing direct links keep working.
+			if (this.#plain) {
+				this.gutter = null;
+				this.hashButton = null;
+				this.toggleButton = null;
+				this.dom.appendChild(this.contentDOM);
+				return;
+			}
+			this.gutter = document.createElement('div');
+			this.gutter.className = 'note-heading__gutter';
+			this.gutter.contentEditable = 'false';
+			this.hashButton = this.#createHashButton();
+			this.toggleButton = this.#createToggleButton();
+			// The chevron stays in the left gutter on every layout.
+			this.gutter.appendChild(this.toggleButton);
+
+			// On touch there is no hover: a tap on the heading reveals the controls
+			// (mirroring web hover). It never toggles collapse (see #onHeadingClick).
+			this.contentDOM.addEventListener('click', event => this.#onHeadingClick(event));
+			this.dom.appendChild(this.gutter);
+			this.dom.appendChild(this.contentDOM);
+
+			// On the web the link icon sits next to the chevron in the left gutter.
+			// On mobile it trails the heading text (revealed by a tap on the heading).
+			if (isMobileLayout()) {
+				this.hashButton.contentEditable = 'false';
+				this.dom.appendChild(this.hashButton);
+			} else {
+				this.gutter.insertBefore(this.hashButton, this.toggleButton);
+			}
+			this.#applyCollapsedState();
+		}
+		#createHashButton() {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'note-heading__hash';
+			const icon = document.createElement('div');
+			// Chain/link glyph — the control copies a link to the heading. A little
+			// larger on mobile, where it trails the heading text.
+			icon.className = 'ui-icon-set --link-3';
+			icon.style.setProperty('--ui-icon-set__icon-size', isMobileLayout() ? '20px' : '16px');
+			icon.style.setProperty('--ui-icon-set__icon-color', 'currentColor');
+			button.appendChild(icon);
+			const label = main_core.Loc.getMessage('NOTE_EDITOR_HEADING_COPY_ANCHOR');
+			button.title = label;
+			button.setAttribute('aria-label', label);
+			// Keep the editor selection intact when interacting with the control.
+			button.addEventListener('mousedown', event => event.preventDefault());
+			button.addEventListener('click', event => this.#onCopyAnchor(event));
+			return button;
+		}
+		#createToggleButton() {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'note-heading__toggle';
+			const label = main_core.Loc.getMessage('NOTE_EDITOR_HEADING_TOGGLE_COLLAPSE');
+			button.title = label;
+			button.setAttribute('aria-label', label);
+			const icon = document.createElement('div');
+			// Same glyph the sidebar disclosure uses (see BIcon "chevron-right-l").
+			icon.className = 'ui-icon-set --chevron-right-l';
+			icon.style.setProperty('--ui-icon-set__icon-size', '16px');
+			icon.style.setProperty('--ui-icon-set__icon-color', 'var(--ui-color-accent-main-primary)');
+			button.appendChild(icon);
+			button.addEventListener('mousedown', event => event.preventDefault());
+			button.addEventListener('click', event => this.#onToggle(event));
+			return button;
+		}
+		#applyCollapsedState() {
+			const collapsed = Boolean(this.node.attrs?.collapsed);
+			this.dom.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
+			this.toggleButton.classList.toggle('is-expanded', !collapsed);
+			this.toggleButton.setAttribute('aria-expanded', String(!collapsed));
+		}
+		#resolvePos() {
+			const pos = typeof this.getPos === 'function' ? this.getPos() : null;
+			return Number.isInteger(pos) && pos >= 0 ? pos : null;
+		}
+
+		// A move between a plain container (table/blockquote/callout) and the top
+		// level recreates the node view (remove+insert), so resolving once in the
+		// constructor is enough.
+		#resolvePlain() {
+			const doc = this.editor?.state?.doc;
+			const pos = this.#resolvePos();
+			if (!doc || pos === null) {
+				return false;
+			}
+			return isPlainHeadingContext(doc.resolve(pos));
+		}
+
+		// Sibling blocks following this heading inside its own container, up to the
+		// next heading of the same or shallower level — the ones the collapse mask
+		// hides. Bounded by the container end so a heading nested in a blockquote/
+		// callout folds only within it, matching the decoration range (see sectionEnd
+		// in heading-anchor-plugin); an outer heading still gets its nested container
+		// as one block of the iteration.
+		#collectFollowingBlocks(headingPos) {
+			const view = this.editor?.view;
+			const doc = this.editor?.state?.doc;
+			if (!view || !doc) {
+				return [];
+			}
+			const headingNode = doc.nodeAt(headingPos);
+			if (!headingNode) {
+				return [];
+			}
+			const level = resolveLevel(headingNode);
+			const blocks = [];
+			let pos = headingPos + headingNode.nodeSize;
+			const end = resolveHeadingContainer(doc, headingPos).containerEnd;
+			while (pos < end) {
+				const node = doc.nodeAt(pos);
+				if (!node) {
+					break;
+				}
+				if (node.type.name === this.node.type.name && resolveLevel(node) <= level) {
+					break;
+				}
+				const dom = view.nodeDOM(pos);
+				if (dom instanceof HTMLElement) {
+					blocks.push(dom);
+				}
+				pos += node.nodeSize;
+			}
+			return blocks;
+		}
+		#onToggle(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			void this.#toggleCollapsed();
+		}
+
+		// A heading click never toggles collapse. On touch (no hover) a tap reveals
+		// the heading's controls — the link icon and the collapse chevron — the way
+		// hovering does on the web (collapsed headings included). Desktop uses hover.
+		#onHeadingClick(event) {
+			if (!isMobileLayout() || this.editor?.isEditable) {
+				return;
+			}
+
+			// Don't hijack taps on links inside the heading.
+			if (event.target instanceof Element && event.target.closest('a')) {
+				return;
+			}
+			this.dom.classList.toggle('is-revealed');
+		}
+		async #toggleCollapsed() {
+			if (this.#animating) {
+				return;
+			}
+			const pos = this.#resolvePos();
+			if (pos === null) {
+				return;
+			}
+			const collapsing = !Boolean(this.node.attrs?.collapsed);
+			const blocks = this.#collectFollowingBlocks(pos);
+
+			// Toggling resets the mobile reveal so the next state starts clean.
+			this.dom.classList.remove('is-revealed');
+
+			// Immediate chevron feedback; update() reconciles once the attr changes.
+			this.toggleButton.classList.toggle('is-expanded', !collapsing);
+			this.toggleButton.setAttribute('aria-expanded', String(!collapsing));
+			this.dom.setAttribute('data-collapsed', collapsing ? 'true' : 'false');
+			if (blocks.length === 0) {
+				this.editor.commands.setHeadingCollapsed(pos, collapsing);
+				return;
+			}
+			this.#animating = true;
+			try {
+				if (collapsing) {
+					await animateCollapse(blocks, {
+						collapsing: true
+					});
+					this.editor.commands.setHeadingCollapsed(this.#resolvePos() ?? pos, true);
+					blocks.forEach(cancelCollapseAnimation);
+				} else {
+					// Reveal first so the natural height can be measured, then animate up.
+					this.editor.commands.setHeadingCollapsed(this.#resolvePos() ?? pos, false);
+					await animateCollapse(blocks, {
+						collapsing: false
+					});
+				}
+			} finally {
+				this.#animating = false;
+			}
+		}
+		#onCopyAnchor(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			const slug = this.dom.getAttribute('id') || '';
+			if (slug === '' || this.documentId <= 0 || typeof window === 'undefined') {
+				return;
+			}
+			const url = `${window.location.origin}/note/document/${this.documentId}/#${slug}`;
+			void copyTextToClipboard(url).then(copied => {
+				if (copied && window.BX?.UI?.Notification?.Center) {
+					window.BX.UI.Notification.Center.notify({
+						content: main_core.Loc.getMessage('NOTE_EDITOR_HEADING_ANCHOR_COPIED'),
+						position: 'top-right'
+					});
+				}
+			});
+		}
+		update(node) {
+			if (node.type !== this.node.type) {
+				return false;
+			}
+
+			// A level change swaps the heading tag — let ProseMirror recreate the view.
+			if (resolveLevel(node) !== resolveLevel(this.node)) {
+				return false;
+			}
+			this.node = node;
+			// While a local toggle animates, the optimistic chevron state is already
+			// correct — don't let an interim update flip it back.
+			if (!this.#plain && !this.#animating) {
+				this.#applyCollapsedState();
+			}
+			return true;
+		}
+		stopEvent(event) {
+			if (!(event.target instanceof Node)) {
+				return false;
+			}
+			return Boolean(this.gutter?.contains(event.target)) || Boolean(this.hashButton?.contains(event.target));
+		}
+		ignoreMutation(mutation) {
+			if (mutation.type === 'selection') {
+				return false;
+			}
+			return !(mutation.target instanceof Node) || !this.contentDOM.contains(mutation.target);
+		}
+	}
+
+	const HeadingAnchor = Heading.extend({
+		addOptions() {
+			return {
+				...(this.parent?.() ?? {}),
+				documentId: null
+			};
+		},
+		addAttributes() {
+			return {
+				...this.parent?.(),
+				collapsed: {
+					default: false,
+					// collapsed=false is the default and is not serialized, keeping the
+					// stored JSON compact and fully backward-compatible with old docs.
+					parseHTML: element => element.getAttribute('data-collapsed') === 'true',
+					renderHTML: attributes => attributes.collapsed ? {
+						'data-collapsed': 'true'
+					} : {}
+				}
+			};
+		},
+		addCommands() {
+			return {
+				...this.parent?.(),
+				setHeadingCollapsed: (pos, value) => ({
+					tr,
+					dispatch
+				}) => {
+					const node = tr.doc.nodeAt(pos);
+					if (!node || node.type.name !== this.name) {
+						return false;
+					}
+					if (dispatch) {
+						tr.setNodeMarkup(pos, undefined, {
+							...node.attrs,
+							collapsed: Boolean(value)
+						});
+					}
+					return true;
+				}
+			};
+		},
+		addProseMirrorPlugins() {
+			return [...(this.parent?.() ?? []), headingAnchorPlugin()];
+		},
+		addNodeView() {
+			const {
+				documentId
+			} = this.options;
+			return ({
+				node,
+				editor,
+				getPos
+			}) => new HeadingBlockNodeView({
+				node,
+				editor,
+				getPos,
+				documentId
+			});
+		}
+	});
+
+	// Containers whose nested headings are plain (see heading-slug): opaque to the
+	// section structure, so a heading inside them must not end a collapsed range or
+	// become the insert position for a new sibling heading.
+	const OPAQUE_CONTAINERS = new Set(['table', 'blockquote', 'callout']);
+
+	// Top-level heading nodes as { pos, level }, in document order. Mirrors the
+	// traversal `computeHeadingEntries` does, minus the slug work — this command
+	// only needs positions and levels, so it stays free of the slug/translit deps.
+	function headingEntries(doc) {
+		const entries = [];
+		doc.descendants((node, pos) => {
+			if (OPAQUE_CONTAINERS.has(node?.type?.name)) {
+				return false;
+			}
+			if (node?.type?.name === 'heading') {
+				entries.push({
+					pos,
+					level: Number(node.attrs?.level) || 1
+				});
+
+				// Headings hold inline content only — no need to descend.
+				return false;
+			}
+			return undefined;
+		});
+		return entries;
+	}
+
+	// Enter inside a COLLAPSED heading must not drop a block into the hidden
+	// section (the default split inserts it right after the heading, inside the
+	// collapse mask, so it stays invisible). Instead we create a new empty heading
+	// of the same level right after the collapsed subtree — a sibling that ends the
+	// collapse range and is therefore visible — and move the caret into it. The
+	// original heading stays collapsed and its hidden blocks stay hidden.
+	//
+	// Mirrors Outline's behaviour. Expanded headings (and non-empty selections, or
+	// carets outside a heading) are left to the default split: returning false lets
+	// the next keymap handler run.
+	function splitCollapsedHeading(state, dispatch) {
+		const {
+			selection
+		} = state;
+		if (!selection.empty) {
+			return false;
+		}
+		const {
+			$from
+		} = selection;
+		const heading = $from.parent;
+		if (heading.type.name !== 'heading' || !heading.attrs?.collapsed) {
+			return false;
+		}
+		const headingPos = $from.before($from.depth);
+		const entries = headingEntries(state.doc);
+		const index = entries.findIndex(entry => entry.pos === headingPos);
+		if (index === -1) {
+			return false;
+		}
+		const current = entries[index];
+		let insertPos = state.doc.content.size;
+		for (let next = index + 1; next < entries.length; next++) {
+			if (entries[next].level <= current.level) {
+				insertPos = entries[next].pos;
+				break;
+			}
+		}
+		if (dispatch) {
+			const newHeading = heading.type.create({
+				level: current.level,
+				collapsed: false
+			});
+			const tr = state.tr.insert(insertPos, newHeading);
+			// The new heading starts exactly at insertPos; its inner caret is +1.
+			tr.setSelection(TextSelection.create(tr.doc, insertPos + 1));
+			tr.scrollIntoView();
+			dispatch(tr);
+		}
+		return true;
+	}
+
+	// Standalone extension that binds Enter to the command above. It is a plain
+	// Extension (not the heading Node) on purpose: a high priority guarantees this
+	// Enter handler's keymap plugin runs before the core `keymap` extension's
+	// default split (priority 100) — and when the command returns false (expanded
+	// heading, non-empty selection, caret outside a heading) ProseMirror falls
+	// through to that default. Raising the Node's priority instead would reorder
+	// the schema's node list and risk changing the default block type.
+	const HeadingCollapseEnter = Extension.create({
+		name: 'headingCollapseEnter',
+		priority: 1000,
+		addKeyboardShortcuts() {
+			return {
+				Enter: ({
+					editor
+				}) => splitCollapsedHeading(editor.state, editor.view.dispatch)
+			};
+		}
+	});
+
+	function createCoreExtensions({
+		hasCollaborationProvider,
+		documentId = null
+	}) {
+		return [Document, Paragraph, Text$1, HardBreak, HeadingAnchor.configure({
+			levels: [1, 2, 3, 4],
+			documentId
+		}), HeadingCollapseEnter, Dropcursor, NoteGapcursor, ...(hasCollaborationProvider ? [] : [UndoRedo])];
 	}
 
 	// src/jsx-runtime.ts
@@ -39344,7 +40290,7 @@ ${prefix}
 		}
 	});
 
-	const ASSET_TYPE_TO_NODE = {
+	const ASSET_TYPE_TO_NODE$1 = {
 		image: 'imageAttachment',
 		file: 'fileAttachment',
 		video: 'video'
@@ -39679,7 +40625,7 @@ ${prefix}
 			url: result.url,
 			isImage: result.isImage
 		};
-		const nodeType = ASSET_TYPE_TO_NODE[attrs.type];
+		const nodeType = ASSET_TYPE_TO_NODE$1[attrs.type];
 		if (!nodeType) {
 			return null;
 		}
@@ -42104,7 +43050,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// THIS FILE IS AUTOMATICALLY GENERATED DO NOT EDIT DIRECTLY
 	// See update-tlds.js for encoding/decoding format
 	// https://data.iana.org/TLD/tlds-alpha-by-domain.txt
-	const encodedTlds = 'aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4w0s2x0a2z0ure5ba0by2idu3namex4d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dad1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3nd0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0axi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp3ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2';
+	const encodedTlds = 'aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4w0s2x0a2z0ure5ba0by2idu3namex4d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dad1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2odyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3nd0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rck0msd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0axi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp3ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2oodside6rk0s2ld3w2s1tc1f3xbox3erox4ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2';
 	// Internationalized domain names containing non-ASCII
 	const encodedUtlds = 'ελ1υ2бг1ел3дети4ею2католик6ом3мкд2он1сква6онлайн5рг3рус2ф2сайт3рб3укр3қаз3հայ3ישראל5קום3ابوظبي5رامكو5لاردن4بحرين5جزائر5سعودية6عليان5مغرب5مارات5یران5بارت2زار4يتك3ھارت5تونس4سودان3رية5شبكة4عراق2ب2مان4فلسطين6قطر3كاثوليك6وم3مصر2ليسيا5وريتانيا7قع4همراه5پاکستان7ڀارت4कॉम3नेट3भारत0म्3ोत5संगठन5বাংলা5ভারত2ৰত4ਭਾਰਤ4ભારત4ଭାରତ4இந்தியா6லங்கை6சிங்கப்பூர்11భారత్5ಭಾರತ4ഭാരതം5ලංකා4คอม3ไทย3ລາວ3გე2みんな3アマゾン4クラウド4グーグル4コム2ストア3セール3ファッション6ポイント4世界2中信1国1國1文网3亚马逊3企业2佛山2信息2健康2八卦2公司1益2台湾1灣2商城1店1标2嘉里0大酒店5在线2大拿2天主教3娱乐2家電2广东2微博2慈善2我爱你3手机2招聘2政务1府2新加坡2闻2时尚2書籍2机构2淡马锡3游戏2澳門2点看2移动2组织机构4网址1店1站1络2联通2谷歌2购物2通販2集团2電訊盈科4飞利浦3食品2餐厅2香格里拉3港2닷넷1컴2삼성2한국2';
 
@@ -43495,11 +44441,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		tt(Email$1, DOT, EmailDomainDot);
 		tt(Email$1, HYPHEN, EmailDomainHyphen);
 
-		// Final possible email states
-		const EmailColon = tt(Email$1, COLON); // URL followed by colon (potential port number here)
-		/*const EmailColonPort = */
-		ta(EmailColon, groups.numeric, Email); // URL followed by colon and port number
-
 		// Account for dots and hyphens. Hyphens are usually parts of domain names
 		// (but not TLDs)
 		const DomainHyphen = tt(Domain, HYPHEN); // domain followed by hyphen
@@ -43582,16 +44523,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Continue not accepting for open brackets
 			tt(UrlNonaccept, OPEN, UrlOpen);
 
-			// Closing bracket component. This character WILL be included in the URL
-			tt(UrlOpen, CLOSE, Url$1);
-
-			// URL that beings with an opening bracket, followed by a symbols.
+			// URL that begins with an opening bracket, followed by a symbols.
 			// Note that the final state can still be `UrlOpen` (if the URL has a
 			// single opening bracket for some reason).
 			const UrlOpenQ = makeState(Url);
 			ta(UrlOpen, qsAccepting, UrlOpenQ);
 			const UrlOpenSyms = makeState(); // UrlOpen followed by some symbols it cannot end it
-			ta(UrlOpen, qsNonAccepting);
+			ta(UrlOpen, qsNonAccepting, UrlOpenSyms);
+
+			// Closing bracket component. This character WILL be included in the URL.
+			// Must come after qsNonAccepting (which includes all close-bracket tokens)
+			// so that CLOSE -> Url wins over CLOSE -> UrlOpenSyms.
+			tt(UrlOpen, CLOSE, Url$1);
 
 			// URL that begins with an opening bracket, followed by some symbols
 			ta(UrlOpenQ, qsAccepting, UrlOpenQ);
@@ -47412,6 +48355,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			viewerAttrs: {
 				default: null
+			},
+			// Set when the backend reports the fileId as unresolvable (not linked / missing source).
+			// Session-transient: cleared on a successful re-resolve, so access granted later recovers.
+			unavailable: {
+				default: false
 			}
 		};
 	}
@@ -47512,7 +48460,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 						className: config.className
 					});
 				},
-				addCommands: createCommandFactory(config)
+				addCommands: createCommandFactory(config),
+				renderMarkdown(node) {
+					const fileId = Number(node?.attrs?.fileId);
+					if (!Number.isInteger(fileId) || fileId <= 0) {
+						return '';
+					}
+					return `[[${config.assetType} fileId=${fileId}]]`;
+				}
 			});
 		}
 		static createAttrs(file) {
@@ -47578,6 +48533,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			viewerAttrs() {
 				return main_core.Type.isPlainObject(this.attrs.viewerAttrs) ? this.attrs.viewerAttrs : {};
+			},
+			isUnavailable() {
+				return Boolean(this.attrs.unavailable);
+			},
+			// fileId present but no URL yet and not flagged failed: the resolver is in flight.
+			// Render a skeleton instead of the "Без названия" name fallback during this window.
+			isResolving() {
+				return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
+			},
+			unavailableMessage() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE');
 			}
 		}
 	};
@@ -47617,6 +48583,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		template: `
 		<a
 			class="note-editor-file-attachment-inner note-editor-file-attachment-link"
+			:class="{ 'note-editor-attachment--unavailable': isUnavailable }"
 			v-bind="fileViewerAttrs"
 			:draggable="false"
 			@click="handleClick"
@@ -47625,8 +48592,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 			</div>
 			<div class="note-editor-file-attachment-text">
-				<div class="note-editor-file-attachment-name">{{ fileName }}</div>
-				<div class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
+				<div class="note-editor-file-attachment-name">
+					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
+					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
+				</div>
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
 			</div>
 		</a>
 	`
@@ -47636,6 +48606,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		name: 'fileAttachment',
 		dataType: 'fileAttachment',
 		className: 'note-editor-file-attachment',
+		assetType: 'file',
 		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
 		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE',
 		nodeViewComponent: FileAttachmentNodeViewComponent
@@ -47686,8 +48657,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
-		<div class="note-editor-image-attachment-inner">
-			<div class="note-editor-image-attachment-preview">
+		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
+			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
+			<div v-else class="note-editor-image-attachment-preview">
 				<a
 					class="note-editor-attachment-tile-link note-editor-image-attachment-link"
 					v-bind="imageViewerAttrs"
@@ -47713,6 +48686,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		name: 'imageAttachment',
 		dataType: 'imageAttachment',
 		className: 'note-editor-image-attachment',
+		assetType: 'image',
 		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
 		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE',
 		nodeViewComponent: ImageAttachmentNodeViewComponent
@@ -48229,8 +49203,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		// language=Vue
 		template: `
-		<div class="note-editor-video-inner">
-			<div v-if="videoUrl" class="note-editor-video-preview">
+		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="videoUrl && !isUnavailable" class="note-editor-video-preview">
 				<video
 					class="note-editor-video-player"
 					:src="videoUrl"
@@ -48239,8 +49213,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				></video>
 			</div>
 			<div class="note-editor-video-meta">
-				<div class="note-editor-video-name">{{ fileName }}</div>
-				<div class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
+				<div class="note-editor-video-name">
+					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
+					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
+				</div>
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
 			</div>
 		</div>
 	`
@@ -48250,6 +49227,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		name: 'video',
 		dataType: 'videoAttachment',
 		className: 'note-editor-video-attachment',
+		assetType: 'video',
 		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
 		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO',
 		nodeViewComponent: VideoAttachmentNodeViewComponent,
@@ -48301,7 +49279,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				mimeType,
 				label
 			} = token.attrs;
-			const nodeType = ASSET_TYPE_TO_NODE[type];
+			const nodeType = ASSET_TYPE_TO_NODE$1[type];
 			if (!nodeType) {
 				return null;
 			}
@@ -48313,6 +49291,93 @@ ${nextLine.slice(indentLevel + 2)}`;
 					name: name ?? label,
 					size: size ? Number(size) : null,
 					mimeType: mimeType ?? null
+				}
+			};
+		}
+	});
+
+	// Strict, block-only syntax for REST-uploaded attachments: [[<type> fileId=<digits>]]
+	// No spaces around tokens, no extra attributes, lowercase type, integer fileId.
+	const NOTE_ASSET_RE = /^\[\[(image|file|video) fileId=(\d+)\]\][ \t]*(?:\n|$)/;
+	const ASSET_TYPE_TO_NODE = {
+		image: 'imageAttachment',
+		file: 'fileAttachment',
+		video: 'video'
+	};
+	function parseNoteAssetSyntax(src, pos) {
+		if (pos >= src.length) {
+			return null;
+		}
+		const slice = src ;
+		const match = NOTE_ASSET_RE.exec(slice);
+		if (!match) {
+			return null;
+		}
+		const fileId = Number(match[2]);
+		if (!Number.isInteger(fileId) || fileId <= 0) {
+			return null;
+		}
+		return {
+			assetType: match[1],
+			fileId,
+			raw: match[0]
+		};
+	}
+	function findNoteAssetStart(src) {
+		let from = 0;
+		while (from < src.length) {
+			const idx = src.indexOf('[[', from);
+			if (idx === -1) {
+				return -1;
+			}
+
+			// Block-only: must start at line beginning (no leading spaces — REST emits
+			// canonical form, and any indentation means it isn't a top-level asset block).
+			if (idx === 0 || src.charCodeAt(idx - 1) === 0x0A) {
+				return idx;
+			}
+			from = idx + 1;
+		}
+		return -1;
+	}
+
+	const NoteAssetTokenizer = Node3.create({
+		name: 'noteAsset',
+		markdownTokenizer: {
+			name: 'noteAsset',
+			level: 'block',
+			start(src) {
+				return findNoteAssetStart(src);
+			},
+			tokenize(src) {
+				const result = parseNoteAssetSyntax(src, 0);
+				if (!result) {
+					return null;
+				}
+				return {
+					type: 'noteAsset',
+					raw: result.raw,
+					attrs: {
+						assetType: result.assetType,
+						fileId: result.fileId
+					}
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token) {
+			const nodeType = ASSET_TYPE_TO_NODE[token.attrs.assetType];
+			if (!nodeType) {
+				return null;
+			}
+			return {
+				type: nodeType,
+				attrs: {
+					fileId: token.attrs.fileId,
+					documentId: null,
+					name: null,
+					size: null,
+					mimeType: null
 				}
 			};
 		}
@@ -48370,7 +49435,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				url: match.url,
 				isImage: match.isImage
 			};
-			const nodeType = ASSET_TYPE_TO_NODE[attrs.type];
+			const nodeType = ASSET_TYPE_TO_NODE$1[attrs.type];
 			if (nodeType) {
 				children.push({
 					type: nodeType,
@@ -52443,7 +53508,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const left = dels[j - 1];
 				const right = dels[i];
 				if (left.clock + left.len >= right.clock) {
-					left.len = max(left.len, right.clock + right.len - left.clock);
+					dels[j - 1] = new DeleteItem(left.clock, max(left.len, right.clock + right.len - left.clock));
 				} else {
 					if (j < i) {
 						dels[j] = right;
@@ -63362,23 +64427,111 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * @type {Map<EditorView, Map<any, any>>|null}
 	 */
 	let viewsToUpdate = null;
-	const updateMetas = () => {
-		const ups = /** @type {Map<EditorView, Map<any, any>>} */viewsToUpdate;
-		viewsToUpdate = null;
-		ups.forEach((metas, view) => {
-			const tr = view.state.tr;
-			const syncState = ySyncPluginKey.getState(view.state);
+	class MetaEntry {
+		/**
+		 * @param {EditorView} view
+		 * @param {any} key
+		 * @param {any} value
+		 */
+		constructor(view, key, value) {
+			this.view = view;
+			this.key = key;
+			this.value = value;
+		}
+		apply() {
+			const syncState = ySyncPluginKey.getState(this.view.state);
 			if (syncState && syncState.binding && !syncState.binding.isDestroyed) {
-				metas.forEach((val, key) => {
-					tr.setMeta(key, val);
-				});
-				view.dispatch(tr);
+				const tr = this.view.state.tr;
+				tr.setMeta(this.key, this.value);
+				this.view.dispatch(tr);
 			}
-		});
+		}
+	}
+	class MetaEntriesQueue {
+		/**
+		 * @param {Array<MetaEntry>} [entries=[]]
+		 */
+		constructor(entries = []) {
+			this.entries = entries;
+		}
+
+		/**
+		 * @return {MetaEntry|undefined}
+		 */
+		getFirst() {
+			return this.entries[0];
+		}
+
+		/**
+		 * @return {MetaEntry|undefined}
+		 */
+		dequeueFirst() {
+			return this.entries.shift();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isEmpty() {
+			return this.entries.length === 0;
+		}
+		static fromViewsToUpdate() {
+			const ups = /** @type {Map<EditorView, Map<any, any>>} */viewsToUpdate;
+			viewsToUpdate = null;
+			const entries = [];
+			ups.forEach((metas, view) => {
+				metas.forEach((value, key) => {
+					entries.push(new MetaEntry(view, key, value));
+				});
+			});
+			return new MetaEntriesQueue(entries);
+		}
+	}
+
+	/**
+	 * Dispatch queued plugin metadata in order, retrying only the remaining
+	 * entries if a transaction becomes stale while the async queue is flushing.
+	 *
+	 * Cursor awareness updates are decoration-only refreshes. If a real document
+	 * transaction lands before one of these queued meta transactions is applied,
+	 * ProseMirror can reject it with a RangeError. In that case we reschedule the
+	 * remaining entries on the next tick. If the first remaining entry fails again
+	 * on retry, we drop that entry and continue with the rest of the queue instead
+	 * of retrying forever or crashing the editor.
+	 *
+	 * @param {MetaEntriesQueue} [metaEntries=MetaEntriesQueue.fromViewsToUpdate()]
+	 * @param {boolean} [isRetry=false]
+	 */
+	const updateMetas = (metaEntries = MetaEntriesQueue.fromViewsToUpdate(), isRetry = false) => {
+		let isFirst = true;
+		while (!metaEntries.isEmpty()) {
+			const metaEntry = metaEntries.getFirst();
+			try {
+				metaEntry.apply();
+			} catch (err) {
+				// ProseMirror throws a RangeError when this transaction was created from
+				// an older state and another transaction changed the document before this
+				// meta-only dispatch was applied ("Applying a mismatched transaction").
+				if (err instanceof RangeError) {
+					if (isRetry && isFirst) {
+						// Drop the repeatedly stale entry so the queue can continue flushing.
+						metaEntries.dequeueFirst();
+					}
+					if (!metaEntries.isEmpty()) {
+						timeout(0, () => updateMetas(metaEntries, true));
+					}
+					return;
+				}
+				throw err;
+			}
+			isFirst = false;
+			metaEntries.dequeueFirst();
+		}
 	};
 	const setMeta = (view, key, value) => {
 		if (!viewsToUpdate) {
 			viewsToUpdate = new Map();
+			// Awareness listeners can fire in bursts, so batch them into one tick.
 			timeout(0, updateMetas);
 		}
 		setIfUndefined(viewsToUpdate, view, create$5).set(key, value);
@@ -64867,10 +66020,448 @@ ${nextLine.slice(indentLevel + 2)}`;
 		};
 	}
 
+	class DocumentService {
+		static async update({
+			id,
+			title,
+			markdown,
+			referencedFileIds = [],
+			contentFormat = null
+		}) {
+			const normalizedReferencedFileIds = Array.isArray(referencedFileIds) ? referencedFileIds.map(fileId => Number(fileId)).filter(fileId => Number.isInteger(fileId) && fileId > 0) : [];
+			const data = {
+				id: Number(id),
+				title,
+				markdown: JSON.stringify(markdown),
+				referencedFileIds: [...new Set(normalizedReferencedFileIds)].sort((left, right) => left - right)
+			};
+			if (contentFormat) {
+				data.contentFormat = contentFormat;
+			}
+			return main_core.ajax.runAction('note.infrastructure.DocumentController.update', {
+				data
+			});
+		}
+		static async loadPatches({
+			documentId
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.loadPatches', {
+				data: {
+					documentId: Number(documentId)
+				}
+			});
+		}
+		static async loadForCollaboration({
+			documentId
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.loadForCollaboration', {
+				data: {
+					documentId: Number(documentId)
+				}
+			});
+		}
+		static async savePatch({
+			documentId,
+			patch,
+			cursor = null
+		}) {
+			const data = {
+				documentId: Number(documentId),
+				patch
+			};
+			if (cursor !== null) {
+				data.cursor = JSON.stringify(cursor);
+			}
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.savePatch', {
+				data
+			});
+		}
+		static async compact({
+			documentId,
+			markdown,
+			processedUpToId,
+			yjsState = null
+		}) {
+			const data = {
+				documentId: Number(documentId),
+				markdown,
+				processedUpToId: Number(processedUpToId)
+			};
+			if (yjsState !== null) {
+				data.yjsState = yjsState;
+			}
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.compact', {
+				data
+			});
+		}
+		static async saveYjsState({
+			documentId,
+			yjsState
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
+				data: {
+					documentId: Number(documentId),
+					yjsState
+				}
+			});
+		}
+		static async sendAwareness({
+			documentId,
+			data
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.sendAwareness', {
+				data: {
+					documentId: Number(documentId),
+					awareness: JSON.stringify(data)
+				}
+			});
+		}
+		static async resolveFileUrls({
+			documentId,
+			fileIds
+		}) {
+			return main_core.ajax.runAction('note.infrastructure.FileController.resolveFileUrlsBatch', {
+				data: {
+					documentId: Number(documentId),
+					fileIds
+				}
+			});
+		}
+		static async finalizeFileSnapshot({
+			documentId,
+			referencedFileIds = []
+		}) {
+			const normalizedReferencedFileIds = Array.isArray(referencedFileIds) ? referencedFileIds.map(fileId => Number(fileId)).filter(fileId => Number.isInteger(fileId) && fileId > 0) : [];
+			return main_core.ajax.runAction('note.infrastructure.FileController.finalizeSnapshot', {
+				data: {
+					documentId: Number(documentId),
+					referencedFileIds: [...new Set(normalizedReferencedFileIds)].sort((left, right) => left - right)
+				}
+			});
+		}
+	}
+
+	const FILE_NODE_TYPES$2 = new Set(['imageAttachment', 'fileAttachment', 'video']);
+	const EMPTY_RESULT = Object.freeze({
+		resolvedIds: [],
+		failedIds: [],
+		failedById: new Map()
+	});
+	function collectUnresolvedFileIds(doc, skip) {
+		const fileIds = new Set();
+		doc.descendants(node => {
+			if (!FILE_NODE_TYPES$2.has(node.type.name)) {
+				return;
+			}
+			const {
+				fileId,
+				showUrl
+			} = node.attrs;
+			if (Number.isInteger(fileId) && fileId > 0 && !showUrl && !skip.has(fileId)) {
+				fileIds.add(fileId);
+			}
+		});
+		return [...fileIds];
+	}
+
+	/**
+	 * Resolve missing file URLs by fileId for attachment nodes in the document.
+	 *
+	 * Sets showUrl/downloadUrl/name/viewerAttrs (and clears `unavailable`) for every node whose
+	 * fileId the backend resolved. Nodes the backend reports as failed are NOT mutated here — the
+	 * caller decides how to surface them (placeholder vs removal), since that depends on origin.
+	 *
+	 * @param {Object} editor — Tiptap editor instance.
+	 * @param {number} documentId — owning document id (URLs are document-scoped).
+	 * @param {{ skip?: Set<number> }} [options] — fileIds to ignore (e.g. already known-failed).
+	 * @returns {Promise<{ resolvedIds: number[], failedIds: number[], failedById: Map<number, string> }>}
+	 */
+	async function resolveFileNodes(editor, documentId, options = {}) {
+		if (!editor || !Number.isInteger(documentId) || documentId <= 0) {
+			return EMPTY_RESULT;
+		}
+		const skip = options.skip instanceof Set ? options.skip : new Set();
+		const fileIds = collectUnresolvedFileIds(editor.state.doc, skip);
+		if (fileIds.length === 0) {
+			return EMPTY_RESULT;
+		}
+		let response = null;
+		try {
+			response = await DocumentService.resolveFileUrls({
+				documentId,
+				fileIds
+			});
+		} catch {
+			// Transient failure (network/5xx): report nothing as failed so the caller retries later.
+			return EMPTY_RESULT;
+		}
+		const files = Array.isArray(response?.data?.files) ? response.data.files : [];
+		const failed = Array.isArray(response?.data?.failed) ? response.data.failed : [];
+
+		// Key by the node's current id (originalFileId): the backend may adopt a borrowed file,
+		// returning a freshly-cloned fileId the node must be remapped to.
+		const urlMap = new Map();
+		for (const file of files) {
+			const resolvedId = Number(file.fileId);
+			const originalId = Number(file.originalFileId ?? file.fileId);
+			if (resolvedId > 0 && originalId > 0 && file.showUrl) {
+				urlMap.set(originalId, {
+					fileId: resolvedId,
+					documentId,
+					name: file.name || '',
+					size: Number(file.size) || 0,
+					mimeType: file.type || '',
+					downloadUrl: file.downloadUrl || file.showUrl,
+					showUrl: file.showUrl,
+					viewerAttrs: file.viewerAttrs || {}
+				});
+			}
+		}
+		const failedById = new Map();
+		for (const item of failed) {
+			const id = Number(item.fileId);
+			if (id > 0) {
+				failedById.set(id, String(item.message || ''));
+			}
+		}
+		if (urlMap.size > 0) {
+			const {
+				tr,
+				doc,
+				schema
+			} = editor.state;
+			let changed = false;
+			doc.descendants((node, pos) => {
+				if (!FILE_NODE_TYPES$2.has(node.type.name)) {
+					return;
+				}
+				const payload = urlMap.get(node.attrs.fileId);
+				if (!payload) {
+					return;
+				}
+
+				// The node type was asserted by the markdown construction ([[image ...]]) and may not
+				// match the real file. Re-derive it from the resolved mime/name (same mapping as upload),
+				// so e.g. an [[image]] pointing at a PDF becomes a proper file node.
+				const desiredType = resolveTargetNodeTypeByPayload(payload);
+				const targetType = schema.nodes[desiredType] ? desiredType : node.type.name;
+				const attrs = buildAttachmentAttrs(payload, targetType);
+				if (!attrs) {
+					return;
+				}
+				attrs.unavailable = false;
+				if (targetType === node.type.name) {
+					tr.setNodeMarkup(pos, undefined, attrs);
+				} else {
+					tr.setNodeMarkup(pos, schema.nodes[targetType], attrs);
+				}
+				changed = true;
+			});
+			if (changed) {
+				editor.view.dispatch(tr);
+			}
+		}
+		return {
+			resolvedIds: [...urlMap.keys()],
+			failedIds: [...failedById.keys()],
+			failedById
+		};
+	}
+
+	function showErrorToast(message) {
+		const content = String(message || '').trim();
+		if (!content) {
+			return;
+		}
+		BX.UI.Notification.Center.notify({
+			content,
+			position: 'top-right',
+			autoHideDelay: 4000
+		});
+	}
+
+	const FILE_NODE_RESOLVER_KEY = new PluginKey('noteFileNodeResolver');
+	const FILE_NODE_TYPES$1 = new Set(['imageAttachment', 'fileAttachment', 'video']);
+	const RESOLVE_DEBOUNCE_MS = 200;
+
+	// Signal from the paste path: these fileIds were just inserted by the user, so if the backend
+	// can't resolve them they should be removed + toasted (rather than left as a placeholder, which
+	// is the right behaviour only for content that was already persisted in the document).
+	function markPastedFileIds(view, fileIds) {
+		const ids = (Array.isArray(fileIds) ? fileIds : []).filter(id => Number.isInteger(id) && id > 0);
+		if (ids.length === 0) {
+			return;
+		}
+		view.dispatch(view.state.tr.setMeta(FILE_NODE_RESOLVER_KEY, {
+			type: 'markPasted',
+			fileIds: ids
+		}));
+	}
+	function applyOutcome(view, deleteIds, placeholderIds) {
+		if (deleteIds.size === 0 && placeholderIds.size === 0) {
+			return;
+		}
+		const {
+			tr,
+			doc
+		} = view.state;
+		const deletePositions = [];
+		let changed = false;
+		doc.descendants((node, pos) => {
+			if (!FILE_NODE_TYPES$1.has(node.type.name)) {
+				return;
+			}
+			const fileId = node.attrs.fileId;
+			if (deleteIds.has(fileId)) {
+				deletePositions.push({
+					pos,
+					size: node.nodeSize
+				});
+			} else if (placeholderIds.has(fileId) && !node.attrs.unavailable) {
+				tr.setNodeMarkup(pos, undefined, {
+					...node.attrs,
+					unavailable: true
+				});
+				changed = true;
+			}
+		});
+
+		// Delete descending so earlier positions stay valid as later nodes are removed.
+		for (let i = deletePositions.length - 1; i >= 0; i--) {
+			tr.delete(deletePositions[i].pos, deletePositions[i].pos + deletePositions[i].size);
+			changed = true;
+		}
+		if (changed) {
+			view.dispatch(tr);
+		}
+	}
+	const FileNodeResolverExtension = Extension.create({
+		name: 'fileNodeResolver',
+		addOptions() {
+			return {
+				getDocumentId: () => 0
+			};
+		},
+		addProseMirrorPlugins() {
+			const {
+				editor
+			} = this;
+			const getDocumentId = () => Number(this.options.getDocumentId?.() ?? 0);
+			return [new Plugin({
+				key: FILE_NODE_RESOLVER_KEY,
+				state: {
+					init() {
+						return {
+							failed: new Set(),
+							deleteOnFail: new Set()
+						};
+					},
+					apply(tr, value) {
+						const meta = tr.getMeta(FILE_NODE_RESOLVER_KEY);
+						if (meta?.type === 'markPasted') {
+							meta.fileIds.forEach(id => value.deleteOnFail.add(id));
+						}
+						return value;
+					}
+				},
+				view(view) {
+					let timer = null;
+					let running = false;
+					let dirty = false;
+					const run = async () => {
+						if (running) {
+							dirty = true;
+							return;
+						}
+						running = true;
+						dirty = false;
+						try {
+							const documentId = getDocumentId();
+							const {
+								failed,
+								deleteOnFail
+							} = FILE_NODE_RESOLVER_KEY.getState(view.state);
+							const result = await resolveFileNodes(editor, documentId, {
+								skip: failed
+							});
+							if (result.failedIds.length > 0) {
+								const deleteIds = new Set();
+								const placeholderIds = new Set();
+								let toastMessage = '';
+								for (const id of result.failedIds) {
+									failed.add(id); // stop retrying this fileId for the session
+									if (deleteOnFail.has(id)) {
+										deleteIds.add(id);
+										toastMessage = toastMessage || result.failedById.get(id) || '';
+									} else {
+										placeholderIds.add(id);
+									}
+								}
+								applyOutcome(view, deleteIds, placeholderIds);
+								if (toastMessage) {
+									showErrorToast(toastMessage);
+								}
+							}
+
+							// Clear handled ids regardless of outcome so a later persisted node with the
+							// same id is placeheld, not silently removed.
+							[...result.resolvedIds, ...result.failedIds].forEach(id => deleteOnFail.delete(id));
+						} finally {
+							running = false;
+							if (dirty) {
+								schedule();
+							}
+						}
+					};
+					const schedule = () => {
+						if (timer) {
+							clearTimeout(timer);
+						}
+						timer = setTimeout(run, RESOLVE_DEBOUNCE_MS);
+					};
+					schedule();
+					return {
+						update() {
+							schedule();
+						},
+						destroy() {
+							if (timer) {
+								clearTimeout(timer);
+							}
+						}
+					};
+				}
+			})];
+		}
+	});
+
 	const MARKDOWN_PASTE_KEY = new PluginKey('noteMarkdownPaste');
 	const MD_PATTERN = /^#{1,6}\s+\S|^\*{2}\S|^\*\s+\S|^-\s+\S|^\+\s+\S|^\d+\.\s+\S|^-\s+\[[ Xx]]\s|^```|^>\s|^\|.+\||^:::/m;
+
+	// REST-uploaded attachment block: [[image|file|video fileId=N]] at line start. Routed through the
+	// markdown parser so NoteAssetTokenizer turns it into a real node (and short-circuits autolink),
+	// instead of falling through to the default paste handler as plain text / a link.
+	const NOTE_ASSET_PATTERN = /^\[\[(?:image|file|video) fileId=\d+]]/m;
+	const FILE_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
 	function looksLikeMarkdown(text) {
-		return MD_PATTERN.test(text.trimStart());
+		const trimmed = text.trimStart();
+		return MD_PATTERN.test(trimmed) || NOTE_ASSET_PATTERN.test(trimmed);
+	}
+	function collectInsertedFileIds(doc, from, to) {
+		const fileIds = new Set();
+		doc.nodesBetween(from, to, node => {
+			if (!FILE_NODE_TYPES.has(node.type.name)) {
+				return;
+			}
+			const {
+				fileId,
+				showUrl
+			} = node.attrs;
+			if (Number.isInteger(fileId) && fileId > 0 && !showUrl) {
+				fileIds.add(fileId);
+			}
+		});
+		return [...fileIds];
 	}
 	const MarkdownPasteExtension = Extension.create({
 		name: 'markdownPaste',
@@ -64892,10 +66483,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 						if (!doc.content || doc.content.length === 0) {
 							return false;
 						}
+						const from = view.state.selection.from;
 						try {
 							editor.commands.insertContent(doc.content);
 						} catch {
 							return false;
+						}
+
+						// Flag freshly pasted attachment nodes so the resolver removes (not placeholders)
+						// any whose fileId the backend can't resolve.
+						const to = view.state.selection.to;
+						const fileIds = collectInsertedFileIds(view.state.doc, from, to);
+						if (fileIds.length > 0) {
+							markPastedFileIds(view, fileIds);
 						}
 						return true;
 					}
@@ -64907,17 +66507,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 	function createEditorExtensions({
 		uploadService = FileUploadService,
 		provider = null,
-		user = null
+		user = null,
+		documentId = 0
 	} = {}) {
 		const hasCollaborationProvider = Boolean(provider?.document);
 		const extensions = [...createCoreExtensions({
-			hasCollaborationProvider
+			hasCollaborationProvider,
+			documentId
 		}), ...createFormattingExtensions(), ...createMediaExtensions(), ...createTableExtensions(), createFileHandlerExtension(uploadService), Markdown.configure({
 			marked: sharedMarked,
 			markedOptions: {
 				gfm: true
 			}
-		}), MarkdownPasteExtension, EnrichedAssetTokenizer];
+		}), MarkdownPasteExtension, NoteAssetTokenizer, EnrichedAssetTokenizer, FileNodeResolverExtension.configure({
+			getDocumentId: () => Number(documentId) || 0
+		})];
 		if (hasCollaborationProvider) {
 			extensions.push(...createCollaborationExtensions({
 				provider,
@@ -65138,9 +66742,25 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return null;
 		}
 	}
+	function extractHash(href) {
+		const index = href.indexOf('#');
+		if (index === -1) {
+			return '';
+		}
+		return href.slice(index + 1).trim();
+	}
 	function parseInternalNoteLink(href, origin) {
 		if (typeof href !== 'string' || href === '') {
 			return null;
+		}
+
+		// Pure in-document anchor: "#slug".
+		if (href.startsWith('#')) {
+			const hash = href.slice(1).trim();
+			return hash === '' ? null : {
+				type: 'anchor',
+				hash
+			};
 		}
 		const currentOrigin = resolveCurrentOrigin() ;
 		const pathname = extractPathname(href, currentOrigin);
@@ -65155,9 +66775,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 		if (!Number.isInteger(id) || id <= 0) {
 			return null;
 		}
-		return {
+		const hash = extractHash(href);
+		return hash === '' ? {
 			type: 'document',
 			id
+		} : {
+			type: 'document',
+			id,
+			hash
 		};
 	}
 
@@ -65458,7 +67083,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const extensions = [...createEditorExtensions({
 					uploadService,
 					provider: this.provider,
-					user: this.normalizedCurrentUser
+					user: this.normalizedCurrentUser,
+					documentId: this.documentId
 				}), ...extraExtensions];
 				const resolvedContent = content ?? (this.provider ? undefined : this.resolveInitialContent());
 				const isMarkdownContent = main_core.Type.isString(resolvedContent);
@@ -65646,7 +67272,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			delete: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_DELETE'),
 			restoreFromTrash: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_RESTORE_FROM_TRASH'),
 			hardDelete: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_HARD_DELETE'),
-			documents: main_core.Loc.getMessage('NOTE_EDITOR_CHILDREN_HEADER')
+			documents: main_core.Loc.getMessage('NOTE_EDITOR_CHILDREN_HEADER'),
+			archivedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_ARCHIVED_REMOTE'),
+			trashedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_TRASHED_REMOTE'),
+			restoredRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_RESTORED_REMOTE'),
+			hardDeletedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_HARD_DELETED_REMOTE'),
+			accessRevokedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_ACCESS_REVOKED_REMOTE'),
+			editRevokedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_EDIT_REVOKED_REMOTE')
 		};
 	}
 
@@ -65717,223 +67349,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		}
 		return fallback;
-	}
-
-	class DocumentService {
-		static async update({
-			id,
-			title,
-			markdown,
-			referencedFileIds = [],
-			contentFormat = null
-		}) {
-			const normalizedReferencedFileIds = Array.isArray(referencedFileIds) ? referencedFileIds.map(fileId => Number(fileId)).filter(fileId => Number.isInteger(fileId) && fileId > 0) : [];
-			const data = {
-				id: Number(id),
-				title,
-				markdown: JSON.stringify(markdown),
-				referencedFileIds: [...new Set(normalizedReferencedFileIds)].sort((left, right) => left - right)
-			};
-			if (contentFormat) {
-				data.contentFormat = contentFormat;
-			}
-			return main_core.ajax.runAction('note.infrastructure.DocumentController.update', {
-				data
-			});
-		}
-		static async loadPatches({
-			documentId
-		}) {
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.loadPatches', {
-				data: {
-					documentId: Number(documentId)
-				}
-			});
-		}
-		static async loadForCollaboration({
-			documentId
-		}) {
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.loadForCollaboration', {
-				data: {
-					documentId: Number(documentId)
-				}
-			});
-		}
-		static async savePatch({
-			documentId,
-			patch,
-			cursor = null
-		}) {
-			const data = {
-				documentId: Number(documentId),
-				patch
-			};
-			if (cursor !== null) {
-				data.cursor = JSON.stringify(cursor);
-			}
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.savePatch', {
-				data
-			});
-		}
-		static async compact({
-			documentId,
-			markdown,
-			processedUpToId,
-			yjsState = null
-		}) {
-			const data = {
-				documentId: Number(documentId),
-				markdown,
-				processedUpToId: Number(processedUpToId)
-			};
-			if (yjsState !== null) {
-				data.yjsState = yjsState;
-			}
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.compact', {
-				data
-			});
-		}
-		static async saveYjsState({
-			documentId,
-			yjsState
-		}) {
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
-				data: {
-					documentId: Number(documentId),
-					yjsState
-				}
-			});
-		}
-		static async sendAwareness({
-			documentId,
-			data
-		}) {
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.sendAwareness', {
-				data: {
-					documentId: Number(documentId),
-					awareness: JSON.stringify(data)
-				}
-			});
-		}
-		static async resolveFileUrls({
-			documentId,
-			fileIds
-		}) {
-			return main_core.ajax.runAction('note.infrastructure.FileController.resolveFileUrlsBatch', {
-				data: {
-					documentId: Number(documentId),
-					fileIds
-				}
-			});
-		}
-		static async finalizeFileSnapshot({
-			documentId,
-			referencedFileIds = []
-		}) {
-			const normalizedReferencedFileIds = Array.isArray(referencedFileIds) ? referencedFileIds.map(fileId => Number(fileId)).filter(fileId => Number.isInteger(fileId) && fileId > 0) : [];
-			return main_core.ajax.runAction('note.infrastructure.FileController.finalizeSnapshot', {
-				data: {
-					documentId: Number(documentId),
-					referencedFileIds: [...new Set(normalizedReferencedFileIds)].sort((left, right) => left - right)
-				}
-			});
-		}
-	}
-
-	const FILE_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
-	function collectUnresolvedFileIds(doc) {
-		const fileIds = new Set();
-		doc.descendants(node => {
-			if (!FILE_NODE_TYPES.has(node.type.name)) {
-				return;
-			}
-			const {
-				fileId,
-				showUrl
-			} = node.attrs;
-			if (Number.isInteger(fileId) && fileId > 0 && !showUrl) {
-				fileIds.add(fileId);
-			}
-		});
-		return [...fileIds];
-	}
-	async function resolveFileNodes(editor, documentId) {
-		if (!editor || !Number.isInteger(documentId) || documentId <= 0) {
-			return;
-		}
-		const fileIds = collectUnresolvedFileIds(editor.state.doc);
-		if (fileIds.length === 0) {
-			return;
-		}
-		let response = null;
-		try {
-			response = await DocumentService.resolveFileUrls({
-				documentId,
-				fileIds
-			});
-		} catch {
-			return;
-		}
-		const files = response?.data?.files;
-		if (!Array.isArray(files) || files.length === 0) {
-			return;
-		}
-		const urlMap = new Map();
-		for (const file of files) {
-			const id = Number(file.fileId);
-			if (id > 0 && file.showUrl) {
-				urlMap.set(id, {
-					downloadUrl: file.downloadUrl,
-					showUrl: file.showUrl,
-					name: file.name || null,
-					viewerAttrs: file.viewerAttrs || null
-				});
-			}
-		}
-		if (urlMap.size === 0) {
-			return;
-		}
-		const {
-			tr,
-			doc
-		} = editor.state;
-		let changed = false;
-		doc.descendants((node, pos) => {
-			if (!FILE_NODE_TYPES.has(node.type.name)) {
-				return;
-			}
-			const urls = urlMap.get(node.attrs.fileId);
-			if (!urls) {
-				return;
-			}
-			tr.setNodeMarkup(pos, undefined, {
-				...node.attrs,
-				downloadUrl: urls.downloadUrl,
-				showUrl: urls.showUrl,
-				...(urls.name ? {
-					name: urls.name
-				} : {}),
-				...(urls.viewerAttrs ? {
-					viewerAttrs: urls.viewerAttrs
-				} : {})
-			});
-			changed = true;
-		});
-		if (changed) {
-			editor.view.dispatch(tr);
-		}
-	}
-
-	function showErrorToast(message) {
-		const content = String(message || '').trim();
-		if (!content) {
-			return;
-		}
-		BX.UI.Notification.Center.notify({
-			content,
-			position: 'top-right',
-			autoHideDelay: 4000
-		});
 	}
 
 	const CollaborationStatus = Object.freeze({
@@ -66664,8 +68079,44 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
+	const PullCommand = Object.freeze({
+		DOCUMENT_PATCH_RECEIVED: 'documentPatchReceived',
+		DOCUMENT_AWARENESS: 'documentAwareness',
+		DOCUMENT_UPDATE: 'documentUpdate',
+		DOCUMENT_MOVE: 'documentMove',
+		DOCUMENT_ARCHIVE: 'documentArchive',
+		DOCUMENT_RESTORE: 'documentRestore',
+		DOCUMENT_DELETE: 'documentDelete',
+		DOCUMENT_HARD_DELETE: 'documentHardDelete',
+		DOCUMENT_CONTENT_OVERWRITTEN: 'documentContentOverwritten',
+		DOCUMENT_CAPABILITIES: 'documentCapabilities',
+		COLLECTION_CAPABILITIES: 'collectionCapabilities',
+		COLLECTION_ARCHIVE: 'collectionArchive',
+		COLLECTION_DELETE: 'collectionDelete'
+	});
+
+	// Lifecycle commands routed via #callbacks. Each lands in its own phase;
+	// unbound entries fall through as no-ops.
+	const LIFECYCLE_COMMANDS = new Set([PullCommand.DOCUMENT_UPDATE, PullCommand.DOCUMENT_MOVE, PullCommand.DOCUMENT_ARCHIVE, PullCommand.DOCUMENT_RESTORE, PullCommand.DOCUMENT_DELETE, PullCommand.DOCUMENT_HARD_DELETE, PullCommand.DOCUMENT_CONTENT_OVERWRITTEN, PullCommand.DOCUMENT_CAPABILITIES, PullCommand.COLLECTION_CAPABILITIES, PullCommand.COLLECTION_ARCHIVE, PullCommand.COLLECTION_DELETE]);
+	const LIFECYCLE_CALLBACK_BY_COMMAND = Object.freeze({
+		[PullCommand.DOCUMENT_UPDATE]: 'onDocumentUpdate',
+		// A move can change the document's collection, hence its effective ACL — re-check access.
+		[PullCommand.DOCUMENT_MOVE]: 'onCapabilities',
+		[PullCommand.DOCUMENT_ARCHIVE]: 'onArchive',
+		[PullCommand.DOCUMENT_RESTORE]: 'onRestore',
+		[PullCommand.DOCUMENT_DELETE]: 'onDelete',
+		[PullCommand.DOCUMENT_HARD_DELETE]: 'onHardDelete',
+		[PullCommand.DOCUMENT_CONTENT_OVERWRITTEN]: 'onContentOverwritten',
+		[PullCommand.DOCUMENT_CAPABILITIES]: 'onCapabilities',
+		// Document inherits ACL from its collection — collection-level changes also flip capabilities.
+		[PullCommand.COLLECTION_CAPABILITIES]: 'onCapabilities',
+		// Whole collection archived/deleted → every doc in it flips into archive/trash mode.
+		[PullCommand.COLLECTION_ARCHIVE]: 'onArchive',
+		[PullCommand.COLLECTION_DELETE]: 'onDelete'
+	});
 	class PullTransport {
 		#documentId;
+		#getCollectionId;
 		#pullHandler;
 		#pullUnsubscribers;
 		#wasPullOffline;
@@ -66674,6 +68125,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			documentId
 		}) {
 			this.#documentId = documentId;
+			this.#getCollectionId = () => 0;
 			this.#pullHandler = null;
 			this.#pullUnsubscribers = [];
 			this.#wasPullOffline = false;
@@ -66683,8 +68135,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 			onPatch,
 			onAwareness,
 			onOffline,
-			onBackOnline
+			onBackOnline,
+			onDocumentUpdate,
+			onArchive,
+			onRestore,
+			onDelete,
+			onHardDelete,
+			onContentOverwritten,
+			onCapabilities,
+			getCollectionId
 		}) {
+			this.#getCollectionId = typeof getCollectionId === 'function' ? getCollectionId : () => 0;
 			if (!main_core.Type.isFunction(BX?.PULL?.subscribe)) {
 				return;
 			}
@@ -66693,7 +68154,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 				onPatch,
 				onAwareness,
 				onOffline,
-				onBackOnline
+				onBackOnline,
+				onDocumentUpdate,
+				onArchive,
+				onRestore,
+				onDelete,
+				onHardDelete,
+				onContentOverwritten,
+				onCapabilities
 			};
 			this.#pullHandler = data => {
 				this.#handleCommand(data);
@@ -66714,6 +68182,30 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}));
 			BX.PULL.extendWatch(`NOTE_DOC_${this.#documentId}`);
 			BX.PULL.extendWatch(`NOTE_DOC_AWARE_${this.#documentId}`);
+			// ACL channel — capability updates flow on this tag.
+			BX.PULL.extendWatch(`NOTE_DOC_${this.#documentId}_ACL`);
+			const collectionId = Number(this.#getCollectionId());
+			if (Number.isInteger(collectionId) && collectionId > 0) {
+				BX.PULL.extendWatch(`NOTE_COLLECTION_${collectionId}_ACL`);
+				// Non-ACL collection channel — archive/delete cascade events of sibling/ancestor docs
+				// arrive here so an open editor can detect that its subtree got swept.
+				BX.PULL.extendWatch(`NOTE_COLLECTION_${collectionId}`);
+			}
+		}
+
+		// Re-issue extendWatch for the (potentially new) collection of this document.
+		// Called after a documentMove flips state.collectionId — without it the ACL/cascade
+		// channel for the new collection would never get a server-side keepalive from this tab.
+		refreshCollectionWatch() {
+			if (!main_core.Type.isFunction(BX?.PULL?.extendWatch)) {
+				return;
+			}
+			const collectionId = Number(this.#getCollectionId());
+			if (!Number.isInteger(collectionId) || collectionId <= 0) {
+				return;
+			}
+			BX.PULL.extendWatch(`NOTE_COLLECTION_${collectionId}_ACL`);
+			BX.PULL.extendWatch(`NOTE_COLLECTION_${collectionId}`);
 		}
 		stop() {
 			if (this.#pullUnsubscribers.length > 0) {
@@ -66738,16 +68230,85 @@ ${nextLine.slice(indentLevel + 2)}`;
 				command,
 				params
 			} = data;
-			if (command === 'documentPatchReceived' && Number(params?.documentId) === this.#documentId) {
+			if (command === PullCommand.DOCUMENT_PATCH_RECEIVED && Number(params?.documentId) === this.#documentId) {
 				const patchBase64 = params?.patch;
 				if (main_core.Type.isStringFilled(patchBase64)) {
 					const update = base64ToUint8Array(patchBase64);
 					this.#callbacks.onPatch(update, params);
 				}
 			}
-			if (command === 'documentAwareness' && Number(params?.documentId) === this.#documentId) {
+			if (command === PullCommand.DOCUMENT_AWARENESS && Number(params?.documentId) === this.#documentId) {
 				this.#callbacks.onAwareness(params);
 			}
+			if (!LIFECYCLE_COMMANDS.has(command)) {
+				return;
+			}
+
+			// Subtree refetch payload has no documentIds — fall back to a capability/meta refetch so
+			// the provider can decide whether the open document landed in archive/trash.
+			const isDocCascade = command === PullCommand.DOCUMENT_ARCHIVE || command === PullCommand.DOCUMENT_DELETE;
+			if (isDocCascade && params?.requestRefetch === true && !Array.isArray(params?.documentIds)) {
+				if (this.#getCollectionId() !== Number(params?.collectionId)) {
+					return;
+				}
+				const refetch = this.#callbacks.onCapabilities;
+				if (typeof refetch === 'function') {
+					refetch(params || {});
+				}
+				return;
+			}
+			if (!this.#isForCurrentDocument(command, params)) {
+				return;
+			}
+			const callbackName = LIFECYCLE_CALLBACK_BY_COMMAND[command];
+			const callback = this.#callbacks[callbackName];
+			if (typeof callback === 'function') {
+				callback(this.#enrichLifecyclePayload(command, params) || {});
+			}
+		}
+
+		// COLLECTION_DELETE carries an optional `recycleBinMap` keyed by documentId — lift this
+		// tab's own entry into `recycleBinId/trashedAt` so handleRemoteDelete can fill state
+		// without a follow-up REST round-trip.
+		#enrichLifecyclePayload(command, params) {
+			if (command !== PullCommand.COLLECTION_DELETE || !params || !params.recycleBinMap) {
+				return params;
+			}
+			const entry = params.recycleBinMap[this.#documentId] || params.recycleBinMap[String(this.#documentId)];
+			if (!entry) {
+				return params;
+			}
+			return {
+				...params,
+				recycleBinId: Number(entry.id) || 0,
+				trashedAt: typeof entry.trashedAt === 'string' ? entry.trashedAt : ''
+			};
+		}
+		#isForCurrentDocument(command, params) {
+			if (!params) {
+				return false;
+			}
+
+			// Batch lifecycle events carry a documentIds[] payload instead of documentId.
+			if (command === PullCommand.DOCUMENT_ARCHIVE || command === PullCommand.DOCUMENT_DELETE) {
+				const ids = Array.isArray(params.documentIds) ? params.documentIds : null;
+				if (!ids) {
+					return Number(params.documentId) === this.#documentId;
+				}
+				for (const id of ids) {
+					if (Number(id) === this.#documentId) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			// Collection-level events apply to every doc in that collection.
+			if (command === PullCommand.COLLECTION_CAPABILITIES || command === PullCommand.COLLECTION_ARCHIVE || command === PullCommand.COLLECTION_DELETE) {
+				const collectionId = Number(this.#getCollectionId());
+				return collectionId > 0 && Number(params.collectionId) === collectionId;
+			}
+			return Number(params.documentId) === this.#documentId;
 		}
 		#handleStatusChange(data) {
 			if (!this.#callbacks) {
@@ -66855,6 +68416,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			schema
 		}) {
 			this.documentId = documentId;
+			this.collectionId = 0;
 			this.#userId = userId;
 			this.#userName = userName;
 			this.#userColor = userColor;
@@ -66868,6 +68430,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.onDisconnect = null;
 			this.onConnectError = null;
 			this.onNeedReconnect = null;
+			this.onRemoteDocumentUpdate = null;
+			this.onRemoteArchive = null;
+			this.onRemoteRestore = null;
+			this.onRemoteDelete = null;
+			this.onRemoteHardDelete = null;
+			this.onRemoteContentOverwritten = null;
+			this.onRemoteCapabilities = null;
 			this.#flushManager = new FlushManager({
 				documentId
 			});
@@ -66914,7 +68483,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 				patches,
 				schema: this.#schema
 			});
-			if (yjsState === null && this.document) {
+
+			// Skip genesis save when server holds raw markdown — ydoc-factory has no MD parser,
+			// so the Y.Doc would be empty and would clobber the real content in DB.
+			if (yjsState === null && this.document && !main_core.Type.isString(markdown)) {
 				await this.#saveGenesisState();
 			}
 			this.#initializeAwareness();
@@ -67021,6 +68593,30 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.document = null;
 			}
 		}
+		freezeWrites() {
+			this.#flushManager.unregisterBeforeUnload();
+			this.#flushManager.stop();
+			this.#compactManager.stopInterval();
+			if (this.#awarenessManager) {
+				this.#awarenessManager.leave();
+			}
+		}
+		refreshCollectionWatch() {
+			this.#pullTransport.refreshCollectionWatch();
+		}
+		unfreezeWrites() {
+			if (this.#isDestroyed || !this.document) {
+				return;
+			}
+			this.#flushManager.start({
+				document: this.document,
+				getCursorPosition: () => this.#getCursorPosition()
+			});
+			this.#flushManager.registerBeforeUnload();
+			if (this.#awarenessManager) {
+				this.#awarenessManager.start();
+			}
+		}
 		async compact(getEditorMarkdown) {
 			if (this.#isDestroyed || !this.document) {
 				return;
@@ -67060,10 +68656,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 			try {
 				const fullState = encodeStateAsUpdate(this.document);
 				const yjsState = uint8ArrayToBase64(fullState);
-				await DocumentService.saveYjsState({
+				const response = await DocumentService.saveYjsState({
 					documentId: this.documentId,
 					yjsState
 				});
+				const applied = response?.data?.applied;
+				const serverState = response?.data?.yjsState ?? null;
+				if (applied === false && main_core.Type.isStringFilled(serverState)) {
+					// Lost the genesis race: discard our orphan baseline and rebuild from the
+					// authoritative server state so transport/awareness/flush/editor bind to it.
+					this.document = createYDoc({
+						yjsState: serverState,
+						markdown: null,
+						patches: [],
+						schema: this.#schema
+					});
+				}
 			} catch {
 				// Genesis state save failed — will be recreated on next connect
 			}
@@ -67127,8 +68735,57 @@ ${nextLine.slice(indentLevel + 2)}`;
 					if (this.onNeedReconnect) {
 						this.onNeedReconnect();
 					}
-				}
+				},
+				onDocumentUpdate: params => {
+					if (this.onRemoteDocumentUpdate) {
+						this.onRemoteDocumentUpdate(params);
+					}
+				},
+				onArchive: params => {
+					if (this.onRemoteArchive) {
+						this.onRemoteArchive(params);
+					}
+				},
+				onRestore: params => {
+					if (this.onRemoteRestore) {
+						this.onRemoteRestore(params);
+					}
+				},
+				onDelete: params => {
+					if (this.onRemoteDelete) {
+						this.onRemoteDelete(params);
+					}
+				},
+				onHardDelete: params => {
+					if (this.onRemoteHardDelete) {
+						this.onRemoteHardDelete(params);
+					}
+				},
+				onContentOverwritten: params => {
+					this.#handleContentOverwritten(params);
+				},
+				onCapabilities: params => {
+					if (this.onRemoteCapabilities) {
+						this.onRemoteCapabilities(params);
+					}
+				},
+				getCollectionId: () => Number(this.collectionId) || 0
 			});
+		}
+		#handleContentOverwritten(params) {
+			if (this.#isDestroyed) {
+				return;
+			}
+			if (Number(params?.documentId) !== this.documentId) {
+				return;
+			}
+
+			// Provider only dispatches — feature layer owns the rebuild. Going through connect(null)
+			// here pipes raw markdown into ydoc-factory, which has no parser and clobbers the doc
+			// with an empty Y.Doc via saveGenesisState.
+			if (this.onRemoteContentOverwritten) {
+				this.onRemoteContentOverwritten(params);
+			}
 		}
 		#getCursorPosition() {
 			if (!this.awareness) {
@@ -67151,6 +68808,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#schema;
 		#getEditorMarkdown;
 		#messages;
+		#onHardDelete;
+		#onRemoteRename;
+		#onCapabilities;
+		#onLifecycleChange;
+		#onRemoteContentOverwritten;
 		#provider;
 		#isReconnecting;
 		#isHandlingAuthFailure;
@@ -67160,12 +68822,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 			state,
 			schema,
 			getEditorMarkdown,
-			messages
+			messages,
+			onHardDelete = null,
+			onRemoteRename = null,
+			onCapabilities = null,
+			onLifecycleChange = null,
+			onRemoteContentOverwritten = null
 		}) {
 			this.#state = state;
 			this.#schema = schema;
 			this.#getEditorMarkdown = getEditorMarkdown;
 			this.#messages = messages;
+			this.#onHardDelete = typeof onHardDelete === 'function' ? onHardDelete : null;
+			this.#onRemoteRename = typeof onRemoteRename === 'function' ? onRemoteRename : null;
+			this.#onCapabilities = typeof onCapabilities === 'function' ? onCapabilities : null;
+			this.#onLifecycleChange = typeof onLifecycleChange === 'function' ? onLifecycleChange : null;
+			this.#onRemoteContentOverwritten = typeof onRemoteContentOverwritten === 'function' ? onRemoteContentOverwritten : null;
 			this.#provider = null;
 			this.#isReconnecting = false;
 			this.#isHandlingAuthFailure = false;
@@ -67187,6 +68859,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				userColor: String(user.color || '#999999'),
 				schema: this.#schema
 			}));
+			this.#provider.collectionId = Number(this.#state.collectionId) || 0;
 			this.#provider.onStatus = ({
 				status
 			}) => {
@@ -67204,7 +68877,33 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#provider.onNeedReconnect = () => {
 				void this.softReconnect();
 			};
+			this.#provider.onRemoteDocumentUpdate = params => {
+				this.handleRemoteDocumentUpdate(params);
+			};
+			this.#provider.onRemoteArchive = params => {
+				this.handleRemoteArchive(params);
+			};
+			this.#provider.onRemoteRestore = params => {
+				this.handleRemoteRestore(params);
+			};
+			this.#provider.onRemoteDelete = params => {
+				this.handleRemoteDelete(params);
+			};
+			this.#provider.onRemoteHardDelete = params => {
+				this.handleRemoteHardDelete(params);
+			};
+			this.#provider.onRemoteCapabilities = params => {
+				this.handleRemoteCapabilities(params);
+			};
+			this.#provider.onRemoteContentOverwritten = params => {
+				this.handleRemoteContentOverwritten(params);
+			};
 			await this.#provider.connect(collaborationData);
+		}
+		handleRemoteContentOverwritten(params) {
+			if (this.#onRemoteContentOverwritten) {
+				this.#onRemoteContentOverwritten(params || {});
+			}
 		}
 		startCompaction() {
 			if (!this.#provider) {
@@ -67263,6 +68962,130 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
 			} finally {
 				this.#isReconnecting = false;
+			}
+		}
+		handleRemoteDocumentUpdate(params) {
+			if (!params) {
+				return;
+			}
+			if (typeof params.title !== 'string' || params.title === '') {
+				return;
+			}
+			this.#state.title = params.title;
+
+			// Vue app inside EditorMount was created with a fixed `title` prop and
+			// won't observe state changes — feature owns the contenteditable sync.
+			if (this.#onRemoteRename) {
+				this.#onRemoteRename(params.title);
+			}
+		}
+		handleRemoteArchive(params) {
+			if (!params || !this.#provider) {
+				return;
+			}
+
+			// Idempotent — backend fans out the same archive via both NOTE_DOC_{id} and NOTE_COLLECTION_{id}.
+			if (this.#state.isArchived) {
+				return;
+			}
+			this.#state.isArchived = true;
+			if (typeof params.archivedAt === 'string' && params.archivedAt !== '') {
+				this.#state.archivedAt = params.archivedAt;
+			}
+			this.#notifyLifecycle(this.#messages.archivedRemote);
+			this.#emitLifecycleChange('archived');
+		}
+		handleRemoteHardDelete(params) {
+			if (!params) {
+				return;
+			}
+
+			// Backend may fan out hardDelete via two channels — destroy() makes #provider null
+			// so the second arrival is short-circuited by the !this.#provider check below if added.
+			if (!this.#provider) {
+				return;
+			}
+			const mode = this.#state.recycleBinId ? 'recyclebin' : this.#state.isArchived ? 'archive' : 'home';
+			this.destroy();
+			this.#notifyLifecycle(this.#messages.hardDeletedRemote);
+			if (this.#onHardDelete) {
+				this.#onHardDelete({
+					documentId: Number(params.documentId) || 0,
+					mode
+				});
+			}
+		}
+		handleRemoteDelete(params) {
+			if (!params || !this.#provider) {
+				return;
+			}
+
+			// Backend fans out documentDelete via both NOTE_DOC_{id} (sendToDocument) and
+			// NOTE_COLLECTION_{id} (sendToCollection) — the first push has no recycleBinId,
+			// so guard on isTrashed too, otherwise toast fires twice.
+			// `isArchived` is NOT a guard here: archived → trashed is a legitimate transit
+			// (initiator deletes an archived doc), and blocking it leaves the viewer stuck
+			// in archive mode with buttons that hit a now-trashed backend.
+			if (this.#state.isTrashed === true || this.#state.recycleBinId) {
+				return;
+			}
+			const recycleBinId = Number(params.recycleBinId);
+			if (Number.isFinite(recycleBinId) && recycleBinId > 0) {
+				this.#state.recycleBinId = recycleBinId;
+			}
+			if (typeof params.trashedAt === 'string' && params.trashedAt !== '') {
+				this.#state.trashedAt = params.trashedAt;
+			}
+			this.#state.isTrashed = true;
+			this.#notifyLifecycle(this.#messages.trashedRemote);
+			this.#emitLifecycleChange('trashed');
+		}
+		handleRemoteCapabilities(params) {
+			if (this.#onCapabilities) {
+				this.#onCapabilities(params || {});
+			}
+		}
+		freezeForLostAccess() {
+			if (!this.#provider) {
+				return;
+			}
+			this.stopCompaction();
+			this.#provider.freezeWrites();
+			this.#state.readOnly = true;
+		}
+		handleRemoteRestore(params) {
+			if (!params || !this.#provider) {
+				return;
+			}
+
+			// Idempotent — receiver may already be in active state.
+			if (!this.#state.isArchived && !this.#state.recycleBinId && !this.#state.isTrashed) {
+				return;
+			}
+			this.#state.isArchived = false;
+			this.#state.archivedAt = null;
+			this.#state.recycleBinId = null;
+			this.#state.trashedAt = null;
+			this.#state.isTrashed = false;
+			this.#notifyLifecycle(this.#messages.restoredRemote);
+			this.#emitLifecycleChange('restored');
+		}
+		#emitLifecycleChange(reason) {
+			if (this.#onLifecycleChange) {
+				this.#onLifecycleChange(reason);
+			}
+		}
+		#notifyLifecycle(content) {
+			if (typeof content !== 'string' || content === '') {
+				return;
+			}
+			const center = BX?.UI?.Notification?.Center;
+			if (center && typeof center.notify === 'function') {
+				center.notify({
+					content,
+					position: 'top-right',
+					autoHideDelay: 4000
+				});
 			}
 		}
 		handleConnectError() {
@@ -67425,19 +69248,35 @@ ${nextLine.slice(indentLevel + 2)}`;
 			currentUser: normalizeCurrentUser(collaboration.currentUser)
 		};
 	}
+
+	// Debounce window for ACL-driven capability refresh; jitter desynchronises
+	// reconnecting clients hitting REST after a burst of `documentCapabilities`.
+	const CAPABILITY_REFRESH_MIN_MS = 80;
+	const CAPABILITY_REFRESH_JITTER_MS = 220;
 	class DocumentFeatureController {
 		constructor({
 			state,
 			getDocumentId,
 			nextTick,
 			messages,
-			onOpenInternalLink = null
+			onOpenInternalLink = null,
+			onHardDelete = null,
+			onAccessRevoked = null
 		}) {
 			this.state = state;
 			this.getDocumentId = getDocumentId;
 			this.nextTick = nextTick;
 			this.messages = messages;
 			this.onOpenInternalLink = typeof onOpenInternalLink === 'function' ? onOpenInternalLink : null;
+			this.onHardDelete = typeof onHardDelete === 'function' ? onHardDelete : null;
+			this.onAccessRevoked = typeof onAccessRevoked === 'function' ? onAccessRevoked : null;
+			this.capabilityRefreshTimer = null;
+			// When a lifecycle event (trash/archive) triggers the access re-check, its own toast
+			// already explains the removal — suppress the redundant access-revoked toast.
+			this.silentAccessRevoke = false;
+
+			// Cleanup for the active anchor pinning session (see #keepTargetPinned).
+			this.anchorPinCleanup = null;
 			this.editorMount = new EditorMount({
 				state,
 				getDocumentId,
@@ -67447,10 +69286,32 @@ ${nextLine.slice(indentLevel + 2)}`;
 				state,
 				schema: getEditorSchema(),
 				getEditorMarkdown: () => this.editorMount.readMarkdown(),
-				messages
+				messages,
+				onHardDelete: this.onHardDelete,
+				onRemoteRename: title => this.applyRemoteTitle(title),
+				onCapabilities: () => this.scheduleCapabilityRefresh(),
+				onLifecycleChange: reason => this.#handleLifecycleChange(reason),
+				onRemoteContentOverwritten: params => {
+					void this.#handleRemoteContentOverwritten(params);
+				}
 			});
 			this.handleTitleRename = newTitle => {
 				void this.renameTitleFromEditor(newTitle);
+			};
+			this.applyRemoteTitle = title => {
+				if (typeof title !== 'string' || title === '') {
+					return;
+				}
+				const changed = this.state.title !== title;
+				this.state.title = title;
+				this.state.titleDraft = title;
+				this.editorMount.vm?.updateTitle?.(title);
+
+				// Notify note-app/sidebar so the browser tab title (document.title) follows a push rename.
+				// Guard against the twin push path (PULL_EVENT) re-emitting the same rename.
+				if (changed) {
+					this.#emitDocumentRenamed(title);
+				}
 			};
 			this.handleDocRenamed = event => {
 				const {
@@ -67472,8 +69333,72 @@ ${nextLine.slice(indentLevel + 2)}`;
 					this.state.collectionTitle = name;
 				}
 			};
+
+			// Cross-route bus: react to push payloads handled by the sidebar so the editor's
+			// breadcrumb/header stay in sync without an extra BX.PULL subscription.
+			this.handlePullEvent = event => {
+				const {
+					command,
+					params
+				} = event.getData() || {};
+				if (!command || !params) {
+					return;
+				}
+				if (command === 'documentUpdate') {
+					this.#applyDocumentRenameFromPull(params);
+				} else if (command === 'collectionUpdate') {
+					this.#applyCollectionRenameFromPull(params);
+				}
+			};
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.DOCUMENT_RENAMED, this.handleDocRenamed);
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.COLLECTION_RENAMED, this.handleCollectionRenamed);
+			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.PULL_EVENT, this.handlePullEvent);
+		}
+		#applyDocumentRenameFromPull(params) {
+			const id = Number(params.documentId);
+			const title = typeof params.title === 'string' ? params.title : '';
+			if (!Number.isInteger(id) || id <= 0 || title === '') {
+				return;
+			}
+			if (Number(this.getDocumentId()) === id) {
+				const changed = this.state.title !== title;
+				this.state.title = title;
+				this.state.titleDraft = title;
+				this.editorMount.vm?.updateTitle?.(title);
+
+				// See applyRemoteTitle: keep document.title in sync; guard the twin provider path.
+				if (changed) {
+					this.#emitDocumentRenamed(title);
+				}
+			}
+
+			// Patch ancestors list — breadcrumb of a child document reflects parent renames.
+			if (Array.isArray(this.state.ancestors) && this.state.ancestors.length > 0) {
+				const next = this.state.ancestors.map(ancestor => Number(ancestor?.id) === id ? {
+					...ancestor,
+					title
+				} : ancestor);
+				this.state.ancestors = next;
+			}
+		}
+		#emitDocumentRenamed(title) {
+			main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.DOCUMENT_RENAMED, new main_core_events.BaseEvent({
+				data: {
+					id: Number(this.getDocumentId()),
+					title,
+					collectionId: Number(this.state.collectionId)
+				}
+			}));
+		}
+		#applyCollectionRenameFromPull(params) {
+			const id = Number(params.collectionId);
+			const name = typeof params.name === 'string' ? params.name : '';
+			if (!Number.isInteger(id) || id <= 0 || name === '') {
+				return;
+			}
+			if (Number(this.state.collectionId) === id) {
+				this.state.collectionTitle = name;
+			}
 		}
 		isEditMode() {
 			return this.state.mode === 'edit';
@@ -67558,6 +69483,78 @@ ${nextLine.slice(indentLevel + 2)}`;
 					await this.#mountEditorWithContext(false);
 				}
 				showErrorToast(extractErrorMessage(error, this.messages.loadError));
+			}
+		}
+		async #handleRemoteContentOverwritten(params) {
+			const documentId = Number(this.getDocumentId());
+			if (documentId <= 0 || Number(params?.documentId) !== documentId) {
+				return;
+			}
+			const requestId = this.state.loadRequestId + 1;
+			this.state.loadRequestId = requestId;
+			this.providerLifecycle.destroy();
+			let response = null;
+			try {
+				response = await DocumentService.loadForCollaboration({
+					documentId
+				});
+			} catch (error) {
+				showErrorToast(extractErrorMessage(error, this.messages.loadError));
+				return;
+			}
+			if (this.state.loadRequestId !== requestId || Number(this.getDocumentId()) !== documentId) {
+				return;
+			}
+			const data = response?.data ?? {};
+			const contentFormat = String(data.contentFormat ?? 'md');
+			const patches = Array.isArray(data.patches) ? data.patches : [];
+			const lastPatchId = data.lastPatchId ?? null;
+			const documentData = {
+				markdown: data.markdown ?? null,
+				contentFormat,
+				collaboration: {
+					patches,
+					lastPatchId
+				}
+			};
+			this.state.content = this.resolveDocumentContent(documentData);
+			this.editorMount.unmount();
+			await this.nextTick();
+			await this.#mountEditorWithContext(this.isEditMode());
+			if (contentFormat === 'md') {
+				// Re-runs the genesis flow: PM JSON → Y.Doc → provider.connect with patches=[].
+				await this.convertAndStartCollaboration(documentData);
+			} else {
+				const providerData = {
+					yjsState: data.yjsState ?? null,
+					markdown: data.markdown ?? null,
+					patches,
+					lastPatchId
+				};
+				await this.providerLifecycle.initialize(documentId, this.state.currentUser, providerData);
+				this.providerLifecycle.startIdleTracking();
+				// The editor was mounted above with provider=null (just destroyed); remount so its
+				// collaboration binding (ySync/flush/pull) attaches to the freshly created provider.
+				this.editorMount.unmount();
+				await this.nextTick();
+				await this.#mountEditorWithContext(this.isEditMode());
+				if (this.providerLifecycle.provider) {
+					this.providerLifecycle.startCompaction();
+				}
+			}
+
+			// convertAndStartCollaboration always remounts with editable=false; restore UI state from state.mode.
+			this.#applyEditorState();
+			this.#notifyContentOverwritten();
+		}
+		#notifyContentOverwritten() {
+			const center = BX?.UI?.Notification?.Center;
+			if (center && typeof center.notify === 'function') {
+				center.notify({
+					content: BX.message('NOTE_EDITOR_CONTENT_OVERWRITTEN'),
+					position: 'top-right',
+					autoHideDelay: 5000
+				});
 			}
 		}
 		applyLoadedDocument(documentData) {
@@ -67693,8 +69690,262 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// 'error' / 'not_found' statuses are surfaced by pages/document-page.js as a single toast + redirect.
 			this.state.isLoading = false;
 		}
+		async scrollToAnchor(hash) {
+			const slug = String(hash ?? '').replace(/^#/, '').trim();
+			if (slug === '') {
+				return;
+			}
+			const editor = this.editorMount.vm?.editor;
+			const editorRoot = editor?.view?.dom;
+			if (!editor || !(editorRoot instanceof HTMLElement)) {
+				return;
+			}
+
+			// Reveal the target if it sits inside one or more collapsed sections.
+			this.#expandAncestorsForSlug(editor, slug);
+			await this.nextTick();
+
+			// `slug` comes straight from the URL hash, so it may contain characters
+			// (`"`, `]`, `\`) that make an `[id="…"]` selector throw a SyntaxError.
+			// CSS.escape keeps the lookup a safe no-match instead of an exception.
+			const target = editorRoot.querySelector(`#${CSS.escape(slug)}`);
+			if (!(target instanceof HTMLElement)) {
+				return;
+			}
+			const scrollContainer = this.#findScrollContainer(target);
+			if (!scrollContainer) {
+				target.scrollIntoView({
+					block: 'start'
+				});
+				return;
+			}
+
+			// Extend the scrollable area only as much as needed for this specific
+			// target. Documents without anchor navigation keep their natural height
+			// — no permanent empty void at the bottom.
+			this.#ensureRoomToScrollTargetToTop(scrollContainer, target);
+			this.#alignTargetToTop(scrollContainer, target);
+
+			// Images above the target may still load later (browser prefetch, user
+			// scrolls up). Keep the target visually pinned by re-aligning inside the
+			// ResizeObserver callback, which fires after layout but before paint —
+			// so the heading never drifts away on screen.
+			this.#keepTargetPinned(scrollContainer, target, editorRoot);
+		}
+		#computeReservedTop(scrollContainer) {
+			const containerRect = scrollContainer.getBoundingClientRect();
+			const stickyBar = scrollContainer.querySelector('.note-page-document-actions');
+			const stickyOffset = stickyBar instanceof HTMLElement ? stickyBar.getBoundingClientRect().height : 0;
+			const pageHeader = document.querySelector('.note-page-header');
+			const headerOverlayOffset = pageHeader instanceof HTMLElement && getComputedStyle(pageHeader).position === 'fixed' ? pageHeader.getBoundingClientRect().height : 0;
+			return {
+				containerTop: containerRect.top,
+				reservedTop: Math.max(containerRect.top + stickyOffset, headerOverlayOffset)
+			};
+		}
+		#alignTargetToTop(scrollContainer, target) {
+			// Land the heading where the document title normally sits — flush against
+			// the sticky page actions bar (plus the mobile fixed page header).
+			const {
+				reservedTop
+			} = this.#computeReservedTop(scrollContainer);
+			const delta = target.getBoundingClientRect().top - reservedTop;
+			scrollContainer.scrollTo({
+				top: scrollContainer.scrollTop + delta,
+				behavior: 'auto'
+			});
+		}
+		#ensureRoomToScrollTargetToTop(scrollContainer, target) {
+			const {
+				reservedTop
+			} = this.#computeReservedTop(scrollContainer);
+			const desiredScrollTop = scrollContainer.scrollTop + (target.getBoundingClientRect().top - reservedTop);
+			const missing = desiredScrollTop + scrollContainer.clientHeight - scrollContainer.scrollHeight;
+			if (missing <= 0) {
+				return;
+			}
+			const docContent = scrollContainer.querySelector('.note-editor-document-content');
+			if (!(docContent instanceof HTMLElement)) {
+				return;
+			}
+
+			// Pad just enough — plus a small buffer — and accumulate across repeated
+			// in-document anchor jumps. The padding is inline, so it vanishes with
+			// the component when the user navigates to another document.
+			const current = parseFloat(docContent.style.paddingBottom) || 0;
+			docContent.style.paddingBottom = `${current + missing + 16}px`;
+		}
+		#keepTargetPinned(scrollContainer, target, editorRoot) {
+			// Cancel a previous pinning session: rapidly jumping between anchors must
+			// not leave an old session that re-aligns to a stale target for up to 5s.
+			this.anchorPinCleanup?.();
+			let active = true;
+			let timerId = null;
+			const cleanups = [];
+			const realign = () => {
+				if (!active) {
+					return;
+				}
+
+				// Re-align synchronously so the same paint that shows the new image
+				// also shows the corrected scroll position — no visible jump.
+				this.#ensureRoomToScrollTargetToTop(scrollContainer, target);
+				this.#alignTargetToTop(scrollContainer, target);
+			};
+
+			// Image `load` events don't bubble, but a capture-phase listener on the
+			// editor root still receives them — including from Vue NodeViews that
+			// mount their <img> after the initial scroll. This is the most direct
+			// signal for layout shifts caused by late-loading images above the target.
+			const onLoadCapture = event => {
+				const img = event.target;
+				if (!(img instanceof HTMLImageElement)) {
+					return;
+				}
+				if (!(target.compareDocumentPosition(img) & Node.DOCUMENT_POSITION_PRECEDING)) {
+					return;
+				}
+				realign();
+			};
+			editorRoot.addEventListener('load', onLoadCapture, {
+				capture: true
+			});
+			cleanups.push(() => editorRoot.removeEventListener('load', onLoadCapture, {
+				capture: true
+			}));
+
+			// ResizeObserver as a fallback for anything else that resizes the editor
+			// (videos, web fonts, late NodeView mounting, …).
+			const observer = new ResizeObserver(() => realign());
+			observer.observe(editorRoot);
+			cleanups.push(() => observer.disconnect());
+			const stop = () => {
+				if (!active) {
+					return;
+				}
+				active = false;
+				if (this.anchorPinCleanup === stop) {
+					this.anchorPinCleanup = null;
+				}
+				if (timerId !== null) {
+					clearTimeout(timerId);
+					timerId = null;
+				}
+				cleanups.forEach(fn => fn());
+			};
+			this.anchorPinCleanup = stop;
+
+			// Stop pinning the moment the user takes scroll into their own hands.
+			// Listening for input events distinguishes user gestures from passive
+			// scroll anchoring that browsers may apply on their own.
+			scrollContainer.addEventListener('wheel', stop, {
+				passive: true,
+				once: true
+			});
+			scrollContainer.addEventListener('touchstart', stop, {
+				passive: true,
+				once: true
+			});
+			scrollContainer.addEventListener('pointerdown', stop, {
+				passive: true,
+				once: true
+			});
+			document.addEventListener('keydown', stop, {
+				passive: true,
+				once: true
+			});
+			cleanups.push(() => {
+				scrollContainer.removeEventListener('wheel', stop);
+				scrollContainer.removeEventListener('touchstart', stop);
+				scrollContainer.removeEventListener('pointerdown', stop);
+				document.removeEventListener('keydown', stop);
+			});
+			timerId = setTimeout(stop, 5000);
+		}
+		#findScrollContainer(el) {
+			let parent = el.parentElement;
+			while (parent) {
+				const style = getComputedStyle(parent);
+				const overflowY = style.overflowY;
+				// Don't gate on current overflow: a short document hasn't overflowed
+				// yet, but #ensureRoomToScrollTargetToTop pads it so a bottom anchor
+				// can still be aligned to the top. The scrollable ancestor is defined
+				// by its overflow style, not by whether it happens to overflow now.
+				if (overflowY === 'auto' || overflowY === 'scroll') {
+					return parent;
+				}
+				parent = parent.parentElement;
+			}
+			return null;
+		}
+		#expandAncestorsForSlug(editor, slug) {
+			const entries = computeHeadingEntries(editor.state.doc);
+			const targetEntry = entries.find(entry => entry.slug === slug);
+			if (!targetEntry) {
+				return;
+			}
+			const targetPos = targetEntry.pos;
+			const docSize = editor.state.doc.content.size;
+			const positionsToExpand = [];
+			for (let i = 0; i < entries.length; i++) {
+				const entry = entries[i];
+				// Plain headings (table, blockquote, callout) neither collapse anything
+				// nor terminate a range — same rules the collapse mask follows (see
+				// heading-anchor-plugin).
+				if (!entry.collapsed || entry.plain || entry.pos >= targetPos) {
+					continue;
+				}
+				let rangeEnd = docSize;
+				for (let j = i + 1; j < entries.length; j++) {
+					if (!entries[j].plain && entries[j].level <= entry.level) {
+						rangeEnd = entries[j].pos;
+						break;
+					}
+				}
+				if (targetPos < rangeEnd) {
+					positionsToExpand.push(entry.pos);
+				}
+			}
+			if (positionsToExpand.length === 0) {
+				return;
+			}
+
+			// Edit mode: expanding is a deliberate change the user is allowed to make
+			// and persist. Batch every ancestor into a single transaction so the
+			// decoration set and editor are reconciled once, not once per level.
+			if (editor.isEditable) {
+				const tr = editor.state.tr;
+				for (const pos of positionsToExpand) {
+					const node = tr.doc.nodeAt(pos);
+					if (node && node.attrs?.collapsed) {
+						tr.setNodeMarkup(pos, undefined, {
+							...node.attrs,
+							collapsed: false
+						});
+					}
+				}
+				if (tr.docChanged) {
+					editor.view.dispatch(tr);
+				}
+				return;
+			}
+
+			// View mode: surfacing an anchor target must NOT mutate or persist the
+			// shared document. A meta-only transaction (no document steps) tells the
+			// anchor plugin to drop the collapse mask locally — FlushManager never
+			// sees a non-remote update, so nothing is saved for read-only viewers.
+			const tr = editor.state.tr;
+			tr.setMeta(headingAnchorPluginKey, {
+				reveal: positionsToExpand
+			});
+			tr.setMeta('addToHistory', false);
+			editor.view.dispatch(tr);
+		}
 		async enterEditMode() {
 			if (this.state.isLoading || this.state.isSaving || this.isEditMode() || !this.canEdit()) {
+				return;
+			}
+			if (this.#isEditingLocked()) {
 				return;
 			}
 			this.state.mode = 'edit';
@@ -67703,8 +69954,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				await this.#mountEditorWithContext(true);
 				return;
 			}
-			this.editorMount.setShowToolbar(true);
-			this.editorMount.setEditable(true);
+			this.#applyEditorState();
 		}
 		async finishEdit() {
 			if (!this.isEditMode() || this.state.isSaving) {
@@ -67719,8 +69969,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				await this.#mountEditorWithContext(false);
 				return;
 			}
-			this.editorMount.setEditable(false);
-			this.editorMount.setShowToolbar(false);
+			this.#applyEditorState();
 		}
 		async cancelEdit() {
 			return this.finishEdit();
@@ -67748,12 +69997,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 					state: this.state
 				});
 				this.state.mode = 'view';
-				if (this.editorMount.isMounted()) {
-					this.editorMount.setEditable(false);
-					this.editorMount.setShowToolbar(false);
-				} else {
+				if (!this.editorMount.isMounted()) {
 					await this.#mountEditorWithContext(false);
 				}
+				this.#applyEditorState();
 			} catch (error) {
 				if (this.#isTrashedError(error)) {
 					this.#handleTrashedDuringEdit(error);
@@ -67779,13 +70026,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#handleTrashedDuringEdit(error) {
 			this.state.isTrashed = true;
 			this.state.canEdit = false;
-			this.state.mode = 'view';
-			this.state.readOnly = true;
 			showErrorToast(extractErrorMessage(error, this.messages.saveError));
-			if (this.editorMount.isMounted()) {
-				this.editorMount.setEditable(false);
-				this.editorMount.setShowToolbar(false);
-			}
+			this.#applyEditorState();
 		}
 		async renameTitleFromEditor(newTitle) {
 			const documentId = Number(this.getDocumentId());
@@ -67812,7 +70054,187 @@ ${nextLine.slice(indentLevel + 2)}`;
 				// Silently ignore — the title in the editor stays as typed
 			}
 		}
+		scheduleCapabilityRefresh({
+			immediate = false,
+			silentRevoke = false
+		} = {}) {
+			if (this.capabilityRefreshTimer) {
+				clearTimeout(this.capabilityRefreshTimer);
+				this.capabilityRefreshTimer = null;
+			}
+			if (silentRevoke) {
+				this.silentAccessRevoke = true;
+			}
+
+			// Lifecycle-driven re-checks resolve the banner-vs-redirect verdict synchronously
+			// (no jitter) so a lost-access user is redirected without a recyclebin/archive flash.
+			if (immediate) {
+				void this.#fetchAndApplyCapabilities();
+				return;
+			}
+			const delay = CAPABILITY_REFRESH_MIN_MS + Math.floor(Math.random() * CAPABILITY_REFRESH_JITTER_MS);
+			this.capabilityRefreshTimer = setTimeout(() => {
+				this.capabilityRefreshTimer = null;
+				void this.#fetchAndApplyCapabilities();
+			}, delay);
+		}
+		async #fetchAndApplyCapabilities() {
+			const documentId = Number(this.getDocumentId());
+			if (!Number.isInteger(documentId) || documentId <= 0) {
+				return;
+			}
+			try {
+				const response = await main_core.ajax.runAction('note.infrastructure.DocumentController.getMyAccess', {
+					data: {
+						id: documentId
+					}
+				});
+				const access = response?.data ?? null;
+				if (!main_core.Type.isPlainObject(access)) {
+					return;
+				}
+				if (!access.canView) {
+					this.#handleAccessRevoked();
+					return;
+				}
+
+				// Access retained — clear any pending lifecycle suppression so a later genuine revoke toasts.
+				this.silentAccessRevoke = false;
+				const wasInEditMode = this.isEditMode();
+				const hadEditRights = Boolean(this.state.canEdit);
+				const nextCanEdit = Boolean(access.canEdit);
+				this.state.canEdit = nextCanEdit;
+				this.state.canEditCollection = Boolean(access.canViewCollection) && Boolean(access.canEditCollection);
+				this.state.canManagePermissions = Boolean(access.canManagePermissions);
+				this.state.sharedAccess = Boolean(access.sharedAccess);
+
+				// Trash-bookkeeping refetch path: when a cascade COLLECTION_DELETE arrived without
+				// a map (requestRefetch), this is how the editor learns its recycleBinId so the
+				// in-place restore button is wired.
+				const remoteRecycleBinId = Number(access.recycleBinId);
+				this.state.recycleBinId = Number.isFinite(remoteRecycleBinId) && remoteRecycleBinId > 0 ? remoteRecycleBinId : null;
+				this.state.trashedAt = typeof access.trashedAt === 'string' && access.trashedAt !== '' ? access.trashedAt : null;
+				// Without these the more-menu's «Restore» / «Delete forever» items stay hidden
+				// after a push-driven mode flip — they read state.canRestore/canHardDelete imperatively.
+				this.state.canRestore = Boolean(access.canRestore);
+				this.state.canHardDelete = Boolean(access.canHardDelete);
+				this.state.isOrphan = Boolean(access.isOrphan);
+				if (Number.isInteger(Number(access.collectionId)) && Number(access.collectionId) > 0) {
+					const previousCollectionId = Number(this.state.collectionId) || 0;
+					const nextCollectionId = Number(access.collectionId);
+					this.state.collectionId = nextCollectionId;
+					// documentMove flips state.collectionId — re-extend pull watch on the new
+					// collection so cascade/ACL pushes land on this tab.
+					if (nextCollectionId !== previousCollectionId) {
+						const provider = this.providerLifecycle.provider;
+						if (provider && typeof provider.refreshCollectionWatch === 'function') {
+							provider.collectionId = nextCollectionId;
+							provider.refreshCollectionWatch();
+						}
+					}
+				}
+
+				// EDIT → VIEW downgrade: yank the user out of edit mode, lock the mount.
+				if (hadEditRights && !nextCanEdit) {
+					this.#handleEditDowngraded(wasInEditMode);
+				}
+
+				// VIEW → EDIT upgrade: unlock writes so the user can re-enter edit-mode via the header button.
+				if (!hadEditRights && nextCanEdit) {
+					this.#handleEditUpgraded();
+				}
+			} catch (error) {
+				console.warn('[NOTE PULL EDITOR] capability refresh failed', documentId, error);
+			}
+		}
+		#handleEditDowngraded(wasInEditMode) {
+			this.#applyEditorState();
+			if (wasInEditMode) {
+				this.#showLifecycleToast(this.messages?.editRevokedRemote);
+			}
+		}
+		#handleEditUpgraded() {
+			this.#applyEditorState();
+		}
+		#handleLifecycleChange(reason) {
+			if (reason === 'restored') {
+				this.providerLifecycle.startCompaction();
+				// Capabilities may have shifted while the doc was archived/trashed — refetch to settle canEdit.
+				this.scheduleCapabilityRefresh();
+			} else if (reason === 'archived' || reason === 'trashed') {
+				this.providerLifecycle.stopCompaction();
+				// Trash/archive may strip access (e.g. collection delete cascade). Re-check now:
+				// access kept → stay on the recyclebin/archive banner, lost → redirect, mirroring reload.
+				// The lifecycle toast already explains the removal, so the revoke path stays silent.
+				this.scheduleCapabilityRefresh({
+					immediate: true,
+					silentRevoke: true
+				});
+			}
+			this.#applyEditorState();
+		}
+		#isEditingLocked() {
+			return Boolean(this.state.isArchived) || Boolean(this.state.isTrashed) || Boolean(this.state.recycleBinId) || !this.state.canEdit;
+		}
+
+		// Single source of truth for editor UI state — recomputed from `state`, applied to
+		// the mounted Vue editor and Yjs provider. All lifecycle / ACL handlers funnel here.
+		#applyEditorState() {
+			const locked = this.#isEditingLocked();
+			if (locked && this.state.mode === 'edit') {
+				this.state.mode = 'view';
+				this.state.titleDraft = this.state.title;
+			}
+			this.state.readOnly = locked;
+			const editable = this.state.mode === 'edit' && !locked;
+			const showToolbar = editable;
+			if (this.editorMount.isMounted()) {
+				this.editorMount.setEditable(editable);
+				this.editorMount.setShowToolbar(showToolbar);
+			}
+			const provider = this.providerLifecycle.provider;
+			if (provider) {
+				if (locked) {
+					provider.freezeWrites();
+				} else {
+					provider.unfreezeWrites();
+				}
+			}
+		}
+		#showLifecycleToast(content) {
+			if (!main_core.Type.isStringFilled(content)) {
+				return;
+			}
+			const center = BX?.UI?.Notification?.Center;
+			if (center && typeof center.notify === 'function') {
+				center.notify({
+					content,
+					position: 'top-right',
+					autoHideDelay: 4000
+				});
+			}
+		}
+		#handleAccessRevoked() {
+			this.providerLifecycle.freezeForLostAccess();
+			this.state.canEdit = false;
+			this.state.canEditCollection = false;
+			this.state.canManagePermissions = false;
+			this.#applyEditorState();
+			if (!this.silentAccessRevoke) {
+				this.#showLifecycleToast(this.messages?.accessRevokedRemote);
+			}
+			this.silentAccessRevoke = false;
+			if (this.onAccessRevoked) {
+				this.onAccessRevoked({
+					documentId: Number(this.getDocumentId()) || 0
+				});
+			}
+		}
 		destroy() {
+			if (this.capabilityRefreshTimer) {
+				clearTimeout(this.capabilityRefreshTimer);
+				this.capabilityRefreshTimer = null;
+			}
 			this.providerLifecycle.destroy();
 			this.editorMount.unmount();
 			if (this.handleDocRenamed) {
@@ -67822,6 +70244,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (this.handleCollectionRenamed) {
 				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.COLLECTION_RENAMED, this.handleCollectionRenamed);
 				this.handleCollectionRenamed = null;
+			}
+			if (this.handlePullEvent) {
+				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.PULL_EVENT, this.handlePullEvent);
+				this.handlePullEvent = null;
 			}
 		}
 		async #mountEditorWithContext(editable) {
@@ -67854,6 +70280,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			finishEdit: () => controller.finishEdit(),
 			saveDocument: () => controller.saveDocumentAction(),
 			getEditorMarkdown: () => controller.editorMount.readMarkdown(),
+			scrollToAnchor: hash => controller.scrollToAnchor(hash),
 			destroy: () => controller.destroy()
 		};
 	}
@@ -68499,30 +70926,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 	`
 	};
 
-	async function copyTextToClipboard(text) {
-		try {
-			if (navigator?.clipboard?.writeText) {
-				await navigator.clipboard.writeText(text);
-				return true;
-			}
-		} catch {
-			// fall through to legacy fallback
-		}
-		try {
-			const textarea = document.createElement('textarea');
-			textarea.value = text;
-			textarea.setAttribute('readonly', '');
-			textarea.style.position = 'absolute';
-			textarea.style.left = '-9999px';
-			document.body.appendChild(textarea);
-			textarea.select();
-			document.execCommand('copy');
-			document.body.removeChild(textarea);
-			return true;
-		} catch {
-			return false;
-		}
-	}
 	const NoteDocumentPageComponent = {
 		name: 'NoteDocumentPage',
 		components: {
@@ -68572,7 +70975,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				state: this.state,
 				getDocumentId: () => this.documentId,
 				nextTick: () => this.$nextTick(),
-				onOpenInternalLink: payload => this.handleOpenInternalLink(payload)
+				onOpenInternalLink: payload => this.handleOpenInternalLink(payload),
+				onHardDelete: ({
+					mode
+				}) => this.handleRemoteHardDelete(mode),
+				onAccessRevoked: () => this.handleAccessRevoked()
 			});
 			this.actionMenuService = ui_vue3.markRaw(new DocumentActionMenuService(this.feature?.messages ?? {}));
 		},
@@ -68648,12 +71055,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		watch: {
 			routeContextSyncKey: {
-				handler() {
-					if (this.feature) {
-						void this.feature.applyRouteDocumentContext(this.routeDocumentContext);
+				async handler() {
+					if (!this.feature) {
+						return;
+					}
+					await this.feature.applyRouteDocumentContext(this.routeDocumentContext);
+					if (String(this.routeDocumentContext?.status || '') === 'ready' && this.$route?.hash) {
+						void this.feature.scrollToAnchor(this.$route.hash);
 					}
 				},
 				immediate: true
+			},
+			'$route.hash'(nextHash) {
+				if (this.feature && !this.state.isLoading && main_core.Type.isStringFilled(nextHash)) {
+					void this.feature.scrollToAnchor(nextHash);
+				}
 			}
 		},
 		beforeUnmount() {
@@ -68712,23 +71128,71 @@ ${nextLine.slice(indentLevel + 2)}`;
 					name: routeName
 				});
 			},
+			handleRemoteHardDelete(mode) {
+				const allowedModes = ['recyclebin', 'archive', 'home'];
+				const target = allowedModes.includes(mode) ? mode : 'home';
+				this.$router.replace({
+					name: target
+				});
+			},
+			handleAccessRevoked() {
+				this.$router.replace({
+					name: 'home'
+				});
+			},
 			handleOpenInternalLink(payload) {
-				if (!payload || payload.type !== 'document') {
+				if (!payload) {
+					return;
+				}
+				if (payload.type === 'anchor') {
+					const anchorHash = String(payload.hash || '').trim();
+					if (anchorHash === '') {
+						return;
+					}
+
+					// When the hash actually changes, the `$route.hash` watcher runs
+					// scrollToAnchor — calling it here too would double every jump
+					// (two DOM passes, two pinning sessions). Scroll directly only
+					// when the hash is unchanged and the watcher won't fire.
+					const nextHash = `#${anchorHash}`;
+					this.$router.replace({
+						hash: nextHash
+					}).catch(() => {});
+					if (this.$route.hash === nextHash) {
+						void this.feature?.scrollToAnchor(anchorHash);
+					}
+					return;
+				}
+				if (payload.type !== 'document') {
 					return;
 				}
 				const id = Number(payload.id);
 				if (!Number.isInteger(id) || id <= 0) {
 					return;
 				}
+				const hash = String(payload.hash || '').trim();
 				if (Number(this.documentId) === id) {
+					if (hash !== '') {
+						const nextHash = `#${hash}`;
+						this.$router.replace({
+							hash: nextHash
+						}).catch(() => {});
+						if (this.$route.hash === nextHash) {
+							void this.feature?.scrollToAnchor(hash);
+						}
+					}
 					return;
 				}
-				this.$router.push({
+				const target = {
 					name: 'document',
 					params: {
 						id
 					}
-				});
+				};
+				if (hash !== '') {
+					target.hash = `#${hash}`;
+				}
+				this.$router.push(target);
 			},
 			buildDocumentLink() {
 				const id = Number(this.documentId);
@@ -68786,8 +71250,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 					onArchive: typeof actions.archive === 'function' ? () => actions.archive(this.documentId) : null,
 					onRestore: typeof actions.restore === 'function' ? () => actions.restore(this.documentId) : null,
 					onDelete: typeof actions.delete === 'function' ? () => actions.delete(this.documentId) : null,
-					onRestoreFromTrash: typeof actions.restoreFromTrash === 'function' ? () => actions.restoreFromTrash(this.documentId) : null,
-					onHardDelete: typeof actions.hardDelete === 'function' ? () => actions.hardDelete(this.documentId) : null
+					// Editor owns the freshest recycleBinId/isOrphan (synced via getMyAccess after
+					// a push-driven mode flip). The app-level handler doesn't share state with the
+					// editor, so we hand the values over at click time instead of having it read
+					// from a stale routeDocumentContext.document.
+					onRestoreFromTrash: typeof actions.restoreFromTrash === 'function' ? () => actions.restoreFromTrash(this.documentId, {
+						recycleBinId: Number(this.state.recycleBinId) || 0,
+						isOrphan: this.isOrphan
+					}) : null,
+					onHardDelete: typeof actions.hardDelete === 'function' ? () => actions.hardDelete(this.documentId, {
+						recycleBinId: Number(this.state.recycleBinId) || 0
+					}) : null
 				});
 			}
 		},
@@ -68874,5 +71347,5 @@ ${nextLine.slice(indentLevel + 2)}`;
 	exports.NoteDocumentPageComponent = NoteDocumentPageComponent;
 	exports.NoteEditorApp = NoteEditorApp;
 
-})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.Event, BX.Note.Sidebar, BX.UI.Notification, BX, BX.Note.Ui, BX.Note.Permissions, BX.Note.Ui, BX.UI, window, BX.Note.Ui);
+})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Notification, BX.Event, BX.Note.Sidebar, BX, BX.Note.Ui, BX.Note.Permissions, BX.Note.Ui, BX.UI, window, BX.Note.Ui);
 //# sourceMappingURL=editor.bundle.js.map

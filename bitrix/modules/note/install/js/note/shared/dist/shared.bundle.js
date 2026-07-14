@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_notification, note_ui_documentList) {
+(function (exports, main_core, main_core_events, ui_notification, note_ui_documentList, note_sidebar) {
 	'use strict';
 
 	const ACTION_LIST = 'note.infrastructure.DocumentController.listSharedWithMe';
@@ -55,6 +55,10 @@ this.BX = this.BX || {};
 	}
 
 	const PAGE_SIZE = 50;
+	// Debounce window for cross-route pull-driven refetch; jitter desynchronises
+	// reconnecting clients hitting REST after a burst of `collectionListInvalidated`.
+	const REFETCH_DEBOUNCE_MIN_MS = 80;
+	const REFETCH_DEBOUNCE_JITTER_MS = 220;
 	const NoteSharedPageComponent = {
 		name: 'NoteSharedPage',
 		components: {
@@ -97,7 +101,20 @@ this.BX = this.BX || {};
 		},
 		created() {
 			this.service = new SharedService();
+			this.refetchTimer = null;
+			this.handlePullEvent = event => this.onPullEvent(event);
+			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.PULL_EVENT, this.handlePullEvent);
 			void this.loadPage(false);
+		},
+		beforeUnmount() {
+			if (this.refetchTimer) {
+				clearTimeout(this.refetchTimer);
+				this.refetchTimer = null;
+			}
+			if (this.handlePullEvent) {
+				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.PULL_EVENT, this.handlePullEvent);
+				this.handlePullEvent = null;
+			}
 		},
 		methods: {
 			goRoot() {
@@ -144,6 +161,21 @@ this.BX = this.BX || {};
 					return;
 				}
 				void this.loadPage(true);
+			},
+			onPullEvent(event) {
+				const payload = event?.getData ? event.getData() : null;
+				const command = payload?.command;
+				if (command !== 'collectionListInvalidated' && command !== 'collectionCapabilities') {
+					return;
+				}
+				if (this.refetchTimer) {
+					clearTimeout(this.refetchTimer);
+				}
+				const delay = REFETCH_DEBOUNCE_MIN_MS + Math.floor(Math.random() * REFETCH_DEBOUNCE_JITTER_MS);
+				this.refetchTimer = setTimeout(() => {
+					this.refetchTimer = null;
+					void this.loadPage(false);
+				}, delay);
 			},
 			onOpen(item) {
 				this.$emit('open', {
@@ -199,5 +231,5 @@ this.BX = this.BX || {};
 
 	exports.NoteSharedPageComponent = NoteSharedPageComponent;
 
-})(this.BX.Note = this.BX.Note || {}, BX, BX.UI.Notification, BX.Note.Ui);
+})(this.BX.Note = this.BX.Note || {}, BX, BX.Event, BX.UI.Notification, BX.Note.Ui, BX.Note.Sidebar);
 //# sourceMappingURL=shared.bundle.js.map

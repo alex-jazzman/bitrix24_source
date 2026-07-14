@@ -62,7 +62,7 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 				'layout',
 				{
 					titleParams: {
-						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE_COLLAB'),
+						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE_PROJECT'),
 						type: 'entity',
 					},
 					rightButtons: this.getRightButtons(),
@@ -125,7 +125,7 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 					onUpdate: () => {
 						AnalyticsService.getInstance().sendDialogEditButtonDoneDialogInfoClick(this.dialogId);
 					},
-				});
+				}, this.widget);
 				AnalyticsService.getInstance().sendDialogEditHeaderMenuClick(this.dialogId);
 			}
 			catch (error)
@@ -191,12 +191,12 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 				.catch((errors) => {
 					logger.error(`${this.constructor.name}.deleteCollab delete chat error`, errors);
 
-					let message = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_COLLAB_ERROR_DELETE_COLLAB');
+					let message = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROJECT_ERROR_DELETE_PROJECT');
 
 					const isTasksNotEmpty = errors.some((error) => error.code === 'TASKS_NOT_EMPTY');
 					if (isTasksNotEmpty)
 					{
-						message = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_COLLAB_DELETE_ERROR');
+						message = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROJECT_DELETE_ERROR');
 					}
 
 					Notification.showErrorToast({ message });

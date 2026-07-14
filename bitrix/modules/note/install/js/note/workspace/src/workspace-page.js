@@ -39,6 +39,7 @@ export const NoteWorkspacePageComponent = {
 			requestId: 0,
 			isRenamingTitle: false,
 			titleDraft: '',
+			isLocalDestruction: false,
 		};
 	},
 	computed: {
@@ -153,6 +154,15 @@ export const NoteWorkspacePageComponent = {
 		activeTab(): void
 		{
 			void this.loadPage(false);
+		},
+		collection(next, prev): void
+		{
+			// Skip when initiator's onDelete/onArchive cleared the entry locally —
+			// they already emit 'deleted'/'archived' which trigger the redirect.
+			if (prev && !next && !this.isLocalDestruction)
+			{
+				this.$emit('not-found', { collectionId: this.collectionId });
+			}
 		},
 	},
 	created()
@@ -334,6 +344,7 @@ export const NoteWorkspacePageComponent = {
 				return;
 			}
 
+			this.isLocalDestruction = true;
 			this.removeFromSidebar(collectionId);
 			this.$emit('archived', { collectionId });
 		},
@@ -367,6 +378,7 @@ export const NoteWorkspacePageComponent = {
 				return;
 			}
 
+			this.isLocalDestruction = true;
 			this.removeFromSidebar(collectionId);
 			this.$emit('deleted', { collectionId });
 		},

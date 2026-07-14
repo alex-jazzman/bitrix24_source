@@ -11,7 +11,8 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
-	const { getStartWordsSearchVariants } = require('im/messenger/db/helper/start-words');
+	const { Query } = require('im/messenger/db/query-builder/builder');
+	const { DialogSchema } = require('im/messenger/db/table-schema');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('database-table--dialog');
 
@@ -149,77 +150,25 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {string} searchText
-		 * @param {'asc'|'desc'} order='asc'
-		 * @param {number} limit=25
-		 * @param {DialoguesFilter | {}} filter
-		 * @param {boolean} shouldRestoreRows
-		 *
-		 * @returns {Promise<{items: *[]}>}
+		 * @param {Array<number>} chatIds
+		 * @return {Promise<Array<string>>}
 		 */
-		async searchByText(
-			searchText,
-			order = 'desc',
-			limit = 25,
-			filter = {},
-			shouldRestoreRows = true,
-		)
+		async getDialogIdsByParentChatIds(chatIds)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(chatIds))
 			{
-				return {
-					items: [],
-				};
+				return [];
 			}
 
-			const filterString = this.createFilter(filter);
-			const { sqlCondition, values } = getStartWordsSearchVariants('name', searchText);
-			const result = await this.executeSql({
-				query: `
-					SELECT ${this.getName()}.*
-					FROM ${this.getName()}
-					LEFT JOIN b_im_recent ON ${this.getName()}.dialogId = b_im_recent.id
-					${filterString} AND ${sqlCondition} 
-					ORDER BY id ${order}
-					LIMIT ${limit}
-				`,
-				values: [
-					...values,
-				],
-			});
+			const result = await Query.select()
+				.from(DialogSchema)
+				.setSelect(DialogSchema.dialogId)
+				.where(DialogSchema.parentChatId.in(chatIds))
+				.execute();
 
-			return this.prepareListResult(result, shouldRestoreRows);
+			return result.map((row) => row.dialogId);
 		}
 
-		/**
-		 * @param {DialoguesFilter['dialogTypes']} dialogTypes
-		 * @param {DialoguesFilter['exceptDialogTypes']} exceptDialogTypes
-		 * @return {string}
-		 */
-		createFilter({ dialogTypes = [], exceptDialogTypes = [] })
-		{
-			let filterString = '';
-			if (dialogTypes.length > 0)
-			{
-				const types = dialogTypes.map((item) => `'${item}'`);
-				filterString = `WHERE ${this.getName()}.type IN (${types})`;
-			}
-
-			if (exceptDialogTypes.length > 0)
-			{
-				const types = exceptDialogTypes.map((item) => `'${item}'`);
-				if (filterString.length > 0)
-				{
-					filterString += ` AND ${this.getName()}.type NOT IN (${types})`;
-				}
-				else
-				{
-					filterString = `WHERE ${this.getName()}.type NOT IN (${types})`;
-				}
-			}
-
-			return filterString;
-		}
 	}
 
 	module.exports = {

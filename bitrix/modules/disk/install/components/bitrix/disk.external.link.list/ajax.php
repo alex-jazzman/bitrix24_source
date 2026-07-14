@@ -61,7 +61,6 @@ class DiskExternalLinkListAjaxController extends \Bitrix\Disk\Internals\Controll
 			'filter' => array(
 				'ID' => (int)$this->request->getPost('externalId'),
 				'OBJECT_ID' => $file->getId(),
-				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
 				'IS_EXPIRED' => false,
 			),

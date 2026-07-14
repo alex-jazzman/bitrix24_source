@@ -24,11 +24,19 @@ export const BaseRecentItem = {
 			type: Object,
 			required: true,
 		},
-		withCounters: {
+		withCounter: {
+			type: Boolean,
+			default: true,
+		},
+		withChildrenCounter: {
 			type: Boolean,
 			default: true,
 		},
 		withMessageStatus: {
+			type: Boolean,
+			default: true,
+		},
+		withPinStatus: {
 			type: Boolean,
 			default: true,
 		},
@@ -165,7 +173,9 @@ export const BaseRecentItem = {
 					<div class="bx-im-list-recent-item__content_bottom">
 						<MessageText :item="recentItem" :withDraft="withDraft" />
 						<ItemCounters
-							v-if="withCounters"
+							v-if="withCounter"
+							:withPinStatus="withPinStatus"
+							:withChildrenCounter="withChildrenCounter"
 							:item="recentItem"
 							:isChatMuted="dialog.isMuted"
 						/>

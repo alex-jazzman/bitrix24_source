@@ -1,8 +1,13 @@
-import '../css/empty-state.css';
+import { RecentType } from 'im.v2.const';
+import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
+	components: { RecentEmptyState },
+	computed: {
+		RecentType: () => RecentType,
+	},
 	methods: {
 		loc(phraseCode: string): string
 		{
@@ -10,9 +15,10 @@ export const EmptyState = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-channel__empty">
-			<div class="bx-im-list-channel__empty_icon"></div>
-			<div class="bx-im-list-channel__empty_text">{{ loc('IM_LIST_CHANNEL_EMPTY') }}</div>
-		</div>
+		<RecentEmptyState 
+			:title="loc('IM_LIST_CHANNEL_EMPTY_TITLE')"
+			:subtitle="loc('IM_LIST_CHANNEL_EMPTY_SUBTITLE')"
+			:recentSection="RecentType.openChannel" 
+		/>
 	`,
 };

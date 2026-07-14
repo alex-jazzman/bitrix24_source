@@ -1,8 +1,9 @@
 import { Loc } from 'main.core';
 
-import { showNotification } from '../utils/notification';
+import { type RunActionError } from 'im.v2.lib.rest';
+import { CollabManager } from 'im.v2.lib.collab';
 
-import type { RunActionError } from 'im.v2.lib.rest';
+import { showNotification } from '../utils/notification';
 
 const CollabErrorCode = {
 	emptyName: 'name',
@@ -20,12 +21,44 @@ const NotEmptyCollabErrorCodes = new Set([
 export const CollabNotifier = {
 	onBeforeDelete(): void
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_PROGRESS'));
+		showNotification(CollabManager.getBeforeDeleteText());
 	},
 
 	onUpdateLinkComplete(): void
 	{
 		showNotification(Loc.getMessage('IM_NOTIFIER_LINK_UPDATE_COMPLETE'));
+	},
+
+	handleDeleteError(error: RunActionError): void
+	{
+		if (NotEmptyCollabErrorCodes.has(error.code))
+		{
+			showNotification(CollabManager.getNotEmptyDeleteErrorText());
+
+			return;
+		}
+
+		showNotification(CollabManager.getDeleteErrorText());
+	},
+
+	onLeaveError(): void
+	{
+		showNotification(CollabManager.getLeaveErrorText());
+	},
+
+	onKickUserError(): void
+	{
+		showNotification(CollabManager.getKickErrorText());
+	},
+
+	onCollaberNotAcceptInvitation(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
+	},
+
+	onCopyLinkError(): void
+	{
+		showNotification(CollabManager.getCopyLinkError());
 	},
 
 	handleCreateError(error: RunActionError): void
@@ -52,37 +85,5 @@ export const CollabNotifier = {
 
 		const notificationText = NotificationTextByErrorCode[error.code] ?? NotificationTextByErrorCode.default;
 		showNotification(notificationText);
-	},
-
-	handleDeleteError(error: RunActionError): void
-	{
-		if (NotEmptyCollabErrorCodes.has(error.code))
-		{
-			showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_ENTITIES_ERROR'));
-
-			return;
-		}
-
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_DELETE_ERROR'));
-	},
-
-	onLeaveError(): void
-	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_LEAVE_ERROR'));
-	},
-
-	onKickUserError(): void
-	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_KICK_ERROR'));
-	},
-
-	onCollaberNotAcceptInvitation(): void
-	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
-	},
-
-	onCopyLinkError(): void
-	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR'));
 	},
 };

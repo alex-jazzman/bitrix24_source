@@ -78,7 +78,19 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 				iconType: IconType.calendar,
 				text: Loc.getMessage('IMMOBILE_COLLAB_ENTITY_CREATION_WIDGET_CALENDAR_ITEM_TITLE'),
 				onClick: () => {
-					Notification.showComingSoon();
+					const projectData = this.#getProjectData();
+					if (Type.isNull(projectData))
+					{
+						Notification.showErrorToast();
+
+						return;
+					}
+
+					this.#openCalendarCreationWidget(projectData)
+						.catch((error) => {
+							Notification.showErrorToast();
+							logger.error('openCalendarCreationWidget error', error);
+						});
 				},
 			};
 		}
@@ -163,6 +175,21 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 						image: projectData.avatar,
 					},
 				},
+			});
+		}
+
+		/**
+		 * @param {{id: string, name: string, avatar: string}} projectData
+		 * @return {Promise<void>}
+		 */
+		async #openCalendarCreationWidget(projectData)
+		{
+			const { Entry } = await requireLazy('calendar:entry');
+
+			await Entry.openEventEditForm({
+				parentLayout: PageManager,
+				calType: 'group',
+				ownerId: Number(projectData.id),
 			});
 		}
 	}

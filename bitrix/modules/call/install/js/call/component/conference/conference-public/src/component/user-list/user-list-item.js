@@ -1,4 +1,3 @@
-import { Vuex } from "ui.vue.vuex";
 import { Utils } from "im.lib.utils";
 import { Utils as UtilsV2 } from 'im.v2.lib.utils';
 import { MenuManager } from "main.popup";
@@ -8,10 +7,42 @@ import { EventEmitter } from "main.core.events";
 
 const UserListItem = {
 	props: {
-		userId: {
+		user: {
+			type: Object,
+			required: true,
+		},
+		userCallStatus: {
+			type: Object,
+			required: true,
+		},
+		currentUserId: {
 			type: Number,
-			required: true
-		}
+			required: true,
+		},
+		isCurrentUserExternal: {
+			type: Boolean,
+			required: true,
+		},
+		isBroadcast: {
+			type: Boolean,
+			required: true,
+		},
+		isUserPresenter: {
+			type: Boolean,
+			required: true,
+		},
+		pinAvailable: {
+			type: Boolean,
+			required: true,
+		},
+		chatOwner: {
+			type: Number,
+			required: true,
+		},
+		conferenceState: {
+			type: String,
+			required: true,
+		},
 	},
 	data: function() {
 		return {
@@ -24,31 +55,9 @@ const UserListItem = {
 	},
 	computed:
 	{
-		user()
-		{
-			return this.$store.getters['users/get'](this.userId, true);
-		},
-		// statuses
-		currentUser()
-		{
-			return this.application.common.userId;
-		},
-		chatOwner()
-		{
-			if (!this.dialog)
-			{
-				return 0;
-			}
-
-			return this.dialog.ownerId;
-		},
 		isCurrentUserOwner()
 		{
-			return this.chatOwner === this.currentUser;
-		},
-		isCurrentUserExternal()
-		{
-			return !!this.conference.user.hash;
+			return this.chatOwner === this.currentUserId;
 		},
 		isMobile()
 		{
@@ -62,35 +71,11 @@ const UserListItem = {
 		{
 			const guestDefaultName = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME');
 
-			return this.user.id === this.currentUser && this.user.extranet && this.user.name === guestDefaultName;
-		},
-		userCallStatus()
-		{
-			return this.$store.getters['call/getUser'](this.user.id);
+			return this.user.id === this.currentUserId && this.user.extranet && this.user.name === guestDefaultName;
 		},
 		isUserInCall()
 		{
 			return this.onlineStates.includes(this.userCallStatus.state);
-		},
-		userInCallCount()
-		{
-			const usersInCall = Object.values(this.call.users).filter(user => {
-				return this.onlineStates.includes(user.state);
-			});
-
-			return usersInCall.length;
-		},
-		isBroadcast()
-		{
-			return this.conference.common.isBroadcast;
-		},
-		presentersList()
-		{
-			return this.conference.common.presenters;
-		},
-		isUserPresenter()
-		{
-			return this.presentersList.includes(this.user.id);
 		},
 		// end statuses
 		formattedSubtitle()
@@ -122,13 +107,13 @@ const UserListItem = {
 		},
 		isMenuNeeded()
 		{
-			return this.getMenuItems.length > 0;
+			return this.menuItems.length > 0;
 		},
 		menuItems()
 		{
 			const items = [];
 			// for self
-			if (this.user.id === this.currentUser)
+			if (this.user.id === this.currentUserId)
 			{
 				// self-rename
 				if (this.isCurrentUserExternal)
@@ -178,7 +163,7 @@ const UserListItem = {
 						}
 					});
 				}
-				if (this.isUserInCall && this.userCallStatus.cameraState && this.userInCallCount > 2)
+				if (this.isUserInCall && this.userCallStatus.cameraState && this.pinAvailable)
 				{
 					// pin
 					if (!this.userCallStatus.pinned)
@@ -288,11 +273,11 @@ const UserListItem = {
 		{
 			if (this.isBroadcast)
 			{
-				return this.conference.common.state === ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
+				return this.conferenceState === ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
 			}
 			else
 			{
-				return this.conference.common.state === ConferenceStateType.call && this.isUserInCall;
+				return this.conferenceState === ConferenceStateType.call && this.isUserInCall;
 			}
 		},
 		callMenuIconClasses()
@@ -366,12 +351,6 @@ const UserListItem = {
 
 			return classes;
 		},
-		...Vuex.mapState({
-			application: state => state.application,
-			conference: state => state.conference,
-			call: state => state.call,
-			dialog: state => state.dialogues.collection[state.application.dialog.dialogId]
-		})
 	},
 	methods:
 	{

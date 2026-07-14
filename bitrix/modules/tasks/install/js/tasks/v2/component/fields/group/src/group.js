@@ -6,10 +6,9 @@ import { Hint } from 'tasks.v2.component.elements.hint';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { showLimit } from 'tasks.v2.lib.show-limit';
-import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { GroupModel } from 'tasks.v2.model.groups';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type GroupModel } from 'tasks.v2.model.groups';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { groupMeta } from './group-meta';
 import { GroupPopup } from './group-popup/group-popup';
@@ -30,6 +29,7 @@ export const Group = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		embedded: {},
 	},
 	setup(): { task: TaskModel }
 	{
@@ -107,11 +107,16 @@ export const Group = {
 				this.showDialog();
 			}
 		},
-		async openGroup(): Promise<void>
+		async openGroup(): void
 		{
-			const href = await groupService.getUrl(this.group.id, this.group.type);
-
-			BX.SidePanel.Instance.emulateAnchorClick(href);
+			if (this.embedded)
+			{
+				void groupDialog.openProject(this.group);
+			}
+			else
+			{
+				void groupDialog.openGroup(false, this.group, this.taskId);
+			}
 		},
 		showDialog(): void
 		{
@@ -157,6 +162,6 @@ export const Group = {
 		<Hint v-if="isHintShown" :bindElement="$refs.group" @close="isHintShown = false">
 			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
-		<GroupPopup :getBindElement="() => $refs.group"/>
+		<GroupPopup :getBindElement="() => $refs.group" @openGroup="openGroup"/>
 	`,
 };

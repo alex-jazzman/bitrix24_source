@@ -13,6 +13,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/integration/tasksmobile/comments/opener',
 		'im:messenger/lib/logger',
+		'im:messenger/lib/plan-limit',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/provider/data',
@@ -23,6 +24,9 @@ return [
 		'./src/nested-strategy/base',
 		'./src/nested-strategy/nested-navigation',
 		'./src/normalizer',
+		'./src/open-context',
+		'./src/open-filter/base',
+		'./src/open-filter/projects-tariff-restriction',
 		'./src/resolver',
 	],
 ];

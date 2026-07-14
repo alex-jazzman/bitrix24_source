@@ -11,8 +11,7 @@ const INVITE_LINK_MODIFIER = '--invite';
 // @vue/component
 export const DescriptionBanner = {
 	name: 'DescriptionBanner',
-	computed:
-	{
+	computed: {
 		preparedTitle(): string
 		{
 			return Loc.getMessage('IM_CREATE_COLLAB_BANNER_TITLE', {
@@ -28,8 +27,7 @@ export const DescriptionBanner = {
 			});
 		},
 	},
-	methods:
-	{
+	methods: {
 		onTitleClick(event: PointerEvent)
 		{
 			if (!Dom.hasClass(event.target, TITLE_LINK_MODIFIER))

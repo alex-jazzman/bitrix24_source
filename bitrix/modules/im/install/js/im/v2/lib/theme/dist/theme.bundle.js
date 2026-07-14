@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_feature) {
+(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_collab, im_v2_lib_feature) {
 	'use strict';
 
 	const ThemeType = Object.freeze({
@@ -81,15 +81,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId
 	const SpecialBackgroundId = {
 		collab: 'collab',
+		collabV2: 'collabV2',
 		martaAI: 'martaAI',
 		copilot: 'copilot',
 		aiAssistant: 'aiAssistant',
+		aiAssistantWidget: 'aiAssistantWidget',
 		notifications: 'notifications',
 		transparent: 'transparent'
 	};
 	const SpecialBackground = {
 		[SpecialBackgroundId.collab]: {
 			color: '#76c68b',
+			type: ThemeType.dark,
+			pattern: ThemePattern.default
+		},
+		[SpecialBackgroundId.collabV2]: {
+			color: '#5E96F0',
 			type: ThemeType.dark,
 			pattern: ThemePattern.default
 		},
@@ -104,6 +111,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			type: ThemeType.dark,
 			pattern: ThemePattern.default
 		},
+		[SpecialBackgroundId.aiAssistantWidget]: {
+			color: '#5B4FC7',
+			type: ThemeType.dark
+		},
 		[SpecialBackgroundId.notifications]: {
 			color: '#fafcfd',
 			type: ThemeType.light,
@@ -116,14 +127,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	/**
-	 * Maps background IDs to image file (without extension).
-	 * Images are at /bitrix/js/im/images/chat-v2-background/{name}.png
+	 * Maps background IDs to image file name.
+	 * Images are at /bitrix/js/im/images/chat-v2-background/{name}.[png|webp]
 	 */
 	const ImageFileByBackgroundId = {
-		[SpecialBackgroundId.collab]: 'collab-v2',
+		[SpecialBackgroundId.collab]: 'collab',
+		[SpecialBackgroundId.collabV2]: 'collabV2',
 		[SpecialBackgroundId.martaAI]: 'ai-assistant',
 		[SpecialBackgroundId.copilot]: '4',
 		[SpecialBackgroundId.aiAssistant]: 'ai-assistant-v2',
+		[SpecialBackgroundId.aiAssistantWidget]: 'ai-assistant-widget.webp',
 		[SpecialBackgroundId.notifications]: '11',
 		[SelectableBackgroundId.azure]: '1',
 		[SelectableBackgroundId.mint]: '2',
@@ -184,11 +197,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		if (!main_core.Type.isStringFilled(dialogId)) {
 			return userBackground;
 		}
-		const chatType = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true).type;
-		if (chatType === im_v2_const.ChatType.collab) {
-			return SpecialBackgroundId.collab;
+		const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+		if (chat.type === im_v2_const.ChatType.collab) {
+			return im_v2_lib_collab.CollabManager.getBackgroundId(chat);
 		}
-		if (chatType === im_v2_const.ChatType.copilot) {
+		if (chat.type === im_v2_const.ChatType.copilot) {
 			if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
 				return SpecialBackgroundId.aiAssistant;
 			}
@@ -225,8 +238,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		if (!fileName) {
 			return null;
 		}
+		const hasExtension = fileName.includes('.');
+		const fullName = hasExtension ? fileName : `${fileName}.png`;
 		return {
-			image: `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`,
+			image: `url('${IMAGE_FOLDER_PATH}/${fullName}')`,
 			position: 'center',
 			repeat: 'no-repeat',
 			size: 'cover'
@@ -261,5 +276,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ThemeManager = ThemeManager;
 	exports.ThemeType = ThemeType;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=theme.bundle.js.map

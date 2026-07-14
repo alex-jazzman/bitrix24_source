@@ -1,6 +1,6 @@
 import { Dom } from 'main.core';
 
-const EntrySide = {
+export const EntrySide = {
 	left: 'left',
 	right: 'right',
 };
@@ -11,7 +11,7 @@ export const SlideAnimation = {
 	props: {
 		duration: {
 			type: Number,
-			default: 300,
+			default: 200,
 		},
 		entrySide: {
 			type: String,

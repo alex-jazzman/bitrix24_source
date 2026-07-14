@@ -3,7 +3,7 @@
  */
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Loc } = require('loc');
+	const { Loc } = require('loc/ai');
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
@@ -716,7 +716,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						},
 					},
 					IconView({
-						icon: Icon.COPILOT,
+						icon: Icon.BITRIX_GPT,
 						size: 22,
 						color: Color.copilotAccentLess1,
 					}),
@@ -724,7 +724,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						style: {
 							marginLeft: Indent.L.toNumber(),
 						},
-						text: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE'),
+						text: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE_MSGVER_1'),
 						color: Color.copilotAccentLess2,
 					}),
 				),
@@ -761,16 +761,16 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 
 		getAiAdviceFooterText()
 		{
-			let messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2';
+			let messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2_MSGVER_1';
 
 			if (this.tasksTotal < this.aiAdvice.minTasksCountForAdvice)
 			{
-				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA';
+				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA_MSGVER_1';
 			}
 
 			if (this.efficiency <= this.aiAdvice.efficiencyThreshold)
 			{
-				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2';
+				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2_MSGVER_1';
 			}
 
 			return Loc.getMessage(
@@ -818,7 +818,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			{
 				void StatusBox.open({
 					parentWidget: this.props.layout,
-					backdropTitle: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE'),
+					backdropTitle: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE_MSGVER_1'),
 					testId: 'bitrix-gpt-limit',
 					imageUri: makeLibraryImagePath('lock.svg', 'banners'),
 					height: 440,
@@ -828,7 +828,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 					onButtonClick: () => {
 						qrauth.open({
 							layout: this.props.layout,
-							title: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE'),
+							title: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE_MSGVER_1'),
 							redirectUrl: '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
 							hintText: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_HINT'),
 							showHint: true,
@@ -860,7 +860,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 
 			showToast(
 				{
-					message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
+					message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST_MSGVER_1'),
 				},
 				this.props.layout,
 			);

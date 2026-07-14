@@ -31,6 +31,7 @@ return [
 		'tasks:flow-list/simple-list/items',
 		'tasks:flow-list/simple-list/items/type',
 		'tasks:task/calendar',
+		'tasks:unsupported-feature',
 		'tasks:statemanager/redux/slices/flows',
 		'tasks:statemanager/redux/slices/groups',
 		'tasks:statemanager/redux/types',

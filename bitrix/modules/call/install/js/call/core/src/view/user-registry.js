@@ -149,6 +149,10 @@ export class UserModel
 		return ((new Date()).getTime() - this.talkingStop);
 	};
 
+	get isConnected() {
+		return this.state === UserState.Connected;
+	}
+
 	subscribe(event, handler)
 	{
 		this.eventEmitter.subscribe(event, handler);

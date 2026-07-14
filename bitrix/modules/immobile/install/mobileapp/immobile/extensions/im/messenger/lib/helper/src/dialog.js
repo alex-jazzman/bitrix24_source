@@ -201,6 +201,19 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.parentChatId;
 		}
 
+		/**
+		 * @return {boolean}
+		 */
+		get inheritsParentChatMembership()
+		{
+			if (!this.isNested)
+			{
+				return false;
+			}
+
+			return ![DialogType.tasksTask, DialogType.calendar].includes(this.dialogModel.type);
+		}
+
 		get isCollab()
 		{
 			return this.dialogModel.type === DialogType.collab;
@@ -346,6 +359,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		get canCopyChatLink()
 		{
 			return !this.isCollab && !this.isCopilot && !this.isDirect;
+		}
+
+		get hasCollaber()
+		{
+			return Boolean(this.dialogModel.containsCollaber);
 		}
 
 		/**

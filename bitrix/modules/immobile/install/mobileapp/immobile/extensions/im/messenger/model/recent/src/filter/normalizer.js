@@ -17,6 +17,11 @@ jn.define('im/messenger/model/recent/filter/normalizer', (require, exports, modu
 			result.tabId = fields.tabId;
 		}
 
+		if (Type.isNumber(fields.parentChatId))
+		{
+			result.parentChatId = fields.parentChatId;
+		}
+
 		if (Type.isArray(fields.itemIds))
 		{
 			result.itemIds = fields.itemIds

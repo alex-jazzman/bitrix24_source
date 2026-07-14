@@ -1,16 +1,16 @@
 /**
- * @module 'im/messenger/db/helper/start-words'
+ * @module im/messenger/db/helper/start-words
  */
 jn.define('im/messenger/db/helper/start-words', (require, exports, module) => {
 	const { Type } = require('type');
+	const { or } = require('im/messenger/db/query-builder/condition');
 
 	/**
-	 * @param {string | Array<string>} fieldName
-	 * @param searchText
-	 * @returns {{sqlCondition: string, values: string[]}}
-	 * @description this method are needed for improve search in Cyrillic locale with upper and lower cases
+	 * @param {StringField | Array<StringField>} field
+	 * @param {string} searchText
+	 * @return {Condition | null}
 	 */
-	function getStartWordsSearchVariants(fieldName, searchText)
+	function getStartWordsSearchCondition(field, searchText)
 	{
 		const upperSearchCase = searchText.toLocaleUpperCase(env.languageId);
 		const lowerSearchCase = searchText.toLocaleLowerCase(env.languageId);
@@ -28,24 +28,18 @@ jn.define('im/messenger/db/helper/start-words', (require, exports, module) => {
 			`% ${withFirstLetterUpperCaseSearch}%`,
 		];
 
-		const fieldList = Type.isArray(fieldName) ? fieldName : [fieldName];
-		const fieldConditions = fieldList.map((field) => {
-			const likeConditions = patterns.map(() => `(${field}) LIKE ? COLLATE NOCASE`);
-
-			return `(${likeConditions.join(' OR ')})`;
+		const fieldList = Type.isArray(field) ? field : [field];
+		const likeConditions = [];
+		fieldList.forEach((fieldItem) => {
+			patterns.forEach((pattern) => {
+				likeConditions.push(fieldItem.like(pattern));
+			});
 		});
-		const sqlCondition = `(${fieldConditions.join(' OR ')})`;
 
-		const values = [];
-		fieldList.forEach(() => values.push(...patterns));
-
-		return {
-			sqlCondition,
-			values,
-		};
+		return or(...likeConditions);
 	}
 
 	module.exports = {
-		getStartWordsSearchVariants,
+		getStartWordsSearchCondition,
 	};
 });

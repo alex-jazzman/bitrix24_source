@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_message_elements, im_v2_component_message_base) {
+(function (exports, im_v2_component_message_base, im_v2_component_message_elements) {
 	'use strict';
 
 	// @vue/component
@@ -13,6 +13,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
 			MessageFooter: im_v2_component_message_elements.MessageFooter,
 			BaseMessage: im_v2_component_message_base.BaseMessage,
+			BuilderContent: im_v2_component_message_elements.BuilderContent,
 			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
 			ReactionSelector: im_v2_component_message_elements.ReactionSelector,
 			MessageKeyboard: im_v2_component_message_elements.MessageKeyboard
@@ -46,7 +47,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</template>
 			<div class="bx-im-message-default__container">
 				<MessageHeader :withTitle="withTitle" :item="item" />
-				<DefaultMessageContent :item="item" :dialogId="dialogId" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 			<template #after-message v-if="hasKeyboard">

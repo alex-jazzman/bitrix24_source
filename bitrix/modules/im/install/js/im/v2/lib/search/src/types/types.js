@@ -55,6 +55,7 @@ export type EntitySelectorRequestConfig = {
 
 type RecentSectionSearchConfigType = {
 	searchRecentSection: $Values<typeof RecentType>,
+	parentId: number,
 };
 
 export type EntitySearchConfigType = {

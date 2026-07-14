@@ -10,17 +10,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $config = [
 	'js' => 'dist/file-service.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.core.events',
-		'ui.uploader.core',
-		'ui.uploader.vue',
-		'ui.vue3',
-		'ui.notification-manager',
-		'tasks.v2.core',
 		'tasks.v2.const',
+		'tasks.v2.core',
 		'tasks.v2.lib.api-client',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.provider.service.task-service',
-		'main.core',
+		'ui.notification-manager',
+		'ui.uploader.core',
+		'ui.uploader.vue',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

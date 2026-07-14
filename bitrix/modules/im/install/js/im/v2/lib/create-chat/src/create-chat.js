@@ -2,7 +2,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { Layout } from 'im.v2.const';
+import { Layout, type SelectorEntityItem } from 'im.v2.const';
 
 import { type CreateChatFields, type PreselectedMemberItem, type OpenChatCreationParams } from './types/types';
 
@@ -155,7 +155,7 @@ export class CreateChatManager extends EventEmitter
 		this.setChatAvatar(null);
 	}
 
-	getChatMembers(): [[string, number | string]]
+	getChatMembers(): SelectorEntityItem[]
 	{
 		const mappedMembers = this.#preselectedMembers.map((item) => [item.type, item.id]);
 		if (this.#includeCurrentUser)
@@ -171,7 +171,7 @@ export class CreateChatManager extends EventEmitter
 		return this.#ownerId ?? Core.getUserId();
 	}
 
-	getUndeselectedItems(): [[string, number | string]]
+	getUndeselectedItems(): SelectorEntityItem[]
 	{
 		if (this.#includeCurrentUser)
 		{

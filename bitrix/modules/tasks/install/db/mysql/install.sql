@@ -1028,3 +1028,13 @@ create table if not exists b_tasks_task_access_request (
 	index ix_b_tasks_task_access_request_created_date (CREATED_DATE)
 );
 
+CREATE TABLE IF NOT EXISTS b_tasks_viewed_absence (
+	ID int not null auto_increment,
+	VIEWED_BY int not null,
+	USER_ID int not null,
+	ABSENCE_ID int not null,
+	ABSENCE_END datetime not null,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX ix_tasks_viewed_absence_unique (VIEWED_BY, USER_ID, ABSENCE_ID),
+	INDEX ix_tasks_viewed_absence_end (ABSENCE_END)
+);

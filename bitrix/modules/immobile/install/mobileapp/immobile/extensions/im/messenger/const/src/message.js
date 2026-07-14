@@ -81,7 +81,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		aiAssistant: 'AiAssistantMessage',
 		planLimits: 'PlanLimitsMessage',
 		aiBizprocMessage: 'AiBizprocMessage',
-		builderMessage: 'BuilderMessage',
+		blockMessage: 'BlockMessage',
 	});
 
 	module.exports = {

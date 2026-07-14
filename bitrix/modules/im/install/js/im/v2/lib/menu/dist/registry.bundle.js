@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, ui_dialogs_messagebox, im_public, im_v2_const, im_v2_lib_analytics, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_recent, im_v2_lib_copilot, ui_iconSet_api_core, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_market, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_promo, im_v2_lib_notifier, im_v2_lib_feature, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
+(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, ui_dialogs_messagebox, im_public, im_v2_const, im_v2_lib_analytics, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_recent, im_v2_lib_collab, im_v2_lib_copilot, ui_iconSet_api_core, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_feature, im_v2_lib_market, im_v2_lib_message, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_promo, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -155,16 +155,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				recentItem,
 				dialogId
 			} = this.context;
-			if (!recentItem) {
+			if (!recentItem || this.isGuestRole()) {
 				return null;
 			}
-			const {
-				chatId
-			} = this.store.getters['chats/get'](dialogId, true);
-			const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
-			const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
-			const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
-			const showReadOption = isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
+			const showReadOption = this.hasCounter();
 			return {
 				title: showReadOption ? main_core.Loc.getMessage('IM_LIB_MENU_READ') : main_core.Loc.getMessage('IM_LIB_MENU_UNREAD'),
 				onClick: () => {
@@ -371,6 +365,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		isChatWithCurrentUser() {
 			return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
 		}
+		hasCounter() {
+			const {
+				dialogId
+			} = this.context;
+			const {
+				chatId
+			} = this.store.getters['chats/get'](dialogId, true);
+			const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
+			const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
+			const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
+			return isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
+		}
 		#leaveChat() {
 			const canLeaveChat = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.leave, this.context.dialogId);
 			if (!canLeaveChat) {
@@ -514,7 +520,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#getKickItemText() {
 			if (this.isCollabChat()) {
-				return main_core.Loc.getMessage('IM_LIB_MENU_USER_KICK_FROM_COLLAB');
+				return im_v2_lib_collab.CollabManager.getKickUserText();
 			}
 			return main_core.Loc.getMessage('IM_LIB_MENU_USER_KICK_FROM_CHAT');
 		}
@@ -808,10 +814,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const title = main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT_MSGVER_1', {
 				'#COPILOT_NAME#': new im_v2_lib_copilot.CopilotManager().getName()
 			});
+			const isBGPTv2 = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			const icon = isBGPTv2 ? ui_iconSet_api_core.Outline.BITRIX_GPT : ui_iconSet_api_core.Outline.COPILOT;
+			const design = isBGPTv2 ? ui_system_menu.MenuItemDesign.BitrixGPT : ui_system_menu.MenuItemDesign.Copilot;
 			return {
 				title,
-				icon: ui_iconSet_api_core.Outline.COPILOT,
-				design: ui_system_menu.MenuItemDesign.Copilot,
+				icon,
+				design,
 				onClick: () => {
 					im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onAskCopilot(this.context.dialogId);
 					this.emitter.emit(im_v2_const.EventType.textarea.insertMention, {
@@ -1507,5 +1516,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.TaskCommentsMessageMenu = TaskCommentsMessageMenu;
 	exports.UserMenu = UserMenu;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
 //# sourceMappingURL=registry.bundle.js.map

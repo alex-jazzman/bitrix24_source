@@ -49,6 +49,7 @@ type FeaturesParams = {
 	im: boolean,
 	disk: boolean,
 	allowedGroups?: boolean, // todo remove before/after release
+	isNewProjectsOn: boolean,
 };
 
 type PathsParams = {

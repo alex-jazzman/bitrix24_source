@@ -24,6 +24,12 @@ type DocumentMessages = {
 	delete: string,
 	restoreFromTrash: string,
 	hardDelete: string,
+	archivedRemote: string,
+	trashedRemote: string,
+	restoredRemote: string,
+	hardDeletedRemote: string,
+	accessRevokedRemote: string,
+	editRevokedRemote: string,
 };
 
 export function createDocumentMessages(): DocumentMessages
@@ -53,5 +59,11 @@ export function createDocumentMessages(): DocumentMessages
 		restoreFromTrash: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_RESTORE_FROM_TRASH'),
 		hardDelete: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_HARD_DELETE'),
 		documents: Loc.getMessage('NOTE_EDITOR_CHILDREN_HEADER'),
+		archivedRemote: Loc.getMessage('NOTE_EDITOR_DOC_ARCHIVED_REMOTE'),
+		trashedRemote: Loc.getMessage('NOTE_EDITOR_DOC_TRASHED_REMOTE'),
+		restoredRemote: Loc.getMessage('NOTE_EDITOR_DOC_RESTORED_REMOTE'),
+		hardDeletedRemote: Loc.getMessage('NOTE_EDITOR_DOC_HARD_DELETED_REMOTE'),
+		accessRevokedRemote: Loc.getMessage('NOTE_EDITOR_DOC_ACCESS_REVOKED_REMOTE'),
+		editRevokedRemote: Loc.getMessage('NOTE_EDITOR_DOC_EDIT_REVOKED_REMOTE'),
 	};
 }

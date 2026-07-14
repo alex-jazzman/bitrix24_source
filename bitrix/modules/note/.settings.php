@@ -13,6 +13,18 @@ return [
 	'rest' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Note\\Infrastructure\\Rest\\V3\\Controller',
+			'documentation' => [
+				'methods' => [
+					'note.collection.list' => \Bitrix\Note\Infrastructure\Rest\V3\Documentation\CollectionListMethodProvider::class,
+					'note.document.search.list' => \Bitrix\Note\Infrastructure\Rest\V3\Documentation\DocumentSearchListMethodProvider::class,
+					'note.document.tree.list' => \Bitrix\Note\Infrastructure\Rest\V3\Documentation\DocumentTreeListMethodProvider::class,
+				],
+				'schemas' => [
+					// Key must equal DocumentTreeItemDto's public type name (TypeAliasRegistry):
+					// first two namespace parts + short class name, lowercased.
+					'bitrix.note.documenttreeitemdto' => \Bitrix\Note\Infrastructure\Rest\V3\Documentation\DocumentTreeNodeSchemaProvider::class,
+				],
+			],
 		],
 	],
 	'accessRightsV2' => [

@@ -1,7 +1,7 @@
-import { Type, Tag, Loc, Runtime, Dom, Validation } from 'main.core';
-import { EventEmitter, BaseEvent } from 'main.core.events';
-import { DefaultFooter } from 'ui.entity-selector';
-import type { Dialog, TabOptions } from 'ui.entity-selector';
+import { Type, Tag, Loc, Runtime, Dom, Validation, Extension } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { DefaultFooter, type Dialog, type TabOptions } from 'ui.entity-selector';
+import { Messenger } from 'im.public';
 
 export default class Footer extends DefaultFooter
 {
@@ -11,6 +11,10 @@ export default class Footer extends DefaultFooter
 
 		this.handleDialogDestroy = this.handleDialogDestroy.bind(this);
 		this.handleSliderMessage = this.handleSliderMessage.bind(this);
+
+		const settings = Extension.getSettings('socialnetwork.entity-selector');
+
+		this.features = settings.get('features');
 
 		this.bindEvents();
 	}
@@ -31,7 +35,7 @@ export default class Footer extends DefaultFooter
 			const createProjectLink = this.getOption('createProjectLink');
 			const lockProjectLink = this.getOption('lockProjectLink', false);
 			const lockProjectLinkFeatureId = this.getOption('lockProjectLinkFeatureId', '');
-			const isProject = this.getOption('isProject', false);
+			const isProject = this.getOption('isProject', this.features.isNewProjectsOn);
 
 			const complexPhrases = {
 				'111': 'SOCNET_ENTITY_SELECTOR_EMPLOYEE_OR_PROJECT_OR_GUEST',
@@ -351,6 +355,13 @@ export default class Footer extends DefaultFooter
 
 	handleCreateProjectClick(): void
 	{
+		if (this.features.isNewProjectsOn)
+		{
+			Messenger.openChatCreation('collab');
+
+			return;
+		}
+
 		const createProjectLink = this.getOption('createProjectLink');
 
 		if (Type.isStringFilled(createProjectLink))

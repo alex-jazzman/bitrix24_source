@@ -2,8 +2,50 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_application_core, main_core, ui_infoHelper, im_v2_const, im_v2_lib_feature) {
+(function (exports, im_v2_application_core, ui_infoHelper, im_v2_const, im_v2_lib_feature, main_core) {
 	'use strict';
+
+	const CollabV2Manager = {
+		isAvailable() {
+			return im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isCollabV2Available'];
+		},
+		isCopyAvailable() {
+			return im_v2_application_core.Core.getStore().getters['application/tariffRestrictions/isCollabV2CopyAvailable'];
+		},
+		openCopyFeatureSlider() {
+			const promoter = new ui_infoHelper.FeaturePromoter({
+				featureId: im_v2_const.SliderCode.collabV2CopyDisabled
+			});
+			promoter.show();
+		},
+		openFeatureSlider() {
+			const promoter = new ui_infoHelper.FeaturePromoter({
+				featureId: im_v2_const.SliderCode.collabV2Disabled
+			});
+			promoter.show();
+		}
+	};
+
+	const CollabManager = {
+		isAvailable() {
+			return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable);
+		},
+		openFeatureSlider() {
+			const promoter = new ui_infoHelper.FeaturePromoter({
+				featureId: im_v2_const.SliderCode.collabDisabled
+			});
+			promoter.show();
+		}
+	};
+
+	const MessagesAutoDelete = {
+		openFeatureSlider() {
+			const promoter = new ui_infoHelper.FeaturePromoter({
+				code: im_v2_const.SliderCode.autoDeleteDisabled
+			});
+			promoter.show();
+		}
+	};
 
 	const ChatHistoryManager = {
 		isAvailable() {
@@ -50,25 +92,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const MessagesAutoDelete = {
-		openFeatureSlider() {
-			const promoter = new ui_infoHelper.FeaturePromoter({
-				code: im_v2_const.SliderCode.autoDeleteDisabled
-			});
-			promoter.show();
-		}
-	};
-
-	const CollabManager = {
-		isAvailable() {
-			return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable);
-		},
-		openFeatureSlider() {
-			const promoter = new ui_infoHelper.FeaturePromoter({
-				featureId: im_v2_const.SliderCode.collabDisabled
-			});
-			promoter.show();
-		}
+	const TariffManager = {
+		collabV2: CollabV2Manager,
+		collab: CollabManager,
+		messagesAutoDelete: MessagesAutoDelete,
+		chatHistory: ChatHistoryManager
 	};
 
 	const Feature = {
@@ -110,14 +138,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		isTaskCardAvailable: 'isMountedTasksCardAvailable',
 		isBitrixGptV2Available: 'isBitrixGptV2Available',
 		isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
-		isNestedListAvailable: 'isNestedChatAvailable',
+		isCollabV2Available: 'isNestedChatAvailable',
 		isChatWithGuestsAvailable: 'isChatWithGuestsAvailable',
-		isCopilotForceSearchAvailable: 'isCopilotForceSearchAvailable'
+		isCopilotForceSearchAvailable: 'isCopilotForceSearchAvailable',
+		isCopilotWebSearchEnabledByAdmin: 'isCopilotWebSearchEnabledByAdmin',
+		isCopilotWebSearchAllowedByTariff: 'isCopilotWebSearchAllowedByTariff',
+		isAiAssistantFeedbackAvailable: 'isAiAssistantFeedbackAvailable',
+		isAiAssistantRegenerateAvailable: 'isAiAssistantRegenerateAvailable',
+		isAiAssistantAgentModeAvailable: 'isAiAssistantAgentModeAvailable'
 	};
 	const FeatureManager = {
-		chatHistory: ChatHistoryManager,
-		messagesAutoDelete: MessagesAutoDelete,
-		collab: CollabManager,
 		isFeatureAvailable(featureName) {
 			const {
 				featureOptions = {}
@@ -128,6 +158,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Feature = Feature;
 	exports.FeatureManager = FeatureManager;
+	exports.TariffManager = TariffManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX, BX.UI, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX.UI, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX);
 //# sourceMappingURL=feature.bundle.js.map

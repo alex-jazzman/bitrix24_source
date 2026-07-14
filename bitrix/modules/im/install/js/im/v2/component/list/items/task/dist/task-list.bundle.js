@@ -18,13 +18,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
 		methods: {
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<RecentEmptyState :title="loc('IM_LIST_TASK_EMPTY_STATE_TITLE')" />
+		<RecentEmptyState 
+			:title="loc('IM_LIST_TASK_EMPTY_STATE_TITLE_MSGVER_1')"
+			:subtitle="loc('IM_LIST_TASK_EMPTY_STATE_SUBTITLE')"
+			:recentSection="RecentType.taskComments"
+		/>
 	`
 	};
 
@@ -55,6 +62,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.contextMenuManager = new TaskRecentMenu({
 				emitter: this.getEmitter()
 			});
+			this.clearCollection();
 			await this.loadInitialItems();
 			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 			this.getEmitter().subscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
@@ -64,11 +72,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
 		},
 		methods: {
+			clearCollection() {
+				this.$store.dispatch('recent/clearUnreadCollection', {
+					type: im_v2_const.RecentType.taskComments
+				});
+			},
 			onCloseChat(event) {
 				const {
 					dialogId
 				} = event.getData();
-				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList(im_v2_const.RecentType.taskComments, dialogId);
+				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList({
+					recentSections: [im_v2_const.RecentType.taskComments],
+					dialogId
+				});
 			},
 			async loadInitialItems() {
 				if (this.firstPageLoaded || this.isLoading) {
@@ -98,9 +114,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				event.preventDefault();
 				const context = {
 					dialogId: item.dialogId,
-					recentItem: item,
-					compactMode: false,
-					recentSection: im_v2_const.RecentType.taskComments
+					recentItem: item
 				};
 				this.contextMenuManager.openMenu(context, {
 					left: event.pageX,
@@ -114,7 +128,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (!this.service) {
 					this.service = new im_v2_provider_service_recent.TaskRecentService({
 						unreadMode: true,
-						parentChatId: im_v2_provider_service_recent.ParentChatScope.all
+						parentChatId: im_v2_const.ParentChatScope.all
 					});
 				}
 				return this.service;
@@ -137,7 +151,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<RecentEmptyState :title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE')" />
+				<RecentEmptyState 
+					:title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE_MSGVER_1')"
+					:subtitle="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_SUBTITLE')"
+				/>
 			</template>
 		</BaseRecentList>
 	`
@@ -217,7 +234,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			getRecentService() {
 				if (!this.service) {
 					this.service = new im_v2_provider_service_recent.TaskRecentService({
-						parentChatId: im_v2_provider_service_recent.ParentChatScope.all
+						parentChatId: im_v2_const.ParentChatScope.all
 					});
 				}
 				return this.service;

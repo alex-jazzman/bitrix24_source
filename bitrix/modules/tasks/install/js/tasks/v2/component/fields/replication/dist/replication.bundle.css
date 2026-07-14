@@ -232,7 +232,6 @@
 	margin-top: 12px;
 	border-bottom: 1px dashed;
 	color: inherit;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 }
 

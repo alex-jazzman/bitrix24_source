@@ -10,7 +10,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 		ImageName,
 		ImageBackgroundColor,
 	} = require('im/messenger/lib/element/dialog/src/message/banner/banners/admin/type');
-	const { ButtonDesignType } = require('im/messenger/lib/element/dialog/message/banner/const/type');
+	const { ButtonDesignType } = require('im/messenger/const');
 	const { ButtonSize } = require('ui-system/form/buttons');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {

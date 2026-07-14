@@ -45,7 +45,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { MessageQueueRequestManager } = require('im/messenger/application/lib/message-queue-request-manager');
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
 
-	const mobileRevision = 24; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 25; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger

@@ -18,6 +18,7 @@ export const EnableFeatures = Object.freeze({
 	websitesStores: 'sites',
 	checkIn: 'checkIn',
 	checkInGeo: 'checkInGeo',
+	checkInV2: 'checkInV2',
 });
 
 export const UpdateFeatures = Object.freeze({

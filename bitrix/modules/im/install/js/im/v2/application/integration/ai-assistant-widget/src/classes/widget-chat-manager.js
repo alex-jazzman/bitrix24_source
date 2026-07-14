@@ -1,20 +1,31 @@
 import { type Store } from 'ui.vue3.vuex';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+
 import { Core } from 'im.v2.application.core';
-import { LocalStorageKey, RecentType } from 'im.v2.const';
+import { ChatType, EventType, LocalStorageKey, RecentType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
 import { Analytics } from 'im.v2.lib.analytics';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Logger } from 'im.v2.lib.logger';
+import { NotifierShowMessageAction } from 'im.v2.lib.message-notifier';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { CopilotChatService, CopilotRecentService } from 'im.v2.provider.service.copilot';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
-export class WidgetChatManager
+export class WidgetChatManager extends EventEmitter
 {
 	static #instance: WidgetChatManager;
+
+	static events = {
+		onDialogIdChange: 'onDialogIdChange',
+	};
 
 	#store: Store;
 	#chatService: ChatService;
 	#copilotChatService: CopilotChatService;
 	#copilotRecentService: CopilotRecentService;
+	#currentDialogId: ?string = null;
+	#isBitrixGptMode: boolean;
 
 	static getInstance(): WidgetChatManager
 	{
@@ -26,16 +37,69 @@ export class WidgetChatManager
 		return this.#instance;
 	}
 
+	get isBitrixGptMode(): boolean
+	{
+		return this.#isBitrixGptMode;
+	}
+
 	constructor()
 	{
+		super();
+		this.setEventNamespace('BX.Im.AiAssistantWidget.WidgetChatManager');
+
 		this.#store = Core.getStore();
 		this.#chatService = new ChatService();
 		this.#copilotChatService = new CopilotChatService();
 		this.#copilotRecentService = new CopilotRecentService();
+		this.#isBitrixGptMode = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
+			&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable)
+			&& FeatureManager.isFeatureAvailable(Feature.copilotActive);
 	}
 
-	async resolveInitialChat(): Promise<string>
+	async changeDialog(dialogId: string): Promise<boolean>
 	{
+		if (!this.#isBitrixGptMode)
+		{
+			Logger.warn(`WidgetChatManager: changeDialog(${dialogId}) ignored: not in bitrixGpt mode`);
+
+			return false;
+		}
+
+		if (!await this.#isCandidateBitrixGptChat(dialogId))
+		{
+			Logger.warn(`WidgetChatManager: ${dialogId} is not a bitrixGpt chat, changeDialog aborted`);
+
+			return false;
+		}
+
+		return this.loadChat(dialogId);
+	}
+
+	#setCurrentDialogId(dialogId: ?string): void
+	{
+		if (this.#currentDialogId === dialogId)
+		{
+			return;
+		}
+
+		this.#currentDialogId = dialogId;
+		this.emit(WidgetChatManager.events.onDialogIdChange, { dialogId });
+	}
+
+	async resolveInitialChat(candidateDialogId: ?string = null): Promise<?string>
+	{
+		if (this.#currentDialogId)
+		{
+			return this.#currentDialogId;
+		}
+
+		if (candidateDialogId
+			&& await this.#isCandidateBitrixGptChat(candidateDialogId)
+			&& await this.loadChat(candidateDialogId))
+		{
+			return candidateDialogId;
+		}
+
 		const savedDialogId = this.#getSavedDialogId();
 		if (savedDialogId && await this.loadChat(savedDialogId))
 		{
@@ -45,33 +109,58 @@ export class WidgetChatManager
 		return this.#openFallbackChat();
 	}
 
+	async #isCandidateBitrixGptChat(dialogId: string): Promise<boolean>
+	{
+		let chat = this.#store.getters['chats/get'](dialogId);
+		if (!chat)
+		{
+			try
+			{
+				await this.#chatService.loadChat(dialogId);
+			}
+			catch
+			{
+				return false;
+			}
+			chat = this.#store.getters['chats/get'](dialogId);
+		}
+
+		return this.#isBitrixGptChat(chat);
+	}
+
+	#isBitrixGptChat(chat: ?ImModelChat): boolean
+	{
+		return chat?.type === ChatType.copilot;
+	}
+
 	async loadChat(dialogId: string): Promise<boolean>
 	{
-		this.#saveDialogId(dialogId);
-
 		const existingDialog = this.#store.getters['chats/get'](dialogId);
 		if (existingDialog?.inited)
 		{
 			Logger.warn(`WidgetChatManager: chat ${existingDialog.chatId} is already loaded`);
-
-			return true;
 		}
-
-		Logger.warn(`WidgetChatManager: loading chat ${dialogId}`);
-		try
+		else
 		{
-			await this.#chatService.loadChatWithMessages(dialogId);
-			Logger.warn(`WidgetChatManager: chat ${dialogId} is loaded`);
-		}
-		catch (error)
-		{
-			Logger.warn(`WidgetChatManager: error loading chat ${dialogId}`, error);
-			this.#removeSavedDialogId();
+			Logger.warn(`WidgetChatManager: loading chat ${dialogId}`);
+			try
+			{
+				await this.#chatService.loadChatWithMessages(dialogId);
+				Logger.warn(`WidgetChatManager: chat ${dialogId} is loaded`);
+			}
+			catch (error)
+			{
+				Logger.warn(`WidgetChatManager: error loading chat ${dialogId}`, error);
 
-			return false;
+				return false;
+			}
+
+			this.#sendOpenChatAnalytics(dialogId);
 		}
 
-		this.#sendOpenChatAnalytics(dialogId);
+		this.#setCurrentDialogId(dialogId);
+		this.#saveDialogId(dialogId);
+		void this.#store.dispatch('copilot/setWidgetDialogId', dialogId);
 
 		return true;
 	}
@@ -91,7 +180,9 @@ export class WidgetChatManager
 	async createNewChat(): Promise<string>
 	{
 		const newDialogId = await this.#copilotChatService.createDefaultChat();
+		this.#setCurrentDialogId(newDialogId);
 		this.#saveDialogId(newDialogId);
+		void this.#store.dispatch('copilot/setWidgetDialogId', newDialogId);
 
 		return newDialogId;
 	}
@@ -131,7 +222,9 @@ export class WidgetChatManager
 
 	#buildStorageKey(): string
 	{
-		return `im-v2-copilot-widget-${LocalStorageKey.copilotWidgetLastDialogId}`;
+		const storageKeyPrefix = this.#isBitrixGptMode ? 'im-ai-assistant' : 'im-ai-marta';
+
+		return `${storageKeyPrefix}-widget-${LocalStorageKey.copilotWidgetLastDialogId}`;
 	}
 
 	async #getFirstRecentDialogId(): Promise<?string>
@@ -147,6 +240,22 @@ export class WidgetChatManager
 		return recentItems[0].dialogId;
 	}
 
+	subscribeNotifier(): void
+	{
+		EventEmitter.subscribe(EventType.notifier.onBeforeShowMessage, this.#onBeforeNotificationShow);
+	}
+
+	unsubscribeNotifier(): void
+	{
+		EventEmitter.unsubscribe(EventType.notifier.onBeforeShowMessage, this.#onBeforeNotificationShow);
+	}
+
+	clearWidgetState(): void
+	{
+		this.#setCurrentDialogId(null);
+		void this.#store.dispatch('copilot/setWidgetDialogId', '');
+	}
+
 	setRecentDraftText(dialogId?: string): void
 	{
 		if (!dialogId)
@@ -156,6 +265,17 @@ export class WidgetChatManager
 
 		DraftManager.getInstance().setRecentDraftText(dialogId);
 	}
+
+	#onBeforeNotificationShow = (event: BaseEvent<{ dialogId: string }>): $Values<typeof NotifierShowMessageAction> => {
+		const eventData = event.getData();
+		const currentDialogId = this.#currentDialogId;
+		if (eventData.dialogId !== currentDialogId)
+		{
+			return NotifierShowMessageAction.show;
+		}
+
+		return NotifierShowMessageAction.skip;
+	};
 
 	#sendOpenChatAnalytics(dialogId: string): void
 	{

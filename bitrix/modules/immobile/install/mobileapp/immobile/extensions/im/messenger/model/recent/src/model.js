@@ -62,8 +62,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @param {number} [parentChatId]
 			 * @return {Set<string>}
 			 */
+			/**
+			 * @return {recentModelGetByChatId}
+			 */
 			getIdCollection: (state, getters, rootState, rootGetters) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
-				const hasSelectedFilter = rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId);
+				const hasSelectedFilter = rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId, parentChatId);
 				if (!hasSelectedFilter)
 				{
 					const rawCollection = getSectionSet(state, RecentTabByNavigationTab[tabId], parentChatId);
@@ -71,7 +74,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					return rawCollection ? new Set(rawCollection) : new Set();
 				}
 
-				return rootGetters['recentModel/recentFilteredModel/getIdCollection'](tabId);
+				return rootGetters['recentModel/recentFilteredModel/getIdCollection'](tabId, parentChatId);
 			},
 
 			/**
@@ -343,6 +346,34 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @typedef {Function} recentModelHasPinnedItemInSection
+			 * @param {string} recentSection
+			 * @param {number} [parentChatId]
+			 * @return {boolean}
+			 * @alias recentModel/hasPinnedItemInSection
+			 */
+			/**
+			 * @return {recentModelHasPinnedItemInSection}
+			 */
+			hasPinnedItemInSection: (state) => (recentSection, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				const collection = getSectionSet(state, recentSection, parentChatId);
+				if (!collection)
+				{
+					return false;
+				}
+
+				for (const dialogId of collection)
+				{
+					if (state.collection[dialogId]?.pinned)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			},
+
+			/**
 			 * @function recentModel/needsBirthdayPlaceholder
 			 * @return {boolean}
 			 */
@@ -425,21 +456,22 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 */
 			syncFilteredIdCollection: async (store, payload) => {
 				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID } = payload;
-				const hasTab = store.getters['recentFilteredModel/hasNavigationTabId'](tabId);
-				const hasSelectedFilter = store.getters['recentFilteredModel/hasSelectedFilter'](tabId);
+				const hasTab = store.getters['recentFilteredModel/hasNavigationTabId'](tabId, parentChatId);
+				const hasSelectedFilter = store.getters['recentFilteredModel/hasSelectedFilter'](tabId, parentChatId);
 				if (!hasTab || !hasSelectedFilter)
 				{
 					return;
 				}
 
 				const baseIds = getSectionSet(store.state, RecentTabByNavigationTab[tabId], parentChatId) || new Set();
-				const currentFilterId = store.getters['recentFilteredModel/getCurrentFilterId'](tabId);
+				const currentFilterId = store.getters['recentFilteredModel/getCurrentFilterId'](tabId, parentChatId);
 				const rootGetters = store.rootGetters;
 				const resolver = filterResolvers[currentFilterId];
 				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters, parentChatId) : baseIds;
 
 				await store.dispatch('recentFilteredModel/setIdCollection', {
 					tabId,
+					parentChatId,
 					itemIds: [...filteredIds],
 				});
 			},
@@ -594,7 +626,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 
 				const navTab = NavigationTabByRecentTab[recentSection];
 				const hasActiveFilter = navTab
-					&& store.rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](navTab);
+					&& store.rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](navTab, parentChatId);
 				const commitName = hasActiveFilter ? 'setNestedIdCollection' : 'storeNestedIdCollection';
 
 				store.commit(commitName, {
@@ -917,6 +949,18 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 						},
 					});
 				}
+			},
+
+			/**
+			 * @function recentModel/setFromLocalDatabase
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {Array<RecentModelState>} payload
+			 */
+			setFromLocalDatabase: (store, payload) => {
+				return store.dispatch('set', {
+					itemList: payload,
+					actionName: 'setFromLocalDatabase',
+				});
 			},
 
 			/**

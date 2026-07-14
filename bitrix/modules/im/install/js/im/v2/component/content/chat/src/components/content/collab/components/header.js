@@ -1,15 +1,16 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
 import { ChatHeader } from 'im.v2.component.content.elements';
 import { PulseAnimation } from 'im.v2.component.elements.pulse-animation';
-import { EventType } from 'im.v2.const';
 import { AddToChat as AddToChatPopup } from 'im.v2.component.entity-selector';
+import { EventType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
+import { AddToChatButton } from './add-to-chat-button';
 import { CollabTitle } from './collab-title';
 import { EntitiesPanel } from './entities-panel/entities-panel';
-import { AddToChatButton } from './add-to-chat-button';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CollabHeader = {
@@ -38,6 +39,10 @@ export const CollabHeader = {
 		isInited(): boolean
 		{
 			return this.dialog.inited;
+		},
+		isCollabV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
 		},
 	},
 	watch:
@@ -91,12 +96,11 @@ export const CollabHeader = {
 				<CollabTitle :dialogId="dialogId" />
 			</template>
 			<template #before-actions>
-				<EntitiesPanel :dialogId="dialogId" :compactMode="compactMode" />
+				<EntitiesPanel v-if="!isCollabV2Available" :dialogId="dialogId" :compactMode="compactMode" />
 			</template>
 			<template #add-to-chat-button>
 				<PulseAnimation :showPulse="showAddToChatPopupDelayed" class="bx-im-collab-header__add-to-chat">
 					<AddToChatButton 
-						:withAnimation="showAddToChatPopupDelayed" 
 						:dialogId="dialogId" 
 						ref="add-to-chat-button" 
 						@close="showAddToChatPopupDelayed = false"

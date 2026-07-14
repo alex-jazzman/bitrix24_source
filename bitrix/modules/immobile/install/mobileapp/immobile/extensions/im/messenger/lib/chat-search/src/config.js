@@ -7,12 +7,16 @@ jn.define('im/messenger/lib/chat-search/src/config', (require, exports, module) 
 	 */
 	class ChatSearchConfig
 	{
-		constructor()
+		/**
+		 * @param {number | null} [parentId=undefined]
+		 */
+		constructor(parentId = undefined)
 		{
 			this.id = 'search-experimental';
 			this.clearUnavailableItems = false;
 			this.context = 'IM_CHAT_SEARCH';
 			this.preselectedItems = [];
+			this.parentId = parentId;
 			this.entities = [
 				{
 					id: 'im-recent-v2',
@@ -31,7 +35,7 @@ jn.define('im/messenger/lib/chat-search/src/config', (require, exports, module) 
 		 */
 		setOption(options = {})
 		{
-			this.entities[0].options = options;
+			this.entities[0].options = { ...options, parentId: this.parentId };
 		}
 
 		getConfig()

@@ -25,6 +25,10 @@ export const ForwardContent = {
 			type: String,
 			required: true,
 		},
+		directForward: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['close'],
 	data(): JsonObject
@@ -53,15 +57,14 @@ export const ForwardContent = {
 		{
 			return this.$store.getters['chats/isSelfChat'](dialogId);
 		},
-		async forwardToSelfChat(forwardDialogId: string)
+		async forwardDirectly(forwardDialogId: string)
 		{
 			await SendingService.getInstance().forwardMessages({
 				forwardIds: this.messagesIds,
 				dialogId: forwardDialogId,
 			});
 
-			Notifier.message.onForwardSelfChatComplete(this.messagesIds);
-
+			Notifier.message.onForwardComplete(this.messagesIds, forwardDialogId);
 			SoundNotificationManager.getInstance().playOnce(SoundType.send);
 		},
 		async onSelectItem(event: {dialogId: string, nativeEvent: KeyboardEvent})
@@ -74,9 +77,9 @@ export const ForwardContent = {
 
 			const isSelfChatForward = this.isSelfChat(forwardDialogId);
 			const isSelfChatOpen = this.isSelfChat(this.dialogId);
-			if (isSelfChatForward && !isSelfChatOpen)
+			if (this.directForward || (isSelfChatForward && !isSelfChatOpen))
 			{
-				void this.forwardToSelfChat(forwardDialogId);
+				void this.forwardDirectly(forwardDialogId);
 			}
 			else
 			{

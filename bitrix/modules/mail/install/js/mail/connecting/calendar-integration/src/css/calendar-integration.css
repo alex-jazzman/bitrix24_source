@@ -1,0 +1,91 @@
+.mail_massconnect__integration-block {
+	display: flex;
+	padding: 16px 22px 20px 22px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-lg);
+	align-self: stretch;
+	border-radius: 10px;
+	border: 1px solid var(--ui-color-accent-soft-blue-1);
+	background: var(--ui-color-blue-04);
+}
+
+.mail_massconnect__integration-block.--disabled {
+	border: 1px solid var(--ui-color-palette-gray-20);
+	background: none;
+	padding: 16px 22px 15px 22px;
+}
+
+.mail_massconnect__integration-block_header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	align-self: stretch;
+}
+
+.mail_massconnect__integration-block_title_group {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.mail_massconnect__integration-block_icon {
+	width: 32px;
+	height: 38px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.mail_massconnect__integration-block_icon.--calendar {
+	background-image: url('img/calendar_icon.webp');
+}
+
+.mail_massconnect__integration-block_title {
+	font-size: 16px;
+	font-weight: var(--ui-font-weight-medium);
+	color: #333;
+}
+
+.mail_massconnect__integration-block_slide-down-enter-active,
+.mail_massconnect__integration-block_slide-down-leave-active {
+	transition: max-height 0.2s ease-out;
+	overflow: hidden;
+}
+
+.mail_massconnect__integration-block_slide-down-enter-from,
+.mail_massconnect__integration-block_slide-down-leave-to {
+	max-height: 0;
+}
+
+.mail_massconnect__integration-block_slide-down-enter-to,
+.mail_massconnect__integration-block_slide-down-leave-from {
+	max-height: 1000px;
+}
+
+.mail_massconnect__integration-block_content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-sm);
+}
+
+.mail_massconnect__checkbox-group {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.mail_massconnect__checkbox-group:last-child {
+	margin-bottom: 0;
+}
+
+.mail_massconnect__checkbox-group label {
+	font-size: 14px;
+	color: #333;
+	cursor: pointer;
+}
+
+.mail_massconnect__checkbox-group input[type="checkbox"] {
+	margin-left: 0;
+}

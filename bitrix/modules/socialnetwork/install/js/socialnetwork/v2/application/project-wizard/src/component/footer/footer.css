@@ -1,0 +1,14 @@
+.socialnetwork--project-wizard-footer {
+	box-sizing: border-box;
+	z-index: 1;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: start;
+	gap: var(--ui-space-stack-sm);
+	min-height: 78px;
+	margin-top: auto;
+	padding: 20px var(--sonet-project-wizard-inline-padding);
+	background: var(--ui-color-base-8);
+	box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.06);
+}

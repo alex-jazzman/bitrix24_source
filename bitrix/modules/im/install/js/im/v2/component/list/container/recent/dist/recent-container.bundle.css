@@ -122,17 +122,20 @@
 	height: 44px;
 	border-radius: 6px;
 	margin-left: 5px;
-	background-color: var(--im-create-chat-menu-item__button-background-color_copilot);
+	background: linear-gradient(
+		270deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.38%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
 }
 
 .bx-im-create-chat-menu-item__icon-more {
-	width: 14px;
-	height: 4px;
-	background-repeat: no-repeat;
-	background-size: contain;
-	background-position: center;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='4' fill='none' viewBox='0 0 14 4'%3E%3Cpath fill='%23853af5' fill-rule='evenodd' d='M3.34 2A1.633 1.633 0 1 1 .075 2 1.633 1.633 0 0 1 3.34 2m5.293 0a1.633 1.633 0 1 1-3.266 0 1.633 1.633 0 0 1 3.266 0m3.66 1.633a1.633 1.633 0 1 0 0-3.266 1.633 1.633 0 0 0 0 3.266' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-copilot-accent-primary-alt);
 }
+
 .bx-im-create-chat-help__container {
 	--im-create-chat-help__background-color_separator: rgba(var(--im-color-palette-gray-90-rgb), 0.05);
 

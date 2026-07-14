@@ -1,5 +1,6 @@
+import { type BaseEvent } from 'main.core.events';
+
 import 'im.v2.css.classes';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { WidgetChatManager } from '../classes/widget-chat-manager';
 import { CopilotWidgetLayout } from './copilot-widget/layout';
@@ -12,7 +13,7 @@ export const AiAssistantWidgetChatOpener = {
 	name: 'AiAssistantWidgetChatOpener',
 	components: { CopilotWidgetLayout, MartaWidgetChatContent },
 	props: {
-		botDialogId: {
+		initialDialogId: {
 			type: String,
 			required: true,
 		},
@@ -27,27 +28,42 @@ export const AiAssistantWidgetChatOpener = {
 	},
 
 	computed: {
-		isCopilotMode(): boolean
+		isBitrixGptMode(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+			return WidgetChatManager.getInstance().isBitrixGptMode;
 		},
 	},
 
 	created(): void
 	{
-		if (this.isCopilotMode)
+		this.manager = WidgetChatManager.getInstance();
+		this.manager.subscribeNotifier();
+		this.manager.subscribe(WidgetChatManager.events.onDialogIdChange, this.onManagerDialogIdChange);
+
+		if (this.isBitrixGptMode)
 		{
 			void this.resolveInitialChat();
 		}
 		else
 		{
-			void WidgetChatManager.getInstance().loadChat(this.botDialogId);
+			void this.manager.loadChat(this.initialDialogId);
 		}
 	},
+	beforeUnmount()
+	{
+		this.manager.unsubscribeNotifier();
+		this.manager.unsubscribe(WidgetChatManager.events.onDialogIdChange, this.onManagerDialogIdChange);
+		this.manager.clearWidgetState();
+	},
 	methods: {
+		onManagerDialogIdChange(event: BaseEvent): void
+		{
+			const { dialogId } = event.getData();
+			this.selectedDialogId = dialogId ?? '';
+		},
 		async resolveInitialChat()
 		{
-			const dialogId = await WidgetChatManager.getInstance().resolveInitialChat();
+			const dialogId = await WidgetChatManager.getInstance().resolveInitialChat(this.initialDialogId);
 			if (dialogId)
 			{
 				this.selectedDialogId = dialogId;
@@ -88,9 +104,9 @@ export const AiAssistantWidgetChatOpener = {
 		},
 	},
 	template: `
-		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container --ui-context-content-light">
+		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container">
 			<CopilotWidgetLayout
-				v-if="isCopilotMode"
+				v-if="isBitrixGptMode"
 				:dialogId="selectedDialogId"
 				:isCreatingChat="isCreatingChat"
 				@select="onChangeDialogId"
@@ -99,7 +115,7 @@ export const AiAssistantWidgetChatOpener = {
 			/>
 			<MartaWidgetChatContent
 				v-else
-				:dialogId="botDialogId"
+				:dialogId="initialDialogId"
 				:withSidebar="false"
 			/>
 		</div>

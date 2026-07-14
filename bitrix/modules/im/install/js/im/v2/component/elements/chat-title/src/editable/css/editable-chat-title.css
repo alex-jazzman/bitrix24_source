@@ -1,7 +1,10 @@
-.bx-im-elements-editable-chat-title__wrap {
-	--im-elements-editable-chat-title__background-color_input-border: rgba(var(--im-color-palette-gray-30-rgb), 0.3);
-	--im-elements-editable-chat-title__font-color_input: var(--im-color-palette-black-base);
+.bx-im-elements-editable-chat-title__scope {
+	--im-elements-editable-chat-title__background-color_input-border: rgba(var(--ui-color-base-30-rgb), 0.3);
+	--im-elements-editable-chat-title__background-color_input: var(--ui-color-background-primary);
+	--im-elements-editable-chat-title__font-color_input: var(--ui-color-text-primary);
+}
 
+.bx-im-elements-editable-chat-title__wrap {
 	display: flex;
 	align-items: center;
 	width: 100%;
@@ -53,6 +56,7 @@
 	outline: none;
 	border: none;
 	border-bottom: 1px solid var(--im-elements-editable-chat-title__background-color_input-border);
+	background: var(--im-elements-editable-chat-title__background-color_input);
 	font: var(--im-font-size-lg)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-elements-editable-chat-title__font-color_input);

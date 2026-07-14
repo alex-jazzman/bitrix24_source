@@ -4,15 +4,23 @@ import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { RecentType } from 'im.v2.const';
 
-import { RecentHeaderMenu } from './classes/recent-header-menu';
-import { TaskHeaderMenu } from './classes/task-header-menu';
-import { BaseRecentHeaderMenu } from './classes/base-header-menu';
+import { RecentHeaderMenu } from './classes/recent';
+import { TaskHeaderMenu } from './classes/task';
+import { CollabHeaderMenu } from './classes/collab/collab';
+import { BaseRecentHeaderMenu } from './classes/base';
+import { CollabDefaultHeaderMenu } from './classes/collab/default';
+import { CollabChatHeaderMenu } from './classes/collab/chat';
+import { CollabCalendarHeaderMenu } from './classes/collab/calendar';
 
 import './css/header-menu.css';
 
 const MenuClass = {
 	[RecentType.taskComments]: TaskHeaderMenu,
+	[RecentType.collab]: CollabHeaderMenu,
 	[RecentType.default]: RecentHeaderMenu,
+	[RecentType.collabDefault]: CollabDefaultHeaderMenu,
+	[RecentType.collabChat]: CollabChatHeaderMenu,
+	[RecentType.calendar]: CollabCalendarHeaderMenu,
 };
 
 // @vue/component
@@ -27,6 +35,10 @@ export const HeaderMenu = {
 		recentSection: {
 			type: String,
 			required: true,
+		},
+		parentChatId: {
+			type: Number,
+			default: 0,
 		},
 	},
 	emits: ['toggleUnreadMode'],
@@ -57,7 +69,12 @@ export const HeaderMenu = {
 		},
 		openMenu(event: PointerEvent)
 		{
-			this.contextMenuManager.openMenu({ unreadMode: this.unreadMode }, event.currentTarget);
+			const context = {
+				unreadMode: this.unreadMode,
+				parentChatId: this.parentChatId,
+			};
+
+			this.contextMenuManager.openMenu(context, event.currentTarget);
 
 			this.showMenu = true;
 		},

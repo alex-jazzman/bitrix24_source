@@ -143,7 +143,8 @@ this.BX = this.BX || {};
 				nextCursor: null,
 				requestId: 0,
 				isRenamingTitle: false,
-				titleDraft: ''
+				titleDraft: '',
+				isLocalDestruction: false
 			};
 		},
 		computed: {
@@ -244,6 +245,15 @@ this.BX = this.BX || {};
 			},
 			activeTab() {
 				void this.loadPage(false);
+			},
+			collection(next, prev) {
+				// Skip when initiator's onDelete/onArchive cleared the entry locally —
+				// they already emit 'deleted'/'archived' which trigger the redirect.
+				if (prev && !next && !this.isLocalDestruction) {
+					this.$emit('not-found', {
+						collectionId: this.collectionId
+					});
+				}
 			}
 		},
 		created() {
@@ -372,6 +382,7 @@ this.BX = this.BX || {};
 					this.showErrorToast(error?.message || this.messages.errorArchive);
 					return;
 				}
+				this.isLocalDestruction = true;
 				this.removeFromSidebar(collectionId);
 				this.$emit('archived', {
 					collectionId
@@ -393,6 +404,7 @@ this.BX = this.BX || {};
 					this.showErrorToast(error?.message || this.messages.errorDelete);
 					return;
 				}
+				this.isLocalDestruction = true;
 				this.removeFromSidebar(collectionId);
 				this.$emit('deleted', {
 					collectionId

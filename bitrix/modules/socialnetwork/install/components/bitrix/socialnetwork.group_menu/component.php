@@ -207,7 +207,24 @@ if (
 			);
 
 			$arResult["Urls"]["Edit"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_EDIT"], array("group_id" => $arResult["Group"]["ID"]));
-			$arResult["Urls"]["View"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
+
+			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($arParams['GROUP_ID']);
+			$isScrum = ($group && $group->isScrumProject());
+			if ($isScrum)
+			{
+				$arResult["Urls"]["View"] = CComponentEngine::MakePathFromTemplate(
+					$arParams["PATH_TO_GROUP_TASKS"],
+					["group_id" => $arResult["Group"]["ID"]],
+				);
+			}
+			else
+			{
+				$arResult["Urls"]["View"] = CComponentEngine::MakePathFromTemplate(
+					$arParams["PATH_TO_GROUP"],
+					["group_id" => $arResult["Group"]["ID"]],
+				);
+			}
+
 			$arResult["Urls"]["UserRequestGroup"] = CComponentEngine::MakePathFromTemplate(($arParams["PATH_TO_USER_REQUEST_GROUP"] ?? ''), array("group_id" => $arResult["Group"]["ID"], "user_id" => $USER->GetID()));
 			$arResult["Urls"]["GroupRequestSearch"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_REQUEST_SEARCH"], array("group_id" => $arResult["Group"]["ID"]));
 			$arResult["Urls"]["GroupRequests"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_REQUESTS"], array("group_id" => $arResult["Group"]["ID"]));

@@ -199,6 +199,7 @@ export const BaseNotificationItem = {
 						<slot name="content"></slot>
 						<ItemReaction v-if="hasReaction" :notification="notificationItem" />
 					</div>
+					<slot name="after-content"></slot>
 					<QuickAnswer
 						v-if="hasQuickAnswer"
 						:notification="notificationItem"

@@ -180,6 +180,7 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 				 */
 				const openDialogOptions = openRequest[OpenRequest.dialog].options;
 				openDialogOptions.makeTabActive = false;
+				openDialogOptions.skipNestedStrategy = true;
 
 				this.#dialogManager.openDialog(openDialogOptions, parentWidget).catch((error) => {
 					this.logger.error(error);

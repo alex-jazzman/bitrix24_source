@@ -1,6 +1,8 @@
 jn.define('call:followup/efficiency-row', (require, exports, module) => {
 
 	const { getScoreColor } = require('call:followup/util');
+	const { Color } = require('tokens');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
 	class EfficiencyRow extends LayoutComponent
 	{
@@ -39,7 +41,7 @@ jn.define('call:followup/efficiency-row', (require, exports, module) => {
 						backgroundColor: '#000',
 					}),
 					Text({
-						style: { fontSize: 15, color: '#555', fontWeight: '400', marginLeft: 10, marginRight: 15 },
+						style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginLeft: 10, marginRight: 15 },
 						text: this.state.name,
 					}),
 				),
@@ -97,6 +99,7 @@ jn.define('call:followup/efficiency-row', (require, exports, module) => {
 					Text({
 						style: {
 							fontSize: 17,
+							color: Color.base2.toHex(),
 						},
 						ref: (ref) => {
 							// this.textRef = ref

@@ -4,11 +4,11 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, EventType, Layout, LocalStorageKey, ErrorCode, type ApplicationContext, type LayoutType, type ChatTypeItem } from 'im.v2.const';
-import { AccessManager } from 'im.v2.lib.access';
+import { MessageAccessManager } from 'im.v2.lib.access';
 import { Analytics } from 'im.v2.lib.analytics';
 import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { FeatureManager, Feature, TariffManager } from 'im.v2.lib.feature';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
@@ -306,11 +306,11 @@ export class LayoutManager
 			return Promise.resolve(true);
 		}
 
-		const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
+		const { hasAccess, errorCode } = await MessageAccessManager.checkMessageAccess(messageId);
 		if (!hasAccess && errorCode === ErrorCode.message.accessDeniedByTariff)
 		{
 			Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId });
-			FeatureManager.chatHistory.openFeatureSlider();
+			TariffManager.chatHistory.openFeatureSlider();
 
 			return Promise.resolve(false);
 		}
@@ -326,7 +326,9 @@ export class LayoutManager
 		}
 
 		const { type } = this.#getChat(entityId);
-		const isCollab = FeatureManager.isFeatureAvailable(Feature.isNestedListAvailable) && type === ChatType.collab;
+		const isCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+
+		const isCollab = isCollabV2Available && type === ChatType.collab;
 		if (isCollab)
 		{
 			return false;

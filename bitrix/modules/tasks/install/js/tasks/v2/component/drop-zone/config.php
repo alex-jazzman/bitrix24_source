@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/drop-zone.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.uploader.core',
+		'tasks.v2.provider.service.file-service',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.main',
-		'tasks.v2.provider.service.file-service',
+		'ui.uploader.core',
 	],
 	'skip_core' => false,
 ];

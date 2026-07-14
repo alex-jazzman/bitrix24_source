@@ -22,6 +22,7 @@ return [
 		'im.v2.lib.slider',
 		'im.v2.lib.utils',
 		'im.v2.provider.service.bot',
+		'im.v2.provider.service.chat',
 		'main.core',
 		'main.core.events',
 		'main.sidepanel',

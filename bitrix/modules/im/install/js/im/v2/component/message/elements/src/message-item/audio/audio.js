@@ -42,7 +42,6 @@ export const AudioItem = {
 				@cancelClick="onCancelClick"
 			/>
 			<AudioPlayer
-				:id="file.id"
 				:messageId="messageId"
 				:src="file.urlDownload"
 				:file="file"

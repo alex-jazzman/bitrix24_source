@@ -7,5 +7,5 @@ $MESS["MAIL_PASSWORDLESS_ERROR_IMAP_UNAVAILABLE"] = "IMAP server is not availabl
 $MESS["MAIL_PASSWORDLESS_ERROR_INVALID_EMAIL"] = "Email address is incorrect.";
 $MESS["MAIL_PASSWORDLESS_ERROR_INVALID_HOST"] = "Email server address is incorrect.";
 $MESS["MAIL_PASSWORDLESS_ERROR_LIMIT"] = "Maximum number of mailboxes per user exceeded.";
-$MESS["MAIL_PASSWORDLESS_ERROR_NOT_FOUND"] = "Connection request was not found.";
+$MESS["MAIL_PASSWORDLESS_ERROR_NOT_FOUND"] = "User request to connect mailbox was not found.";
 $MESS["MAIL_PASSWORDLESS_ERROR_SMTP_UNAVAILABLE"] = "SMTP server is not available or does not respond.";

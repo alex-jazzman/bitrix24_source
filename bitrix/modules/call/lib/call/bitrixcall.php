@@ -1,0 +1,118 @@
+<?php
+
+namespace Bitrix\Call\Call;
+
+use Bitrix\Call\Util;
+use Bitrix\Main\Error;
+use Bitrix\Main\Security\Random;
+use Bitrix\Main\Web\JWT;
+use Bitrix\Call\ControllerClient;
+
+
+class BitrixCall extends \Bitrix\Call\Call
+{
+	public const
+		ROOM_TYPE_SMALL = 1,
+		ROOM_TYPE_BIG = 3,
+		ROOM_TYPE_1TO1 = 4
+	;
+
+	protected $provider = parent::PROVIDER_BITRIX;
+
+	/**
+	 * @return void
+	 */
+	protected function initCall(): void
+	{
+		if ($this->scheme === self::SCHEME_JWT)
+		{
+			return;
+		}
+
+		if (!$this->endpoint)
+		{
+			$this->uuid = Util::generateUUID();
+			$this->secretKey = Random::getString(10, true);
+
+			if (!$this->getId())
+			{
+				$this->save();
+			}
+
+			$createResult = (new ControllerClient())->createCall($this);
+
+			if (!$createResult->isSuccess())
+			{
+				parent::finish();
+				$this->addErrors($createResult->getErrors());
+
+				return;
+			}
+			$callData = $createResult->getData();
+			if (!$callData['endpoint'])
+			{
+				parent::finish();
+				$this->addError(new Error('Empty endpoint', 'empty_endpoint'));
+
+				return;
+			}
+
+			$this->setEndpoint($callData['endpoint']);
+			$this->save();
+		}
+
+		parent::initCall();
+	}
+
+	public function finish(): void
+	{
+		if (
+			$this->scheme !== self::SCHEME_JWT
+			&& $this->getState() != static::STATE_FINISHED
+		)
+		{
+			(new ControllerClient())->finishCall($this);
+		}
+
+		parent::finish();
+	}
+
+	protected function generateJwt(int $userId): string
+	{
+		return JWT::encode(
+			[
+				'uuid' => $this->getUuid(),
+				'userId' => (string)$userId,
+			],
+			$this->getSecretKey()
+		);
+	}
+
+	public function getConnectionData(int $userId): array
+	{
+		return [
+			'endpoint' => $this->endpoint ?: null,
+			'jwt' => $this->generateJwt($userId),
+		];
+	}
+
+	public function inviteUsers(int $senderId, array $toUserIds, $isLegacyMobile, $video = false, $sendPush = true): void
+	{
+		foreach ($toUserIds as $toUserId)
+		{
+			$this->getSignaling()->sendInviteToUser(
+				$senderId,
+				$toUserId,
+				$toUserIds,
+				$isLegacyMobile,
+				$video,
+				$sendPush
+			);
+		}
+	}
+
+	public function getMaxUsers(): int
+	{
+		return parent::getMaxCallServerParticipants();
+	}
+}

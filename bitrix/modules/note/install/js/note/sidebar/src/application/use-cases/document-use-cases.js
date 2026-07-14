@@ -407,6 +407,20 @@ export class DocumentUseCases
 				};
 				const inserted = this.#store.actions.insertDocumentLocal(restoredDoc, { forceCreateBranch: true });
 
+				// Expand the collection and ancestor chain so the restored doc is visible.
+				this.#uiState.expandedCollections[restoredDoc.collectionId] = true;
+				let ancestorId = restoredDoc.parentId;
+				const visited = new Set();
+				while (Number.isInteger(ancestorId) && ancestorId > 0 && !visited.has(ancestorId))
+				{
+					visited.add(ancestorId);
+					this.#store.state.expandedDocs[ancestorId] = true;
+					const ancestorDoc = this.#store.queries.findLoadedDocument(restoredDoc.collectionId, ancestorId);
+					ancestorId = ancestorDoc?.parentId === null || ancestorDoc?.parentId === undefined
+						? null
+						: Number(ancestorDoc.parentId);
+				}
+
 				if (restoredDoc.parentId !== null)
 				{
 					EventEmitter.emit(NoteEvent.DOCUMENT_CHILDREN_CHANGED, new BaseEvent({

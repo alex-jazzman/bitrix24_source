@@ -13,7 +13,7 @@ import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import './css/view.css';
-import { Util, Hardware, JoinResponseError, ParticipantsPermissionPopup } from 'call.core';
+import { Util, Hardware, ParticipantsPermissionPopup, LegacyCallViewAdapter } from 'call.core';
 import { ConferenceChannel } from 'call.application.conference-channel';
 
 // im
@@ -88,7 +88,7 @@ class ConferenceApplication
 
 		this.event = new VueVendorV2;
 		this.callContainer = null;
-		// this.callView = null;
+		this.viewPort = null;
 		this.preCall = null;
 		this.currentCall = null;
 		this.callToken = this.params.callToken ?? null;
@@ -124,6 +124,8 @@ class ConferenceApplication
 		this.onCallLocalMediaStoppedHandler = this.onCallLocalMediaStopped.bind(this);
 		this.onCallRemoteMediaReceivedHandler = this.onCallRemoteMediaReceived.bind(this);
 		this.onCallRemoteMediaStoppedHandler = this.onCallRemoteMediaStopped.bind(this);
+		this.onCallRemoteMediaAvailableHandler = this.onCallRemoteMediaAvailable.bind(this);
+		this.onCallRemoteMediaUnavailableHandler = this.onCallRemoteMediaUnavailable.bind(this);
 		this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 		this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 		this.onUserStatsReceivedHandler = this.onUserStatsReceived.bind(this);
@@ -189,7 +191,7 @@ class ConferenceApplication
 		{
 			ConferenceChannel.getInstance().setExecuter((callUuid) => {
 				const currentCallUuid = this.params.alias;
-				const hasView = Boolean(this.callView);
+				const hasView = Boolean(this.viewPort);
 
 				const hasActiveCall = currentCallUuid === callUuid && hasView;
 				if (hasActiveCall)
@@ -474,7 +476,7 @@ class ConferenceApplication
 					hiddenButtons.push('chat');
 				}
 
-				this.callView = new Call.View({
+				this.viewPort = new LegacyCallViewAdapter(new Call.View({
 					container: this.callContainer,
 					showChatButtons: true,
 					showUsersButton: true,
@@ -495,34 +497,34 @@ class ConferenceApplication
 					isCopilotActive: false,
 					isWindowFocus: this.isWindowFocus,
 					isVideoconf: true,
-				});
+				}));
 
-				this.callView.subscribe(Call.View.Event.onButtonClick, this.onCallButtonClick.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceCamera, this.onCallReplaceCamera.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceMicrophone, this.onCallReplaceMicrophone.bind(this));
-				this.callView.subscribe(Call.View.Event.onReplaceSpeaker, this.onCallReplaceSpeaker.bind(this));
-				this.callView.subscribe(Call.View.Event.onHasMainStream, this.onCallViewHasMainStream.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeNoiseSuppression, this.onCallViewChangeNoiseSuppression.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeMicAutoParams, this.onCallViewChangeMicAutoParams.bind(this));
-				this.callView.subscribe(Call.View.Event.onChangeFaceImprove, this.onCallViewChangeFaceImprove.bind(this));
-				this.callView.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
-				this.callView.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
-				this.callView.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
-				this.callView.subscribe(Call.View.Event.onCommonRecordMenu, this.#onCommonRecordMenu.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onButtonClick, this.onCallButtonClick.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onReplaceCamera, this.onCallReplaceCamera.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onReplaceMicrophone, this.onCallReplaceMicrophone.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onReplaceSpeaker, this.onCallReplaceSpeaker.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onHasMainStream, this.onCallViewHasMainStream.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onChangeNoiseSuppression, this.onCallViewChangeNoiseSuppression.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onChangeMicAutoParams, this.onCallViewChangeMicAutoParams.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onChangeFaceImprove, this.onCallViewChangeFaceImprove.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
+				this.viewPort.subscribe(Call.View.Event.onCommonRecordMenu, this.#onCommonRecordMenu.bind(this));
 
-				this.callView.setCallback(Call.View.Event.onChangeVideoQuality, this._onChangeVideoQuality.bind(this));
-				this.callView.setCallback(Call.View.Event.onTurnOffParticipantMic, this._onCallViewTurnOffParticipantMic.bind(this));
-				this.callView.setCallback(Call.View.Event.onTurnOffParticipantCam, this._onCallViewTurnOffParticipantCam.bind(this));
-				this.callView.setCallback(Call.View.Event.onTurnOffParticipantScreenshare, this._onCallViewTurnOffParticipantScreenshare.bind(this));
-				this.callView.setCallback(Call.View.Event.onAllowSpeakPermission, this._onCallViewAllowSpeakPermission.bind(this));
-				this.callView.setCallback(Call.View.Event.onDisallowSpeakPermission, this._onCallViewDisallowSpeakPermission.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onChangeVideoQuality, this._onChangeVideoQuality.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onTurnOffParticipantMic, this._onCallViewTurnOffParticipantMic.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onTurnOffParticipantCam, this._onCallViewTurnOffParticipantCam.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onTurnOffParticipantScreenshare, this._onCallViewTurnOffParticipantScreenshare.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onAllowSpeakPermission, this._onCallViewAllowSpeakPermission.bind(this));
+				this.viewPort.setCallback(Call.View.Event.onDisallowSpeakPermission, this._onCallViewDisallowSpeakPermission.bind(this));
 
-				this.callView.blockAddUser();
-				this.callView.blockHistoryButton();
+				this.viewPort.blockAddUser();
+				this.viewPort.blockHistoryButton();
 
 				if (!Utils.device.isMobile())
 				{
-					this.callView.show();
+					this.viewPort.show();
 				}
 
 				resolve()
@@ -634,7 +636,7 @@ class ConferenceApplication
 					});
 
 					this.controller.setUserId(result.data().id);
-					this.callView.setLocalUserId(result.data().id);
+					this.viewPort.setLocalUserId(result.data().id);
 
 					Call.Engine.setCurrentUserId(this.controller.getUserId());
 					Call.EngineLegacy.setCurrentUserId(this.controller.getUserId());
@@ -759,7 +761,7 @@ class ConferenceApplication
 			// since we don't know if a call is legacy or not when we make a REST request
 			Call.EngineLegacy.setRestClient(this.restClient);
 			Call.EngineLegacy.setPullClient(this.pullClient);
-			this.callView.unblockButtons(['chat']);
+			this.viewPort.unblockButtons(['chat']);
 
 			resolve();
 		})
@@ -784,12 +786,12 @@ class ConferenceApplication
 			const { payload, type } = mutation;
 			if (type === 'users/update' && payload.fields.name)
 			{
-				if (!this.callView)
+				if (!this.viewPort)
 				{
 					return false;
 				}
 
-				this.callView.updateUserData(
+				this.viewPort.updateUserData(
 					{[payload.id]: {name: payload.fields.name}}
 				);
 			}
@@ -806,7 +808,7 @@ class ConferenceApplication
 					{
 						Util.sendLog(`[conf] setButtonCounter chat: payload[0].counter = ${payload[0].counter} (NaN)`);
 					}
-					this.callView.setButtonCounter('chat', payload[0].counter);
+					this.viewPort.setButtonCounter('chat', payload[0].counter);
 				}
 			}
 			else if (type === 'dialogues/update')
@@ -816,7 +818,7 @@ class ConferenceApplication
 					return false;
 				}
 
-				if (typeof payload.fields.counter === 'number' && this.callView)
+				if (typeof payload.fields.counter === 'number' && this.viewPort)
 				{
 					if (Utils.platform.isBitrixDesktop())
 					{
@@ -840,7 +842,7 @@ class ConferenceApplication
 							{
 								Util.sendLog(`[conf] setButtonCounter chat: counter = ${counter} (NaN)`);
 							}
-							this.callView.setButtonCounter('chat', counter);
+							this.viewPort.setButtonCounter('chat', counter);
 						}
 					}
 					else
@@ -849,7 +851,7 @@ class ConferenceApplication
 						{
 							Util.sendLog(`[conf] setButtonCounter chat:  payload.fields.counter = ${payload.fields.counter} (NaN)`);
 						}
-						this.callView.setButtonCounter('chat', payload.fields.counter);
+						this.viewPort.setButtonCounter('chat', payload.fields.counter);
 					}
 				}
 
@@ -860,13 +862,13 @@ class ConferenceApplication
 			}
 			else if (type === 'conference/common' && typeof payload.messageCount === 'number')
 			{
-				if (this.callView)
+				if (this.viewPort)
 				{
 					if (Number.isNaN(parseInt(payload.messageCount, 10)))
 					{
 						Util.sendLog(`[conf] setButtonCounter chat: payload.messageCount = ${payload.messageCount} (NaN)`);
 					}
-					this.callView.setButtonCounter('chat', payload.messageCount);
+					this.viewPort.setButtonCounter('chat', payload.messageCount);
 				}
 			}
 		});
@@ -876,7 +878,7 @@ class ConferenceApplication
 	{
 		if (this.isExternalUser())
 		{
-			this.callView.localUser.userModel.allowRename = true;
+			this.viewPort.localUser.userModel.allowRename = true;
 		}
 
 		if (this.getConference().common.inited)
@@ -918,7 +920,7 @@ class ConferenceApplication
 				{
 					this.checkAvailableCamera();
 					this.checkAvailableMicrophone();
-					this.callView.enableMediaSelection();
+					this.viewPort.enableMediaSelection();
 				}
 
 				Call.Hardware.subscribe(Call.Hardware.Events.deviceChanged, this._onDeviceChange.bind(this));
@@ -956,7 +958,7 @@ class ConferenceApplication
 			{
 				microphoneId: this.currentCall.microphoneId,
 				cameraId: this.currentCall.cameraId,
-				speakerId: this.callView.speakerId,
+				speakerId: this.viewPort.speakerId,
 			}
 		);
 
@@ -1032,44 +1034,44 @@ class ConferenceApplication
 
 	onBlockCameraButton()
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
 
-		this.callView.blockSwitchCamera();
+		this.viewPort.blockSwitchCamera();
 	}
 
 	onUnblockCameraButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.unblockSwitchCamera();
+		this.viewPort.unblockSwitchCamera();
 	}
 
 	onBlockMicrophoneButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.blockSwitchMicrophone();
+		this.viewPort.blockSwitchMicrophone();
 	}
 
 	onUnblockMicrophoneButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.unblockSwitchMicrophone();
+		this.viewPort.unblockSwitchMicrophone();
 	}
 
 	checkAvailableCamera()
 	{
-		const isCameraButtonHasBlocked = this.callView.isButtonBlocked('camera');
+		const isCameraButtonHasBlocked = this.viewPort.isButtonBlocked('camera');
 
 		if (!this.currentCall && !Call.Hardware.hasCamera())
 		{
@@ -1090,7 +1092,7 @@ class ConferenceApplication
 			this.template.$emit('cameraSelected', Call.Hardware.defaultCamera);
 		}
 
-		this.callView.updateButtons();
+		this.viewPort.updateButtons();
 	}
 
 	checkAvailableMicrophone()
@@ -1114,7 +1116,7 @@ class ConferenceApplication
 			this.template.$emit('micSelected', Call.Hardware.defaultCamera);
 		}
 
-		this.callView.updateButtons();
+		this.viewPort.updateButtons();
 	}
 
 	useDevicesInCurrentCall(deviceList, isForceUse = false)
@@ -1135,7 +1137,7 @@ class ConferenceApplication
 					{
 						const newDeviceId = Call.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
 						this.currentCall.setMicrophoneId(newDeviceId);
-						this.callView.setMicrophoneId(newDeviceId);
+						this.viewPort.setMicrophoneId(newDeviceId);
 					}
 
 					this.checkAvailableMicrophone();
@@ -1156,10 +1158,10 @@ class ConferenceApplication
 
 					break;
 				case "audiooutput":
-					if (this.callView && deviceInfo.deviceId === 'default' || isForceUse)
+					if (this.viewPort && deviceInfo.deviceId === 'default' || isForceUse)
 					{
 						const newDeviceId = Call.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audiooutput');
-						this.callView.setSpeakerId(newDeviceId);
+						this.viewPort.setSpeakerId(newDeviceId);
 					}
 
 					break;
@@ -1201,7 +1203,7 @@ class ConferenceApplication
 
 						if (this.currentCall.provider === Call.Provider.Bitrix)
 						{
-							this.callView.setMicrophoneId(deviceId);
+							this.viewPort.setMicrophoneId(deviceId);
 						}
 					}
 
@@ -1219,7 +1221,7 @@ class ConferenceApplication
 
 					break;
 				case "audiooutput":
-					if (this.callView && this.callView.speakerId == deviceInfo.deviceId)
+					if (this.viewPort && this.viewPort.speakerId == deviceInfo.deviceId)
 					{
 						const speakerIds = Object.keys(Call.Hardware.audioOutputList);
 						let deviceId;
@@ -1232,7 +1234,7 @@ class ConferenceApplication
 
 						if (!deviceId)
 						{
-							this.callView.setSpeakerId(speakerIds.length > 0 ? speakerIds[0] : "");
+							this.viewPort.setSpeakerId(speakerIds.length > 0 ? speakerIds[0] : "");
 						}
 					}
 
@@ -1250,19 +1252,19 @@ class ConferenceApplication
 
 		if (Utils.device.isMobile())
 		{
-			this.callView.show();
+			this.viewPort.show();
 			if (Number.isNaN(parseInt(this.getDialogData().counter, 10)))
 			{
 				Util.sendLog(`[conf] setButtonCounter chat: this.getDialogData().counter = ${this.getDialogData().counter} (NaN)`);
 			}
-			this.callView.setButtonCounter('chat', this.getDialogData().counter);
+			this.viewPort.setButtonCounter('chat', this.getDialogData().counter);
 		}
 		else
 		{
-			this.callView.setLayout(Call.View.Layout.Grid);
+			this.viewPort.setLayout(Call.View.Layout.Grid);
 		}
 
-		this.callView.setUiState(Call.View.UiState.Calling);
+		this.viewPort.setUiState(Call.View.UiState.Calling);
 
 		if (videoEnabled && !Call.Hardware.hasCamera())
 		{
@@ -1323,22 +1325,22 @@ class ConferenceApplication
 
 						if (!Utils.device.isMobile())
 						{
-							this.callView.setLayout(Call.View.Layout.Grid);
+							this.viewPort.setLayout(Call.View.Layout.Grid);
 						}
 
 						if (CallSettingsManager.jwtCallsEnabled)
 						{
 							const userData = this.controller.getStore().getters['users/get'](this.controller.getUserId(), true);
-							this.callView.appendUsers([userData.id]);
-							this.callView.updateUserData({[userData.id]: userData});
+							this.viewPort.appendUsers([userData.id]);
+							this.viewPort.updateUserData({[userData.id]: userData});
 						}
 						else
 						{
-							this.callView.appendUsers(this.currentCall.getUsers());
+							this.viewPort.appendUsers(this.currentCall.getUsers());
 							Util.getUsers(this.currentCall.id, this.getCallUsers(true)).then(userData => {
 								this.controller.getStore().dispatch('users/set', Object.values(userData));
 								this.controller.getStore().dispatch('conference/setUsers', {users: Object.keys(userData)});
-								this.callView.updateUserData(userData)
+								this.viewPort.updateUserData(userData)
 							});
 						}
 
@@ -1423,23 +1425,23 @@ class ConferenceApplication
 
 		if (Utils.device.isMobile())
 		{
-			this.callView.show();
+			this.viewPort.show();
 		}
 		else
 		{
-			this.callView.setLayout(Call.View.Layout.Grid);
+			this.viewPort.setLayout(Call.View.Layout.Grid);
 		}
 
 		if (joinAsViewer)
 		{
-			this.callView.setLocalUserDirection(Call.EndpointDirection.RecvOnly);
+			this.viewPort.setLocalUserDirection(Call.EndpointDirection.RecvOnly);
 		}
 		else
 		{
-			this.callView.setLocalUserDirection(Call.EndpointDirection.SendRecv);
+			this.viewPort.setLocalUserDirection(Call.EndpointDirection.SendRecv);
 		}
 
-		this.callView.setUiState(Call.View.UiState.Calling);
+		this.viewPort.setUiState(Call.View.UiState.Calling);
 
 		const isLegacyCall = Boolean(callId)
 			|| this.callScheme === Call.CallScheme.classic
@@ -1455,13 +1457,13 @@ class ConferenceApplication
 			.then((callToken) => {
 				if (isLegacyCall)
 				{
-					return Call.EngineLegacy.getCallWithId(callId, this.getCallConfig(video));
+					return Call.EngineLegacy.getCallWithId(callId, this.getCallConfig(video, true));
 				}
 
 				this.callToken = callToken;
 				CallTokenManager.setToken(this.params.chatId, this.callToken);
 
-				return Call.Engine.getCallWithId(callUuid, this.getCallConfig(video, callUuid));
+				return Call.Engine.getCallWithId(callUuid, this.getCallConfig(video, true, callUuid));
 			})
 			.then((result) => {
 				this.currentCall = result.call;
@@ -1485,16 +1487,16 @@ class ConferenceApplication
 				if (this.currentCall?.scheme === Call.CallScheme.jwt)
 				{
 					const userData = this.controller.getStore().getters['users/get'](this.controller.getUserId(), true);
-					this.callView.appendUsers([userData.id]);
-					this.callView.updateUserData({[userData.id]: userData});
+					this.viewPort.appendUsers([userData.id]);
+					this.viewPort.updateUserData({[userData.id]: userData});
 				}
 				else
 				{
-					this.callView.appendUsers(this.currentCall.getUsers());
+					this.viewPort.appendUsers(this.currentCall.getUsers());
 					Util.getUsers(this.currentCall.id, this.getCallUsers(true)).then(userData => {
 						this.controller.getStore().dispatch('users/set', Object.values(userData));
 						this.controller.getStore().dispatch('conference/setUsers', {users: Object.keys(userData)});
-						this.callView.updateUserData(userData)
+						this.viewPort.updateUserData(userData)
 					});
 				}
 
@@ -1591,6 +1593,12 @@ class ConferenceApplication
 
 			this.removeCallEvents();
 			this.removeAdditionalEvents();
+
+			if (this.currentCall.isScreenSharingStarted())
+			{
+				this.currentCall.stopScreenSharing();
+			}
+
 			this.currentCall.hangup(false, '', finishCall);
 		}
 
@@ -1609,8 +1617,8 @@ class ConferenceApplication
 		}
 		else
 		{
-			this.callView.releaseLocalMedia();
-			this.callView.close();
+			this.viewPort.releaseLocalMedia();
+			this.viewPort.close();
 			this.closeReconnectionBaloon();
 			this.setError(ConferenceErrorCode.userLeftCall);
 			this.controller.getStore().commit('conference/endCall');
@@ -1647,13 +1655,13 @@ class ConferenceApplication
 			clearTimeout(this.promotedToAdminTimeout);
 		}
 
-		if(this.callView)
+		if(this.viewPort)
 		{
-			this.callView.releaseLocalMedia();
-			this.callView.close();
+			this.viewPort.releaseLocalMedia();
+			this.viewPort.close();
 			this.closeReconnectionBaloon();
-			this.callView.destroy();
-			this.callView = null;
+			this.viewPort.destroy();
+			this.viewPort = null;
 		}
 		this.initCallInterface();
 		this.initCall();
@@ -1725,17 +1733,17 @@ class ConferenceApplication
 
 	setSelectedCamera(cameraId)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setCameraId(cameraId)
+			this.viewPort.setCameraId(cameraId)
 		}
 	}
 
 	setSelectedMic(micId)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setMicrophoneId(micId);
+			this.viewPort.setMicrophoneId(micId);
 		}
 	}
 
@@ -1860,7 +1868,7 @@ class ConferenceApplication
 
 	showVpnIsActiveNotification()
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
 			BX.UI.Notification.Center.notify({
 				content: Text.encode(Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
@@ -1874,14 +1882,14 @@ class ConferenceApplication
 
 	showMicMutedNotification()
 	{
-		if (this.mutePopup || !this.callView || this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic'))
+		if (this.mutePopup || !this.viewPort || this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic'))
 		{
 			return;
 		}
 
 		this.mutePopup = new Call.Hint({
-			bindElement: this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.callView.elements.root,
+			bindElement: this.viewPort.buttons.microphone.elements.icon,
+			targetContainer: this.viewPort.elements.root,
 			buttons: [
 				this.createUnmuteButton()
 			],
@@ -1928,8 +1936,8 @@ class ConferenceApplication
 		}
 
 		this.webScreenSharePopup = new Call.WebScreenSharePopup({
-			bindElement: this.callView.buttons.screen.elements.root,
-			targetContainer: this.callView.elements.root,
+			bindElement: this.viewPort.buttons.screen.elements.root,
+			targetContainer: this.viewPort.elements.root,
 			onClose: function ()
 			{
 				this.webScreenSharePopup?.destroy();
@@ -2061,7 +2069,7 @@ class ConferenceApplication
 
 		this.videoStrategy = new VideoStrategy({
 			call: this.currentCall,
-			callView: this.callView,
+			callView: this.viewPort,
 			strategyType: strategyType
 		});
 	}
@@ -2098,9 +2106,9 @@ class ConferenceApplication
 	{
 		let microphoneId = event.data.deviceId;
 		Call.Hardware.defaultMicrophone = microphoneId.deviceId;
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setMicrophoneId(microphoneId);
+			this.viewPort.setMicrophoneId(microphoneId);
 		}
 		if (this.currentCall)
 		{
@@ -2245,16 +2253,17 @@ class ConferenceApplication
 		return true;
 	}
 
-	onCallToggleSubscribe(e) {
+	onCallToggleSubscribe(e)
+	{
 		if (this.currentCall && this.currentCall.provider === Call.Provider.Bitrix && e.data)
 		{
-			this.currentCall.toggleRemoteParticipantVideo(e.data.participants, e.data.showVideo, true)
+			this.currentCall.toggleRemoteParticipantVideo(e.data.participants, e.data.showVideo, true);
 		}
 	}
 
 	async renameGuest(newName)
 	{
-		this.callView.localUser.userModel.renameRequested = true;
+		this.viewPort.localUser.userModel.renameRequested = true;
 		try
 		{
 			const response = await this.setUserName(newName);
@@ -2264,7 +2273,7 @@ class ConferenceApplication
 				CallTokenManager.setUserToken(result.userToken);
 			}
 			this.currentCall?.updateUserData({ name: newName });
-			this.callView.localUser.userModel.wasRenamed = true;
+			this.viewPort.localUser.userModel.wasRenamed = true;
 			Logger.log('setting name to', newName);
 		}
 		catch (error)
@@ -2277,9 +2286,9 @@ class ConferenceApplication
 	{
 		this.setUserName(newName).then(() => {
 			Logger.log('setting mobile name to', newName);
-			if (this.callView.renameSlider)
+			if (this.viewPort.renameSlider)
 			{
-				this.callView.renameSlider.close();
+				this.viewPort.renameSlider.close();
 			}
 		}).catch(error => {
 			Logger.error('error setting name', error);
@@ -2345,7 +2354,7 @@ class ConferenceApplication
 			return;
 		}
 
-		const targetNodeWidth = this.callView.buttons.hangupOptions.elements.root.offsetWidth;
+		const targetNodeWidth = this.viewPort.buttons.hangupOptions.elements.root.offsetWidth;
 
 		let menuItems = [
 			{
@@ -2393,8 +2402,8 @@ class ConferenceApplication
 			contentBorderRadius: '6px',
 			borderRadius: '6px',
 			angle: false,
-			bindElement: this.callView.buttons.hangupOptions.elements.root,
-			targetContainer: this.callView.elements.root,
+			bindElement: this.viewPort.buttons.hangupOptions.elements.root,
+			targetContainer: this.viewPort.elements.root,
 			offsetTop: -15,
 			bindOptions: {position: "top"},
 			cacheable: false,
@@ -2567,7 +2576,7 @@ class ConferenceApplication
 
 	togglePictureInPictureCallWindow(config = {})
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
@@ -2583,8 +2592,8 @@ class ConferenceApplication
 			return;
 		}
 
-		this.callView.isActivePiPFromController = isActiveStatePictureInPictureCallWindow;
-		this.callView.toggleStatePictureInPictureCallWindow(isActiveStatePictureInPictureCallWindow);
+		this.viewPort.isActivePiPFromController = isActiveStatePictureInPictureCallWindow;
+		this.viewPort.toggleStatePictureInPictureCallWindow(isActiveStatePictureInPictureCallWindow);
 	}
 
 	#startCommonRecord(type)
@@ -2596,13 +2605,13 @@ class ConferenceApplication
 		if (Call.CallCloudRecord.serviceEnabled && !isPlainCall)
 		{
 			const kind = type === 'audio' ? Call.CloudRecordKind.AUDIO : Call.CloudRecordKind.VIDEO;
-			this.callView.blockButtons(['record']);
+			this.viewPort.blockButtons(['record']);
 			this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STARTED, kind);
 
 			return;
 		}
 
-		this.callView.setButtonActive('record', true);
+		this.viewPort.setButtonActive('record', true);
 
 		this.currentCall.sendLocalRecordState({
 			action: Call.CallCommonRecordState.Started,
@@ -2625,10 +2634,10 @@ class ConferenceApplication
 			BXDesktopSystem.CallRecordStop();
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setCommonRecordState(this.callView.getDefaultCommonRecordState());
-			this.callView.setButtonActive('record', false);
+			this.viewPort.setCommonRecordState(this.viewPort.getDefaultCommonRecordState());
+			this.viewPort.setButtonActive('record', false);
 		}
 
 		if (
@@ -2672,7 +2681,7 @@ class ConferenceApplication
 					// If copilot is active → ask if recording is needed
 					if (this.currentCall && this.currentCall.isCopilotActive)
 					{
-						this.callView
+						this.viewPort
 							.showConfirmModal({
 								title: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
 								message: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
@@ -2685,7 +2694,7 @@ class ConferenceApplication
 									this.#startCommonRecord(Call.CallCommonRecordType.Audio);
 								}
 							})
-							.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+							.catch((error) => console.error('Unspecified error in viewPort.showConfirmModal:', error));
 
 						return;
 					}
@@ -2729,7 +2738,7 @@ class ConferenceApplication
 				// For cloud recording → block button and stop recording
 				if (this.#canCloudRecord())
 				{
-					this.callView.blockButtons(['record']);
+					this.viewPort.blockButtons(['record']);
 					this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STOPPED);
 					this.commonRecord.state = Call.CallCommonRecordState.Stopped;
 
@@ -2737,7 +2746,7 @@ class ConferenceApplication
 				}
 
 				// For desktop → just deactivate the recording button
-				this.callView.setButtonActive('record', false);
+				this.viewPort.setButtonActive('record', false);
 
 				break;
 			}
@@ -2747,7 +2756,7 @@ class ConferenceApplication
 				// For cloud recording → confirm recording deletion
 				if (this.#canCloudRecord())
 				{
-					this.callView
+					this.viewPort
 						.showConfirmModal({
 							title: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_TITLE'),
 							message: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_MESSAGE'),
@@ -2757,12 +2766,12 @@ class ConferenceApplication
 						.then((choice) => {
 							if (choice === 'no')
 							{
-								this.callView.blockButtons(['record']);
+								this.viewPort.blockButtons(['record']);
 								this.currentCall.setCloudRecordState(Call.CloudRecordStatus.DESTROYED);
 								this.commonRecord.state = Call.CallCommonRecordState.Destroyed;
 							}
 						})
-						.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+						.catch((error) => console.error('Unspecified error in viewPort.showConfirmModal:', error));
 
 					return;
 				}
@@ -2808,12 +2817,12 @@ class ConferenceApplication
 
 			if (isPlainCall && !DesktopApi.isDesktop())
 			{
-				this.callView.showCloudRecordInfoPopup(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+				this.viewPort.showCloudRecordInfoPopup(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
 
 				return;
 			}
 
-			this.callView.showCommonRecordMenuPopup(isPlainCall && DesktopApi.isDesktop());
+			this.viewPort.showCommonRecordMenuPopup(isPlainCall && DesktopApi.isDesktop());
 
 			return;
 		}
@@ -2828,7 +2837,7 @@ class ConferenceApplication
 			return;
 		}
 
-		this.callView.showCommonRecordMenuPopup(true);
+		this.viewPort.showCommonRecordMenuPopup(true);
 	}
 
 	_onCallViewToggleVideoButtonClickHandler(e)
@@ -2847,7 +2856,7 @@ class ConferenceApplication
 
 		if (this.currentCall && !e.video && !this.currentCall.isScreenSharingStarted())
 		{
-			this.callView.releaseLocalMedia();
+			this.viewPort.releaseLocalMedia();
 		}
 
 		if (this.currentCall && !this.currentCall.cameraId && e.video)
@@ -2890,7 +2899,7 @@ class ConferenceApplication
 			}
 			if(!event.data.video)
 			{
-				this.callView.releaseLocalMedia();
+				this.viewPort.releaseLocalMedia();
 			}
 
 			if (!this.currentCall.cameraId && event.data.video)
@@ -2906,12 +2915,12 @@ class ConferenceApplication
 
 	onCallViewToggleSpeakerButtonClick(event)
 	{
-		this.callView.muteSpeaker(!event.data.speakerMuted);
+		this.viewPort.muteSpeaker(!event.data.speakerMuted);
 
 		if (event.data.fromHotKey)
 		{
 			BX.UI.Notification.Center.notify({
-				content: BX.message(this.callView.speakerMuted? 'IM_M_CALL_MUTE_SPEAKERS_OFF': 'IM_M_CALL_MUTE_SPEAKERS_ON'),
+				content: BX.message(this.viewPort.speakerMuted? 'IM_M_CALL_MUTE_SPEAKERS_OFF': 'IM_M_CALL_MUTE_SPEAKERS_ON'),
 				position: "top-right",
 				autoHideDelay: 3000,
 				closeButton: true
@@ -2975,9 +2984,9 @@ class ConferenceApplication
 
 		this.isWindowFocus = isActive;
 
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setWindowFocusState(this.isWindowFocus);
+			this.viewPort.setWindowFocusState(this.isWindowFocus);
 		}
 	}
 
@@ -3106,22 +3115,22 @@ class ConferenceApplication
 
 		if (buttonsToBlock.length > 0 && event.isFullScreen)
 		{
-			this.callView?.blockButtons(buttonsToBlock);
+			this.viewPort?.blockButtons(buttonsToBlock);
 		}
 		else if (buttonsToBlock.length > 0)
 		{
-			this.callView?.unblockButtons(buttonsToBlock);
+			this.viewPort?.unblockButtons(buttonsToBlock);
 		}
 	}
 
 	enterFullScreen()
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
 
-		const element = this.callView.elements.root;
+		const element = this.viewPort.elements.root;
 
 		try
 		{
@@ -3207,7 +3216,7 @@ class ConferenceApplication
 		}
 
 		this.participantsPermissionPopup = new ParticipantsPermissionPopup({
-			targetContainer: this.callView.elements.root,
+			targetContainer: this.viewPort.elements.root,
 			turnOffAllParticipansStream: (options) => {
 				this._onCallViewTurnOffAllParticipansStreamButtonClick(options);
 
@@ -3300,7 +3309,7 @@ class ConferenceApplication
 		this.copilotPopup = new Call.CopilotPopup({
 			isCopilotActive: this.currentCall.isCopilotActive,
 			isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
-			targetContainer: this.callView.elements.root,
+			targetContainer: this.viewPort.elements.root,
 			updateCopilotState: () => {
 				this.onChangeStateCopilot();
 			},
@@ -3325,44 +3334,44 @@ class ConferenceApplication
 		{
 			this.currentCall.isCopilotActive = isTrackRecordOn;
 		}
-		this.callView.updateCopilotState(this.currentCall.isCopilotActive);
+		this.viewPort.updateCopilotState(this.currentCall.isCopilotActive);
 	}
 
 	_onBlockCameraButton()
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
 
-		this.callView.blockSwitchCamera();
+		this.viewPort.blockSwitchCamera();
 	}
 
 	_onUnblockCameraButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.unblockSwitchCamera();
+		this.viewPort.unblockSwitchCamera();
 	}
 
 	_onBlockMicrophoneButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.blockSwitchMicrophone();
+		this.viewPort.blockSwitchMicrophone();
 	}
 
 	_onUnblockMicrophoneButton()
 	{
-		if (!this.callView) {
+		if (!this.viewPort) {
 			return;
 		}
 
-		this.callView.unblockSwitchMicrophone();
+		this.viewPort.unblockSwitchMicrophone();
 	}
 
 	onCameraPublishing(e)
@@ -3376,15 +3385,15 @@ class ConferenceApplication
 			this.onUnblockCameraButton();
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.updateButtons();
+			this.viewPort.updateButtons();
 		}
 	}
 
 	onMicrophonePublishingd(e)
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
@@ -3398,9 +3407,9 @@ class ConferenceApplication
 			this.onUnblockMicrophoneButton();
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.updateButtons();
+			this.viewPort.updateButtons();
 		}
 	}
 
@@ -3423,20 +3432,20 @@ class ConferenceApplication
 			callType: Analytics.AnalyticsType.videoconf,
 		});
 
-		const floorState = this.callView.getUserFloorRequestState(this.callEngine.getCurrentUserId());
-		const talkingState = this.callView.getUserTalking(this.callEngine.getCurrentUserId());
+		const floorState = this.viewPort.getUserFloorRequestState(this.callEngine.getCurrentUserId());
+		const talkingState = this.viewPort.getUserTalking(this.callEngine.getCurrentUserId());
 
-		this.callView.setUserFloorRequestState(this.callEngine.getCurrentUserId(), !floorState);
+		this.viewPort.setUserFloorRequestState(this.callEngine.getCurrentUserId(), !floorState);
 
 		if (this.currentCall)
 		{
 			this.currentCall.requestFloor(!floorState);
 		}
 
-		clearTimeout(this.callViewFloorRequestTimeout);
+		clearTimeout(this.viewPortFloorRequestTimeout);
 		if (talkingState && !floorState)
 		{
-			this.callViewFloorRequestTimeout = setTimeout(() =>
+			this.viewPortFloorRequestTimeout = setTimeout(() =>
 			{
 				if (this.currentCall)
 				{
@@ -3474,6 +3483,8 @@ class ConferenceApplication
 		this.currentCall.addEventListener(Call.Event.onLocalMediaStopped, this.onCallLocalMediaStoppedHandler);
 		this.currentCall.addEventListener(Call.Event.onRemoteMediaReceived, this.onCallRemoteMediaReceivedHandler);
 		this.currentCall.addEventListener(Call.Event.onRemoteMediaStopped, this.onCallRemoteMediaStoppedHandler);
+		this.currentCall.addEventListener(Call.Event.onRemoteMediaAvailable, this.onCallRemoteMediaAvailableHandler);
+		this.currentCall.addEventListener(Call.Event.onRemoteMediaUnavailable, this.onCallRemoteMediaUnavailableHandler);
 		this.currentCall.addEventListener(Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
@@ -3522,6 +3533,8 @@ class ConferenceApplication
 		this.currentCall.removeEventListener(Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
 		this.currentCall.removeEventListener(Call.Event.onRemoteMediaReceived, this.onCallRemoteMediaReceivedHandler);
 		this.currentCall.removeEventListener(Call.Event.onRemoteMediaStopped, this.onCallRemoteMediaStoppedHandler);
+		this.currentCall.removeEventListener(Call.Event.onRemoteMediaAvailable, this.onCallRemoteMediaAvailableHandler);
+		this.currentCall.removeEventListener(Call.Event.onRemoteMediaUnavailable, this.onCallRemoteMediaUnavailableHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
@@ -3574,21 +3587,21 @@ class ConferenceApplication
 
 	onCallUserInvited(e)
 	{
-		this.callView.addUser(e.userId);
+		this.viewPort.addUser(e.userId);
 
 		Util.getUsers(this.currentCall.id, [e.userId]).then(userData => {
 			this.controller.getStore().dispatch('users/set', Object.values(userData));
 			this.controller.getStore().dispatch('conference/setUsers', {users: Object.keys(userData)});
-			this.callView.updateUserData(userData)
+			this.viewPort.updateUserData(userData)
 		});
 	}
 
 	onCallUserJoined(e)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.updateUserData(e.userData);
-			this.callView.addUser(e.userId, Call.UserState.Connected);
+			this.viewPort.updateUserData(e.userData);
+			this.viewPort.addUser(e.userId, Call.UserState.Connected);
 		}
 	}
 
@@ -3602,11 +3615,11 @@ class ConferenceApplication
 		if (e.state === Call.UserState.Connected)
 		{
 			this.clearConnectionQualityTimer(e.userId);
-			this.callView.setUserConnectionQuality(e.userId, 5);
+			this.viewPort.setUserConnectionQuality(e.userId, 5);
 
 			if (false && CallAI.serviceEnabled)
 			{
-				this.callView.unblockButtons(['copilot']);
+				this.viewPort.unblockButtons(['copilot']);
 			}
 		}
 
@@ -3627,16 +3640,16 @@ class ConferenceApplication
 			}
 		}
 
-		this.callView.setUserState(e.userId, e.state);
+		this.viewPort.setUserState(e.userId, e.state);
 		this.updateCallUser(e.userId,{state: e.state});
 
 		if (!this.#isCommonRecordStarted())
 		{
-			this.callView.unblockButtons(['record']);
+			this.viewPort.unblockButtons(['record']);
 		}
 		/*if (e.direction)
 		{
-			this.callView.setUserDirection(e.userId, e.direction);
+			this.viewPort.setUserDirection(e.userId, e.direction);
 		}*/
 	}
 
@@ -3648,14 +3661,14 @@ class ConferenceApplication
 		}
 		else
 		{
-			this.callView.setUserMicrophoneState(e.userId, e.microphoneState);
+			this.viewPort.setUserMicrophoneState(e.userId, e.microphoneState);
 			this.updateCallUser(e.userId, {microphoneState: e.microphoneState});
 		}
 	}
 
 	onCallUserCameraState(e)
 	{
-		this.callView.setUserCameraState(e.userId, e.cameraState);
+		this.viewPort.setUserCameraState(e.userId, e.cameraState);
 		this.updateCallUser(e.userId, {cameraState: e.cameraState});
 	}
 
@@ -3667,20 +3680,20 @@ class ConferenceApplication
 
 	onCallUserVideoPaused(e)
 	{
-		this.callView.setUserVideoPaused(e.userId, e.videoPaused);
+		this.viewPort.setUserVideoPaused(e.userId, e.videoPaused);
 	}
 
 	onCallLocalMediaReceived(e)
 	{
 		console.log("Received local media stream " + e);
-		if (this.callView)
+		if (this.viewPort)
 		{
 			const flipVideo = (e.tag == "main" || e.mediaRenderer) ? Call.Hardware.enableMirroring : false;
 
-			this.callView.setLocalStream(e);
-			this.callView.flipLocalVideo(flipVideo);
+			this.viewPort.setLocalStream(e);
+			this.viewPort.flipLocalVideo(flipVideo);
 
-			this.callView.setButtonActive("screen", this.currentCall.isScreenSharingStarted());
+			this.viewPort.setButtonActive("screen", this.currentCall.isScreenSharingStarted());
 			if (this.currentCall.isScreenSharingStarted())
 			{
 				this.screenShareStartTime = new Date();
@@ -3696,7 +3709,7 @@ class ConferenceApplication
 					this.showWebScreenSharePopup();
 				}
 
-				this.callView.updateButtons();
+				this.viewPort.updateButtons();
 			}
 			else
 			{
@@ -3736,7 +3749,7 @@ class ConferenceApplication
 
 	onCallLocalMediaStopped(e)
 	{
-		if (this.callView && e.kind === 'audio')
+		if (this.viewPort && e.kind === 'audio')
 		{
 			Call.Hardware.isMicrophoneMuted = true;
 		}
@@ -3759,44 +3772,54 @@ class ConferenceApplication
 			return null;
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
 			if ('track' in e)
 			{
-				this.callView.setUserMedia(e.userId, e.kind, e.track)
+				this.viewPort.setUserMedia(e.userId, e.kind, e.track)
 			}
 			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'audio' && getStreamType(e.mediaRenderer.stream) === 'audio')
 			{
-				this.callView.setUserMedia(e.userId, 'audio', e.mediaRenderer.stream.getAudioTracks()[0]);
+				this.viewPort.setUserMedia(e.userId, 'audio', e.mediaRenderer.stream.getAudioTracks()[0]);
 			}
 			if ('mediaRenderer' in e && e.mediaRenderer.kind === 'sharing' && getStreamType(e.mediaRenderer.stream) === 'audio')
 			{
-				this.callView.setUserMedia(e.userId, 'sharingAudio', e.mediaRenderer.stream.getAudioTracks()[0]);
+				this.viewPort.setUserMedia(e.userId, 'sharingAudio', e.mediaRenderer.stream.getAudioTracks()[0]);
 			}
 			if ('mediaRenderer' in e && (e.mediaRenderer.kind === 'video' || e.mediaRenderer.kind === 'sharing') && getStreamType(e.mediaRenderer.stream) === 'video')
 			{
-				this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
+				this.viewPort.setVideoRenderer(e.userId, e.mediaRenderer);
 			}
 		}
 	}
 
 	onCallRemoteMediaStopped(e)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
 			if ('mediaRenderer' in e)
 			{
 				if (e.kind === 'video' || e.kind === 'sharing')
 				{
 					e.mediaRenderer.stream = null;
-					this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
+					this.viewPort.setVideoRenderer(e.userId, e.mediaRenderer);
 				}
 			}
 			else
 			{
-				this.callView.setUserMedia(e.userId, e.kind, null);
+				this.viewPort.setUserMedia(e.userId, e.kind, null);
 			}
 		}
+	}
+
+	onCallRemoteMediaAvailable(e)
+	{
+		this.viewPort.trackAvailabilityChanged(e.userId, e.kind, e.available);
+	}
+
+	onCallRemoteMediaUnavailable(e)
+	{
+		this.viewPort.trackAvailabilityChanged(e.userId, e.kind, e.available);
 	}
 
 	isLegacyCall(provider, scheme = null): boolean
@@ -3829,10 +3852,10 @@ class ConferenceApplication
 
 	loopConnectionQuality(userId, quality, timeout = 200)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
 			this.loopTimers[userId] = setTimeout(() => {
-				this.callView.setUserConnectionQuality(userId, quality);
+				this.viewPort.setUserConnectionQuality(userId, quality);
 				const newQuality = quality >= 4 ? 1 : quality + 1;
 				this.loopConnectionQuality(userId, newQuality, timeout);
 			}, timeout);
@@ -3852,7 +3875,7 @@ class ConferenceApplication
 	{
 		this.clearConnectionQualityTimer(e.userId);
 
-		this.callView.setUserConnectionQuality(e.userId, e.score);
+		this.viewPort.setUserConnectionQuality(e.userId, e.score);
 	}
 
 	onGetUserMediaEnded()
@@ -3951,11 +3974,11 @@ class ConferenceApplication
 			return;
 		}
 
-		this.callView.setUserTalking(e.userId, true);
+		this.viewPort.setUserTalking(e.userId, true);
 
-		if (e.userId == this.callView.localUser.id)
+		if (e.userId == this.viewPort.localUser.id)
 		{
-			this.callView.setUserFloorRequestState(e.userId, false);
+			this.viewPort.setUserFloorRequestState(e.userId, false);
 		}
 
 		this.updateCallUser(e.userId, {talking: true, floorRequestState: false});
@@ -3963,7 +3986,7 @@ class ConferenceApplication
 
 	onCallUserVoiceStopped(e)
 	{
-		this.callView.setUserTalking(e.userId, false);
+		this.viewPort.setUserTalking(e.userId, false);
 		this.updateCallUser(e.userId, {talking: false});
 	}
 
@@ -3995,7 +4018,7 @@ class ConferenceApplication
 
 	_onAllParticipantsAudioMuted(e)
 	{
-		const userModel = this.callView.userRegistry.get(e.userId);
+		const userModel = this.viewPort.userRegistry.get(e.userId);
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-mic-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_MIC_FOR_ALL_MSGVER_1", {
@@ -4017,7 +4040,7 @@ class ConferenceApplication
 	_onAllParticipantsVideoMuted(e)
 	{
 
-		const userModel = this.callView.userRegistry.get(e.userId);
+		const userModel = this.viewPort.userRegistry.get(e.userId);
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-cam-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_CAM_FOR_ALL_MSGVER_1", {
@@ -4038,7 +4061,7 @@ class ConferenceApplication
 
 	_onAllParticipantsScreenshareMuted(e)
 	{
-		const userModel = this.callView.userRegistry.get(e.userId);
+		const userModel = this.viewPort.userRegistry.get(e.userId);
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-cam-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1", {
@@ -4063,8 +4086,8 @@ class ConferenceApplication
 		{
 			let contentIcon = 'mic';
 			let contentPhrase = '';
-			const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
-			const targetUserModel = this.callView.userRegistry.get(e.data.toUserId);
+			const initiatorUserModel = this.viewPort.userRegistry.get(e.data.fromUserId);
+			const targetUserModel = this.viewPort.userRegistry.get(e.data.toUserId);
 			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
 
 			if (e.data.toUserId == this.callEngine.getCurrentUserId())
@@ -4153,7 +4176,7 @@ class ConferenceApplication
 
 	_onUserPermissionsChanged(e)
 	{
-		const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
+		const initiatorUserModel = this.viewPort.userRegistry.get(e.data.fromUserId);
 		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
 
 		let contentPhrase = 'CALL_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_' + initiatorGender;
@@ -4161,7 +4184,7 @@ class ConferenceApplication
 		if (!e.data.allow)
 		{
 			contentPhrase = 'CALL_ADMIN_NOT_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_' + initiatorGender;
-			const floorState = this.callView.getUserFloorRequestState(this.callEngine.getCurrentUserId());
+			const floorState = this.viewPort.getUserFloorRequestState(this.callEngine.getCurrentUserId());
 
 			if (floorState)
 			{
@@ -4179,12 +4202,12 @@ class ConferenceApplication
 			this.createCallControlNotify({content: content, isAllow: e.data.allow});
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setUserPermissionToSpeakState(e.data.toUserId, e.data.allow);
+			this.viewPort.setUserPermissionToSpeakState(e.data.toUserId, e.data.allow);
 		}
 
-		this.callView.updateButtons();
+		this.viewPort.updateButtons();
 		this._onBlockUnblockCamMicButtons();
 	}
 
@@ -4193,16 +4216,16 @@ class ConferenceApplication
 		if (e.data.toUserId == this.callEngine.getCurrentUserId())
 		{
 			const newRole = e.data.role.toUpperCase();
-			
+
 			if (newRole === Util.UsersRoles.ADMIN || newRole === Util.UsersRoles.MANAGER)
 			{
 				const content = BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
-				
+
 				this.promotedToAdminTimeout = setTimeout(
 					() => this.createCallControlNotify({content: content, isAllow: true}),
 					this.promotedToAdminTimeoutValue
 				);
-				
+
 				if (this.riseYouHandToTalkPopup)
 				{
 					this.riseYouHandToTalkPopup.close();
@@ -4215,10 +4238,10 @@ class ConferenceApplication
 				this.createCallControlNotify({content: content});
 			}
 
-			if (this.callView)
+			if (this.viewPort)
 			{
-				this.callView.updateButtons();
-				this.callView.updateFloorRequestNotification();
+				this.viewPort.updateButtons();
+				this.viewPort.updateFloorRequestNotification();
 			}
 
 			this._onBlockUnblockCamMicButtons();
@@ -4232,7 +4255,7 @@ class ConferenceApplication
 		let content = '';
 		let isAllow = false;
 
-		const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
+		const initiatorUserModel = this.viewPort.userRegistry.get(e.data.fromUserId);
 		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
 
 		if (e.data.eft === true)
@@ -4314,9 +4337,9 @@ class ConferenceApplication
 			}
 		}
 
-		if (this.callView && !isAllow)
+		if (this.viewPort && !isAllow)
 		{
-			this.callView.setAllUserPermissionToSpeakState(false);
+			this.viewPort.setAllUserPermissionToSpeakState(false);
 		}
 
 		if (content)
@@ -4335,13 +4358,13 @@ class ConferenceApplication
 			this.showRiseYouHandToTalkNotification({initiatorName: this.lastCalledChangeSettingsUserName});
 		}
 
-		this.callView.updateButtons();
+		this.viewPort.updateButtons();
 		this._onBlockUnblockCamMicButtons();
 	}
 
 	showRiseYouHandToTalkNotification(params)
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
@@ -4359,8 +4382,8 @@ class ConferenceApplication
 
 		this.riseYouHandToTalkPopup = new Call.Hint({
 			callFolded: false,
-			bindElement: this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.callView.elements.root,
+			bindElement: this.viewPort.buttons.microphone.elements.icon,
+			targetContainer: this.viewPort.elements.root,
 			icon: 'mic',
 			showAngle: false,
 			initiatorName: params.initiatorName,
@@ -4435,7 +4458,7 @@ class ConferenceApplication
 
 	createCallControlNotify(_p)
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return;
 		}
@@ -4489,17 +4512,17 @@ class ConferenceApplication
 
 	onUserStatsReceived(e)
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.setUserStats(e.userId, e.report);
+			this.viewPort.setUserStats(e.userId, e.report, e.mediaServerId);
 		}
 	}
 
 	onCallUserScreenState(e)
 	{
-		if(this.callView)
+		if(this.viewPort)
 		{
-			this.callView.setUserScreenState(e.userId, e.screenState);
+			this.viewPort.setUserScreenState(e.userId, e.screenState);
 		}
 		this.updateCallUser(e.userId, {screenState: e.screenState});
 	}
@@ -4592,22 +4615,22 @@ class ConferenceApplication
 				{
 					if (Call.CallCloudRecord.isCisRegion)
 					{
-						this.callView.showCommonRecordStartNotify(event.userId, Call.CallCommonRecordState.Started);
+						this.viewPort.showCommonRecordStartNotify(event.userId, Call.CallCommonRecordState.Started);
 					}
 					else
 					{
-						this.callView.showCommonRecordStartModal();
+						this.viewPort.showCommonRecordStartModal();
 					}
 				}
 			}
 			else
 			{
-				this.callView.showCommonRecordStartNotify(event.userId, event.commonRecordState.state);
+				this.viewPort.showCommonRecordStartNotify(event.userId, event.commonRecordState.state);
 			}
 		}
 
 		this.commonRecord.state = event.commonRecordState.state;
-		this.callView.setCommonRecordState(event.commonRecordState);
+		this.viewPort.setCommonRecordState(event.commonRecordState);
 		this.commonRecord.initiatorId = event.initiatorId;
 
 		if (Util.isCommonRecordStateInactive(event.commonRecordState.state))
@@ -4620,8 +4643,8 @@ class ConferenceApplication
 			this.commonRecord.info = structuredClone(event.commonRecordState);
 		}
 
-		this.callView.unblockButtons(['record']);
-		this.callView.setButtonActive('record', [Call.CloudRecordStatus.STARTED, Call.CloudRecordStatus.PAUSED].includes(event.code));
+		this.viewPort.unblockButtons(['record']);
+		this.viewPort.setButtonActive('record', [Call.CloudRecordStatus.STARTED, Call.CloudRecordStatus.PAUSED].includes(event.code));
 	}
 
 	#onCallUserCommonRecordState(event)
@@ -4635,7 +4658,7 @@ class ConferenceApplication
 		const { state, userId: initiatorId } = commonRecordState;
 
 		this.commonRecord.state = state;
-		this.callView.setCommonRecordState(commonRecordState);
+		this.viewPort.setCommonRecordState(commonRecordState);
 		this.commonRecord.initiatorId = initiatorId;
 
 		if ([Call.CallCommonRecordState.Stopped, Call.CallCommonRecordState.Destroyed].includes(state))
@@ -4650,7 +4673,7 @@ class ConferenceApplication
 		if (!this.commonRecord.notifyShowed && state === Call.CallCommonRecordState.Started && initiatorId !== this.controller.getUserId())
 		{
 			this.commonRecord.notifyShowed = true;
-			this.callView.showCommonRecordStartNotify(initiatorId);
+			this.viewPort.showCommonRecordStartNotify(initiatorId);
 		}
 
 		if (Util.isCommonRecordStateInactive(state) && initiatorId !== this.controller.getUserId())
@@ -4728,13 +4751,13 @@ class ConferenceApplication
 
 	onCallUserFloorRequest(e)
 	{
-		this.callView.setUserFloorRequestState(e.userId, e.requestActive);
+		this.viewPort.setUserFloorRequestState(e.userId, e.requestActive);
 		this.updateCallUser(e.userId, {floorRequestState: e.requestActive});
 	}
 
 	onMicrophoneLevel(e)
 	{
-		this.callView.setMicrophoneLevel(e.level);
+		this.viewPort.setMicrophoneLevel(e.level);
 	}
 
 	onCallJoin(e)
@@ -4746,17 +4769,17 @@ class ConferenceApplication
 
 		if (!this.isViewerMode())
 		{
-			this.callView.unblockButtons(['floorRequest', 'screen']);
+			this.viewPort.unblockButtons(['floorRequest', 'screen']);
 			this.checkAvailableCamera();
 			this.checkAvailableMicrophone();
 		}
 
-		if (this.callView.getConnectedUserCount(false))
+		if (this.viewPort.getConnectedUserCount(false))
 		{
-			this.callView.unblockButtons(['record']);
+			this.viewPort.unblockButtons(['record']);
 		}
 
-		this.callView.setUiState(Call.View.UiState.Connected);
+		this.viewPort.setUiState(Call.View.UiState.Connected);
 	}
 
 	onCallFailure(e)
@@ -4827,19 +4850,19 @@ class ConferenceApplication
 				}
 		}
 
-		if (this.callView)
+		if (this.viewPort)
 		{
 			if (isUnknownError)
 			{
-				this.callView.showSelfTest();
+				this.viewPort.showSelfTest();
 			}
 			else if (errorCode === Call.DisconnectReason.SecurityKeyChanged)
 			{
-				this.callView.showSecurityKeyError();
+				this.viewPort.showSecurityKeyError();
 			}
 			else
 			{
-				this.callView.showFatalError({ text: errorMessage });
+				this.viewPort.showFatalError({ text: errorMessage });
 			}
 		}
 		else
@@ -4978,22 +5001,22 @@ class ConferenceApplication
 		if (rightPanelMode === RightPanelMode.hidden)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.chat});
-			this.callView.setButtonActive('chat', true);
+			this.viewPort.setButtonActive('chat', true);
 		}
 		else if (rightPanelMode === RightPanelMode.chat)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.hidden});
-			this.callView.setButtonActive('chat', false);
+			this.viewPort.setButtonActive('chat', false);
 		}
 		else if (rightPanelMode === RightPanelMode.users)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.split});
-			this.callView.setButtonActive('chat', true);
+			this.viewPort.setButtonActive('chat', true);
 		}
 		else if (rightPanelMode === RightPanelMode.split)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.users});
-			this.callView.setButtonActive('chat', false);
+			this.viewPort.setButtonActive('chat', false);
 		}
 	}
 
@@ -5003,42 +5026,42 @@ class ConferenceApplication
 		if (rightPanelMode === RightPanelMode.hidden)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.users});
-			this.callView.setButtonActive('users', true);
+			this.viewPort.setButtonActive('users', true);
 		}
 		else if (rightPanelMode === RightPanelMode.users)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.hidden});
-			this.callView.setButtonActive('users', false);
+			this.viewPort.setButtonActive('users', false);
 		}
 		else if (rightPanelMode === RightPanelMode.chat)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.split});
-			this.callView.setButtonActive('users', true);
+			this.viewPort.setButtonActive('users', true);
 		}
 		else if (rightPanelMode === RightPanelMode.split)
 		{
 			this.controller.getStore().dispatch('conference/changeRightPanelMode', {mode: RightPanelMode.chat});
-			this.callView.setButtonActive('users', false);
+			this.viewPort.setButtonActive('users', false);
 		}
 	}
 
 	pinUser(user)
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return false;
 		}
-		this.callView.pinUser(user.id);
-		this.callView.setLayout(Call.View.Layout.Centered);
+		this.viewPort.pinUser(user.id);
+		this.viewPort.setLayout(Call.View.Layout.Centered);
 	}
 
 	unpinUser()
 	{
-		if (!this.callView)
+		if (!this.viewPort)
 		{
 			return false;
 		}
-		this.callView.unpinUser();
+		this.viewPort.unpinUser();
 	}
 
 	changeBackground()
@@ -5120,12 +5143,12 @@ class ConferenceApplication
 
 	onInputFocus(e)
 	{
-		this.callView.setHotKeyTemporaryBlock(true);
+		this.viewPort.setHotKeyTemporaryBlock(true);
 	}
 
 	onInputBlur(e)
 	{
-		this.callView.setHotKeyTemporaryBlock(false);
+		this.viewPort.setHotKeyTemporaryBlock(false);
 	}
 
 	closeReconnectionBaloon()
@@ -5233,9 +5256,9 @@ class ConferenceApplication
 
 	setUserWasRenamed()
 	{
-		if (this.callView)
+		if (this.viewPort)
 		{
-			this.callView.localUser.userModel.wasRenamed = true;
+			this.viewPort.localUser.userModel.wasRenamed = true;
 		}
 	}
 	/* endregion 01. General actions */
@@ -5377,8 +5400,12 @@ class ConferenceApplication
 		return !!this.getUserHash();
 	}
 
-	getCallConfig(videoEnabled: Boolean, callUuid: String): Object
+	getCallConfig(videoEnabled: Boolean,joinExisting: Boolean, callUuid: String): Object
 	{
+		const dialogData = this.getDialogData() ?? {};
+		const ownerId = Number(dialogData.ownerId ?? dialogData.owner ?? 0) || 0;
+		const managerIds = Array.isArray(dialogData.managerList) ? dialogData.managerList.map(Number) : [];
+
 		const callConfig = {
 			videoEnabled,
 			type: Call.Type.Permanent,
@@ -5386,7 +5413,7 @@ class ConferenceApplication
 			entityId: this.getDialogId(),
 			provider: Call.Provider.Bitrix,
 			enableMicAutoParameters: Call.Hardware.enableMicAutoParameters,
-			joinExisting: true,
+			joinExisting: Boolean(joinExisting),
 			token: this.callToken,
 			chatInfo: {
 				advanced: {
@@ -5403,7 +5430,9 @@ class ConferenceApplication
 				chatId: this.getChatId(),
 				name: this.params.conferenceTitle,
 				type: 'chat',
-				userCounter: this.getDialogData()?.userCounter,
+				userCounter: dialogData.userCounter,
+				ownerId,
+				managerIds,
 			},
 		};
 
@@ -5489,12 +5518,12 @@ class ConferenceApplication
 	#showCloudRecordPromo()
 	{
 		if (
-			this.callView
+			this.viewPort
 			&& (this.currentCall && this.currentCall.isAnyoneParticipating())
 			&& Call.CallCloudRecord.serviceEnabled
 		)
 		{
-			this.callView.showCloudRecordPromo(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+			this.viewPort.showCloudRecordPromo(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
 		}
 	}
 

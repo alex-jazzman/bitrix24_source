@@ -94,12 +94,7 @@ export class RightSidebar
 			return;
 		}
 
-		if (this.#rightPanel.isExpanded())
-		{
-			Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');
-			Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
-		}
-		else if (SidePanel.Instance.getOpenSlidersCount() > 0)
+		if (SidePanel.Instance.getOpenSlidersCount() > 0)
 		{
 			Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
 			Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');

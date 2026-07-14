@@ -1,3 +1,4 @@
+// @flow
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import { STREAM_QUALITY, LOCAL_STREAM_QUALITY_HEIGHT } from './stream_quality';
 import { Event, Type } from 'main.core';
@@ -5,238 +6,61 @@ import { Event, Type } from 'main.core';
 import Util from './util';
 import { RoomType } from './engine/engine';
 import { Hardware } from './call_hardware';
+import { MediaServer } from './media-server';
 import { CallStreamManager } from './media-stream-manager';
 
-export const ClientPlatform = 'web';
+import { type LayersAvailability, type SubscribedQuality } from 'call.const';
 
-export const ClientVersion = '1.0.0';
+import {
+	ClientPlatform,
+	ClientVersion,
+	MediaStreamsKinds,
+	CALL_STATE,
+	VIDEO_QUEUE,
+	MONITORING_METRICS,
+	MONITORING_METRICS_PROMETHEUS,
+	RecorderStatus,
+	CloudRecordStatus,
+	CloudRecordKind,
+	JoinRequestFailedCodes,
+	ConnectionType,
+	CloseCode,
+	CallApiEvent,
+	LOG_LEVEL,
+	MONITORING_EVENTS_NAME_LIST,
+	ReconnectionReason,
+} from './sdk/const';
+import { createMessage } from './sdk/mappers';
+import { JoinResponseError } from './sdk/errors';
+import { Track } from './sdk/models';
+import { calcBitrateSumFromArray, fillDefaultValueMonitoringMetrics, checkMetricsFeatureAndExecutionCallback, sendMonitoringData } from './sdk/helpers/monitoring';
+import { buildMediaConstraints, isNoiseSuppressionInputTrackOff } from './sdk/helpers/media';
 
-export const MediaStreamsKinds = {
-	Camera: 1,
-	Microphone: 2,
-	Screen: 3,
-	ScreenAudio: 4,
-}
-
-class Track {
-	id = null;
-	source = '';
-	track = {};
-
-	constructor(id, track) {
-		this.id = id;
-		this.source = track.source;
-		this.track = track
-	}
-}
-
-class Message {
-	text
-	from
-	timestamp
-
-	constructor(message) {
-		this.text = message.message
-		this.from = message.senderSid
-		this.timestamp = Math.floor(Date.now() / 1000)
-	}
-}
-
-export const CALL_STATE = {
-	CONNECTED: 'Connected',
-	PROGRESSING: 'Progressing',
-	TERMINATED: 'Terminated',
-}
-
-const VIDEO_QUEUE = {
-	INITIAL: '',
-	ENABLE: 'enable',
-	DISABLE: 'disable',
+export {
+	ClientPlatform,
+	ClientVersion,
+	MediaStreamsKinds,
+	CALL_STATE,
+	RecorderStatus,
+	CloudRecordStatus,
+	CloudRecordKind,
+	JoinRequestFailedCodes,
+	ConnectionType,
+	LOG_LEVEL,
+	MONITORING_EVENTS_NAME_LIST,
+	JoinResponseError,
 };
 
-const LOG_LEVEL = {
-	INFO: 'INFO',
-	WARNING: 'WARNING',
-	ERROR: 'ERROR',
-};
-
-const MONITORING_EVENTS_NAME_LIST = {
-	TRACK_SUBSCRIPTION_FAILED: 'webrtc_track_subscription_failed',
-	TRACK_SUBSCRIPTION_DELAY: 'webrtc_track_subscription_delay',
-	HIGH_PACKET_LOSS_SEND: 'webrtc_high_packet_loss_send',
-	HIGH_PACKET_LOSS_RECEIVE: 'webrtc_high_packet_loss_receive',
-	CPU_ISSUES: 'webrtc_cpu_issues',
-	NETWORK_ISSUES: 'webrtc_network_issues',
-	NETWORK_LATENCY_MS: 'webrtc_network_latency_ms',
-	PEER_CONNECTION_REFUSED: 'webrtc_peer_connection_refused',
-	//PEER_CONNECTION_ISSUES: 'webrtc_peer_connection_issues', // removed
-	PEER_CONNECTION_ISSUES_HANDLING_OFFER: 'webrtc_peer_connection_issues_handling_offer',
-	PEER_CONNECTION_ISSUES_HANDLING_ANSWER: 'webrtc_peer_connection_issues_handling_answer',
-	PEER_CONNECTION_ISSUES_ADDING_ICE_CANDIDATE: 'webrtc_peer_connection_issues_adding_ice_candidate',
-	USER_CAMERA_DISABLED: 'webrtc_user_camera_disabled',
-	USER_RECONNECTED: 'webrtc_user_reconnected',
-	LOCAL_VIDEO_STREAM_RECEIVING_FAILED: 'webrtc_local_video_stream_receiving_failed',
-	LOCAL_MICROPHONE_STREAM_RECEIVING_FAILED: 'webrtc_local_microphone_stream_receiving_failed',
-	LOCAL_SCREEN_STREAM_RECEIVING_FAILED: 'webrtc_local_screen_stream_receiving_failed',
-	LOCAL_VIDEO_STREAM_PUBLICATION_FAILED: 'webrtc_local_video_stream_publication_failed',
-	LOCAL_MICROPHONE_STREAM_PUBLICATION_FAILED: 'webrtc_local_microphone_stream_publication_failed',
-	LOCAL_SCREEN_STREAM_PUBLICATION_FAILED: 'webrtc_local_screen_stream_publication_failed',
-
-	STREAM_FAILURE_TOTAL: 'webrtc_stream_failure_total', // not implemented yet
-	RECONNECT_ATTEMPTS: 'webrtc_reconnect_attempts', // not implemented yet
-	RECONNECT_DURATION_SECONDS: 'webrtc_reconnect_duration_seconds', // not implemented yet
-	CPU_USAGE_PERCENT: 'webrtc_cpu_usage_percent', // not implemented yet
-	HIGH_PACKET_LOSS_PERCENT: 'webrtc_packet_loss_percent', // not implemented yet
-	SUBSCRIPTION_DELAY_MS: 'webrtc_subscription_delay_ms', // not implemented yet
-};
-
-const MONITORING_METRICS = {
-	COUNT_TRACKS: 'COUNT_TRACKS',
-	COUNT_VIDEO_TRACKS: 'COUNT_VIDEO_TRACKS',
-	COUNT_AUDIO_TRACKS: 'COUNT_AUDIO_TRACKS',
-	PACKET_LOST_RECEIVE: 'PACKET_LOST_RECEIVE',
-	PACKET_LOST_SEND: 'PACKET_LOST_SEND',
-	BITRATE_IN: 'BITRATE_IN',
-	BITRATE_OUT: 'BITRATE_OUT',
-	CONN_SCORE_CURRENT: 'CONN_SCORE_CURRENT',
-	FRAMES_LOSS: 'FRAMES_LOSS',
-	FREEZE_COUNT: 'FREEZE_COUNT',
-	TOTAL_FREEZE_DURATION: 'TOTAL_FREEZE_DURATION',
-	JITTER: 'JITTER',
-	FRAMES_DECODED: 'FRAMES_DECODED',
-	FRAMES_DROPPED: 'FRAMES_DROPPED',
-	FRAMES_RECEIVED: 'FRAMES_RECEIVED',
-};
-
-const MONITORING_METRICS_PHROMETEUS = {
-	COUNT_TRACKS: 'webrtc_active_tracks',
-	COUNT_VIDEO_TRACKS: 'webrtc_active_video_tracks',
-	COUNT_AUDIO_TRACKS: 'webrtc_active_audio_tracks',
-	PACKET_LOST_RECEIVE: 'webrtc_packets_lost_receive_total',
-	PACKET_LOST_SEND: 'webrtc_packets_lost_send_total',
-	BITRATE_IN: 'webrtc_bitrate_receive_bps',
-	BITRATE_OUT: 'webrtc_bitrate_send_bps',
-	CONN_SCORE_CURRENT: 'webrtc_connection_score',
-	FRAMES_LOSS: 'webrtc_frames_lost_total',
-	FREEZE_COUNT: 'webrtc_freeze_count_total',
-	TOTAL_FREEZE_DURATION: 'webrtc_freeze_duration_seconds_total',
-	JITTER: 'webrtc_jitter_seconds',
-	FRAMES_DECODED: 'webrtc_frames_decoded_total',
-	FRAMES_DROPPED: 'webrtc_frames_dropped_total',
-	FRAMES_RECEIVED: 'webrtc_frames_received_total',
-};
-
-export const RecorderStatus = {
-	UNAVAILABLE: 0, // recording not available at the moment
-	NONE: 1, // recording not started but available
-	ENABLED: 2, // recording started and not paused
-	DISABLED: 3, // recording stopped and can not be resumed
-	PAUSED: 4, // recording started and paused
-	DESTROYED: 5, // recording will be aborted and no results will be provided
-};
-
-export const CloudRecordStatus = {
-	NONE: 1, // record not started
-	STARTED: 2, // record started and not paused
-	STOPPED: 3, // record stopped and can not be resumed
-	PAUSED: 4, // record started and paused
-	DESTROYED: 5, // record will be aborted and no results will be provided
-};
-
-export const CloudRecordKind = {
-	AUDIO: 1,
-	VIDEO: 2,
-};
-
-const ReconnectionReason = {
-	NetworkError: 'NetworkError',
-	PingPongMissed: 'PingPongMissed',
-	PeerConnectionFailed: 'PeerConnectionFailed',
-	WsTransportClosed: 'WsTransportClosed',
-	LeaveCommand: 'LeaveCommand',
-	JoinResponseError: 'JoinResponseError',
-};
-
-export const JoinRequestFailedCodes = {
-	CanNotCreateRoom: 1,
-	InputError: 2,
-	AccessDenied: 3,
-	RoomNotFound: 5,
-	MalfunctioningSignaling: 7,
-	JsonParsingError: 'JsonParsingError',
-	UnexpectedResponse: 'UnexpectedResponse',
-	FailedRequest: 'FailedRequest',
-	AbortedRequest: 'AbortedRequest',
-	UnknownError: 'UnknownError',
-};
-
-export const ConnectionType = {
-	PeerToPeer: 0,
-	MediaServer: 1,
-};
-
-const CloseCode = {
-	Normal: 1000,
-	Reconnect: 4001,
-};
-
-export class JoinResponseError extends Error
+export class Call
 {
-	constructor(error, code) {
-		let message = '';
-		if (Type.isObject(error) && (error instanceof Error))
-		{
-			message = error.message;
-		}
-		else
-		{
-			message = error;
-		}
-		let errorCode = null;
-		let name = null;
-		const fondedCodePair = Object
-			.entries(JoinRequestFailedCodes)
-			.find(([_, failedCode]) => failedCode === code);
-		if (fondedCodePair)
-		{
-			[name, errorCode] = fondedCodePair;
-		}
-
-		if (!name)
-		{
-			name = 'UnknownError';
-		}
-
-		super(message);
-		this.name = name;
-		this.code = errorCode ?? code;
-
-		if (Type.isObject(error) && (error instanceof Error))
-		{
-			this.stack = error.stack;
-		}
-	}
-}
-
-const CallApiEvent = {
-	Reconnected: 'Reconnected',
-	Connected: 'Connected',
-};
-
-export class Call {
-	sender = null;
-	recipient = null;
-	#peerConnectionAbortController = null;
 	#privateProperties = {
-		codec: 'vp8',
 		canReconnect: true,
 		logs: {},
 		isloggingEnable: true,
 		loggerCallback: null,
 		abortController: new AbortController(),
-		isWaitAnswer: false,
-		reportsForIncomingTracks: {},
-		outgoingTracksReports: {},
+		mediaServers: new Map(),
+		previousMediaServers: null,
 		prevParticipantsWithLargeDataLoss: new Set(),
 		tracksDataFromSocket: {},
 		realTracksIds: {}, // todo: check why track ids are different in a stream and in the track itself
@@ -250,18 +74,13 @@ export class Call {
 		roomType: RoomType.Small,
 		roomId: null,
 		isLegacy: false,
-		token: null,
+		autoSubscribe: false,
 		endpoint: null,
 		jwt: null,
 		options: null,
-		iceServers: null,
-		socketConnect: null,
-		peerConnectionFailed: false,
-		pendingOffer: null,
-		pendingCandidates: {
-			recipient: [],
-			sender: [],
-		},
+		publishingMediaServerIdForSmallRoom: 0,
+		publishingMediaServerId: null,
+		socketConnection: null,
 		pendingPublications: {},
 		pendingSubscriptions: {},
 		publicationTimeout: 10000,
@@ -277,18 +96,19 @@ export class Call {
 		localTracks: {},
 		localConnectionQuality: 0,
 		minimalConnectionQuality: 2,
-		rtt: 0,
+		rtt: {},
+		pings: {},
 		pingIntervalDuration: 0,
 		pingTimeoutDuration: 0,
+		awaitedPings: new Set(),
 		ontrackData: {},
-		remoteTracks: {},
 		remoteParticipants: {},
 		participantsToUpdateTrackAvailability: {},
+		tracksToProcess: [],
 		mainStream: {},
-		pingPongTimeout: null,
-		pingPongInterval: null,
+		pingPongIntervals: {},
 		userId: '',
-		localParticipantSid: '',
+		localParticipantSid: {},
 		defaultVideoResolution: {
 			width: 1280,
 			height: 720
@@ -298,14 +118,14 @@ export class Call {
 			h: 300000,
 			f: 1000000
 		},
+		useLayersAccurateControl: false,
 		defaultRemoteStreamsQuality: STREAM_QUALITY.MEDIUM,
 		audioBitrate: 70000,
 		videoBitrate: 1500000,
-		screenBitrate: 1500000,
+		screenBitrate: 1000000,
 		videoSimulcast: true,
 		screenSimulcast: false,
 		events: new Map(),
-		offersStack: 0,
 		audioDeviceId: '',
 		switchActiveAudioDeviceInProgress: null,
 		switchActiveAudioDevicePending: null,
@@ -321,15 +141,33 @@ export class Call {
 		callStatsInterval: null,
 		callState: '',
 		wasConnected: false,
+		allMediaServersConnected: false,
+		mediaServersConnected: {},
 		packetLostThreshold: 7,
 		statsTimeout: 3000,
+		outgoingTracksReports: {},
+		reportsForIncomingTracks: {},
+		stats: {},
 		videoQueue: VIDEO_QUEUE.INITIAL,
 		videoStreamSetupErrorList: {},
 	};
 
-	constructor() {
+	constructor()
+	{
 		this.sendLeaveBound = this.#sendLeave.bind(this);
-		this.beforeDisconnectBound = this.#beforeDisconnect.bind(this);
+		this.beforeDisconnectBound = this.#beforeDisconnect.bind(this, {
+			initiatedByUser: true,
+			destroySocket: true,
+		});
+
+		this.setLogBound = this.setLog.bind(this);
+		this.sendSignalBound = this.#sendSignal.bind(this);
+		this.onAddTrackBound = this.#onAddTrack.bind(this);
+		this.onTrackBound = this.#onTrack.bind(this);
+		this.processStatsBound = this.#processStats.bind(this);
+		this.onPeerConnectionIssueBound = this.#onPeerConnectionIssue.bind(this);
+		this.onMediaServerDownBound = this.#onMediaServerDown.bind(this);
+		this.onMediaServerUpBound = this.#onMediaServerUp.bind(this);
 
 		this.monitoringEvents = [];
 		this.monitoringDelayTime = 30000;
@@ -339,7 +177,7 @@ export class Call {
 
 		this.currentMonitoringEventsObject =
 		{
-			metrics: [],
+			metrics: fillDefaultValueMonitoringMetrics(),
 			events: [],
 			logs: [],
 			increasingEvents: [],
@@ -365,9 +203,12 @@ export class Call {
 		Hardware.maxLocalStreamQualityHeight = LOCAL_STREAM_QUALITY_HEIGHT.HIGH;
 	}
 
-	get iceServers()
+	get iceServers(): Array<RTCIceServer> | null
 	{
-		return this.#privateProperties.iceServers;
+		const mediaServer = this.#getPublishingMediaServer();
+		const iceServers = mediaServer?.iceServers ?? null;
+
+		return Type.isArray(iceServers) ? iceServers : null;
 	}
 
 	get remoteParticipantsCount()
@@ -389,7 +230,9 @@ export class Call {
 	{
 		const rtt = connection.rtt;
 
-		if (!rtt && !this.#privateProperties.isReconnecting)
+		const isConnectionLost = rtt === null || rtt === undefined;
+
+		if (isConnectionLost && !this.#privateProperties.isReconnecting)
 		{
 			this.#beforeDisconnect();
 			this.#reconnect({
@@ -414,27 +257,9 @@ export class Call {
 		});
 	}
 
-	checkMetricsFeatureAndExecutionCallback(callback)
-	{
-		if (typeof callback === 'function' && Util.isMetricsEnabled())
-		{
-			callback();
-		}
-	}
-
 	clearMonitoringEvents()
 	{
 		this.monitoringEvents = [];
-	}
-
-	calcBitrateSumFromArray({ bitrateArray })
-	{
-		if (bitrateArray && Array.isArray(bitrateArray))
-		{
-			return bitrateArray.reduce((acc, currentValue) => acc + currentValue.bitrate || 0, 0);
-		}
-
-		return 0;
 	}
 
 	addValidatedMonitoringMetric({ additionalData, metricValue, metricKey })
@@ -443,7 +268,7 @@ export class Call {
 		{
 			this.currentMonitoringRtcStatsObject[metricKey] = {
 				metric:
-					{	__name__: MONITORING_METRICS_PHROMETEUS[metricKey] || metricKey,
+					{	__name__: MONITORING_METRICS_PROMETHEUS[metricKey] || metricKey,
 						user_id: String(this.#privateProperties.userId),
 						session_id: String(this.#privateProperties.roomId),
 						env: String(this.#privateProperties.monitoringEnvironment),
@@ -493,7 +318,7 @@ export class Call {
 	{
 		this.currentMonitoringEventsObject.events = [];
 		this.currentMonitoringEventsObject.logs = [];
-		this.currentMonitoringEventsObject.metrics = this.fillDefaultValueMonitoringMetrics();
+		this.currentMonitoringEventsObject.metrics = fillDefaultValueMonitoringMetrics();
 	}
 
 	getCountRemoteTracks()
@@ -528,28 +353,6 @@ export class Call {
 			countVideoTracks,
 			countAudioTracks,
 		}
-	}
-
-	getDefaultValueMonitoringMetric(key)
-	{
-		switch (key)
-		{
-			case 'COUNT_TRACKS':
-				return {
-					video: 0,
-					audio: 0,
-				};
-			default:
-				return [];
-		}
-	}
-
-	fillDefaultValueMonitoringMetrics()
-	{
-		return Object.entries(MONITORING_METRICS).reduce((acc, [key, value]) => {
-			acc[value] = this.getDefaultValueMonitoringMetric(key);
-			return acc;
-		}, {});
 	}
 
 	startAggregateMonitoringEvents()
@@ -594,24 +397,28 @@ export class Call {
 			{
 				for (let key in this.currentMonitoringRtcStatsObject)
 				{
-				   if (this.currentMonitoringRtcStatsObject.hasOwnProperty(key))
-				   {
+					if (this.currentMonitoringRtcStatsObject.hasOwnProperty(key))
+					{
 						metricsResultString += JSON.stringify(this.currentMonitoringRtcStatsObject[key]) + '\r\n';
-				   }
+					}
 				}
 			}
 
 			for (let key in this.currentMonitoringEventsObject.events)
 			{
-			   if (this.currentMonitoringEventsObject.events.hasOwnProperty(key))
-			   {
+				if (this.currentMonitoringEventsObject.events.hasOwnProperty(key))
+				{
 					metricsResultString += JSON.stringify(this.currentMonitoringEventsObject.events[key]) + '\r\n';
-			   }
+				}
 			}
 
 			if (metricsResultString)
 			{
-				this.sendMonitoringHandler(metricsResultString, this.#privateProperties.monitoringServerUrl, this.#privateProperties.monitoringJwtToken);
+				sendMonitoringData(
+					metricsResultString,
+					this.#privateProperties.monitoringServerUrl,
+					this.#privateProperties.monitoringJwtToken,
+				);
 			}
 		}
 
@@ -622,14 +429,14 @@ export class Call {
 				resourceLogs:
 				[
 					{
-					 resource: {
-						attributes:
-						{
-							'service.name': 'call-logs',
-							'service.version': 'v0.0.1',
-							platform: ClientPlatform,
+						resource: {
+							attributes:
+							{
+								'service.name': 'call-logs',
+								'service.version': 'v0.0.1',
+								platform: ClientPlatform,
+							},
 						},
-					 },
 						scopeLogs:
 						[{
 							scope:
@@ -645,7 +452,11 @@ export class Call {
 
 			const resultLogsStr = JSON.stringify(otplLogsStructure);
 
-			this.sendMonitoringHandler(resultLogsStr, this.#privateProperties.monitoringLogsServerUrl, this.#privateProperties.monitoringJwtToken);
+			sendMonitoringData(
+				resultLogsStr,
+				this.#privateProperties.monitoringLogsServerUrl,
+				this.#privateProperties.monitoringJwtToken,
+			);
 		}
 
 		this.currentMonitoringRtcStatsObject = {};
@@ -687,7 +498,7 @@ export class Call {
 
 	onPublishFailed(kind)
 	{
-		this.triggerEvents('PublishFailed', [kind]);
+		this.#triggerEvents('PublishFailed', [kind]);
 		let eventName;
 		if (kind === MediaStreamsKinds.Camera)
 		{
@@ -701,8 +512,7 @@ export class Call {
 		{
 			eventName = MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_PUBLICATION_FAILED;
 		}
-		this.checkMetricsFeatureAndExecutionCallback(() =>
-		{
+		checkMetricsFeatureAndExecutionCallback(() => {
 			this.addMonitoringEvents({
 				name: eventName,
 				withCounter: true,
@@ -710,12 +520,18 @@ export class Call {
 		});
 	}
 
-	async connect(options) {
+	async connect(options)
+	{
 		this.setLog(`Connecting to the call (desktop: ${Util.isDesktop()})`, LOG_LEVEL.INFO);
-		this.#privateProperties.callState = CALL_STATE.PROGRESSING
+		this.#privateProperties.callState = CALL_STATE.PROGRESSING;
+
+		if (Util.isMetricsEnabled() || Util.isMetricsLogsEnabled())
+		{
+			this.startAggregateMonitoringEvents();
+		}
 
 		for (let key in options) {
-			this.#privateProperties[`${key}`] = options[key]
+			this.#privateProperties[`${key}`] = options[key];
 		}
 
 		if (this.#privateProperties.isLegacy)
@@ -723,13 +539,13 @@ export class Call {
 			if (!this.#privateProperties.endpoint)
 			{
 				this.setLog(`Missing required param 'endpoint' from backend, disconnecting`, LOG_LEVEL.ERROR);
-				this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'endpoint'`}]);
+				this.#triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'endpoint'`}]);
 				return;
 			}
 			if (!this.#privateProperties.jwt)
 			{
 				this.setLog(`Missing required param 'jwt' from backend, disconnecting`, LOG_LEVEL.ERROR);
-				this.triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'jwt'`}]);
+				this.#triggerEvents('Failed', [{name: 'AUTHORIZE_ERROR', message: `Missing required param 'jwt'`}]);
 				return;
 			}
 
@@ -752,6 +568,18 @@ export class Call {
 				this.#privateProperties.monitoringJwtToken = mediaServerInfo.monitoringJwtToken;
 				this.#privateProperties.monitoringEnvironment = mediaServerInfo.monitoringEnvironment;
 				this.#privateProperties.monitoringRegion = mediaServerInfo.monitoringRegion;
+
+				const roomTypes = Object.values(RoomType);
+
+				if (!roomTypes.includes(this.#privateProperties.roomType))
+				{
+					this.#triggerEvents('Failed', [{
+						name: 'UNSUPPORTED_ROOM_TYPE',
+						message: `Got unknown room type ${this.#privateProperties.roomType}`,
+					}]);
+
+					return;
+				}
 			}
 			catch (error)
 			{
@@ -767,7 +595,7 @@ export class Call {
 				}
 				else if (this.#privateProperties.abortController.signal.aborted)
 				{
-					this.triggerEvents('Failed', [error]);
+					this.#triggerEvents('Failed', [error]);
 				}
 
 				return;
@@ -782,44 +610,51 @@ export class Call {
 		}
 
 		this.#privateProperties.abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
+		this.#privateProperties.socketConnection?.close(CloseCode.Reconnect);
 
-		this.#privateProperties.socketConnect = new WebSocket(
-			`${this.#privateProperties.mediaServerUrl}?auto_subscribe=1&sdk=js&version=1.6.7&protocol=8`
+		const autoSubscribe = this.#privateProperties.autoSubscribe ? 1 : 0;
+
+		this.#privateProperties.socketConnection = new WebSocket(
+			`${this.#privateProperties.mediaServerUrl}?auto_subscribe=${autoSubscribe}&sdk=js&version=1.6.7&protocol=8`
 			+`&roomData=${this.#privateProperties.roomData}`
 			+`&clientVersion=${ClientVersion}`
 			+`&clientPlatform=${ClientPlatform}`);
 
-		this.#privateProperties.socketConnect.onmessage = (e) => this.socketOnMessageHandler(e);
-		this.#privateProperties.socketConnect.onopen = () => this.socketOnOpenHandler();
-		this.#privateProperties.socketConnect.onerror = () => this.socketOnErrorHandler();
-		this.#privateProperties.socketConnect.onclose = (e) => this.socketOnCloseHandler(e);
+		this.#privateProperties.socketConnection.onmessage = (e) => this.socketOnMessageHandler(e);
+		this.#privateProperties.socketConnection.onopen = () => this.socketOnOpenHandler();
+		this.#privateProperties.socketConnection.onerror = () => this.socketOnErrorHandler();
+		this.#privateProperties.socketConnection.onclose = (e) => this.socketOnCloseHandler(e);
 	};
 
-	#reconnect(data) {
+	#reconnect(reconnectInfo): void
+	{
+		const data: any = Type.isObject(reconnectInfo) ? reconnectInfo : {};
+
 		this.#privateProperties.isReconnecting = true;
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 
-		const reconnect = () =>
-		{
-			const reconnectionDelay = this.#privateProperties.lastReconnectionReason !== ReconnectionReason.JoinResponseError
-				? this.#privateProperties.fastReconnectionDelay
-				: this.#privateProperties.reconnectionDelay;
-			this.setLog(`Reconnecting attempt: ${++this.#privateProperties.reconnectionAttempt}`, LOG_LEVEL.WARNING);
-			this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
-		};
+		const reasonText = data.reconnectionReason ? `, reason: ${data.reconnectionReason}` : '';
+		const detailsText = data.reconnectionReasonInfo ? `, details: ${data.reconnectionReasonInfo}` : '';
+		const reconnectLog = `Starting reconnection attempt #${++this.#privateProperties.reconnectionAttempt}${reasonText}${detailsText}`;
+		this.setLog(reconnectLog, LOG_LEVEL.WARNING);
 
-		reconnect();
+		const reconnectionDelay = this.#privateProperties.lastReconnectionReason === ReconnectionReason.JoinResponseError
+			? this.#privateProperties.reconnectionDelay
+			: this.#privateProperties.fastReconnectionDelay;
+		this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 
-		this.checkMetricsFeatureAndExecutionCallback(() =>
-		{
+		this.#privateProperties.previousMediaServers = this.#privateProperties.mediaServers;
+		this.#privateProperties.mediaServers = new Map();
+
+		checkMetricsFeatureAndExecutionCallback(() => {
 			this.addMonitoringEvents({
 				name: MONITORING_EVENTS_NAME_LIST.USER_RECONNECTED,
 				withCounter: true,
 			});
 		});
 
-		this.triggerEvents('Reconnecting', [data]);
-	};
+		this.#triggerEvents('Reconnecting', [data]);
+	}
 
 	#beforeDisconnect(options: Object): void
 	{
@@ -831,26 +666,48 @@ export class Call {
 
 		this.#privateProperties.mediaServerUrl = '';
 		this.#privateProperties.roomData = '';
-		this.#privateProperties.pendingOffer = null;
-		this.#privateProperties.pendingCandidates = { recipient: [], sender: [] };
-
+		this.#privateProperties.allMediaServersConnected = false;
+		this.#privateProperties.mediaServersConnected = {};
 		this.#privateProperties.localTracks = {};
-		this.#privateProperties.isWaitAnswer = false;
 
-		if (this.#privateProperties.socketConnect)
+		if (this.#privateProperties.socketConnection)
 		{
 			const closeCode = disconnectOptions.initiatedByUser ? CloseCode.Normal : CloseCode.Reconnect;
-			this.#privateProperties.socketConnect.onmessage = null;
-			this.#privateProperties.socketConnect.onopen = null;
-			this.#privateProperties.socketConnect.onerror = null;
-			this.#privateProperties.socketConnect.onclose = null;
+			this.#privateProperties.socketConnection.onmessage = null;
+			this.#privateProperties.socketConnection.onopen = null;
+			this.#privateProperties.socketConnection.onerror = null;
+			this.#privateProperties.socketConnection.onclose = null;
 
 			if (disconnectOptions.destroySocket)
 			{
-				this.#privateProperties.socketConnect.close(closeCode);
+				this.#privateProperties.socketConnection.close(closeCode);
+				this.#privateProperties.socketConnection = null;
+			}
+		}
+	}
+
+	#processMediaServers(mediaServersToProcess: Array<[number, any]>): void
+	{
+		for (const [id: number, iceServers: any] of mediaServersToProcess)
+		{
+			const mediaServerId: number = Number(id);
+			const isPublishing: boolean = mediaServerId === this.#privateProperties.publishingMediaServerId;
+			const mediaServer: MediaServer = this.#getOrSetMediaServer(mediaServerId);
+			mediaServer.updateConfig({ iceServers, isPublishing });
+			mediaServer.connect();
+		}
+
+		if (this.#privateProperties.previousMediaServers)
+		{
+			const mediaServersToRemove: Map<number, MediaServer> = new Map(this.#privateProperties.previousMediaServers);
+			this.#privateProperties.previousMediaServers = null;
+
+			for (const mediaServer of mediaServersToRemove.values())
+			{
+				mediaServer.disconnect();
 			}
 
-			this.#privateProperties.socketConnect = null;
+			mediaServersToRemove.clear();
 		}
 	}
 
@@ -930,6 +787,7 @@ export class Call {
 						monitoringJwtToken,
 						monitoringEnvironment,
 						monitoringRegion,
+						roomType: data.result.roomType,
 					});
 				})
 				.catch((error) => {
@@ -951,7 +809,7 @@ export class Call {
 							errorCode = error.code === 'access_denied' 'ACCESS_DENIED' : error.code;
 						}
 
-						this.triggerEvents('ReconnectingFailed', [null, {
+						this.#triggerEvents('ReconnectingFailed', [null, {
 							code: errorCode,
 							message: error?.message,
 						}]);
@@ -980,64 +838,53 @@ export class Call {
 		});
 	}
 
-	async sendOffer() {
-		if (this.#privateProperties.offersStack > 0 && !this.#privateProperties.isWaitAnswer) {
-			this.setLog('Start sending an offer', LOG_LEVEL.INFO);
-			this.#privateProperties.isWaitAnswer = true;
-			this.#privateProperties.offersStack--;
-
-			try {
-				let offer = await this.sender.createOffer();
-				if (Util.useTcpSdp())
-				{
-					offer = {
-						type: offer.type,
-						sdp: this.#removeUdpFromSdp(offer.sdp),
-					};
-				}
-
-				await this.sender.setLocalDescription(offer);
-				this.#sendSignal({ offer });
-				this.setLog('Sending an offer succeeded', LOG_LEVEL.INFO);
-			}
-			catch (e)
-			{
-				this.setLog(`Sending an offer failed: ${e}`, LOG_LEVEL.ERROR);
-				this.#beforeDisconnect();
-				this.#reconnect({
-					reconnectionReason: 'SENDING_OFFER',
-					reconnectionReasonInfo: `Sending an offer failed: ${e}`,
-				});
-			}
-		}
-	}
-
-	async startStream() {
+	async startStream()
+	{
 		const videoTrack = await this.getLocalVideo();
-		if (videoTrack) {
-			await this.publishTrack(MediaStreamsKinds.Camera, videoTrack);
-		} else {
+		if (videoTrack)
+		{
+			await this.publishTrack(MediaStreamsKinds.Camera, videoTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Camera));
+		}
+		else
+		{
 			this.#releaseStream(MediaStreamsKinds.Camera);
 			this.onPublishFailed(MediaStreamsKinds.Camera);
 		}
 
 		const audioTrack = await this.getLocalAudio();
-		if (audioTrack) {
-			await this.publishTrack(MediaStreamsKinds.Microphone, audioTrack);
-		} else {
+		if (audioTrack)
+		{
+			await this.publishTrack(MediaStreamsKinds.Microphone, audioTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
+		}
+		else
+		{
 			this.#releaseStream(MediaStreamsKinds.Microphone);
 			this.onPublishFailed(MediaStreamsKinds.Microphone);
 		}
 	}
 
-	async socketOnMessageHandler(event) {
+	async socketOnMessageHandler(event)
+	{
 		if (typeof event.data !== 'string') return;
 
-		let data
+		let signal;
+		let data;
+		let mediaServerId;
 
 		try
 		{
-			data = JSON.parse(event.data);
+			if (this.#privateProperties.roomType === RoomType.Small)
+			{
+				data = JSON.parse(event.data);
+				mediaServerId = this.#privateProperties.publishingMediaServerIdForSmallRoom;
+				this.#privateProperties.publishingMediaServerId = mediaServerId;
+			}
+			else if (this.#privateProperties.roomType === RoomType.Large)
+			{
+				signal = JSON.parse(event.data);
+				data = signal?.event;
+				mediaServerId = signal?.mediaServerId;
+			}
 		}
 		catch (err)
 		{
@@ -1045,14 +892,19 @@ export class Call {
 			return;
 		}
 
-		if (data?.answer){
-			await this.#answerHandler(data);
-		}
-		else if (data?.offer)
+		if (!data)
 		{
-			await this.#offerHandler(data);
+			return;
 		}
-		else if (data?.joinResponse) {
+
+		if (data?.joinResponse)
+		{
+			if (this.isConnected())
+			{
+				this.setLog(`Got extra joinResponse signal after connection, ignoring it`, LOG_LEVEL.WARNING);
+				return;
+			}
+
 			if (data.joinResponse.role)
 			{
 				Util.setCurrentUserRole(data.joinResponse.role);
@@ -1060,82 +912,55 @@ export class Call {
 
 			this.#privateProperties.abortController.signal.removeEventListener('abort', this.beforeDisconnectBound);
 
-			this.#privateProperties.iceServers = data.joinResponse.iceServers;
-			this.#privateProperties.localParticipantSid = data.joinResponse.localParticipant.sid;
+			this.#privateProperties.localParticipantSid = this.#privateProperties.roomType === RoomType.Large
+				? data.joinResponse.localParticipant.sids
+				: { [this.#privateProperties.publishingMediaServerId]: data.joinResponse.localParticipant.sid };
 
-			try
-			{
-				this.#createPeerConnection();
-			}
-			catch (error)
-			{
-				console.error(error);
-				this.#beforeDisconnect();
-				this.#reconnect({
-					reconnectionReason: 'CREATE_PEER_CONNECTION_ERROR',
-					reconnectionReasonInfo: `Creating an RTCPeerConnection failed: ${error.message}`,
-				});
+			this.#privateProperties.publishingMediaServerId = this.#privateProperties.roomType === RoomType.Large
+				? data.joinResponse.publishingMediaServerId
+				: this.#privateProperties.publishingMediaServerIdForSmallRoom;
 
-				return;
-			}
+			const mediaServersToProcess = this.#privateProperties.roomType === RoomType.Large
+				? Object.entries(data.joinResponse.iceServers)
+				: [[this.#privateProperties.publishingMediaServerId, data.joinResponse.iceServer]];
 
-			const connectedEvent = this.#privateProperties.isReconnecting && this.wasConnected
-				? CallApiEvent.Reconnected
-				: CallApiEvent.Connected;
+			this.#processMediaServers(mediaServersToProcess);
+
+			const isReconnect = this.#privateProperties.isReconnecting && this.wasConnected;
+			const connectedEvent = isReconnect ? CallApiEvent.Reconnected : CallApiEvent.Connected;
 
 			this.#privateProperties.callState = CALL_STATE.CONNECTED;
 			this.wasConnected = true;
-			this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} on the mediaserver after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
+			this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} (type: ${this.#privateProperties.roomType}) on the media server after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
 			this.#privateProperties.isReconnecting = false;
 			this.#privateProperties.reconnectionAttempt = 0;
 
 			if (data.joinResponse.oneToOneType)
 			{
-				this.triggerEvents('ConnectionTypeChanged', [{
+				this.#triggerEvents('ConnectionTypeChanged', [{
 					type: data.joinResponse.oneToOneType,
 				}]);
 			}
 
-			if (data.joinResponse.permissions && connectedEvent === CallApiEvent.Connected)
+			if (data.joinResponse.permissions && !isReconnect)
 			{
 				this.#setUserPermissions(data.joinResponse.permissions);
 			}
 
-			if (data.joinResponse.roomState && connectedEvent === CallApiEvent.Connected)
+			if (data.joinResponse.roomState && !isReconnect)
 			{
 				Util.setRoomPermissions(data.joinResponse.roomState);
 				Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 			}
 
-			this.checkMetricsFeatureAndExecutionCallback(() =>
-			{
-				if (connectedEvent === CallApiEvent.Reconnected && this.monitoringEvents.length)
+			checkMetricsFeatureAndExecutionCallback(() => {
+				if (isReconnect && this.monitoringEvents.length > 1)
 				{
 					this.sendMonitoringEvents();
 				}
 			});
 
-			const participantsToDelete = { ...this.#privateProperties.remoteParticipants };
-			Object.values(data.joinResponse.otherParticipants).forEach((p) => {
-				if (participantsToDelete[p.userId])
-				{
-					delete participantsToDelete[p.userId];
-				}
-				this.setLog(`Adding an early connected participant with id ${p.userId} (sid: ${p.sid})`, LOG_LEVEL.INFO);
-				this.#setRemoteParticipant(p);
-			});
-
-			if (connectedEvent === CallApiEvent.Reconnected)
-			{
-				for (let userId in participantsToDelete)
-				{
-					const participant = this.#privateProperties.remoteParticipants[userId];
-					this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-					this.triggerEvents('ParticipantLeaved', [participant]);
-					delete this.#privateProperties.remoteTracks[userId];
-					delete this.#privateProperties.remoteParticipants[userId];
-				}
-			}
+			this.#processParticipants(data.joinResponse.otherParticipants, isReconnect);
 
 			if ('recorderStatus' in data.joinResponse)
 			{
@@ -1145,42 +970,40 @@ export class Call {
 					recorderStatus.errMsg = data.joinResponse.recorderRespStatus;
 				}
 
-				this.triggerEvents('RecorderStatusChanged', [recorderStatus]);
+				this.#triggerEvents('RecorderStatusChanged', [recorderStatus]);
 			}
 
 			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000;
 			this.#privateProperties.pingTimeoutDuration = this.#privateProperties.pingIntervalDuration * 2.5;
+			for (let id of this.#privateProperties.mediaServers.keys())
+			{
+				this.#startPingInterval(id);
+			}
 
-			this.#startPingInterval();
-
-			this.triggerEvents(connectedEvent);
-		} else if (data?.participantJoined) {
-			this.setLog(`Adding a new participant with id ${data.participantJoined.participant.userId} (sid: ${data.participantJoined.participant.sid})`, LOG_LEVEL.INFO);
-			this.#setRemoteParticipant(data.participantJoined.participant);
+			this.#triggerEvents(connectedEvent);
+		}
+		else if (data?.participantJoined)
+		{
+			const participant = data.participantJoined.participant;
+			this.setLog(`Adding a new participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+			this.#setRemoteParticipant(participant);
 		}
 		else if (data?.participantLeft)
 		{
 			const participantId = data.participantLeft.userId;
 			const participant = this.#privateProperties.remoteParticipants[participantId];
-			const pendingSubscriptions = this.#privateProperties.pendingSubscriptions[participantId];
-
-			if (pendingSubscriptions)
-			{
-				for (let trackId in pendingSubscriptions)
-				{
-					clearTimeout(pendingSubscriptions[trackId].timeout);
-					this.setLog(`A participant with id ${participantId} (sid: ${data.participantLeft.sid}) left during subscription attempt, cancel it`, LOG_LEVEL.WARNING);
-				}
-
-				delete this.#privateProperties.pendingSubscriptions[participantId];
-			}
+			this.#clearPendingSubscriptions(participantId);
 
 			if (participant)
 			{
 				this.setLog(`Deleting a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-				this.triggerEvents('ParticipantLeaved', [participant]);
-				delete this.#privateProperties.remoteTracks[participantId];
+
+				Object.values(participant.tracks).forEach((track) => {
+					delete this.#privateProperties.tracksDataFromSocket[track.id];
+				});
+
 				delete this.#privateProperties.remoteParticipants[participantId];
+				this.#triggerEvents('ParticipantLeaved', [participant]);
 			}
 			else
 			{
@@ -1191,11 +1014,15 @@ export class Call {
 		{
 			const participantId = data.participantReconnecting.userId;
 			const participant = this.#privateProperties.remoteParticipants[participantId];
+			this.#clearPendingSubscriptions(participantId);
 
 			if (participant)
 			{
 				this.setLog(`Participant with id ${participantId} (sid: ${data.participantReconnecting.sid}) is reconnecting`, LOG_LEVEL.INFO);
-				this.triggerEvents('ParticipantReconnecting', [participant]);
+				Object.values(participant.tracks).forEach((track) => {
+					delete this.#privateProperties.tracksDataFromSocket[track.id];
+				});
+				this.#triggerEvents('ParticipantReconnecting', [participant]);
 			}
 			else
 			{
@@ -1206,11 +1033,12 @@ export class Call {
 		{
 			const participantId = data.participantReconnected.userId;
 			const participant = this.#privateProperties.remoteParticipants[participantId];
+			this.#clearPendingSubscriptions(participantId);
 
 			if (participant)
 			{
 				this.setLog(`Participant with id ${participantId} (sid: ${data.participantReconnected.sid}) is reconnected`, LOG_LEVEL.INFO);
-				this.triggerEvents('ParticipantReconnected', [participant]);
+				this.#triggerEvents('ParticipantReconnected', [participant]);
 			}
 			else
 			{
@@ -1223,77 +1051,74 @@ export class Call {
 			const cid = data.trackCreated.cid;
 			const track = data.trackCreated.track;
 			const trackId = track.sid;
+			const source = track.source;
 			track.userId = participantId;
 
 			if (participantId == this.#privateProperties.userId)
 			{
 				const timeout = this.#privateProperties.pendingPublications[cid];
-				if (timeout)
+				clearTimeout(this.#privateProperties.pendingPublications[cid]);
+				delete this.#privateProperties.pendingPublications[cid];
+
+				if (!timeout)
 				{
-					clearTimeout(this.#privateProperties.pendingPublications[cid]);
-					delete this.#privateProperties.pendingPublications[cid];
-
-					this.setLog(`Publishing a local track with kind ${track.source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
-					this.#privateProperties.localTracks[track.source] = track;
-					this.triggerEvents('PublishSucceed', [track.source]);
-
-					if (track.source === MediaStreamsKinds.Microphone && this.#privateProperties.needToDisableAudioAfterPublish)
-					{
-						this.#privateProperties.needToDisableAudioAfterPublish = false;
-						this.disableAudio({ calledFrom: 'data.trackCreated' });
-					}
-					else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
-					{
-						this.#processVideoQueue();
-					}
-
-					return;
+					this.setLog(`Got trackCreated signal for local track with kind ${source} (sid: ${trackId}) without active timeout`, LOG_LEVEL.WARNING);
 				}
 
-				this.setLog(`Got trackCreated signal for a non-existent local track with kind ${track.source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+				this.setLog(`Publishing a local track with kind ${source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
+				this.#privateProperties.localTracks[source] = track;
+				this.#triggerEvents('PublishSucceed', [source]);
+				this.#onTrackPublishResult(trackId, source, 'trackCreated');
 			}
-			else {
+			else
+			{
 				this.#privateProperties.tracksDataFromSocket[trackId] = track;
 				const participant = this.#privateProperties.remoteParticipants[participantId];
 				if (participant)
 				{
-					this.setLog(`Got a track info with kind ${track.source} (sid: ${data.trackCreated.track.sid}) for a participant with id ${participantId} (sid: ${participant.sid}), waiting for it`, LOG_LEVEL.INFO);
-					switch (track.source)
-					{
-						case MediaStreamsKinds.Camera:
-							participant.videoEnabled = true;
-							break;
-						case MediaStreamsKinds.Microphone:
-							participant.audioEnabled = true;
-							break;
-						case MediaStreamsKinds.Screen:
-							participant.screenSharingEnabled = true;
-							break;
-					}
-
-					const ontrackData = this.#privateProperties.ontrackData[trackId];
-					delete this.#privateProperties.ontrackData[trackId];
-
-					if (ontrackData)
-					{
-						this.#createRemoteTrack(trackId, ontrackData);
-					}
-					else
-					{
-						this.#addPendingSubscription(participant, track);
-					}
+					this.#processTrack(data.trackCreated);
 				}
 				else
 				{
-					this.setLog(`Got a track info with kind ${track.source} (sid: ${data.trackCreated.track.sid}) for a non-existent participant with id ${participantId}`, LOG_LEVEL.WARNING);
+					if (!this.#privateProperties.allMediaServersConnected)
+					{
+						this.#privateProperties.tracksToProcess.push(data.trackCreated);
+					}
+					else
+					{
+						this.setLog(`Got a track info with kind ${track.source} (sid: ${data.trackCreated.track.sid}) for a non-existent participant with id ${participantId}`, LOG_LEVEL.WARNING);
+					}
 				}
 			}
-		} else if (data?.trackDeleted) {
+		}
+		else if (data.trackSubscribed)
+		{
+			// disabled because of switching to per layer subscription
+			// this.#changeTrackActivity(data.trackSubscribed.trackSid, true);
+		}
+		else if (data.trackNoSubscribed)
+		{
+			// disabled because of switching to per layer subscription
+			// this.#changeTrackActivity(data.trackNoSubscribed.trackSid, false);
+		}
+		else if (data.trackReSubscribed)
+		{
+			// disabled because of switching to per layer subscription
+			// this.#changeTrackActivity(data.trackReSubscribed.trackSid, true);
+		}
+		else if (data?.trackDeleted)
+		{
+			const participantId = data.trackDeleted.publisher;
+			if (participantId == this.#privateProperties.userId)
+			{
+				return;
+			}
+
+			const trackId = data.trackDeleted.shortId;
 			try
 			{
-				const participantId = data.trackDeleted.publisher;
-				const trackId = data.trackDeleted.shortId;
 				const pendingSubscription = this.#privateProperties.pendingSubscriptions[participantId]?.[trackId];
+				delete this.#privateProperties.tracksDataFromSocket[trackId];
 
 				if (pendingSubscription)
 				{
@@ -1302,7 +1127,6 @@ export class Call {
 					this.setLog(`Track with id ${trackId} was deleted during subscription attempt, cancel it`, LOG_LEVEL.WARNING);
 				}
 
-				if (participantId == this.#privateProperties.userId) return;
 				this.setLog(`Start deleting a track with id ${trackId} from a participant with id ${participantId} `, LOG_LEVEL.INFO);
 				const participant = this.#privateProperties.remoteParticipants[participantId];
 				if (!participant)
@@ -1329,7 +1153,7 @@ export class Call {
 					}
 					participant.removeTrack(track.source);
 					this.setLog(`Deleting a track with id ${trackId} from a participant with id ${participantId} (sid: ${participant.sid}) succeeded`, LOG_LEVEL.INFO);
-					this.triggerEvents('RemoteMediaRemoved', [participant, track]);
+					this.#triggerEvents('RemoteMediaRemoved', [participant, track]);
 				}
 				else
 				{
@@ -1345,32 +1169,58 @@ export class Call {
 		{
 			this.#trackMutedHandler(data.trackMuted);
 		}
+		else if (data.trackPublicationError)
+		{
+			this.#trackPublicationErrorHandler(data.trackPublicationError);
+		}
+		else if (data?.subscribedQualityUpdate)
+		{
+			const { trackSid, subscribedQualities } = data.subscribedQualityUpdate;
+			this.#changeLayersAvailability(trackSid, subscribedQualities);
+		}
+		else if (data?.subscriptionResponse)
+		{
+			this.#subscriptionResponseHandler(data.subscriptionResponse);
+		}
+		else if (data?.offer)
+		{
+			const mediaServer = this.#getOrSetMediaServer(mediaServerId);
+			mediaServer.addOffer(data);
+		}
+		else if (data?.answer)
+		{
+			const mediaServer = this.#getOrSetMediaServer(mediaServerId);
+			mediaServer.addAnswer(data);
+		}
+		else if (data?.trickle)
+		{
+			const mediaServer = this.#getOrSetMediaServer(mediaServerId);
+			mediaServer.addIceCandidate(data);
+		}
 		else if (data.recorderStatus)
 		{
-			this.triggerEvents('RecorderStatusChanged', [data.recorderStatus]);
+			this.#triggerEvents('RecorderStatusChanged', [data.recorderStatus]);
 		}
 		else if (data?.videoRecorderStatus)
 		{
-			this.triggerEvents('CloudRecordStatusChanged', [data.videoRecorderStatus]);
-		}
-		else if (data?.trickle) {
-			this.#addIceCandidate(data.trickle);
+			this.#triggerEvents('CloudRecordStatusChanged', [data.videoRecorderStatus]);
 		}
 		else if (data?.newMessage)
 		{
-			const message = new Message(data.newMessage);
-			this.triggerEvents('MessageReceived', [message]);
+			const message = createMessage(data.newMessage);
+			this.#triggerEvents('MessageReceived', [message]);
 		}
-		else if (data?.handRaised) {
+		else if (data?.handRaised)
+		{
 			const participant = this.#privateProperties.remoteParticipants[data.handRaised.participantId];
 			if (participant)
 			{
 				participant.isHandRaised = data.handRaised.isHandRaised;
-				this.triggerEvents('HandRaised', [participant]);
+				this.#triggerEvents('HandRaised', [participant]);
 			}
-		} else if (data?.speakersChanged) {
-			this.#speakerChangedHandler(data)
-		} else if (data?.connectionQuality) {
+		}
+		else if (data?.connectionQuality)
+		{
 			if (!data.connectionQuality.updates)
 			{
 				return;
@@ -1399,8 +1249,7 @@ export class Call {
 					const isLocalVideoMuted = this.#privateProperties.localTracks[MediaStreamsKinds.Camera]
 						&& this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted;
 
-					this.checkMetricsFeatureAndExecutionCallback(() =>
-					{
+					checkMetricsFeatureAndExecutionCallback(() => {
 						if (participant.participantSid === this.#privateProperties.localParticipantSid)
 						{
 							this.addValidatedMonitoringMetric({
@@ -1409,40 +1258,82 @@ export class Call {
 							});
 						}
 					});
-
-					if (
-						participant.participantSid === this.#privateProperties.localParticipantSid
-						&& (
-							!isLocalVideoMuted
-							|| !this.#privateProperties.localConnectionQuality
-						)
-						&& !this.#privateProperties.localTracks[MediaStreamsKinds.Screen]
-					)
-					{
-						participants[this.#privateProperties.userId] = participant.score;
-						this.#privateProperties.localConnectionQuality =  participant.score;
-						// commented out for now, since a lot of log generated by this
-						//this.setLog(`Quality of connection with a mediaserver changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
-						// this.#toggleRemoteParticipantVideo(Object.keys(participantsToUpdate), hasGoodQuality);
-					}
 				});
 			});
-			this.triggerEvents('ConnectionQualityChanged', [participants]);
-		} else if (data.pongResp) {
-			this.#privateProperties.rtt = Date.now() - data.pongResp.lastPingTimestamp
-			this.#resetPingTimeout()
-		} else if (data.leave) {
+		}
+		else if (data.pongResp)
+		{
+			this.#privateProperties.rtt[mediaServerId] = Date.now() - data.pongResp.lastPingTimestamp;
+			this.#resetPingTimeout(mediaServerId);
+		}
+		else if (data.addMediaServer)
+		{
+			const mediaServer = this.#getOrSetMediaServer(data.addMediaServer.id);
+			mediaServer.updateConfig({iceServers: data.addMediaServer.iceServers});
+			mediaServer.connect();
+			this.#startPingInterval(data.addMediaServer.id);
+		}
+		else if (data.removeMediaServer)
+		{
+			const mediaServer = this.#getMediaServer(data.removeMediaServer.id);
+			if (mediaServer)
+			{
+				this.#clearPingInterval(mediaServer.id);
+				this.#clearPingTimeout(mediaServer.id);
+				mediaServer.disconnect();
+				this.#privateProperties.mediaServers.delete(mediaServer.id);
+			}
+		}
+		else if (data.reconnectMediaServer)
+		{
+			this.setLog(`Got reconnectMediaServer signal for ${data.reconnectMediaServer}`, LOG_LEVEL.WARNING);
+			if (this.#privateProperties.isReconnecting)
+			{
+				return;
+			}
+
+			const mediaServer = this.#getMediaServer(data.reconnectMediaServer);
+			if (!mediaServer)
+			{
+				return;
+			}
+
+			mediaServer.disconnect();
+			mediaServer.connect();
+		}
+		else if (data.sidChanged)
+		{
+			const userId = data.sidChanged.participantId;
+
+			if (userId == this.#privateProperties.userId)
+			{
+				this.#beforeDisconnect();
+				this.#reconnect({
+					reconnectionReason: 'GOT_SID_CHANGED_SIGNAL',
+					reconnectionReasonInfo: '',
+				});
+
+				return;
+			}
+
+			const participant = this.#privateProperties.remoteParticipants[userId];
+			participant?.updateSid(data.sidChanged.newSid);
+		}
+		else if (data.leave)
+		{
 			this.setLog(`Got leave signal with ${data.leave.reason} reason`, LOG_LEVEL.WARNING);
 			this.#beforeDisconnect({
 				initiatedByUser: true,
 				destroySocket: true,
 			});
 
-			const reasonsToReconnect = ['CHANGING_MEDIA_SERVER', 'FULL_RECONNECT_NEEDED', 'STATE_MISMATCH'];
+			const canReconnectSmallRoom = this.#privateProperties.roomType === RoomType.Small
+				&& (data.leave.canReconnect || data.leave.reason === 'CHANGING_MEDIA_SERVER')
+				&& data.leave.reason !== 'SIGNALING_DUPLICATE_PARTICIPANT';
+			const canReconnectBigRoom = this.#privateProperties.roomType === RoomType.Large
+				&& (data.leave.reason === 'FULL_RECONNECT_NEEDED' || data.leave.reason === 'JOIN_FAILURE');
 
-			if (
-				(data.leave.canReconnect || reasonsToReconnect.includes(data.leave.reason)) &&
-				data.leave.reason !== "SIGNALING_DUPLICATE_PARTICIPANT")
+			if (canReconnectSmallRoom || canReconnectBigRoom)
 			{
 				this.#privateProperties.lastReconnectionReason = ReconnectionReason.LeaveCommand;
 				this.#reconnect({
@@ -1453,11 +1344,10 @@ export class Call {
 			else
 			{
 				this.#privateProperties.canReconnect = false;
-				this.triggerEvents('Failed', [
-					{
-						name: data.leave.reason,
-						leaveInformation: {code: data.leave.code, reason: data.leave.reason}
-					}]);
+				this.#triggerEvents('Failed', [{
+					name: data.leave.reason,
+					leaveInformation: {code: data.leave.code, reason: data.leave.reason}
+				}]);
 			}
 		}
 		else if (data?.onErrorResponse)
@@ -1488,16 +1378,18 @@ export class Call {
 			}
 			else if (data?.onActionSent.switchConnectionType)
 			{
-				this.triggerEvents('ConnectionTypeChanged', [data?.onActionSent.switchConnectionType]);
+				this.#triggerEvents('ConnectionTypeChanged', [data?.onActionSent.switchConnectionType]);
 			}
 		}
 	};
 
-	socketOnOpenHandler() {
-		window.addEventListener('unload', this.sendLeaveBound);
+	socketOnOpenHandler()
+	{
+		window.addEventListener('unload', this.sendLeaveBound)
 	};
 
-	socketOnCloseHandler(e) {
+	socketOnCloseHandler(e)
+	{
 		this.#beforeDisconnect();
 
 		if (e?.code && e?.code !== 1005)
@@ -1514,103 +1406,636 @@ export class Call {
 			this.setLog(`Socket closed with a code ${e.code}`, LOG_LEVEL.ERROR);
 		}
 	};
-	socketOnErrorHandler() {
+
+	socketOnErrorHandler()
+	{
 		this.setLog(`Got a socket error`, LOG_LEVEL.ERROR);
 	};
-	async onIceCandidate(target, event) {
-		if (!event.candidate) return;
 
-		if (Util.useTcpSdp() && event.candidate.protocol !== 'tcp')
-		{
-			return;
-		}
+	#getMediaServer(id: number | string): MediaServer | null
+	{
+		return this.#privateProperties.mediaServers.get(Number(id)) || null;
+	}
 
-		const trickle = {
-			candidateInit: JSON.stringify({
-				candidate: event.candidate.candidate,
-				sdpMid: event.candidate?.sdpMid,
-				sdpMLineIndex: event.candidate?.sdpMLineIndex,
-				usernameFragment: event.candidate?.usernameFragment
-			})
-		};
+	#getOrSetMediaServer(id): MediaServer
+	{
+		return this.#getMediaServer(id) || this.#createMediaServer({ id });
+	}
 
-		if (target) {
-			trickle.target = target;
-		}
-		
-		const pcType = target
-			? 'RECEPIENT'
-			: 'SENDER';
-		
-		this.setLog('pcType: '+pcType+' Send local ICE candidate', LOG_LEVEL.INFO);
-		this.setLog(JSON.stringify(trickle), LOG_LEVEL.INFO);
+	#getPublishingMediaServer(): MediaServer | null
+	{
+		return this.#getMediaServer(this.#privateProperties.publishingMediaServerId);
+	}
 
-		this.#sendSignal({ trickle });
+	#createMediaServer(config: any): MediaServer
+	{
+		const mediaServer: MediaServer = new MediaServer(config);
+		this.#privateProperties.mediaServers.set(mediaServer.id, mediaServer);
+
+		mediaServer.on('log', this.setLogBound);
+		mediaServer.on('signal', this.sendSignalBound);
+		mediaServer.on('addTrack', this.onAddTrackBound);
+		mediaServer.on('track', this.onTrackBound);
+		mediaServer.on('stats', this.processStatsBound);
+		mediaServer.on('peerConnectionIssue', this.onPeerConnectionIssueBound);
+		mediaServer.on('down', this.onMediaServerDownBound);
+		mediaServer.on('up', this.onMediaServerUpBound);
+
+		return mediaServer;
+	}
+
+	#removeMediaServerEvents(mediaServer)
+	{
+		mediaServer.off('log', this.setLogBound);
+		mediaServer.off('signal', this.sendSignalBound);
+		mediaServer.off('track', this.onTrackBound );
+		mediaServer.off('stats', this.processStatsBound);
+		mediaServer.off('peerConnectionIssue', this.onPeerConnectionIssueBound);
+		mediaServer.off('down', this.onMediaServerDownBound);
+		mediaServer.off('up', this.onMediaServerUpBound);
 	};
-	onConnectionStateChange(subscriber) {
-		const state = subscriber
-			? this.recipient.connectionState
-			: this.sender.connectionState
 
-		if (state === 'failed' && !this.#privateProperties.isReconnecting)
+	#onPeerConnectionIssue(mediaServerId, issue)
+	{
+		checkMetricsFeatureAndExecutionCallback(() => {
+			this.addMonitoringEvents(issue);
+		});
+	}
+
+	#onMediaServerDown(mediaServerId, additionalData)
+	{
+		if (!this.#privateProperties.isReconnecting)
 		{
-			this.setLog(`State of ${subscriber ? 'recipient' : 'sender'} peer connection changed to ${state}, reconnecting`, LOG_LEVEL.WARNING);
-			if (this.#privateProperties.peerConnectionFailed)
+			if (this.#privateProperties.roomType === RoomType.Small)
 			{
-				return;
+				this.setLog(`Media server with id ${mediaServerId} is down, reconnecting`, LOG_LEVEL.WARNING);
+				this.#beforeDisconnect();
+				this.#reconnect(additionalData);
 			}
-
-			this.#privateProperties.peerConnectionFailed = true;
-
-			this.checkMetricsFeatureAndExecutionCallback(() =>
+			else if (this.#privateProperties.roomType === RoomType.Large)
 			{
-				this.addMonitoringEvents({
-					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_REFUSED,
-					withCounter: true,
-				});
-			});
-			this.#beforeDisconnect({ destroySocket: true });
-			if (this.#privateProperties.canReconnect)
-			{
-				this.#privateProperties.lastReconnectionReason = ReconnectionReason.PeerConnectionFailed;
-				this.#reconnect({
-					reconnectionReason: 'ON_CONNECTION_STATE_CHANGED',
-					reconnectionReasonInfo: `State of ${subscriber ? 'recipient' : 'sender'} peer connection changed to ${state}`,
-				});
+				this.setLog(`Media server with id ${mediaServerId} is down, waiting for reconnectMediaServer signal`, LOG_LEVEL.WARNING);
 			}
 		}
-		else if (state === 'failed' || state === 'disconnected')
+	};
+
+	#onMediaServerUp(mediaServerId, subscriber)
+	{
+		if (!this.#privateProperties.isReconnecting && !this.#privateProperties.allMediaServersConnected)
 		{
-			const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} PEER CONNECTION changed to ${state}`;
-			this.setLog(logMessage, LOG_LEVEL.WARNING);
+			if (!this.#privateProperties.mediaServersConnected[mediaServerId])
+			{
+				this.#privateProperties.mediaServersConnected[mediaServerId] = {};
+			}
+
+			const peerConnectionType = subscriber ? 'subscriber' : 'publisher';
+			this.#privateProperties.mediaServersConnected[mediaServerId][peerConnectionType] = true;
+
+			const connectedMediaServers = Object.keys(this.#privateProperties.mediaServersConnected).length;
+			const mediaServer = this.#getPublishingMediaServer();
+			const allMediaServersConnected = connectedMediaServers === this.#privateProperties.mediaServers.size;
+			const subscriberConnectionIsUp = mediaServer?.subscriber;
+			const publisherConnectionIsUp = mediaServer?.publisher;
+			const publishIsDisabled = Util.isBroadcastDisabled();
+
+			if (allMediaServersConnected && subscriberConnectionIsUp && (publisherConnectionIsUp || publishIsDisabled))
+			{
+				this.#privateProperties.allMediaServersConnected = true;
+				this.#privateProperties.tracksToProcess.forEach((data) => this.#processTrack(data));
+				this.#privateProperties.tracksToProcess = [];
+			}
 		}
 	}
 
-	onIceConnectionStateChange(subscriber)
+	#processStats(stats, mediaServerId)
 	{
-		const state = subscriber
-			? this.recipient.iceConnectionState
-			: this.sender.iceConnectionState;
-
-		const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} ICE connection changed to ${state}`;
-
-		if (state === 'failed' || state === 'disconnected')
+		const processedStats = {};
+		if (stats.publisher)
 		{
-			this.setLog(logMessage, LOG_LEVEL.WARNING);
+			processedStats.publisher = this.#processPublisherStats(stats.publisher, mediaServerId);
+		}
+		processedStats.subscriber = this.#processSubscriberStats(stats.subscriber, mediaServerId);
+
+		this.#triggerEvents('CallStatsReceived', [processedStats]);
+	};
+
+	#processPublisherStats(stats, mediaServerId)
+	{
+		const statsOutput = [];
+		const codecs = {};
+		const reportsWithoutCodecs = {};
+		const remoteReports = {};
+		const reportsWithoutRemoteInfo = {};
+		const dataLoss = [];
+		let isQualityLimitationSent = false;
+		const totalBitrateOut = [];
+		let packetLostEventAdded = false;
+
+		if (!this.#privateProperties.outgoingTracksReports[mediaServerId])
+		{
+			this.#privateProperties.outgoingTracksReports[mediaServerId] = {};
+		}
+
+		stats.forEach((rawReport) => {
+			const report = { ...rawReport };
+			statsOutput.push(report);
+
+			if (report.type === 'codec')
+			{
+				Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
+			}
+
+			if (report.type === 'remote-inbound-rtp')
+			{
+				const reportId = report.localId;
+				if (!reportsWithoutRemoteInfo[reportId])
+				{
+					remoteReports[reportId] = report;
+
+					return;
+				}
+
+				if (!this.#privateProperties.outgoingTracksReports[mediaServerId][reportId])
+				{
+					this.#privateProperties.outgoingTracksReports[mediaServerId][reportId] = {};
+				}
+
+				const prevReport = this.#privateProperties.outgoingTracksReports[mediaServerId][reportId];
+				const packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], prevReport, report);
+				const { currentPercentPacketLost } = packetsLostData;
+
+				checkMetricsFeatureAndExecutionCallback(() => {
+					this.addValidatedMonitoringMetric({
+						additionalData: {
+							currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
+							prevReportPacketsSent: this.#privateProperties.outgoingTracksReports[mediaServerId][reportId]?.packetsSent,
+							prevReportPacketsLost: this.#privateProperties.outgoingTracksReports[mediaServerId][reportId]?.packetsLost,
+							remoteReportPacketsLost: report?.packetsLost,
+						},
+						metricKey: MONITORING_METRICS.PACKET_LOST_SEND,
+						metricValue: currentPercentPacketLost,
+					});
+				});
+
+				if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
+				{
+					packetLostEventAdded = true;
+					checkMetricsFeatureAndExecutionCallback(() => {
+						this.addMonitoringEvents({
+							name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
+							withCounter: true,
+						});
+					});
+				}
+
+				prevReport.packetsLostData = packetsLostData;
+				prevReport.packetsLost = { ...packetsLostData };
+				prevReport.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
+
+				delete reportsWithoutRemoteInfo[reportId];
+
+				if (this.#privateProperties.outgoingTracksReports[mediaServerId][reportId].source === MediaStreamsKinds.Camera)
+				{
+					dataLoss.push(report.packetsLost);
+				}
+			}
+
+			if (report.type === 'outbound-rtp')
+			{
+				const reportId = report.id;
+
+				if (!this.#privateProperties.outgoingTracksReports[mediaServerId][reportId])
+				{
+					this.#privateProperties.outgoingTracksReports[mediaServerId][reportId] = {};
+				}
+
+				const prevReport = this.#privateProperties.outgoingTracksReports[mediaServerId][reportId];
+				report.bitrate = Util.calcBitrate(report, prevReport, true);
+
+				this.#privateProperties.outgoingTracksReports[mediaServerId][reportId] = {
+					...prevReport,
+					...report,
+				};
+
+				report.userId = this.#privateProperties.userId;
+				report.mediaServerId = mediaServerId;
+
+				if (report.kind === 'audio')
+				{
+					report.source = MediaStreamsKinds.Microphone;
+				}
+				else if (report.kind === 'video')
+				{
+					report.source = report.contentType === 'screenshare'
+						? MediaStreamsKinds.Screen
+						: MediaStreamsKinds.Camera;
+				}
+
+				totalBitrateOut.push({
+					bitrate: report.bitrate,
+					kind: report.kind,
+					contentType: report.contentType,
+				});
+
+				if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent)
+				{
+					checkMetricsFeatureAndExecutionCallback(() => {
+						if (report.qualityLimitationReason === 'cpu')
+						{
+							this.addMonitoringEvents({
+								name: MONITORING_EVENTS_NAME_LIST.CPU_ISSUES,
+								withCounter: true,
+							});
+						}
+
+						if (report.qualityLimitationReason === 'bandwidth')
+						{
+							this.addMonitoringEvents({
+								name: MONITORING_EVENTS_NAME_LIST.NETWORK_ISSUES,
+								withCounter: true,
+							});
+						}
+					});
+
+					isQualityLimitationSent = true;
+					const limitations = Object.entries(report.qualityLimitationDurations).reduce(
+						(accumulator, value, index) => `${accumulator}${index ? ', ' : ''}${value[0]}: ${value[1]}`,
+						'',
+					);
+					this.setLog(`Local user have problems with sending video: ${report.qualityLimitationReason} (${limitations})`, LOG_LEVEL.WARNING);
+				}
+
+				if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs))
+				{
+					Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
+				}
+
+				if (Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo) && report.source === MediaStreamsKinds.Camera)
+				{
+					dataLoss.push(report.packetsLostData.currentPercentPacketLost);
+				}
+			}
+		});
+
+		checkMetricsFeatureAndExecutionCallback(() => {
+			const bitrateSumOut = calcBitrateSumFromArray({ bitrateArray: totalBitrateOut });
+			const formattedBitrateOut = Number.parseFloat((bitrateSumOut / 1_000_000).toFixed(2));
+
+			if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.BITRATE_OUT].length < this.countMetricsInMetricsInterval)
+			{
+				this.addValidatedMonitoringMetric({
+					additionalData: {
+						bitrateList: totalBitrateOut,
+						bitrateSumOut,
+						formattedBitrateOut,
+					},
+					metricKey: MONITORING_METRICS.BITRATE_OUT,
+					metricValue: bitrateSumOut,
+				});
+			}
+		});
+
+		if (!this.#privateProperties.stats[this.#privateProperties.userId])
+		{
+			this.#privateProperties.stats[this.#privateProperties.userId] = [];
+		}
+
+		const maxDataLoss = Math.max(0, ...dataLoss);
+
+		if (this.#privateProperties.stats[this.#privateProperties.userId].push(maxDataLoss) > 10)
+		{
+			this.#privateProperties.stats[this.#privateProperties.userId].shift();
+		}
+
+		const connectionDataLoss = this.#privateProperties.stats[this.#privateProperties.userId].reduce(
+			(acc, number) => acc + number, 0
+		) / this.#privateProperties.stats[this.#privateProperties.userId].length;
+		const connectionScore = Util.calcConnectionScore(connectionDataLoss);
+		this.#setConnectionQuality(this.#privateProperties.userId, connectionScore);
+
+		return statsOutput;
+	}
+
+	#processSubscriberStats(stats, mediaServerId)
+	{
+		const statsOutput = [];
+		const participantsWithLargeDataLoss = new Map();
+		const codecs = {};
+		const reportsWithoutCodecs = {};
+		let dataLoss = {};
+		let totalBitrateIn = [];
+		let currentPacketLostReceiveCount = 0;
+
+		const inboundRtpStatsArray = {
+			freezeCount: [],
+			totalFreezesDuration: [],
+			jitter: [],
+			framesDecoded: [],
+			framesDropped: [],
+			framesReceived: [],
+			framesLoss: [],
+		};
+
+		if (!this.#privateProperties.reportsForIncomingTracks[mediaServerId])
+		{
+			this.#privateProperties.reportsForIncomingTracks[mediaServerId] = {};
+		}
+
+		stats.forEach((report) =>
+		{
+			statsOutput.push(report);
+
+			if (report.type === 'inbound-rtp' && report.kind === 'video')
+			{
+				const { freezeCount, totalFreezesDuration, jitter, framesDecoded, framesDropped, framesReceived } = report;
+
+				inboundRtpStatsArray.jitter.push(jitter);
+				inboundRtpStatsArray.totalFreezesDuration.push(totalFreezesDuration);
+				inboundRtpStatsArray.freezeCount.push(freezeCount);
+				inboundRtpStatsArray.framesDecoded.push(framesDecoded);
+				inboundRtpStatsArray.framesDropped.push(framesDropped);
+				inboundRtpStatsArray.framesReceived.push(framesReceived);
+				inboundRtpStatsArray.framesLoss.push((framesDropped / framesReceived) * 100);
+			}
+
+			const needCheckPacketLosts = (report?.trackIdentifier
+				&& report.hasOwnProperty('packetsLost')
+				&& report.hasOwnProperty('packetsReceived'));
+
+			if (needCheckPacketLosts)
+			{
+				const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[mediaServerId][report.trackIdentifier]);
+				report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
+				this.#privateProperties.reportsForIncomingTracks[mediaServerId][report.trackIdentifier] = report;
+
+				const realTrackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
+				const track = this.#privateProperties.tracksDataFromSocket[realTrackId];
+
+				if (!track)
+				{
+					return;
+				}
+
+				const participant = this.#privateProperties.remoteParticipants[track.userId];
+
+				if (!participant)
+				{
+					return;
+				}
+
+				const prevReport = track.report || {};
+				track.report = report;
+				report.bitrate = Util.calcBitrate(report, prevReport);
+				report.userId = track.userId;
+				report.source = track.source;
+				report.mediaServerId = mediaServerId;
+
+				const { currentPercentPacketLost } = packetsLostData;
+
+				totalBitrateIn.push({
+					bitrate: report.bitrate,
+					kind: report.kind,
+					contentType: report.contentType,
+				});
+
+				if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs))
+				{
+					Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
+				}
+
+				if (report.source === MediaStreamsKinds.Camera)
+				{
+					currentPacketLostReceiveCount = currentPercentPacketLost;
+					dataLoss[report.userId] = currentPercentPacketLost;
+				}
+
+				if (participant.userId != this.#privateProperties.userId)
+				{
+					report.inRemoteTracks = participant.getTrack(track.source)?.sid === realTrackId ? 'Y' : 'N';
+
+					if (currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
+					{
+						participantsWithLargeDataLoss.set(participant.userId, `userId: ${participant.userId} (${currentPercentPacketLost}%)`);
+						this.#privateProperties.prevParticipantsWithLargeDataLoss.delete(participant.userId);
+					}
+				}
+			}
+			else if (report.type === 'codec')
+			{
+				Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
+			}
+		});
+
+		checkMetricsFeatureAndExecutionCallback(() => {
+			const { countVideoTracks, countAudioTracks } = this.getCountRemoteTracks();
+
+			const round = (number, decimal) => Math.round(number * Math.pow(10, decimal)) / Math.pow(10, decimal);
+
+			const addValueInboundRTCStatsToMetrics = ({ key, metricsKey, isSum, decimal = 0, interval }) =>
+			{
+				if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS[metricsKey]].length >= this.countMetricsInMetricsInterval)
+				{
+					return;
+				}
+
+				const inboundRtpStatsArraySumByKey = inboundRtpStatsArray[key].reduce((acc, number) => acc + number, 0) / (interval ? (this.#privateProperties.statsTimeout / 1000) : 1);
+				const prevInboundRtpStatsArraySumByKey = this.prevInboundRtpStatsSum[key];
+				const diffInboundRtpStatsArraySumByKey = prevInboundRtpStatsArraySumByKey && !!isSum ? inboundRtpStatsArraySumByKey - prevInboundRtpStatsArraySumByKey : inboundRtpStatsArraySumByKey;
+				const metricValue = !!countVideoTracks ? diffInboundRtpStatsArraySumByKey / countVideoTracks : 0;
+
+				this.addValidatedMonitoringMetric({
+					additionalData: {
+						inboundRtpStatsArrayByKey: inboundRtpStatsArray[key],
+						inboundRtpStatsArraySumByKey,
+						prevInboundRtpStatsArraySumByKey: prevInboundRtpStatsArraySumByKey,
+						diffInboundRtpStatsArraySumByKey,
+						metricValue,
+					},
+					metricKey: metricsKey,
+					metricValue: round(metricValue, decimal),
+				});
+				this.prevInboundRtpStatsSum[key] = inboundRtpStatsArraySumByKey;
+			}
+
+			addValueInboundRTCStatsToMetrics({ key: 'jitter', metricsKey: MONITORING_METRICS.JITTER, isSum: false, decimal: 3 });
+			addValueInboundRTCStatsToMetrics({ key: 'freezeCount', metricsKey: MONITORING_METRICS.FREEZE_COUNT, isSum: true, interval: true });
+			addValueInboundRTCStatsToMetrics({ key: 'totalFreezesDuration', metricsKey: MONITORING_METRICS.TOTAL_FREEZE_DURATION, isSum: true, decimal: 3, interval: true });
+			addValueInboundRTCStatsToMetrics({ key:'framesDecoded', metricsKey:MONITORING_METRICS.FRAMES_DECODED, isSum:true, interval: true });
+			addValueInboundRTCStatsToMetrics({ key:'framesReceived', metricsKey:MONITORING_METRICS.FRAMES_RECEIVED, isSum:true, interval: true });
+			addValueInboundRTCStatsToMetrics({ key:'framesDropped', metricsKey: MONITORING_METRICS.FRAMES_DROPPED, isSum: true, interval: true });
+			// addValueInboundRTCStatsToMetrics({ key: 'framesLoss', metricsKey: 'FRAMES_LOSS', isSum: true });
+
+			this.addValidatedMonitoringMetric({
+				metricKey: MONITORING_METRICS.COUNT_VIDEO_TRACKS,
+				metricValue: countVideoTracks,
+			});
+
+			this.addValidatedMonitoringMetric({
+				metricKey: MONITORING_METRICS.COUNT_AUDIO_TRACKS,
+				metricValue: countAudioTracks,
+			});
+
+			if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_LOSS].length < this.countMetricsInMetricsInterval)
+			{
+				const currentFramesReceivedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_RECEIVED];
+				const currentFramesDroppedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_DROPPED];
+				const currentFramesReceived = currentFramesReceivedArray.slice(-1)[0];
+				const currentFramesDropped = currentFramesDroppedArray.slice(-1)[0];
+				const currentFramesLoss = !!currentFramesReceived ? currentFramesDropped / currentFramesReceived : 0;
+
+				this.addValidatedMonitoringMetric({
+					additionalData: {
+						currentFramesReceivedArray,
+						currentFramesDroppedArray,
+						currentFramesReceived,
+						currentFramesDropped,
+						currentFramesLoss,
+					},
+					metricKey: MONITORING_METRICS.FRAMES_LOSS,
+					metricValue: currentFramesLoss > 0 ? round(currentFramesLoss * 100, 0)  : 0,
+				});
+			}
+			const bitrateSumIn = calcBitrateSumFromArray({ bitrateArray: totalBitrateIn });
+			const formattedBitrateIn = Number.parseFloat((bitrateSumIn / 1000000).toFixed(2));
+
+			if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.BITRATE_IN].length < this.countMetricsInMetricsInterval)
+			{
+				this.addValidatedMonitoringMetric({
+					additionalData: {
+						bitrateList: totalBitrateIn,
+						bitrateSumIn,
+						formattedBitrateIn,
+					},
+					metricKey: MONITORING_METRICS.BITRATE_IN,
+					metricValue: bitrateSumIn,
+				});
+			}
+
+			if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.PACKET_LOST_RECEIVE].length < this.countMetricsInMetricsInterval)
+			{
+				this.addValidatedMonitoringMetric({
+					metricKey: MONITORING_METRICS.PACKET_LOST_RECEIVE,
+					metricValue: currentPacketLostReceiveCount,
+				});
+			}
+
+			if (currentPacketLostReceiveCount > this.#privateProperties.packetLostThreshold)
+			{
+				this.addMonitoringEvents({name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_RECEIVE, withCounter: true} )
+			}
+		});
+
+		for (let userId in dataLoss)
+		{
+			if (!this.#privateProperties.stats[userId])
+			{
+				this.#privateProperties.stats[userId] = [];
+			}
+
+			if (this.#privateProperties.stats[userId].push(dataLoss[userId]) > 10)
+			{
+				this.#privateProperties.stats[userId].shift();
+			}
+
+			const connectionDataLoss = this.#privateProperties.stats[userId].reduce(
+				(acc, number) => acc + number, 0
+			) / this.#privateProperties.stats[userId].length;
+			const connectionScore = Util.calcConnectionScore(connectionDataLoss);
+			this.#setConnectionQuality(userId, connectionScore);
+		}
+
+		if (participantsWithLargeDataLoss.size || this.#privateProperties.prevParticipantsWithLargeDataLoss.size)
+		{
+			if (participantsWithLargeDataLoss.size)
+			{
+				this.setLog(`Have high packetsLost on users: ${[...participantsWithLargeDataLoss.values()]}`, LOG_LEVEL.WARNING);
+			}
+			this.#triggerEvents('UpdatePacketLoss', [[...participantsWithLargeDataLoss.keys()]]);
+		}
+		this.#privateProperties.prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
+
+		return statsOutput;
+	}
+
+	#setConnectionQuality(userId, score)
+	{
+		const localParticipant = userId === this.#privateProperties.userId;
+		const remoteParticipant = this.#privateProperties.remoteParticipants[userId];
+		const hasGoodQuality = score > this.#privateProperties.minimalConnectionQuality;
+		let needToSetScore;
+		let prevScore;
+
+		if (localParticipant)
+		{
+			prevScore = this.#privateProperties.localConnectionQuality;
+			this.#privateProperties.localConnectionQuality = score;
+			needToSetScore = (!this.#privateProperties.localTracks[MediaStreamsKinds.Camera]?.muted || !prevScore)
+				&& !this.#privateProperties.localTracks[MediaStreamsKinds.Screen];
+		}
+		else if (remoteParticipant)
+		{
+			prevScore = remoteParticipant.connectionQuality;
+			remoteParticipant.connectionQuality = score;
+			needToSetScore = (!remoteParticipant.isMutedVideo || !prevScore) && !remoteParticipant.screenSharingEnabled;
+		}
+
+		if (needToSetScore)
+		{
+			if (prevScore !== score)
+			{
+				const logMessage = localParticipant
+					? `Quality of connection with a media server changed to ${score}`
+					: `Quality of connection with a participant with id ${userId} (sid: ${remoteParticipant.sid}) changed to ${score}`;
+				const logLevel = hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING;
+
+				this.setLog(logMessage, logLevel);
+			}
+
+			// this.#toggleRemoteParticipantVideo([userId], hasGoodQuality);
+			this.#triggerEvents('ConnectionQualityChanged', [{ [userId]: score }]);
+		}
+	}
+
+	#onAddTrack(mediaServerId: number, signal: any, mediaStreamTrackId: string, mediaStreamKind: string): void
+	{
+		this.#addPendingPublication(mediaStreamTrackId, mediaStreamKind);
+		this.#sendSignal({ addTrack: signal }, mediaServerId);
+	}
+
+	#onTrack(event)
+	{
+		const ids = event.streams[0].id.split('|');
+		const trackId = ids[1];
+		const userId = this.#privateProperties.tracksDataFromSocket[trackId]?.userId;
+
+		if (this.#privateProperties.remoteParticipants[userId] && this.#privateProperties.tracksDataFromSocket[trackId])
+		{
+			this.#createRemoteTrack(trackId, event);
 		}
 		else
 		{
-			this.setLog(logMessage, LOG_LEVEL.INFO);
+			this.setLog(`Got a track with kind ${event.track.kind} (sid: ${trackId}) without a participant, saving it`, LOG_LEVEL.WARNING);
+			this.#privateProperties.ontrackData[trackId] = event;
 		}
-	}
+	};
 
-	#resetPingTimeout() {
-		this.#clearPingTimeout()
-		if (!this.#privateProperties.pingTimeoutDuration) {
+	#resetPingTimeout(mediaServerId)
+	{
+		this.#clearPingTimeout(mediaServerId);
+
+		if (!this.#privateProperties.pingTimeoutDuration)
+		{
 			return;
 		}
-		this.#privateProperties.pingTimeout = setTimeout(() => {
-			this.setLog('Ping signal was not received, reconnecting', LOG_LEVEL.WARNING);
+
+		if (mediaServerId && this.#privateProperties.awaitedPings.size)
+		{
+			return;
+		}
+
+		this.#privateProperties.pingTimeout = setTimeout(() =>
+		{
+			this.setLog(`Ping signal was not received from ${[...this.#privateProperties.awaitedPings]}, reconnecting`, LOG_LEVEL.WARNING);
 			this.#beforeDisconnect();
 			this.#privateProperties.lastReconnectionReason = ReconnectionReason.PingPongMissed;
 			this.#reconnect({
@@ -1618,112 +2043,151 @@ export class Call {
 				reconnectionReasonInfo: ``,
 			});
 		}, this.#privateProperties.pingTimeoutDuration);
-	}
+	};
 
+	#clearPingTimeout(mediaServerId)
+	{
+		if (mediaServerId)
+		{
+			this.#privateProperties.awaitedPings.delete(mediaServerId);
+			if (this.#privateProperties.awaitedPings.size)
+			{
+				return;
+			}
 
-	#clearPingTimeout() {
-		if (this.#privateProperties.pingTimeout) {
+			clearTimeout(this.#privateProperties.pingTimeout);
+		}
+		else
+		{
+			this.#privateProperties.awaitedPings = new Set();
 			clearTimeout(this.#privateProperties.pingTimeout);
 		}
 	}
 
-	#startPingInterval() {
-		this.#clearPingInterval()
-		this.#resetPingTimeout()
-		if (!this.#privateProperties.pingIntervalDuration) {
+	#startPingInterval(mediaServerId)
+	{
+		this.#clearPingInterval(mediaServerId);
+		this.#resetPingTimeout(mediaServerId);
+		if (!this.#privateProperties.pingIntervalDuration)
+		{
 			return;
 		}
-		this.#privateProperties.pingPongInterval = setInterval(() => {
-			this.#sendPing();
+		this.#privateProperties.pingPongIntervals[mediaServerId] = setInterval(() =>
+		{
+			this.#sendPing(mediaServerId);
 		}, this.#privateProperties.pingIntervalDuration);
 	}
 
-	#clearPingInterval() {
-		this.#clearPingTimeout();
-		if (this.#privateProperties.pingPongInterval) {
-			clearInterval(this.#privateProperties.pingPongInterval);
+	#clearPingInterval(mediaServerId)
+	{
+		this.#clearPingTimeout(mediaServerId);
+		if (mediaServerId)
+		{
+			if (this.#privateProperties.pingPongIntervals[mediaServerId])
+			{
+				clearInterval(this.#privateProperties.pingPongIntervals[mediaServerId]);
+				delete this.#privateProperties.pingPongIntervals[mediaServerId];
+			}
+		}
+		else
+		{
+			for (let mediaServerId in this.#privateProperties.pingPongIntervals)
+			{
+				this.#clearPingInterval(mediaServerId);
+			}
 		}
 	}
 
-	#sendPing() {
+	#sendPing(mediaServerId)
+	{
+		this.#privateProperties.awaitedPings.add(mediaServerId);
 		this.#sendSignal({
 			pingReq: {
 				timestamp: Date.now(),
-				rtt: this.#privateProperties.rtt
+				rtt: this.#privateProperties.rtt[mediaServerId] || 0,
 			}
-		});
+		}, mediaServerId);
 	}
 
-	on(eventType, handler) {
+	on(eventType, handler)
+	{
 		this.#privateProperties.events.set(eventType, handler)
-		return this
+		return this;
 	}
-	off(eventType) {
-		if (this.#privateProperties.events.has(eventType)) {
+
+	off(eventType)
+	{
+		if (this.#privateProperties.events.has(eventType))
+		{
 			return this.#privateProperties.events.delete(eventType)
 		}
-		return this
+		return this;
 	}
 
-	triggerEvents(eventType, args) {
-		if (this.#privateProperties.events.has(eventType)) {
+	#triggerEvents(eventType, args)
+	{
+		if (this.#privateProperties.events.has(eventType))
+		{
 			const event = this.#privateProperties.events.get(eventType)
-			if (args) {
-				event(...args)
-			} else {
-				event()
-			}
-		}
-	}
-
-	isRecordable() {
-		console.log('isRecordable')
-	}
-
-	setBitrate(bitrate, MediaStreamKind) {
-		this.setLog('Start setting bitrate', LOG_LEVEL.INFO);
-		let track;
-		let isSimulcast;
-		switch (MediaStreamKind) {
-			case MediaStreamsKinds.Camera:
-				track = this.#privateProperties.cameraStream.getVideoTracks[0];
-				isSimulcast = this.#privateProperties.videoSimulcast;
-				break;
-			case MediaStreamsKinds.Microphone:
-				track = this.#privateProperties.microphoneStream.getAudioTracks[0];
-				break;
-			case MediaStreamsKinds.Screen:
-				track = this.#privateProperties.screenStream.getVideoTracks[0];
-				break;
-		}
-		const senders = this.sender.getSenders()
-
-		senders.forEach( (sender) => {
-			const params = sender.getParameters();
-			if(!params || !params.encodings || params.encodings.length === 0)
+			if (args)
 			{
-				this.setLog('Setting bitrate failed: has no encodings in the sender parameters', LOG_LEVEL.WARNING);
+				event(...args);
 			}
 			else
 			{
-				params.encodings.forEach(encoding => {
-					if (isSimulcast) {
-						encoding.maxBitrate = bitrate < this.#privateProperties.defaultSimulcastBitrate[encoding.rid] ? bitrate : this.#privateProperties.defaultSimulcastBitrate[encoding.rid]
-					} else {
-						encoding.maxBitrate = bitrate
-					}
-				})
-				sender.setParameters(params);
-				this.setLog('Setting bitrate succeeded', LOG_LEVEL.INFO);
+				event();
 			}
-		});
+		}
 	}
 
-	#addPendingPublication(trackId, source)
+	isRecordable()
 	{
-		this.#privateProperties.pendingPublications[trackId] = setTimeout(() =>
+		// console.log('isRecordable')
+	}
+
+	#needSubscribeToTrack(track, participant, processAudio)
+	{
+		// for the simplicity of logic we will immediately subscribe to all screen share streams
+		return (track.source === MediaStreamsKinds.Microphone && processAudio && !participant.isMutedAudio)
+			|| track.source === MediaStreamsKinds.Screen
+			|| (track.source === MediaStreamsKinds.Camera && ((!participant.isLocalVideoMute && !participant.isMutedVideo) || this.#privateProperties.participantsToUpdateTrackAvailability[participant.userId]));
+	}
+
+	#onTrackPublishResult(trackId: string, source: number, calledFrom: string): void
+	{
+		if (source === MediaStreamsKinds.Microphone)
 		{
+			if (this.#privateProperties.needToDisableAudioAfterPublish)
+			{
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+				this.disableAudio({ calledFrom });
+			}
+			else
+			{
+				this.unpauseTrack(MediaStreamsKinds.Microphone);
+			}
+		}
+		else if (source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
+		{
+			this.#processVideoQueue();
+		}
+
+		if (source === MediaStreamsKinds.Camera || source === MediaStreamsKinds.Screen)
+		{
+			this.#changeLayersAvailability(trackId);
+		}
+	}
+
+	#addPendingPublication(trackId: string, source: number): void
+	{
+		this.#privateProperties.pendingPublications[trackId] = setTimeout(() => {
 			delete this.#privateProperties.pendingPublications[trackId];
+
+			if (source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
+			{
+				this.#onTrackPublishResult(trackId, source, '#addPendingPublication');
+			}
+
 			this.onPublishFailed(source);
 		}, this.#privateProperties.publicationTimeout);
 	}
@@ -1743,8 +2207,7 @@ export class Call {
 
 		const timeout = setTimeout(() => {
 			this.setLog(`Track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) was not received, trying to subscribe to it`, LOG_LEVEL.WARNING);
-			this.checkMetricsFeatureAndExecutionCallback(() =>
-			{
+			checkMetricsFeatureAndExecutionCallback(() => {
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_DELAY,
 					withCounter: true,
@@ -1754,20 +2217,19 @@ export class Call {
 			if (tries)
 			{
 				this.#addPendingSubscription(participant, track, tries - 1)
-				this.#changeSubscriptionToTrack(track.sid, participant.sid, true);
+				this.#changeSubscriptionToTrack(track.sid, participant.sid, true, participant.mediaServerId);
 			}
 			else
 			{
 				this.setLog(`Subscription to track ${track.sid} with kind ${track.source} for a participant with id ${participant.userId} (sid: ${participant.sid}) failed`, LOG_LEVEL.ERROR);
-				this.checkMetricsFeatureAndExecutionCallback(() =>
-				{
+				checkMetricsFeatureAndExecutionCallback(() => {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_FAILED,
 						withCounter: true,
 					});
 				});
 
-				this.triggerEvents('TrackSubscriptionFailed', [{participant: participant, track: track}]);
+				this.#triggerEvents('TrackSubscriptionFailed', [{participant: participant, track: track}]);
 			}
 		}, this.#privateProperties.subscriptionTimeout);
 
@@ -1777,179 +2239,93 @@ export class Call {
 		};
 	}
 
-	setCodec(transceiver)
+	#clearPendingSubscriptions(participantId: number): void
 	{
-		if (!('getCapabilities' in RTCRtpReceiver)) {
+		const pendingSubscriptions = this.#privateProperties.pendingSubscriptions[participantId];
+		if (!pendingSubscriptions)
+		{
 			return;
 		}
-		const cap = RTCRtpReceiver.getCapabilities('video');
-		if (!cap) return;
-		const matched = [];
-		const partialMatched = [];
-		const unmatched = [];
-		cap.codecs.forEach((c) => {
-			const codec = c.mimeType.toLowerCase();
-			if (codec === 'audio/opus') {
-				matched.push(c);
-				return;
-			}
-			const matchesVideoCodec = codec === `video/${this.#privateProperties.codec}`;
-			if (!matchesVideoCodec) {
-				unmatched.push(c);
-				return;
-			}
-			// for h264 codecs that have sdpFmtpLine available, use only if the
-			// profile-level-id is 42e01f for cross-browser compatibility
-			if (this.#privateProperties.codec === 'h264') {
-				if (c.sdpFmtpLine && c.sdpFmtpLine.includes('profile-level-id=42e01f')) {
-					matched.push(c);
-				} else {
-					partialMatched.push(c);
-				}
-				return;
-			}
 
-			matched.push(c);
+		Object.values(pendingSubscriptions).forEach(subscription => {
+			clearTimeout(subscription.timeout);
 		});
 
-		if ('setCodecPreferences' in transceiver) {
-			// console.log('setCodecPreferences', this.#privateProperties.codec, matched, partialMatched, unmatched);
-			transceiver.setCodecPreferences(matched.concat(partialMatched, unmatched));
+		delete this.#privateProperties.pendingSubscriptions[participantId];
+	}
+
+	async publishTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {})
+	{
+		const mediaServer: MediaServer = this.#getPublishingMediaServer();
+		if (mediaServer)
+		{
+			mediaServer.addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions)
+				.then((publicationResult) => {
+					if (publicationResult)
+					{
+						this.#triggerEvents('PublishSucceed', [mediaStreamKind]);
+					}
+				})
+				.catch((error) => {
+					this.setLog(`Publishing a track with kind ${mediaStreamKind} failed: ${error}`, LOG_LEVEL.ERROR);
+					clearTimeout(this.#privateProperties.pendingPublications[mediaStreamTrack.id]);
+					this.#releaseStream(mediaStreamKind);
+					this.#triggerEvents('PublishFailed', [mediaStreamKind]);
+				});
+		}
+		else
+		{
+			this.setLog(`Media server for publishing not found`, LOG_LEVEL.ERROR);
 		}
 	}
 
-	async publishTrack(MediaStreamKind, MediaStreamTrack, StreamQualityOptions = {}) {
-		if (!this.sender)
+	async changeStreamQuality(streamQualityOptions)
+	{
+		const mediaServer = this.#getPublishingMediaServer();
+
+		for (let key in streamQualityOptions)
 		{
-			this.setLog(`Publishing a track before a peer connection was created, ignoring`, LOG_LEVEL.WARNING);
-			return;
-		}
+			if (this.#privateProperties[`${key}`] !== streamQualityOptions[key])
+			{
+				this.#privateProperties[`${key}`] = streamQualityOptions[key]
 
-		this.setLog(`Start publishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
+				if (key === 'videoSimulcast' || (key === 'screenSimulcast' && this.#privateProperties.screenStream))
+				{
+					let kind;
+					let trackPublished;
+					if (key === 'videoSimulcast')
+					{
+						kind = MediaStreamsKinds.Camera;
+						trackPublished = this.isVideoPublished();
+					}
+					else if (key === 'screenSimulcast')
+					{
+						kind = MediaStreamsKinds.Screen;
+						trackPublished = this.isScreenSharePublished();
+					}
 
-		try {
-			for (let keys in StreamQualityOptions ) {
-				this.#privateProperties[`${keys}`] = StreamQualityOptions[keys]
+					if (mediaServer && trackPublished)
+					{
+						this.setLog('Add sender transceiver - direction: sendonly', LOG_LEVEL.INFO);
+						await this.republishTrack(kind);
+					}
+				}
+				else if ( ['videoBitrate', 'audioBitrate', 'screenBitrate'].includes(key))
+				{
+					const kind = key === 'videoBitrate'
+						? MediaStreamsKinds.Camera
+						: key === 'screenBitrate'
+							? MediaStreamsKinds.Screen
+							: MediaStreamsKinds.Microphone;
+
+					if (mediaServer)
+					{
+						await mediaServer.setBitrate(streamQualityOptions[key], kind);
+					}
+				}
 			}
-
-			const source = MediaStreamKind;
-			MediaStreamTrack.source = source;
-			if (source === MediaStreamsKinds.Camera) {
-				if( this.#privateProperties.videoSimulcast) {
-					const width = MediaStreamTrack.getSettings().width;
-					const height = MediaStreamTrack.getSettings().height;
-
-					const sender = this.#getSender(MediaStreamsKinds.Camera);
-					if (sender)
-					{
-						await sender.replaceTrack(MediaStreamTrack);
-						this.#updateVideoEncodings(sender, MediaStreamTrack);
-						this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
-						this.triggerEvents('PublishSucceed', [MediaStreamsKinds.Camera]);
-						return;
-					}
-					else
-					{
-						const encodings = this.#getEncodingsFromVideoWidth(width);
-
-						this.setLog('Add sender transceiver - direction: sendonly', LOG_LEVEL.INFO);
-						const transceiver = this.sender.addTransceiver(MediaStreamTrack, {
-							direction: 'sendonly',
-							streams: [this.#privateProperties.cameraStream],
-							sendEncodings: MediaStreamTrack.sendEncodings || encodings,
-						});
-
-						this.setCodec(transceiver)
-
-						this.#addPendingPublication(MediaStreamTrack.id, source);
-
-						this.#sendSignal({
-							"addTrack":  {
-								"cid":  MediaStreamTrack.id,
-								"type":  "VIDEO",
-								"width":  width,
-								"height":  height,
-								"source":  source,
-								"layers":  this.#getLayersFromEncodings(width, height, encodings),
-							}
-						});
-					}
-				} else {
-					const sender = this.#getSender(MediaStreamsKinds.Camera);
-					if (sender)
-					{
-						await sender.replaceTrack(MediaStreamTrack);
-						this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
-						this.triggerEvents('PublishSucceed', [MediaStreamsKinds.Camera]);
-						return;
-					}
-					else
-					{
-						this.setLog('Add sender transceiver - direction: sendonly', LOG_LEVEL.INFO);
-						this.sender.addTransceiver(MediaStreamTrack, {
-							direction: 'sendonly'
-						});
-						this.setBitrate(this.#privateProperties.videoBitrate, MediaStreamsKinds.Camera)
-
-						const width = MediaStreamTrack.getSettings().width
-						const height = MediaStreamTrack.getSettings().height
-
-						this.#addPendingPublication(MediaStreamTrack.id, source);
-
-						this.#sendSignal({
-							"addTrack":  {
-								"cid":  MediaStreamTrack.id,
-								"type":  "VIDEO",
-								"width":  width,
-								"height":  height,
-								"source":  source,
-							}
-						});
-					}
-				}
-			} else if (source === MediaStreamsKinds.Microphone) {
-				const sender = this.#getSender(MediaStreamsKinds.Microphone);
-				if (sender)
-				{
-					await sender.replaceTrack(MediaStreamTrack);
-					this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
-					this.triggerEvents('PublishSucceed', [MediaStreamsKinds.Microphone]);
-					return;
-				}
-				else
-				{
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
-
-					this.#addPendingPublication(MediaStreamTrack.id, source);
-
-					this.#sendSignal({
-						"addTrack":  {
-							"cid" : MediaStreamTrack.id,
-							"source":  source
-						}
-					});
-				}
-			} else if (source === MediaStreamsKinds.Screen) {
-				this.sender.addTransceiver(MediaStreamTrack, {
-					direction: 'sendonly'
-				});
-				const width = MediaStreamTrack.getSettings().width
-				const height = MediaStreamTrack.getSettings().height
-
-				this.#addPendingPublication(MediaStreamTrack.id, source);
-
-				this.#sendSignal({
-					"addTrack":  {
-						"cid":  MediaStreamTrack.id,
-						"type":  "VIDEO",
-						"width":  width,
-						"height":  height,
-						"source":  source,
-					}
-				});
-			} else if (source === MediaStreamsKinds.ScreenAudio) {
+			else if (source === MediaStreamsKinds.ScreenAudio)
+			{
 				this.sender.addTransceiver(MediaStreamTrack, {
 					direction: 'sendonly'
 				});
@@ -1966,160 +2342,150 @@ export class Call {
 					}
 				});
 			}
-
-			this.#privateProperties.offersStack++;
-			await this.sendOffer();
-		}
-		catch (e)
-		{
-			if (MediaStreamKind === MediaStreamsKinds.Microphone)
-			{
-				this.#privateProperties.needToDisableAudioAfterPublish = false;
-			}
-			this.setLog(`Publishing a track with kind ${MediaStreamKind} failed: ${e}`, LOG_LEVEL.ERROR);
-			this.#releaseStream(MediaStreamKind);
-			this.onPublishFailed(MediaStreamKind);
 		}
 	}
 
-	#getMaxEncodingsByVideoWidth(width)
+	async republishTrack(mediaStreamKind)
 	{
-		const aspectRation = 16 / 9;
-		let maxWidth = Math.ceil(Hardware.maxLocalStreamQualityHeight * aspectRation);
-
-		if (maxWidth <= width)
+		this.setLog(`Start republishing a track with kind ${mediaStreamKind}`, LOG_LEVEL.INFO);
+		await this.unpublishTrack(mediaStreamKind);
+		const track = await this.getTrack(mediaStreamKind);
+		if (track)
 		{
-			width = maxWidth;
-		}
-
-		// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
-
-		if (width >= 960)
-		{
-			return 3;
-		}
-		else if (width >= 480)
-		{
-			return 2;
-		}
-		return 1;
-	}
-
-	#getEncodingsFromVideoWidth(width)
-	{
-		const maxEncodings = this.#getMaxEncodingsByVideoWidth(width);
-		const rids = ['q', 'h', 'f'];
-		const encodings = [];
-
-		for (let i = 0; i < 3; i++)
-		{
-			const rid = rids[i];
-			encodings.push({
-				rid,
-				active: i < maxEncodings,
-				maxBitrate: this.#privateProperties.defaultSimulcastBitrate[rid],
-				scaleResolutionDownBy: 2 ** Math.max(0, (maxEncodings - 1 - i))
-			});
-		}
-
-		return encodings;
-	};
-
-	#getLayersFromEncodings(width, height, encodings)
-	{
-		return encodings.map((encoding, index) =>
-		{
-			return {
-				quality: index,
-				width: width / encoding.scaleResolutionDownBy,
-				height: height / encoding.scaleResolutionDownBy,
-				bitrate: this.#privateProperties.defaultSimulcastBitrate[encoding.rid],
-			}
-		});
-	}
-
-	#updateVideoEncodings(sender, track)
-	{
-		const params = sender.getParameters();
-		const width = track?.getSettings().width || Hardware.maxLocalStreamQualityHeight;
-		const encodings = this.#getEncodingsFromVideoWidth(width);
-
-		if (params && params.encodings && params.encodings.length)
-		{
-			params.encodings.forEach((encoding) =>
-			{
-				const encodingByRid = encodings.find(el => el.rid === encoding.rid);
-				if (encodingByRid)
-				{
-					encoding.active = encodingByRid.active;
-					encoding.maxBitrate = encodingByRid.maxBitrate;
-					encoding.scaleResolutionDownBy = encodingByRid.scaleResolutionDownBy;
-				}
-			});
-			sender.setParameters(params);
-		}
-	}
-
-	async changeStreamQuality(StreamQualityOptions) {
-		for (let key in StreamQualityOptions) {
-			if (this.#privateProperties[`${key}`] !== StreamQualityOptions[key]) {
-				this.#privateProperties[`${key}`] = StreamQualityOptions[key]
-
-				if (key === 'videoSimulcast' || (key === 'screenSimulcast' && this.#privateProperties.screenStream)) {
-					const kind = key === 'videoSimulcast'
-						? MediaStreamsKinds.Camera
-						: MediaStreamsKinds.Screen
-
-					if (this.#getSender(kind)) {
-						await this.republishTrack(kind)
-					}
-				} else if ( ['videoBitrate', 'audioBitrate', 'screenBitrate'].includes(key)) {
-					const kind = key === 'videoBitrate'
-						? MediaStreamsKinds.Camera
-						: key === 'screenBitrate'
-							? MediaStreamsKinds.Screen
-							: MediaStreamsKinds.Microphone
-
-					await this.setBitrate(StreamQualityOptions[key], kind)
-				}
-			}
-		}
-	}
-
-	async republishTrack(MediaStreamKind) {
-		this.setLog(`Start republishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
-		await this.unpublishTrack(MediaStreamKind);
-		const track = await this.getTrack(MediaStreamKind);
-		if (track) {
-			await this.publishTrack(MediaStreamKind, track);
-		} else {
-			this.setLog(`Republishing a track with kind ${MediaStreamKind} failed: ${error}`, LOG_LEVEL.ERROR);
-			this.#releaseStream(MediaStreamKind);
-			this.triggerEvents('PublishFailed', [MediaStreamKind])
-		}
-	}
-
-	async unpublishTrack(MediaStreamKind) {
-		this.setLog(`Start unpublishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
-		const sender = this.#getSender(MediaStreamKind);
-
-		if (sender) {
-			this.sender.removeTrack(sender);
-			this.#privateProperties.offersStack++;
-			await this.sendOffer();
-			this.setLog(`Unpublishing a track with kind ${MediaStreamKind} succeeded`, LOG_LEVEL.INFO);
+			await this.publishTrack(mediaStreamKind, track, this.#getStreamQualityOptions(mediaStreamKind));
 		}
 		else
 		{
-			this.setLog(`Unpublishing a track with kind ${MediaStreamKind} failed: has no sender for a track`, LOG_LEVEL.ERROR);
+			this.setLog(`Republishing a track with kind ${mediaStreamKind} failed: track not found`, LOG_LEVEL.ERROR);
+			this.#releaseStream(mediaStreamKind);
+			this.#triggerEvents('PublishFailed', [mediaStreamKind]);
 		}
 	}
 
-	toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false) {
+	async unpublishTrack(mediaStreamKind)
+	{
+		this.setLog(`Start unpublishing a track with kind ${mediaStreamKind}`, LOG_LEVEL.INFO);
+
+		const mediaServer = this.#getPublishingMediaServer();
+		if (mediaServer)
+		{
+			mediaServer.removeTrack(mediaStreamKind);
+		}
+		else
+		{
+			this.setLog(`Media server for publishing not found`, LOG_LEVEL.ERROR);
+		}
+	}
+
+	toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false)
+	{
 		this.#toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
 	}
 
-	#changeSubscriptionToTrack(trackId, participantId, subscribe)
+	#changeTrackActivity(trackSid: string, isActive: boolean): void
+	{
+		const localTracks: any[] = Object.values(this.#privateProperties.localTracks);
+		let mediaStreamKind: ?number = null;
+
+		for (const track of localTracks)
+		{
+			if (track.sid === trackSid)
+			{
+				mediaStreamKind = track.source;
+				break;
+			}
+		}
+
+		if (!mediaStreamKind)
+		{
+			return;
+		}
+
+		const mediaServer = this.#getPublishingMediaServer();
+		mediaServer?.changeTrackActivity(mediaStreamKind, isActive);
+	}
+
+	#changeLayersAvailability(trackSid: string, subscribedQualities?: Array<SubscribedQuality>): Promise<void>
+	{
+		const mediaServer = this.#getPublishingMediaServer();
+		if (!mediaServer)
+		{
+			return;
+		}
+
+		const localTrack = this.#getLocalTrackBySid(trackSid);
+		if (!localTrack)
+		{
+			return;
+		}
+
+		const isVideoTrack = [MediaStreamsKinds.Camera, MediaStreamsKinds.Screen].includes(localTrack.source);
+		if (!isVideoTrack)
+		{
+			return;
+		}
+
+		const track: MediaStreamTrack | undefined = localTrack.source === MediaStreamsKinds.Camera
+			? this.#privateProperties.cameraStream?.getVideoTracks()?.[0]
+			: this.#privateProperties.screenStream?.getVideoTracks()?.[0];
+		if (!track)
+		{
+			return;
+		}
+
+		const layers: LayersAvailability = this.#getLayersInUse(subscribedQualities);
+		mediaServer.changeLayersAvailability(layers, track);
+	}
+
+	#getLayersInUse(subscribedQualities: Array<SubscribedQuality> = []): LayersAvailability
+	{
+		const qualityToRid = { HIGH: 'f', MEDIUM: 'h', LOW: 'q' };
+		const layersInUse: LayersAvailability = { f: false, h: false, q: false };
+
+		if (subscribedQualities?.length === 0)
+		{
+			return layersInUse;
+		}
+
+		for (const layer of subscribedQualities)
+		{
+			const rid = qualityToRid[layer?.quality] || 'q';
+			layersInUse[rid] = Boolean(layer?.enabled);
+		}
+
+		return layersInUse;
+	}
+
+	#getStreamQualityOptions(mediaStreamKind)
+	{
+		let options = {};
+		switch (mediaStreamKind)
+		{
+			case MediaStreamsKinds.Camera:
+				const bitrate = this.#privateProperties.videoSimulcast
+					? this.#privateProperties.defaultSimulcastBitrate
+					: this.#privateProperties.videoBitrate;
+				options = {
+					videoSimulcast: this.#privateProperties.videoSimulcast,
+					videoBitrate: bitrate,
+				};
+				break;
+			case MediaStreamsKinds.Microphone:
+				options = {
+					audioBitrate: this.#privateProperties.audioBitrate,
+				};
+				break;
+			case MediaStreamsKinds.Screen:
+				options = {
+					screenSimulcast: this.#privateProperties.screenSimulcast,
+					screenBitrate: this.#privateProperties.screenBitrate,
+				};
+				break;
+		}
+		return options;
+	};
+
+	#changeSubscriptionToTrack(trackId, participantId, subscribe, mediaServerId)
 	{
 		this.#sendSignal({
 			subscription: {
@@ -2132,7 +2498,7 @@ export class Call {
 					},
 				],
 			}
-		});
+		}, mediaServerId);
 	}
 
 	#pauseRemoteTrack(userId, trackId, trackSource, pause)
@@ -2151,23 +2517,32 @@ export class Call {
 				disabled: pause,
 				quality: this.#calculateVideoQualityForUser(userId, trackSource),
 			}
-		});
+		}, participant.mediaServerId);
 	}
 
-	#calculateVideoQualityForUser(userId, source)
+	#calculateVideoQualityForUser(userId, source): Number
 	{
 		const participant = this.#privateProperties.remoteParticipants[userId];
 		const exactUser = this.#privateProperties.mainStream.userId == userId;
 		const exactTrack = this.#privateProperties.mainStream.kind === source;
 
-		let quality = STREAM_QUALITY.LOW;
+		let quality = this.#privateProperties.defaultRemoteStreamsQuality;
 		if (exactUser && (exactTrack || !participant.screenSharingEnabled))
 		{
 			quality = STREAM_QUALITY.HIGH;
 		}
-		else if (!this.#privateProperties.mainStream.userId)
+		else if (!this.#privateProperties.mainStream.userId && participant.videoWidth)
 		{
-			quality = this.#privateProperties.defaultRemoteStreamsQuality;
+			quality = STREAM_QUALITY.LOW;
+
+			if (participant.videoWidth >= (640 * 1.5))
+			{
+				quality = STREAM_QUALITY.HIGH;
+			}
+			else if (participant.videoWidth >= (320 * 1.5))
+			{
+				quality = STREAM_QUALITY.MEDIUM;
+			}
 		}
 
 		return quality;
@@ -2177,26 +2552,16 @@ export class Call {
 	{
 		this.setLog(`Changing quality of streams; main stream: ${users.userId}, other users: ${users.otherUsers}`, LOG_LEVEL.INFO);
 
-		users.otherUsers?.forEach((userId) => {
-			const participant = this.#privateProperties.remoteParticipants[userId];
-			if (participant)
-			{
-				const quality = this.#calculateVideoQualityForUser(userId, MediaStreamsKinds.Camera);
-				this.#setStreamQualityFoParticipant(participant, quality);
-			}
-		});
+		const mainStreamUserId = users.userId;
 
-		if (users.userId)
+		if (mainStreamUserId)
 		{
 			const participant = this.#privateProperties.remoteParticipants[users.userId];
 			if (participant)
 			{
-				let quality = this.#privateProperties.defaultRemoteStreamsQuality;
-				if (kind === MediaStreamsKinds.Camera && this.#privateProperties.defaultRemoteStreamsQuality >= STREAM_QUALITY.HIGH)
-				{
-					quality = STREAM_QUALITY.HIGH;
-				}
-
+				const quality = kind === MediaStreamsKinds.Camera
+					? STREAM_QUALITY.HIGH
+					: this.#privateProperties.defaultRemoteStreamsQuality;
 				this.#privateProperties.mainStream = { userId: users.userId, kind };
 				this.#setStreamQualityFoParticipant(participant, quality);
 			}
@@ -2205,8 +2570,16 @@ export class Call {
 		{
 			this.#privateProperties.mainStream = {};
 		}
-	}
 
+		users.otherUsers?.forEach((userId) => {
+			const participant = this.#privateProperties.remoteParticipants[userId];
+			if (participant && (!mainStreamUserId || mainStreamUserId != userId))
+			{
+				const quality = this.#calculateVideoQualityForUser(userId, MediaStreamsKinds.Camera);
+				this.#setStreamQualityFoParticipant(participant, quality);
+			}
+		});
+	}
 
 	#setStreamQualityFoParticipant(participant, quality)
 	{
@@ -2215,16 +2588,19 @@ export class Call {
 			return;
 		}
 
-		this.#sendSignal({
-			requestLayers: {
-				targetUserId: participant.userId,
-				layers: {
-					q: quality === STREAM_QUALITY.LOW,
-					h: quality === STREAM_QUALITY.MEDIUM,
-					f: quality === STREAM_QUALITY.HIGH,
+		if (this.#privateProperties.useLayersAccurateControl)
+		{
+			this.#sendSignal({
+				requestLayers: {
+					targetUserId: participant.userId,
+					layers: {
+						q: quality === STREAM_QUALITY.LOW,
+						h: quality === STREAM_QUALITY.MEDIUM,
+						f: quality === STREAM_QUALITY.HIGH,
+					},
 				},
-			},
-		});
+			});
+		}
 
 		this.#sendSignal({
 			trackSetting: {
@@ -2243,6 +2619,8 @@ export class Call {
 			const trackSubscribed = cameraTrack?.subscribed === true;
 			const needChangeLocalVideoMute = remoteParticipant?.isLocalVideoMute === showVideo;
 
+			remoteParticipant?.setVideoWidth(participant.videoWidth);
+
 			if (
 				trackSubscribed
 				&& showVideo
@@ -2250,8 +2628,8 @@ export class Call {
 				&& !remoteParticipant.isMutedVideo
 			)
 			{
-				//remoteParticipant.setVideoWidth(participant.videoWidth);
-				this.#setStreamQualityFoParticipant(remoteParticipant);
+				const quality = this.#calculateVideoQualityForUser(participantId, MediaStreamsKinds.Camera);
+				this.#setStreamQualityFoParticipant(remoteParticipant, quality);
 			}
 			else if (trackSubscribed && needChangeLocalVideoMute)
 			{
@@ -2274,7 +2652,6 @@ export class Call {
 				&& cameraTrack
 				&& !trackSubscribed
 				&& showVideo
-				&& needChangeLocalVideoMute
 			)
 			{
 				remoteParticipant.isLocalVideoMute = !showVideo;
@@ -2291,7 +2668,7 @@ export class Call {
 					remoteParticipant.mediaServerId,
 				);
 			}
-			else if (remoteParticipant && !showVideo)
+			else if (remoteParticipant && needChangeLocalVideoMute)
 			{
 				remoteParticipant.isLocalVideoMute = !showVideo;
 			}
@@ -2303,45 +2680,18 @@ export class Call {
 
 		if (!isPaginateToggle)
 		{
-			this.triggerEvents('ToggleRemoteParticipantVideo', [showVideo]);
+			this.#triggerEvents('ToggleRemoteParticipantVideo', [showVideo]);
 		}
 	}
 
-	/*
-	#toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle = false)
+	hangup(closeRoom = false)
 	{
-		participantIds.forEach(participantId => {
-			const remoteParticipant = this.#privateProperties.remoteParticipants[participantId];
-			if (remoteParticipant && remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo)
-			{
-				remoteParticipant.isLocalVideoMute = !showVideo;
-
-				if (remoteParticipant.isMutedVideo)
-				{
-					return;
-				}
-
-				this.#pauseRemoteTrack(
-					remoteParticipant.userId,
-					remoteParticipant.tracks[MediaStreamsKinds.Camera].id,
-					remoteParticipant.tracks[MediaStreamsKinds.Camera].source,
-					remoteParticipant.isLocalVideoMute
-				);
-			}
-		});
-
-		if (!isPaginateToggle)
-		{
-			this.triggerEvents('ToggleRemoteParticipantVideo', [showVideo]);
-		}
-	}*/
-
-	hangup(closeRoom = false) {
 		if (this.#privateProperties.callState === CALL_STATE.TERMINATED)
 		{
 			return;
 		}
 
+		this.#privateProperties.abortController.signal.removeEventListener('abort', this.beforeDisconnectBound);
 		this.#privateProperties.abortController.abort();
 
 		this.#privateProperties.callState = CALL_STATE.TERMINATED;
@@ -2363,7 +2713,12 @@ export class Call {
 			initiatedByUser: true,
 			destroySocket: true,
 		});
-		this.#destroyPeerConnection();
+		for (let mediaServer of this.#privateProperties.mediaServers.values())
+		{
+			this.#removeMediaServerEvents(mediaServer);
+			mediaServer.disconnect();
+		}
+		this.#privateProperties.mediaServers.clear();
 
 		clearTimeout(this.#privateProperties.reconnectionTimeout);
 
@@ -2382,24 +2737,27 @@ export class Call {
 		}
 		this.#privateProperties.pendingSubscriptions = {};
 
+		this.#privateProperties.url = null;
+		this.#privateProperties.endpoint = null;
+		this.#privateProperties.jwt = null;
 		this.#privateProperties.options = null;
-		this.#privateProperties.iceServers = null;
 		this.#privateProperties.lastReconnectionReason = null;
 
 		this.#releaseStream(MediaStreamsKinds.Camera);
 		this.#releaseStream(MediaStreamsKinds.Microphone);
 		this.#releaseStream(MediaStreamsKinds.Screen);
+		this.#releaseStream(MediaStreamsKinds.ScreenAudio);
 
-		this.#privateProperties.rtt = 0;
-		this.#privateProperties.remoteTracks = {};
+		this.#privateProperties.rtt = {};
 		this.#privateProperties.isReconnecting = false;
 		this.#privateProperties.reconnectionAttempt = 0;
 		this.#privateProperties.mainStream = {};
 
-		this.triggerEvents('Disconnected');
+		this.#triggerEvents('Disconnected');
 	}
 
-	isConnected() {
+	isConnected()
+	{
 		return this.#privateProperties.callState === CALL_STATE.CONNECTED
 	}
 
@@ -2414,23 +2772,6 @@ export class Call {
 			this.#privateProperties.videoStreamSetupErrorList[userId] = [kind, ...kindsArray];
 		}
 	}
-
-/*
-	setMainStream(userId, kind)
-	{
-		// userId always exists, check in bitrix_call
-		if (!this.#privateProperties.remoteParticipants[userId])
-		{
-			this.setVideoStreamSetupErrorList(userId, kind);
-			this.setLog(`Setting main stream error (No remoteParticipant with ID - ${userId} in list)`, LOG_LEVEL.ERROR);
-			return;
-		}
-
-		this.setLog(`Setting main stream for a participant width id ${userId} (sid: ${this.#privateProperties.remoteParticipants[userId].sid})`, LOG_LEVEL.INFO);
-		this.#changeRoomStreamsQuality(userId, kind);
-	}
-
-	*/
 
 	setMainStream(users, kind)
 	{
@@ -2462,7 +2803,7 @@ export class Call {
 
 		if (params.isCameraWasEnabledBeforeQualityChanged && this.#privateProperties.defaultRemoteStreamsQuality !== STREAM_QUALITY.NO_VIDEO)
 		{
-			this.triggerEvents('TurnOnCamera');
+			this.#triggerEvents('TurnOnCamera');
 		}
 
 		switch (this.#privateProperties.defaultRemoteStreamsQuality)
@@ -2478,11 +2819,8 @@ export class Call {
 				break;
 		}
 
-		const sender = this.#getSender(MediaStreamsKinds.Camera);
-		if (sender)
-		{
-			this.#updateVideoEncodings(sender);
-		}
+		const mediaServer = this.#getPublishingMediaServer();
+		mediaServer?.updateVideoEncodings();
 	}
 
 	resetMainStream(users) {
@@ -2602,7 +2940,7 @@ export class Call {
 		let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		const needToGetNewTrack = !track
 			|| track.readyState !== 'live'
-			|| this.#isNoiseSuppressionInputTrackOff();
+			|| isNoiseSuppressionInputTrackOff();
 
 		if (needToGetNewTrack)
 		{
@@ -2613,7 +2951,7 @@ export class Call {
 		{
 			this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
 			this.#releaseStream(MediaStreamsKinds.Microphone);
-			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
+			this.#triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
 
 			return;
 		}
@@ -2623,7 +2961,7 @@ export class Call {
 			this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
 			track.enabled = true;
 			this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
-			await this.publishTrack(MediaStreamsKinds.Microphone, track);
+			await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
 			this.unpauseTrack(MediaStreamsKinds.Microphone);
 		}
 		else
@@ -2640,7 +2978,7 @@ export class Call {
 				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
 			}
 
-			await this.publishTrack(MediaStreamsKinds.Microphone, track);
+			await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
 		}
 	}
 
@@ -2677,21 +3015,21 @@ export class Call {
 				{
 					CallStreamManager.stopStream(MediaStreamsKinds.Camera);
 				}
-				this.checkMetricsFeatureAndExecutionCallback(() => {
+				checkMetricsFeatureAndExecutionCallback(() => {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 						withCounter: true,
 					});
 				});
 
-				this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+				this.#triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
 			};
 
 			if (this.#privateProperties.mediaMutedBySystem)
 			{
 				this.#privateProperties.mediaMutedBySystem = false;
 				stopTrack();
-				this.triggerEvents('MediaMutedBySystem', [false]);
+				this.#triggerEvents('MediaMutedBySystem', [false]);
 
 				return;
 			}
@@ -2752,15 +3090,15 @@ export class Call {
 			}
 		}
 
-		let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
+		let hasTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Camera];
 		let track = await this.getLocalVideo();
 
-		if (track && hasTrack && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
+		if (track && hasTrack)
 		{
 			if (this.#privateProperties.mediaMutedBySystem)
 			{
 				this.#privateProperties.mediaMutedBySystem = false;
-				this.triggerEvents('MediaMutedBySystem', [false]);
+				this.#triggerEvents('MediaMutedBySystem', [false]);
 			}
 			if (skipUnpause)
 			{
@@ -2771,33 +3109,27 @@ export class Call {
 				this.setLog('Enabling video via unpause signal', LOG_LEVEL.INFO);
 			}
 			this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
-			await this.publishTrack(MediaStreamsKinds.Camera, track);
+			await this.publishTrack(MediaStreamsKinds.Camera, track, this.#getStreamQualityOptions(MediaStreamsKinds.Camera));
 			if (skipUnpause)
 			{
 				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 			}
 			else
 			{
-				this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
 				this.unpauseTrack(MediaStreamsKinds.Camera);
 			}
 		}
 		else if (track)
 		{
-			if (this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
-			{
-				this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
-			}
-
 			this.setLog('Enabling video via publish', LOG_LEVEL.INFO);
-			await this.publishTrack(MediaStreamsKinds.Camera, track);
+			await this.publishTrack(MediaStreamsKinds.Camera, track, this.#getStreamQualityOptions(MediaStreamsKinds.Camera));
 		}
 		else
 		{
 			this.setLog('Enabling video failed: has no track', LOG_LEVEL.ERROR);
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 			this.#releaseStream(MediaStreamsKinds.Camera);
-			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
+			this.#triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
 		}
 	}
 
@@ -2815,7 +3147,8 @@ export class Call {
 		}
 	}
 
-	async startScreenShare() {
+	async startScreenShare()
+	{
 		if (!Util.havePermissionToBroadcast('screenshare'))
 		{
 			return;
@@ -2835,7 +3168,7 @@ export class Call {
 			return;
 		}
 
-		await this.publishTrack(MediaStreamsKinds.Screen, videoTrack);
+		await this.publishTrack(MediaStreamsKinds.Screen, videoTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Screen));
 
 		if (audioTrack)
 		{
@@ -2843,7 +3176,8 @@ export class Call {
 		}
 	}
 
-	async stopScreenShare() {
+	async stopScreenShare()
+	{
 		this.setLog('Start disabling screen sharing', LOG_LEVEL.INFO);
 		this.#releaseStream(MediaStreamsKinds.Screen);
 		this.#releaseStream(MediaStreamsKinds.ScreenAudio);
@@ -2853,7 +3187,8 @@ export class Call {
 		await this.unpublishTrack(MediaStreamsKinds.ScreenAudio);
 	}
 
-	sendMessage(message) {
+	sendMessage(message)
+	{
 		this.#sendSignal({ sendMessage: { message } });
 	}
 
@@ -3061,7 +3396,7 @@ export class Call {
 	async getLocalAudio(): Promise<?MediaStreamTrack>
 	{
 		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-		if (!track || track.readyState !== 'live' || this.#isNoiseSuppressionInputTrackOff())
+		if (!track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff())
 		{
 			await this.getTrack(MediaStreamsKinds.Microphone);
 		}
@@ -3082,50 +3417,37 @@ export class Call {
 		};
 	}
 
-	#getUserMediaConstraints(options, fallbackMode = false)
+	#getLocalTrackBySid(trackSid: string): any | null
 	{
-		const constraints = {
-			audio: false,
-			video: false,
-		};
-
-		if (options.video)
+		if (!trackSid)
 		{
-			constraints.video = {};
-
-			if (!fallbackMode)
-			{
-				constraints.video.width = { ideal: this.#privateProperties.defaultVideoResolution.width };
-				constraints.video.height = { ideal: this.#privateProperties.defaultVideoResolution.height };
-
-				if (this.#privateProperties.videoDeviceId)
-				{
-					constraints.video.deviceId = { exact: this.#privateProperties.videoDeviceId };
-				}
-			}
-
-			return constraints;
+			return null;
 		}
 
-		if (this.#privateProperties.audioDeviceId && !fallbackMode)
+		const localTracks = this.#privateProperties.localTracks || {};
+		const localTrack = Object.values(localTracks).find(track => track?.sid === trackSid || track?.cid === trackSid);
+
+		if (!localTrack)
 		{
-			constraints.audio = {
-				deviceId: { exact: this.#privateProperties.audioDeviceId },
-			};
-		}
-		else
-		{
-			constraints.audio = true;
+			return null;
 		}
 
-		return constraints;
+		return localTrack;
 	}
 
 	async #getUserMedia(options, fallbackMode = false): Promise<?MediaStream>
 	{
 		this.setLog(`Start getting user media with options: ${JSON.stringify(options)}`);
-		this.triggerEvents('GetUserMediaStarted', [options]);
-		const constraints = this.#getUserMediaConstraints(options, fallbackMode);
+		this.#triggerEvents('GetUserMediaStarted', [options]);
+		const constraints = buildMediaConstraints(
+			options,
+			fallbackMode,
+			{
+				videoDeviceId: this.#privateProperties.videoDeviceId,
+				audioDeviceId: this.#privateProperties.audioDeviceId,
+				defaultVideoResolution: this.#privateProperties.defaultVideoResolution,
+			},
+		);
 
 		try
 		{
@@ -3135,16 +3457,16 @@ export class Call {
 			if (options.video && stream.getVideoTracks()[0])
 			{
 				this.#addTrackMuteHandlers(stream.getVideoTracks()[0]);
-				this.triggerEvents('GetUserMediaSuccess', [{ video: true }]);
+				this.#triggerEvents('GetUserMediaSuccess', [{ video: true }]);
 			}
 
 			if (options.audio && stream.getAudioTracks()[0])
 			{
-				this.triggerEvents('GetUserMediaSuccess', [{ audio: true }]);
+				this.#triggerEvents('GetUserMediaSuccess', [{ audio: true }]);
 			}
 			const trackMuteHandlersAreAddedInfo = options.video ? ' - trackMuteHandlersAreAdded: true' : '';
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} succeeded${trackMuteHandlersAreAddedInfo}`);
-			this.triggerEvents('GetUserMediaEnded');
+			this.#triggerEvents('GetUserMediaEnded', [options]);
 
 			return stream;
 		}
@@ -3167,8 +3489,7 @@ export class Call {
 
 				if (monitoringEvent)
 				{
-					this.checkMetricsFeatureAndExecutionCallback(() =>
-					{
+					checkMetricsFeatureAndExecutionCallback(() => {
 						this.addMonitoringEvents({
 							name: monitoringEvent,
 							withCounter: true,
@@ -3178,14 +3499,14 @@ export class Call {
 
 				const stream = await this.#getUserMedia(options, true);
 
-				this.triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
+				this.#triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
 
 				return stream;
 			}
 
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed: ${error}`, LOG_LEVEL.ERROR);
-			this.triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
-			this.triggerEvents('GetUserMediaEnded');
+			this.#triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
+			this.#triggerEvents('GetUserMediaEnded', [options]);
 
 			return null;
 		}
@@ -3207,7 +3528,7 @@ export class Call {
 		{
 			this.setLog(`Getting display media failed: ${error}`, LOG_LEVEL.ERROR);
 
-			this.checkMetricsFeatureAndExecutionCallback(() => {
+			checkMetricsFeatureAndExecutionCallback(() => {
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 					withCounter: true,
@@ -3218,7 +3539,8 @@ export class Call {
 		}
 	}
 
-	async getTrack(MediaStreamKind) {
+	async getTrack(MediaStreamKind)
+	{
 		if (MediaStreamKind === MediaStreamsKinds.Camera)
 		{
 			const readyState = this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState;
@@ -3271,7 +3593,7 @@ export class Call {
 		else if (MediaStreamKind === MediaStreamsKinds.Microphone)
 		{
 			track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-			if (track && (track.readyState !== 'live' || this.#isNoiseSuppressionInputTrackOff()))
+			if (track && (track.readyState !== 'live' || isNoiseSuppressionInputTrackOff()))
 			{
 				this.#privateProperties.microphoneStream = null;
 				track = this.getLocalAudio();
@@ -3333,13 +3655,14 @@ export class Call {
 						// no need to do anything
 					})
 					.finally(() => {
-						this.triggerEvents('PublishEnded', [mediaStreamKind, interrupted]);
+						this.#triggerEvents('PublishEnded', [mediaStreamKind, interrupted]);
 					});
 			};
 		}
 	}
 
-	async switchActiveAudioDevice(deviceId, force) {
+	async switchActiveAudioDevice(deviceId, force)
+	{
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress && !force)
 		{
 			this.setLog(`Got another request to switch an audio device to ${deviceId}, saving it`, LOG_LEVEL.INFO);
@@ -3357,16 +3680,6 @@ export class Call {
 
 			try
 			{
-				const sender = this.#getSender(MediaStreamsKinds.Microphone);
-
-				if (!sender)
-				{
-					this.setLog('Switching an audio device skipped - no sender', LOG_LEVEL.WARNING);
-					error = 'No sender for audio';
-
-					return;
-				}
-
 				const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 				this.#privateProperties.microphoneStream = null;
 				let prevTrackEnabledState = true;
@@ -3380,10 +3693,10 @@ export class Call {
 				const audioTrack = await this.getLocalAudio();
 				audioTrack.source = MediaStreamsKinds.Microphone;
 				audioTrack.enabled = prevTrackEnabledState;
-				if ((this.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))
+				const mediaServer = this.#getPublishingMediaServer();
+				if (mediaServer && (this.isAudioPublished() || audioTrack.id !== prevTrackId))
 				{
-					this.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
-					await sender.replaceTrack(audioTrack);
+					await mediaServer.replaceTrack(MediaStreamsKinds.Microphone, audioTrack);
 				}
 				this.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
 			}
@@ -3421,7 +3734,8 @@ export class Call {
 		return promise;
 	}
 
-	async switchActiveVideoDevice(deviceId, force) {
+	async switchActiveVideoDevice(deviceId, force)
+	{
 		if (this.#privateProperties.switchActiveVideoDeviceInProgress && !force)
 		{
 			this.setLog(`Got another request to switch a video device to ${deviceId}, saving it`, LOG_LEVEL.INFO);
@@ -3439,26 +3753,15 @@ export class Call {
 
 			try
 			{
-				const sender = this.#getSender(MediaStreamsKinds.Camera);
-
-				if (!sender)
-				{
-					this.setLog('Switching a video device skipped - no sender', LOG_LEVEL.WARNING);
-					error = 'No sender for video';
-
-					return;
-				}
-
 				if (this.isVideoPublished())
 				{
-					this.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
 					this.#privateProperties.cameraStream?.getVideoTracks()[0].stop();
 					this.#privateProperties.cameraStream = null;
 
 					const videoTrack = await this.getLocalVideo();
 					videoTrack.source = MediaStreamsKinds.Camera;
-					await sender.replaceTrack(videoTrack);
-					this.#updateVideoEncodings(sender, videoTrack);
+					const mediaServer = this.#getPublishingMediaServer();
+					await mediaServer?.replaceTrack(MediaStreamsKinds.Camera, videoTrack);
 				}
 				this.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
 			}
@@ -3525,7 +3828,7 @@ export class Call {
 			this.disableVideo({ calledFrom: 'track.onmute', bySystem: true });
 			this.disableAudio({ calledFrom: 'track.onmute', bySystem: true });
 			this.#privateProperties.mediaMutedBySystem = true;
-			this.triggerEvents('MediaMutedBySystem', [true]);
+			this.#triggerEvents('MediaMutedBySystem', [true]);
 		};
 
 		track.onunmute = (event) =>
@@ -3534,7 +3837,7 @@ export class Call {
 			if (this.#privateProperties.mediaMutedBySystem)
 			{
 				this.#privateProperties.mediaMutedBySystem = false;
-				this.triggerEvents('MediaMutedBySystem', [false]);
+				this.#triggerEvents('MediaMutedBySystem', [false]);
 			}
 			this.enableVideo({calledFrom: 'track.onunmute'});
 			if (this.#privateProperties.needToEnableAudioAfterSystemMuted)
@@ -3544,11 +3847,13 @@ export class Call {
 		};
 	}
 
-	getParticipants() {
-		return this.#privateProperties.remoteParticipants
+	getParticipants()
+	{
+		return this.#privateProperties.remoteParticipants;
 	}
 
-	getState() {
+	getState()
+	{
 		return this.#privateProperties.callState
 	}
 
@@ -3596,8 +3901,10 @@ export class Call {
 		}
 	}
 
-	setLog(log, level) {
+	setLog(log, level)
+	{
 		level = LOG_LEVEL[level] || LOG_LEVEL.INFO;
+		log = Util.logToString(log);
 
 		const desktopVersion = window['BXDesktopSystem']?.ApiVersion?.();
 		const version = ClientVersion + (desktopVersion ? ` (desktopApi: ${desktopVersion})` : '');
@@ -3613,7 +3920,7 @@ export class Call {
 		if (Util.isConsoleLogsEnabled() && console)
 		{
 			let a = ['Call API log [' + Util.getTimeForLog() + ']: '];
-			console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
+			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 		}
 
 		if (Util.isMetricsLogsEnabled())
@@ -3644,7 +3951,8 @@ export class Call {
 				this.#privateProperties.logs = Object.values(this.#privateProperties.logs).slice(lastSentLog + 1);
 			}
 
-			if (this.#privateProperties.loggerCallback) {
+			if (this.#privateProperties.loggerCallback)
+			{
 				this.#privateProperties.loggerCallback();
 			}
 		}
@@ -3699,190 +4007,43 @@ export class Call {
 		return this.isConnected() ? this.#sendSignal(signal) : false;
 	}
 
-	setLoggerCallback(callback) {
+	setLoggerCallback(callback)
+	{
 		this.#privateProperties.loggerCallback = callback;
 	}
 
-	enableSilentLogging(enable) {
+	enableSilentLogging(enable)
+	{
 		this.#privateProperties.isloggingEnable = enable;
 	}
 
-	#removeUdpFromSdp(sdp)
+	#processParticipants(participants: any, isReconnect: boolean): void
 	{
-		const updatedSdp = [];
-		sdp.split(/(\r\n|\r|\n)/).filter(RegExp.prototype.test.bind(/^([a-z])=(.*)/)).forEach((el) =>
-		{
-			if (!el.startsWith('a=candidate') || el.includes('tcp'))
+		const participantsToProcess: any[] = Object.values(participants);
+		const participantsToDelete: Set<number> = new Set(Object.keys(this.#privateProperties.remoteParticipants));
+
+		participantsToProcess.forEach((participant) => {
+			if (participantsToDelete.has(participant.userId))
 			{
-				updatedSdp.push(el);
+				participantsToDelete.delete(participant.userId);
 			}
+			this.setLog(`Adding an early connected participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+			this.#setRemoteParticipant(participant);
 		});
 
-		sdp = updatedSdp.join('\r\n') + '\r\n';
-
-		return sdp;
-	}
-
-	async #answerHandler(data) {
-		this.setLog('pcType: SENDER; Start handling a remote answer', LOG_LEVEL.INFO);
-		this.setLog(JSON.stringify(data.answer), LOG_LEVEL.INFO);
-		
-		let hasError = false;
-		try
+		if (!isReconnect)
 		{
-			if (Util.useTcpSdp())
-			{
-				data.answer.sdp = this.#removeUdpFromSdp(data.answer.sdp);
-			}
-			await this.sender.setRemoteDescription(data.answer);
-			this.#privateProperties.pendingCandidates.sender.forEach((candidate) =>
-			{
-				this.sender.addIceCandidate(candidate);
-				this.setLog('pcType: SENDER; Added a deferred ICE candidate', LOG_LEVEL.INFO);
-				this.setLog(JSON.stringify(candidate));
-			});
-			this.#privateProperties.pendingCandidates.sender = [];
-		}
-		catch (e)
-		{
-			this.setLog(`Handling a remote answer failed: ${e}`, LOG_LEVEL.ERROR);
-			hasError = true;
-			this.#beforeDisconnect();
-			this.#reconnect({
-				reconnectionReason: 'HANDLING_ANSWER',
-				reconnectionReasonInfo: `Handling a remote answer failed: ${e}`,
-			});
-
-			this.checkMetricsFeatureAndExecutionCallback(() =>
-			{
-				this.addMonitoringEvents({
-					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_ANSWER,
-				});
-			});
-		}
-		finally
-		{
-			if (!hasError)
-			{
-				this.setLog('Handling a remote answer succeeded', LOG_LEVEL.INFO);
-				this.#privateProperties.isWaitAnswer = false;
-				await this.sendOffer();
-			}
-		}
-	}
-
-	async #offerHandler(data)
-	{
-		this.setLog('pcType: RECEPIENT; Handling a remote offer:', LOG_LEVEL.INFO);
-		
-
-		if (!this.recipient)
-		{
-			this.setLog('Handling a remote offer deferred');
-			this.#privateProperties.pendingOffer = data;
-
 			return;
 		}
 
-		try
+		for (const participantId: number of participantsToDelete)
 		{
-			if (Util.useTcpSdp())
-			{
-				data.offer.sdp = this.#removeUdpFromSdp(data.offer.sdp);
-			}
-			this.setLog(JSON.stringify(data.offer));
-			await this.recipient.setRemoteDescription(data.offer);
-			this.#privateProperties.pendingCandidates.recipient.forEach((candidate) => {
-				this.recipient.addIceCandidate(candidate);
-				this.setLog('pcType: RECEPIENT; Added a deferred ICE candidate', LOG_LEVEL.INFO);
-				this.setLog(JSON.stringify(candidate));
-			});
-			this.#privateProperties.pendingCandidates.recipient = [];
-			let answer = await this.recipient.createAnswer();
-			if (Util.useTcpSdp())
-			{
-				answer = {
-					type: answer.type,
-					sdp: this.#removeUdpFromSdp(answer.sdp),
-				};
-			}
+			const participant: Participant = this.#privateProperties.remoteParticipants[participantId];
+			delete this.#privateProperties.remoteParticipants[participant.userId];
 
-			await this.recipient.setLocalDescription(answer);
-			this.#sendSignal({ answer });
-			this.setLog('pcType: RECEPIENT;Handling a remote offer succeeded, send answer:', LOG_LEVEL.INFO);
-			this.setLog(JSON.stringify(answer), LOG_LEVEL.INFO);
-		}
-		catch (e)
-		{
-			this.setLog(`pcType: RECEPIENT; Handling a remote offer failed: ${e}`, LOG_LEVEL.ERROR);
-			this.#beforeDisconnect();
-
-			this.#reconnect({
-				reconnectionReason: 'HANDLING_OFFER',
-				reconnectionReasonInfo: `Handling a remote offer failed: ${e}`,
-			});
-			this.checkMetricsFeatureAndExecutionCallback(() =>
-			{
-				this.addMonitoringEvents({
-					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_HANDLING_OFFER,
-				});
-			});
-		}
-	}
-
-	#addIceCandidate(trickle)
-	{
-		
-		this.setLog('pcType: '+(trickle.target ? 'RECEPIENT' : 'SENDER')+'; Start adding an ICE candidate', LOG_LEVEL.INFO);
-		try
-		{
-			const candidate = JSON.parse(trickle.candidateInit);
-
-			if (Util.useTcpSdp() && !candidate.candidate.includes('tcp'))
-			{
-				return;
-			}
-
-			if (trickle.target)
-			{
-				if (this.recipient?.remoteDescription)
-				{
-					this.recipient.addIceCandidate(candidate);
-					this.setLog('pcType: RECEPIENT; Adding an ICE candidate succeeded', LOG_LEVEL.INFO);
-					this.setLog(candidate, LOG_LEVEL.INFO);
-
-					return;
-				}
-
-				this.#privateProperties.pendingCandidates.recipient.push(candidate);
-				this.setLog('pcType: RECEPIENT; Adding an ICE candidate deferred: has no remote description', LOG_LEVEL.INFO);
-
-			}
-			else
-			{
-				if (this.sender?.remoteDescription)
-				{
-					this.sender.addIceCandidate(candidate);
-					this.setLog('pcType: SENDER; Adding an ICE candidate succeeded', LOG_LEVEL.INFO);
-					this.setLog(candidate, LOG_LEVEL.INFO);
-
-					return;
-				}
-
-				this.#privateProperties.pendingCandidates.sender.push(candidate);
-				this.setLog('pcType: SENDER; Adding an ICE candidate deferred: has no remote description', LOG_LEVEL.INFO);
-			}
-		}
-		catch (e)
-		{
-			this.setLog(`Adding an ICE candidate failed: ${e}`, LOG_LEVEL.ERROR);
-			this.checkMetricsFeatureAndExecutionCallback(() =>
-			{
-				this.addMonitoringEvents({
-					name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES_ADDING_ICE_CANDIDATE,
-					value: 3,
-				});
-			});
+			participantsToDelete.delete(participant.userId);
+			this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+			this.#triggerEvents('ParticipantLeaved', [participant]);
 		}
 	}
 
@@ -3900,37 +4061,47 @@ export class Call {
 		}
 	}
 
-	#setRemoteParticipant(participant) {
+	#setRemoteParticipant(participant: any): void
+	{
 		const userId = participant.userId;
-
-		const participantEvent = this.#privateProperties.remoteParticipants[userId]
+		const previousParticipantState: Participant = this.#privateProperties.remoteParticipants[userId];
+		const previousTrackSources = previousParticipantState?.tracks ? Object.keys(previousParticipantState.tracks) : [];
+		const newTrackSources = [];
+		const participantEvent = previousParticipantState
 			? 'ParticipantStateUpdated'
 			: 'ParticipantJoined';
-		const remoteParticipant = new Participant(participant, this.#privateProperties.socketConnect);
+		const remoteParticipant = new Participant(participant, STREAM_QUALITY.HIGH);
+		remoteParticipant.setVideoWidth(previousParticipantState?.videoWidth);
 		this.#privateProperties.remoteParticipants[userId] = remoteParticipant;
 
-		this.triggerEvents(participantEvent, [remoteParticipant]);
+		if (userId in this.#privateProperties.participantsToUpdateTrackAvailability)
+		{
+			remoteParticipant.isLocalVideoMute = !this.#privateProperties.participantsToUpdateTrackAvailability[userId];
+			delete this.#privateProperties.participantsToUpdateTrackAvailability[userId];
+		}
+		else if (previousParticipantState)
+		{
+			remoteParticipant.isLocalVideoMute = previousParticipantState.isLocalVideoMute;
+		}
+
+		this.#triggerEvents(participantEvent, [remoteParticipant]);
+
 		if (participant.participantTracks)
 		{
-			Object.values(participant.participantTracks).forEach((track) => {
-				track.userId = userId;
-				this.#privateProperties.tracksDataFromSocket[track.sid] = track;
-				if (track.muted && track.source === MediaStreamsKinds.Microphone)
-				{
-					remoteParticipant.isMutedAudio = true;
-				}
-
-				if (track.muted && track.source === MediaStreamsKinds.Camera)
-				{
-					remoteParticipant.isMutedVideo = true;
-				}
+			Object.values(participant.participantTracks).forEach(track =>
+			{
+				newTrackSources.push(track.source);
+				track.userId = userId
+				this.#privateProperties.tracksDataFromSocket[track.sid] = track
 
 				switch (track.source)
 				{
 					case MediaStreamsKinds.Camera:
+						remoteParticipant.isMutedVideo = !!track.muted;
 						remoteParticipant.videoEnabled = true;
 						break;
 					case MediaStreamsKinds.Microphone:
+						remoteParticipant.isMutedAudio = !!track.muted;
 						remoteParticipant.audioEnabled = true;
 						break;
 					case MediaStreamsKinds.Screen:
@@ -3938,7 +4109,9 @@ export class Call {
 						break;
 				}
 
-				this.setLog(`A participant with id ${userId} (sid: ${participant.sid}) has a track info with kind ${track.source} (sid: ${track.sid}, waiting for it`, LOG_LEVEL.INFO);
+				remoteParticipant.mediaServerId = track.mediaServerId;
+
+				this.setLog(`A participant with id ${userId} (sid: ${remoteParticipant.sid}) has a track info with kind ${track.source} (sid: ${track.sid}, waiting for it`, LOG_LEVEL.INFO);
 
 				const ontrackData = this.#privateProperties.ontrackData[track.sid];
 				delete this.#privateProperties.ontrackData[track.sid];
@@ -3947,12 +4120,28 @@ export class Call {
 				{
 					this.#createRemoteTrack(track.sid, ontrackData);
 				}
-				else
+				else if (this.#needSubscribeToTrack(track, remoteParticipant, true))
 				{
-					this.#addPendingSubscription(participant, track);
+					this.#changeSubscriptionToTrack(track.sid, remoteParticipant.sid, true, remoteParticipant.mediaServerId);
+					this.#addPendingSubscription(remoteParticipant, track);
+				}
+				else if (track.source === MediaStreamsKinds.Camera)
+				{
+					const remoteTrack = new Track(track.sid, track.source);
+					remoteParticipant.addTrack(remoteTrack.source, remoteTrack);
+					if (!remoteParticipant.isMutedVideo)
+					{
+						this.#triggerEvents('RemoteMediaAvailable', [participant, remoteTrack]);
+					}
 				}
 			});
 		}
+
+		const removedSources = previousTrackSources.filter(source => !newTrackSources.includes(source));
+		removedSources.forEach((source) => {
+			const prevTrack = previousParticipantState.getTrack(source);
+			this.#triggerEvents('RemoteMediaRemoved', [participant, prevTrack]);
+		});
 
 		if (this.#privateProperties.videoStreamSetupErrorList[userId])
 		{
@@ -3964,6 +4153,49 @@ export class Call {
 			});
 		}
 	};
+
+	#processTrack(data)
+	{
+		const participantId = data.userId;
+		const participant = this.#privateProperties.remoteParticipants[participantId];
+		const track = data.track;
+		const trackId = track.sid;
+		track.userId = participantId;
+
+		this.setLog(`Got a track info with kind ${track.source} (sid: ${trackId}) for a participant with id ${participantId} (sid: ${participant.sid}), waiting for it`, LOG_LEVEL.INFO);
+		switch (track.source)
+		{
+			case MediaStreamsKinds.Camera:
+				participant.videoEnabled = true;
+				break;
+			case MediaStreamsKinds.Microphone:
+				participant.audioEnabled = true;
+				break;
+			case MediaStreamsKinds.Screen:
+				participant.screenSharingEnabled = true;
+				break;
+		}
+		participant.mediaServerId = data.mediaServerId;
+
+		const ontrackData = this.#privateProperties.ontrackData[trackId];
+		delete this.#privateProperties.ontrackData[trackId];
+
+		if (ontrackData)
+		{
+			this.#createRemoteTrack(trackId, ontrackData);
+		}
+		else if (this.#needSubscribeToTrack(track, participant))
+		{
+			this.#changeSubscriptionToTrack(track.sid, participant.sid, true, participant.mediaServerId);
+			this.#addPendingSubscription(participant, track);
+		}
+		else if (track.source === MediaStreamsKinds.Camera)
+		{
+			const remoteTrack = new Track(trackId, track.source);
+			participant.addTrack(remoteTrack.source, remoteTrack);
+			this.#triggerEvents('RemoteMediaAvailable', [participant, remoteTrack]);
+		}
+	}
 
 	#createRemoteTrack(trackId, ontrackData)
 	{
@@ -3977,12 +4209,15 @@ export class Call {
 		track.source = trackData.source;
 		track.layers = trackData.layers || null;
 
-		if (!this.#privateProperties.remoteTracks?.[userId])
+		let remoteTrack = Object.values(participant.tracks)?.find(track => track?.id === trackId);
+		if (remoteTrack)
 		{
-			this.#privateProperties.remoteTracks[userId] = {}
+			remoteTrack.setTrack(track);
 		}
-		const remoteTrack = new Track(trackId, track);
-		this.#privateProperties.remoteTracks[userId][trackId] = remoteTrack;
+		else
+		{
+			remoteTrack = new Track(trackId, track.source, track);
+		}
 
 		if (remoteTrack.source === MediaStreamsKinds.Camera)
 		{
@@ -3994,7 +4229,7 @@ export class Call {
 			if (trackMuted)
 			{
 				this.setLog(`Trigger mute signal (${trackMuted}) for received audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-				this.triggerEvents('RemoteMediaMuted', [participant, remoteTrack]);
+				this.#triggerEvents('RemoteMediaMuted', [participant, remoteTrack]);
 			}
 		}
 
@@ -4008,14 +4243,13 @@ export class Call {
 		participant.addTrack(remoteTrack.source, remoteTrack);
 		if (remoteTrack.source !== MediaStreamsKinds.Camera || !participant.isMutedVideo)
 		{
-			this.triggerEvents('RemoteMediaAdded', [participant, remoteTrack]);
+			this.#triggerEvents('RemoteMediaAdded', [participant, remoteTrack]);
 		}
 
 		if (remoteTrack.source === MediaStreamsKinds.Camera)
 		{
 			const quality = this.#calculateVideoQualityForUser(userId, remoteTrack.source);
-			this.setLog(`Quality of video for a participant with id ${participant.userId} (sid: ${participant.sid}) was changed to ${quality} after receiving`, LOG_LEVEL.INFO);
-			participant.setStreamQuality(quality);
+			this.#setStreamQualityFoParticipant(participant, quality);
 		}
 
 		const streamRemovingId = Util.getUuidv4();
@@ -4027,12 +4261,11 @@ export class Call {
 			const participant = this.#privateProperties.remoteParticipants[userId];
 			if (participant)
 			{
-				participant.removeTrack(remoteTrack.source);
-
 				if (participant.streamRemovingId[remoteTrack.source] === streamRemovingId)
 				{
 					this.setLog(`Track with kind ${track.source} (sid: ${track.id}) for a participant with id ${userId} (sid: ${participant.sid || 'unknown'}) was removed from peer connection`, LOG_LEVEL.WARNING);
-					this.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
+					participant.removeTrack(remoteTrack.source);
+					this.#triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
 				}
 			}
 			else
@@ -4042,41 +4275,53 @@ export class Call {
 		};
 	}
 
-	#speakerChangedHandler(data) {
-		data.speakersChanged.speakers.forEach((speaker) => {
-			const participant = Object.values(this.#privateProperties.remoteParticipants).find(p => p.sid === speaker.sid)
-			if (participant && participant?.userId != this.#privateProperties.userId) {
-				participant.isSpeaking = speaker?.active || false
-				if (speaker?.active) {
-					this.triggerEvents('VoiceStarted', [participant]);
-				} else {
-					this.triggerEvents('VoiceEnded', [participant]);
-				}
+	#releaseStream(mediaStreamKind): void
+	{
+		const streamTypes = {
+			[MediaStreamsKinds.Camera]: 'cameraStream',
+			[MediaStreamsKinds.Microphone]: 'microphoneStream',
+			[MediaStreamsKinds.Screen]: 'screenStream',
+			[MediaStreamsKinds.ScreenAudio]: 'screenStream',
+		};
+
+		const streamType = streamTypes[mediaStreamKind];
+
+		if (streamType)
+		{
+			this.#privateProperties[streamType]?.getTracks?.()?.forEach((track) => {
+				track.onended = null;
+				track.stop();
+			});
+			this.#privateProperties[streamType] = null;
+			if (this.#privateProperties.needToStopStreams)
+			{
+				CallStreamManager.stopStream(mediaStreamKind);
 			}
-		})
+		}
 	}
 
-	#trackMutedHandler(data) {
-		const participant = this.#privateProperties.remoteParticipants[data.track.publisher];
+	#trackMutedHandler(data)
+	{
 		const trackId = data.track.shortId;
-		this.setLog(`Got socket message "trackMuted" - trackId: ${trackId}, muted: ${data?.muted}`, LOG_LEVEL.INFO);
+		const isMuted = data.muted;
+		this.setLog(`Got socket message "trackMuted" - trackId: ${trackId}, muted: ${isMuted}`);
 
 		if (data.track.publisher == this.#privateProperties.userId)
 		{
-			const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === trackId);
+			const track = this.#getLocalTrackBySid(trackId);
 			if (track)
 			{
 				if (track.source === MediaStreamsKinds.Camera)
 				{
-					this.setLog(`Got mute self video signal (${data.muted}) - trackId: ${trackId}`, LOG_LEVEL.INFO);
+					this.setLog(`Got mute self video signal (${isMuted}) - trackId: ${trackId}`, LOG_LEVEL.INFO);
 
-					if (!data.muted && track.muted && !this.#privateProperties.mediaMutedBySystem)
+					if (!isMuted && track.muted && !this.#privateProperties.mediaMutedBySystem)
 					{
-						this.triggerEvents('PublishSucceed', [track.source]);
+						this.#triggerEvents('PublishSucceed', [track.source]);
 					}
 					else if (!this.#privateProperties.mediaMutedBySystem)
 					{
-						this.triggerEvents('PublishPaused', [track.source]);
+						this.#triggerEvents('PublishPaused', [track.source]);
 					}
 
 					if (this.#privateProperties.videoQueue)
@@ -4084,86 +4329,120 @@ export class Call {
 						this.#processVideoQueue();
 					}
 				}
-				else if(track.source === MediaStreamsKinds.Microphone)
+				else if (track.source === MediaStreamsKinds.Microphone)
 				{
 					if (data?.muted && !Hardware.isMicrophoneMuted)
 					{
 						return;
 					}
-					this.triggerEvents('PublishPaused', [track.source, data.muted]);
+					this.#triggerEvents('PublishPaused', [track.source, data.muted]);
 				}
 			}
 			else
 			{
-				this.setLog(`Mute self signal (${data.muted}) getting failed - trackId: ${trackId}`, LOG_LEVEL.INFO);
+				this.setLog(`Mute self signal (${isMuted}) getting failed - trackId: ${trackId}`, LOG_LEVEL.INFO);
 			}
 
 			return;
 		}
 
-		if (!participant) {
-			if (data.track.publisher != this.#privateProperties.userId)
-			{
-				this.setLog(`Got mute signal (${data.muted}) for a non-existent participant with id ${data.track.publisher}`, LOG_LEVEL.WARNING);
-			}
+		const participant = this.#privateProperties.remoteParticipants[data.track.publisher];
+		if (!participant)
+		{
+			this.setLog(`Got mute signal (${isMuted}) for a non-existent participant with id ${data.track.publisher}`, LOG_LEVEL.WARNING);
+
 			return;
 		}
 
-		const track = Object.values(participant.tracks)?.find(track => track?.id === trackId);
+		const track = Object.values(participant.tracks)?.find((track) => track?.id === trackId);
 		const awaitedTrack = this.#privateProperties.tracksDataFromSocket[trackId];
+
+		if (awaitedTrack)
+		{
+			awaitedTrack.muted = isMuted;
+
+			if (awaitedTrack.source === MediaStreamsKinds.Camera)
+			{
+				participant.isMutedVideo = isMuted;
+			}
+			else if (awaitedTrack.source === MediaStreamsKinds.Microphone)
+			{
+				participant.isMutedAudio = isMuted;
+			}
+		}
+
 		if (awaitedTrack && !track)
 		{
-			this.#privateProperties.tracksDataFromSocket[trackId].muted = data.muted;
-			this.setLog(`Got mute signal (${data.muted}) for a non-received track with id ${trackId}`, LOG_LEVEL.WARNING);
-			participant.isMutedVideo = data.muted;
-			this.triggerEvents('AwaitedRemoteMediaMuted', [participant, this.#privateProperties.tracksDataFromSocket[trackId]]);
+			if (
+				awaitedTrack.source === MediaStreamsKinds.Microphone
+				&& !this.#privateProperties.pendingSubscriptions?.[participant.userId]?.[trackId]
+				&& !isMuted
+			)
+			{
+				this.#changeSubscriptionToTrack(trackId, participant.sid, true, participant.mediaServerId);
+				this.#addPendingSubscription(participant, awaitedTrack);
+			}
+
+			this.setLog(`Got mute signal (${isMuted}) for a non-received track with id ${trackId}`, LOG_LEVEL.WARNING);
+			this.#triggerEvents('AwaitedRemoteMediaMuted', [participant, awaitedTrack]);
 
 			return;
 		}
-		else if (!track)
+
+		if (!track)
 		{
-			this.setLog(`Got mute signal (${data.muted}) for a non-existent track with id ${trackId}`, LOG_LEVEL.WARNING);
+			this.setLog(`Got mute signal (${isMuted}) for a non-existent track with id ${trackId}`, LOG_LEVEL.WARNING);
+
 			return;
 		}
 
 		if (track.source === MediaStreamsKinds.Microphone)
 		{
-			this.#microphoneMuteUnmuteHandler({track: track, isMuted: data.muted, participant: participant});
-			this.setLog(`Got mute signal (${data.muted}) for audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+			this.#microphoneMuteUnmuteHandler({ track, isMuted, participant });
+			this.setLog(`Got mute signal (${isMuted}) for audio from a participant with id ${participant.userId} (sid: ${participant.sid})`);
 		}
 		else if (track.source === MediaStreamsKinds.Camera)
 		{
-			this.#cameraMuteUnmuteHandler({track: track, isMuted: data.muted, participant: participant});
-			this.setLog(`Got mute signal (${data.muted}) for video from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
-
+			this.#cameraMuteUnmuteHandler({ track, isMuted, participant });
+			this.setLog(`Got mute signal (${isMuted}) for video from a participant with id ${participant.userId} (sid: ${participant.sid})`);
 		}
 	}
 
-	#microphoneMuteUnmuteHandler(options) {
+	#microphoneMuteUnmuteHandler(options)
+	{
 		options.participant.isMutedAudio = options.isMuted;
 
 		const eventName = options.isMuted
 			? 'RemoteMediaMuted'
 			: 'RemoteMediaUnmuted';
 
-		this.triggerEvents(eventName, [options.participant, options.track]);
+		this.#triggerEvents(eventName, [options.participant, options.track]);
 	}
 
-	#cameraMuteUnmuteHandler(options) {
+	#cameraMuteUnmuteHandler(options)
+	{
 		this.setLog(`Camera muting was changed (${options?.isMuted}) - trackSid: ${options?.track?.sid}, participantUserId: ${options?.participant?.userId}, trackSource: ${options?.track?.source}`, LOG_LEVEL.INFO);
 
 		options.participant.isMutedVideo = options.isMuted;
 
-		const eventName = options.isMuted
-			? 'RemoteMediaRemoved'
-			: 'RemoteMediaAdded';
+		if (options.track.subscribed)
+		{
+			const eventName = options.isMuted
+				? 'RemoteMediaRemoved'
+				: 'RemoteMediaAdded';
+			this.#triggerEvents(eventName, [options.participant, options.track]);
+			return;
+		}
 
 		if (this.#privateProperties.tracksDataFromSocket[options.track.sid])
 		{
 			this.#privateProperties.tracksDataFromSocket[options.track.sid].muted = options.isMuted;
 		}
 
-		this.triggerEvents(eventName, [options.participant, options.track]);
+		const eventName = options.isMuted
+			? 'RemoteMediaUnavailable'
+			: 'RemoteMediaAvailable';
+		this.#triggerEvents(eventName, [options.participant, options.track]);
 	}
 
 	#participantMutedHandler(data)
@@ -4227,7 +4506,7 @@ export class Call {
 			}
 		}
 
-		this.triggerEvents('ParticipantMuted', [data]);
+		this.#triggerEvents('ParticipantMuted', [data]);
 	}
 
 	#allParticipantsMutedHandler(data)
@@ -4240,23 +4519,23 @@ export class Call {
 		{
 			if (!data.reason || (data.reason && data.reason != 'settings'))
 			{
-				this.triggerEvents('YouMuteAllParticipants', [data]);
+				this.#triggerEvents('YouMuteAllParticipants', [data]);
 			}
 		}
 		else
 		{
 			if (data?.track.type === 0)
 			{
-				this.triggerEvents('AllParticipantsAudioMuted', [data]);
+				this.#triggerEvents('AllParticipantsAudioMuted', [data]);
 			}
 			else if (data.track.type === 1)
 			{
 				this.setLog(`Try to mute all participant videos - from: ${data?.fromUserId}`, LOG_LEVEL.INFO);
-				this.triggerEvents('AllParticipantsVideoMuted', [data]);
+				this.#triggerEvents('AllParticipantsVideoMuted', [data]);
 			}
 			else if (data.track.type === 2)
 			{
-				this.triggerEvents('AllParticipantsScreenshareMuted', [data]);
+				this.#triggerEvents('AllParticipantsScreenshareMuted', [data]);
 			}
 		}
 
@@ -4304,11 +4583,61 @@ export class Call {
 							{
 								this.#microphoneMuteUnmuteHandler({track: screenAudioTrack, isMuted: true, participant: participant});
 							}
-
 						}
 					}
 				}
 			}
+		}
+	}
+
+	#subscriptionResponseHandler({ trackSid, err }: { trackSid: string; err?: string }): void
+	{
+		this.setLog(`Got an error  from the media server during subscription to ${trackSid}: ${err || 'unknowError'}`, LOG_LEVEL.ERROR);
+
+		const trackData = this.#privateProperties.tracksDataFromSocket[trackSid];
+		delete this.#privateProperties.tracksDataFromSocket[trackSid];
+
+		if (!trackData)
+		{
+			return;
+		}
+
+		const participant = this.#privateProperties.remoteParticipants[trackData.userId];
+		if (!participant)
+		{
+			return;
+		}
+
+		const remoteTrack = Object.values(participant.tracks).find((track) => track.id === trackSid);
+		if (!remoteTrack)
+		{
+			return;
+		}
+
+		this.#triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
+	}
+
+	#trackPublicationErrorHandler(data: { trackSid?: string; err?: string; reason?: string }): void
+	{
+		const trackSid = data.trackSid;
+		const error = data.err;
+		const reason = data.reason;
+
+		const message = `Got trackPublicationError for track ${trackSid}: ${error} (${reason})`;
+		this.setLog(message, LOG_LEVEL.WARNING);
+		console.warn(message);
+
+		if (!trackSid)
+		{
+			this.setLog(`trackPublicationError has no trackSid`, LOG_LEVEL.ERROR);
+			return;
+		}
+
+		const localTrack = this.#getLocalTrackBySid(trackSid);
+
+		if (localTrack)
+		{
+			this.onPublishFailed(localTrack.source);
 		}
 	}
 
@@ -4325,7 +4654,7 @@ export class Call {
 		{
 			Util.setCurrentUserRole(data.role);
 			this.#setUserPermissions(data.permissions);
-			this.triggerEvents('UserRoleChanged', [data]);
+			this.#triggerEvents('UserRoleChanged', [data]);
 		}
 	}
 
@@ -4346,7 +4675,7 @@ export class Call {
 			Util.setUserPermissions(permissions);
 		}
 
-		this.triggerEvents('UserPermissionsChanged', [data]);
+		this.#triggerEvents('UserPermissionsChanged', [data]);
 	}
 
 	#settingsChangedHandler(data)
@@ -4384,605 +4713,29 @@ export class Call {
 			this.#allParticipantsMutedHandler(options);
 		}
 
-		this.triggerEvents('RoomSettingsChanged', [data]);
+		this.#triggerEvents('RoomSettingsChanged', [data]);
 	}
 
-
-	onIceGatheringStateChange(subscriber, e)
+	#sendSignal(signal, mediaServerId = null)
 	{
-		const pcType = subscriber
-			? 'RECEPIENT'
-			: 'SENDER';
-			
-		const connection = e.target;
-		this.setLog(`User ${this.#privateProperties.userId}: pcType: ${pcType}; ICE gathering state changed to : ` + connection.iceGatheringState);
-	};
-
-	onSignalingStateChange(subscriber, e)
-	{
-		const pcType = subscriber
-			? 'RECEPIENT'
-			: 'SENDER';
-
-		const state = subscriber
-			? this.recipient.signalingState
-			: this.sender.signalingState;
-
-		this.setLog(`User ${this.#privateProperties.userId}: pcType: ${pcType}; PC signalingState: ` + state);
-	};
-
-	onIceCandidateError(subscriber, e)
-	{
-		const pcType = subscriber
-			? 'RECEPIENT'
-			: 'SENDER';
-
-		this.setLog(`User ${this.#privateProperties.userId}: pcType: ${pcType}; onIceCandidateError: `, JSON.stringify(e));
-	};
-
-	onNegotiationNeeded(subscriber, e)
-	{
-		const pcType = subscriber
-			? 'RECEPIENT'
-			: 'SENDER';
-
-		this.setLog(`User ${this.#privateProperties.userId}: pcType: ${pcType}; onNegotiationNeeded: `, e);
-	};
-
-	#createPeerConnection()
-	{
-		this.#destroyPeerConnection();
-
-		this.#peerConnectionAbortController = new AbortController();
-
-		const config = {};
-		if (this.#privateProperties.iceServers)
+		if (this.#privateProperties.socketConnection?.readyState === 1)
 		{
-			config.iceServers = this.#privateProperties.iceServers;
-		}
-
-		this.setLog(`Creating peer connection with config ${JSON.stringify(config, null, 2)}`);
-
-		this.sender = new RTCPeerConnection(config);
-		this.sender.addEventListener('icecandidate', e => this.onIceCandidate(null, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('connectionstatechange', e => this.onConnectionStateChange(), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('iceconnectionstatechange', e => this.onIceConnectionStateChange(), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('icegatheringstatechange', e => this.onIceGatheringStateChange(null, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('signalingstatechange', e => this.onSignalingStateChange(null, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('icecandidateerror', e => this.onIceCandidateError(null, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.sender.addEventListener('negotiationneeded', e => this.onNegotiationNeeded(null, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-
-		this.recipient = new RTCPeerConnection(config);
-		this.recipient.ontrack = (event) => {
-			const ids = event.streams[0].id.split('|');
-			const trackId = ids[1];
-			const userId = this.#privateProperties.tracksDataFromSocket[trackId]?.userId;
-
-			if (this.#privateProperties.remoteParticipants[userId] && this.#privateProperties.tracksDataFromSocket[trackId])
+			if (this.#privateProperties.roomType === RoomType.Small)
 			{
-				this.#createRemoteTrack(trackId, event);
+				this.#privateProperties.socketConnection.send(JSON.stringify(signal));
 			}
-			else
+			else if (this.#privateProperties.roomType === RoomType.Large)
 			{
-				this.setLog(`Got a track with kind ${event.track.kind} (sid: ${trackId}) without a participant, saving it`, LOG_LEVEL.WARNING);
-				this.#privateProperties.ontrackData[trackId] = event;
-			}
-		};
-		this.recipient.addEventListener('icecandidate', e => this.onIceCandidate('SUBSCRIBER', e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('connectionstatechange', e => this.onConnectionStateChange(true), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('iceconnectionstatechange', e => this.onIceConnectionStateChange(true), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('icegatheringstatechange', e => this.onIceGatheringStateChange(true, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('signalingstatechange', e => this.onSignalingStateChange(true, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('icecandidateerror', e => this.onIceCandidateError(true, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-		this.recipient.addEventListener('negotiationneeded', e => this.onNegotiationNeeded(true, e), {
-			signal: this.#peerConnectionAbortController.signal,
-		});
-
-		if (this.#privateProperties.pendingOffer)
-		{
-			this.#offerHandler(this.#privateProperties.pendingOffer);
-			this.#privateProperties.pendingOffer = null;
-		}
-
-		const getStatsHandle = async () => {
-			try
-			{
-				const statsAll = {};
-				let packetLostEventAdded = false;
-				await this.sender.getStats(null).then((stats) => {
-					const statsOutput = [];
-					const codecs = {};
-					const reportsWithoutCodecs = {};
-					const remoteReports = {};
-					const reportsWithoutRemoteInfo = {};
-					let audioReport = null;
-					let isQualityLimitationSent = false;
-					const totalBitrateOut = [];
-
-					stats.forEach((rawReport) => {
-						const report = { ...rawReport };
-						statsOutput.push(report);
-
-						if (report.type === 'codec')
-						{
-							Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
-						}
-
-						if (report.type === 'remote-inbound-rtp')
-						{
-							const reportId = report.localId;
-							if (!reportsWithoutRemoteInfo[reportId])
-							{
-								remoteReports[reportId] = report;
-
-								return;
-							}
-
-							if (!this.#privateProperties.outgoingTracksReports[reportId])
-							{
-								this.#privateProperties.outgoingTracksReports[reportId] = {};
-							}
-
-							const prevReport = this.#privateProperties.outgoingTracksReports[reportId];
-							const packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], prevReport, report);
-							const { currentPercentPacketLost } = packetsLostData;
-
-							this.checkMetricsFeatureAndExecutionCallback(() =>
-							{
-								this.addValidatedMonitoringMetric({
-									additionalData: {
-										currentReportPacketsSent: reportsWithoutRemoteInfo[reportId]?.packetsSent,
-										prevReportPacketsSent: this.#privateProperties.outgoingTracksReports[reportId]?.packetsSent,
-										prevReportPacketsLost: this.#privateProperties.outgoingTracksReports[reportId]?.packetsLost,
-										remoteReportPacketsLost: report?.packetsLost,
-									},
-									metricKey: MONITORING_METRICS.PACKET_LOST_SEND,
-									metricValue: currentPercentPacketLost,
-								});
-							});
-
-							if (!packetLostEventAdded && currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
-							{
-								packetLostEventAdded = true;
-								this.checkMetricsFeatureAndExecutionCallback(() => {
-									this.addMonitoringEvents({
-										name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
-										withCounter: true,
-									});
-								});
-							}
-
-							prevReport.packetsLostData = packetsLostData;
-							prevReport.packetsLost = { ...packetsLostData };
-							prevReport.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-
-							delete reportsWithoutRemoteInfo[reportId];
-						}
-
-						if (report.type === 'outbound-rtp')
-						{
-							const reportId = report.id;
-
-							if (!this.#privateProperties.outgoingTracksReports[reportId])
-							{
-								this.#privateProperties.outgoingTracksReports[reportId] = {};
-							}
-
-							const prevReport = this.#privateProperties.outgoingTracksReports[reportId];
-							report.bitrate = Util.calcBitrate(report, prevReport, true);
-
-							this.#privateProperties.outgoingTracksReports[reportId] = {
-								...prevReport,
-								...report,
-							};
-
-							report.userId = this.#privateProperties.userId;
-
-							if (report.kind === 'audio')
-							{
-								report.source = MediaStreamsKinds.Microphone;
-							}
-							else if (report.kind === 'video')
-							{
-								report.source = report.contentType === 'screenshare'
-									? MediaStreamsKinds.Screen
-									: MediaStreamsKinds.Camera;
-							}
-
-							totalBitrateOut.push({
-								bitrate: report.bitrate,
-								kind: report.kind,
-								contentType: report.contentType,
-							});
-
-							if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent)
-							{
-								this.checkMetricsFeatureAndExecutionCallback(() => {
-									if (report.qualityLimitationReason === 'cpu')
-									{
-										this.addMonitoringEvents({
-											name: MONITORING_EVENTS_NAME_LIST.CPU_ISSUES,
-											withCounter: true,
-										});
-									}
-
-									if (report.qualityLimitationReason === 'bandwidth')
-									{
-										this.addMonitoringEvents({
-											name: MONITORING_EVENTS_NAME_LIST.NETWORK_ISSUES,
-											withCounter: true,
-										});
-									}
-								});
-
-								isQualityLimitationSent = true;
-								const limitations = Object.entries(report.qualityLimitationDurations).reduce(
-									(accumulator, value, index) => `${accumulator}${index ? ', ' : ''}${value[0]}: ${value[1]}`,
-									'',
-								);
-								this.setLog(`Local user have problems with sending video: ${report.qualityLimitationReason} (${limitations})`, LOG_LEVEL.WARNING);
-							}
-
-							if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs))
-							{
-								Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
-							}
-
-							Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo);
-						}
-					});
-
-					this.checkMetricsFeatureAndExecutionCallback(() => {
-						const bitrateSumOut = this.calcBitrateSumFromArray({ bitrateArray: totalBitrateOut });
-						const formattedBitrateOut = Number.parseFloat((bitrateSumOut / 1_000_000).toFixed(2));
-
-						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.BITRATE_OUT].length < this.countMetricsInMetricsInterval)
-						{
-							this.addValidatedMonitoringMetric({
-								additionalData: {
-									bitrateList: totalBitrateOut,
-									bitrateSumOut,
-									formattedBitrateOut,
-								},
-								metricKey: MONITORING_METRICS.BITRATE_OUT,
-								metricValue: bitrateSumOut,
-							});
-						}
-					});
-
-					statsAll.sender = statsOutput;
-				});
-
-				await this.recipient.getStats(null).then((stats) =>
+				const data = {
+					event: signal,
+				};
+				if (mediaServerId)
 				{
-					let statsOutput = [];
-					const participantsWithLargeDataLoss = new Map();
-					const codecs = {};
-					const reportsWithoutCodecs = {};
-					let totalBitrateIn = [];
-					let currentPacketLostReceiveCount = 0;
-
-					const inboundRtpStatsArray = {
-						freezeCount: [],
-						totalFreezesDuration: [],
-						jitter: [],
-						framesDecoded: [],
-						framesDropped: [],
-						framesReceived: [],
-						framesLoss: [],
-					};
-
-					stats.forEach((report) =>
-					{
-
-						if (report.type === 'inbound-rtp' && report.kind === 'video')
-						{
-							const { freezeCount, totalFreezesDuration, jitter, framesDecoded, framesDropped, framesReceived } = report;
-
-							inboundRtpStatsArray.jitter.push(jitter);
-							inboundRtpStatsArray.totalFreezesDuration.push(totalFreezesDuration);
-							inboundRtpStatsArray.freezeCount.push(freezeCount);
-							inboundRtpStatsArray.framesDecoded.push(framesDecoded);
-							inboundRtpStatsArray.framesDropped.push(framesDropped);
-							inboundRtpStatsArray.framesReceived.push(framesReceived);
-							inboundRtpStatsArray.framesLoss.push((framesDropped / framesReceived) * 100);
-						}
-
-						statsOutput.push(report);
-
-						const needCheckPacketLosts = (report?.trackIdentifier
-							&& report.hasOwnProperty('packetsLost')
-							&& report.hasOwnProperty('packetsReceived'));
-
-						if (needCheckPacketLosts)
-						{
-							const packetsLostData = Util.calcRemotePacketsLost(report, this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier]);
-
-							report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-
-
-							this.#privateProperties.reportsForIncomingTracks[report.trackIdentifier] = report;
-
-							const realTrackId = this.#privateProperties.realTracksIds[report.trackIdentifier];
-							const track = this.#privateProperties.tracksDataFromSocket[realTrackId];
-							if (track)
-							{
-								const prevReport = track.report || {};
-								track.report = report;
-
-								report.bitrate = Util.calcBitrate(report, prevReport);
-								report.userId = track.userId;
-								report.source = track.source;
-
-								const { currentPercentPacketLost } = packetsLostData;
-
-								if (track.source === MediaStreamsKinds.Camera)
-								{
-									currentPacketLostReceiveCount = currentPercentPacketLost;
-								}
-
-								totalBitrateIn.push({
-									bitrate: report.bitrate,
-									kind: report.kind,
-									contentType: report.contentType,
-								});
-
-								if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs))
-								{
-									Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
-								}
-
-								report.inRemoteTracks = (!!(this.#privateProperties.remoteTracks[track.userId] && this.#privateProperties.remoteTracks[track.userId][realTrackId]) ? 'Y' : 'N');
-							}
-
-							if (packetsLostData.currentPercentPacketLost > this.#privateProperties.packetLostThreshold)
-							{
-								const participant = Object.values(this.#privateProperties.remoteParticipants)
-									.find(p => p?.tracks?.[MediaStreamsKinds.Camera]?.track?.id === report.trackIdentifier);
-								if (participant && participant.userId != this.#privateProperties.userId)
-								{
-									participantsWithLargeDataLoss.set(participant.userId, `userId: ${ participant.userId} (${packetsLostData.currentPercentPacketLost}%)`);
-									this.#privateProperties.prevParticipantsWithLargeDataLoss.delete(participant.userId);
-								}
-							}
-						}
-
-						if (report.type === 'codec')
-						{
-							Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
-						}
-					});
-
-					this.checkMetricsFeatureAndExecutionCallback(() =>
-					{
-						const { countVideoTracks, countAudioTracks } = this.getCountRemoteTracks();
-
-						const round = (number, decimal) => Math.round(number * Math.pow(10, decimal)) / Math.pow(10, decimal);
-
-						const addValueInboundRTCStatsToMetrics = ({ key, metricsKey, isSum, decimal = 0, interval }) =>
-						{
-							if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS[metricsKey]].length >= this.countMetricsInMetricsInterval)
-							{
-								return;
-							}
-
-							const inboundRtpStatsArraySumByKey = inboundRtpStatsArray[key].reduce((acc, number) => acc + number, 0) / (interval ? (this.#privateProperties.statsTimeout / 1000) : 1);
-							const prevInboundRtpStatsArraySumByKey = this.prevInboundRtpStatsSum[key];
-							const diffInboundRtpStatsArraySumByKey = prevInboundRtpStatsArraySumByKey && !!isSum ? inboundRtpStatsArraySumByKey - prevInboundRtpStatsArraySumByKey : inboundRtpStatsArraySumByKey;
-							const metricValue = !!countVideoTracks ? diffInboundRtpStatsArraySumByKey / countVideoTracks : 0;
-
-							this.addValidatedMonitoringMetric({
-								additionalData: {
-									inboundRtpStatsArrayByKey: inboundRtpStatsArray[key],
-									inboundRtpStatsArraySumByKey,
-									prevInboundRtpStatsArraySumByKey: prevInboundRtpStatsArraySumByKey,
-									diffInboundRtpStatsArraySumByKey,
-									metricValue,
-								},
-								metricKey: metricsKey,
-								metricValue: round(metricValue, decimal),
-							});
-							this.prevInboundRtpStatsSum[key] = inboundRtpStatsArraySumByKey;
-						}
-
-						addValueInboundRTCStatsToMetrics({ key: 'jitter', metricsKey: MONITORING_METRICS.JITTER, isSum: false, decimal: 3 });
-						addValueInboundRTCStatsToMetrics({ key: 'freezeCount', metricsKey: MONITORING_METRICS.FREEZE_COUNT, isSum: true, interval: true });
-						addValueInboundRTCStatsToMetrics({ key: 'totalFreezesDuration', metricsKey: MONITORING_METRICS.TOTAL_FREEZE_DURATION, isSum: true, decimal: 3, interval: true });
-						addValueInboundRTCStatsToMetrics({ key:'framesDecoded', metricsKey:MONITORING_METRICS.FRAMES_DECODED, isSum:true, interval: true });
-						addValueInboundRTCStatsToMetrics({ key:'framesReceived', metricsKey:MONITORING_METRICS.FRAMES_RECEIVED, isSum:true, interval: true });
-						addValueInboundRTCStatsToMetrics({ key:'framesDropped', metricsKey: MONITORING_METRICS.FRAMES_DROPPED, isSum: true, interval: true });
-						// addValueInboundRTCStatsToMetrics({ key: 'framesLoss', metricsKey: 'FRAMES_LOSS', isSum: true });
-
-						this.addValidatedMonitoringMetric({
-							metricKey: MONITORING_METRICS.COUNT_VIDEO_TRACKS,
-							metricValue: countVideoTracks,
-						});
-
-						this.addValidatedMonitoringMetric({
-							metricKey: MONITORING_METRICS.COUNT_AUDIO_TRACKS,
-							metricValue: countAudioTracks,
-						});
-
-						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_LOSS].length < this.countMetricsInMetricsInterval)
-						{
-							const currentFramesReceivedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_RECEIVED];
-							const currentFramesDroppedArray = this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.FRAMES_DROPPED];
-							const currentFramesReceived = currentFramesReceivedArray.slice(-1)[0];
-							const currentFramesDropped = currentFramesDroppedArray.slice(-1)[0];
-							const currentFramesLoss = !!currentFramesReceived ? currentFramesDropped / currentFramesReceived : 0;
-
-							this.addValidatedMonitoringMetric({
-								additionalData: {
-									currentFramesReceivedArray,
-									currentFramesDroppedArray,
-									currentFramesReceived,
-									currentFramesDropped,
-									currentFramesLoss,
-								},
-								metricKey: MONITORING_METRICS.FRAMES_LOSS,
-								metricValue: currentFramesLoss > 0 ? round(currentFramesLoss * 100, 0)  : 0,
-							});
-						}
-						const bitrateSumIn = this.calcBitrateSumFromArray({ bitrateArray: totalBitrateIn });
-						const formattedBitrateIn = Number.parseFloat((bitrateSumIn / 1000000).toFixed(2));
-
-						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.BITRATE_IN].length < this.countMetricsInMetricsInterval)
-						{
-							this.addValidatedMonitoringMetric({
-								additionalData: {
-									bitrateList: totalBitrateIn,
-									bitrateSumIn,
-									formattedBitrateIn,
-								},
-								metricKey: MONITORING_METRICS.BITRATE_IN,
-								metricValue: bitrateSumIn,
-							});
-						}
-
-						if (this.currentMonitoringEventsObject.metrics[MONITORING_METRICS.PACKET_LOST_RECEIVE].length < this.countMetricsInMetricsInterval)
-						{
-							this.addValidatedMonitoringMetric({
-								metricKey: MONITORING_METRICS.PACKET_LOST_RECEIVE,
-								metricValue: currentPacketLostReceiveCount,
-							});
-						}
-
-						if (currentPacketLostReceiveCount > this.#privateProperties.packetLostThreshold)
-						{
-							this.addMonitoringEvents({name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_RECEIVE, withCounter: true} )
-						}
-					});
-
-					statsAll.recipient = statsOutput;
-					if (participantsWithLargeDataLoss.size || this.#privateProperties.prevParticipantsWithLargeDataLoss.size)
-					{
-						if (participantsWithLargeDataLoss.size)
-						{
-							this.setLog(`Have high packetsLost on users: ${[...participantsWithLargeDataLoss.values()]}`, LOG_LEVEL.WARNING);
-						}
-						this.triggerEvents('UpdatePacketLoss', [[...participantsWithLargeDataLoss.keys()]] );
-					}
-					this.#privateProperties.prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
-				});
-
-				this.triggerEvents('CallStatsReceived', [statsAll]);
-			}
-			catch (e)
-			{
-				// if we're here it's almost okay
-				// we tried to get stats during reconnection
-			}
-		}
-
-
-		getStatsHandle().finally(() => {
-			if (Util.isMetricsEnabled() || Util.isMetricsLogsEnabled())
-			{
-				this.startAggregateMonitoringEvents();
-			}
-
-			this.#privateProperties.callStatsInterval = setInterval( async () => {
-				await getStatsHandle()
-			}, this.#privateProperties.statsTimeout);
-		});
-	}
-
-	#destroyPeerConnection()
-	{
-		if (this.#peerConnectionAbortController)
-		{
-			this.#peerConnectionAbortController.abort();
-			this.#peerConnectionAbortController = null;
-		}
-
-		if (this.sender)
-		{
-			this.sender.close();
-			this.sender = null;
-		}
-
-		if (this.recipient)
-		{
-			this.recipient.ontrack = null;
-			this.recipient.close();
-			this.recipient = null;
-		}
-
-		this.#privateProperties.peerConnectionFailed = false;
-	}
-
-	#releaseStream(mediaStreamKind): void
-	{
-		const streamTypes = {
-			[MediaStreamsKinds.Camera]: 'cameraStream',
-			[MediaStreamsKinds.Microphone]: 'microphoneStream',
-			[MediaStreamsKinds.Screen]: 'screenStream',
-			[MediaStreamsKinds.ScreenAudio]: 'screenStream',
-		};
-
-		const streamType = streamTypes[mediaStreamKind];
-
-		if (streamType)
-		{
-			this.#privateProperties[streamType]?.getTracks?.()?.forEach((track) => {
-				track.onended = null;
-				track.stop();
-			});
-			this.#privateProperties[streamType] = null;
-			if (this.#privateProperties.needToStopStreams)
-			{
-				CallStreamManager.stopStream(mediaStreamKind);
-			}
-		}
-	}
-
-	#getSender(kind) {
-		const senders = this.sender?.getSenders?.();
-		let sender = null;
-
-		if (senders?.length > 0) {
-			for (const s of senders) {
-				if (s.track?.source === kind) {
-					sender = s
-					break;
+					data.mediaServerId = mediaServerId;
 				}
+				this.#privateProperties.socketConnection.send(JSON.stringify(data));
 			}
-		}
 
-		return sender;
-	}
-
-	#sendSignal(signal)
-	{
-		if (this.#privateProperties.socketConnect?.readyState === 1)
-		{
-			this.#privateProperties.socketConnect.send(JSON.stringify(signal));
 			return true;
 		}
 
@@ -4991,31 +4744,23 @@ export class Call {
 
 	#sendLeave()
 	{
-		this.checkMetricsFeatureAndExecutionCallback(() =>
-		{
+		checkMetricsFeatureAndExecutionCallback(() => {
 			this.sendMonitoringEvents(false);
 		});
-		if (this.#privateProperties.socketConnect?.readyState === 1)
+
+		if (this.#privateProperties.socketConnection?.readyState === 1)
 		{
 			this.#sendSignal({
-				leave:  {
+				leave: {
 					reason: 'CLIENT_INITIATED',
 				}
 			});
 		}
 	}
-
-	#isNoiseSuppressionInputTrackOff() {
-		return CallSettingsManager.noiseSuppressionEnabled
-			&& Hardware.noiseSuppressionInputStream
-			&& Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
-			&& Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState !== 'live';
-	}
 }
 
-class Participant {
-	#socketConnect;
-
+class Participant
+{
 	name = '';
 	image = '';
 	userId = '';
@@ -5029,21 +4774,22 @@ class Participant {
 	isMutedAudio = false;
 	isHandRaised = false;
 	videoPaused = false;
-	isLocalVideoMute = false;
+	isLocalVideoMute = true;
 	streamRemovingId = {};
-	cameraStreamQuality: STREAM_QUALITY.MEDIUM;
 
-	constructor(participant, socket) {
+	constructor(participant, cameraStreamQuality)
+	{
 		this.name = participant?.name || '';
 		this.image = participant?.image || '';
 		this.userId = participant?.userId || '';
 		this.sid = participant?.sid || '';
+		this.mediaServerId = null;
 		this.videoEnabled = participant?.videoEnabled || false;
 		this.audioEnabled = participant?.audioEnabled || false;
 		this.screenSharingEnabled = participant?.screenSharingEnabled || false;
 		this.isSpeaking = participant?.isSpeaking || false;
 		this.isHandRaised = participant?.isHandRaised || false;
-		this.#socketConnect = socket;
+		this.cameraStreamQuality = cameraStreamQuality || STREAM_QUALITY.HIGH;
 	}
 
 	subscribeTrack(MediaStreamKind) {};
@@ -5086,24 +4832,28 @@ class Participant {
 		return this.tracks?.[MediaStreamKind]
 	}
 
-	setStreamQuality(quality) {
-		if (this.cameraStreamQuality === quality || this.videoPaused)
+	setStreamQuality(quality)
+	{
+		if (this.tracks?.[MediaStreamsKinds.Camera] && this.tracks?.[MediaStreamsKinds.Camera]?.subscribed && !(this.cameraStreamQuality === quality || this.videoPaused))
 		{
-			return;
-		}
-
-		if (this.tracks?.[MediaStreamsKinds.Camera]) {
 			this.cameraStreamQuality = quality;
-			const trackId = this.tracks[MediaStreamsKinds.Camera].id;
 			this.tracks[MediaStreamsKinds.Camera].track.currentVideoQuality = quality;
-			const signal = {
-				trackSetting: {
-					trackSids: [trackId],
-					quality: quality,
-				}
-			};
-
-			this.#socketConnect.send(JSON.stringify(signal));
+			return true;
 		}
+
+		return false;
+	}
+
+	setVideoWidth(videoWidth)
+	{
+		if (videoWidth)
+		{
+			this.videoWidth = videoWidth;
+		}
+	}
+
+	updateSid(sid)
+	{
+		this.sid = sid;
 	}
 }

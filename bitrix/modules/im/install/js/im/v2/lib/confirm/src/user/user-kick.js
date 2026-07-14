@@ -1,12 +1,11 @@
-import { ChannelManager } from 'im.v2.lib.channel';
 import { Loc } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
+import { ChannelManager } from 'im.v2.lib.channel';
+import { CollabManager } from 'im.v2.lib.collab';
 
-import { showTwoButtonConfirm } from '../base/base';
-
-import type { ConfirmParams } from '../base/base';
+import { showTwoButtonConfirm, type ConfirmParams } from '../base/base';
 
 export const showKickUserConfirm = (dialogId: string): Promise<boolean> => {
 	const { title, text, firstButtonCaption } = getPhrases(dialogId);
@@ -18,8 +17,8 @@ const getPhrases = (dialogId: string): ConfirmParams => {
 	if (isCollab(dialogId))
 	{
 		return {
-			title: Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_TITLE'),
-			text: Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_TEXT'),
+			title: CollabManager.getKickConfirmTitleText(),
+			text: CollabManager.getKickConfirmText(),
 			firstButtonCaption: Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES'),
 		};
 	}

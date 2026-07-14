@@ -2,16 +2,17 @@ import { Loc } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
+import { CollabManager } from 'im.v2.lib.collab';
 
-import type { ImModelChat } from 'im.v2.model';
-import type { MentionItemType } from '../mention-content';
+import { type MentionItemType } from '../mention-content';
 
-const ItemTextByChatType = {
-	[ChatType.openChannel]: Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	[ChatType.generalChannel]: Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	[ChatType.channel]: Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
-	[ChatType.collab]: Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
-	default: Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE'),
+const ItemTextByChatType: Record<string, () => string> = {
+	[ChatType.openChannel]: () => Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	[ChatType.generalChannel]: () => Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	[ChatType.channel]: () => Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
+	[ChatType.collab]: () => CollabManager.getMentionItemSubtitleText(),
+	default: () => Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE'),
 };
 
 export class MentionItemFormatter
@@ -46,7 +47,9 @@ export class MentionItemFormatter
 			return Core.getStore().getters['users/getPosition'](this.dialogId) ?? Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
 		}
 
-		return ItemTextByChatType[dialog.type] ?? ItemTextByChatType.default;
+		const handler = ItemTextByChatType[dialog.type] ?? ItemTextByChatType.default;
+
+		return handler();
 	}
 
 	#getDialog(): ImModelChat

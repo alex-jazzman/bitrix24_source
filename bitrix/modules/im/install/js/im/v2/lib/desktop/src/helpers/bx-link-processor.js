@@ -83,6 +83,11 @@ export const BxLinkProcessor = {
 		{
 			void Messenger.openChatCreation(params.chatType);
 		}
+		else if (command === DesktopBxLink.chatUpdate)
+		{
+			const { dialogId } = params;
+			void Messenger.openChatUpdate(dialogId);
+		}
 		else if (command === DesktopBxLink.openLayout)
 		{
 			const { id, entityId } = params;

@@ -3,12 +3,12 @@ import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, UserType, Color, BotCode } from 'im.v2.const';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { type ImModelChat, type ImModelUser, type ImModelBot } from 'im.v2.model';
 
 import { DialogSpecialType, ChatTitleType, TitleIcons } from './const/const';
 
 import './css/chat-title.css';
-
-import type { ImModelChat, ImModelUser, ImModelBot } from 'im.v2.model';
 
 const ICON_SIZE = 18;
 
@@ -162,6 +162,11 @@ export const ChatTitle = {
 				return '';
 			}
 
+			if (this.isAiAssistantBot)
+			{
+				return DialogSpecialType.copilot;
+			}
+
 			if (this.isBot)
 			{
 				return this.botType;
@@ -253,6 +258,17 @@ export const ChatTitle = {
 
 			return this.dialog.extranet;
 		},
+		isAiAssistantBot(): boolean
+		{
+			if (!this.isBot)
+			{
+				return false;
+			}
+
+			const bot = this.$store.getters['users/bots/getByUserId'](this.dialogId);
+
+			return bot?.code === BotCode.copilot;
+		},
 		isCollaberChatOrUser(): boolean
 		{
 			if (this.isUser)
@@ -302,6 +318,10 @@ export const ChatTitle = {
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showBirthday);
 		},
+		isCopilot2026Styles(): boolean
+		{
+			return this.isAiAssistantBot && FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
 	},
 	methods: {
 		loc(phraseCode: string): string
@@ -314,7 +334,7 @@ export const ChatTitle = {
 			<span class="bx-im-chat-title__content">
 				<span v-if="leftIcon" :class="'--' + leftIcon" class="bx-im-chat-title__icon"></span>
 				<span
-					:class="[specialColor ? '--' + specialColor : '']"
+					:class="[specialColor ? '--' + specialColor : '', {'--copilot2026': isCopilot2026Styles}]"
 					:style="{color: color}"
 					:title="tooltipText"
 					class="bx-im-chat-title__text"

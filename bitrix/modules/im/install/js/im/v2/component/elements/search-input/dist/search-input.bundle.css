@@ -16,6 +16,7 @@
 	border-radius: 80px;
 	border: 1px solid transparent;
 	padding: 5px 8px 5px 10px;
+	outline: none;
 }
 
 .bx-im-search-input__container.--has-focus {

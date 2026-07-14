@@ -1,7 +1,7 @@
 import { Captcha } from './captcha';
 import { Headline } from 'ui.system.typography.vue';
 import { Ajax } from '../api/ajax';
-import { sendData } from 'ui.analytics';
+import { sendOtpAnalytics } from '../analytics';
 import { usePushOtpStore } from '../store/push-otp-store';
 import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
 
@@ -83,9 +83,7 @@ export const PushOtp = {
 	},
 	mounted()
 	{
-		sendData({
-			tool: 'security',
-			category: 'fa_auth_form',
+		sendOtpAnalytics({
 			event: 'show',
 		});
 	},
@@ -119,9 +117,7 @@ export const PushOtp = {
 			{
 				this.$emit('show-recover-access');
 			}
-			sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'other_type_click',
 			});
 		},

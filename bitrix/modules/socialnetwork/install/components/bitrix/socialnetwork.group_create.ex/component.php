@@ -51,6 +51,25 @@ $errorData = [];
 $errorMessage = [];
 $warningMessage = [];
 
+$isScrum = (
+	($arParams['PROJECT_OPTIONS']['scrum'] ?? false)
+);
+if (!$isScrum && $arParams['GROUP_ID'] > 0)
+{
+	$group = Bitrix\Socialnetwork\Item\Workgroup::getById($arParams['GROUP_ID']);
+	$isScrum = ($group && $group->isScrumProject());
+}
+
+if (
+	\Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn()
+	&& !$isScrum
+)
+{
+	ShowError(GetMessage("SONET_GCE_ERR_CANT_CREATE"));
+
+	return;
+}
+
 if (!$USER->IsAuthorized())
 {
 	$arResult["NEED_AUTH"] = "Y";

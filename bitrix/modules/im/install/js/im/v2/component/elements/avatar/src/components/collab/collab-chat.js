@@ -1,9 +1,8 @@
-import { Color } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
 import { AvatarSize } from '../../const/const';
 import { BaseUiAvatar, AvatarType } from '../base/base-ui-avatar';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CollabChatAvatar = {
@@ -40,7 +39,6 @@ export const CollabChatAvatar = {
 		},
 	},
 	computed: {
-		AvatarType: () => AvatarType,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -53,19 +51,35 @@ export const CollabChatAvatar = {
 		{
 			return this.dialog.avatar;
 		},
-		collabBackgroundColor(): string
+		avatarType(): $Values<typeof AvatarType>
 		{
-			return Color.collab60;
+			return this.useCollabV2Avatar ? AvatarType.collabV2 : AvatarType.collab;
+		},
+		backgroundColor(): string
+		{
+			return this.useCollabV2Avatar ? this.dialog.color : '';
+		},
+		useCollabV2Avatar(): boolean
+		{
+			return this.isCollabV2Available && !this.dialog.containsCollaber;
+		},
+		isCollabV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+		},
+		avatarKey(): string
+		{
+			return `${this.dialogId}_${this.avatarType}`;
 		},
 	},
 	template: `
 		<BaseUiAvatar
-			:type="AvatarType.collab"
-			:key="dialogId"
+			:type="avatarType"
+			:key="avatarKey" 
 			:title="dialogName" 
 			:size="size" 
-			:url="dialogAvatarUrl" 
-			:backgroundColor="collabBackgroundColor" 
+			:url="dialogAvatarUrl"
+			:backgroundColor="backgroundColor"
 		/>
 	`,
 };

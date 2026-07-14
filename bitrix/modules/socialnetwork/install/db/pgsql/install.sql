@@ -18,6 +18,7 @@ CREATE TABLE b_sonet_group (
   SITE_ID char(2) NOT NULL,
   NAME varchar(255) NOT NULL,
   DESCRIPTION text NULL,
+  GOAL text NULL,
   DATE_CREATE timestamp NOT NULL,
   DATE_UPDATE timestamp NOT NULL,
   ACTIVE char(1) NOT NULL DEFAULT 'Y',
@@ -86,6 +87,7 @@ CREATE TABLE b_sonet_features (
   FEATURE varchar(50) NOT NULL,
   FEATURE_NAME varchar(250) NULL,
   ACTIVE char(1) NOT NULL DEFAULT 'Y',
+  BASE char(1) NOT NULL DEFAULT 'N',
   DATE_CREATE timestamp NOT NULL,
   DATE_UPDATE timestamp NOT NULL,
   PRIMARY KEY (ID)

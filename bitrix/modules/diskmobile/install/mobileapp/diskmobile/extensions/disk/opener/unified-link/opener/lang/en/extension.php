@@ -1,0 +1,2 @@
+<?php
+$MESS["M_DISK_UNIFIED_LINK_OPENER_FORBIDDEN_TOAST"] = "Access denied";

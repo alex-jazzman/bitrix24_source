@@ -110,6 +110,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		audioplayer: 'audioplayer',
 		videomessage: 'videomessage',
 		stickers: 'stickers',
+		project: 'project',
 	});
 
 	const Type = Object.freeze({
@@ -118,6 +119,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 			copilot: 'copilot',
 			channel: 'channel',
 			collab: 'collab',
+			project: 'project',
 			openlines: 'openlines',
 		},
 		Dialog: {

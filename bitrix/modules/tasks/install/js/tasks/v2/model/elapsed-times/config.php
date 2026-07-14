@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/elapsed-times.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.vue3.vuex',
 		'tasks.v2.const',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => false,
 ];

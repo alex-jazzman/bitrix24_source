@@ -97,7 +97,7 @@ class note extends CModule
 		global $DB, $APPLICATION;
 
 		$freshSchema = false;
-		$installSqlFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/db/mysql/install.sql';
+		$installSqlFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/install.sql';
 		if (is_file($installSqlFile))
 		{
 			$errors = $DB->RunSQLBatch($installSqlFile);
@@ -169,10 +169,10 @@ class note extends CModule
 
 		if (
 			(!array_key_exists('save_tables', $arParams) || $arParams['save_tables'] !== 'Y')
-			&& is_file(__DIR__ . '/db/mysql/uninstall.sql')
+			&& is_file(__DIR__ . '/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/uninstall.sql')
 		)
 		{
-			$errors = $DB->RunSQLBatch(__DIR__ . '/db/mysql/uninstall.sql');
+			$errors = $DB->RunSQLBatch(__DIR__ . '/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/uninstall.sql');
 			if ($errors !== false)
 			{
 				$APPLICATION->ThrowException(implode('<br>', $errors));

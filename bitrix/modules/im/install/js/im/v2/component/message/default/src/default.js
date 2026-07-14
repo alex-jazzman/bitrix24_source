@@ -1,9 +1,15 @@
-import { DefaultMessageContent, MessageHeader, ReactionSelector, MessageKeyboard, MessageFooter } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
+import {
+	BuilderContent,
+	DefaultMessageContent,
+	MessageFooter,
+	MessageHeader,
+	MessageKeyboard,
+	ReactionSelector,
+} from 'im.v2.component.message.elements';
+import { type ImModelMessage } from 'im.v2.model';
 
 import './css/default.css';
-
-import type { ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const DefaultMessage = {
@@ -12,6 +18,7 @@ export const DefaultMessage = {
 		MessageHeader,
 		MessageFooter,
 		BaseMessage,
+		BuilderContent,
 		DefaultMessageContent,
 		ReactionSelector,
 		MessageKeyboard,
@@ -30,8 +37,7 @@ export const DefaultMessage = {
 			default: true,
 		},
 	},
-	computed:
-	{
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -48,7 +54,7 @@ export const DefaultMessage = {
 			</template>
 			<div class="bx-im-message-default__container">
 				<MessageHeader :withTitle="withTitle" :item="item" />
-				<DefaultMessageContent :item="item" :dialogId="dialogId" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withBuilder="true" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 			<template #after-message v-if="hasKeyboard">

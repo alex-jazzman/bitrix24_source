@@ -7,7 +7,7 @@ import {RecentConfigSections} from "./recent";
 import {RawFile, RawMessage, RawPin, RawUser} from "./common";
 import {DialogId} from "../../../../types/common";
 import {OpenlinesSessionModelState} from "../../../../model/dialogues/src/openlines/type";
-import {BuilderConfig, BaseBuilderBlockType} from "../../../../model/messages/src/types/builder";
+import {BlockConfig, BaseBlockElementType} from "../../../../model/messages/src/types/block";
 
 export type MessagesAutoDeleteDelayParams = {
 	delay: number,
@@ -168,7 +168,7 @@ declare type MessagePullHandlerUpdateParams = {
 	toUserId?: number, // only private chat
 	text: string,
 	textLegacy: string,
-	builder?: BuilderConfig,
+	block?: BlockConfig,
 }
 
 declare type MessagePullHandlerMessageParamsUpdateParams = {
@@ -232,20 +232,22 @@ declare type MessageAddParams = {
 };
 
 
-declare type MessagePullHandlerBuilderBlockAppendParams = {
+declare type MessagePullHandlerBlockAppendParams = {
 	messageId: number,
 	text: string,
-	block: BaseBuilderBlockType,
+	block: BaseBlockElementType,
+	files?: Array<RawFile>,
 }
 
-declare type MessagePullHandlerBuilderBlockUpdateParams = {
+declare type MessagePullHandlerBlockUpdateParams = {
 	messageId: number,
 	text: string,
 	blockId: string,
-	block: BaseBuilderBlockType,
+	block: BaseBlockElementType,
+	files?: Array<RawFile>,
 }
 
-declare type MessagePullHandlerBuilderBlockDeleteParams = {
+declare type MessagePullHandlerBlockDeleteParams = {
 	messageId: number,
 	text: string,
 	blockId: string,

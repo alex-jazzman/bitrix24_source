@@ -9,7 +9,8 @@ this.BX.Call = this.BX.Call || {};
 	  finish: 'FINISH',
 	  declined: 'DECLINED',
 	  busy: 'BUSY',
-	  missed: 'MISSED'
+	  missed: 'MISSED',
+	  cancelled: 'CANCELLED'
 	};
 
 	// @vue/component
@@ -63,6 +64,7 @@ this.BX.Call = this.BX.Call || {};
 	        case MESSAGE_TYPE.declined:
 	        case MESSAGE_TYPE.busy:
 	        case MESSAGE_TYPE.missed:
+	        case MESSAGE_TYPE.cancelled:
 	          result.push('bx-call-message__icon--danger');
 	          break;
 	        default:

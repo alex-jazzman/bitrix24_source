@@ -11,7 +11,6 @@ return [
 		'main.polyfill.core',
 		'call.component.active-call-list',
 		'im.v2.application.core',
-		'im.v2.component.elements.button',
 		'im.v2.component.list.items.base',
 		'im.v2.component.list.items.elements.create-chat-status',
 		'im.v2.component.list.items.elements.empty-state',
@@ -24,6 +23,8 @@ return [
 		'im.v2.lib.unread-mode',
 		'im.v2.provider.service.recent',
 		'main.core.events',
+		'ui.icon-set.api.core',
+		'ui.vue3.components.button',
 	],
 	'skip_core' => true,
 ];

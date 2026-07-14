@@ -1,13 +1,22 @@
 import { Tag, Loc, Runtime } from 'main.core';
 import 'ui.buttons';
 import type { Item } from 'ui.entity-selector';
+
 import { Core } from 'im.v2.application.core';
+import { ChatAccessManager } from 'im.v2.lib.access';
 
 export const openCallUserSelector = async (params) => {
-	const handleAddCLick = () => {
+	const handleAddClick = async () => {
 		const selectedItems = dialog.getSelectedItems();
 
 		const preparedItems = prepareUser(selectedItems);
+
+		const userIds = preparedItems.map((item) => String(item.id));
+		const canAddChatUsers = await ChatAccessManager.canAddUsers(params.dialogId, userIds);
+		if (!canAddChatUsers)
+		{
+			return;
+		}
 
 		params.onSelect({ users: preparedItems });
 	};
@@ -43,7 +52,7 @@ export const openCallUserSelector = async (params) => {
 				},
 			],
 		}],
-		footer: getFooter(handleAddCLick, handleCancelCLick),
+		footer: getFooter(handleAddClick, handleCancelCLick),
 		popupOptions: {
 			targetContainer: params.targetContainer,
 		},
@@ -69,12 +78,12 @@ const prepareUser = (users) => {
 	});
 };
 
-const getFooter = (handleAddCLick, handleCancelCLick) => {
+const getFooter = (handleAddClick, handleCancelCLick) => {
 	const addButtonTitle = Loc.getMessage('CALL_LIB_CALL_ADD_BUTTON');
 	const cancelButtonTitle = Loc.getMessage('CALL_LIB_CALL_CANCEL_BUTTON');
 
 	return Tag.render`
-		<button class="ui-btn ui-btn-xs ui-btn-primary" onclick="${handleAddCLick}">${addButtonTitle}</button>
+		<button class="ui-btn ui-btn-xs ui-btn-primary" onclick="${handleAddClick}">${addButtonTitle}</button>
 		<button class="ui-btn ui-btn-xs ui-btn-light-border" onclick="${handleCancelCLick}">${cancelButtonTitle}</button>
 	`;
 };

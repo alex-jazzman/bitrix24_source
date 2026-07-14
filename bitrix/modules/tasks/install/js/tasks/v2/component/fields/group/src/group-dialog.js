@@ -1,8 +1,10 @@
+import { EventEmitter } from 'main.core.events';
 import { Notifier } from 'ui.notification-manager';
-
+import { Messenger } from 'im.public';
 import { Core } from 'tasks.v2.core';
-import { EntitySelectorEntity, Model, Endpoint } from 'tasks.v2.const';
+import { EntitySelectorEntity, Model, Endpoint, GroupType, EventName } from 'tasks.v2.const';
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
+import { type GroupModel } from 'tasks.v2.model.groups';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 
@@ -26,6 +28,67 @@ export const groupDialog = new class
 		this.#dialog ??= this.#createDialog();
 		this.#dialog.selectItemsByIds(this.#items);
 		this.#dialog.showTo(params.targetNode);
+	}
+
+	async openGroup(isAutonomous: boolean, group: GroupModel, taskId: number = 0): Promise<void>
+	{
+		if (
+			Core.getParams().features.isNewProjectsOn
+			&& (
+				Messenger.isEmbeddedMode()
+				|| Messenger.isMessengerSliderOpened()
+			)
+			&& group.type !== GroupType.Scrum
+		)
+		{
+			const closeEventName = (
+				isAutonomous
+					? EventName.CardClosed
+					: EventName.FullCardClosed
+			);
+			EventEmitter.subscribeOnce(closeEventName, () => {
+				Messenger.openCollab(`sg${group.id}`);
+			});
+
+			if (isAutonomous)
+			{
+				EventEmitter.emit(`${EventName.CloseCard}:${taskId}`);
+			}
+			else
+			{
+				EventEmitter.emit(EventName.TryCloseFullCard, { taskId });
+			}
+		}
+		else
+		{
+			void this.#emulateAnchorClick(group);
+		}
+	}
+
+	async openProject(group: GroupModel): Promise<void>
+	{
+		if (
+			Core.getParams().features.isNewProjectsOn
+			&& (
+				Messenger.isEmbeddedMode()
+				|| Messenger.isMessengerSliderOpened()
+			)
+			&& group.type !== GroupType.Scrum
+		)
+		{
+			Messenger.openCollab(`sg${group.id}`);
+		}
+		else
+		{
+			void this.#emulateAnchorClick(group);
+		}
+	}
+
+	async #emulateAnchorClick(group: GroupModel): void
+	{
+		const href = await groupService.getUrl(group.id, group.type);
+
+		BX.SidePanel.Instance.emulateAnchorClick(href);
 	}
 
 	#createDialog(): EntitySelectorDialog

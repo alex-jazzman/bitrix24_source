@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_component_animation, im_v2_const, im_v2_lib_feature, im_v2_lib_menu, im_v2_lib_messageComponent, im_v2_lib_permission, im_v2_lib_quote, im_v2_lib_utils, im_v2_application_core, im_v2_lib_dateFormatter, main_polyfill_intersectionobserver, im_v2_component_elements_avatar, im_v2_lib_copilot, main_core, im_v2_lib_notifier, ui_lottie, im_v2_lib_inputAction, im_v2_component_elements_userListPopup, im_v2_provider_service_user, ui_vue3_components_richLoc, im_v2_lib_analytics, im_v2_component_message_file, im_v2_component_message_default, im_v2_component_message_error, im_v2_component_message_callInvite, im_v2_component_message_deleted, im_v2_component_message_unsupported, im_v2_component_message_smile, im_v2_component_message_sticker, im_v2_component_message_creation_chat, im_v2_component_message_copilot_creation, im_v2_component_message_copilot_answer, im_v2_component_message_copilot_addedUsers, im_v2_component_message_support_vote, im_v2_component_message_support_sessionNumber, im_v2_component_message_support_chatCreation, im_v2_component_message_creation_conference, im_v2_component_message_supervisor_updateFeature, im_v2_component_message_supervisor_enableFeature, im_v2_component_message_sign, im_v2_component_message_admin, im_v2_component_message_checkIn, im_v2_component_message_creation_ownChat, im_v2_component_message_zoomInvite, im_v2_component_message_creation_generalChat, im_v2_component_message_creation_generalChannel, im_v2_component_message_creation_channel, imopenlines_v2_component_message_startDialog, imopenlines_v2_component_message_hidden, imopenlines_v2_component_message_feedbackForm, im_v2_component_message_call, im_v2_component_message_vote, im_v2_component_message_creation_taskChat, im_v2_component_message_collab_convert, im_v2_component_message_aiAssistant_answer, im_v2_component_message_aiBizproc, im_v2_component_message_builder) {
+(function (exports, im_v2_component_animation, im_v2_const, im_v2_lib_feature, im_v2_lib_menu, im_v2_lib_messageComponent, im_v2_lib_permission, im_v2_lib_quote, im_v2_lib_utils, im_v2_application_core, im_v2_lib_dateFormatter, main_polyfill_intersectionobserver, im_v2_component_elements_avatar, im_v2_lib_copilot, main_core, im_v2_lib_notifier, ui_lottie, im_v2_lib_inputAction, im_v2_component_elements_userListPopup, im_v2_provider_service_user, ui_vue3_components_richLoc, im_v2_lib_analytics, im_v2_component_message_file, im_v2_component_message_default, im_v2_component_message_error, im_v2_component_message_callInvite, im_v2_component_message_deleted, im_v2_component_message_unsupported, im_v2_component_message_smile, im_v2_component_message_sticker, im_v2_component_message_creation_chat, im_v2_component_message_copilot_creation, im_v2_component_message_copilot_answer, im_v2_component_message_copilot_addedUsers, im_v2_component_message_support_vote, im_v2_component_message_support_sessionNumber, im_v2_component_message_support_chatCreation, im_v2_component_message_creation_conference, im_v2_component_message_supervisor_updateFeature, im_v2_component_message_supervisor_enableFeature, im_v2_component_message_sign, im_v2_component_message_admin, im_v2_component_message_checkIn, im_v2_component_message_creation_ownChat, im_v2_component_message_zoomInvite, im_v2_component_message_creation_generalChat, im_v2_component_message_creation_generalChannel, im_v2_component_message_creation_channel, imopenlines_v2_component_message_startDialog, imopenlines_v2_component_message_hidden, imopenlines_v2_component_message_feedbackForm, im_v2_component_message_call, im_v2_component_message_vote, im_v2_component_message_creation_taskChat, im_v2_component_message_collab_convert, im_v2_component_message_creation_collab, im_v2_component_message_aiAssistant_answer, im_v2_component_message_aiBizproc) {
 	'use strict';
 
 	class AvatarMenu extends im_v2_lib_menu.UserMenu {
@@ -491,6 +491,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</Transition>
 				<div v-if="isAvatarNeeded(index)" class="bx-im-message-list-author-group__avatar">
 					<MessageAvatar
+						:contextDialogId="contextDialogId"
 						:messageId="firstMessageIdInAuthorGroup"
 						:authorId="authorGroup.avatar.avatarId"
 						:size="AvatarSize.L"
@@ -32325,13 +32326,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		computed: {
 			title() {
-				return im_v2_lib_feature.FeatureManager.chatHistory.getLimitTitle();
+				return im_v2_lib_feature.TariffManager.chatHistory.getLimitTitle();
 			},
 			subtitle() {
-				return im_v2_lib_feature.FeatureManager.chatHistory.getLimitSubtitle();
+				return im_v2_lib_feature.TariffManager.chatHistory.getLimitSubtitle();
 			},
 			buttonText() {
-				return im_v2_lib_feature.FeatureManager.chatHistory.getLearnMoreText();
+				return im_v2_lib_feature.TariffManager.chatHistory.getLearnMoreText();
 			}
 		},
 		mounted() {
@@ -32342,7 +32343,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				im_v2_lib_analytics.Analytics.getInstance().historyLimit.onDialogBannerClick({
 					dialogId: this.dialogId
 				});
-				im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+				im_v2_lib_feature.TariffManager.chatHistory.openFeatureSlider();
 			},
 			sendAnalytics() {
 				im_v2_lib_analytics.Analytics.getInstance().historyLimit.onDialogLimitExceeded({
@@ -32409,8 +32410,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		VoteMessage: im_v2_component_message_vote.VoteMessage,
 		TaskChatCreationMessage: im_v2_component_message_creation_taskChat.TaskChatCreationMessage,
 		ConvertToCollabMessage: im_v2_component_message_collab_convert.ConvertToCollabMessage,
-		AiBizprocMessage: im_v2_component_message_aiBizproc.AiBizprocMessage,
-		BuilderMessage: im_v2_component_message_builder.BuilderMessage
+		CollabCreationMessage: im_v2_component_message_creation_collab.CollabCreationMessage,
+		AiBizprocMessage: im_v2_component_message_aiBizproc.AiBizprocMessage
 	};
 
 	// @vue/component
@@ -32479,7 +32480,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.formattedCollection.length === 0;
 			},
 			isHistoryLimitExceeded() {
-				return !im_v2_lib_feature.FeatureManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
+				return !im_v2_lib_feature.TariffManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
 			},
 			showDialogStatus() {
 				return this.messageCollection.some(message => {

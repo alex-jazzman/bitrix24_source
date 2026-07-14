@@ -45,6 +45,14 @@ class ImMobile extends CModule
 			'getPath'
 		);
 
+		$eventManager->registerEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			$this->MODULE_ID,
+			\Bitrix\ImMobile\Marketplace\Placement::class,
+			'onRestServiceBuildDescription'
+		);
+
 		return true;
 	}
 
@@ -58,6 +66,14 @@ class ImMobile extends CModule
 			$this->MODULE_ID,
 			$this->workspaceClass,
 			'getPath'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			$this->MODULE_ID,
+			\Bitrix\ImMobile\Marketplace\Placement::class,
+			'onRestServiceBuildDescription'
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);

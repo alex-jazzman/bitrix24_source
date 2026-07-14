@@ -34,17 +34,54 @@ export default class Footer extends DefaultFooter
 		return [...this.dialog.entities.values()][0].options.isFullListOpenable === true;
 	}
 
+	#handleClickOpenerAllTags(data): void
+	{
+		const {
+			userId,
+			taskId,
+			groupId,
+		} = data;
+
+		const queryGroup = groupId ? '?GROUP_ID=' + groupId : '';
+		const url = '/company/personal/user/' + userId + '/tasks/tags/' + queryGroup;
+
+		BX.SidePanel.Instance.open(
+			url,
+			{
+				width: 1000,
+				requestMethod: 'post',
+				requestParams: {
+					taskId,
+				},
+			},
+		);
+	}
+
+	#handleClickOpenerAllTemplates(data): void
+	{
+		const {
+			userId,
+		} = data;
+		const url = `/company/personal/user/${userId}/tasks/templates/`;
+
+		BX.SidePanel.Instance.open(
+			url,
+			{
+				newWindowLabel: false,
+				copyLinkLabel: false,
+			},
+		);
+	}
+
 	#renderTasksTagFooter(): HTMLElement
 	{
-		let url = '/company/personal/user/' + this.userId + '/tasks/tags/';
-		const task = this.taskId;
-		const group = this.groupId;
-		if (group !== 0)
-		{
-			url = '/company/personal/user/' + this.userId + '/tasks/tags/?GROUP_ID=' + group;
-		}
-
 		return this.cache.remember('content', () => {
+			const data = {
+				userId: this.userId,
+				taskId: this.taskId,
+				groupId: this.groupId,
+			};
+
 			return Tag.render`
 				<div class="tags-widget-custom-footer">
 					<a class="ui-selector-footer-link ui-selector-footer-link-add"  
@@ -56,17 +93,8 @@ export default class Footer extends DefaultFooter
 							${Loc.getMessage('TASKS_ENTITY_SELECTOR_TAG_FOOTER_OR')}
 					</span>
 					<a
-						class="ui-selector-footer-link" 
-						onclick="BX.SidePanel.Instance.open(
-							\'${url}\',
-							{
-								width: 1000,
-								requestMethod: 'post',
-								requestParams: {
-									taskId: ${task},
-								},
-							}
-						)"
+						class="ui-selector-footer-link"
+						onclick="${() => this.#handleClickOpenerAllTags(data)}"
 					>
 							${Loc.getMessage('TASKS_ENTITY_SELECTOR_TAG_FOOTER_GET_TAG_SLIDER')}
 					</a>
@@ -77,18 +105,14 @@ export default class Footer extends DefaultFooter
 
 	#renderAllTemplateOpener(): HTMLElement | null
 	{
-		const url = `/company/personal/user/${this.userId}/tasks/templates/`;
+		const data = {
+			userId: this.userId,
+		};
 
 		return Tag.render`
 			<a
 				class="ui-selector-footer-link ui-selector-footer-link_separated"
-				onclick="BX.SidePanel.Instance.open(
-					\'${url}\',
-					{
-						newWindowLabel: false,
-						copyLinkLabel: false,
-					}
-				)"
+				onclick="${() => this.#handleClickOpenerAllTemplates(data)}"
 			>
 				${Loc.getMessage('TASKS_ENTITY_SELECTOR_TEMPLATE_FOOTER_OPEN_ALL_TEMPLATES')}
 			</a>

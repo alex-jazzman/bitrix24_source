@@ -5,10 +5,10 @@ import { BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { type ImModelRecentItem } from 'im.v2.model';
+import { CopilotRecentService } from 'im.v2.provider.service.copilot';
 
 import { CopilotRecentMenu } from './classes/context-menu-manager';
-import { CopilotRecentService } from 'im.v2.provider.service.copilot';
-import { EmptyState } from './components/empty-state';
+import { EmptyState } from './components/empty-state.js';
 
 // @vue/component
 export const CopilotList = {

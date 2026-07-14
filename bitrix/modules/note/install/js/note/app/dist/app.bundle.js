@@ -548,7 +548,9 @@ this.BX.Note = this.BX.Note || {};
 			name: ROUTE_NAME_DOCUMENT,
 			params: {
 				id: to.params.id
-			}
+			},
+			hash: to.hash,
+			query: to.query
 		})
 	}, {
 		path: '/workspace/:id(\\d+)/',
@@ -563,7 +565,9 @@ this.BX.Note = this.BX.Note || {};
 			name: ROUTE_NAME_WORKSPACE,
 			params: {
 				id: to.params.id
-			}
+			},
+			hash: to.hash,
+			query: to.query
 		})
 	}, {
 		path: '/:pathMatch(.*)*',
@@ -576,7 +580,32 @@ this.BX.Note = this.BX.Note || {};
 	function createNoteRouter() {
 		return ui_vue3_router.createRouter({
 			history: ui_vue3_router.createWebHistory(DEFAULT_BASE),
-			routes
+			routes,
+			scrollBehavior(to, from, savedPosition) {
+				if (savedPosition) {
+					return savedPosition;
+				}
+
+				// Hash scrolling is owned by the document page: the target heading may
+				// not exist yet (async load) and can live inside a collapsed section
+				// that has to be expanded first. See feature.scrollToAnchor().
+				if (to.hash) {
+					return false;
+				}
+				if (!from || to.path !== from.path) {
+					// The app's scrollable surface is <main class="content">, not the
+					// window — Vue Router's { top: 0 } only resets window scroll, which
+					// leaves a previously-scrolled .content stuck on the new page.
+					const content = document.querySelector('main.content');
+					if (content instanceof HTMLElement) {
+						content.scrollTop = 0;
+					}
+					return {
+						top: 0
+					};
+				}
+				return false;
+			}
 		});
 	}
 
@@ -779,6 +808,7 @@ this.BX.Note = this.BX.Note || {};
 		#handleDocRenamed = null;
 		#handleCollectionRenamed = null;
 		#handleChildrenChanged = null;
+		#childrenWatchStop = null;
 		#documentActions = null;
 		#dialogService = new note_sidebar.DialogService();
 		#lastKnownCollectionId = 0;
@@ -828,6 +858,25 @@ this.BX.Note = this.BX.Note || {};
 				isMobile: Boolean(this.#options.isMobile)
 			});
 			this.#documentActions = this.#createDocumentActions();
+
+			// Live-mirror the open document's sidebar branch into the editor children-block.
+			// Every create/rename/move/remove the store applies reaches the block without a
+			// per-event re-sync — getChildren returns the reactive docsByParent array.
+			this.#childrenWatchStop = ui_vue3.watchEffect(() => {
+				const ctx = this.#routeDocumentContext;
+				if (!ctx || !this.#sidebarFeature) {
+					return;
+				}
+				const docId = Number(ctx.docId);
+				const collectionId = Number(ctx.document?.collectionId);
+				if (!Number.isInteger(docId) || docId <= 0 || !Number.isInteger(collectionId) || collectionId <= 0) {
+					ctx.children = [];
+					ctx.childrenHasMore = false;
+					return;
+				}
+				ctx.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
+				ctx.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+			});
 			this.#app = ui_vue3.BitrixVue.createApp(NoteLayout, {
 				state: this.#sidebarFeature.state,
 				actions: this.#sidebarFeature.actions,
@@ -837,6 +886,7 @@ this.BX.Note = this.BX.Note || {};
 				documentActions: this.#documentActions,
 				themeActions: this.#themeActions
 			});
+			// @chef-ignore
 			this.#app.use(this.#router);
 			this.#app.mount(target);
 			this.#themeRoot = document.querySelector(target);
@@ -870,7 +920,10 @@ this.BX.Note = this.BX.Note || {};
 					collectionId
 				} = event.getData();
 				if (this.#routeDocumentContext && this.#sidebarFeature && Number(this.#routeDocumentContext.docId) === parentId) {
-					this.#syncChildDocumentsState(parentId, collectionId);
+					// Display is handled reactively by the children watchEffect; we only need
+					// to fetch an unloaded branch (first remote child of a leaf) so it has
+					// something to mirror. ensureChildrenLoaded is a no-op once hydrated.
+					void this.#sidebarFeature.ensureChildrenLoaded(Number(collectionId), parentId);
 				}
 			};
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.DOCUMENT_RENAMED, this.#handleDocRenamed);
@@ -881,6 +934,10 @@ this.BX.Note = this.BX.Note || {};
 		}
 		destroy() {
 			this.#applyMobileClass(false);
+			if (main_core.Type.isFunction(this.#childrenWatchStop)) {
+				this.#childrenWatchStop();
+				this.#childrenWatchStop = null;
+			}
 			if (this.#app) {
 				this.#app.unmount();
 				this.#app = null;
@@ -1414,6 +1471,8 @@ this.BX.Note = this.BX.Note || {};
 			}
 			const sidebarDoc = this.#sidebarFeature.findLoadedDocument(collectionId, docId);
 			if (sidebarDoc && !sidebarDoc.hasChildren) {
+				// Nothing to fetch; the watchEffect already reflects the empty branch.
+				this.#syncChildDocumentsState(docId, collectionId);
 				return;
 			}
 			if (this.#routeDocumentContext && Number(this.#routeDocumentContext.docId) === docId) {
@@ -1433,8 +1492,8 @@ this.BX.Note = this.BX.Note || {};
 			if (!this.#routeDocumentContext || Number(this.#routeDocumentContext.docId) !== docId) {
 				return;
 			}
-			this.#routeDocumentContext.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
-			this.#routeDocumentContext.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+
+			// children / childrenHasMore are kept live by the children watchEffect.
 			this.#routeDocumentContext.childrenLoading = false;
 			this.#routeDocumentContext.loadMoreChildren = () => {
 				void this.#loadMoreChildDocuments(docId, collectionId);
@@ -1499,22 +1558,25 @@ this.BX.Note = this.BX.Note || {};
 						void this.#sidebarFeature.actions.deleteDocument(doc);
 					}
 				},
-				restoreFromTrash: documentId => {
-					void this.#restoreDocumentFromTrash(documentId);
+				restoreFromTrash: (documentId, hints = {}) => {
+					void this.#restoreDocumentFromTrash(documentId, hints);
 				},
-				hardDelete: documentId => {
-					void this.#hardDeleteDocument(documentId);
+				hardDelete: (documentId, hints = {}) => {
+					void this.#hardDeleteDocument(documentId, hints);
 				}
 			};
 		}
-		async #restoreDocumentFromTrash(documentId) {
+		async #restoreDocumentFromTrash(documentId, hints = {}) {
 			const doc = this.#resolveLoadedDocument(documentId);
-			const recycleBinId = Number(doc?.recycleBinId);
-			if (!doc || !Number.isInteger(recycleBinId) || recycleBinId <= 0) {
+			// Editor passes the freshest recycleBinId/isOrphan via hints — routeDocumentContext.document
+			// stays at its initial-load snapshot and is stale after a push-driven trash flip.
+			const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
+			const isOrphan = typeof hints?.isOrphan === 'boolean' ? hints.isOrphan : Boolean(doc?.isOrphan);
+			if (!doc || recycleBinId <= 0) {
 				return;
 			}
 			let targetCollectionId = null;
-			if (doc.isOrphan) {
+			if (isOrphan) {
 				const result = await note_recyclebin.openOrphanRestorePopup({
 					documentTitle: String(doc.title || '')
 				});
@@ -1554,10 +1616,10 @@ this.BX.Note = this.BX.Note || {};
 				name: ROUTE_NAME_RECYCLE_BIN
 			});
 		}
-		async #hardDeleteDocument(documentId) {
+		async #hardDeleteDocument(documentId, hints = {}) {
 			const doc = this.#resolveLoadedDocument(documentId);
-			const recycleBinId = Number(doc?.recycleBinId);
-			if (!doc || !Number.isInteger(recycleBinId) || recycleBinId <= 0) {
+			const recycleBinId = Number(hints?.recycleBinId) || Number(doc?.recycleBinId) || 0;
+			if (!doc || recycleBinId <= 0) {
 				return;
 			}
 			const confirmed = await this.#confirmHardDelete(String(doc.title || ''));

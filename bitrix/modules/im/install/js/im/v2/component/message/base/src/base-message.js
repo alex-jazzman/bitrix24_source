@@ -95,12 +95,16 @@ export const BaseMessage = {
 			return {
 				'--self': this.isSelfMessage,
 				'--opponent': this.isOpponentMessage,
-				'--system': this.isSystemMessage,
+				'--system': this.isSystemMessage && !this.shouldForceBackground,
 				'--has-error': this.hasError,
 				'--has-after-content': Boolean(this.$slots['after-message']),
 				'--selected': this.isMessageSelected,
 				'--is-bulk-actions-mode': this.isBulkActionsMode,
 			};
+		},
+		shouldForceBackground(): boolean
+		{
+			return this.$store.getters['messages/builder/forceBackground'](this.message.id);
 		},
 		bodyClasses(): {[className: string]: boolean}
 		{
@@ -111,7 +115,17 @@ export const BaseMessage = {
 		},
 		isTransparentBackground(): boolean
 		{
-			return !this.withBackground || this.isSystemMessage;
+			if (!this.withBackground)
+			{
+				return true;
+			}
+
+			if (this.shouldForceBackground)
+			{
+				return false;
+			}
+
+			return this.isSystemMessage;
 		},
 		showRetryButton(): boolean
 		{

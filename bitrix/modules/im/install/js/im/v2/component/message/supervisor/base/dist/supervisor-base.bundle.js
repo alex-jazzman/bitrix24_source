@@ -25,7 +25,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		saleshub: 'saleshub',
 		websitesStores: 'sites',
 		checkIn: 'checkIn',
-		checkInGeo: 'checkInGeo'
+		checkInGeo: 'checkInGeo',
+		checkInV2: 'checkInV2'
 	});
 	const UpdateFeatures = Object.freeze({
 		collaborativeDocumentEditing: 'limit_office_no_document',

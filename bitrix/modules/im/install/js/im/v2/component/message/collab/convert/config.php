@@ -9,8 +9,10 @@ return [
 	'js' => 'dist/convert.bundle.js',
 	'rel' => [
 		'im.v2.component.message.base',
+		'im.v2.lib.copilot',
+		'im.v2.lib.feature',
 		'main.core',
-		'ui.vue3.components.rich-loc',
+		'ui.icon-set.api.vue',
 	],
 	'skip_core' => false,
 ];

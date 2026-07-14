@@ -1,5 +1,5 @@
 import { type JsonObject } from 'main.core';
-import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
@@ -13,6 +13,7 @@ import { ChatService } from 'im.v2.provider.service.chat';
 import { DescriptionBanner } from './components/description-banner/description-banner';
 import { RightsSection, type AccessRightsFormResult } from './components/rights-section';
 
+// @vue/component
 export const CollabCreation = {
 	name: 'CollabCreation',
 	components: {
@@ -41,15 +42,13 @@ export const CollabCreation = {
 			autoDeleteDelay: 0,
 		};
 	},
-	watch:
-	{
+	watch: {
 		chatTitle(newValue: string): void
 		{
 			CreateChatManager.getInstance().setChatTitle(newValue);
 		},
 	},
-	computed:
-	{
+	computed: {
 		EmptyAvatarType: () => EmptyAvatarType,
 		createButtonColorScheme(): CustomColorScheme
 		{
@@ -81,8 +80,7 @@ export const CollabCreation = {
 		}
 		this.saveFields();
 	},
-	methods:
-	{
+	methods: {
 		restoreFields(): void
 		{
 			const savedFields = CreateChatManager.getInstance().getFields();

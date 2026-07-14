@@ -21,6 +21,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
@@ -39,6 +40,14 @@ if ($arParams["USER_ID"] <= 0)
 $arParams["PAGE_ID"] = Trim($arParams["PAGE_ID"]);
 if ($arParams["PAGE_ID"] == '')
 	$arParams["PAGE_ID"] = "user_features";
+
+$projectProvider = new ProjectProvider();
+if ($projectProvider->isProject($arParams["GROUP_ID"]))
+{
+	ShowError(GetMessage("SONET_C3_PERMS"));
+
+	return;
+}
 
 $arParams["SET_NAV_CHAIN"] = ($arParams["SET_NAV_CHAIN"] == "N" ? "N" : "Y");
 

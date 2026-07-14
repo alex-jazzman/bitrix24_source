@@ -4635,6 +4635,8 @@ select:not(:-internal-list-box) {
 }
 
 .calendar-settings-control-name {
+	display: flex;
+	align-items: center;
 	margin: 0 0 8px;
 }
 
@@ -5919,6 +5921,7 @@ select:not(:-internal-list-box) {
 	right: 0;
 	z-index: 1;
 	height: 32px;
+	min-height: auto;
 	background: none;
 }
 

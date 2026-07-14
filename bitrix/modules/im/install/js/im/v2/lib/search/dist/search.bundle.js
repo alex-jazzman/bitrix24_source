@@ -78,14 +78,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return message.date.toISOString();
 	}
 
-	function getRecentListItems({
-		withFakeUsers,
-		searchRecentSection
-	}) {
+	function getRecentListItems(params) {
+		const {
+			withFakeUsers,
+			searchRecentSection,
+			parentChatId
+		} = params;
 		const recentSection = searchRecentSection ?? im_v2_const.RecentType.default;
-		const recentItems = im_v2_application_core.Core.getStore().getters['recent/getSortedCollection']({
-			type: recentSection
-		});
+		const preparedParentChatId = prepareParentChatId(parentChatId);
+		const payload = {
+			type: recentSection,
+			parentChatId: preparedParentChatId
+		};
+		const recentItems = im_v2_application_core.Core.getStore().getters['recent/getSortedCollection'](payload);
 		return recentItems.filter(item => filterRecentItem(item, withFakeUsers)).map(({
 			dialogId
 		}) => buildSearchResultItem(dialogId));
@@ -101,6 +106,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			dialogId,
 			dateMessage: getRecentItemDate(dialogId)
 		};
+	};
+	const prepareParentChatId = parentChatId => {
+		const isAllScope = parentChatId === im_v2_const.ParentChatScope.all;
+		if (!parentChatId || isAllScope) {
+			return im_v2_const.ParentChatScope.topLevel;
+		}
+		return parentChatId;
 	};
 
 	const collator = new Intl.Collator(undefined, {
@@ -134,7 +146,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#getRecentListItems() {
 			const recentListItems = getRecentListItems({
 				withFakeUsers: true,
-				searchRecentSection: this.#searchConfig.searchRecentSection
+				searchRecentSection: this.#searchConfig.searchRecentSection,
+				parentChatId: this.#searchConfig.parentId
 			});
 			return recentListItems.map(item => {
 				return this.#prepareRecentItem(item.dialogId, item.dateMessage);

@@ -11,6 +11,7 @@
 	position: absolute;
 	background: linear-gradient(var(--im-scroll-with-gradient-direction), #fff 10.58%, rgb(255 255 255 / 0.01%) 98.3%);
 	z-index: 2;
+	pointer-events: none;
 }
 
 .bx-im-scroll-with-gradient__container.--horizontal .bx-im-scroll-with-gradient__gradient {

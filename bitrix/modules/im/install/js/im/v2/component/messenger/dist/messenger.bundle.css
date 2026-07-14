@@ -44,6 +44,7 @@
 	height: 100%;
 	position: relative;
 	border-right: 1px solid var(--im-messenger__list_border-color);
+	overflow: hidden;
 }
 
 .bx-im-messenger__content_container {

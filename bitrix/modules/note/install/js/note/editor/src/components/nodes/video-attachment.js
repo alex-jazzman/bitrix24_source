@@ -16,8 +16,8 @@ export const VideoAttachmentNodeViewComponent = {
 	},
 	// language=Vue
 	template: `
-		<div class="note-editor-video-inner">
-			<div v-if="videoUrl" class="note-editor-video-preview">
+		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="videoUrl && !isUnavailable" class="note-editor-video-preview">
 				<video
 					class="note-editor-video-player"
 					:src="videoUrl"
@@ -26,8 +26,11 @@ export const VideoAttachmentNodeViewComponent = {
 				></video>
 			</div>
 			<div class="note-editor-video-meta">
-				<div class="note-editor-video-name">{{ fileName }}</div>
-				<div class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
+				<div class="note-editor-video-name">
+					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
+					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
+				</div>
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
 			</div>
 		</div>
 	`,

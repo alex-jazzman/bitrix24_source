@@ -14,12 +14,13 @@ import {
 	UserRole,
 	ActionByRole,
 	ErrorCode,
-	AnchorType, type ScrollToBottomEvent
+	AnchorType,
+	type ScrollToBottomEvent,
 } from 'im.v2.const';
-import { AccessManager } from 'im.v2.lib.access';
+import { MessageAccessManager } from 'im.v2.lib.access';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
-import { FeatureManager } from 'im.v2.lib.feature';
+import { TariffManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -102,6 +103,10 @@ export const ChatDialog = {
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
+		},
+		isChatOpenedInWidget(): boolean
+		{
+			return this.$store.getters['copilot/isChatOpenedInWidget'](this.dialogId);
 		},
 		dialogInited(): boolean
 		{
@@ -329,11 +334,11 @@ export const ChatDialog = {
 				return;
 			}
 
-			const { hasAccess, errorCode } = await AccessManager.checkMessageAccess(messageId);
+			const { hasAccess, errorCode } = await MessageAccessManager.checkMessageAccess(messageId);
 			if (!hasAccess && errorCode === ErrorCode.message.accessDeniedByTariff)
 			{
 				Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({ dialogId: this.dialogId });
-				FeatureManager.chatHistory.openFeatureSlider();
+				TariffManager.chatHistory.openFeatureSlider();
 
 				return;
 			}
@@ -457,7 +462,7 @@ export const ChatDialog = {
 				this.getChatService().clearDialogMark(this.dialogId);
 			});
 
-			EventEmitter.emit(EventType.dialog.onDialogInited, { dialogId: this.dialogId });
+			this.sendInitEvents();
 		},
 		async onScrollTriggerUp()
 		{
@@ -879,6 +884,13 @@ export const ChatDialog = {
 			PopupManager.getPopupById(PopupType.dialogReadUsers)?.close();
 			PopupManager.getPopupById(PopupType.messageBaseFileMenu)?.close();
 		},
+		sendInitEvents()
+		{
+			const payload = { dialogId: this.dialogId, chat: this.dialog };
+
+			EventEmitter.emit(EventType.dialog.onDialogInited, payload);
+			this.getEmitter().emit(EventType.dialog.onDialogInited, payload);
+		},
 		subscribeToEvents()
 		{
 			EventEmitter.subscribe(EventType.dialog.scrollToBottom, this.onScrollToBottom);
@@ -949,6 +961,7 @@ export const ChatDialog = {
 				v-if="forwardPopup.show"
 				:messagesIds="forwardPopup.messagesIds"
 				:dialogId="dialogId"
+				:directForward="isChatOpenedInWidget"
 				@close="onCloseForwardPopup"
 			/>
 			<QuoteButton

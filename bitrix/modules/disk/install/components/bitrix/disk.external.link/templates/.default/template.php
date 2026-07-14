@@ -33,6 +33,8 @@ switch(mb_strtolower($langId))
 	default:
 		$langForBanner = Loc::getDefaultLang($langId);
 }
+
+$unifiedLink = $arResult['UNIFIED_LINK'];
 ?>
 <!DOCTYPE html>
 <html lang="<?= mb_strtolower($langId)?>">
@@ -62,7 +64,9 @@ switch(mb_strtolower($langId))
 	BX.ready(function(){
 		let inlineController = new BX.UI.Viewer.InlineController({baseContainer: BX('test-content')});
 		inlineController.renderItemByNode(BX('test-content'));
-		<?php if($arResult['SESSION_EXPIRED']): ?>
+		<?php if (!$arResult['FROM_UNIFIED_LINK'] && is_string($unifiedLink)) { ?>
+			window.history.replaceState({}, '', '<?= $unifiedLink ?>');
+		<?php } elseif($arResult['SESSION_EXPIRED']) { ?>
 			BX.UI.Notification.Center.notify({
 				content: '<?= GetMessageJS('DISK_EXT_SESSION_EXPIRED') ?>',
 			});
@@ -71,7 +75,7 @@ switch(mb_strtolower($langId))
 			url = url.replace(/\&session=expired/, '');
 			window.history.replaceState({}, '', url);
 
-		<?php endif; ?>
+		<?php } ?>
 	});
 </script>
 	<div class="bx-shared-wrap">

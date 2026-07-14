@@ -8,6 +8,7 @@ return [
 		'utils/array',
 		'im:messenger/const',
 		'im:messenger/controller/selector/member',
+		'im:messenger/lib/project-access-guard',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',

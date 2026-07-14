@@ -52,6 +52,11 @@ export class ChatDataExtractor
 		return this.#restResult.chat.type === ChatType.collab;
 	}
 
+	getParentChat(): ?RawChat
+	{
+		return this.#restResult.parentChat;
+	}
+
 	getChats(): RawChat[]
 	{
 		const mainChat = {
@@ -60,9 +65,11 @@ export class ChatDataExtractor
 			hasNextPage: this.#restResult.hasNextPage,
 			tariffRestrictions: this.#restResult.tariffRestrictions,
 		};
+
 		const chats = {
 			[this.#restResult.chat.dialogId]: mainChat,
 		};
+
 		this.#restResult.users.forEach((user) => {
 			if (chats[user.id])
 			{
@@ -73,6 +80,12 @@ export class ChatDataExtractor
 				chats[user.id] = UserManager.getDialogForUser(user);
 			}
 		});
+
+		const parentChat = this.getParentChat();
+		if (parentChat)
+		{
+			chats[parentChat.dialogId] = parentChat;
+		}
 
 		return Object.values(chats);
 	}

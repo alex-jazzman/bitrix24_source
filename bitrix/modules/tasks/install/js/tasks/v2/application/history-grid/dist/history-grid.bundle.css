@@ -23,6 +23,12 @@
 .tasks-history-grid-comment-link:hover {
 	text-decoration: underline;
 }
+.tasks-history-grid-user-element.--collaber {
+	color: var(--ui-color-collab-accent-primary);
+}
+.tasks-history-grid-checklist-element.--checked {
+	text-decoration: line-through;
+}
 .tasks-history-grid-loader-spinner {
 	width: var(--ui-size-8xl);
 	height: var(--ui-size-8xl);
@@ -41,11 +47,4 @@
 	100% {
 		transform: rotate(360deg);
 	}
-}
-
-.tasks-history-grid-checklist-element.--checked {
-	text-decoration: line-through;
-}
-.tasks-history-grid-user-element.--collaber {
-	color: var(--ui-color-collab-accent-primary);
 }

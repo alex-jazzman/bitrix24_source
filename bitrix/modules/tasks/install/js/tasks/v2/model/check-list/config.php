@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/check-list.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
 		'tasks.v2.const',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => true,
 ];

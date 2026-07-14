@@ -24,6 +24,8 @@ import { CallAI } from './call_ai';
 import {VideoStrategy} from './video_strategy';
 import { JoinResponseError } from './call_api';
 import {View} from './view/view';
+import type { CallView } from './view/call-view-port';
+import { LegacyCallViewAdapter } from './view/legacy-call-view-adapter';
 import { CopilotPopup } from './view/copilot-popup';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import { WebScreenSharePopup } from './web_screenshare_popup';
@@ -78,7 +80,10 @@ export {
 	CallCommonRecordState,
 	CloudRecordKind,
 	CloudRecordStatus,
+	LegacyCallViewAdapter,
 };
+
+export type { CallView };
 
 // compatibility
 BX.CallEngine = CallEngine;

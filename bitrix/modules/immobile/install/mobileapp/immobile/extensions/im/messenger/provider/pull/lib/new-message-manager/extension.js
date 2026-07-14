@@ -85,11 +85,11 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		}
 
 		/**
-		 * @return {BuilderConfig|null}
+		 * @return {BlockConfig|null}
 		 */
-		getBuilder()
+		getBlock()
 		{
-			return this.getMessage().builder;
+			return this.getMessage().block;
 		}
 
 		/**

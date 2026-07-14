@@ -21,6 +21,8 @@ export const EmptyStateListItemName = {
 	collaboration: 'collaboration',
 	business: 'business',
 	result: 'result',
+	copilot: 'copilot',
+	list: 'list',
 };
 
 export type EmptyStateListItem = {

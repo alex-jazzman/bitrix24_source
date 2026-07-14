@@ -51,6 +51,12 @@
 	margin-bottom: 16px;
 }
 
+.bx-im-content-chat-forms__content.--collab-v2 {
+	padding: 0;
+	/* @chef-ignore */
+	scrollbar-gutter: initial;
+}
+
 .bx-im-content-chat-forms__collapsed-users {
 	display: flex;
 	align-items: center;

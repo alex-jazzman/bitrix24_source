@@ -1,0 +1,247 @@
+<?php
+
+namespace Bitrix\Im\V2\Message\Forward;
+
+use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Common\ContextCustomer;
+use Bitrix\Im\V2\Entity\File\FileItem;
+use Bitrix\Im\V2\Entity\File\ParamCollection;
+use Bitrix\Im\V2\Integration\AI\RoleManager;
+use Bitrix\Im\V2\Integration\AI\Transcription\TranscriptionCopyManager;
+use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\Message\BlocksBuilder\BuilderService;
+use Bitrix\Im\V2\MessageCollection;
+use Bitrix\Im\V2\Result;
+use Bitrix\Imbot\Bot\CopilotChatBot;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Loader;
+
+class ForwardService
+{
+	use ContextCustomer;
+
+	private const PARAMS_TO_COPY_WHITELIST = [
+		Message\Params::ATTACH => Message\Params::ATTACH,
+		Message\Params::URL_ID => Message\Params::URL_ID,
+		Message\Params::IS_DELETED => Message\Params::IS_DELETED,
+		Message\Params::URL_ONLY => Message\Params::URL_ONLY,
+		Message\Params::LARGE_FONT => Message\Params::LARGE_FONT,
+		Message\Params::FORWARD_CONTEXT_ID => Message\Params::FORWARD_CONTEXT_ID,
+		Message\Params::FORWARD_ID => Message\Params::FORWARD_ID,
+		Message\Params::FORWARD_USER_ID => Message\Params::FORWARD_USER_ID,
+		Message\Params::FORWARD_CHAT_TITLE => Message\Params::FORWARD_CHAT_TITLE,
+		Message\Params::REPLY_ID => Message\Params::REPLY_ID,
+		Message\Params::STICKER_PARAMS => Message\Params::STICKER_PARAMS,
+		Message\Params::BLOCK => Message\Params::BLOCK,
+	];
+
+	private Chat $toChat;
+
+	public function __construct(Chat $toChat)
+	{
+		$this->toChat = $toChat;
+	}
+
+	/**
+	 * @param MessageCollection $forwardingMessages
+	 * @return Result<MessageCollection>
+	 */
+	public function createMessages(MessageCollection $forwardingMessages): Result
+	{
+		$result = new Result();
+		$fileCopyMap = new FileCopyMap();
+		$messageConfigs = [];
+		$uuidMap = [];
+
+		foreach ($forwardingMessages as $forwardingMessage)
+		{
+			if ($this->canForward($forwardingMessage))
+			{
+				$messageConfigs[] = $this->buildForwardMessageConfig($forwardingMessage, $fileCopyMap);
+			}
+		}
+
+		ParamCollection::copyParams($fileCopyMap);
+		(new TranscriptionCopyManager($fileCopyMap))->copy();
+
+		foreach ($messageConfigs as $messageConfig)
+		{
+			$forwardMessageResult = $this->createForwardMessage($messageConfig);
+			if ($forwardMessageResult->hasResult())
+			{
+				$messageMap = $forwardMessageResult->getResult();
+				if (!empty($messageMap['uuid']))
+				{
+					$uuidMap[$messageMap['uuid']] = $messageMap['id'];
+				}
+			}
+
+			$result->addErrors($forwardMessageResult->getErrors());
+		}
+
+		return $result->setResult($uuidMap);
+	}
+
+	public static function getChatTypeByContextId(string $contextId): string
+	{
+		$dialogId = Chat::getDialogIdByContextId($contextId);
+
+		if (!str_starts_with($dialogId, 'chat'))
+		{
+			return \Bitrix\Im\Chat::getType(['TYPE' => Chat::IM_TYPE_PRIVATE]);
+		}
+
+		$chatId = mb_substr($dialogId, 4);
+
+		return Chat::getInstance($chatId)->getExtendedType();
+	}
+
+	private function createForwardMessage(array $messageConfig): Result
+	{
+		$result = new Result();
+
+		$messageId = \CIMMessenger::Add($messageConfig); //TODO replace with $chat->sendMessage
+		if (!$messageId)
+		{
+			$result->addError(new Message\MessageError(Message\MessageError::SENDING_FAILED));
+		}
+
+		return $result->setResult([
+			'uuid' => $messageConfig['TEMPLATE_ID'] ?: null,
+			'id' => $messageId,
+		]);
+	}
+
+	private function buildForwardMessageConfig(Message $forwardingMessage, FileCopyMap $fileCopyMap): array
+	{
+		$paramsResult = $this->buildForwardParams($forwardingMessage, $fileCopyMap);
+		$params = $paramsResult->getResult();
+
+		return [
+			'MESSAGE_TYPE' => $this->toChat->getType(),
+			'MESSAGE' => $forwardingMessage->getMessage() !== '' ? $forwardingMessage->getMessage() : null,
+			'PARAMS' => $params['PARAMS'] ?? [],
+			'TO_CHAT_ID' =>  $this->toChat->getChatId(),
+			'FROM_USER_ID' => $this->getContext()->getUserId(),
+			'URL_PREVIEW' => 'N',
+			'TEMPLATE_ID' => $forwardingMessage->getForwardUuid() ?? '',
+			'FILE_MODELS' => $params['FILE_MODELS'] ?? [],
+			'WAIT_FULL_EXECUTION' => 'N',
+		];
+	}
+
+	private function buildForwardParams(Message $forwardingMessage, FileCopyMap $fileCopyMap): Result
+	{
+		$result = new Result();
+
+		$newParams = $this->getForwardingMessageParams($forwardingMessage);
+
+		if ($this->isOriginalMessage($newParams))
+		{
+			$userId = $forwardingMessage->isSystem() ? 0 : $forwardingMessage->getAuthorId();
+			$newParams[Message\Params::FORWARD_ID] = $forwardingMessage->getId();
+			$newParams[Message\Params::FORWARD_CONTEXT_ID] = $forwardingMessage->getContextId();
+			$newParams[Message\Params::FORWARD_USER_ID] = $userId;
+			if ($forwardingMessage->getChat() instanceof Chat\OpenChannelChat)
+			{
+				$newParams[Message\Params::FORWARD_CHAT_TITLE] = $forwardingMessage->getChat()->getDisplayedTitle();
+			}
+		}
+
+		$diskFiles = [];
+
+		if ($this->hasFilesToCopy($forwardingMessage))
+		{
+			$newFileIds = [];
+			foreach ($forwardingMessage->getFiles() as $file)
+			{
+				$copy = $file->getCopyToChat($this->toChat);
+				if ($copy instanceof FileItem)
+				{
+					$newFileIds[] = $copy->getId();
+					$diskFiles[] = $copy->getDiskFile();
+					$fileCopyMap->addFileIdMapping($copy, $file);
+				}
+			}
+
+			$newParams = $this->setFileIds($forwardingMessage, $newFileIds, $newParams);
+		}
+
+		if (Loader::includeModule('imbot') && $forwardingMessage->getAuthorId() === CopilotChatBot::getBotId())
+		{
+			if ($forwardingMessage->getParams()->isSet(Message\Params::COPILOT_ROLE))
+			{
+				$copilotRole = $forwardingMessage->getParams()->get(Message\Params::COPILOT_ROLE)->getValue();
+			}
+
+			$newParams[Message\Params::COPILOT_ROLE] = $copilotRole ?? RoleManager::getDefaultRoleCode();
+		}
+
+		return $result->setResult(['PARAMS' => $newParams, 'FILE_MODELS' => $diskFiles]);
+	}
+
+	private function hasFilesToCopy(Message $forwardingMessage): bool
+	{
+		return !empty($forwardingMessage->getFileIds());
+	}
+
+	private function setFileIds(Message $forwardingMessage, array $newFileIds, array $newParams): array
+	{
+		if ($forwardingMessage->getBlocksBuilder() !== null)
+		{
+			$builder = $forwardingMessage->getBlocksBuilder();
+			$builderService = ServiceLocator::getInstance()->get(BuilderService::class);
+			$builderResult = $builderService->updateFileIds($builder, $newFileIds, $this->toChat);
+			$newParams[Message\Params::BLOCK] = $builderResult->getBlocksBuilder();
+
+			return $newParams;
+		}
+
+		$newParams[Message\Params::FILE_ID] = $newFileIds;
+
+		return $newParams;
+	}
+
+	/**
+	 * If this message is already forwarded, then the params are already available
+	 * @param array $messageParams
+	 * @return bool
+	 */
+	private function isOriginalMessage(array $messageParams): bool
+	{
+		return !isset(
+			$messageParams[Message\Params::FORWARD_CONTEXT_ID],
+			$messageParams[Message\Params::FORWARD_USER_ID]
+		);
+	}
+
+	/**
+	 * @param Message $message
+	 * @return array
+	 */
+	private function getForwardingMessageParams(Message $message): array
+	{
+		$result = [];
+		foreach ($message->getParams() as $param)
+		{
+			if (isset(self::PARAMS_TO_COPY_WHITELIST[$param->getName()]))
+			{
+				$value = $param->getValue();
+				if (is_bool($value))
+				{
+					$value = $value ? 'Y' : 'N';
+				}
+				$result[$param->getName()] = $value;
+			}
+		}
+
+		return $result;
+	}
+
+	private function canForward(Message $message): bool
+	{
+		$chat = $message->getChat();
+
+		return $chat->checkAccess($this->getContext()->getUserId())->isSuccess() && !($chat instanceof Chat\CommentChat);
+	}
+}

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['EXTRANET_WG_TO_ARCHIVE_NAME'] = "Рабочая группа переведена в архив";
 $MESS ['EXTRANET_WG_TO_ARCHIVE_DESC'] = "#WG_ID# - ID рабочей группы
 #WG_NAME# - Название рабочей группы
@@ -73,4 +73,52 @@ $MESS ['EXTRANET_COLLAB_JOIN_DESC'] = "#USER_ID# - ID пользователя
 #SERVER_NAME# - URL сайта (без http://)
 ";
 $MESS ['EXTRANET_COLLAB_JOIN_SUBJECT'] = "Вы присоединились к коллабе";
-?>
+
+$MESS ['EXTRANET_PROJECT_TO_ARCHIVE_NAME'] = "Проект переведён в архив";
+$MESS ['EXTRANET_PROJECT_TO_ARCHIVE_DESC'] = "#WG_ID# - ID проекта
+#WG_NAME# - Название проекта
+#MEMBER_EMAIL# - E-mail участника проекта
+#MEMBER_NAME# - Имя участника проекта
+#MEMBER_LAST_NAME# - Фамилия участника проекта
+#SITE_NAME# - Название сайта
+";
+$MESS ['EXTRANET_PROJECT_TO_ARCHIVE_SUBJECT'] = "#SITE_NAME#: Проект '#WG_NAME#' переведен в архив";
+$MESS ['EXTRANET_PROJECT_TO_ARCHIVE_MESSAGE'] = "Информационное сообщение сайта #SITE_NAME#
+------------------------------------------
+
+Здравствуйте, #MEMBER_NAME#!
+
+Проект '#WG_NAME#' [#WG_ID#] переведен в архив на сайте #SITE_NAME#.
+---------------------------------------------------------------------------
+
+Данные этого проекта теперь доступны только для просмотра.
+
+Для просмотра проекта воспользуйтесь ссылкой:
+https://#SERVER_NAME#/extranet/workgroups/group/#WG_ID#/
+
+Письмо сгенерировано автоматически.
+";
+$MESS ['EXTRANET_PROJECT_FROM_ARCHIVE_NAME'] = "Проект выведен из архива";
+$MESS ['EXTRANET_PROJECT_FROM_ARCHIVE_DESC'] = "#WG_ID# - ID проекта
+#WG_NAME# - Название проекта
+#MEMBER_EMAIL# - E-mail'ы участников проекта
+#MEMBER_NAME# - Имя участника проекта
+#MEMBER_LAST_NAME# - Фамилия участника проекта
+#SITE_NAME# - Название сайта
+";
+$MESS ['EXTRANET_PROJECT_FROM_ARCHIVE_SUBJECT'] = "#SITE_NAME#: Проект '#WG_NAME#' выведен из архива";
+$MESS ['EXTRANET_PROJECT_FROM_ARCHIVE_MESSAGE'] = "Информационное сообщение сайта #SITE_NAME#
+------------------------------------------
+
+Здравствуйте, #MEMBER_NAME#!
+
+Проект '#WG_NAME#' [#WG_ID#] выведен из архива на сайте #SITE_NAME#.
+---------------------------------------------------------------------------
+
+Данные этого проекта теперь вновь доступны для изменения.
+
+Для перехода к проекту воспользуйтесь ссылкой:
+https://#SERVER_NAME#/extranet/workgroups/group/#WG_ID#/
+
+Письмо сгенерировано автоматически.
+";

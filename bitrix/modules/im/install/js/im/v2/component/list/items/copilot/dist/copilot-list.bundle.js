@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, main_core, im_v2_lib_analytics, im_v2_lib_menu, im_v2_provider_service_copilot) {
+(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_provider_service_copilot, main_core, im_v2_lib_analytics, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_copilot) {
 	'use strict';
 
 	class CopilotRecentMenu extends im_v2_lib_menu.RecentMenu {
@@ -31,16 +31,28 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const EmptyState = {
 		name: 'EmptyState',
+		components: {
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType,
+			subtitle() {
+				return this.loc('IM_LIST_COPILOT_EMPTY_SUBTITLE', {
+					'#COPILOT_NAME#': new im_v2_lib_copilot.CopilotManager().getName()
+				});
+			}
+		},
 		methods: {
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
 		},
 		template: `
-		<div class="bx-im-list-copilot__empty">
-			<div class="bx-im-list-copilot__empty_icon"></div>
-			<div class="bx-im-list-copilot__empty_text">{{ loc('IM_LIST_COPILOT_EMPTY') }}</div>
-		</div>
+		<RecentEmptyState
+			:title="loc('IM_LIST_COPILOT_EMPTY_TITLE')"
+			:subtitle="subtitle"
+			:recentSection="RecentType.copilot"
+		/>
 	`
 	};
 
@@ -144,5 +156,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotList = CopilotList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
 //# sourceMappingURL=copilot-list.bundle.js.map

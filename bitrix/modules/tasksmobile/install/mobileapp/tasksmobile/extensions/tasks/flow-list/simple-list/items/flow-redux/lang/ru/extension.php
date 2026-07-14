@@ -13,23 +13,23 @@ $MESS['TASKSMOBILE_FLOW_CONTENT_DISABLED_TOAST'] = 'Этот поток выкл
 $MESS['TASKSMOBILE_FLOWS_INFO_HEADER_TEXT'] = 'Потоки';
 $MESS['TASKSMOBILE_FLOWS_INFO_DESCRIPTION_TEXT'] = 'Распределяйте задачи между исполнителями, отслеживайте загруженность сотрудников и скорость выполнения задач';
 
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE'] = "Рекомендации CoPilot";
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA'] = "CoPilot собирает данные об эффективности";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE_MSGVER_1'] = "Рекомендации #COPILOT_NAME#";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA_MSGVER_1'] = "#COPILOT_NAME# собирает данные об эффективности";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW'] = "Эффективность работы в потоке снизилась. Узнайте, как #ANCHOR_START#повысить эффективность#ANCHOR_END#";
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2'] = "CoPilot подготовил #ANCHOR_START#рекомендации#ANCHOR_END#, как увеличить эффективность работы";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2_MSGVER_1'] = "#COPILOT_NAME# подготовил #ANCHOR_START#рекомендации#ANCHOR_END#, как увеличить эффективность работы";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH'] = "Команда работает эффективно";
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2'] = "CoPilot отметил #ANCHOR_START#несколько моментов#ANCHOR_END#, которые помогли команде работать эффективно";
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'] = "CoPilot ещё готовит рекомендации, подождите немного";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2_MSGVER_1'] = "#COPILOT_NAME# отметил #ANCHOR_START#несколько моментов#ANCHOR_END#, которые помогли команде работать эффективно";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST_MSGVER_1'] = "#COPILOT_NAME# ещё готовит рекомендации, подождите немного";
 
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_RATE_LIMIT_EXCEEDED_TOAST'] = 'Достигнут лимит запросов к AI. Обратитесь в поддержку';
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_DESCRIPTION'] = 'Бесплатные запросы закончились. Вы можете оформить подписку на Маркетплейс и работать с AI без ограничений!';
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE'] = 'BitrixGPT + Маркетплейс';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE_MSGVER_1'] = '#COPILOT_NAME# + Маркетплейс';
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_BUTTON'] = 'Оформить подписку';
-$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE'] = 'BitrixGPT + Маркетплейс';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE_MSGVER_1'] = '#COPILOT_NAME# + Маркетплейс';
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_HINT'] = 'Узнать подробнее о подписке можно в веб-версии Битрикс24';
 
-$MESS['TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE'] = "Рекомендации CoPilot";
-$MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE'] = "Привет! Я — CoPilot";
+$MESS['TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE_MSGVER_1'] = "Рекомендации #COPILOT_NAME#";
+$MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE_MSGVER_1'] = "Привет! Я — #COPILOT_NAME#";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_0'] = "Я подготовлю рекомендации, когда в потоке будет больше #MIN_TASKS_COUNT_FOR_ADVICE# задачи";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_1'] = "Я подготовлю рекомендации, когда в потоке будет больше #MIN_TASKS_COUNT_FOR_ADVICE# задач";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_2'] = "Я подготовлю рекомендации, когда в потоке будет больше #MIN_TASKS_COUNT_FOR_ADVICE# задач";
@@ -40,7 +40,7 @@ $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_NOTE_LOW'] = "Я нашел неско�
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_NOTE_HIGH'] = "Я отметил несколько моментов, которые привели команду к такому уровню эффективности";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_ADVICES_ADVICE'] = "Рекомендация";
 
-$MESS['TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE'] = "*Ответы CoPilot могут быть неточны.";
+$MESS['TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE_MSGVER_1'] = "*Ответы #COPILOT_NAME# могут быть неточны.";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE_LINK'] = "Подробнее";
 
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_MENU_ITEM_CREATE_TASK'] = "Создать задачу";

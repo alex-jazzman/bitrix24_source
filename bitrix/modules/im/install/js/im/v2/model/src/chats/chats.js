@@ -102,17 +102,18 @@ export class ChatsModel extends BuilderModel
 		return {
 			/** @function chats/get */
 			get: (state: ChatState) => (dialogId: string, getBlank: boolean = false) => {
-				if (!state.collection[dialogId] && getBlank)
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem && getBlank)
 				{
 					return this.getElementState();
 				}
 
-				if (!state.collection[dialogId] && !getBlank)
+				if (!collectionItem && !getBlank)
 				{
 					return null;
 				}
 
-				return state.collection[dialogId];
+				return collectionItem;
 			},
 			/** @function chats/getByChatId */
 			getByChatId: (state: ChatState) => (chatId: number | string, getBlank: boolean = false) => {
@@ -131,30 +132,23 @@ export class ChatsModel extends BuilderModel
 			},
 			/** @function chats/getQuoteId */
 			getQuoteId: (state: ChatState) => (dialogId: string) => {
-				if (!state.collection[dialogId])
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
 				{
 					return 0;
 				}
 
-				return state.collection[dialogId].quoteId;
-			},
-			/** @function chats/isUser */
-			isUser: (state: ChatState) => (dialogId: string) => {
-				if (!state.collection[dialogId])
-				{
-					return false;
-				}
-
-				return state.collection[dialogId].type === ChatType.user;
+				return collectionItem.quoteId;
 			},
 			/** @function chats/getLastReadId */
 			getLastReadId: (state: ChatState) => (dialogId: string): number => {
-				if (!state.collection[dialogId])
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
 				{
 					return 0;
 				}
 
-				const { lastReadId } = state.collection[dialogId];
+				const { lastReadId } = collectionItem;
 				const lastReadIdMessage = Core.getStore().getters['messages/getById'](lastReadId);
 				if (!lastReadIdMessage)
 				{
@@ -165,12 +159,13 @@ export class ChatsModel extends BuilderModel
 			},
 			/** @function chats/getInitialMessageId */
 			getInitialMessageId: (state: ChatState) => (dialogId: string): number => {
-				if (!state.collection[dialogId])
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
 				{
 					return 0;
 				}
 
-				const { lastReadId, markedId } = state.collection[dialogId];
+				const { lastReadId, markedId } = collectionItem;
 				if (markedId === 0)
 				{
 					return lastReadId;
@@ -178,33 +173,55 @@ export class ChatsModel extends BuilderModel
 
 				return Math.min(lastReadId, markedId);
 			},
-			/** @function chats/isSupport */
-			isSupport: (state: ChatState) => (dialogId: string): boolean => {
-				if (!state.collection[dialogId])
-				{
-					return false;
-				}
-
-				return state.collection[dialogId].type === ChatType.support24Question;
-			},
-			/** @function chats/isSelfChat */
-			isSelfChat: () => (dialogId: string): boolean => {
-				return Core.getUserId().toString() === dialogId;
-			},
 			/** @function chats/getBackgroundId */
 			getBackgroundId: (state: ChatState) => (dialogId: string): string => {
-				if (!state.collection[dialogId])
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
 				{
 					return '';
 				}
 
-				return state.collection[dialogId].backgroundId;
+				return collectionItem.backgroundId;
 			},
 			/** @function chats/getCollectionByChatType */
 			getCollectionByChatType: (state: ChatState) => (type: ChatTypeItem): ImModelChat[] => {
 				return Object.values(state.collection).filter((item) => {
 					return item.type === type;
 				});
+			},
+			/** @function chats/getParent */
+			getParent: () => (dialogId: string): ?ImModelChat => {
+				const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+				if (!chat || chat.parentChatId === 0)
+				{
+					return null;
+				}
+
+				return Core.getStore().getters['chats/getByChatId'](chat.parentChatId);
+			},
+			/** @function chats/isUser */
+			isUser: (state: ChatState) => (dialogId: string): boolean => {
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
+				{
+					return false;
+				}
+
+				return collectionItem.type === ChatType.user;
+			},
+			/** @function chats/isSupport */
+			isSupport: (state: ChatState) => (dialogId: string): boolean => {
+				const collectionItem = state.collection[dialogId];
+				if (!collectionItem)
+				{
+					return false;
+				}
+
+				return collectionItem.type === ChatType.support24Question;
+			},
+			/** @function chats/isSelfChat */
+			isSelfChat: () => (dialogId: string): boolean => {
+				return Core.getUserId().toString() === dialogId;
 			},
 		};
 	}

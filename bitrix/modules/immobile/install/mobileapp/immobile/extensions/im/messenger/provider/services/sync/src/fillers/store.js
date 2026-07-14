@@ -27,7 +27,7 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 		{
 			const cloneResult = clone(result);
 
-			return this.filterChildChats(this.filterUsers(cloneResult));
+			return this.filterUsers(cloneResult);
 		}
 
 		/**
@@ -60,61 +60,49 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 		 */
 		async processRecent(syncListResult)
 		{
-			const { chatSync, recentItems, messages, chats } = syncListResult;
+			const { chatSync, recentItems, messages, chats, recentConfigs } = syncListResult;
 
 			const processedRecentItems = this.prepareAddedRecent(recentItems, chatSync.addedRecent, messages);
-			if (processedRecentItems.length > 0)
+			if (processedRecentItems.length === 0)
 			{
-				await this.setRecentItems(processedRecentItems, chats);
-			}
-		}
-
-		/**
-		 * @param {Array<SyncRawRecentItem>} items
-		 * @param {Array<SyncRawChat>} chats
-		 * @returns {Promise<void>}
-		 */
-		async setRecentItems(items, chats)
-		{
-			const chatTypeById = new Map();
-			for (const chat of chats)
-			{
-				chatTypeById.set(String(chat.id), chat.type);
+				return;
 			}
 
-			const groups = {
-				[RecentTab.chat]: [],
-				[RecentTab.copilot]: [],
-				[RecentTab.collab]: [],
-				[RecentTab.tasksTask]: [],
-			};
-
-			for (const item of items)
+			if (!Type.isArrayFilled(recentConfigs))
 			{
-				const chatType = chatTypeById.get(String(item.chatId));
-				if (chatType === DialogType.copilot)
-				{
-					groups[RecentTab.copilot].push(item);
-				}
-
-				if (chatType === DialogType.collab)
-				{
-					groups[RecentTab.collab].push(item);
-				}
-
-				if (chatType === DialogType.tasksTask)
-				{
-					groups[RecentTab.tasksTask].push(item);
-
-					continue;
-				}
-
-				groups[RecentTab.chat].push(item);
+				return;
 			}
 
-			await this.store.dispatch('recentModel/setGroupCollection', {
-				groups,
-			});
+			const sectionsByChatId = new Map(
+				recentConfigs.map((config) => [Number(config.chatId), config.sections]),
+			);
+
+			const parentChatIdByChatId = new Map(
+				chats.map((chat) => [Number(chat.id), Number(chat.parentChatId) || 0]),
+			);
+
+			const items = processedRecentItems
+				.map((recentItem) => {
+					const sections = sectionsByChatId.get(Number(recentItem.chatId)) ?? [];
+					if (!Type.isArrayFilled(sections))
+					{
+						return null;
+					}
+
+					return {
+						sections,
+						itemList: recentItem,
+						parentChatId: parentChatIdByChatId.get(Number(recentItem.chatId)) ?? 0,
+					};
+				})
+				.filter(Boolean);
+
+			if (!Type.isArrayFilled(items))
+			{
+				return;
+			}
+
+			await this.store.dispatch('recentModel/setByRecentConfigTabsBatch', { items });
 		}
 
 		/**

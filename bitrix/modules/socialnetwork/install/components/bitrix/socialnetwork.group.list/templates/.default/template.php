@@ -21,6 +21,7 @@ use Bitrix\Socialnetwork\Internals\Counter\CounterDictionary;
 /** @var $templateFolder */
 
 $component = $this->getComponent();
+$isCompareMode = (($arParams['COMPARE_MODE'] ?? 'N') === 'Y');
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -79,7 +80,7 @@ if (!$settings->isToolAvailable(Settings::SONET_TOOLS['workgroups']) && !$isTask
 	return;
 }
 
-if ($isTasksScope)
+if ($isTasksScope && !$isCompareMode)
 {
 	$scope = (
 		$arParams['MODE'] === WorkgroupList::MODE_TASKS_SCRUM
@@ -142,85 +143,53 @@ if ($isTasksScope)
 
 $toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
 
-Toolbar::addFilter([
-	'GRID_ID' => $arResult['GRID_ID'],
-	'FILTER_ID' => $arResult['FILTER_ID'],
-	'FILTER' => $arResult['FILTER'],
-	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-	'RESET_TO_DEFAULT_MODE' => true,
-	'ENABLE_LIVE_SEARCH' => true,
-	'ENABLE_LABEL' => true,
-	'LAZY_LOAD' => [
-		'CONTROLLER' => [
-			'getList' => 'socialnetwork.filter.workgroup.getlist',
-			'getField' => 'socialnetwork.filter.workgroup.getfield',
-			'componentName' => 'socialnetwork.group.list',
-			'signedParameters' => ParameterSigner::signParameters('socialnetwork.group.list', [
-				'MODE' => $arParams['MODE'],
-				'USER_ID' => $arParams['USER_ID'],
-			])
-		]
-	],
-	'CONFIG' => [
-		'AUTOFOCUS' => false,
-	],
-]);
-
-if ($isTasksScope)
+if (!$isCompareMode)
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:tasks.interface.toolbar',
-		'',
-		[
-			'USER_ID' => (int)$arParams['USER_ID'],
-			'GRID_ID' => $arResult['GRID_ID'],
-			'FILTER_ID' => $arResult['FILTER_ID'],
-			'COUNTERS' => $arResult['TASKS_COUNTERS'],
-			'SCOPE' => $arResult['TASKS_COUNTERS_SCOPE'],
-			'FILTER_FIELD' => 'COUNTERS',
+	Toolbar::addFilter([
+		'GRID_ID' => $arResult['GRID_ID'],
+		'FILTER_ID' => $arResult['FILTER_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'RESET_TO_DEFAULT_MODE' => true,
+		'ENABLE_LIVE_SEARCH' => true,
+		'ENABLE_LABEL' => true,
+		'LAZY_LOAD' => [
+			'CONTROLLER' => [
+				'getList' => 'socialnetwork.filter.workgroup.getlist',
+				'getField' => 'socialnetwork.filter.workgroup.getfield',
+				'componentName' => 'socialnetwork.group.list',
+				'signedParameters' => ParameterSigner::signParameters('socialnetwork.group.list', [
+					'MODE' => $arParams['MODE'],
+					'USER_ID' => $arParams['USER_ID'],
+				])
+			]
 		],
-		$component,
-		['HIDE_ICONS' => true]
-	);
-}
-else
-{
-	if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
+		'CONFIG' => [
+			'AUTOFOCUS' => false,
+		],
+	]);
+
+	if ($isTasksScope)
 	{
-		$this->SetViewTarget('below_pagetitle');
+		$APPLICATION->IncludeComponent(
+			'bitrix:tasks.interface.toolbar',
+			'',
+			[
+				'USER_ID' => (int)$arParams['USER_ID'],
+				'GRID_ID' => $arResult['GRID_ID'],
+				'FILTER_ID' => $arResult['FILTER_ID'],
+				'COUNTERS' => $arResult['TASKS_COUNTERS'],
+				'SCOPE' => $arResult['TASKS_COUNTERS_SCOPE'],
+				'FILTER_FIELD' => 'COUNTERS',
+			],
+			$component,
+			['HIDE_ICONS' => true]
+		);
 	}
-
-	?>
-	<div class="ui-actions-bar sonet-interface-toolbar">
-		<?php
-			$counters = [
-				CounterDictionary::COUNTER_WORKGROUP_LIST_LIVEFEED,
-			];
-			if (ModuleManager::isModuleInstalled('tasks'))
-			{
-				$counters[] = CounterDictionary::COUNTER_WORKGROUP_LIST_TASKS;
-			}
-
-			$APPLICATION->IncludeComponent(
-				'bitrix:socialnetwork.interface.counters',
-				'',
-				[
-					'ENTITY_TYPE' => CounterDictionary::ENTITY_WORKGROUP_LIST,
-					'ENTITY_ID' => 0,
-					'GRID_ID' => $arResult['GRID_ID'],
-					'COUNTERS' => $counters,
-					'CURRENT_COUNTER' => $arResult['CURRENT_COUNTER'],
-				],
-				$component
-			);
-		?>
-	</div><?php
-
-	if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
+	else
 	{
-		$this->EndViewTarget();
+		//todo add here counter component for new sonet counters
 	}
-
 }
 
 
@@ -231,7 +200,7 @@ if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 
 $buttonId = "{$toolbarId}_button";
 
-if (!empty($arResult['TOOLBAR_BUTTONS']))
+if (!empty($arResult['TOOLBAR_BUTTONS']) && !$isCompareMode)
 {
 	foreach($arResult['TOOLBAR_BUTTONS'] as $buttonData)
 	{

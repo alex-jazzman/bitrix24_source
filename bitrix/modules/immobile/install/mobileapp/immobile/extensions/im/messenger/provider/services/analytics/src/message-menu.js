@@ -9,6 +9,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
@@ -134,7 +135,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				analytics.setElement(Analytics.Element.more);
 			}
 
-			if (dialogModel.type === DialogType.copilot)
+			if (dialogModel.type === DialogType.copilot && !Feature.isBitrixGptV2Enabled)
 			{
 				this.#setCopilotAnalyticsParams(analytics, params.dialogId);
 			}
@@ -183,7 +184,10 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 
 			if (dialogModel.type === DialogType.copilot)
 			{
-				this.#setCopilotAnalyticsParams(analytics, params.dialogId);
+				if (!Feature.isBitrixGptV2Enabled)
+				{
+					this.#setCopilotAnalyticsParams(analytics, params.dialogId);
+				}
 				analytics.setSection(AnalyticsHelper.getSectionCode());
 			}
 

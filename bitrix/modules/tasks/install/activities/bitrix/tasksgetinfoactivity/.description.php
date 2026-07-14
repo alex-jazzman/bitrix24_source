@@ -32,6 +32,14 @@ $arActivityDescription = (new ActivityDescription(
 			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_COUNTER_TASKS_INFO'),
 			'TYPE' => FieldType::INT,
 		],
+		'TASKS_TITLES_LIST' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_TASKS_TITLES_LIST'),
+			'TYPE' => FieldType::TEXT,
+		],
+		'TASKS_TITLES_BB_LIST' => [
+			'NAME' => Loc::getMessage('TASKS_GET_INFO_RETURN_FIELD_TASKS_TITLES_BB_LIST'),
+			'TYPE' => FieldType::TEXT,
+		],
 	])
 	->setIcon(Outline::TASK->name)
 	->setColorIndex(ActivityColorIndex::BLUE->value)

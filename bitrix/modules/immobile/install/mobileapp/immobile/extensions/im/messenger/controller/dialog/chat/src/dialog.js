@@ -85,7 +85,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		CallMessageHandler,
 		VoteMessageHandler,
 		AiBizprocMessageHandler,
-		BuilderMessageHandler,
+		BlockMessageHandler,
 	} = require('im/messenger/lib/element/dialog');
 
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -156,10 +156,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { InputActionManager } = require('im/messenger/controller/dialog/lib/input-action');
 	const { MessageSender } = require('im/messenger/controller/dialog/lib/message-sender');
 	const { StickerManager } = require('im/messenger/controller/dialog/lib/sticker');
-	const { AssistantButtonManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
+	const { AssistantButtonManager, MarketButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { InputRecordManager } = require('im/messenger/controller/dialog/lib/input-record');
 	const { ClipboardImageManager } = require('im/messenger/controller/dialog/lib/clipboard-image');
 	const { SuggestsManager } = require('im/messenger/controller/dialog/lib/suggests-manager');
+	const { MessageFooterActionManager } = require('im/messenger/controller/dialog/lib/message-footer-action');
 	const { OptimisticChatManager, TextFieldOptimisticHandler } = require('im/messenger/controller/dialog/lib/optimistic-chat-manager');
 
 	/* endregion lib import */
@@ -358,9 +359,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			/**
 			 * @protected
-			 * @type {BuilderMessageHandler}
+			 * @type {BlockMessageHandler}
 			 */
-			this.builderMessageHandler = null;
+			this.blockMessageHandler = null;
 
 			/**
 			 * @protected
@@ -595,7 +596,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			/** @private */
 			this.messageUpdateHandler = this.messageUpdateHandlerRouter.bind(this);
 			/** @private */
-			this.builderBlockUpdateHandler = this.builderBlockUpdateHandler.bind(this);
+			this.blockUpdateHandler = this.blockUpdateHandler.bind(this);
 			this.deleteHandler = this.deleteMessage.bind(this);
 			this.deleteMessagesByChatIdHandler = this.deleteMessagesByChatId.bind(this);
 			/** @private */
@@ -715,6 +716,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.dialog.bbcodeImgTap, this.bbcodeImgTapHandler)
 				.on(EventType.dialog.messageButtonTap, this.messageButtonTapHandler)
 				.on(EventType.dialog.copilotFootnoteTap, this.copilotFootnoteTapHandler)
+				.on(EventType.dialog.messageBuilderImageTap, this.mediaTapHandler(FileType.image))
+				.on(EventType.dialog.messageBuilderVideoTap, this.mediaTapHandler(FileType.video))
 			;
 
 			this.view.textField.on(EventType.dialog.textField.quoteTap, this.quoteTapHandler);
@@ -732,7 +735,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.pinManager?.subscribeViewEvents();
 			this.checkInMessageHandler?.subscribeEvents();
 			this.bannerMessageHandler?.subscribeEvents();
-			this.builderMessageHandler?.subscribeEvents();
+			this.blockMessageHandler?.subscribeEvents();
 			this.callMessageHandler?.subscribeEvents();
 			this.videoNoteMessageManager?.subscribeViewEvents();
 			this.voteMessageHandler?.subscribeEvents();
@@ -746,6 +749,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.textField?.subscribeViewEvents();
 			this.suggestsManager?.subscribeViewEvents();
 			this.textFormatManager?.subscribeViewEvents();
+			this.footerActionManager?.subscribeEvents();
 		}
 
 		/** @private */
@@ -755,7 +759,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.videoNoteMessageManager?.unsubscribeEvents();
 			this.checkInMessageHandler?.unsubscribeEvents();
 			this.bannerMessageHandler?.unsubscribeEvents();
-			this.builderMessageHandler?.unsubscribeEvents();
+			this.blockMessageHandler?.unsubscribeEvents();
 			this.callMessageHandler?.unsubscribeEvents();
 			this.voteMessageHandler?.unsubscribeEvents();
 			this.messageMenu?.unsubscribeEvents();
@@ -768,6 +772,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.textField?.unsubscribeViewEvents();
 			this.suggestsManager?.unsubscribeViewEvents();
 			this.aiBizprocMessageHandler?.unsubscribeEvents();
+			this.footerActionManager?.unsubscribeEvents();
 
 			this.view.removeAll();
 		}
@@ -779,7 +784,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on('messagesModel/setChatCollection', this.setChatCollectionHandler)
 				.on('messagesModel/update', this.messageUpdateHandler)
 				.on('messagesModel/updateWithId', this.messageUpdateHandler)
-				.on('messagesModel/builderModel/update', this.builderBlockUpdateHandler)
+				.on('messagesModel/blockModel/update', this.blockUpdateHandler)
 				.on('messagesModel/delete', this.deleteHandler)
 				.on('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.on('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
@@ -814,7 +819,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.off('messagesModel/setChatCollection', this.setChatCollectionHandler)
 				.off('messagesModel/update', this.messageUpdateHandler)
 				.off('messagesModel/updateWithId', this.messageUpdateHandler)
-				.off('messagesModel/builderModel/update', this.builderBlockUpdateHandler)
+				.off('messagesModel/blockModel/update', this.blockUpdateHandler)
 				.off('messagesModel/delete', this.deleteHandler)
 				.off('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.off('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
@@ -1024,6 +1029,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				this.suggestsManager = new SuggestsManager(this.locator);
 			}
 
+			if (Feature.isMessageActionsSupported)
+			{
+				this.footerActionManager = new MessageFooterActionManager({
+					dialogLocator: this.locator,
+				});
+			}
+
 			this.locator
 				.add('text-field-manager', this.textField)
 				.add('reply-manager', this.replyManager)
@@ -1110,7 +1122,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.callMessageHandler = new CallMessageHandler(serviceLocator, this.locator);
 			this.voteMessageHandler = new VoteMessageHandler(serviceLocator, this.locator);
 			this.commentButton = new CommentButton(this.view, this.getDialogId(), this.locator);
-			this.builderMessageHandler = new BuilderMessageHandler(serviceLocator, this.locator);
+			this.blockMessageHandler = new BlockMessageHandler(serviceLocator, this.locator);
 			this.audioPlayer = this.createAudioPlayer();
 			this.aiBizprocMessageHandler = new AiBizprocMessageHandler(serviceLocator, this.locator);
 		}
@@ -1176,7 +1188,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.dialogId = dialogId;
 			this.onClose = onClose;
 
-			if (this.getDialogType() === DialogWidgetType.collab)
+			if (this.getDialogWidgetType() === DialogWidgetType.collab)
 			{
 				const isCollabToolEnabled = await CollabAccessService.checkAccess();
 
@@ -1334,12 +1346,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.headerTitleControllerClassLoadPromise = this.configurator.getHeaderTitleControllerClass();
 			this.headerButtonsControllerClassLoadPromise = this.configurator.getHeaderButtonsControllerClass();
 
-			this.dialogCode = `im.dialog-optimistic-${this.getDialogType()}-${Uuid.getV4()}`;
+			this.dialogCode = `im.dialog-optimistic-${this.getDialogWidgetType()}-${Uuid.getV4()}`;
 			this.locator.add('dialogCode', this.dialogCode);
 			this.openingContext = OpenDialogContextType.chatCreation;
 
 			const textFieldHandler = new TextFieldOptimisticHandler({
-				chatType: this.getDialogType(),
+				chatType: this.getDialogWidgetType(),
 				dialogLocator: this.locator,
 				assistantButtons: this.getAssistantButtons(),
 			});
@@ -1353,8 +1365,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			await this.initHeaderButtons();
 			this.inputRecordManager = new InputRecordManager(this.locator);
-			const rightButtons = await this.headerButtons.getButtonsForOptimisticChat(this.getDialogType());
-			const background = BackgroundManager.getOptimisticConfiguration(this.getDialogType());
+			const rightButtons = await this.headerButtons.getButtonsForOptimisticChat(this.getDialogWidgetType());
+			const background = BackgroundManager.getOptimisticConfiguration(this.getDialogWidgetType());
 
 			await this.createOptimisticWidget({
 				titleParams: this.optimisticTitleParams,
@@ -1743,7 +1755,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return ReactionAssetsManager.getInstance().getWidgetSettings();
 		}
 
-		getDialogType()
+		getDialogWidgetType()
 		{
 			if (this.getDialog().type === DialogType.collab)
 			{
@@ -1925,7 +1937,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				},
 			]);
 
-			OptimisticChatManager.restore(this.getDialogType(), this.locator);
+			OptimisticChatManager.restore(this.getDialogWidgetType(), this.locator);
 		}
 
 		/**
@@ -2747,6 +2759,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.voteManager.destructor();
 			this.audioPlayer.destructor?.();
 			this.pullWatchManager.unsubscribe();
+			this.footerActionManager?.destructor();
 
 			const chatId = this.getChatId();
 			if (this.isNeedDeleteMessages())
@@ -4183,7 +4196,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				currentDialogMessageList.push({
 					...validateQuoteMessage,
 					reactions: this.store.getters['messagesModel/reactionsModel/getByMessageId'](message.id),
-					builder: this.store.getters['messagesModel/builderModel/getByMessageId'](message.id),
+					block: this.store.getters['messagesModel/blockModel/getByMessageId'](message.id),
 				});
 			});
 
@@ -4271,7 +4284,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return {
 				...validateQuoteMessage,
 				reactions: this.store.getters['messagesModel/reactionsModel/getByMessageId'](message.id),
-				builder: this.store.getters['messagesModel/builderModel/getByMessageId'](message.id),
+				block: this.store.getters['messagesModel/blockModel/getByMessageId'](message.id),
 			};
 		}
 
@@ -4359,6 +4372,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			)
 			{
 				this.textField.update();
+				this.backgroundManager?.update();
+			}
+
+			if (!Type.isUndefined(mutation.payload.data?.fields?.containsCollaber)
+				&& DialogHelper.createByDialogId(this.getDialogId())?.isCollab
+			)
+			{
 				this.backgroundManager?.update();
 			}
 
@@ -4822,7 +4842,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (mutation.payload.actionName === 'updateBuilderState')
+			if (mutation.payload.actionName === 'updateBlockState')
 			{
 				return;
 			}
@@ -4840,9 +4860,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @param {Object} mutation
 		 */
-		async builderBlockUpdateHandler(mutation)
+		async blockUpdateHandler(mutation)
 		{
-			const { messageId, blockId } = mutation.payload.data;
+			const { messageId, elementId } = mutation.payload.data;
 			const { actionName } = mutation.payload;
 
 			if (!this.messageRenderer.isMessageRendered(messageId))
@@ -4856,11 +4876,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			const animated = actionName !== 'updateBlock';
+			const animated = actionName !== 'updateElement';
 
+			// renderMessageBlock is a native API that expects "blockId" parameter
 			await this.messageRenderer.renderMessageBlock(
 				modelMessage,
-				blockId,
+				elementId,
 				{
 					animated,
 				},
@@ -5332,7 +5353,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		getAssistantButtons()
 		{
-			return [];
+			const buttons = [];
+
+			if (Feature.isAssistantMarketButtonAvailable)
+			{
+				buttons.push({ ...MarketButton });
+			}
+
+			return buttons;
 		}
 
 		/**
@@ -5362,7 +5390,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					showStickerButton: this.checkCanShowStickerButton(),
 				},
 				code: this.dialogCode,
-				dialogType: this.getDialogType(),
+				dialogType: this.getDialogWidgetType(),
 				canHaveAttachments: this.checkCanHaveAttachments(),
 				defaultRecordMediaType: this.inputRecordManager.recordMediaType,
 				canRecordAudio: this.checkCanRecordAudio(),

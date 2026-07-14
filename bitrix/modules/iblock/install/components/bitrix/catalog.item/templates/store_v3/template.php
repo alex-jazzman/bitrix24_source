@@ -280,7 +280,7 @@ if (isset($arResult['ITEM']))
 
 	?>
 	<script>
-		var <?=$obName?> = new JCCatalogItem(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
+		var <?=$obName?> = new JCCatalogItemStoreV3(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
 	</script>
 	<?php
 }

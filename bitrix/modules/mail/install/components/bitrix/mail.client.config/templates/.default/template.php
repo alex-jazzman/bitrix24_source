@@ -24,7 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 $newPath = \CComponentEngine::makePathFromTemplate(
 	$arParams['PATH_TO_MAIL_CONFIG'],
-	array('act' => 'new')
+	['act' => 'new'],
 );
 
 if (!$arResult['CAN_CONNECT_NEW_MAILBOX'])
@@ -37,7 +37,7 @@ if (!$arResult['CAN_CONNECT_NEW_MAILBOX'])
 }
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."no-background");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "no-background");
 
 $isMainPage = $arParams['VARIABLES']['IS_MAIN_MAIL_PAGE'] ?? false;
 
@@ -154,14 +154,17 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		}
 	);
 
-	BX.addCustomEvent('onPullEvent-mail', function(command, params) {
-		if (command !== 'connection_request_count_changed')
-		{
-			return;
-		}
+	let mailboxGridButtonCounterRequest = null;
+	let isMailboxGridButtonCounterRefreshQueued = false;
 
-		const count = params?.pendingCount ?? 0;
-		const node = document.querySelector('[data-id="mail-provider-showcase-mailbox-grid-button"]');
+	function getMailboxGridButtonNode()
+	{
+		return document.querySelector('[data-id="mail-provider-showcase-mailbox-grid-button"]');
+	}
+
+	function updateMailboxGridButtonCounter(count)
+	{
+		const node = getMailboxGridButtonNode();
 		if (!node)
 		{
 			return;
@@ -179,7 +182,56 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		if (counter)
 		{
 			counter.setValue(count);
+
+			return;
 		}
+
+		button.setRightCounter({
+			value: count,
+		});
+	}
+
+	function refreshMailboxGridButtonCounter()
+	{
+		if (!getMailboxGridButtonNode())
+		{
+			return;
+		}
+
+		if (mailboxGridButtonCounterRequest)
+		{
+			isMailboxGridButtonCounterRefreshQueued = true;
+
+			return;
+		}
+
+		mailboxGridButtonCounterRequest = BX.ajax.runAction(
+			'mail.mailboxsettings.getMailboxGridButtonCounter',
+		).then(function(response) {
+			const count = Number(response?.data?.count ?? 0);
+			updateMailboxGridButtonCounter(count);
+		}).catch(function() {
+		}).finally(function() {
+			mailboxGridButtonCounterRequest = null;
+
+			if (isMailboxGridButtonCounterRefreshQueued)
+			{
+				isMailboxGridButtonCounterRefreshQueued = false;
+				refreshMailboxGridButtonCounter();
+			}
+		});
+	}
+
+	BX.addCustomEvent('onPullEvent-mail', function(command) {
+		if (
+			command !== 'mailbox_grid_button_counter_refresh'
+			&& command !== 'connection_request_count_changed'
+		)
+		{
+			return;
+		}
+
+		refreshMailboxGridButtonCounter();
 	});
 
 	BX.ready(function()

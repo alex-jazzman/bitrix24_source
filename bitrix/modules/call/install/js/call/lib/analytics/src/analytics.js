@@ -585,7 +585,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
-			c_section: AnalyticsSection.chatWindow,
+			c_section: this.#getSectionParamByChatType(params.dialog.type),
 			c_sub_section: AnalyticsSubSection.window,
 			p5: `chatId_${params.dialog.chatId}`,
 		};
@@ -598,6 +598,8 @@ export class Analytics
 			resultData.p4 = getCollabId(params.dialog.chatId);
 		}
 
+		this.#sendTaskCardCallClick(params.dialog, params.callType);
+
 		sendData(resultData);
 	}
 
@@ -607,7 +609,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
-			c_section: AnalyticsSection.chatWindow,
+			c_section: this.#getSectionParamByChatType(params.context.type),
 			c_sub_section: AnalyticsSubSection.contextMenu,
 			p5: `chatId_${params.context.chatId}`,
 		};
@@ -619,6 +621,8 @@ export class Analytics
 		{
 			resultData.p4 = getCollabId(params.context.chatId);
 		}
+
+		this.#sendTaskCardCallClick(params.context, params.callType);
 
 		sendData(resultData);
 	}
@@ -635,6 +639,88 @@ export class Analytics
 		return type === ChatType.user
 			? AnalyticsType.private
 			: AnalyticsType.group;
+	}
+
+	#getSectionParamByChatType(chatType)
+	{
+		if (![ChatType.taskComments].includes(chatType))
+		{
+			return AnalyticsSection.chatWindow;
+		}
+
+		return this.#isTaskCardSliderOpen()
+			? AnalyticsSection.taskCard
+			: AnalyticsSection.taskChat;
+	}
+
+	#isTaskCardSliderOpen()
+	{
+		const topSlider = BX.SidePanel?.Instance?.getTopSlider();
+
+		return topSlider !== null
+			&& topSlider !== undefined
+			&& /\/tasks\/task\/view\/\d+\//.test(topSlider.getUrl());
+	}
+
+	#getTaskIdParam(dialogData)
+	{
+		if (![ChatType.taskComments].includes(dialogData?.type))
+		{
+			return '';
+		}
+
+		const taskId = Number.parseInt(dialogData?.entityLink?.id, 10);
+		if (!Number.isInteger(taskId))
+		{
+			return 'taskId_0';
+		}
+
+		return `taskId_${taskId}`;
+	}
+
+	#setTaskIdParam(resultData, dialogData)
+	{
+		const taskIdParam = this.#getTaskIdParam(dialogData);
+		if (taskIdParam)
+		{
+			resultData.p1 = taskIdParam;
+		}
+	}
+
+	#sendTaskCardCallClick(dialogData, callType)
+	{
+		const isTaskChat = [ChatType.taskComments].includes(dialogData?.type);
+		if (!isTaskChat)
+		{
+			return;
+		}
+
+		const taskIdParam = this.#getTaskIdParam(dialogData);
+		if (!taskIdParam)
+		{
+			return;
+		}
+
+		const isTaskCard = this.#isTaskCardSliderOpen();
+
+		const resultData = {
+			tool: AnalyticsTool.task,
+			category: AnalyticsCategory.chatOperations,
+			event: AnalyticsEvent.clickCallButton,
+			type: callType === CallTypes.audio.id ? AnalyticsType.audio : AnalyticsType.video,
+			p1: taskIdParam,
+		};
+
+		if (isTaskCard)
+		{
+			resultData.c_sub_section = AnalyticsSubSection.taskCard;
+		}
+		else
+		{
+			resultData.c_section = AnalyticsSection.chatTasks;
+		}
+
+		sendData(resultData);
 	}
 
 	onStartConferenceClick(params)
@@ -711,7 +797,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
-			c_section: AnalyticsSection.callMessage,
+			c_section: this.#getSectionParamByChatType(params.dialog.type),
 			c_element: AnalyticsElement.startMessage,
 			p5: `chatId_${params.dialog.chatId}`,
 		};
@@ -723,6 +809,8 @@ export class Analytics
 			resultData.p4 = getCollabId(params.dialog.chatId);
 		}
 
+		this.#sendTaskCardCallClick(params.dialog, CallTypes.video.id);
+
 		sendData(resultData);
 	}
 
@@ -732,7 +820,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
-			c_section: AnalyticsSection.callMessage,
+			c_section: this.#getSectionParamByChatType(params.dialog.type),
 			c_element: AnalyticsElement.finishMessage,
 			p5: `chatId_${params.dialog.chatId}`,
 		};
@@ -743,6 +831,8 @@ export class Analytics
 		{
 			resultData.p4 = getCollabId(params.dialog.chatId);
 		}
+
+		this.#sendTaskCardCallClick(params.dialog, CallTypes.video.id);
 
 		sendData(resultData);
 	}

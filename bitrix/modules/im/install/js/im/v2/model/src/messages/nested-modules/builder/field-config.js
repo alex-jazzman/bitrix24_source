@@ -7,12 +7,26 @@ import { prepareSources } from './format-functions.js';
 
 export const builderFieldsConfig: FieldsConfig = [
 	{
-		fieldName: 'blocks',
-		targetFieldName: 'blocks',
+		fieldName: 'config',
+		targetFieldName: 'config',
+		checkFunction: Type.isPlainObject,
+		formatFunction: (target) => formatFieldsWithConfig(target, configFieldsConfig),
+	},
+	{
+		fieldName: 'elements',
+		targetFieldName: 'elements',
 		checkFunction: Type.isArray,
 		formatFunction: (target) => {
 			return target.map((block) => formatFieldsWithConfig(block, blocksBuilderFieldsConfig));
 		},
+	},
+];
+
+const configFieldsConfig: FieldsConfig = [
+	{
+		fieldName: 'background',
+		targetFieldName: 'background',
+		checkFunction: Type.isString,
 	},
 ];
 
@@ -64,6 +78,11 @@ export const blocksBuilderFieldsConfig: FieldsConfig = [
 		checkFunction: Type.isString,
 	},
 	{
+		fieldName: 'title',
+		targetFieldName: 'title',
+		checkFunction: Type.isString,
+	},
+	{
 		fieldName: 'elements',
 		targetFieldName: 'elements',
 		checkFunction: Type.isArray,
@@ -84,6 +103,16 @@ export const blocksBuilderFieldsConfig: FieldsConfig = [
 		formatFunction: (target) => formatFieldsWithConfig(target, foldFieldsConfig),
 	},
 	{
+		fieldName: 'buttons',
+		targetFieldName: 'buttons',
+		checkFunction: Type.isArray,
+		formatFunction: (target) => {
+			return target.map((row) => row.map((button) => {
+				return formatFieldsWithConfig(button, buttonFieldsConfig);
+			}));
+		},
+	},
+	{
 		fieldName: 'rows',
 		targetFieldName: 'rows',
 		checkFunction: Type.isArray,
@@ -92,6 +121,11 @@ export const blocksBuilderFieldsConfig: FieldsConfig = [
 				return column.map((block) => formatFieldsWithConfig(block, blocksBuilderFieldsConfig));
 			});
 		},
+	},
+	{
+		fieldName: 'fileIds',
+		targetFieldName: 'fileIds',
+		checkFunction: Type.isArray,
 	},
 ];
 
@@ -105,6 +139,39 @@ const iconFieldsConfig: FieldsConfig = [
 		fieldName: 'color',
 		targetFieldName: 'color',
 		checkFunction: Type.isString,
+	},
+];
+
+const buttonFieldsConfig: FieldsConfig = [
+	{
+		fieldName: 'type',
+		targetFieldName: 'type',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'title',
+		targetFieldName: 'title',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'url',
+		targetFieldName: 'url',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'design',
+		targetFieldName: 'design',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'actionId',
+		targetFieldName: 'actionId',
+		checkFunction: Type.isString,
+	},
+	{
+		fieldName: 'actionParams',
+		targetFieldName: 'actionParams',
+		checkFunction: Type.isPlainObject,
 	},
 ];
 

@@ -46,3 +46,4 @@ $MESS['REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT'] = '<b>
 $MESS['REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_MARKET_PLUS'] = '<b>Подписка на Маркет Плюс заканчивается через #DAYS#.</b><br>Продлите подписку, чтобы продолжить работу с приложениями';
 $MESS['REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT'] = '<b>Подписка #COPILOT_NAME# + Маркетплейс закончилась.</b><br>Продлите подписку, чтобы сохранить неограниченный доступ к #COPILOT_NAME# и приложениям для вашего бизнеса';
 $MESS['REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_MARKET_PLUS'] = '<b>Подписка на Маркет Плюс закончилась.</b><br>Продлите подписку, чтобы продолжить работу с приложениями';
+

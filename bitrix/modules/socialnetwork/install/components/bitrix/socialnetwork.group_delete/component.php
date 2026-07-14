@@ -16,6 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -29,6 +30,14 @@ $arResult['IS_IFRAME'] = (
 );
 
 $arParams['GROUP_ID'] = (int)$arParams['GROUP_ID'];
+
+$projectProvider = new ProjectProvider();
+if ($projectProvider->isProject($arParams["GROUP_ID"]))
+{
+	ShowError(GetMessage("SONET_C9_NO_PERMS"));
+
+	return;
+}
 
 $arParams['SET_NAV_CHAIN'] = ($arParams['SET_NAV_CHAIN'] === 'N' ? 'N' : 'Y');
 

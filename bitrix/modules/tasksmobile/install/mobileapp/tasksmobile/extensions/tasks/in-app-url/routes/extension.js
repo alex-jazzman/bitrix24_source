@@ -2,6 +2,7 @@
  * @module tasks/in-app-url/routes
  */
 jn.define('tasks/in-app-url/routes', (require, exports, module) => {
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { requireLazy } = require('require-lazy');
 
 	/**
@@ -102,7 +103,17 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 			},
 		).name('tasks:efficiency:open');
 
-		inAppUrl.register('/projects/', (params, { context }) => {
+		inAppUrl.register('/projects/', async (params, { context }) => {
+			await tariffPlanRestrictionsReady();
+			const { showRestriction, isRestricted } = getFeatureRestriction('socialnetwork_projects_groups');
+
+			if (isRestricted())
+			{
+				showRestriction();
+
+				return;
+			}
+
 			const { title } = context;
 
 			PageManager.openComponent('JSStackComponent', {

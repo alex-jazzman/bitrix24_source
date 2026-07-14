@@ -81,6 +81,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 			return this.chatPermission.canChangeOwner();
 		}
 
+		canChangeManagers()
+		{
+			return this.chatPermission.canChangeManagers(this.dialogId);
+		}
+
 		canHide()
 		{
 			return this.dialogHelper.isBot && !this.dialogHelper.isAiAssistant;

@@ -82,7 +82,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 		decodeQuote(text, options)
 		{
 			logger.log('Parser.decodeQuote text:', text, options);
-			text = text.replace(this.patterns.DECODE_QUOTE_CONTENT_PATTERN, (whole, content) => {
+			text = text.replace(this.patterns.DECODE_QUOTE_CONTENT_PATTERN, (whole, content, offset) => {
 				const textWithoutTags = parsedElements.cutTags(content);
 				logger.log('Parser.decodeQuote textWithoutTags:', textWithoutTags);
 
@@ -157,7 +157,14 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 				logger.log('Parser.decodeQuote title and quoteText:', { title, quoteText });
 
-				return this.createQuote(title, contextTag, quoteText, userNameWithData, options);
+				const quoteMark = this.createQuote(title, contextTag, quoteText, userNameWithData, options);
+
+				const charBefore = offset > 0 ? text[offset - 1] : '';
+				const charAfter = text[offset + whole.length] || '';
+				const prefix = charBefore && charBefore !== '\n' ? NEW_LINE : '';
+				const suffix = charAfter && charAfter !== '\n' ? NEW_LINE : '';
+
+				return `${prefix}${quoteMark}${suffix}`;
 			});
 
 			parsedElements.cleanTags();

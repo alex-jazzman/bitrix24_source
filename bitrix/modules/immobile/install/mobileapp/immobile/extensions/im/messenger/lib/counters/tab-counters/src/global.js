@@ -81,61 +81,21 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 			 * @type {Record<string, (CounterModelState, CounterHelper) => number>}
 			 */
 			const calculateUnmutedTabCounters = {
-				chats: (counterState, helper) => {
-					if (helper.hasChatTab)
-					{
-						return helper.tabCounter;
-					}
-
-					if (helper.isChildCounter)
-					{
-						const parentHelper = CounterHelper.createByChatId(counterState.parentChatId);
-
-						if (parentHelper?.isMuted)
-						{
-							return 0;
-						}
-
-						return parentHelper.hasChatTab
-							? counterState.counter
-							: 0
-						;
-					}
-
-					return 0;
-				},
-				openlines: (counterState, helper) => {
-					return helper.hasOpenlinesTab ? helper.tabCounter : 0;
-				},
-				copilot: (counterState, helper) => {
-					return helper.hasCopilotTab ? helper.tabCounter : 0;
-				},
-				collab: (counterState, helper) => {
-					if (helper.hasCollabTab)
-					{
-						return helper.tabCounter;
-					}
-
-					if (helper.isChildCounter)
-					{
-						const parentHelper = CounterHelper.createByChatId(counterState.parentChatId);
-
-						if (parentHelper?.isMuted)
-						{
-							return 0;
-						}
-
-						return parentHelper.hasCollabTab
-							? counterState.counter
-							: 0
-						;
-					}
-
-					return 0;
-				},
-				tasksTask: (counterState, helper) => {
-					return helper.hasTasksTab ? helper.tabCounter : 0;
-				},
+				chats: (counterState, helper) => this.#calculateInheritableTabCounter(
+					counterState,
+					helper,
+					RecentTab.chat,
+					helper.tabCounter,
+				),
+				openlines: (counterState, helper) => this.#calculateTopLevelTabCounter(helper, RecentTab.openlines),
+				copilot: (counterState, helper) => this.#calculateTopLevelTabCounter(helper, RecentTab.copilot),
+				collab: (counterState, helper) => this.#calculateInheritableTabCounter(
+					counterState,
+					helper,
+					RecentTab.collab,
+					counterState.counter,
+				),
+				tasksTask: (counterState, helper) => this.#calculateDirectTabCounter(helper, RecentTab.tasksTask),
 			};
 
 			for (const counterState of counterList)
@@ -326,6 +286,66 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 			serviceLocator.get('emitter')
 				?.off(EventType.navigation.tabRegistered, this.#tabRegisteredHandler)
 			;
+		}
+
+		/**
+		 * @param {CounterHelper} helper
+		 * @param {string} tabName
+		 * @return {number}
+		 */
+		#calculateDirectTabCounter(helper, tabName)
+		{
+			return helper.hasTab(tabName) ? helper.tabCounter : 0;
+		}
+
+		/**
+		 * @param {CounterHelper} helper
+		 * @param {string} tabName
+		 * @return {number}
+		 */
+		#calculateTopLevelTabCounter(helper, tabName)
+		{
+			if (helper.isChildCounter)
+			{
+				return 0;
+			}
+
+			return this.#calculateDirectTabCounter(helper, tabName);
+		}
+
+		/**
+		 * @param {CounterModelState} counterState
+		 * @param {CounterHelper} helper
+		 * @param {string} tabName
+		 * @param {number} childCounter
+		 * @return {number}
+		 */
+		#calculateInheritableTabCounter(counterState, helper, tabName, childCounter)
+		{
+			if (helper.hasTab(tabName))
+			{
+				return helper.tabCounter;
+			}
+
+			if (!helper.isChildCounter)
+			{
+				return 0;
+			}
+
+			const parentHelper = CounterHelper.createByChatId(counterState.parentChatId);
+			if (Type.isNull(parentHelper))
+			{
+				logger.error(`calculateUnmutedTabCounters ${tabName} tab: unknown parentChatId`, counterState.parentChatId, counterState);
+
+				return 0;
+			}
+
+			if (parentHelper.isMuted)
+			{
+				return 0;
+			}
+
+			return parentHelper.hasTab(tabName) ? childCounter : 0;
 		}
 
 		/**

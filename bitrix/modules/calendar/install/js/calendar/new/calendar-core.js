@@ -75,6 +75,7 @@
 		this.keyHandlerEnabled = true;
 		this.isCollabUser = config.isCollabUser || false;
 		this.isCollabCalendar = config.isCollabCalendar || false;
+		this.isNewProjectsOn = config.isNewProjectsOn || false;
 		this.isCollabFeatureEnabled = config.isCollabFeatureEnabled || false;
 
 		// build basic DOM structure

@@ -9,6 +9,8 @@ return [
     'css' => './dist/shared.bundle.css',
     'rel' => [
 		'main.core',
+		'main.core.events',
+		'note.sidebar',
 		'note.ui.document-list',
 		'ui.notification',
 	],

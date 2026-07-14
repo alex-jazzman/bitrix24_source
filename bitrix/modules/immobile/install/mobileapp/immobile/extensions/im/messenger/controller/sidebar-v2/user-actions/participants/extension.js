@@ -13,6 +13,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { DialogType } = require('im/messenger/const');
+	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { Type } = require('type');
 
 	/**
@@ -52,10 +53,11 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 		return new Promise((resolve, reject) => {
 			const memberSelector = new MemberSelector({
 				title: widgetTitle,
-				onSelectMembers: (selectedUsersIds) => {
+				onSelectMembers: async (selectedUsersIds) => {
 					try
 					{
-						const { participants } = store.getters['dialoguesModel/getById'](dialogId);
+						const currentDialog = store.getters['dialoguesModel/getById'](dialogId);
+						const { participants } = currentDialog;
 						const currentParticipantIds = unique(participants.filter(Boolean));
 						const uniqueIds = selectedUsersIds.filter((id) => !currentParticipantIds.includes(id));
 
@@ -74,6 +76,19 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 								.catch(reject);
 
 							return;
+						}
+
+						const dialogHelper = DialogHelper.createByModel(currentDialog);
+						if (dialogHelper?.inheritsParentChatMembership)
+						{
+							const parentChatId = currentDialog.parentChatId ?? 0;
+							const canAdd = await ProjectAccessGuard.canAddUsersToProjectChildChat(parentChatId, uniqueIds);
+							if (!canAdd)
+							{
+								resolve();
+
+								return;
+							}
 						}
 
 						addParticipants(dialogId, uniqueIds)

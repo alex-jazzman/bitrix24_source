@@ -1,21 +1,24 @@
+import { BIcon, Outline, Solid, Main } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
+import { Notifier } from 'ui.notification-manager';
+import { Popup } from 'ui.vue3.components.popup';
+import { mapGetters } from 'ui.vue3.vuex';
+
 import { TaskCard } from 'tasks.v2.application.task-card';
+import {
+	TasksControlPanel,
+	TasksControlPanelSection,
+	TasksControlPanelMenu,
+	TasksControlPanelInfo,
+} from 'tasks.v2.component.tasks-control-panel';
 import { TasksEntityPicker } from 'tasks.v2.component.tasks-entity-picker';
 import { Analytics, EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { BIcon, Outline, Solid, Main } from 'ui.icon-set.api.vue';
-import { Notifier } from 'ui.notification-manager';
-import { Popup } from 'ui.vue3.components.popup';
-import { mapGetters } from 'ui.vue3.vuex';
-import 'ui.icon-set.outline';
 
-import {
-	TasksControlPanel,
-	TasksControlPanelSection,
-	TasksControlPanelMenu,
-} from '../tasks-control-panel';
+import { TasksOpenerFullCard } from '../tasks-opener-full-card/tasks-opener-full-card.js';
 import './control-panel.css';
 
 const templatePickerOpenerId = 'templatePickerOpener';
@@ -26,15 +29,18 @@ export const ControlPanel = {
 	components: {
 		Popup,
 		BIcon,
+		TasksOpenerFullCard,
 		TasksControlPanel,
 		TasksControlPanelSection,
 		TasksControlPanelMenu,
+		TasksControlPanelInfo,
 		TasksEntityPicker,
 	},
 	inject: {
+		analytics: {},
+		embedded: {},
 		task: {},
 		taskId: {},
-		analytics: {},
 	},
 	setup(): {}
 	{
@@ -239,6 +245,29 @@ export const ControlPanel = {
 				},
 			};
 		},
+		itemCopyUrl(): MenuItemOptions
+		{
+			const action = {
+				title: this.loc('TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_ACTION'),
+				icon: Outline.LINK,
+				successNotification: this.loc('TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_NOTIF_SUCC'),
+				failNotification: this.loc('TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_NOTIF_FAIL'),
+			};
+
+			return {
+				title: action.title,
+				icon: action.icon,
+				handleClickItem: async (): void => {
+					const path = TaskCard.getUrl(this.taskId);
+					const url = `${window.location.origin}${path}`;
+					const isCopyingSuccess = Boolean(path) && BX.clipboard.copy(url);
+					Notifier.notifyViaBrowserProvider({
+						id: 'task-notify-copy-url',
+						text: isCopyingSuccess ? action.successNotification : action.failNotification,
+					});
+				},
+			};
+		},
 		itemCreationTaskNew(): MenuItemOptions
 		{
 			return {
@@ -344,7 +373,7 @@ export const ControlPanel = {
 			return [
 				this.itemToggleWatch,
 				this.itemToggleNotification,
-				this.itemToggleFavor,
+				this.itemCopyUrl,
 			].filter((item: MenuItemOptions) => item);
 		},
 		itemsCreation(): any
@@ -355,6 +384,7 @@ export const ControlPanel = {
 				this.task.rights.copy && this.itemCreationTaskCopy,
 				this.userRights.tasks.createFromTemplate && this.itemCreationTaskNewWithTemplate,
 				false && this.task.rights.saveAsTemplate && this.itemCreationTemplateFromTask, // TODO: handle later
+				this.itemToggleFavor,
 			].filter((item: MenuItemOptions) => item);
 		},
 		itemsRouting(): any
@@ -506,6 +536,9 @@ export const ControlPanel = {
 				<TasksControlPanelMenu
 					:menuItems="itemsRouting"
 				/>
+				<TasksControlPanelInfo v-if="embedded">
+					<TasksOpenerFullCard />
+				</TasksControlPanelInfo>
 			</TasksControlPanel>
 		</Popup>
 		<TasksEntityPicker

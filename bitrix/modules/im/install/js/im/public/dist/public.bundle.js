@@ -389,6 +389,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return getOpener()?.openChatCreation(chatType, params);
 		}
+		async openChatUpdate(dialogId) {
+			const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+			const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+			if (isRedirectAllowed) {
+				return DesktopManager?.getInstance().redirectToChatUpdate(dialogId);
+			}
+			return getOpener()?.openChatUpdate(dialogId);
+		}
 		async startVideoCall(dialogId = '', withVideo = true) {
 			if (!this.v2enabled) {
 				window.BXIM.callTo(dialogId, withVideo);

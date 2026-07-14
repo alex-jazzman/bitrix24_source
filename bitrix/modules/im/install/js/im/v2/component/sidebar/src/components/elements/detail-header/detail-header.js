@@ -1,10 +1,10 @@
-import { SearchInput } from 'im.v2.component.elements.search-input';
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
+import { SearchInput } from 'im.v2.component.elements.search-input';
 import { ChatType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
+import { CollabManager } from 'im.v2.lib.collab';
 
 import './detail-header.css';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const DetailHeader = {
@@ -56,7 +56,7 @@ export const DetailHeader = {
 		},
 		addButtonColor(): ButtonColor
 		{
-			if (this.isCollab)
+			if (this.isCollab && CollabManager.shouldUseAccentColor(this.dialog))
 			{
 				return this.ButtonColor.Collab;
 			}

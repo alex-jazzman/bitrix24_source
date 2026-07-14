@@ -59,6 +59,11 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 			};
 		}
 
+		getParentChat()
+		{
+			return this.restResult.parentChat ?? null;
+		}
+
 		getChats()
 		{
 			const mainChat = {

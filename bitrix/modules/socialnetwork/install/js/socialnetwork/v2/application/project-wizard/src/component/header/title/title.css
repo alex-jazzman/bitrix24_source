@@ -1,0 +1,16 @@
+.socialnetwork--project-title-wrapper {
+	width: 100%;
+}
+
+.socialnetwork--project-title-wrapper.socialnetwork--project--field-highlight {
+	--highlight-background: var(--socialnetwork--project-wizard-bg);
+}
+
+.socialnetwork--project-title-wrapper.socialnetwork--project--field-highlight {
+	--highlight-offset-y: -3px;
+	--highlight-offset-x: -6px;
+}
+
+.socialnetwork--project-title {
+	border-bottom: 1px solid var(--ui-color-divider-accent);
+}

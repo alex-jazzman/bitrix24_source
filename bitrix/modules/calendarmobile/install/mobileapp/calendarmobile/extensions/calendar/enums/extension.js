@@ -13,6 +13,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 	const EventTypes = {
 		SHARED: '#shared#',
 		SHARED_CRM: '#shared_crm#',
+		// @deprecated
 		COLLAB: '#collab#',
 		SHARED_COLLAB: '#shared_collab#',
 		BOOKING: '#booking#',

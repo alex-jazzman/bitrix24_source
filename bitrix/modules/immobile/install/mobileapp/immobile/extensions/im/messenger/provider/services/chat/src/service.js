@@ -14,6 +14,7 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 	const { BotService } = require('im/messenger/provider/services/chat/bot');
 	const { HealthCheckService } = require('im/messenger/provider/services/chat/health-check');
 	const { ChatGetService } = require('im/messenger/provider/services/chat/get');
+	const { MemberService } = require('im/messenger/provider/services/chat/src/member');
 
 	/**
 	 * @class ChatService
@@ -42,6 +43,8 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		#healthCheckService;
 		/** @type {ChatGetService} */
 		#getService;
+		/** @type {MemberService} */
+		#memberService;
 
 		constructor()
 		{
@@ -123,6 +126,13 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 			this.#getService = this.#getService ?? new ChatGetService();
 
 			return this.#getService;
+		}
+
+		get memberService()
+		{
+			this.#memberService = this.#memberService ?? new MemberService();
+
+			return this.#memberService;
 		}
 
 		/**

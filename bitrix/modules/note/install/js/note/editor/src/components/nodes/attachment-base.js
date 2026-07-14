@@ -52,5 +52,19 @@ export const AttachmentNodeViewBaseComponent = {
 				: {}
 			;
 		},
+		isUnavailable(): boolean
+		{
+			return Boolean(this.attrs.unavailable);
+		},
+		// fileId present but no URL yet and not flagged failed: the resolver is in flight.
+		// Render a skeleton instead of the "Без названия" name fallback during this window.
+		isResolving(): boolean
+		{
+			return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
+		},
+		unavailableMessage(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE');
+		},
 	},
 };

@@ -3,6 +3,7 @@ import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } fro
 
 import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { formatFieldsWithConfig } from 'im.v2.model';
+import { RecentManager } from 'im.v2.lib.recent';
 
 import { type CounterItem as ImModelCounter } from '../type/counter';
 import { counterFieldsConfig } from './format/field-config';
@@ -10,7 +11,6 @@ import { counterFieldsConfig } from './format/field-config';
 type CountersState = { collection: CountersCollection };
 type CountersCollection = { [chatId: string]: ImModelCounter };
 
-/* eslint-disable sonarjs/prefer-immediate-return */
 // noinspection UnnecessaryLocalVariableJS
 export class CountersModel extends BuilderModel
 {
@@ -62,11 +62,23 @@ export class CountersModel extends BuilderModel
 			getTotalLinesCounter: (state: CountersState, getters: GetterTree): number => {
 				return getters.getCounterByRecentType(RecentType.openlines);
 			},
+			/** @function counters/getRecentSectionsByChatId */
+			getRecentSectionsByChatId: (state: CountersState) => (chatId: number): RecentTypeItem[] => {
+				const counterItem = state.collection[chatId];
+
+				if (!counterItem)
+				{
+					return [];
+				}
+
+				return counterItem.recentSections;
+			},
 			/** @function counters/getCounterByRecentType */
 			getCounterByRecentType: (state: CountersState) => (recentType: RecentTypeItem): number => {
 				let totalCount = 0;
 				const collection = state.collection;
 
+				const shouldCheckParentMute = !RecentManager.isTypeWithNestedChats(recentType);
 				for (const counterItem of Object.values(collection))
 				{
 					if (!this.#matchesRecentType(collection, counterItem, recentType))
@@ -74,7 +86,12 @@ export class CountersModel extends BuilderModel
 						continue;
 					}
 
-					if (this.#isMuted(counterItem) || this.#isParentMuted(state.collection, counterItem))
+					if (this.#isMuted(counterItem))
+					{
+						continue;
+					}
+
+					if (shouldCheckParentMute && this.#isParentMuted(state.collection, counterItem))
 					{
 						continue;
 					}
@@ -186,7 +203,6 @@ export class CountersModel extends BuilderModel
 	}
 
 	/* eslint-disable no-param-reassign */
-	/* eslint-disable-next-line max-lines-per-function */
 	getActions(): ActionTree
 	{
 		return {
@@ -350,8 +366,23 @@ export class CountersModel extends BuilderModel
 		recentType: RecentTypeItem,
 	): boolean
 	{
-		return this.#hasRecentType(counterItem, recentType)
-			|| this.#hasParentRecentType(collection, counterItem, recentType);
+		// chat's parent has section
+		if (this.#hasParentRecentType(collection, counterItem, recentType))
+		{
+			return true;
+		}
+
+		const isNestedChat = counterItem.parentChatId > 0;
+		if (isNestedChat)
+		{
+			const shouldUseChildrenCounter = RecentManager.isTypeWithNestedChats(recentType);
+
+			// nested chat has its own section - only for specific recent types
+			return shouldUseChildrenCounter && this.#hasRecentType(counterItem, recentType);
+		}
+
+		// root chat has section
+		return this.#hasRecentType(counterItem, recentType);
 	}
 
 	#hasRecentType(counterItem: ImModelCounter, recentType: RecentTypeItem): boolean

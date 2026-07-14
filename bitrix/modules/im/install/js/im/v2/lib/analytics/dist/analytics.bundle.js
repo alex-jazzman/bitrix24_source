@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, ui_analytics, im_v2_const, im_v2_application_core, im_v2_lib_analytics, im_v2_lib_messageComponent) {
+(function (exports, main_core, ui_analytics, im_v2_const, im_v2_application_core, im_v2_lib_feature, im_v2_lib_analytics, im_v2_lib_messageComponent) {
 	'use strict';
 
 	const PSEUDO_SELF_CHAT_TYPE = 'notes';
@@ -757,6 +757,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		role_picker: 'role_picker'
 	});
 	class Copilot {
+		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
 		onCreateChat(chatId) {
 			ui_analytics.sendData({
 				event: AnalyticsEvent.createNewChat,
@@ -814,16 +815,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 			const aiModelName = aiModel.name ?? aiModel;
 			const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
-			ui_analytics.sendData({
+			const params = {
 				event: AnalyticsEvent.audioUse,
 				tool: AnalyticsTool.ai,
 				category: AnalyticsCategory.chatOperations,
 				c_section: `${currentLayout}_tab`,
-				p2: `provider_${aiModelName}`,
 				p3: copilotChatType,
 				p4: `role_${main_core.Text.toCamelCase(role.code)}`,
 				p5: `chatId_${dialog.chatId}`
-			});
+			};
+			if (!this.#isBitrixGptV2Available) {
+				params.p2 = `provider_${aiModelName}`;
+			}
+			ui_analytics.sendData(params);
 		}
 		onToggleReasoning(dialogId) {
 			const isReasoningEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
@@ -833,17 +837,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
 			const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 			const aiModelName = aiModel.name ?? aiModel;
-			ui_analytics.sendData({
+			const params = {
 				event,
 				tool: AnalyticsTool.im,
 				category: AnalyticsCategory.copilot,
 				type: AnalyticsType.think,
 				c_section: `${currentLayout}_tab`,
 				p1: getChatType(chat),
-				p2: `provider_${aiModelName}`,
 				p4: `role_${main_core.Text.toCamelCase(role.code)}`,
 				p5: `chatId_${chat.chatId}`
-			});
+			};
+			if (!this.#isBitrixGptV2Available) {
+				params.p2 = `provider_${aiModelName}`;
+			}
+			ui_analytics.sendData(params);
 		}
 		#sendDataForCopilotCreation(params) {
 			const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
@@ -1044,19 +1051,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class MessageContextMenu {
 		messageForward = new MessageForward();
 		messagePins = new MessagePins();
+		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
 		onSendFeedback(dialogId) {
 			const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
 			const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
 			const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 			const aiModelName = aiModel.name ?? aiModel;
-			ui_analytics.sendData({
+			const params = {
 				category: AnalyticsCategory.copilot,
 				event: AnalyticsEvent.addFeedback,
 				c_section: `${currentLayout}_tab`,
-				p2: `provider_${aiModelName}`,
 				p4: `role_${main_core.Text.toCamelCase(role.code)}`,
 				...this.#getBaseParams(dialogId)
-			});
+			};
+			if (!this.#isBitrixGptV2Available) {
+				params.p2 = `provider_${aiModelName}`;
+			}
+			ui_analytics.sendData(params);
 		}
 		onDelete({
 			messageId,
@@ -1296,16 +1307,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
 			const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
 			const aiModelName = aiModel.name ?? aiModel;
-			ui_analytics.sendData({
+			const params = {
 				category: AnalyticsCategory.copilot,
 				event: AnalyticsEvent.copyMessage,
 				type,
 				c_section: `${currentLayout}_tab`,
-				p2: `provider_${aiModelName}`,
 				p4: `role_${main_core.Text.toCamelCase(role.code)}`,
 				p5: `chatId_${chat.chatId}`,
 				...this.#getBaseParams(dialogId)
-			});
+			};
+			if (!this.#isBitrixGptV2Available) {
+				params.p2 = `provider_${aiModelName}`;
+			}
+			ui_analytics.sendData(params);
 		}
 		#getFilesAmountParam(messageId) {
 			const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
@@ -2070,5 +2084,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getCollabId = getCollabId;
 	exports.getUserType = getUserType;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.UI.Analytics, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.UI.Analytics, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=analytics.bundle.js.map

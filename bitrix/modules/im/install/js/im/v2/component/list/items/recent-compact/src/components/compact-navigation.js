@@ -1,18 +1,12 @@
 import 'ui.design-tokens.air';
 import { Extension } from 'main.core';
 
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { NavigationMenuItem } from 'im.v2.const';
 
 import { CompactNavigationItem } from './compact-navigation-item';
 
 import '../css/compact-navigation.css';
-
-const CompactNavigationItems = [
-	NavigationMenuItem.notification,
-	NavigationMenuItem.copilot,
-	NavigationMenuItem.openlines,
-	NavigationMenuItem.openlinesV2,
-];
 
 type NavigationItem = {
 	id: string,
@@ -34,7 +28,23 @@ export const CompactNavigation = {
 		},
 		preparedNavigationItems(): string[]
 		{
-			return CompactNavigationItems.filter((item) => this.availableNavigationItems.includes(item));
+			return this.compactNavigationItems.filter((item) => this.availableNavigationItems.includes(item));
+		},
+		compactNavigationItems(): $Values<typeof NavigationMenuItem>[]
+		{
+			const items = [NavigationMenuItem.notification];
+
+			if (!FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
+			{
+				items.push(NavigationMenuItem.copilot);
+			}
+
+			items.push(
+				NavigationMenuItem.openlines,
+				NavigationMenuItem.openlinesV2,
+			);
+
+			return items;
 		},
 	},
 	template: `

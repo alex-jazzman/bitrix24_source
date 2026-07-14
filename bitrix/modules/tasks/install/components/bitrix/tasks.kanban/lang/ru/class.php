@@ -7,6 +7,7 @@ $MESS["TASK_LIST_ACCESS_DENIED"] = "Вы не можете просматрив�
 $MESS["TASK_LIST_ACCESS_DENIED_V2"] = "Недостаточно прав для просмотра списка задач. Обратитесь к вашему руководителю или администратору Битрикс24.";
 $MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED"] = "Вы не можете просматривать список задач в этой группе.";
 $MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED_V2"] = "Недостаточно прав для просмотра списка задач в этой группе. Обратитесь к вашему руководителю или администратору Битрикс24.";
+$MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED_V3"] = "Недостаточно прав для просмотра списка задач в этом проекте";
 $MESS["TASK_LIST_USER_NOT_FOUND"] = "Пользователь не найден.";
 $MESS["TASK_LIST_GROUP_NOT_FOUND"] = "Группа не найдена.";
 $MESS["TASK_LIST_TASK_ACTION_DENIED"] = "Запрещено выполнять данное действие.";

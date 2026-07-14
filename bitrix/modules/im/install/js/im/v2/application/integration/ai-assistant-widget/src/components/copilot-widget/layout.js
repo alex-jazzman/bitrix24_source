@@ -12,7 +12,6 @@ const MINIMIZE_EVENT_NAME = 'IM.AiAssistantWidget:minimize';
 export const CopilotWidgetLayout = {
 	name: 'CopilotWidgetLayout',
 	components: { SlideAnimation, CopilotWidgetRecentList, CopilotWidgetChatContent },
-	emits: ['select', 'createChat', 'recentVisibilityChanged'],
 	props: {
 		dialogId: {
 			type: String,
@@ -23,6 +22,7 @@ export const CopilotWidgetLayout = {
 			default: false,
 		},
 	},
+	emits: ['select', 'createChat', 'recentVisibilityChanged'],
 	data(): { isPanelOpen: boolean }
 	{
 		return {
@@ -69,17 +69,18 @@ export const CopilotWidgetLayout = {
 					v-if="dialogId"
 					:dialogId="dialogId"
 					:withSidebar="false"
+					:isCreatingChat="isCreatingChat"
 					@toggleList="togglePanel"
+					@createChat="onCreateChat"
 				/>
 			</main>
 
 			<SlideAnimation>
-				<aside class="bx-im-ai-assistant-widget-layout__panel-container" v-if="isPanelOpen">
+				<aside class="bx-im-ai-assistant-widget-layout__panel-container --ui-context-content-light" v-if="isPanelOpen">
 					<CopilotWidgetRecentList
-						:isCreating="isCreatingChat"
 						@chatSelect="selectDialog"
+						@createChat="onCreateChat"
 						@close="onHeaderClose"
-						@newChat="onCreateChat"
 					/>
 				</aside>
 			</SlideAnimation>

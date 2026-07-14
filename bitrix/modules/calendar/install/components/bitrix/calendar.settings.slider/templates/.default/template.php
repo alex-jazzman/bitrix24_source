@@ -173,7 +173,6 @@ $syncTasksLockCode = ((
 						<div
 							class="ui-icon ui-icon-common-question calendar-settings-question"
 							data-hint="<?=Loc::getMessage('EC_SEND_FROM_EMAIL_HELP_TITLE')?>">
-							<i></i>
 						</div>
 					</div>
 					<div class="calendar-field-container calendar-field-container-select">

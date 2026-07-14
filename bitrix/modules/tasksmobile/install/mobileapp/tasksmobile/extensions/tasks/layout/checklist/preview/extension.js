@@ -22,34 +22,6 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	};
 
 	/**
-	 * @typedef {Object} ChecklistPreviewPropsInitialState
-	 * @property {string} title
-	 * @property {number} completed
-	 * @property {number} uncompleted
-	 */
-
-	/**
-	 * @typedef {Object} ChecklistPreviewPropsConfig
-	 * @property {Object} parentWidget
-	 * @property {Object} checklistController
-	 * @property {ChecklistPreviewPropsInitialState[]} initialState
-	 * @property {number|string} taskId
-	 */
-
-	/**
-	 * @typedef {Object} ChecklistPreviewProps
-	 * @property {string} id
-	 * @property {string} testId
-	 * @property {Object} value
-	 * @property {boolean} readOnly
-	 * @property {ChecklistPreviewPropsConfig} config
-	 * @property {boolean} loading
-	 * @property {boolean} [hideTitle=false]
-	 * @property {number} maxElements
-	 * @property {boolean} showAddButton
-	 */
-
-	/**
 	 * @class ChecklistPreview
 	 */
 	class ChecklistPreview extends PureComponent
@@ -182,6 +154,36 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return this.handleContentClick;
 		}
 
+		/**
+		 * @public
+		 * @return {(function(): void)}
+		 */
+		getCustomContentClickHandler()
+		{
+			return () => {
+				const checklists = [...this.controller.getChecklists().values()];
+
+				if (checklists.length > 1)
+				{
+					this.#openChecklistSelector(checklists);
+
+					return;
+				}
+
+				if (checklists.length === 1)
+				{
+					this.openPageManager(checklists[0]);
+
+					return;
+				}
+
+				if (!this.isReadOnly())
+				{
+					this.createChecklist();
+				}
+			};
+		}
+
 		handleContentClick()
 		{
 			if (!this.isReadOnly() && !this.isDisabled() && !isOnline())
@@ -196,20 +198,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				this.props.onContentClick(this);
 			}
 
-			if (this.isReadOnly())
-			{
-				return;
-			}
-
-			const checklists = [...this.controller.getChecklists().values()];
-			if (checklists.length > 0)
-			{
-				this.#openChecklistSelector(checklists);
-
-				return;
-			}
-
-			this.createChecklist();
+			this.getCustomContentClickHandler()();
 		}
 
 		#openChecklistSelector(checklists)
@@ -408,9 +397,6 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				},
 				...checklists.map((checklist, index) => {
 					const rootItem = checklist.getRootItem();
-					const onClick = this.isReadOnly()
-						? this.getContentClickHandler()
-						: () => this.openPageManager(checklist);
 
 					return Item({
 						testId: this.testId,
@@ -419,7 +405,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 						title: rootItem.getTitle(),
 						isComplete: rootItem.getIsComplete(),
 						showBorder: index < (checklists.length - 1),
-						onClick,
+						onClick: () => this.openPageManager(checklist),
 					});
 				}),
 			);

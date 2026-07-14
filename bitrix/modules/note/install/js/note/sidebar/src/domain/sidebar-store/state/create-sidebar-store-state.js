@@ -12,6 +12,7 @@ export class SidebarStoreState
 			canEditCollections: false,
 			canEditGlobalPermissions: false,
 			canImport: false,
+			canImportWiki: false,
 			hasManageableCollection: false,
 		});
 		this.selectedCollectionId = ref(null);

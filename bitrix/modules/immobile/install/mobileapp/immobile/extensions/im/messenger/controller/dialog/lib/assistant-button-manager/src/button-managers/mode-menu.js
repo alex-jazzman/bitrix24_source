@@ -224,6 +224,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			try
 			{
 				const result = await CopilotRoleSelector.open({
+					isBitrixGptV2Enabled: Feature.isBitrixGptV2Enabled,
 					showOpenFeedbackItem: true,
 					openWidgetConfig: {
 						backdrop: {

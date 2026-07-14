@@ -1,8 +1,9 @@
-<?
+<?php
 $MESS['TASKS_TL_SOCIALNETWORK_MODULE_NOT_INSTALLED'] = 'Модуль "Социальная сеть" не установлен';
 $MESS['TASKS_TL_FORUM_MODULE_NOT_INSTALLED'] = 'Модуль "Форум" не установлен';
 $MESS['TASKS_TL_ACCESS_TO_GROUP_DENIED'] = 'Вы не можете просматривать список задач в этой группе';
 $MESS['TASKS_TL_ACCESS_TO_COLLAB_DENIED'] = 'Вы не можете просматривать список задач в этой коллабе';
+$MESS['TASKS_TL_ACCESS_TO_COLLAB_DENIED_V2'] = 'Вы не можете просматривать список задач в этом проекте';
 
 $MESS['TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TITLE'] = 'Ошибка ввода данных';
 $MESS['TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TEXT'] = 'Данное поле может содержать только цифры';
@@ -25,6 +26,7 @@ $MESS['TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER'] = 'Вернутьс
 $MESS['TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT'] = 'Прямо сейчас мы обновляем теги, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени.';
 
 $MESS['TASKS_GRID_STUB_PROJECT_CREATE_COLLAB'] = 'Здесь будут задачи коллабы';
+$MESS['TASKS_GRID_STUB_PROJECT_CREATE_PROJECT'] = 'Здесь будут задачи проекта';
 $MESS['TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE'] = 'Создавайте задачи здесь или из сообщений в чатах, добавляйте нужных участников. [helpdesklink]Подробнее[/helpdesklink]';
 
 /*

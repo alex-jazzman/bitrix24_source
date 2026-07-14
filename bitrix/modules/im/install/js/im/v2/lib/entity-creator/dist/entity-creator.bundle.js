@@ -13,12 +13,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#restClient = im_v2_application_core.Core.getRestClient();
 			this.#chatId = chatId;
 		}
-		openTaskCreationForm() {
+		openCollabTaskCreationForm(collabId) {
+			this.openTaskCreationForm({
+				groupId: collabId
+			});
+		}
+		openCollabMeetingCreationSlider(collabId) {
+			this.#openCalendarSlider({
+				type: 'group',
+				ownerId: collabId
+			});
+		}
+		openTaskCreationForm(additionalParams = {}) {
 			this.#openTaskV2Card({
 				analytics: {
 					context: 'chat',
 					element: 'create_button'
-				}
+				},
+				...additionalParams
 			});
 		}
 		createTaskForChat() {
@@ -29,6 +41,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		createMeetingForChat() {
 			return this.#createMeeting();
+		}
+		createFlowForChat() {
+			return this.#createFlow();
 		}
 		createMeetingForMessage(messageId) {
 			return this.#createMeeting(messageId);
@@ -65,6 +80,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					params
 				} = taskParams;
 				return params.is_tasks_v2 ? this.#openPrefilledTaskV2Card(params) : this.#openTaskSlider(link, params);
+			});
+		}
+		#createFlow() {
+			const config = {
+				data: {
+					chatId: this.#chatId
+				}
+			};
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatFlowPrepare, config).then(async params => {
+				const {
+					EditForm
+				} = await main_core.Runtime.loadExtension('tasks.flow.edit-form');
+				return EditForm.createInstance({
+					groupId: params.groupId
+				});
 			});
 		}
 		#requestPreparedParams(requestMethod, query) {

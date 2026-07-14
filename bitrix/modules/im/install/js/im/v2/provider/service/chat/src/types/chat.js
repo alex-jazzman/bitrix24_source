@@ -18,6 +18,7 @@ import {
 export type ChatLoadRestResult = {
 	additionalMessages: RawMessage[],
 	chat: RawChat,
+	parentChat: ?RawChat,
 	commentInfo: RawCommentInfo[],
 	collabInfo?: RawCollabInfo,
 	files: RawFile[],

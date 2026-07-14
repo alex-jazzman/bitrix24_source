@@ -16,6 +16,7 @@ import { Hint, tooltip } from 'tasks.v2.component.elements.hint';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { calendar } from 'tasks.v2.lib.calendar';
+import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -89,6 +90,7 @@ export const Deadline = {
 			isSettingsPopupShown: false,
 			isExceededHintShown: false,
 			isChangeReasonPopupShown: false,
+			isDeadlineDeniedHintShown: false,
 			dateTs: null,
 			externalBindElement: null,
 			coordinates: null,
@@ -231,7 +233,13 @@ export const Deadline = {
 				return null;
 			}
 
-			if (!this.isEdit || !this.readonly || this.exceededChangeCount || this.task.allowsChangeDeadline)
+			if (
+				!this.isEdit
+				|| !this.readonly
+				|| this.exceededChangeCount
+				|| this.task.allowsChangeDeadline
+				|| this.isDeadlineDeniedHintShown
+			)
 			{
 				return null;
 			}
@@ -299,11 +307,26 @@ export const Deadline = {
 	methods: {
 		handleOpenDeadlinePickerEvent(event: BaseEvent): void
 		{
-			const { taskId, bindElement, coordinates } = event.getData();
+			const { taskId } = event.getData();
 
 			if (Number(taskId) === Number(this.taskId))
 			{
-				this.showPopup(bindElement, coordinates);
+				setTimeout(() => {
+					fieldHighlighter.scrollToField(deadlineMeta.id);
+
+					if (!this.readonly)
+					{
+						this.showPopup();
+					}
+					else if (this.exceededChangeCount)
+					{
+						this.isExceededHintShown = true;
+					}
+					else
+					{
+						this.isDeadlineDeniedHintShown = true;
+					}
+				}, 200);
 			}
 		},
 		handleClick(): void
@@ -374,8 +397,10 @@ export const Deadline = {
 		},
 		async saveDeadline(): Promise<void>
 		{
-			if (this.requireChangeReason && this.changeReason === '')
+			if (this.requireChangeReason && this.changeReason.trim() === '')
 			{
+				this.dateTs = this.taskDeadline;
+
 				return;
 			}
 
@@ -391,7 +416,7 @@ export const Deadline = {
 		},
 		async clearDeadline(): Promise<void>
 		{
-			if (this.requireChangeReason && this.changeReason === '')
+			if (this.requireChangeReason && this.changeReason.trim() === '')
 			{
 				return;
 			}
@@ -563,6 +588,18 @@ export const Deadline = {
 				<span>{{ loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_1') }}</span>
 				<span>{{ loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_2') }}</span>
 			</div>
+		</Hint>
+		<Hint
+			v-if="isDeadlineDeniedHintShown"
+			:bindElement="hintBindElement"
+			:options="{
+				width: 280,
+				offsetLeft: hintAngleOffset + 3,
+				closeIcon: false,
+			}"
+			@close="isDeadlineDeniedHintShown = false"
+		>
+			{{ loc('TASKS_V2_DEADLINE_CAN_CHANGE_HINT') }}
 		</Hint>
 	`,
 };

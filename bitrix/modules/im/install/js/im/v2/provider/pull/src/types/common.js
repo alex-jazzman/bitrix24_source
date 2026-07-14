@@ -1,8 +1,9 @@
-import type { StatusGroupName } from 'imopenlines.v2.const';
+import { type JsonObject } from 'main.core';
 
-import type { BotType, UserType } from 'im.v2.const';
-import type { RawReaction, RawShortUser, RawSticker } from 'im.v2.provider.service.types';
-import type { JsonObject } from 'main.core';
+import { type StatusGroupName } from 'imopenlines.v2.const';
+
+import { type BotType, type UserType } from 'im.v2.const';
+import { type RawReaction, type RawShortUser, type RawSticker } from 'im.v2.provider.service.types';
 
 export type PullExtraParams = {
 	im_revision: number,
@@ -143,7 +144,7 @@ export type RawMessage = {
 	textLegacy: string,
 	isImportant: boolean,
 	importantFor: number[],
-	builder: RawBuilder,
+	block: RawBlock,
 	additionalEntities: {
 		additionalMessages: RawMessage[],
 		files: RawFile[],
@@ -183,6 +184,11 @@ export type RawLines = {
 	isClosed: boolean,
 }
 
-export type RawBuilder = {
-	blocks: JsonObject[],
+export type RawBlockConfig = {
+	background?: string | null,
+}
+
+export type RawBlock = {
+	config: RawBlockConfig,
+	elements: JsonObject[],
 }

@@ -1,5 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-use Bitrix\Disk\Security\ParameterSigner;
+
+use Bitrix\Disk\Public\Provider\ExternalLinkProvider;
+use Bitrix\Main\DI\ServiceLocator;
 
 /**
  * @var $arParams array
@@ -19,27 +21,15 @@ else if (mb_strpos($this->__page, "show") === 0)
 			($fileModel = \Bitrix\Disk\File::loadById($file["FILE_ID"])) && $fileModel
 		)
 		{
-			$extLinks = $fileModel->getExternalLinks(array(
-				'filter' => array(
-					'OBJECT_ID' => $file["FILE_ID"],
-					'CREATED_BY' => $arParams["RECIPIENT_ID"],
-					'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
-					'IS_EXPIRED' => false,
-				),
-				'limit' => 1,
-			));
+			$externalLinkProvider = ServiceLocator::getInstance()->get(ExternalLinkProvider::class);
+			$externalLink = $externalLinkProvider->getForUse($fileModel->getRealObjectId());
 
-			if (empty($extLinks))
+			if (!$externalLink)
 			{
-				$externalLink = $fileModel->addExternalLink(array(
+				$externalLink = $fileModel->getRealObject()->addExternalLink(array(
 					'CREATED_BY' => $arParams["RECIPIENT_ID"],
 					'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
 				));
-			}
-			else
-			{
-				/** @var \Bitrix\Disk\ExternalLink $externalLink */
-				$externalLink = reset($extLinks);
 			}
 
 			if ($externalLink)

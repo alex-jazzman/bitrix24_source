@@ -17,6 +17,31 @@ import './css/style.css';
  */
 export class Menu extends Event.EventEmitter
 {
+	static prefetchLandingsPromise = null;
+
+	/**
+	 * Prefetches all site landings into Backend cache before menu forms are built.
+	 * Deduplicates concurrent calls within the same editor session.
+	 */
+	static prefetchLandings(): Promise<void>
+	{
+		if (Menu.prefetchLandingsPromise !== null)
+		{
+			return Menu.prefetchLandingsPromise;
+		}
+
+		Menu.prefetchLandingsPromise = Backend
+			.getInstance()
+			.getLandings({siteId: Env.getInstance().getSiteId()})
+			.then(() => {})
+			.catch((error) => {
+				Menu.prefetchLandingsPromise = null;
+				throw error;
+			});
+
+		return Menu.prefetchLandingsPromise;
+	}
+
 	constructor(options = {})
 	{
 		super(options);

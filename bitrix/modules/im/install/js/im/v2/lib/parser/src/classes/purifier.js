@@ -107,6 +107,7 @@ export const Purifier = {
 			files = false,
 			isSticker = false,
 			showPhraseMessageWasDeleted = true,
+			removeNewLines = true,
 		} = config;
 
 		if (!Type.isString(text))
@@ -140,7 +141,10 @@ export const Purifier = {
 		text = ParserImage.purifyImageBbCode(text);
 		text = ParserDisk.purify(text);
 		text = ParserDate.purify(text);
-		text = ParserCommon.purifyNewLine(text);
+		if (removeNewLines)
+		{
+			text = ParserCommon.purifyNewLine(text);
+		}
 		text = this.addTextPrefix({ text, attach, files });
 
 		if (text.length > 0)

@@ -31,9 +31,9 @@ import { CallMessage } from 'im.v2.component.message.call';
 import { VoteMessage } from 'im.v2.component.message.vote';
 import { TaskChatCreationMessage } from 'im.v2.component.message.creation.task-chat';
 import { ConvertToCollabMessage } from 'im.v2.component.message.collab.convert';
+import { CollabCreationMessage } from 'im.v2.component.message.creation.collab';
 import { AiAssistantMessage } from 'im.v2.component.message.ai-assistant.answer';
 import { AiBizprocMessage } from 'im.v2.component.message.ai-bizproc';
-import { BuilderMessage } from 'im.v2.component.message.builder';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -70,6 +70,6 @@ export const MessageComponents = {
 	VoteMessage,
 	TaskChatCreationMessage,
 	ConvertToCollabMessage,
+	CollabCreationMessage,
 	AiBizprocMessage,
-	BuilderMessage,
 };

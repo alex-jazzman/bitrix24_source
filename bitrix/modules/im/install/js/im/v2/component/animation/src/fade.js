@@ -1,4 +1,4 @@
-import { Dom, type JsonObject } from 'main.core';
+import { Dom } from 'main.core';
 
 import './css/fade.css';
 

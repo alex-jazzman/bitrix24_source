@@ -17,8 +17,7 @@ import Util from '../util';
 import { CallAI } from '../call_ai';
 import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
 import { MediaRenderer } from './media-renderer';
-import { PictureInPictureWindow } from './pictureInPictureWindow';
-import { Utils } from 'im.v2.lib.utils';
+import { PictureInPictureWindow } from './picture-in-picture-window';
 import {UserSelector} from './user-selector';
 import { checkAndEncodeURI } from './tools';
 
@@ -35,6 +34,7 @@ import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '..
 import { TalkingService } from './talking-service';
 
 import { CallSettingsManager } from 'call.lib.settings-manager';
+import { UnsupportedBrowserFeatures } from '../engine/unsupported_features_in_browsers';
 
 const Layouts = {
 	Grid: 1,
@@ -46,6 +46,7 @@ const RerenderReason = {
 	VideoEnabled: 'videoEnabled',
 	VideoDisabled: 'videoDisabled',
 	UserDisconnected: 'userDisconnected',
+	VoiceStarted: 'voiceStarted',
 };
 
 const SwapType = {
@@ -178,6 +179,7 @@ export class View
 
 	constructor(config: ViewOptions)
 	{
+		this.destroyed = false;
 		this.title = config.title;
 		this.container = config.container;
 		this.baseZIndex = config.baseZIndex;
@@ -197,12 +199,10 @@ export class View
 		this.preferInitialWindowPlacementPictureInPicture = true;
 
 		this.limitation = null;
-		this.inactiveUsers = [];
-		this.activeUsers = [];
+		this.activeUsers = new Set();
 		this.rerenderTimeout = null;
 		this.waitingForUserMediaTimeouts = new Map();
 		this.rerenderQueue = new Map();
-		this.shelvedRerenderQueue = new Map();
 
 		this.broadcastingMode = BX.prop.getBoolean(config, "broadcastingMode", false);
 		this.broadcastingPresenters = BX.prop.getArray(config, "broadcastingPresenters", []);
@@ -395,6 +395,29 @@ export class View
 		this._onKeyDownHandler = this._onKeyDown.bind(this);
 		this._onKeyUpHandler = this._onKeyUp.bind(this);
 
+		this._onAddUser = BX.throttle(() => {
+			if (this.destroyed)
+			{
+				return;
+			}
+
+			this.updateUserList();
+			this.updateButtons();
+			this.updateUserButtons();
+			this.muteSpeaker(this.speakerMuted);
+		}, 500);
+
+		this._onUserStateUpdated = BX.throttle((skippedElementsList) => {
+			if (this.destroyed)
+			{
+				return;
+			}
+
+			this.updateUserList();
+			this.updateButtons(skippedElementsList);
+			this.updateUserButtons();
+		}, 500);
+
 		this.resizeObserver = new BX.ResizeObserver(this._onResizeHandler);
 		this.intersectionObserver = null;
 
@@ -482,6 +505,7 @@ export class View
 		};
 
 		this.viewVisibility = this.#getViewVisibilityChange([pictureInPictureUpdateButtonHandler, openPiPHandler]);
+		this.macDesktopPipBlur = this.#getMacDesktopPipBlur([() => this.toggleStatePictureInPictureCallWindow(true)]);
 
 		this.init();
 		this.subscribeEvents(config);
@@ -695,7 +719,8 @@ export class View
 		this.container.appendChild(this.elements.audioContainer);
 		this.container.appendChild(this.elements.screenAudioContainer);
 
-		this.viewVisibility.startViewVisibilityChange()
+		this.viewVisibility.startViewVisibilityChange();
+		this.macDesktopPipBlur.start();
 	};
 
 	get isActivePiPFromController()
@@ -1124,6 +1149,7 @@ export class View
 		{
 			this.eventEmitter.emit(EventName.onHasMainStream, {
 				userId: this.centralUser.id,
+				otherUsers: [currentPresenterId],
 			});
 		}
 	}
@@ -1166,8 +1192,6 @@ export class View
 			return;
 		}
 
-		let useShelvedRerenderQueue = this.layout === Layouts.Centered && newLayout === Layouts.Grid;
-
 		this.layout = newLayout;
 
 		if (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)
@@ -1180,6 +1204,13 @@ export class View
 			if (this.layout != Layouts.Mobile)
 			{
 				this.elements.userBlock.appendChild(this.elements.userList.container);
+			}
+
+			if (this.layout === Layouts.Centered)
+			{
+				this.eventEmitter.emit(EventName.onHasMainStream, {
+					userId: this.centralUser.id,
+				});
 			}
 
 			this.centralUser.playVideo();
@@ -1212,7 +1243,7 @@ export class View
 
 		this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", (this.layout == Layouts.Mobile));
 
-		this.updateUserList(useShelvedRerenderQueue);
+		this.updateUserList();
 		this.toggleEars();
 		this.updateButtons();
 
@@ -1550,23 +1581,9 @@ export class View
 
 		this.userRegistry.push(userModel);
 
-		if (!this.elements.audio[userId])
-		{
-			this.elements.audio[userId] = Dom.create('audio');
-			Dom.append(this.elements.audio[userId], this.elements.audioContainer);
-		}
-
-		if (!this.elements.screenAudio[userId])
-		{
-			this.elements.screenAudio[userId] = Dom.create('audio');
-			Dom.append(this.elements.screenAudio[userId], this.elements.screenAudioContainer);
-		}
-
 		this.users[userId] = new CallUser({
+			userModel,
 			parentContainer: this.container,
-			userModel: userModel,
-			audioElement: this.elements.audio[userId],
-			screenAudioElement: this.elements.screenAudio[userId],
 			allowPinButton: this.getConnectedUserCount() > 1,
 			onClick: this._onUserClick.bind(this),
 			onPin: this._onUserPin.bind(this),
@@ -1593,10 +1610,7 @@ export class View
 				this.cache.delete('activeUsers');
 			}
 
-			this.updateUserList();
-			this.updateButtons();
-			this.updateUserButtons();
-			this.muteSpeaker(this.speakerMuted);
+			this._onAddUser();
 		}
 	};
 
@@ -1629,14 +1643,6 @@ export class View
 			return;
 		}
 
-		if (
-			(user.state === UserState.Connected || user.state === UserState.Connecting)
-			&& newState === UserState.Declined
-		)
-		{
-			return;
-		}
-
 		if ((user.state === UserState.Connected || newState === UserState.Connected))
 		{
 			this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
@@ -1644,12 +1650,12 @@ export class View
 			this.cache.delete('activeUsers');
 		}
 
+		user.state = newState;
+
 		if (newState == UserState.Idle && user.screenState)
 		{
 			user.prevScreenState = user.screenState;
 		}
-
-		user.state = newState;
 
 		if (newState === UserState.Connected && this.uiState === UiState.Calling)
 		{
@@ -1690,7 +1696,6 @@ export class View
 				}
 			}
 		}
-
 
 		if (newState === UserState.Connected)
 		{
@@ -1747,9 +1752,7 @@ export class View
 			this.switchPresenter();
 		}
 
-		this.updateUserList();
-		this.updateButtons(skippedElementsList);
-		this.updateUserButtons();
+		this._onUserStateUpdated(skippedElementsList);
 	};
 
 	setTitle(title)
@@ -1793,23 +1796,27 @@ export class View
 		}
 	}
 
-	setUserStats(userId, stats)
+	setUserStats(userId, stats, mediaServerId): void
 	{
-		if (this.users[userId])
-		{
-			this.users[userId].showStats(stats);
-		}
-		if (this.screenUsers[userId])
-		{
-			this.screenUsers[userId].showStats(stats);
-		}
+		this.pictureInPictureCallWindow?.setStats(userId, stats);
+
 		if (userId == this.localUser.id)
 		{
-			this.localUser.showStats(stats);
+			this.localUser.showStats(stats, mediaServerId);
 			this.localUserReceivedStats = true;
+
+			return;
 		}
 
-		this.pictureInPictureCallWindow?.setStats(userId, stats);
+		if (this.users[userId]?.isMounted())
+		{
+			this.users[userId].showStats(stats, mediaServerId);
+		}
+
+		if (this.screenUsers[userId]?.isMounted())
+		{
+			this.screenUsers[userId].showStats(stats, mediaServerId);
+		}
 
 		this.updateButtons()
 	}
@@ -1915,6 +1922,17 @@ export class View
 
 		if (user.permissionToSpeak !== permissionToSpeakState)
 		{
+			const userState = user?.state;
+			const userActive = (userState !== UserState.Idle
+				&& userState !== UserState.Declined
+				&& userState !== UserState.Unavailable
+				&& userState !== UserState.Busy
+			);
+			if (!userActive)
+			{
+				return
+			}
+
 			user.permissionToSpeak = permissionToSpeakState;
 		}
 	};
@@ -1944,6 +1962,7 @@ export class View
 
 		this.eventEmitter.emit(EventName.onHasMainStream, {
 			userId: this.centralUser.id,
+			otherUsers: [...this.activeUsers],
 		});
 	}
 
@@ -1961,6 +1980,7 @@ export class View
 
 		this.eventEmitter.emit(EventName.onHasMainStream, {
 			userId: null,
+			otherUsers: [...this.activeUsers],
 		});
 		this.switchPresenterDeferred();
 	}
@@ -2063,9 +2083,9 @@ export class View
 				this.returnToGridAfterScreenStopped = false;
 				this.setLayout(Layouts.Grid);
 			}
-			
+
 			const newPresenterId = screenState ? userId : null;
-			
+
 			this.switchPresenter(newPresenterId);
 		}
 	};
@@ -2280,80 +2300,129 @@ export class View
 		}
 	}
 
-	setVideoRenderer(userId, mediaRenderer)
+	trackAvailabilityChanged(userId, kind, available)
 	{
 		const user = this.users[userId];
 		if (!user)
 		{
-			throw Error("User " + userId + " is not a part of this call");
+			console.warn(`User ${userId} is not a part of this call`);
+
+			return;
+		}
+
+		const userModel = this.userRegistry.get(userId);
+
+		if (kind === 'video' && available)
+		{
+			userModel.cameraState = true;
+			this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+		}
+		else if (kind === 'video' && !available)
+		{
+			userModel.cameraState = false;
+			this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
+		}
+	}
+
+	setVideoRenderer(userId: number, mediaRenderer: MediaRenderer): void
+	{
+		const user: CallUser = this.users[userId];
+		if (!user)
+		{
+			throw Error(`User ${userId} is not a part of this call`);
 		}
 
 		this.cache.delete('usersWithVideo');
 
-		if (mediaRenderer === null)
+		const userModel: UserModel = this.userRegistry.get(userId);
+		const userHasCameraVideo: boolean = userModel.cameraState;
+
+		if (!('render' in mediaRenderer) || !Type.isFunction(mediaRenderer.render))
 		{
-			if (user.hasCameraVideo())
-			{
-				this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
-			}
-			user.videoRenderer = null;
-			this.pictureInPictureCallWindow?.setVideoRenderer(userId, null);
-			return;
+			throw Error('mediaRenderer should have method render');
 		}
 
-		if (!("render" in mediaRenderer) || !Type.isFunction(mediaRenderer.render))
+		if (!('kind' in mediaRenderer) || (mediaRenderer.kind !== 'video' && mediaRenderer.kind !== 'sharing'))
 		{
-			throw Error("mediaRenderer should have method render");
-		}
-		if (!("kind" in mediaRenderer) || (mediaRenderer.kind !== "video" && mediaRenderer.kind !== "sharing"))
-		{
-			throw Error("mediaRenderer should be of video kind");
+			throw Error('mediaRenderer should be of video kind');
 		}
 
-		const userHasCameraVideo = user.hasCameraVideo();
 		user.videoRenderer = mediaRenderer;
 		this.pictureInPictureCallWindow?.setVideoRenderer(userId, mediaRenderer);
 
-		if (mediaRenderer.stream && mediaRenderer.kind === 'video')
+		if (mediaRenderer.stream && mediaRenderer.kind === 'video' && !userHasCameraVideo)
 		{
+			userModel.cameraState = true;
 			this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
 		}
-		else if (mediaRenderer.kind === 'video')
+		else if (!mediaRenderer.stream && mediaRenderer.kind === 'video' && userHasCameraVideo)
 		{
-			if (!userHasCameraVideo)
-			{
-				return;
-			}
+			userModel.cameraState = false;
 			this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
 		}
-	};
+
+		if (this.centralUser.id == userId)
+		{
+			this.eventEmitter.emit(EventName.onHasMainStream, {
+				userId: this.centralUser.id,
+			});
+		}
+	}
 
 	setUserMedia(userId, kind, track)
 	{
-		if (kind === 'audio')
+		const user = this.users[userId];
+
+		if (!user)
 		{
-			this.users[userId].audioTrack = track;
+			return;
 		}
 
 		switch (kind)
 		{
+			case 'audio':
+				if (!this.elements.audio[userId])
+				{
+					this.elements.audio[userId] = Dom.create('audio');
+					Dom.append(this.elements.audio[userId], this.elements.audioContainer);
+					user.audioElement = this.elements.audio[userId];
+				}
+
+				user.audioTrack = track;
+
+				// todo: Check this logick later. For now it's disabled
+				// to avoid conflicts with another render RerenderReason.VideoEnabled
+				// this.rerenderQueue.set(userId, {
+				// 	userId,
+				// 	reason: RerenderReason.VoiceStarted,
+				// });
+				// this.renderUserList();
+				break;
+
 			case 'sharingAudio':
-				this.users[userId].screenAudioTrack = track;
+				if (!this.elements.screenAudio[userId])
+				{
+					this.elements.screenAudio[userId] = Dom.create('audio');
+					Dom.append(this.elements.screenAudio[userId], this.elements.audioContainer);
+					user.screenAudioElement = this.elements.screenAudio[userId];
+				}
+
+				user.screenAudioTrack = track;
 				break;
 
 			case 'video':
-				this.users[userId].videoTrack = track;
+				user.videoTrack = track;
 				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					track,
 					kind: 'video',
-					track: track,
 				}));
 				break;
 
 			case 'screen':
 				this.screenUsers[userId].videoTrack = track;
 				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					track,
 					kind: 'sharing',
-					track: track,
 				}));
 				this.updateUserList();
 				this.setUserScreenState(userId, track !== null);
@@ -2401,35 +2470,35 @@ export class View
 		}
 	};
 
-	applyIncomingVideoConstraints()
+	applyIncomingVideoConstraints(activeUsers, inactiveUsers)
 	{
-		let userId;
-		let user: CallUser;
+		let users = [];
+		let videoWidth = this.userSize.width;
+
 		if (this.layout === Layouts.Grid)
 		{
-			for (userId in this.users)
-			{
-				user = this.users[userId];
-				user.setIncomingVideoConstraints(this.userSize.width, this.userSize.height);
-			}
+			users = activeUsers.map((userId) => {
+				return { userId, videoWidth };
+			});
 		}
 		else if (this.layout === Layouts.Centered)
 		{
-			for (userId in this.users)
-			{
-				user = this.users[userId];
-				if (userId == this.centralUser.id)
-				{
-					const containerSize = this.elements.center.getBoundingClientRect();
-					user.setIncomingVideoConstraints(Math.floor(containerSize.width), Math.floor(containerSize.height));
-				}
-				else
-				{
-					user.setIncomingVideoConstraints(SIDE_USER_WIDTH, SIDE_USER_HEIGHT);
-				}
-			}
+			const containerSize = this.elements.center.getBoundingClientRect();
+			users = [];
+
+			activeUsers.forEach((userId) => {
+				videoWidth = this.centralUser.id == userId ? Math.floor(containerSize.width) : SIDE_USER_WIDTH;
+
+				users.push({ userId, videoWidth });
+			});
 		}
-	};
+		this.toggleSubscribingVideoInRenderUserList(users, true);
+
+		users = inactiveUsers.map((userId) => {
+			return { userId };
+		});
+		this.toggleSubscribingVideoInRenderUserList(users, false);
+	}
 
 	getDefaultCommonRecordState()
 	{
@@ -3083,9 +3152,8 @@ export class View
 		const noCamPermission = !Util.havePermissionToBroadcast('cam');
 		const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
 		const hasStream = this.localUser.hasVideo() || this.localUser.hasAudio();
-		const localUserReceivedStats = (this.isVideoconf || this.localUserReceivedStats || !hasStream);
 
-		return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting || !localUserReceivedStats;
+		return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting;
 	}
 
 	/**
@@ -3694,6 +3762,7 @@ export class View
 			this.centralUser.mount(this.elements.center);
 			this.eventEmitter.emit(EventName.onHasMainStream, {
 				userId: this.centralUser.id,
+				otherUsers: [...this.activeUsers],
 			});
 			this.elements.root.classList.add('bx-messenger-videocall-centered');
 			if (this.layout !== Layouts.Mobile)
@@ -3728,6 +3797,7 @@ export class View
 		const rules = {
 			[RerenderReason.VideoEnabled]: [],
 			[RerenderReason.VideoDisabled]: [],
+			[RerenderReason.VoiceStarted]: [],
 			[RerenderReason.UserDisconnected]: null,
 		};
 
@@ -3743,6 +3813,7 @@ export class View
 
 				case RerenderReason.VideoEnabled:
 				case RerenderReason.VideoDisabled:
+				case RerenderReason.VoiceStarted:
 					rules[el.reason].push({
 						id: el.userId,
 						order: this.userRegistry.get(el.userId).order,
@@ -3792,6 +3863,68 @@ export class View
 			&& userModel.direction !== EndpointDirection.RecvOnly
 		);
 	};
+
+	processVoiceRules(rules, params): void
+	{
+		if (rules[RerenderReason.VoiceStarted].length === 0)
+		{
+			return;
+		}
+
+		params.activeUsers = this.getActiveUsers();
+		const firstPageUsers = params.activeUsers.slice(0, this.usersPerPage).reverse();
+		let firstPageUsersStartIndex = 0;
+
+		rules[RerenderReason.VoiceStarted].forEach((rule) => {
+			const fromUser = this.userRegistry.get(rule.id);
+
+			if (firstPageUsers.includes(fromUser))
+			{
+				return;
+			}
+
+			let toUser;
+
+			for (; firstPageUsersStartIndex < firstPageUsers.length; firstPageUsersStartIndex++)
+			{
+				toUser = this.userRegistry.get(firstPageUsers[firstPageUsersStartIndex]);
+				if (toUser.wasTalkingAgo() > 60 * 1000)
+				{
+					break;
+				}
+
+				toUser = null;
+			}
+
+			if (toUser)
+			{
+				// todo: looks not optimal
+				for (let i = 0; i < rules[RerenderReason.VideoDisabled].length; i++)
+				{
+					if (rules[RerenderReason.VideoDisabled][i].id === rule.id)
+					{
+						rules[RerenderReason.VideoDisabled].splice(i, 1);
+						break;
+					}
+				}
+
+				params.orderChanges.push({
+					type: SwapType.Replace,
+					to: {
+						userModel: fromUser,
+						order: fromUser.order,
+					},
+					from: {
+						userModel: toUser,
+						order: toUser.order,
+					},
+				});
+			}
+		});
+
+		this.applyOrderChanges(params.orderChanges);
+		params.orderChanges.length = 0;
+	}
 
 	processVideoRules(rules, params): void
 	{
@@ -3867,46 +4000,46 @@ export class View
 		}
 	}
 
-	completeVideoEnableSwap(userModel, rules, params): void
+	completeVideoEnableSwap(userModel: UserModel, params: any): void
 	{
-		const swapRemains = params.incompleteSwaps.length;
+		const swapRemains: number = params.incompleteSwaps.length;
 
 		if (userModel.state === UserState.Calling)
 		{
 			return;
 		}
 
-		if (params.usersWithEnabledVideo.includes(userModel.id))
+		const userAlreadyProcessed = params.usersToKeepActive.includes(userModel.id);
+
+		if (params.usersWithEnabledVideo.includes(userModel.id) && !userAlreadyProcessed)
 		{
-			params.incompleteSwaps.pop();
-			params.usersWithEnabledVideo.splice(params.usersWithEnabledVideo.indexOf(userModel.id), 1);
+			params.incompleteSwaps.shift();
 			params.usersToKeepActive.push(userModel.id);
 		}
 		else if (!userModel.cameraState)
 		{
-			const index = params.incompleteSwaps[swapRemains - 1] - 1;
-			const userEnabledVideo = params.orderChanges[index].from;
-			const currenUserFromCurrentPage = params.possibleActiveUsers?.includes(userModel.id);
-			const changedUserFromCurrentPage = params.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
-			const skipDeactivation = changedUserFromCurrentPage || (currenUserFromCurrentPage && changedUserFromCurrentPage);
+			const index: number = params.incompleteSwaps[swapRemains - 1] - 1;
+			const userEnabledVideo: number = params.orderChanges[index].from.userModel.id;
+			const currenUserFromCurrentPage: boolean = params.possibleActiveUsers?.includes(userModel.id);
+			const changedUserFromCurrentPage: boolean = params.possibleActiveUsers?.includes(userEnabledVideo);
 
 			params.orderChanges[index].to = {
 				userModel,
 				order: userModel.order,
 			};
 
-			if (!skipDeactivation)
+			if (currenUserFromCurrentPage && !changedUserFromCurrentPage)
 			{
-				params.currentPageUsers.pop();
+				params.currentPageUsers--;
 				params.usersToDeactivate++;
 			}
 			else if (changedUserFromCurrentPage && !currenUserFromCurrentPage)
 			{
-				params.usersToForceDeactivation.push(userEnabledVideo.userModel.id);
+				params.usersToForceDeactivation.push(userEnabledVideo);
 			}
 			else if (currenUserFromCurrentPage && changedUserFromCurrentPage)
 			{
-				params.usersToKeepActive.push(userModel.id);
+				params.usersToKeepActive.push(userEnabledVideo);
 			}
 
 			params.incompleteSwaps.pop();
@@ -3924,6 +4057,8 @@ export class View
 			const skipUsers = (userWithoutVideoPage - 1) * this.usersPerPage;
 			const numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
 			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - usersProcessed];
+			// we should add '&& (userWithoutVideo.wasTalkingAgo() <= 60 * 1000)' below
+			// to prevent speaking users swap
 			const canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
 
 			if (canCompleteVideoSwap && (numberOfUsersWithVideoForSwap - usersProcessed >= 0))
@@ -3962,22 +4097,25 @@ export class View
 		this.applyOrderChanges(params.orderChanges);
 	}
 
-	calculateUserActive(userModel, status, userSkipped, params)
+	calculateUserActive(userId: number, currentStatus: boolean, userSkipped: boolean, params: any): boolean
 	{
-		if (params.usersWithEnabledVideo.includes(userModel.id) && !userSkipped && !params.possibleActiveUsers.includes(userModel.id))
+		if (params.usersWithEnabledVideo.includes(userId) && !userSkipped && !params.possibleActiveUsers.includes(userId))
 		{
-			params.currentPageUsers.push(userModel);
+			params.currentPageUsers++;
 			params.usersToDeactivate--;
-			status = true;
-		}
-		else if (params.currentPageUsers.length + params.usersToDeactivate > this.usersPerPage)
-		{
-			params.currentPageUsers.pop();
-			status = false;
+
+			return true;
 		}
 
-		return status;
-	};
+		if (params.currentPageUsers + params.usersToDeactivate > this.usersPerPage)
+		{
+			params.currentPageUsers--;
+
+			return false;
+		}
+
+		return currentStatus;
+	}
 
 	completeDisconnectSwap(rules, params): void
 	{
@@ -4052,8 +4190,9 @@ export class View
 	{
 		clearTimeout(this.rerenderTimeout);
 		this.rerenderTimeout = null;
-		this.activeUsers = [];
-		this.inactiveUsers = [];
+		const prevActiveUsers = new Set(this.activeUsers);
+
+		this.activeUsers.clear();
 
 		const showLocalUser = this.shouldShowLocalUser();
 		let userCount = 0;
@@ -4069,7 +4208,7 @@ export class View
 			possibleActiveUsers: null,
 			usersToKeepActive: [],
 			usersToForceDeactivation: [],
-			currentPageUsers: [],
+			currentPageUsers: 0,
 			orderChanges: [],
 			incompleteSwaps: [],
 			disconnectedUserHadVideo: false,
@@ -4082,36 +4221,21 @@ export class View
 			skipUsers = (this.currentPage - 1) * this.usersPerPage;
 		}
 
-		if (this.layout === Layouts.Grid)
-		{
-			this.processVideoRules(orderingRules, orderingParams);
-			this.processDisconnectRules(orderingRules, orderingParams);
-			orderingParams.usersWithEnabledVideo = orderingRules[RerenderReason.VideoEnabled].map((el) => el.id);
-			orderingParams.usersWithDisabledVideo = orderingRules[RerenderReason.VideoDisabled].map((el) => el.id);
+		// this.processVoiceRules(orderingRules, orderingParams); // not ready to use
+		this.processVideoRules(orderingRules, orderingParams);
+		this.processDisconnectRules(orderingRules, orderingParams);
+		orderingParams.usersWithEnabledVideo = orderingRules[RerenderReason.VideoEnabled].map((el) => el.id);
+		orderingParams.usersWithDisabledVideo = orderingRules[RerenderReason.VideoDisabled].map((el) => el.id);
 
-			orderingParams.activeUsers = this.getActiveUsers();
-			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
-			orderingParams.usersWithVideo = this.getUsersWithCamera();
+		orderingParams.activeUsers = this.getActiveUsers();
+		orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
+		orderingParams.usersWithVideo = this.getUsersWithCamera();
 
-			this.completeVideoDisabledSwap(orderingRules, orderingParams);
-			this.completeDisconnectSwap(orderingRules, orderingParams);
+		this.completeVideoDisabledSwap(orderingRules, orderingParams);
+		this.completeDisconnectSwap(orderingRules, orderingParams);
 
-			orderingParams.activeUsers = this.getActiveUsers();
-			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
-		}
-		else if (this.layout === Layouts.Centered)
-		{
-			// new grid logic is applied only in the Layouts.Grid layout
-			// so we need to save some rules for later
-			orderingRules[RerenderReason.VideoEnabled].forEach((user) => this.shelvedRerenderQueue.set(user.id, {
-				userId: user.id,
-				reason: RerenderReason.VideoEnabled,
-			}));
-			orderingRules[RerenderReason.VideoDisabled].forEach((user) => this.shelvedRerenderQueue.set(user.id, {
-				userId: user.id,
-				reason: RerenderReason.VideoDisabled,
-			}));
-		}
+		orderingParams.activeUsers = this.getActiveUsers();
+		orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 
 		const userModels: UserModel[] = [...this.userRegistry.users.values()];
 		for (const userModel: UserModel of userModels)
@@ -4124,11 +4248,15 @@ export class View
 
 			const user: CallUser = this.users[userId];
 			const screenUser: CallUser = this.screenUsers[userId];
-			if (userId == this.centralUser.id && (this.layout == Layouts.Centered || this.layout == Layouts.Mobile))
+			if (userId == this.centralUser.id && (this.layout === Layouts.Centered || this.layout === Layouts.Mobile))
 			{
-				if (this.layout == Layouts.Centered)
+				if (this.layout === Layouts.Centered)
 				{
-					this.activeUsers.push(userId);
+					this.activeUsers.add(userId);
+					if (orderingParams.usersWithEnabledVideo.includes(userId) && prevActiveUsers.has(userId))
+					{
+						prevActiveUsers.delete(userId);
+					}
 				}
 				this.unobserveIntersections(user);
 				if (screenUser.hasVideo())
@@ -4159,7 +4287,7 @@ export class View
 
 			if (userActive && this.layout === Layouts.Grid && this.usersPerPage > 0 && renderedUsers < this.usersPerPage)
 			{
-				orderingParams.currentPageUsers.push(userModel);
+				orderingParams.currentPageUsers++;
 			}
 
 			if (this.layout === Layouts.Grid)
@@ -4169,12 +4297,15 @@ export class View
 					if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length > 0)
 					{
 						const previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
-						const index = orderingParams.incompleteSwaps[0] - 1;
+						const index: number = orderingParams.incompleteSwaps[previousIncompleteSwaps - 1] - 1;
 						const userEnabledVideo = orderingParams.orderChanges[index].from;
 						const currentUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userModel.id);
 						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
 
-						this.completeVideoEnableSwap(userModel, orderingRules, orderingParams);
+						// code below should be wrapped in condition like
+						// !(this.currentPage === 1 && userModel.wasTalkingAgo() <= 60 * 1000))
+						// to prevent speaking users swap
+						this.completeVideoEnableSwap(userModel, orderingParams);
 						const swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
 
 						if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id))
@@ -4189,7 +4320,7 @@ export class View
 
 					if (orderingParams.usersToDeactivate)
 					{
-						userActive = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
+						userActive = this.calculateUserActive(userModel.id, userActive, userSkipped, orderingParams);
 					}
 
 					if (orderingParams.usersToForceDeactivation.includes(userModel.id))
@@ -4205,11 +4336,11 @@ export class View
 						orderingParams.usersToDeactivate--;
 					}
 					else if (orderingParams.usersToForceDeactivation.includes(userModel.id)
-						|| (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage)
+						|| (orderingParams.currentPageUsers + orderingParams.usersToDeactivate > this.usersPerPage)
 					)
 					{
 						userActive = false;
-						orderingParams.currentPageUsers.pop();
+						orderingParams.currentPageUsers--;
 					}
 				}
 				else if (orderingRules[RerenderReason.UserDisconnected])
@@ -4219,10 +4350,10 @@ export class View
 						userActive = true;
 						orderingParams.usersToDeactivate--;
 					}
-					else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage)
+					else if (orderingParams.currentPageUsers + orderingParams.usersToDeactivate > this.usersPerPage)
 					{
 						userActive = false;
-						orderingParams.currentPageUsers.pop();
+						orderingParams.currentPageUsers--;
 					}
 				}
 			}
@@ -4235,11 +4366,11 @@ export class View
 
 			if (userActive)
 			{
-				this.activeUsers.push(userId)
-			}
-			else
-			{
-				this.inactiveUsers.push(userId)
+				this.activeUsers.add(userId);
+				if (orderingParams.usersWithEnabledVideo.includes(userId) && prevActiveUsers.has(userId))
+				{
+					prevActiveUsers.delete(userId);
+				}
 			}
 
 			if (!userActive)
@@ -4300,7 +4431,9 @@ export class View
 			// this.unobserveIntersections(this.localUser);
 		}
 
-		if (this.layout == Layouts.Grid)
+		const prevUserWidth = this.userSize.width;
+
+		if (this.layout === Layouts.Grid)
 		{
 			this.updateGridUserSize(userCount);
 		}
@@ -4311,32 +4444,52 @@ export class View
 			this.elements.userList.container.style.removeProperty('--avatar-text-size');
 			this.updateCentralUserAvatarSize();
 		}
-		this.applyIncomingVideoConstraints();
 
 		this.renderAddUserButtonInList();
 
 		this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", (this.elements.userList.container.childElementCount === 0));
 		this.localUser.updatePanelDeferred();
 
-		const currentActiveUsers = this.currentPiPUserId ? [...this.activeUsers, this.currentPiPUserId] : this.activeUsers;
-		const currentInactiveUsers = [...this.inactiveUsers];
-		const currentPiPUserIndexInInactiveUsers = this.currentPiPUserId ? currentInactiveUsers.indexOf(this.currentPiPUserId) : -1;
+		const { usersToActivate, usersToDeactivate } = this.#getUserChangesAfterRendering(prevActiveUsers, prevUserWidth);
 
-		if (currentPiPUserIndexInInactiveUsers !== -1)
+		this.applyIncomingVideoConstraints(usersToActivate, usersToDeactivate);
+	}
+
+	#getUserChangesAfterRendering(
+		prevActiveUsers: Set<number>,
+		prevVideoWidth: number,
+	): {
+		usersToActivate: number[],
+		usersToDeactivate: number[]
+	}
+	{
+		const usersToDeactivate = [];
+		const activeUsers = new Set(this.activeUsers);
+		const videoWidth = this.userSize.width;
+
+		if (this.currentPiPUserId && !activeUsers.has(this.currentPiPUserId))
 		{
-			currentInactiveUsers.splice(currentPiPUserIndexInInactiveUsers, 1);
+			activeUsers.add(this.currentPiPUserId);
 		}
 
-		const activeUsers = currentActiveUsers.map((userId) => {
-			return { userId };
+		prevActiveUsers.forEach((userId) => {
+			if (activeUsers.has(userId))
+			{
+				if (videoWidth === prevVideoWidth)
+				{
+					activeUsers.delete(userId);
+				}
+			}
+			else
+			{
+				usersToDeactivate.push(userId);
+			}
 		});
 
-		this.toggleSubscribingVideoInRenderUserList(activeUsers, true)
-		const inactiveUsers = currentInactiveUsers.map((userId) => {
-			return { userId };
-		});
-		this.toggleSubscribingVideoInRenderUserList(inactiveUsers, false)
-	};
+		const usersToActivate = [...activeUsers];
+
+		return { usersToActivate, usersToDeactivate };
+	}
 
 	shouldShowLocalUser()
 	{
@@ -5230,17 +5383,18 @@ export class View
 		const currentUser = isLocalUser ? this.localUser : this.users[currentUserId];
 
 		const isCurrentPiPUser = !!this.currentPiPUserId && currentUserId === this.currentPiPUserId;
+
 		if (isCurrentPiPUser)
 		{
 			return;
 		}
 
-		if (!this.activeUsers.includes(currentUserId) && !isLocalUser)
+		if (!this.activeUsers.has(currentUserId) && !isLocalUser)
 		{
 			this.toggleSubscribingVideoInRenderUserList([{ userId: currentUserId }], true);
 		}
 
-		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.includes(this.currentPiPUserId))
+		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.has(this.currentPiPUserId))
 		{
 			this.toggleSubscribingVideoInRenderUserList([{ userId: this.currentPiPUserId }], false);
 		}
@@ -5281,11 +5435,11 @@ export class View
 		return modifiedCurrentUser;
 	}
 
-	getAnyOtherUserId()
+	getAnyOtherUserId(): number
 	{
 		const myId = String(this.userId);
 
-		const anyActiveUser = (this.activeUsers || []).find(id => String(id) !== myId);
+		const anyActiveUser = [...this.activeUsers].find((id) => String(id) !== myId);
 		if (anyActiveUser)
 		{
 			return anyActiveUser;
@@ -5332,7 +5486,7 @@ export class View
 
 	toggleStatePictureInPictureCallWindow(isActive)
 	{
-		const isPiPAvailable = PictureInPictureWindow.isAvailable;
+		const isPiPAvailable = UnsupportedBrowserFeatures.isPiPAvailable;
 		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled())
 		{
 			this.pictureInPictureCallWindow = new PictureInPictureWindow({
@@ -5345,6 +5499,10 @@ export class View
 				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
 				preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
 				floorRequestNotifications: this.floorRequestNotifications,
+				hardwareState: Hardware,
+				Buttons,
+				CallUser,
+				FloorRequest,
 				onClose: (isProgrammaticClose) =>
 				{
 					this.pictureInPictureCallWindow = null;
@@ -5421,7 +5579,7 @@ export class View
 		this.buttons[buttonName].setCounter(counter);
 	};
 
-	updateUserList(useShelvedRerenderQueue)
+	updateUserList()
 	{
 		if (this.layout == Layouts.Mobile)
 		{
@@ -5440,6 +5598,7 @@ export class View
 				this.centralUser.mount(this.elements.center);
 				this.eventEmitter.emit(EventName.onHasMainStream, {
 					userId: this.centralUser.id,
+					otherUsers: [...this.activeUsers],
 				});
 				this.centralUser.visible = true;
 			}
@@ -5453,23 +5612,6 @@ export class View
 		if ((this.layout == Layouts.Grid || this.layout == Layouts.Centered) && this.size == Size.Full)
 		{
 			this.recalculatePages();
-		}
-
-		if (useShelvedRerenderQueue)
-		{
-			this.shelvedRerenderQueue.forEach((el) =>
-			{
-				if (el.reason === RerenderReason.VideoEnabled)
-				{
-					this.updateRerenderQueue(el.userId, el.reason);
-				}
-				else if (el.reason === RerenderReason.VideoDisabled)
-				{
-					this.updateRerenderQueue(el.userId, el.reason);
-				}
-			});
-
-			this.shelvedRerenderQueue.clear();
 		}
 
 		this.renderUserList();
@@ -6429,14 +6571,17 @@ export class View
 		this.pinUser(e.userId);
 	};
 
-	_onUserUnPin()
+	_onUserUnPin(): void
 	{
-		if (this.layout == Layouts.Centered)
+		if (this.layout === Layouts.Centered)
 		{
 			this.setLayout(Layouts.Grid);
 		}
-		this.unpinUser();
-	};
+		else
+		{
+			this.unpinUser();
+		}
+	}
 
 	_onTurnOffParticipantMic(e)
 	{
@@ -6506,12 +6651,6 @@ export class View
 	_onGridButtonClick()
 	{
 		this.setLayout(this.layout == Layouts.Centered ? Layouts.Grid : Layouts.Centered);
-		if (this.layout == Layouts.Centered && this.localUser.id !== this.centralUser.id)
-		{
-			this.eventEmitter.emit(EventName.onHasMainStream, {
-				userId: this.centralUser.id,
-			});
-		}
 	};
 
 	_onAddButtonClick(e)
@@ -7061,11 +7200,11 @@ export class View
 
 	}
 
-	#getViewVisibilityChange(listners = []) {
+	#getViewVisibilityChange(listeners = []) {
 		const handler = (event) => {
-			for (const listner of listners)
+			for (const listener of listeners)
 			{
-				listner(event, document.visibilityState)
+				listener(event, document.visibilityState)
 			}
 		};
 
@@ -7082,6 +7221,37 @@ export class View
 			stopViewVisibilityChange,
 			getCurrentVisibility: () => document.visibilityState,
 		};
+	}
+
+	#getMacDesktopPipBlur(listeners = [])
+	{
+		if (!DesktopApi.isDesktop() || !Browser.isMac())
+		{
+			return { start: () => {}, stop: () => {} };
+		}
+
+		const handler = (event) => {
+			for (const listener of listeners)
+			{
+				listener(event)
+			}
+		};
+
+		return {
+			start: () => window.addEventListener('blur', handler),
+			stop:  () => window.removeEventListener('blur', handler),
+		};
+	}
+
+
+	resetTalkingUsers()
+	{
+		this.userRegistry.users.forEach((userModel) => {
+			if (!userModel.localUser && userModel.talking)
+			{
+				this.setUserTalking(userModel.id, false);
+			}
+		});
 	}
 
 	destroy()
@@ -7156,6 +7326,7 @@ export class View
 		this.clearCallcontrolPromo();
 
 		this.viewVisibility.stopViewVisibilityChange();
+		this.macDesktopPipBlur.stop();
 
 		if (this.deviceSelector)
 		{

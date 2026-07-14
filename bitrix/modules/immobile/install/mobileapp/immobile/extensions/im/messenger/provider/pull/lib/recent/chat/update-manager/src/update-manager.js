@@ -52,9 +52,9 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		 */
 		getLastMessage()
 		{
-			const [lastMessage] = this.#params.messages;
-
-			return { ...lastMessage };
+			return {
+				...this.#params.message,
+			};
 		}
 
 		/**
@@ -77,15 +77,14 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		{
 			const message = this.getPreparedLastMessage();
 
-			const userData = message.author_id > 0
-				? this.#params.users[message.author_id]
-				: { id: 0 };
+			const userData = (message.author_id > 0
+				? this.#params.users.find((user) => Number(user.id) === message.author_id)
+				: null) ?? { id: 0 };
 
 			return RecentDataConverter.fromPullToModel({
 				id: this.getDialogId(),
 				chat: this.#params.chat,
 				user: userData,
-				counter: this.#params.counter,
 				lastActivityDate: this.#params.lastActivityDate,
 				message,
 			});
@@ -105,7 +104,6 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		{
 			const chat = {
 				...this.#params.chat,
-				counter: this.#params.counter,
 				dialogId: this.getDialogId(),
 			};
 

@@ -1,0 +1,124 @@
+.bx-im-nested-list-collab-card__container {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	padding: 16px 18px;
+	margin-bottom: 10px;
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.bx-im-nested-list-collab-card__container.ui-highlighter::after {
+	inset: 0;
+	padding: 2px;
+	border-radius: 10px;
+	z-index: 1;
+}
+
+.bx-im-nested-list-collab-card__background {
+	position: absolute;
+	inset: -28px;
+	filter: blur(28px);
+	background-image: url('./images/default-background.png');
+	background-size: cover;
+	background-position: center;
+	z-index: 1;
+}
+
+.bx-im-nested-list-collab-card__background.--no-avatar {
+	inset: -13px;
+	filter: blur(13px);
+}
+
+.bx-im-nested-list-collab-card__background-overlay {
+	position: absolute;
+	inset: 0;
+	background-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.2);
+}
+
+.bx-im-nested-list-collab-card__header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	margin-bottom: 16px;
+	z-index: 2;
+}
+
+.bx-im-nested-list-collab-card__avatar {
+	margin-right: 12px;
+}
+
+.bx-im-nested-list-collab-card__title {
+	font: 19px/26px var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-0);
+	overflow-wrap: break-word;
+}
+
+.bx-im-nested-list-collab-card__buttons {
+	display: flex;
+	align-items: center;
+	max-width: 100%;
+	z-index: 2;
+}
+
+.bx-im-nested-list-collab-card__button {
+	position: relative;
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: 0;
+	height: 28px;
+	padding: 0 8px;
+	margin-right: 8px;
+	border-radius: 8px;
+	font: var(--im-font-size-sm)/16px var(--im-font-family-system);
+	color: var(--ui-color-design-outline-content);
+	background-color: var(--ui-color-design-outline-bg);
+	border: 1.5px solid var(--ui-color-design-outline-stroke);
+	transition: background-color 0.15s ease;
+	cursor: pointer;
+}
+
+.bx-im-nested-list-collab-card__button:nth-child(3) {
+	flex-shrink: 1;
+}
+
+.bx-im-nested-list-collab-card__button.--with-icon {
+	padding: 0 5px;
+}
+
+.bx-im-nested-list-collab-card__button:last-child {
+	margin-right: 0;
+}
+
+.bx-im-nested-list-collab-card__button:hover {
+	background-color: var(--ui-color-g-content-grey-4);
+	border-color: #e1e2e4;
+}
+
+.bx-im-nested-list-collab-card__button_counter {
+	position: absolute;
+	top: -6px;
+	right: -2px;
+	min-width: 14px;
+	height: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: var(--ui-border-radius-xl);
+	background-color: var(--ui-color-design-filled-alert-bg);
+	font: var(--im-font-size-4xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-design-filled-content);
+}
+
+.bx-im-nested-list-collab-card__button_more {
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-content);
+	--ui-icon-set__icon-size: 24px;
+
+	width: 24px;
+	height: 24px;
+}

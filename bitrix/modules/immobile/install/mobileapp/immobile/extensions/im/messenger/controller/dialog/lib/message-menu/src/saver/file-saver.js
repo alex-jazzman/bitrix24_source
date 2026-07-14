@@ -78,7 +78,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 		 */
 		fallbackMultipleFilesDownload = async () => {
 			const downloadResult = await fileSaverUtility().downloadFileToLocalCache(
-				this.messageHelper.files.map((file) => file.urlDownload),
+				this.getFiles().map((file) => file.urlDownload),
 			);
 			const isSuccessDownloaded = downloadResult.every((result) => result.status === 'fulfilled');
 

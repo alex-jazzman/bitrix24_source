@@ -1,5 +1,6 @@
 import { SliderCode } from 'im.v2.const';
 import { Runtime } from 'main.core';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { ChipDesign, ChipSize, Chip } from 'ui.system.chip.vue';
@@ -30,17 +31,15 @@ export const SearchButton = {
 		},
 		isDisabledByTariff(): boolean
 		{
-			// TODO: implement tariff restriction check
-			return false;
+			return !FeatureManager.isFeatureAvailable(Feature.isCopilotWebSearchAllowedByTariff);
 		},
 		isDisabledByAdmin(): boolean
 		{
-			// TODO: implement admin restriction check
-			return false;
+			return !FeatureManager.isFeatureAvailable(Feature.isCopilotWebSearchEnabledByAdmin);
 		},
 		isDisabled(): boolean
 		{
-			return this.isDisabledByTariff || this.isDisabledByAdmin;
+			return this.isDisabledByAdmin;
 		},
 		chipText(): string
 		{
@@ -77,13 +76,6 @@ export const SearchButton = {
 	methods: {
 		onClick()
 		{
-			if (this.isDisabledByTariff)
-			{
-				this.openTariffSlider();
-
-				return;
-			}
-
 			if (this.isDisabledByAdmin)
 			{
 				return;

@@ -15,6 +15,7 @@ return [
 		'tasks.v2.lib.api-client',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.provider.service.check-list-service',
+		'tasks.v2.provider.service.file-service',
 		'tasks.v2.provider.service.relation-service',
 		'tasks.v2.provider.service.task-service',
 	],

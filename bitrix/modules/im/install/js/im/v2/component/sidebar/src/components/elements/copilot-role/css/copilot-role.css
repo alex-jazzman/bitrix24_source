@@ -5,15 +5,9 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	height: 20px;
+	height: 22px;
 	cursor: pointer;
 	font: var(--im-font-size-md)/var(--im-font-line-height-2xs) var(--im-font-family-system);
-	font-weight: var(--im-font-weight-semi-bold);
-	color: var(--im-sidebar-main-preview-settings__color_copilot-title);
-}
-
-.bx-im-sidebar-copilot-role__container:hover {
-	color: var(--im-sidebar-main-preview-settings__color_copilot-title-hover);
 }
 
 .bx-im-sidebar-copilot-role__title {
@@ -28,6 +22,21 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	position: relative;
+	color: var(--im-sidebar-main-preview-settings__color_copilot-title);
+	font-weight: var(--im-font-weight-semi-bold);
+}
+
+.bx-im-sidebar-copilot-role__title-text:hover {
+	color: var(--im-sidebar-main-preview-settings__color_copilot-title-hover);
+}
+
+.bx-im-sidebar-copilot-role__title-text.--bgpt-v2 {
+	background-image: var(--im-gradient-ai-assistant);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	color: inherit;
+	font-weight: var(--im-font-weight-normal);
 }
 
 .bx-im-sidebar-copilot-role__title-icon {
@@ -37,17 +46,25 @@
 	background: url("./images/icon.svg") no-repeat center;
 }
 
+.bx-im-sidebar-copilot-role__bgpt-icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: linear-gradient(
+		174deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 0%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 21.0856%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 53.1372%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 78.2299%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 100%
+	);
+
+	flex-shrink: 0;
+}
+
 .bx-im-sidebar-copilot-role__container:hover .bx-im-sidebar-copilot-role__title-icon {
 	background: url("./images/icon-hover.svg") no-repeat center;
 }
 
 .bx-im-sidebar-copilot-role__arrow-icon {
-	flex-shrink: 0;
-	width: 20px;
-	height: 20px;
-	background: url("./images/arrow.svg") no-repeat center;
-}
-
-.bx-im-sidebar-copilot-role__container:hover .bx-im-sidebar-copilot-role__arrow-icon {
-	background: url("./images/arrow-hover.svg") no-repeat center;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }

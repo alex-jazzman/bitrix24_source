@@ -4,7 +4,7 @@ import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
-import { AiAssistantAvatar } from './components/ai-assistant-avatar';
+import { MartaAvatar } from './components/marta-avatar';
 import { Avatar } from './components/base/avatar';
 import { CollabChatAvatar } from './components/collab/collab-chat';
 import { CollaberAvatar } from './components/collab/collaber';
@@ -68,7 +68,7 @@ export const ChatAvatar = {
 		},
 		customAvatarUrl(): string
 		{
-			if (!this.isCopilot)
+			if (!this.isAiAssistantBitrixGptInChat)
 			{
 				return '';
 			}
@@ -95,11 +95,11 @@ export const ChatAvatar = {
 		{
 			return this.user?.type === UserType.extranet;
 		},
-		isAiAssistant(): boolean
+		isAiAssistantMarta(): boolean
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.avatarDialogId);
 		},
-		isCopilot(): boolean
+		isAiAssistantBitrixGptInChat(): boolean
 		{
 			return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
 		},
@@ -126,8 +126,8 @@ export const ChatAvatar = {
 				{ condition: () => this.isExtranet, component: ExtranetUserAvatar },
 				{ condition: () => this.isCollaber, component: CollaberAvatar },
 				{ condition: () => this.isCollabChat, component: CollabChatAvatar },
-				{ condition: () => this.isCopilot, component: CopilotAvatar },
-				{ condition: () => this.isAiAssistant, component: AiAssistantAvatar },
+				{ condition: () => this.isAiAssistantBitrixGptInChat, component: CopilotAvatar },
+				{ condition: () => this.isAiAssistantMarta, component: MartaAvatar },
 				{ condition: () => this.isExtranetChat, component: ExtranetChatAvatar },
 			];
 		},
@@ -146,6 +146,7 @@ export const ChatAvatar = {
 		<component
 			:is="avatarComponent"
 			:dialogId="avatarDialogId"
+			:contextDialogId="contextDialogId"
 			:customSource="customAvatarUrl"
 			:size="size"
 			:withAvatarLetters="withAvatarLetters"

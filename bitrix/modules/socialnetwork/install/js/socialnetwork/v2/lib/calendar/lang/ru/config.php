@@ -1,0 +1,3 @@
+<?php
+
+$MESS['SONET_EXT_V2_DATE_TIME_FORMAT'] = '#DATE# #TIME#';

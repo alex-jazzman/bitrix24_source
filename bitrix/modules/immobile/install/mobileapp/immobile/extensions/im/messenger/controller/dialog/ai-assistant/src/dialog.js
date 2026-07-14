@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { NotifyPanelManager } = require('im/messenger/controller/dialog/lib/notify-panel-manager');
-	const { MCPButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
+	const { MCPButton, MarketButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const { DialogConfigurator, configs } = require('im/messenger/controller/dialog/lib/configurator');
@@ -78,7 +78,7 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			await this.notifyPanelManager.checkServiceHealthStatus();
 		}
 
-		getDialogType()
+		getDialogWidgetType()
 		{
 			return DialogWidgetType.aiAssistant;
 		}
@@ -161,12 +161,19 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 
 		getAssistantButtons()
 		{
+			const buttons = [];
+
 			if (Feature.isAiAssistantMCPSelectorAvailable)
 			{
-				return [MCPButton];
+				buttons.push({ ...MCPButton });
 			}
 
-			return [];
+			if (Feature.isAssistantMarketButtonAvailable)
+			{
+				buttons.push({ ...MarketButton });
+			}
+
+			return buttons;
 		}
 
 		sendAnalyticsOpenDialog()

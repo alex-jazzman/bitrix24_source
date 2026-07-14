@@ -170,6 +170,16 @@ return static function (RoutingConfigurator $routes) {
 			$routes->get('{uniqueCode}/edit/', [UnifiedLinkController::class, 'edit']);
 		})
 	;
+	$routes->prefix($sitePrefix . '{fileType}')
+		->where('fileType', '(picture|media|audio|board|doc|sheet|pres|file)')
+		->where('uniqueCode', '[0-9a-zA-Z]{20}')
+		->group(function (RoutingConfigurator $routes) {
+			$routes->get('{uniqueCode}', [UnifiedLinkController::class, 'view']);
+			$routes->get('{uniqueCode}/edit', [UnifiedLinkController::class, 'edit']);
+			$routes->get('{uniqueCode}/', [UnifiedLinkController::class, 'view']);
+			$routes->get('{uniqueCode}/edit/', [UnifiedLinkController::class, 'edit']);
+		})
+	;
 
 	// crm
 	$routes

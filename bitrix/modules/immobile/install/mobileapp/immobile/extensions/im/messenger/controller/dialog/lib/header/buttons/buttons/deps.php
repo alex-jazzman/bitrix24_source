@@ -13,6 +13,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/integration/callmobile/call-manager',
+		'im:messenger/lib/project-access-guard',
 		'im:messenger/lib/integration/immobile/calls',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/permission-manager',

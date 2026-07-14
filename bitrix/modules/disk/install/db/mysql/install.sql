@@ -255,6 +255,7 @@ CREATE TABLE b_disk_external_link
 
 	CREATE_TIME datetime not null,
 	CREATED_BY int(11),
+	CAN_DOWNLOAD_WITH_READ_ACCESS TINYINT(1) NOT NULL DEFAULT 1,
 
 	PRIMARY KEY (ID),
 
@@ -636,4 +637,16 @@ CREATE TABLE b_disk_unified_link_access
     PRIMARY KEY(ID),
 
     UNIQUE KEY IX_DISK_ULA_1 (OBJECT_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_disk_object_options
+(
+	ID int(11) not null auto_increment,
+	OBJECT_ID int(11) not null,
+	NAME varchar(255) not null,
+	VALUE TEXT NULL DEFAULT NULL,
+
+	PRIMARY KEY (ID),
+
+	UNIQUE KEY IX_DISK_OO_OBJECT_ID_NAME (OBJECT_ID, NAME)
 );

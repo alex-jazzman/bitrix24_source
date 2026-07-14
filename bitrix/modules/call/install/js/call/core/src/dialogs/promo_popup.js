@@ -3,6 +3,7 @@ import {EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {BackgroundDialog} from './background_dialog';
 import {View} from '../view/view';
+import type {CallView} from '../view/call-view-port';
 import '../css/promo-popup.css';
 
 const Events = {
@@ -189,7 +190,7 @@ PromoPopup.Events = Events;
 
 export class PromoPopup3D
 {
-	callView: View
+	callView: CallView
 
 	constructor(options)
 	{

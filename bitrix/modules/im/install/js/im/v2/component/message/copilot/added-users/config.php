@@ -13,6 +13,7 @@ return [
 		'im.v2.component.elements.user-list-popup',
 		'im.v2.component.message.base',
 		'im.v2.lib.copilot',
+		'im.v2.lib.feature',
 	],
 	'skip_core' => true,
 ];

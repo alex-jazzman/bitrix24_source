@@ -1,6 +1,7 @@
 import { Extension } from 'main.core';
 import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
 
+import { Absences } from 'tasks.v2.model.absences';
 import { CheckList } from 'tasks.v2.model.check-list';
 import { CrmItems } from 'tasks.v2.model.crm-items';
 import { ElapsedTimes } from 'tasks.v2.model.elapsed-times';
@@ -80,6 +81,7 @@ class CoreApplication
 		this.#builder = Builder.init();
 
 		this.#builder
+			.addModel(Absences.create())
 			.addModel(CheckList.create())
 			.addModel(CrmItems.create())
 			.addModel(ElapsedTimes.create())

@@ -1,0 +1,32 @@
+.socialnetwork--auto-delete-message-dropdown {
+	--dropdown-text-color-hover: var(--ui-color-base-2);
+
+	display: flex;
+	align-items: center;
+	color: inherit;
+}
+
+.socialnetwork--auto-delete-message-dropdown.--enabled {
+	cursor: pointer;
+}
+
+.socialnetwork--auto-delete-message-dropdown.--enabled:hover {
+	color: var(--dropdown-text-color-hover);
+}
+
+.socialnetwork--auto-delete-message-dropdown--icon {
+	background-color: var(--ui-color-base-3);
+	transition: transform 150ms ease;
+}
+
+.socialnetwork--auto-delete-message-dropdown.--enabled:hover .socialnetwork--auto-delete-message-dropdown--icon {
+	background-color: var(--dropdown-text-color-hover);
+}
+
+.socialnetwork--auto-delete-message-dropdown--icon:hover {
+	transition-duration: 150ms;
+}
+
+.socialnetwork--auto-delete-message-dropdown--icon.--open {
+	transform: rotate(180deg);
+}

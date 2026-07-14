@@ -125,13 +125,10 @@
 }
 
 .tasks-task-deadline-settings-label-filter span {
-	-webkit-text-decoration-line: underline;
-	        text-decoration-line: underline;
+	text-decoration-line: underline;
 	text-decoration-thickness: var(--ui-border-width-thin);
-	-webkit-text-decoration-style: dashed;
-	        text-decoration-style: dashed;
-	-webkit-text-decoration-color: var(--ui-color-base-5);
-	        text-decoration-color: var(--ui-color-base-5);
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-base-5);
 	text-underline-offset: 4px;
 	cursor: pointer;
 }

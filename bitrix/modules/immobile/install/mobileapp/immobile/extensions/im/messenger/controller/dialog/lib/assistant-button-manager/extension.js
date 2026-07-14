@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 		MCPButton,
 		SearchModeButton,
 		AgentButton,
+		MarketButton,
 	} = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
 	const {
 		AssistantButtonType,
@@ -24,6 +25,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 			AssistantButtonManager: LegacyAssistantButtonManager,
 			ReasoningButton,
 			MCPButton,
+			MarketButton,
 			AssistantButtonType,
 			AssistantButtonDesign,
 			AssistantButtonSize,
@@ -38,6 +40,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 	const { MCPManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/mcp');
 	const { SearchModeManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/search-mode');
 	const { AgentManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/agent');
+	const { MarketManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/market');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -57,6 +60,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 		/** @type {AgentManager} */
 		#agentManager;
 
+		/** @type {MarketManager} */
+		#marketManager;
+
 		/**
 		 * @param {DialogLocator} dialogLocator
 		 */
@@ -72,6 +78,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 			this.#mcpManager = new MCPManager(subManagerParams);
 			this.#searchModeManager = new SearchModeManager(subManagerParams);
 			this.#agentManager = new AgentManager(subManagerParams);
+			this.#marketManager = new MarketManager(subManagerParams);
 		}
 
 		get isReasoningActive()
@@ -85,6 +92,22 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 		get mcpSelectedAuthId()
 		{
 			return this.#mcpManager.selectedAuthId;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isSearchModeActive()
+		{
+			return this.#searchModeManager.isActive;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isAgentModeActive()
+		{
+			return this.#agentManager.isActive;
 		}
 
 		subscribeViewEvents()
@@ -132,6 +155,12 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 		{
 			const hasAnyActive = this.#hasAnyActiveButton();
 
+			if (!this.#modeMenuManager.isActive)
+			{
+				const text = hasAnyActive ? '' : ModeMenuButton.text;
+				void this.view.textField.updateAssistantButton(AssistantButtonType.menu, { ...ModeMenuButton, text });
+			}
+
 			if (!this.#searchModeManager.isActive)
 			{
 				const text = hasAnyActive ? '' : SearchModeButton.text;
@@ -142,6 +171,12 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 			{
 				const text = hasAnyActive ? '' : AgentButton.text;
 				void this.view.textField.updateAssistantButton(AssistantButtonType.agent, { ...AgentButton, text });
+			}
+
+			if (Feature.isAssistantMarketButtonAvailable)
+			{
+				const text = hasAnyActive ? '' : MarketButton.text;
+				void this.view.textField.updateAssistantButton(AssistantButtonType.market, { ...MarketButton, text });
 			}
 		}
 
@@ -160,6 +195,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 				case AssistantButtonType.agent:
 					void this.#agentManager.menuButtonTapHandler();
 					break;
+				case AssistantButtonType.market:
+					this.#marketManager.menuButtonTapHandler();
+					break;
 				default:
 			}
 		};
@@ -171,6 +209,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 		MCPButton,
 		SearchModeButton,
 		AgentButton,
+		MarketButton,
 		AssistantButtonType,
 		AssistantButtonDesign,
 		AssistantButtonSize,

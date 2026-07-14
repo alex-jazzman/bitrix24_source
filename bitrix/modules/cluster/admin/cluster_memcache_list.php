@@ -22,7 +22,7 @@ if (!$USER->isAdmin())
 
 $cacheType = Bitrix\Main\Config\Option::get('cluster', 'cache_type', 'memcache');
 
-if ($cacheType != 'memcache' && $cacheType != 'memcached')
+if ($cacheType !== 'memcache' && $cacheType !== 'memcached')
 {
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 	ShowError(Loc::getMessage('CLU_MEMCACHE_DISABLED'));
@@ -31,16 +31,16 @@ if ($cacheType != 'memcache' && $cacheType != 'memcached')
 }
 
 if (
-	($cacheType == 'memcache' && !extension_loaded('memcache'))
-	|| ($cacheType == 'memcached' && !extension_loaded('memcached'))
+	($cacheType === 'memcache' && !extension_loaded('memcache'))
+	|| ($cacheType === 'memcached' && !extension_loaded('memcached'))
 )
 {
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
-	if ($cacheType == 'memcache')
+	if ($cacheType === 'memcache')
 	{
 		ShowError(Loc::getMessage('CLU_MEMCACHE_NO_EXTENTION'));
 	}
-	elseif ($cacheType == 'memcached')
+	elseif ($cacheType === 'memcached')
 	{
 		ShowError(Loc::getMessage('CLU_MEMCACHED_NO_EXTENTION'));
 	}
@@ -49,7 +49,7 @@ if (
 	die();
 }
 
-if ($cacheType == 'memcache')
+if ($cacheType === 'memcache')
 {
 	$cache = CClusterMemcache::class;
 }

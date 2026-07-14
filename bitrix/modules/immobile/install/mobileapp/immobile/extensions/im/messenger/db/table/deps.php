@@ -8,6 +8,8 @@ return [
 		'im:messenger/db/const',
 		'im:messenger/db/helper/fulltext',
 		'im:messenger/db/helper/start-words',
+		'im:messenger/db/query-builder/builder',
+		'im:messenger/db/table-schema',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',

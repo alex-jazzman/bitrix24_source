@@ -1,7 +1,7 @@
 import { Endpoint, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { apiClient } from 'tasks.v2.lib.api-client';
-import { GroupMappers } from 'tasks.v2.provider.service.group-service';
+import { GroupMappers, createGroupDto } from 'tasks.v2.provider.service.group-service';
 import { mapDtoToModel } from './mappers';
 
 class FlowService
@@ -13,15 +13,30 @@ class FlowService
 
 	async getFlow(id: number): Promise<void>
 	{
+		if (id <= 0)
+		{
+			return;
+		}
+
 		try
 		{
 			const data = await apiClient.post(Endpoint.FlowGet, { flow: { id } });
 
+			if (!data?.id)
+			{
+				return;
+			}
+
 			const flow = mapDtoToModel(data);
-			const group = GroupMappers.mapDtoToModel(data.group);
 
 			await Core.getStore().dispatch(`${Model.Flows}/insert`, flow);
-			await Core.getStore().dispatch(`${Model.Groups}/insert`, group);
+
+			if (data.group)
+			{
+				const group = GroupMappers.mapDtoToModel(createGroupDto(data.group));
+
+				await Core.getStore().dispatch(`${Model.Groups}/insert`, group);
+			}
 		}
 		catch (error)
 		{

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { RecentFilterId, RecentTabByNavigationTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
+	const { RecentFilterId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -39,6 +39,11 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 			 * @type {MessengerCoreStoreManager}
 			 */
 			this.storeManager = serviceLocator.get('core').getStoreManager();
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
+			this.isSubscribed = false;
 		}
 
 		/**
@@ -71,6 +76,12 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		subscribeStoreMutation()
 		{
+			if (this.isSubscribed)
+			{
+				return;
+			}
+			this.isSubscribed = true;
+
 			this.storeManager
 				.on('recentModel/setNestedIdCollection', this.setNestedIdCollectionHandler)
 				.on('recentModel/storeNestedIdCollection', this.storeNestedIdCollectionHandler)
@@ -87,6 +98,12 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		unsubscribeStoreMutation()
 		{
+			if (!this.isSubscribed)
+			{
+				return;
+			}
+			this.isSubscribed = false;
+
 			this.storeManager
 				.off('recentModel/setNestedIdCollection', this.setNestedIdCollectionHandler)
 				.off('recentModel/storeNestedIdCollection', this.storeNestedIdCollectionHandler)
@@ -147,18 +164,18 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 * >} payload
 		 */
 		setCurrentFilterHandler = async ({ payload }) => {
-			const { tabId, filterId } = payload?.data || {};
+			const { tabId, parentChatId = ROOT_PARENT_CHAT_ID, filterId } = payload?.data || {};
 
-			if (!Type.isStringFilled(tabId) || RecentTabByNavigationTab[tabId] !== this.recentSection)
+			if (!Type.isStringFilled(tabId) || tabId !== this.tabId || parentChatId !== this.parentChatId)
 			{
 				return;
 			}
 
-			this.logger.log('recentFilteredSync: setCurrentFilterHandler', { tabId, filterId });
+			this.logger.log('recentFilteredSync: setCurrentFilterHandler', { tabId, parentChatId, filterId });
 
 			if (filterId === RecentFilterId.all)
 			{
-				await this.#clearForTab(this.tabId);
+				await this.#clearForTab(this.tabId, this.parentChatId);
 			}
 			else if (Type.isStringFilled(filterId))
 			{
@@ -195,10 +212,11 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		/**
 		 * @description Clears filtered collection for given tab.
 		 * @param {string} tabId
+		 * @param {number} [parentChatId]
 		 */
-		async #clearForTab(tabId)
+		async #clearForTab(tabId, parentChatId = ROOT_PARENT_CHAT_ID)
 		{
-			await this.store.dispatch('recentModel/recentFilteredModel/clearIdCollection', { tabId });
+			await this.store.dispatch('recentModel/recentFilteredModel/clearIdCollection', { tabId, parentChatId });
 		}
 	}
 

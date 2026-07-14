@@ -36,6 +36,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
 		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
+		imV2ChatMessageVoteSend: 'im.v2.Chat.Message.Vote.send',
 		imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
 		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 		imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
@@ -58,14 +59,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2BetaEnable: 'im.v2.Beta.enable',
 		imV2BetaDisable: 'im.v2.Beta.disable',
 		imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
+		imV2ChatFlowPrepare: 'im.v2.Chat.Flow.prepare',
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 		imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
 		imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.Tail',
 		imV2RecentTail: 'im.v2.Recent.tail',
+		imV2RecentLoad: 'im.v2.Recent.load',
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 		imV2AccessCheck: 'im.v2.Access.check',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
+		imV2ChatMemberCheckMembership: 'im.v2.Chat.Member.checkMembership',
 		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
 		imV2DiskFileSave: 'im.v2.Disk.File.save',
 		imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
@@ -216,7 +220,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		recent: {
 			openSearch: 'IM.Recent:openSearch',
 			openNestedList: 'IM.Recent:openNestedList',
-			closeListSlider: 'IM.Recent:closeListSlider'
+			closeNestedList: 'IM.Recent:closeNestedList'
 		},
 		mention: {
 			selectItem: 'IM:Mention:selectItem',
@@ -226,21 +230,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		reaction: {
 			onReactionSelected: 'IM:Reaction:onReactionSelected'
 		},
-		slider: {
-			onClose: 'onChatSliderClose'
-		},
 		request: {
 			onAuthError: 'IM:request:onAuthError'
 		},
 		audioPlayer: {
-			play: 'IM:AudioPlayer:play',
-			stop: 'IM:AudioPlayer:stop',
-			pause: 'IM:AudioPlayer:pause',
-			preload: 'IM:AudioPlayer:preload'
+			pause: 'IM:AudioPlayer:pause'
 		},
 		roundVideoPlayer: {
-			playNext: 'IM:RoundVideoPlayer:playNext',
 			onClickPlay: 'IM:RoundVideoPlayer:onClickPlay'
+		},
+		player: {
+			playNext: 'IM:Player:playNext'
 		},
 		key: {
 			onBeforeEscape: 'IM:Keys:onBeforeEscape'
@@ -258,6 +258,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onLayoutChange: 'IM.Layout:onLayoutChange',
 			onOpenNotifications: 'IM.Layout:onOpenNotifications'
 		},
+		slider: {
+			onClose: 'onChatSliderClose'
+		},
 		counter: {
 			onNotificationCounterChange: 'onImUpdateCounterNotify',
 			onChatCounterChange: 'onImUpdateCounterMessage',
@@ -267,6 +270,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		task: {
 			onMembersCountChange: 'tasks:card:onMembersCountChange',
 			openCardFromMessage: 'tasks:chat-action:before-execute'
+		},
+		collab: {
+			onFirstOpen: 'IM:Collab:onFirstOpen'
 		},
 		call: {
 			onFold: 'CallController::onFold',
@@ -379,6 +385,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		stop: 'stop',
 		none: 'none'
 	});
+	const PlaylistScope = {
+		chat: 'chat',
+		sidebar: 'sidebar'
+	};
 
 	const MessageType = Object.freeze({
 		self: 'self',
@@ -417,9 +427,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		voteMessage: 'VoteMessage',
 		taskChatCreationMessage: 'TaskChatCreationMessage',
 		convertToCollabMessage: 'ConvertToCollabMessage',
+		collabCreationMessage: 'CollabCreationMessage',
 		aiAssistantMessage: 'AiAssistantMessage',
 		aiBizprocMessage: 'AiBizprocMessage',
-		builderMessage: 'builderMessage',
 		...imopenlines_v2_const.OpenLinesMessageComponent
 	});
 	const MessageMentionType = Object.freeze({
@@ -479,6 +489,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		chat: 'chat',
 		createChat: 'createChat',
 		updateChat: 'updateChat',
+		copyCollab: 'copyCollab',
 		channel: 'channel',
 		notification: 'notification',
 		openlines: 'openlines',
@@ -605,7 +616,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		base: 'base',
 		primary: 'primary',
 		secondary: 'secondary',
-		alert: 'alert'
+		alert: 'alert',
+		aiAssistant: 'ai-assistant'
 	});
 
 	const AttachType = Object.freeze({
@@ -682,6 +694,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		openTab: 'openTab',
 		openPage: 'openPage',
 		chatCreation: 'chatCreation',
+		chatUpdate: 'chatUpdate',
 		botContext: 'botContext',
 		openLayout: 'openLayout'
 	};
@@ -745,7 +758,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		stickerContextMenu: 'im-sticker-context-menu',
 		stickerPackContextMenu: 'im-sticker-pack-context-menu',
 		sharedLinkContextMenu: 'im-shared-link-context-menu',
-		mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown'
+		mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown',
+		collabCardPromo: 'im-collab-card-promo-popup',
+		collabCreateChatPromo: 'im-collab-create-chat-promo-popup'
 	});
 
 	const Settings = Object.freeze({
@@ -811,8 +826,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		createGroupChat: 'im:group-chat-create:20062023:all',
 		createConference: 'im:conference-create:24082023:all',
 		createChannel: 'im:channel-create:04032024:all',
-		createCollabDescription: 'im:collab-create:12092024:all',
 		addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
+		createCollabDescription: 'im:collab-create:12092024:all',
 		changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
 		collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
 		downloadSeveralFiles: 'im:download-several-files:22112024:all',
@@ -824,7 +839,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all',
 		desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
 		stickersAvailable: 'im:stickers-available:27112025:all',
-		createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all'
+		createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all',
+		collabCardNavigation: 'im:collab-card-navigation:28042026:all',
+		collabCreateChat: 'im:collab-create-chat:28042026:all',
+		collabAi: 'socialnetwork:collab-project-ai:28042026:all'
 	});
 
 	const ActionByRole = Object.freeze({
@@ -852,6 +870,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		setReaction: 'setReaction',
 		createMeeting: 'createMeeting',
 		createTask: 'createTask',
+		createChildChat: 'createChildChat',
 		openAvatarMenu: 'openAvatarMenu',
 		openMessageMenu: 'openMessageMenu',
 		openSidebarMenu: 'openSidebarMenu',
@@ -962,6 +981,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		autoDeleteDisabled: 'limit_auto_delete_messages_off',
 		collabInviteOff: 'limit_v2_socialnetwork_collab_invite_off',
 		collabDisabled: 'socialnetwork_collab_off',
+		collabV2Disabled: 'socialnetwork_projects_groups',
+		collabV2CopyDisabled: 'socialnetwork_copy_project',
 		buyMarketPlus: 'limit_subscription_market_access_buy_marketplus'
 	};
 
@@ -972,6 +993,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const ErrorCode = Object.freeze({
+		collabV2: {
+			tariffRestricted: 'COLLAB_TARIFF_RESTRICTED'
+		},
 		chat: {
 			accessDenied: 'ACCESS_DENIED',
 			notFound: 'CHAT_NOT_FOUND'
@@ -1058,6 +1082,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MessageBuilderGradientColorToken = {
 		'ai-assistant': 'ai-assistant'
 	};
+	const MessageBuilderBackgroundPlainToken = 'plain';
+
+	const ParentChatScope = {
+		all: null,
+		topLevel: 0
+	};
 
 	exports.ActionByRole = ActionByRole;
 	exports.ActionByUserType = ActionByUserType;
@@ -1099,6 +1129,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.Layout = Layout;
 	exports.LegacyDesktopBxLink = LegacyDesktopBxLink;
 	exports.LocalStorageKey = LocalStorageKey;
+	exports.MessageBuilderBackgroundPlainToken = MessageBuilderBackgroundPlainToken;
 	exports.MessageBuilderGradientColorToken = MessageBuilderGradientColorToken;
 	exports.MessageBuilderPlainColorToken = MessageBuilderPlainColorToken;
 	exports.MessageComponent = MessageComponent;
@@ -1111,8 +1142,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.NotificationSettingsType = NotificationSettingsType;
 	exports.NotificationTypesCodes = NotificationTypesCodes;
 	exports.OwnMessageStatus = OwnMessageStatus;
+	exports.ParentChatScope = ParentChatScope;
 	exports.Path = Path;
 	exports.PlacementType = PlacementType;
+	exports.PlaylistScope = PlaylistScope;
 	exports.PopupType = PopupType;
 	exports.PromoId = PromoId;
 	exports.RawBotType = RawBotType;

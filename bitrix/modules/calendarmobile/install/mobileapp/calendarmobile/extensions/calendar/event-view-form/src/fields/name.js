@@ -10,6 +10,7 @@ jn.define('calendar/event-view-form/fields/name', (require, exports, module) => 
 	const { H3 } = require('ui-system/typography/heading');
 
 	const { CalendarIcon } = require('calendar/event-view-form/layout/calendar-icon');
+	const { SettingsManager } = require('calendar/data-managers/settings-manager');
 
 	class NameField extends PureComponent
 	{
@@ -73,8 +74,12 @@ jn.define('calendar/event-view-form/fields/name', (require, exports, module) => 
 
 		renderSectionName()
 		{
+			const collabNameMessageCode = SettingsManager.isNewProjectsOn()
+				? 'M_CALENDAR_EVENT_VIEW_FORM_PROJECT_NAME'
+				: 'M_CALENDAR_EVENT_VIEW_FORM_COLLAB_NAME'
+			;
 			const messageCode = this.props.collabId > 0
-				? 'M_CALENDAR_EVENT_VIEW_FORM_COLLAB_NAME'
+				? collabNameMessageCode
 				: 'M_CALENDAR_EVENT_VIEW_FORM_SECTION_NAME'
 			;
 			const sectionName = Loc.getMessage(messageCode, {

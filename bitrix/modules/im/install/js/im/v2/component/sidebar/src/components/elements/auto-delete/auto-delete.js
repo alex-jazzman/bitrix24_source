@@ -5,7 +5,7 @@ import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
 import { ChatType, UserType, AutoDeleteDelay } from 'im.v2.const';
 import { AutoDeleteManager } from 'im.v2.lib.auto-delete';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -108,7 +108,7 @@ export const AutoDelete = {
 
 			if (!this.isAutoDeleteFeatureEnabled)
 			{
-				FeatureManager.messagesAutoDelete.openFeatureSlider();
+				TariffManager.messagesAutoDelete.openFeatureSlider();
 
 				return;
 			}

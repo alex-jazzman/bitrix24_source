@@ -21,7 +21,7 @@ export const ChannelItem = {
 	template: `
 		<BaseRecentItem
 			:item="item"
-			:withCounters="false"
+			:withCounter="false"
 			:withMessageStatus="false"
 			:withInputIndicator="false"
 			:withDraft="false"

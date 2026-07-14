@@ -420,7 +420,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		async #sendMessage(sendMessageParams, options)
 		{
 			const isCopilotAnimatedScroll = Feature.isCopilotAnimatedScrollSupported && this.dialogHelper?.isCopilotDirect;
-			if (!isCopilotAnimatedScroll)
+			if (!isCopilotAnimatedScroll && this.#shouldGoToBottomMessageContext())
 			{
 				await this.contextManager.goToBottomMessageContext();
 			}
@@ -442,6 +442,22 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				})
 				.catch((error) => logger.error('sendMessage.error', error))
 			;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#shouldGoToBottomMessageContext()
+		{
+			const messageRenderer = this.messageRenderer;
+			if (!messageRenderer || !Type.isArrayFilled(messageRenderer.messageList))
+			{
+				return true;
+			}
+
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			return dialog?.hasNextPage === true;
 		}
 
 		/**
@@ -514,17 +530,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				requestParams.copilot = { promptCode };
 			}
 
-			const isReasoningActive = this.assistantButtonManager?.isReasoningActive;
-			if (isReasoningActive)
+			const copilotParams = this.#buildCopilotParams(requestParams.copilot);
+			if (copilotParams)
 			{
-				const copilot = requestParams.copilot ?? {};
-				requestParams.copilot = { ...copilot, reasoning: isReasoningActive };
-			}
-
-			const mcpSelectedAuthId = this.assistantButtonManager?.mcpSelectedAuthId;
-			if (this.dialogHelper?.isAiAssistant && Type.isInteger(mcpSelectedAuthId))
-			{
-				requestParams.aiAssistant = { mcpAuthId: mcpSelectedAuthId };
+				requestParams.copilot = copilotParams;
 			}
 
 			if (Type.isStringFilled(text))
@@ -581,6 +590,43 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				forwardingMessages,
 				requestParams,
 			};
+		}
+
+		/**
+		 * @param {Object|null} currentCopilot
+		 * @return {Object|null}
+		 */
+		#buildCopilotParams(currentCopilot = null)
+		{
+			const manager = this.assistantButtonManager;
+			if (!manager)
+			{
+				return currentCopilot;
+			}
+
+			const copilot = { ...(currentCopilot ?? {}) };
+
+			if (manager.isReasoningActive)
+			{
+				copilot.reasoning = 'Y';
+			}
+
+			if (manager.isSearchModeActive)
+			{
+				copilot.forceSearch = 'Y';
+			}
+
+			if (manager.isAgentModeActive)
+			{
+				copilot.agentMode = 'Y';
+			}
+
+			if (Type.isInteger(manager.mcpSelectedAuthId))
+			{
+				copilot.mcpAuthId = manager.mcpSelectedAuthId;
+			}
+
+			return Object.keys(copilot).length > 0 ? copilot : null;
 		}
 
 		/**
@@ -790,16 +836,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				templateId: message.id,
 			};
 
-			const isReasoningActive = this.assistantButtonManager?.isReasoningActive;
-			if (isReasoningActive)
+			const copilotParams = this.#buildCopilotParams();
+			if (copilotParams)
 			{
-				messageToSend.copilot.reasoning = isReasoningActive;
-			}
-
-			const mcpSelectedAuthId = this.assistantButtonManager?.mcpSelectedAuthId;
-			if (this.dialogHelper?.isAiAssistant && Type.isInteger(mcpSelectedAuthId))
-			{
-				messageToSend.aiAssistant = { mcpAuthId: mcpSelectedAuthId };
+				messageToSend.copilot = copilotParams;
 			}
 
 			if (messageIndex > 0)

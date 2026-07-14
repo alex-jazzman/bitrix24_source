@@ -2,92 +2,74 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Client = this.BX.Mail.Client || {};
-(function (exports,main_core,ui_buttons,ui_system_input,mail_client_dialog_baseDialog) {
+(function (exports, main_core, ui_buttons, ui_system_input, ui_infoHelper, mail_client_dialog_baseDialog) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _sending = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sending");
-	var _renderForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderForm");
-	var _showSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSuccess");
-	var _showRepeat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showRepeat");
-	var _cancelRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelRequest");
-	var _showLimitSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLimitSlider");
-	var _submit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submit");
 	class MailboxConnectionRequest extends mail_client_dialog_baseDialog.BaseDialog {
-	  constructor() {
-	    super({
-	      id: 'mail-mailbox-connection-request',
-	      title: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_POPUP_TITLE'),
-	      width: 430
-	    });
-	    Object.defineProperty(this, _submit, {
-	      value: _submit2
-	    });
-	    Object.defineProperty(this, _cancelRequest, {
-	      value: _cancelRequest2
-	    });
-	    Object.defineProperty(this, _showRepeat, {
-	      value: _showRepeat2
-	    });
-	    Object.defineProperty(this, _showSuccess, {
-	      value: _showSuccess2
-	    });
-	    Object.defineProperty(this, _renderForm, {
-	      value: _renderForm2
-	    });
-	    Object.defineProperty(this, _input, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _sending, {
-	      writable: true,
-	      value: false
-	    });
-	  }
-	  show() {
-	    super.show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderForm)[_renderForm]();
-	  }
-	}
-	function _renderForm2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _input)[_input] = new ui_system_input.Input({
-	    placeholder: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_COMMENT_PLACEHOLDER'),
-	    stretched: true,
-	    dataTestId: 'mail-mailbox-connection-request-comment'
-	  });
-	  this.setContent(main_core.Tag.render(_t || (_t = _`
+		#input = null;
+		#sending = false;
+		constructor() {
+			super({
+				id: 'mail-mailbox-connection-request',
+				title: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_POPUP_TITLE') ?? '',
+				width: 430
+			});
+		}
+		async show() {
+			super.show();
+			let isRepeat = false;
+			try {
+				const response = await this.doBeforeShowContent({
+					showLoader: true,
+					action: () => main_core.ajax.runAction('mail.api.mailboxconnectionrequest.getOwnRequestStatus')
+				});
+				isRepeat = response?.data?.isRepeat ?? false;
+			} catch {
+			}
+			if (!this.getPopup()) {
+				return;
+			}
+			if (isRepeat) {
+				this.#showRepeat();
+			} else {
+				this.#renderForm();
+			}
+		}
+		#renderForm() {
+			this.#input = new ui_system_input.Input({
+				placeholder: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_COMMENT_PLACEHOLDER') ?? '',
+				stretched: true,
+				dataTestId: 'mail-mailbox-connection-request-comment'
+			});
+			this.setContent(main_core.Tag.render`
 			<div class="mail__client_dialog_mailbox-connection-request_form">
 				<div class="mail__client_dialog_base-dialog_content-description">
-					${0}
+					${main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_DESCRIPTION')}
 				</div>
-				${0}
+				${this.#input.render()}
 			</div>
-		`), main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].render()));
-	  this.setActions({
-	    position: mail_client_dialog_baseDialog.ActionPosition.left,
-	    actions: [{
-	      id: 'submit',
-	      text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUBMIT'),
-	      style: ui_buttons.AirButtonStyle.FILLED,
-	      onclick: () => babelHelpers.classPrivateFieldLooseBase(this, _submit)[_submit]()
-	    }, {
-	      text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CANCEL'),
-	      style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
-	      onclick: () => this.close()
-	    }]
-	  });
-	}
-	function _showSuccess2() {
-	  this.setContentAlign(mail_client_dialog_baseDialog.ContentPosition.center);
-	  this.setBodyPadding('24px 0 10px 0');
-	  this.setTitle('');
-	  this.setWidth(430);
-	  this.hideCloseIcon();
-	  this.setContent(main_core.Tag.render(_t2 || (_t2 = _`
+		`);
+			this.setActions({
+				position: mail_client_dialog_baseDialog.ActionPosition.left,
+				actions: [{
+					id: 'submit',
+					text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUBMIT') ?? '',
+					style: ui_buttons.AirButtonStyle.FILLED,
+					onclick: () => this.#submit()
+				}, {
+					text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CANCEL') ?? '',
+					style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+					onclick: () => this.close()
+				}]
+			});
+		}
+		#showSuccess() {
+			this.setContentAlign(mail_client_dialog_baseDialog.ContentPosition.center);
+			this.setBodyPadding('24px 0 10px 0');
+			this.setTitle('');
+			this.setWidth(430);
+			this.hideCloseIcon();
+			this.setContent(main_core.Tag.render`
 			<div class="mail__client_dialog_mailbox-connection-request_success">
 				<video
 					class="mail__client_dialog_mailbox-connection-request_success-video"
@@ -97,25 +79,25 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					playsinline
 				></video>
 				<div class="mail__client_dialog_mailbox-connection-request_success-title">
-					${0}
+					${main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUCCESS_TITLE')}
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUCCESS_TITLE')));
-	  this.setActions({
-	    position: mail_client_dialog_baseDialog.ActionPosition.center,
-	    actions: [{
-	      text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CLOSE'),
-	      style: ui_buttons.AirButtonStyle.OUTLINE_NO_ACCENT,
-	      onclick: () => this.close()
-	    }]
-	  });
-	}
-	function _showRepeat2() {
-	  this.setContentAlign(mail_client_dialog_baseDialog.ContentPosition.center);
-	  this.setBodyPadding('52px 0 18px 0');
-	  this.setTitle('');
-	  this.setWidth(430);
-	  this.setContent(main_core.Tag.render(_t3 || (_t3 = _`
+		`);
+			this.setActions({
+				position: mail_client_dialog_baseDialog.ActionPosition.center,
+				actions: [{
+					text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CLOSE') ?? '',
+					style: ui_buttons.AirButtonStyle.OUTLINE_NO_ACCENT,
+					onclick: () => this.close()
+				}]
+			});
+		}
+		#showRepeat() {
+			this.setContentAlign(mail_client_dialog_baseDialog.ContentPosition.center);
+			this.setBodyPadding('52px 0 18px 0');
+			this.setTitle('');
+			this.setWidth(430);
+			this.setContent(main_core.Tag.render`
 			<div class="mail__client_dialog_mailbox-connection-request_repeat">
 				<video
 					class="mail__client_dialog_mailbox-connection-request_repeat-video"
@@ -126,81 +108,76 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				></video>
 				<div class="mail__client_dialog_mailbox-connection-request_repeat-text">
 					<div class="mail__client_dialog_mailbox-connection-request_repeat-title">
-						${0}
+						${main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUCCESS_TITLE')}
 					</div>
 					<div class="mail__client_dialog_mailbox-connection-request_repeat-description">
-						${0}
+						${main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_ALREADY_SENT')}
 					</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_SUCCESS_TITLE'), main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_ALREADY_SENT')));
-	  this.setActions({
-	    position: mail_client_dialog_baseDialog.ActionPosition.center,
-	    actions: [{
-	      id: 'cancel-request',
-	      text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CANCEL_REQUEST'),
-	      style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
-	      onclick: () => babelHelpers.classPrivateFieldLooseBase(this, _cancelRequest)[_cancelRequest]()
-	    }]
-	  });
+		`);
+			this.setActions({
+				position: mail_client_dialog_baseDialog.ActionPosition.center,
+				actions: [{
+					id: 'cancel-request',
+					text: main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_CANCEL_REQUEST') ?? '',
+					style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+					onclick: () => this.#cancelRequest()
+				}]
+			});
+		}
+		#cancelRequest() {
+			const cancelButton = this.getButton('cancel-request');
+			cancelButton?.setWaiting(true);
+			main_core.ajax.runAction('mail.api.mailboxconnectionrequest.cancelOwnRequest').then(() => {
+				cancelButton?.setWaiting(false);
+				this.close();
+			}).catch(() => {
+				cancelButton?.setWaiting(false);
+			});
+		}
+		static #showLimitSlider() {
+			const promoter = ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+				code: 'limit_contact_center_mail_box_number'
+			});
+			promoter?.show();
+		}
+		#submit() {
+			if (this.#sending) {
+				return;
+			}
+			this.#sending = true;
+			const submitButton = this.getButton('submit');
+			submitButton?.setWaiting(true);
+			const comment = this.#input?.getValue()?.trim() ?? '';
+			main_core.ajax.runAction('mail.api.mailboxconnectionrequest.createRequest', {
+				data: {
+					comment
+				}
+			}).then(response => {
+				this.#sending = false;
+				submitButton?.setWaiting(false);
+				if (response.data.isRepeat) {
+					this.#showRepeat();
+				} else {
+					this.#showSuccess();
+				}
+			}).catch(response => {
+				this.#sending = false;
+				submitButton?.setWaiting(false);
+				const errorCode = response?.errors?.[0]?.code ?? '';
+				if (errorCode === 'MAIL_CONNECTION_REQUEST_LIMIT_EXCEEDED') {
+					this.close();
+					MailboxConnectionRequest.#showLimitSlider();
+					return;
+				}
+				const errorMessage = response?.errors?.[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_ERROR') ?? '';
+				this.#input?.setError(errorMessage);
+			});
+		}
 	}
-	function _cancelRequest2() {
-	  const cancelButton = this.getButton('cancel-request');
-	  cancelButton == null ? void 0 : cancelButton.setWaiting(true);
-	  main_core.ajax.runAction('mail.api.mailboxconnectionrequest.cancelOwnRequest').then(() => {
-	    cancelButton == null ? void 0 : cancelButton.setWaiting(false);
-	    this.close();
-	  }).catch(() => {
-	    cancelButton == null ? void 0 : cancelButton.setWaiting(false);
-	  });
-	}
-	function _showLimitSlider2() {
-	  var _BX$UI, _BX$UI$FeaturePromote;
-	  const promoter = (_BX$UI = BX.UI) == null ? void 0 : (_BX$UI$FeaturePromote = _BX$UI.FeaturePromotersRegistry) == null ? void 0 : _BX$UI$FeaturePromote.getPromoter({
-	    code: 'limit_contact_center_mail_box_number'
-	  });
-	  promoter == null ? void 0 : promoter.show();
-	}
-	function _submit2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _sending)[_sending]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _sending)[_sending] = true;
-	  const submitButton = this.getButton('submit');
-	  submitButton == null ? void 0 : submitButton.setWaiting(true);
-	  const comment = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input]) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.getValue()) == null ? void 0 : _babelHelpers$classPr3.trim()) != null ? _babelHelpers$classPr : '';
-	  main_core.ajax.runAction('mail.api.mailboxconnectionrequest.createRequest', {
-	    data: {
-	      comment
-	    }
-	  }).then(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _sending)[_sending] = false;
-	    submitButton == null ? void 0 : submitButton.setWaiting(false);
-	    if (response.data.isRepeat) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showRepeat)[_showRepeat]();
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showSuccess)[_showSuccess]();
-	    }
-	  }).catch(response => {
-	    var _response$errors$0$co, _response$errors, _response$errors$, _response$errors$0$me, _response$errors2, _response$errors2$, _babelHelpers$classPr4;
-	    babelHelpers.classPrivateFieldLooseBase(this, _sending)[_sending] = false;
-	    submitButton == null ? void 0 : submitButton.setWaiting(false);
-	    const errorCode = (_response$errors$0$co = response == null ? void 0 : (_response$errors = response.errors) == null ? void 0 : (_response$errors$ = _response$errors[0]) == null ? void 0 : _response$errors$.code) != null ? _response$errors$0$co : '';
-	    if (errorCode === 'MAIL_CONNECTION_REQUEST_LIMIT_EXCEEDED') {
-	      this.close();
-	      babelHelpers.classPrivateFieldLooseBase(MailboxConnectionRequest, _showLimitSlider)[_showLimitSlider]();
-	      return;
-	    }
-	    const errorMessage = (_response$errors$0$me = response == null ? void 0 : (_response$errors2 = response.errors) == null ? void 0 : (_response$errors2$ = _response$errors2[0]) == null ? void 0 : _response$errors2$.message) != null ? _response$errors$0$me : main_core.Loc.getMessage('MAIL_MAILBOX_CONNECTION_REQUEST_ERROR');
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input]) == null ? void 0 : _babelHelpers$classPr4.setError(errorMessage);
-	  });
-	}
-	Object.defineProperty(MailboxConnectionRequest, _showLimitSlider, {
-	  value: _showLimitSlider2
-	});
 
 	exports.MailboxConnectionRequest = MailboxConnectionRequest;
 
-}((this.BX.Mail.Client.Dialog = this.BX.Mail.Client.Dialog || {}),BX,BX.UI,BX.UI.System.Input,BX.Mail.Client.Dialog));
+})(this.BX.Mail.Client.Dialog = this.BX.Mail.Client.Dialog || {}, BX, BX.UI, BX.UI.System.Input, BX.UI, BX.Mail.Client.Dialog);
 //# sourceMappingURL=mailbox-connection-request.bundle.js.map

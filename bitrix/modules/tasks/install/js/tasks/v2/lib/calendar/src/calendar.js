@@ -39,6 +39,14 @@ export const calendar = new class
 		return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 	}
 
+	get todyTs(): number
+	{
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		return today.getTime();
+	}
+
 	formatDateTime(timestamp: number, { forceYear, removeOffset }: { forceYear: boolean } = {}): string
 	{
 		if (!timestamp)
@@ -317,12 +325,20 @@ export const calendar = new class
 		return this.#isDateInList(date, nextWeekDays);
 	}
 
+	parseDateTs(dateTime: string): number
+	{
+		const date = new Date(dateTime);
+		date.setHours(0, 0, 0, 0);
+
+		return date.getTime();
+	}
+
 	#isSameCalendarDay(firstDate: Date, secondDate: Date): boolean
 	{
 		return firstDate.getFullYear() === secondDate.getFullYear()
 			&& firstDate.getMonth() === secondDate.getMonth()
 			&& firstDate.getDate() === secondDate.getDate()
-		;
+			;
 	}
 
 	#getWeekStartDate(referenceDate: Date): Date

@@ -46,7 +46,7 @@ export class SubTasksService extends RelationService
 
 		if (parentId === 0 && idUtils.isReal(taskId))
 		{
-			if (idUtils.isTemplate(taskId))
+			if (idUtils.isTemplate(taskId) && !idUtils.isTemplate(currentParentId))
 			{
 				await templateService.update(taskId, { parentId });
 

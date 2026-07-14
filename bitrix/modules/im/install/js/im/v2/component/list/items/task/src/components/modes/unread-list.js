@@ -3,10 +3,10 @@ import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
 import { BaseRecentItem, BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
-import { EventType, RecentType } from 'im.v2.const';
+import { EventType, ParentChatScope, RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { type ImModelRecentItem } from 'im.v2.model';
-import { TaskRecentService, ParentChatScope } from 'im.v2.provider.service.recent';
+import { TaskRecentService } from 'im.v2.provider.service.recent';
 import { UnreadModeManager } from 'im.v2.lib.unread-mode';
 
 import { TaskRecentMenu } from '../../classes/context-menu-manager';
@@ -34,8 +34,8 @@ export const TaskUnreadList = {
 	{
 		this.contextMenuManager = new TaskRecentMenu({ emitter: this.getEmitter() });
 
+		this.clearCollection();
 		await this.loadInitialItems();
-
 		void DraftManager.getInstance().initDraftHistory();
 
 		this.getEmitter().subscribe(EventType.dialog.onCloseChat, this.onCloseChat);
@@ -47,11 +47,18 @@ export const TaskUnreadList = {
 		this.getEmitter().unsubscribe(EventType.dialog.onCloseChat, this.onCloseChat);
 	},
 	methods: {
+		clearCollection()
+		{
+			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.taskComments });
+		},
 		onCloseChat(event: BaseEvent<{ dialogId: string }>)
 		{
 			const { dialogId } = event.getData();
 
-			UnreadModeManager.removeItemFromList(RecentType.taskComments, dialogId);
+			UnreadModeManager.removeItemFromList({
+				recentSections: [RecentType.taskComments],
+				dialogId,
+			});
 		},
 		async loadInitialItems()
 		{
@@ -88,8 +95,6 @@ export const TaskUnreadList = {
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
-				compactMode: false,
-				recentSection: RecentType.taskComments,
 			};
 
 			this.contextMenuManager.openMenu(context, {
@@ -130,7 +135,10 @@ export const TaskUnreadList = {
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #empty-state>
-				<RecentEmptyState :title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE')" />
+				<RecentEmptyState 
+					:title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE_MSGVER_1')"
+					:subtitle="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_SUBTITLE')"
+				/>
 			</template>
 		</BaseRecentList>
 	`,

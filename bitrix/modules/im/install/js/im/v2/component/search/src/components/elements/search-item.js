@@ -6,17 +6,18 @@ import { ChatType } from 'im.v2.const';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 import { highlightText } from 'im.v2.lib.text-highlighter';
 import { Utils } from 'im.v2.lib.utils';
+import { CollabManager } from 'im.v2.lib.collab';
 import { type ImModelChat } from 'im.v2.model';
 
 import '../css/search-item.css';
 
-const ItemTextByChatType = {
-	[ChatType.openChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
-	[ChatType.generalChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
-	[ChatType.channel]: Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
-	[ChatType.collab]: Loc.getMessage('IM_SEARCH_ITEM_COLLAB_TYPE'),
-	[ChatType.taskComments]: Loc.getMessage('IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'),
-	default: Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2'),
+const ItemTextByChatType: Record<string, () => string> = {
+	[ChatType.openChannel]: () => Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+	[ChatType.generalChannel]: () => Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+	[ChatType.channel]: () => Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
+	[ChatType.collab]: () => CollabManager.getSearchItemSubtitleText(),
+	[ChatType.taskComments]: () => Loc.getMessage('IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'),
+	default: () => Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2'),
 };
 
 // @vue/component
@@ -116,7 +117,9 @@ export const SearchItem = {
 		},
 		chatItemText(): string
 		{
-			return ItemTextByChatType[this.dialog.type] ?? ItemTextByChatType.default;
+			const handler = ItemTextByChatType[this.dialog.type] ?? ItemTextByChatType.default;
+
+			return handler();
 		},
 		itemText(): string
 		{

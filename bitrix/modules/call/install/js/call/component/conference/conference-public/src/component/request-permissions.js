@@ -17,7 +17,7 @@ const RequestPermissions = {
 	created()
 	{
 		EventEmitter.subscribe(EventType.conference.requestPermissions, this.onRequestPermissions);
-		this.getApplication().callView.blockButtons(['microphone', 'camera']);
+		this.getApplication().viewPort.blockButtons(['microphone', 'camera']);
 	},
 	beforeDestroy()
 	{
@@ -82,8 +82,8 @@ const RequestPermissions = {
 			{
 				await this.getApplication().initHardware();
 				const devices = await tryGetUserMedia({ video: 'exact' });
-				this.getApplication().callView.showButtons(['camera', 'microphone']);
-				this.getApplication().callView.unblockButtons(devices);
+				this.getApplication().viewPort.showButtons(['camera', 'microphone']);
+				this.getApplication().viewPort.unblockButtons(devices);
 			}
 			catch (error)
 			{

@@ -17,45 +17,6 @@ declare namespace BX.Messenger.v2.Component.List {
 		onClick(event: PointerEvent): void;
 		loc(phraseCode: string): string;
 	}, BX.Vue3.ComponentOptionsMixin, BX.Vue3.ComponentOptionsMixin, {}, string, BX.Vue3.PublicProps, Readonly<{}> & Readonly<{}>, {}, {}, {
-		BIcon: {
-			props: {
-				name: {
-					type: StringConstructor;
-					required: boolean;
-					validator(value: string): boolean;
-				};
-				color: {
-					type: StringConstructor;
-					required: boolean;
-					default: null;
-				};
-				size: {
-					type: NumberConstructor;
-					required: boolean;
-					default: null;
-				};
-				hoverable: {
-					type: BooleanConstructor;
-					default: boolean;
-				};
-				hoverableAlt: {
-					type: BooleanConstructor;
-					default: boolean;
-				};
-				responsive: {
-					type: BooleanConstructor;
-					default: boolean;
-				};
-			};
-			computed: {
-				className(): string[];
-				hoverableClassnameModifier(): string;
-				responsiveClassnameModifier(): string;
-				inlineSize(): string;
-				inlineColor(): string;
-				inlineStyle(): string;
-			};
-			template: string;
-		};
+		BIcon: typeof BX.UI.IconSet.BIcon;
 	}, {}, string, BX.Vue3.ComponentProvideOptions, true, {}, any>;
 }

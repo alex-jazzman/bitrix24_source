@@ -65,6 +65,9 @@ Extension::load([
 	'disk.url-cleaner',
 ]);
 
+$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
+$frameOpenUrl = (new Bitrix\Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
+
 $isSignPlaceholdersEnabled = ($arResult['SIGN_PLACEHOLDERS_ENABLED'] ?? false) === true;
 if ($isSignPlaceholdersEnabled)
 {
@@ -132,54 +135,37 @@ if (!$arResult['EDITOR']['ALLOW_EDIT'])
 	;
 }
 
-$setupSharingButton = Button::create();
-$wayToSharing = [
-	[
-		'id' => 'ext-link',
-		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-			. '<div class="ui-icon-set --share-1"></div>'
-			. '<div> ' . Loc::getMessage("DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1") .' </div>'
-			.'</div>',
-		'dataset' => [
-			'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
-			'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
-		],
-	],
-	[
-		'id' => 'sharing',
-		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
-			. '<div class="ui-icon-set --person-plus-3"></div>'
-			. '<div> ' . Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_2') .' </div>'
-			.'</div>',
-	],
-];
-if (empty($arResult['SHARING_CONTROL_TYPE']))
+$setupSharingButton = null;
+
+if (!empty($arResult['SHARING_CONTROL_TYPE']))
 {
-    unset($wayToSharing[1]);
+	$setupSharingButton = Button::create();
+	$setupSharingButton
+		->setText(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_MSGVER_1'))
+		->addClass('disk-fe-office-header-btn-access-setting')
+		->setSize(Size::SMALL)
+		->setColor(Color::LIGHT_BORDER)
+		->setRound()
+	;
 }
 
-$setupSharingButton
-	->setText(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_MSGVER_1'))
-	->addClass('disk-fe-office-header-btn-access-setting')
-	->setSize(Size::SMALL)
-	->setColor(Color::LIGHT_BORDER)
-	->setRound()
-	->setDropdown(false)
-	->setMenu([
-		'items' => $wayToSharing
-	])
-;
-
-if ($editMode)
+if ($editMode && $setupSharingButton)
 {
 	$setupSharingButton
 		->setColor(Color::PRIMARY)
 	;
 }
 $downloadButton = null;
-if ($arResult['EXTERNAL_LINK_MODE'] && !empty($arParams['LINK_TO_DOWNLOAD']))
+
+$shouldDisableSharingButton = $arResult['SHOULD_DISABLE_SHARING_BUTTON'] || $arResult['EXTERNAL_LINK_MODE'];
+
+if ($shouldDisableSharingButton && $setupSharingButton)
 {
 	$setupSharingButton = null;
+}
+
+if ($shouldDisableSharingButton && !empty($arParams['LINK_TO_DOWNLOAD']))
+{
 	$downloadButton = Button::create();
 	$downloadButton
         ->setTag(Tag::LINK)
@@ -324,4 +310,11 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 	<?php if ($isSignPlaceholdersEnabled): ?>
 	new BX.Sign.V2.B2e.PlaceholdersWidget().show();
 	<?php endif; ?>
+</script>
+<script>
+	BX.Helper.init({
+		frameOpenUrl: '<?=$frameOpenUrl?>',
+		langId: '<?=LANGUAGE_ID?>',
+		isNewHelpdesk: '<?= \Bitrix\Main\Config\Option::get('intranet', 'isNewHelpdesk', 'N') === 'Y' ? 'Y' : 'N' ?>',
+	});
 </script>

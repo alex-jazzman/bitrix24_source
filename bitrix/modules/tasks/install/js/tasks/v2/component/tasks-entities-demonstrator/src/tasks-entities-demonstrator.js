@@ -1,9 +1,10 @@
-import 'main.polyfill.intersectionobserver';
 import { Type } from 'main.core';
-import { TasksPopup } from 'tasks.v2.component.tasks-popup';
-import { TasksEntitiesPicker } from 'tasks.v2.component.tasks-entities-picker';
+import 'main.polyfill.intersectionobserver';
 import { BIcon, Outline, Animated } from 'ui.icon-set.api.vue';
 import { h } from 'ui.vue3';
+
+import { TasksEntitiesPicker } from 'tasks.v2.component.tasks-entities-picker';
+import { TasksPopup } from 'tasks.v2.component.tasks-popup';
 
 import './tasks-entities-demonstrator.css';
 
@@ -192,12 +193,46 @@ export const TasksEntitiesDemonstrator = {
 				this.$emit('open');
 			}
 		},
-		async entitiesList() {
-			await this.$nextTick();
-			this.$refs.entityDemonstratorPopup?.setCoordsForPopup();
+		entitiesList() {
+			this.setPopupPosition();
 		},
 	},
 	methods: {
+		getRectWithOffset(elem): any
+		{
+			const rect = elem.getBoundingClientRect();
+
+			return {
+				top: rect.top + window.pageYOffset,
+				right: rect.right + window.pageXOffset,
+				bottom: rect.bottom + window.pageYOffset,
+				left: rect.left + window.pageXOffset,
+			};
+		},
+		async setPopupPosition(): void
+		{
+			const opener = this.$refs.entityDemonstratorOpener?.$el
+				|| this.$refs.entityDemonstratorOpener;
+
+			const coordsInitial = this.getRectWithOffset(opener);
+
+			await this.$nextTick();
+			this.$refs.entityDemonstratorPopup?.setCoordsForPopup();
+
+			const coordsResult = this.getRectWithOffset(opener);
+
+			const isSameTop = coordsInitial.top === coordsResult.top;
+			const isSameRight = coordsInitial.right === coordsResult.right;
+			const isSameBottom = coordsInitial.bottom === coordsResult.bottom;
+			const isSameLeft = coordsInitial.left === coordsResult.left;
+			const isSameEverything = isSameTop && isSameRight && isSameBottom && isSameLeft;
+			// for example, in case if entities-list expanded and caused scrollbar appearance
+			// and then moved up, but opener rect has been calculated with scrollbar in the first refresh
+			if (!isSameEverything)
+			{
+				this.setPopupPosition();
+			}
+		},
 		handleClickOpener(): void
 		{
 			if (this.optionsFilled.isOpenedOnClick)

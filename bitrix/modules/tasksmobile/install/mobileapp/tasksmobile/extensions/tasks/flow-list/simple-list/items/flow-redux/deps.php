@@ -7,7 +7,7 @@ return [
 		'bottom-sheet',
 		'type',
 		'toast',
-		'loc',
+		'loc/ai',
 		'error',
 		'require-lazy',
 		'utils/date',

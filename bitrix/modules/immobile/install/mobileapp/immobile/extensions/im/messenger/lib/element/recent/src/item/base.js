@@ -176,13 +176,18 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		initParams(modelItem, options)
 		{
 			const dialog = this.getDialogById(modelItem.id);
-			const counter = serviceLocator.get('core').getStore().getters['counterModel/getCounterByChatId'](dialog?.chatId);
+			const store = serviceLocator.get('core').getStore();
+			const counterState = store.getters['counterModel/getByChatId'](dialog?.chatId);
+			const counter = counterState?.counter ?? 0;
+			const anchors = store.getters['anchorModel/getByChatId'](dialog?.chatId);
 
 			this.params = {
 				model: {
 					recent: modelItem,
 					dialog,
 					counter,
+					counterState,
+					anchors,
 				},
 				options,
 				id: modelItem.id,
@@ -191,6 +196,22 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			};
 
 			return this;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasMention()
+		{
+			return this.params.model.anchors.some((anchor) => anchor.type === AnchorType.mention);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasReaction()
+		{
+			return this.params.model.anchors.some((anchor) => anchor.type === AnchorType.reaction);
 		}
 
 		/**
@@ -357,13 +378,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 			if (dialog)
 			{
-				const chatId = dialog.chatId;
-				const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
-					chatId,
-					AnchorType.mention,
-				);
-
-				this.messageCount = (counter === 1 && hasMentions) ? 0 : counter;
+				this.messageCount = (counter === 1 && this.hasMention()) ? 0 : counter;
 			}
 
 			return this;
@@ -374,7 +389,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createUnread()
 		{
-			this.unread = this.getModelItem().unread;
+			this.unread = this.getModelItem().unread === true || this.getCounterState()?.isMarkedAsUnread === true;
 
 			return this;
 		}
@@ -553,13 +568,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			let sizeMultiplier = 0.7;
 			let tintColor = '';
 
-			const chatId = this.getDialogItem()?.chatId;
-			const liked = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
-				chatId,
-				AnchorType.reaction,
-			);
-
-			if (liked && !Feature.isRecentLikeAvailable)
+			if (this.hasReaction() && !Feature.isRecentLikeAvailable)
 			{
 				url = this.getImageUrlByFileName('status_reaction.png');
 				name = Icon.HEART.getIconName();
@@ -633,14 +642,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		createMentionStyle()
 		{
-			const chatId = this.getDialogItem()?.chatId;
-
-			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
-				chatId,
-				AnchorType.mention,
-			);
-
-			if (hasMention)
+			if (this.hasMention())
 			{
 				this.styles.mentions = {
 					backgroundColor: Color.accentMainPrimary.toHex(),
@@ -659,11 +661,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const dialog = this.getDialogItem();
 			const counter = dialog?.counter ?? 0;
-			const chatId = dialog?.chatId;
-			const liked = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.reaction);
-			const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.mention);
 
-			if (!liked || (counter > 1 && hasMentions))
+			if (!this.hasReaction() || (counter > 1 && this.hasMention()))
 			{
 				return false;
 			}
@@ -836,6 +835,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @return {?CounterModelState}
+		 */
+		getCounterState()
+		{
+			return this.params.model.counterState;
+		}
+
+		/**
 		 * @param {RecentModelState} [item=this.getModelItem()]
 		 * @return {string}
 		 */
@@ -857,12 +864,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				});
 			}
 
-			const isBuilderMessage = modelMessage.builder && modelMessage.builder.blocks;
-			if (isBuilderMessage && !Type.isStringFilled(modelMessage.text))
+			const isBlockMessage = modelMessage.block && modelMessage.block.elements;
+			if (isBlockMessage && !Type.isStringFilled(modelMessage.text))
 			{
-				return parser.simplify({
-					text: modelMessage.builder?.description,
-				});
+				return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_ATTACH')}]`;
 			}
 
 			const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
@@ -933,7 +938,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const item = this.getModelItem();
 			const counter = this.getCounter();
 
-			return (item.unread === true || counter > 0) ? ReadAction : UnreadAction;
+			return (item.unread === true || this.unread === true || counter > 0) ? ReadAction : UnreadAction;
 		}
 
 		/**

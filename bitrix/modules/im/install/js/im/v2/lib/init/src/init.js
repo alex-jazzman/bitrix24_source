@@ -133,6 +133,7 @@ export class InitManager
 	{
 		const { copilot } = Core.getApplicationData();
 		void Core.getStore().dispatch('copilot/setName', copilot.botName);
+		void Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
 
 		if (!copilot.availableEngines)
 		{

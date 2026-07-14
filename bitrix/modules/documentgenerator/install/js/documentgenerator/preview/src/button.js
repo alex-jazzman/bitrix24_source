@@ -174,7 +174,7 @@ export class Button
 			{
 				const url = BX.util.add_url_param(this.documentUrl, {
 					templateId: parseInt(response.data.templates[i].id, 10),
-					providerClassName: this.provider.replaceAll('\\', '\\\\'),
+					providerClassName: this.provider,
 					value: this.value,
 					analyticsLabel: 'generateDocument',
 					templateCode: response.data.templates[i].code,
@@ -187,7 +187,9 @@ export class Button
 				this.links.templates[i] = {
 					text: Text.encode(response.data.templates[i].name),
 					title: Text.encode(response.data.templates[i].name),
-					onclick: `BX.DocumentGenerator.Document.onBeforeCreate('${url}',${JSON.stringify(docParams)},'${this.loaderPath}','${this.moduleId}')`,
+					onclick: () => {
+						BX.DocumentGenerator.Document.onBeforeCreate(url, docParams, this.loaderPath, this.moduleId);
+					},
 				};
 			}
 		}
@@ -195,7 +197,7 @@ export class Button
 		if (response.data.documentList && this.documentUrl)
 		{
 			this.links.documentList = BX.util.add_url_param(response.data.documentList, {
-				provider: this.provider.replaceAll('\\', '\\\\'),
+				provider: this.provider,
 				module: this.moduleId,
 				value: this.value,
 				viewUrl: this.documentUrl,
@@ -240,7 +242,9 @@ export class Button
 			}
 			result[result.length] = {
 				text: this.documentsText,
-				onclick: `BX.DocumentGenerator.openUrl('${this.links.documentList}', null, 1060)`,
+				onclick: () => {
+					BX.DocumentGenerator.openUrl(this.links.documentList, null, 1060);
+				},
 			};
 		}
 
@@ -254,7 +258,9 @@ export class Button
 			}
 			result[result.length] = {
 				text: this.templatesText,
-				onclick: `BX.DocumentGenerator.openUrl('${this.links.templateList}', null, 1060)`,
+				onclick: () => {
+					BX.DocumentGenerator.openUrl(this.links.templateList, null, 1060);
+				},
 			};
 		}
 

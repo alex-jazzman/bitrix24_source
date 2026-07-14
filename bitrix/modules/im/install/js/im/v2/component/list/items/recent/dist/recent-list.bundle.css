@@ -1,0 +1,62 @@
+.bx-im-list-recent-empty-state-v2__container {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 40px;
+}
+
+.bx-im-list-recent-empty-state-v2__image {
+	width: 212px;
+	height: 212px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin-bottom: 6px;
+}
+
+.bx-im-list-recent-empty-state-v2__image.--tasksTask {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/tasks.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--calendar {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/calendar.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--openChannel {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/channel.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--collabChat {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/collab.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--collab {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/collab.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--copilot {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/copilot.png");
+}
+
+.bx-im-list-recent-empty-state-v2__image.--default {
+	background-image: url("images/im.v2.component.list.items.elements.empty-state-v2/default.png");
+}
+
+.bx-im-list-recent-empty-state-v2__title {
+	margin-bottom: 6px;
+	font-size: 19px;
+	line-height: 26px;
+	font-weight: 500;
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-list-recent-empty-state-v2__subtitle {
+	margin-bottom: 34px;
+	width: 291px;
+	text-align: center;
+	font-size: 16px;
+	line-height: 21px;
+	font-weight: 400;
+	color: var(--ui-color-base-2);
+}

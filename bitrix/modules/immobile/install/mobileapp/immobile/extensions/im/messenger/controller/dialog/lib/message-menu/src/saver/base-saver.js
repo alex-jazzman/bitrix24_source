@@ -80,7 +80,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 		 */
 		getFiles()
 		{
-			return this.messageHelper.files;
+			const files = this.messageHelper.files;
+			if (files.length > 0)
+			{
+				return files;
+			}
+
+			return this.messageHelper.getBlockMediaFiles();
 		}
 
 		showSuccessSaveToast()

@@ -4,7 +4,7 @@
  */
 jn.define('im/messenger/model/recent/filter/model', (require, exports, module) => {
 	const { Type } = require('type');
-	const { NavigationTabId, RecentFilterId } = require('im/messenger/const');
+	const { NavigationTabId, RecentFilterId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 
 	const { normalize } = require('im/messenger/model/recent/filter/normalizer');
 	const { recentFilterDefaultElement } = require('im/messenger/model/recent/filter/default-element');
@@ -17,8 +17,10 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 		namespaced: true,
 		state: () => ({
 			collection: {
-				[NavigationTabId.chats]: createDefaultTabElement(),
-				[NavigationTabId.task]: createDefaultTabElement(),
+				[ROOT_PARENT_CHAT_ID]: {
+					[NavigationTabId.chats]: createDefaultTabElement(),
+					[NavigationTabId.task]: createDefaultTabElement(),
+				},
 			},
 		}),
 		getters: {
@@ -26,60 +28,64 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 * @function recentModel/recentFilteredModel/hasNavigationTabId
 			 * @return {boolean}
 			 */
-			hasNavigationTabId: (state) => (tabId) => {
-				return tabId in state.collection;
+			hasNavigationTabId: (state) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				return Boolean(state.collection[parentChatId]?.[tabId]);
 			},
 
 			/**
 			 * @function recentModel/recentFilteredModel/getCurrentFilterId
 			 * @return {FilterId}
 			 */
-			getCurrentFilterId: (state) => (tabId) => {
-				if (!(tabId in state.collection))
+			getCurrentFilterId: (state) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				const element = state.collection[parentChatId]?.[tabId];
+				if (!element)
 				{
 					return null;
 				}
 
-				return state.collection[tabId].currentFilterId;
+				return element.currentFilterId;
 			},
 
 			/**
 			 * @function recentModel/recentFilteredModel/hasSelectedFilter
 			 * @return {boolean}
 			 */
-			hasSelectedFilter: (state) => (tabId) => {
-				if (!(tabId in state.collection))
+			hasSelectedFilter: (state) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				const element = state.collection[parentChatId]?.[tabId];
+				if (!element)
 				{
 					return false;
 				}
 
-				return state.collection[tabId].currentFilterId !== RecentFilterId.all;
+				return element.currentFilterId !== RecentFilterId.all;
 			},
 
 			/**
 			 * @function recentModel/recentFilteredModel/getIdCollection
 			 * @return {Set<string>}
 			 */
-			getIdCollection: (state) => (tabId) => {
-				if (!(tabId in state.collection))
+			getIdCollection: (state) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				const element = state.collection[parentChatId]?.[tabId];
+				if (!element)
 				{
 					return new Set();
 				}
 
-				return state.collection[tabId].idCollection;
+				return element.idCollection;
 			},
 
 			/**
 			 * @function recentModel/recentFilteredModel/hasItem
 			 * @return {boolean}
 			 */
-			hasItem: (state) => (itemId, tabId) => {
-				if (!(tabId in state.collection))
+			hasItem: (state) => (itemId, tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+				const element = state.collection[parentChatId]?.[tabId];
+				if (!element)
 				{
 					return false;
 				}
 
-				return state.collection[tabId].idCollection.has(itemId);
+				return element.idCollection.has(itemId);
 			},
 		},
 		actions: {
@@ -88,7 +94,7 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 * @param {RecentFilteredModelActionParams['recentModel/recentFilteredModel/setCurrentFilter']} payload
 			 */
 			setCurrentFilter: (store, payload) => {
-				const { tabId, filterId } = payload;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID, filterId } = payload;
 
 				if (!Type.isStringFilled(tabId) || !Type.isStringFilled(filterId))
 				{
@@ -101,6 +107,7 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 					actionName: 'setCurrentFilter',
 					data: {
 						tabId,
+						parentChatId,
 						filterId,
 					},
 				});
@@ -120,10 +127,12 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 					return;
 				}
 
+				const parentChatId = normalized.parentChatId ?? ROOT_PARENT_CHAT_ID;
 				store.commit('setIdCollection', {
 					actionName: 'setIdCollection',
 					data: {
 						tabId: normalized.tabId,
+						parentChatId,
 						itemIds: normalized.itemIds,
 					},
 				});
@@ -134,7 +143,7 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 * @param {RecentFilteredModelActionParams['recentModel/recentFilteredModel/clearIdCollection']} payload
 			 */
 			clearIdCollection: (store, payload) => {
-				const { tabId } = payload;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID } = payload;
 
 				if (!Type.isStringFilled(tabId))
 				{
@@ -147,6 +156,7 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 					actionName: 'clearIdCollection',
 					data: {
 						tabId,
+						parentChatId,
 					},
 				});
 			},
@@ -161,14 +171,14 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 */
 			setCurrentFilter: (state, payload) => {
 				logger.log('setCurrentFilter mutation', payload);
-				const { tabId, filterId } = payload.data;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID, filterId } = payload.data;
 
 				if (!Type.isStringFilled(tabId) || !Type.isStringFilled(filterId))
 				{
 					return;
 				}
 
-				ensureTabElement(state.collection, tabId).currentFilterId = filterId;
+				ensureTabElement(state.collection, tabId, parentChatId).currentFilterId = filterId;
 			},
 
 			/**
@@ -180,14 +190,14 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 */
 			setIdCollection: (state, payload) => {
 				logger.log('setIdCollection mutation', payload);
-				const { tabId, itemIds } = payload.data;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID, itemIds } = payload.data;
 
 				if (!Type.isStringFilled(tabId) || !Type.isArray(itemIds))
 				{
 					return;
 				}
 
-				ensureTabElement(state.collection, tabId).idCollection = new Set(itemIds);
+				ensureTabElement(state.collection, tabId, parentChatId).idCollection = new Set(itemIds);
 			},
 
 			/**
@@ -199,14 +209,14 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 			 */
 			clearIdCollection: (state, payload) => {
 				logger.log('clearIdCollection mutation', payload);
-				const { tabId } = payload.data;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID } = payload.data;
 
 				if (!Type.isStringFilled(tabId))
 				{
 					return;
 				}
 
-				ensureTabElement(state.collection, tabId).idCollection = new Set();
+				ensureTabElement(state.collection, tabId, parentChatId).idCollection = new Set();
 			},
 		},
 	};
@@ -223,18 +233,24 @@ jn.define('im/messenger/model/recent/filter/model', (require, exports, module) =
 	}
 
 	/**
-	 * @param {Record<string, RecentFilterElement>} collection
+	 * @param {object} collection
 	 * @param {string} tabId
+	 * @param {number} [parentChatId]
 	 * @returns {RecentFilterElement}
 	 */
-	function ensureTabElement(collection, tabId)
+	function ensureTabElement(collection, tabId, parentChatId = ROOT_PARENT_CHAT_ID)
 	{
-		if (!(tabId in collection))
+		if (!collection[parentChatId])
 		{
-			collection[tabId] = createDefaultTabElement();
+			collection[parentChatId] = {};
 		}
 
-		return collection[tabId];
+		if (!collection[parentChatId][tabId])
+		{
+			collection[parentChatId][tabId] = createDefaultTabElement();
+		}
+
+		return collection[parentChatId][tabId];
 	}
 
 	module.exports = { recentFilteredModel };

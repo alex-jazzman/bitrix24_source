@@ -584,7 +584,6 @@ export class IncomingNotificationContent extends EventEmitter
 		if (!this.hasCamera)
 		{
 			this.cameraState = false;
-			this.microphoneState = true;
 		}
 
 		if (DesktopApi.isDesktop())

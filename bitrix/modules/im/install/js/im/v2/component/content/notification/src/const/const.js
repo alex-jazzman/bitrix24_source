@@ -27,6 +27,10 @@ export const CrmNotificationIconTitleClass = Object.freeze({
 	invoice: '--o-invoice',
 });
 
+export const MailNotificationIconTitleClass = Object.freeze({
+	mail: '--o-mail',
+});
+
 export const SonetNotificationIconTitleClass = Object.freeze({
 	newsfeed: '--o-newsfeed',
 	wiki: '--wiki',

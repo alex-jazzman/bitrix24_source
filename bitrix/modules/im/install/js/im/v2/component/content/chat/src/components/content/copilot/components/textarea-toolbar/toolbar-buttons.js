@@ -5,6 +5,7 @@ import { ModeButton } from './components/mode-button';
 import { ReasoningButton } from './components/reasoning-button';
 import { CopilotMcpIntegration } from './components/copilot-mcp-integration';
 import { SearchButton } from './components/search-button';
+import { AgentModeButton } from '../agent-mode-button';
 
 import '../../css/toolbar-buttons.css';
 
@@ -20,7 +21,7 @@ const DEFAULT_EXPANDED = ButtonKey.search;
 // @vue/component
 export const ToolbarButtons = {
 	name: 'ToolbarButtons',
-	components: { ModeButton, ReasoningButton, CopilotMcpIntegration, SearchButton },
+	components: { ModeButton, ReasoningButton, CopilotMcpIntegration, SearchButton, AgentModeButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -63,6 +64,10 @@ export const ToolbarButtons = {
 		isSearchAvailable(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isCopilotForceSearchAvailable);
+		},
+		isAgentModeAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAiAssistantAgentModeAvailable);
 		},
 		isReasoningEnabled(): boolean
 		{
@@ -116,6 +121,10 @@ export const ToolbarButtons = {
 				v-if="isSearchAvailable"
 				:dialogId="dialogId"
 				:isExpanded="isSearchExpanded"
+			/>
+			<AgentModeButton
+				v-if="isAgentModeAvailable"
+				:dialogId="dialogId"
 			/>
 		</div>
 	`,

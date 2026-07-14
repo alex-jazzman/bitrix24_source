@@ -1,17 +1,17 @@
 import { Event, Runtime, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import type { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
 import { EventName, Model, Endpoint } from 'tasks.v2.const';
 import { apiClient } from 'tasks.v2.lib.api-client';
-import { taskService, TaskMappers } from 'tasks.v2.provider.service.task-service';
+import { taskService, TaskMappers, type TagDto, type TaskDto } from 'tasks.v2.provider.service.task-service';
 import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
+import { fileService } from 'tasks.v2.provider.service.file-service';
 import { subTasksService } from 'tasks.v2.provider.service.relation-service';
 import { userFieldsManager } from 'tasks.v2.component.fields.user-fields';
-import type { TagDto, TaskDto } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { mapRights } from './mappers';
 import { permissionBuilder } from './mappers/permission-builder';
@@ -276,6 +276,11 @@ export const templateService = new class
 			data.templateId = 0;
 
 			await taskService.onAfterTaskAdded(task, data);
+
+			if (Type.isArrayFilled(data.files))
+			{
+				fileService.get(data.id).loadFilesFromData(data.files);
+			}
 
 			return [data.id, null];
 		}

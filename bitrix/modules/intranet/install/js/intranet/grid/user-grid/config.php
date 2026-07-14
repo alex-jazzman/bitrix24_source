@@ -21,8 +21,11 @@ return [
 		'ui.dialogs.messagebox',
 		'ui.entity-selector',
 		'ui.form-elements.field',
+		'ui.hint',
+		'ui.icon-set.api.core',
 		'ui.icon-set.main',
 		'ui.label',
+		'ui.system.chip',
 	],
 	'settings' => [
 		'isRenamedIntegrator' => \Bitrix\Intranet\Public\Service\IntegratorService::createByDefault()->isRenamedIntegrator() ? 'Y' : 'N',

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, planner, ui_designTokens, ui_fontawesome4, ui_fonts_opensans, im_integration_viewer, im_v2_component_list_navigator, im_v2_component_content_openlines, im_v2_const, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_bulkActions, im_v2_lib_counter, im_v2_lib_desktop, im_v2_lib_escManager, im_v2_lib_init, im_v2_lib_layout, im_v2_lib_logger, im_v2_lib_theme, im_v2_component_desktop_modeSelectionBanner, im_v2_lib_analytics, im_v2_lib_desktopApi, im_v2_lib_promo, im_v2_component_content_chat, im_v2_component_content_chatForms_forms, im_v2_component_content_market, im_v2_component_content_notification, im_v2_component_content_openlinesV2, im_v2_component_content_settings, im_v2_component_list_container_channel, im_v2_component_list_container_collab, im_v2_component_list_container_copilot, im_v2_component_list_container_openline, im_v2_component_list_container_recent, im_v2_component_list_container_task) {
+(function (exports, planner, ui_designTokens, ui_fontawesome4, ui_fonts_opensans, im_integration_viewer, im_v2_component_list_navigator, im_v2_component_content_openlines, im_v2_const, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_bulkActions, im_v2_lib_counter, im_v2_lib_desktop, im_v2_lib_escManager, im_v2_lib_init, im_v2_lib_layout, im_v2_lib_logger, im_v2_lib_theme, im_v2_component_desktop_modeSelectionBanner, im_v2_lib_analytics, im_v2_lib_desktopApi, im_v2_lib_promo, im_v2_component_content_chat, im_v2_component_content_chatForms_forms, im_v2_component_content_market, im_v2_component_content_notification, im_v2_component_content_openlinesV2, im_v2_component_content_settings, im_v2_component_list_container_channel, im_v2_component_list_container_collab, im_v2_component_list_container_aiAssistant, im_v2_component_list_container_openline, im_v2_component_list_container_recent, im_v2_component_list_container_task) {
 	'use strict';
 
 	// @vue/component
@@ -52,6 +52,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			list: im_v2_component_list_container_recent.RecentListContainer,
 			content: im_v2_component_content_chatForms_forms.UpdateChatContent
 		},
+		[im_v2_const.Layout.copyCollab]: {
+			list: im_v2_component_list_container_recent.RecentListContainer,
+			content: im_v2_component_content_chatForms_forms.CollabV2CopyContent
+		},
 		[im_v2_const.Layout.channel]: {
 			list: im_v2_component_list_container_channel.ChannelListContainer,
 			content: im_v2_component_content_chat.ChatContent
@@ -75,7 +79,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			content: im_v2_component_content_settings.SettingsContent
 		},
 		[im_v2_const.Layout.copilot]: {
-			list: im_v2_component_list_container_copilot.CopilotListContainer,
+			list: im_v2_component_list_container_aiAssistant.AiAssistantListContainer,
 			content: im_v2_component_content_chat.ChatContent
 		},
 		[im_v2_const.Layout.collab]: {

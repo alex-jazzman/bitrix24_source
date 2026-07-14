@@ -49,25 +49,25 @@ if ($arResult['GROUP_PERMS']['UserCanModifyGroup'])
 }
 
 ?><div class="<?= implode(' ', $classList)?>">
-	<?php
+<?php
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:socialnetwork.interface.counters',
-		'',
-		[
-			'ENTITY_TYPE' => CounterDictionary::ENTITY_WORKGROUP_DETAIL,
-			'ENTITY_ID' => (int)$arParams['GROUP_ID'],
-			'GRID_ID' => $arResult['GRID_ID'],
-			'COUNTERS' => [
-				CounterDictionary::COUNTER_WORKGROUP_REQUESTS_OUT,
-				CounterDictionary::COUNTER_WORKGROUP_REQUESTS_IN,
-			],
-			'CURRENT_COUNTER' => $arResult['CURRENT_COUNTER'],
-			'ROLE' => $arResult['GROUP_PERMS']['UserRole'],
+$APPLICATION->IncludeComponent(
+	'bitrix:socialnetwork.interface.counters',
+	'',
+	[
+		'ENTITY_TYPE' => CounterDictionary::ENTITY_WORKGROUP_DETAIL,
+		'ENTITY_ID' => (int)$arParams['GROUP_ID'],
+		'GRID_ID' => $arResult['GRID_ID'],
+		'COUNTERS' => [
+			CounterDictionary::COUNTER_WORKGROUP_REQUESTS_OUT,
+			CounterDictionary::COUNTER_WORKGROUP_REQUESTS_IN,
 		],
-		$component
-	);
-	?>
+		'CURRENT_COUNTER' => $arResult['CURRENT_COUNTER'],
+		'ROLE' => $arResult['GROUP_PERMS']['UserRole'],
+	],
+	$component
+);
+?>
 </div><?php
 
 if ((SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air') && $arParams['INCLUDE_COUNTERS_BELOW_TITLE'])

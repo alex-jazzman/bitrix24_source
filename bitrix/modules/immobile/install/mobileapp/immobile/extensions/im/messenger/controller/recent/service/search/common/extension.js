@@ -2,13 +2,23 @@
  * @module im/messenger/controller/recent/service/search/common
  */
 jn.define('im/messenger/controller/recent/service/search/common', (require, exports, module) => {
-	const { ChatSearchSelector } = require('im/messenger/lib/chat-search');
+	const { Type } = require('type');
+	const {
+		ChatSearchSelector,
+		ChatSearchProvider,
+		ChatSearchConfig,
+		RecentSectionLocalSearchStrategy,
+		UserLocalSearchStrategy,
+		CompositeLocalSearchStrategy,
+		DefaultServerSearchStrategy,
+	} = require('im/messenger/lib/chat-search');
 	const { EventType } = require('im/messenger/const');
 
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
 
 	/**
 	 * @implements {ISearchService}
+	 * @extends {BaseUiRecentService<CommonSearchServiceProps>}
 	 * @class CommonSearchService
 	 */
 	class CommonSearchService extends BaseUiRecentService
@@ -27,12 +37,58 @@ jn.define('im/messenger/controller/recent/service/search/common', (require, expo
 
 			this.ui = ui;
 			this.searchSelector = new ChatSearchSelector(ui, {
-				filter: this.props.filter,
-				recentTab: this.props.recentTab,
+				provider: this.#createSearchProvider(),
 				sections: this.props.sections,
 			});
 
 			this.subscribeEvents(ui);
+		}
+
+		/**
+		 * @private
+		 * @return {ChatSearchProvider}
+		 */
+		#createSearchProvider()
+		{
+			return new ChatSearchProvider({
+				localStrategy: this.#createLocalStrategy(),
+				serverStrategy: new DefaultServerSearchStrategy({
+					config: new ChatSearchConfig(this.#resolveParentChatId()),
+					recentTab: this.props.recentTab,
+				}),
+			});
+		}
+
+		/**
+		 * @private
+		 * @return {LocalSearchStrategy}
+		 */
+		#createLocalStrategy()
+		{
+			const recentStrategy = new RecentSectionLocalSearchStrategy({
+				section: this.props.recentTab,
+				parentChatId: this.#resolveParentChatId(),
+			});
+
+			if (!this.props.searchUsers)
+			{
+				return recentStrategy;
+			}
+
+			return new CompositeLocalSearchStrategy({
+				strategies: [recentStrategy, new UserLocalSearchStrategy()],
+			});
+		}
+
+		/**
+		 * @private
+		 * @return {number | null}
+		 */
+		#resolveParentChatId()
+		{
+			return Type.isUndefined(this.props.parentId)
+				? this.recentLocator.get('parentChatId')
+				: this.props.parentId;
 		}
 
 		async openSearch()

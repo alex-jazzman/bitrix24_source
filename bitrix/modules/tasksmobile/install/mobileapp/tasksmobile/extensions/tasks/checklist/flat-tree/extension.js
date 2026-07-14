@@ -57,6 +57,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				items = [],
 				number = 0,
 				autoCompleteItem,
+				userId,
+				taskId,
+				hideCompleted,
 			} = params;
 
 			const checklistNumber = number >= 1 ? number + 1 : '';
@@ -76,6 +79,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			const flatCheckList = new CheckListFlatTree({
 				checklist: rootItem,
 				autoCompleteItem,
+				userId,
+				taskId,
+				hideCompleted,
 			});
 
 			if (addBlankItem)

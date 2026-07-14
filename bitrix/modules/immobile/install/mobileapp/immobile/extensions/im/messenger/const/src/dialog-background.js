@@ -7,6 +7,7 @@ jn.define('im/messenger/const/dialog-background', (require, exports, module) => 
 		aiAssistant: 'aiAssistant',
 		copilot: 'copilot',
 		collab: 'collab',
+		collabWithoutCollaber: 'collabWithoutCollaber'
 	});
 
 	module.exports = {

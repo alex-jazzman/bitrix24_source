@@ -1,0 +1,6 @@
+.sonet--project-wizard--user-selector-wrapper {
+	padding: 8px 12px;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-md);
+	min-height: 32px;
+}

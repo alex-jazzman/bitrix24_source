@@ -11,4 +11,5 @@ Date: #DATE#
 [url=#LINK#]View email[/url]
 ";
 $MESS["MAIL_SECRETARY_CREATE_CHAT_LOCK_ERROR"] = "Error creating chat. Please try again.";
+$MESS["MAIL_SECRETARY_MODULE_NOT_INSTALLED"] = "Install the required modules.";
 $MESS["MAIL_SECRETARY_POST_MESSAGE_CALENDAR_EVENT"] = "Created based on [url=#LINK#]email message[/url]";

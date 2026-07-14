@@ -7,6 +7,7 @@ import { ActionByRole, ChatType, EventType, UserType, type ApplicationContext } 
 import { showKickUserConfirm } from 'im.v2.lib.confirm';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
+import { CollabManager } from 'im.v2.lib.collab';
 import { type ImModelUser, type ImModelChat } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -119,7 +120,7 @@ export class UserMenu extends BaseMenu
 	{
 		if (this.isCollabChat())
 		{
-			return Loc.getMessage('IM_LIB_MENU_USER_KICK_FROM_COLLAB');
+			return CollabManager.getKickUserText();
 		}
 
 		return Loc.getMessage('IM_LIB_MENU_USER_KICK_FROM_CHAT');

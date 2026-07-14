@@ -356,13 +356,13 @@
 					));
 			}
 
-			if (aiOutcome.version === 2)
+			if (aiOutcome.version >= 2)
 			{
 				const efficiency = aiOutcome.evaluation;
 				return Object.entries(efficiency ?? {})
 					.filter(([key, value]) => key !== 'efficiencyValue')
 					.map(([key, item]) => (
-						this.renderCheckRow(item.value, item.title)
+						item.title ? this.renderCheckRow(item.value, item.title) : null
 					));
 			}
 
@@ -428,7 +428,47 @@
 			});
 		}
 
-		renderSummary(agreements, tasks, meetings)
+		renderSummary(agreements, tasks, meetings, actionItems)
+		{
+			const hasContent = agreements || tasks || meetings || actionItems;
+
+			return View(
+				{
+					style: {
+						...styles.container,
+					},
+					ref: (ref) => {
+						this.summaryBlockRef = ref;
+						this.tabs.set(BX.message('CALL_COMPONENT_AGREEMENTS'), {
+							...this.tabs.get(BX.message('CALL_COMPONENT_AGREEMENTS')),
+							ref: this.summaryBlockRef
+						});
+					},
+					onLayout: (params) => {
+						this.positions['agreements'] = { y: params.y, height: params.height };
+					},
+				},
+				this.renderTitle(BX.message('CALL_COMPONENT_AGREEMENTS')),
+				hasContent ? this.renderSummaryContent(agreements, tasks, meetings, actionItems) : this.renderEmptyState()
+			);
+		}
+
+		renderEmptyState()
+		{
+			return View(
+				{
+					style: {
+						marginTop: 18,
+					}
+				},
+				BBCodeText({
+					style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400' },
+					value: BX.message('CALL_COMPONENT_EMPTY_AGREEMENTS'),
+				})
+			);
+		}
+
+		renderSummaryContent(agreements, tasks, meetings, actionItems)
 		{
 			const agreementsViews = agreements?.map((item, index) => (
 				BBCodeText({
@@ -437,13 +477,14 @@
 					value: `${index + 1}. ${item.agreement}`,
 				})
 			));
+
 			const tasksViews = tasks?.map((item, index) => (
 				View(
 					{},
 					BBCodeText({
 						onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
 						style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 12 },
-						value: `${index + 1}. ${item.task}`,
+						value: `${index + 1}. ${item.taskMentionLess}`,
 					}),
 					View(
 						{
@@ -452,7 +493,36 @@
 						Button({
 							testId: 'Button',
 							onClick: () => {
-								Entry.openTaskCreation({ title: item.task });
+								Entry.openTaskCreation({ title: item.taskMentionLess });
+							},
+							disabled: false,
+							text: BX.message('CALL_COMPONENT_TASK_CREATE'),
+							leftIcon: Icon.PLUS,
+							size: ButtonSize.M,
+							design: ButtonDesign.OUTLINE_ACCENT_2,
+							ellipsize: Ellipsize.END,
+							onDisabledClick: this.onDisabledClick,
+						}),
+					),
+				)
+			));
+
+			const actionItemsViews = actionItems?.map((item, index) => (
+				View(
+					{},
+					BBCodeText({
+						onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+						style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 12 },
+						value: `${index + 1}. ${item.actionItemMentionLess}`,
+					}),
+					View(
+						{
+							style: { marginTop: 14 }
+						},
+						Button({
+							testId: 'Button',
+							onClick: () => {
+								Entry.openTaskCreation({ title: item.actionItemMentionLess });
 							},
 							disabled: false,
 							text: BX.message('CALL_COMPONENT_TASK_CREATE'),
@@ -494,93 +564,59 @@
 			));
 
 			return View(
+				{},
+				this.renderSectionWithBar(
+					'#1F86FF',
+					agreements,
+					BX.message('CALL_COMPONENT_AGREEMENTS_COMMON'),
+					agreementsViews,
+				),
+				this.renderSectionWithBar(
+					'#1BCE7B',
+					tasks || actionItems,
+					BX.message('CALL_COMPONENT_AGREEMENTS_TASKS'),
+					tasksViews || actionItemsViews,
+				),
+				this.renderSectionWithBar(
+					'#1BCE7B',
+					meetings,
+					BX.message('CALL_COMPONENT_AGREEMENTS_MEETINGS'),
+					meetingsViews,
+				),
+			);
+		}
+
+		renderSectionWithBar(color, data, subtitle, views)
+		{
+			if (!data)
+			{
+				return null;
+			}
+
+			return View(
 				{
 					style: {
-						...styles.container,
-					},
-					ref: (ref) =>{
-						this.summaryBlockRef = ref;
-						this.tabs.set(BX.message('CALL_COMPONENT_AGREEMENTS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_AGREEMENTS')), ref: this.summaryBlockRef });
-					},
-					onLayout: (params) => {
-						this.positions['agreements'] = { y: params.y, height: params.height };
-					},
+						display: 'flex',
+						flexDirection: 'row',
+						marginTop: 18,
+					}
 				},
-				// TODO: make renderView
-				this.renderTitle(BX.message('CALL_COMPONENT_AGREEMENTS')),
 				View(
 					{
 						style: {
-							display: 'flex',
-							flexDirection: 'row',
-							marginTop: 18,
+							width: 2,
+							height: '100%',
+							backgroundColor: color,
+							marginRight: 14,
 						}
-					},
-					View(
-						{
-							style: {
-								width: 2,
-								height: '100%',
-								backgroundColor: '#1F86FF',
-								marginRight: 14,
-							}
-						}
-					),
-					agreements && View(
-						{},
-						this.renderSubtitle(BX.message('CALL_COMPONENT_AGREEMENTS_COMMON')),
-						...agreementsViews,
-					)
+					}
 				),
 				View(
-					{
-						style: {
-							display: 'flex',
-							flexDirection: 'row',
-							marginTop: 18,
-						}
-					},
-					View(
-						{
-							style: {
-								width: 2,
-								height: '100%',
-								backgroundColor: '#1BCE7B',
-								marginRight: 14,
-							}
-						}
-					),
-					tasks && View(
-						{},
-						this.renderSubtitle(BX.message('CALL_COMPONENT_AGREEMENTS_TASKS')),
-						...tasksViews,
-					),
+					{},
+					this.renderSubtitle(subtitle),
+					...views,
 				),
-				View(
-					{
-						style: {
-							display: 'flex',
-							flexDirection: 'row',
-							marginTop: 18,
-						},
-					},
-					View(
-						{
-							style: {
-								width: 2,
-								height: '100%',
-								backgroundColor: '#1BCE7B',
-								marginRight: 14,
-							}
-						}
-					),
-					meetings && View(
-						{},
-						this.renderSubtitle(BX.message('CALL_COMPONENT_AGREEMENTS_MEETINGS')),
-						...meetingsViews,
-					)
-				)
-			)
+			);
 		}
 
 		renderAgreement()
@@ -607,9 +643,9 @@
 			);
 		}
 
-		renderAnalysis(insights)
+		renderOldInsightsView(insights)
 		{
-			const insightsView = insights.map((item, index) => (
+			return insights.map((item, index) => (
 				View(
 					{},
 					BBCodeText({
@@ -619,6 +655,130 @@
 					}),
 				)
 			))
+		}
+
+		renderNewInsightsView(insights)
+		{
+			const analysisGraph = View(
+				{},
+				View(
+					{
+						style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }
+					},
+					Text({
+						style: { fontSize: 15, color: '#909090', fontWeight: '400' },
+						text: BX.message('CALL_COMPONENT_ANALYSIS_EMPLOYEES'),
+					}),
+					Text({
+						style: { fontSize: 15, color: '#909090', fontWeight: '400' },
+						text: BX.message('CALL_COMPONENT_ANALYSIS_EFFICIENCY'),
+					}),
+				),
+				...insights.map((item) => (
+					new EfficiencyRow({
+						avatarPath: this.state.users[item.userId]?.avatar,
+						name: this.state.users[item.userId].name,
+						score: item.efficiencyValue,
+						isWide: true,
+					})
+				)),
+			)
+
+			return View(
+				{},
+				analysisGraph,
+				View(
+					{ style: { marginTop: 20 } },
+					this.renderSubtitle(BX.message('CALL_COMPONENT_ANALYSIS_INVOLVEMENT')),
+				),
+				...insights.map((item) => (
+					View(
+						{ style: { marginTop: 20 } },
+						new EfficiencyRow({
+							avatarPath: this.state.users[item.userId]?.avatar,
+							name: this.state.users[item.userId].name,
+							score: item.efficiencyValue,
+							isWide: false,
+						}),
+						...Object.entries(item.evaluationCriteria).map(([key, value]) => (
+							this.renderCheckRow(value.value, value.title)
+						)),
+						BBCodeText({
+							onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+							style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+							value: item.detailedInsight,
+						}),
+					)
+				))
+			)
+		}
+
+		renderStrengthsAndWeaknesses(insights)
+		{
+			const recommendationFields = ['speechStyleInfluence', 'engagementLevel', 'areasOfResponsibility'];
+
+			return View(
+				{},
+				insights?.meetingStrengths?.length > 0 && View(
+					{},
+					View(
+						{ style: { marginTop: 20 } },
+						this.renderSubtitle(BX.message('CALL_COMPONENT_INSIGHTS_STRENGTH')),
+					),
+					View(
+						{},
+						...insights?.meetingStrengths?.map((item) => (
+							BBCodeText({
+								onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+								value: `${item.strengthTitle ?? ''}. ${item.strengthExplanation ?? ''}`.trim(),
+							})
+						))
+					),
+				),
+				insights?.meetingWeaknesses?.length > 0 && View(
+					{},
+					View(
+						{ style: { marginTop: 20 } },
+						this.renderSubtitle(BX.message('CALL_COMPONENT_INSIGHTS_WEAKNESS')),
+					),
+					View(
+						{},
+						...insights?.meetingWeaknesses?.map((item) => (
+							BBCodeText({
+								onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+								value: `${item.weaknessTitle ?? ''}. ${item.weaknessExplanation ?? ''}`.trim(),
+							})
+						))
+					),
+					...recommendationFields.map((field) =>
+							insights?.[field] && BBCodeText({
+								onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+								value: `${insights?.[field] ?? ''}`,
+							})
+					)
+				),
+				insights?.finalRecommendations && View(
+					{},
+					View(
+						{ style: { marginTop: 20 } },
+						this.renderSubtitle(BX.message('CALL_COMPONENT_INSIGHTS_FINAL_RECOMMENDATIONS')),
+					),
+					BBCodeText({
+						onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+						style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+						value: `${insights?.finalRecommendations ?? ''}`,
+					}),
+				)
+			)
+		}
+
+
+		renderAnalysis(insights, speakerEvaluationAvailable)
+		{
+			const version = this.state.result?.aiOutcome?.version;
 
 			return View(
 				{
@@ -634,7 +794,10 @@
 					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_INSIGHTS')),
-				...insightsView,
+				...(!speakerEvaluationAvailable
+						? [this.renderStrengthsAndWeaknesses(insights)]
+						: insights[0]?.evaluationCriteria ? [this.renderNewInsightsView(insights)] : this.renderOldInsightsView(insights)
+				),
 			);
 		}
 
@@ -911,11 +1074,10 @@
 			const agreements = overview?.agreements;
 			const tasks = overview?.tasks;
 			const meetings = overview?.meetings;
-			const insights = version === 1
-				? insightsData?.insights
-				: insightsData?.speakerAnalysis;
+			const insights = insightsData?.insights ?? (insightsData?.speakerAnalysis ?? insightsData);
+			const actionItems = overview?.actionItems;
 			const trackUrl = tracks?.[0]?.url;
-			const hasSummary = agreements || tasks || meetings;
+			const shouldRenderAnalysis = (insights?.length > 0 || (!insights?.speakerEvaluationAvailable && !Array.isArray(insights)));
 
 			const tabs = ScrollView(
 				{
@@ -1004,8 +1166,8 @@
 					this.renderHeader(),
 					this.renderAgreement(),
 					this.renderCopilotScore(),
-					hasSummary && this.renderSummary(agreements, tasks, meetings),
-					insights?.length > 0 && this.renderAnalysis(insights),
+					this.renderSummary(agreements, tasks, meetings, actionItems),
+					shouldRenderAnalysis && this.renderAnalysis(insights, insightsData.speakerEvaluationAvailable),
 					this.renderResume(trackUrl),
 					this.renderTranscribation(trackUrl),
 				)

@@ -1,2 +1,790 @@
-this.BX=this.BX||{},this.BX.Tasks=this.BX.Tasks||{},this.BX.Tasks.V2=this.BX.Tasks.V2||{},function(t,e,a,s,n,i,r,o,l,_,T,d){"use strict";const S={props:{getGrid:{type:Function,required:!0}},data:()=>({changesetTimeRef:[],changesetTime:[]}),methods:{async update(){const t=this.getGrid().querySelectorAll("[data-time]");this.changesetTime=[...t].map(t=>this.getChangesetTime(t)),await this.$nextTick(),t.forEach(t=>{const e=this.getChangesetTime(t);t.append(this.changesetTimeRef[e.rowId])})},getChangesetTime(t){return{rowId:Number(t.closest("[data-id]").dataset.id),offsetTimestamp:this.getOffsetTimestamp(t.dataset.time)}},getOffsetTimestamp(t){const e=1e3*Number(t),a=(e+_.timezone.getOffset(e))/1e3;return T.DateTimeFormat.format(T.DateTimeFormat.getFormat("FORMAT_DATETIME"),a)},setRef(t,e){null!=this.changesetTimeRef||(this.changesetTimeRef={}),this.changesetTimeRef[e]=t}},template:'\n\t\t<template v-for="(time, id) in changesetTime" :key="id">\n\t\t\t<div :ref="(el) => setRef(el, time.rowId)">{{ time.offsetTimestamp }}</div>\n\t\t</template>\n\t'},c={props:{getGrid:{type:Function,required:!0}},data:()=>({authorsRefs:[],authors:[]}),methods:{async update(){const t=this.getGrid().querySelectorAll("[data-author][data-author-id]");this.authors=[...t].map(t=>this.getAuthor(t)),await this.$nextTick(),t.forEach(t=>{const e=this.getAuthor(t);t.append(this.authorsRefs[e.rowId])})},getAuthor:t=>({rowId:Number(t.closest("[data-id]").dataset.id),author:JSON.parse(t.dataset.author),authorId:Number(t.dataset.authorId),type:JSON.parse(t.dataset.authorType)}),setRef(t,e){null!=this.authorsRefs||(this.authorsRefs={}),this.authorsRefs[e]=t},getUserUrl:t=>o.userService.getUrl(t)},template:'\n\t\t<template v-for="(author, id) in authors" :key="id">\n\t\t\t<a\n\t\t\t\t:ref="(el) => setRef(el, author.rowId)"\n\t\t\t\t:href="getUserUrl(author.authorId)"\n\t\t\t\tclass="tasks-history-grid-author-column-element"\n\t\t\t\t:class="{ \'--collaber\' : author.type === \'collaber\'}"\n\t\t\t>\n\t\t\t\t{{ author.author }}\n\t\t\t</a>\n\t\t</template>\n\t'},h={NEW:"TASKS_V2_HISTORY_LOG_NEW",TITLE:"TASKS_V2_HISTORY_LOG_TITLE",DESCRIPTION:"TASKS_V2_HISTORY_LOG_DESCRIPTION",CREATED_BY:"TASKS_V2_HISTORY_LOG_CREATED_BY",RESPONSIBLE_ID:"TASKS_V2_HISTORY_LOG_RESPONSIBLE_ID",FLOW_ID:"TASKS_V2_HISTORY_LOG_FLOW_ID",DEADLINE:"TASKS_V2_HISTORY_LOG_DEADLINE",ACCOMPLICES:"TASKS_V2_HISTORY_LOG_ACCOMPLICES",AUDITORS:"TASKS_V2_HISTORY_LOG_AUDITORS",UF_TASK_WEBDAV_FILES:"TASKS_V2_HISTORY_LOG_UF_TASK_WEBDAV_FILES",TAGS:"TASKS_V2_HISTORY_LOG_TAGS",PRIORITY:"TASKS_V2_HISTORY_LOG_PRIORITY",GROUP_ID:"TASKS_V2_HISTORY_LOG_GROUP_ID",STAGE:"TASKS_V2_HISTORY_LOG_STAGE",PARENT_ID:"TASKS_V2_HISTORY_LOG_PARENT_ID",DEPENDS_ON:"TASKS_V2_HISTORY_LOG_DEPENDS_ON",STATUS:"TASKS_V2_HISTORY_LOG_STATUS",MARK:"TASKS_V2_HISTORY_LOG_MARK",ADD_IN_REPORT:"TASKS_V2_HISTORY_LOG_ADD_IN_REPORT",DELETE:"TASKS_V2_HISTORY_LOG_DELETE",RENEW:"TASKS_V2_HISTORY_LOG_RENEW",MOVE_TO_SPRINT:"TASKS_V2_HISTORY_LOG_MOVE_TO_SPRINT",MOVE_TO_BACKLOG:"TASKS_V2_HISTORY_LOG_MOVE_TO_BACKLOG",DELETED_FILES:"TASKS_V2_HISTORY_LOG_DELETED_FILES",NEW_FILES:"TASKS_V2_HISTORY_LOG_NEW_FILES",COMMENT:"TASKS_V2_HISTORY_LOG_COMMENT",COMMENT_EDIT:"TASKS_V2_HISTORY_LOG_COMMENT_EDIT",COMMENT_DEL:"TASKS_V2_HISTORY_LOG_COMMENT_DEL",RESULT_REMOVE:"TASKS_V2_HISTORY_LOG_RESULT_REMOVE",RESULT_EDIT:"TASKS_V2_HISTORY_LOG_RESULT_EDIT",RESULT:"TASKS_V2_HISTORY_LOG_RESULT",START_DATE_PLAN:"TASKS_V2_HISTORY_LOG_START_DATE_PLAN",END_DATE_PLAN:"TASKS_V2_HISTORY_LOG_END_DATE_PLAN",DURATION_PLAN:"TASKS_V2_HISTORY_LOG_DURATION_PLAN",DURATION_PLAN_SECONDS:"TASKS_V2_HISTORY_LOG_DURATION_PLAN_SECONDS",DURATION_FACT:"TASKS_V2_HISTORY_LOG_DURATION_FACT",TIME_ESTIMATE:"TASKS_V2_HISTORY_LOG_TIME_ESTIMATE",TIME_SPENT_IN_LOGS:"TASKS_V2_HISTORY_LOG_TIME_SPENT_IN_LOGS",CHECKLIST_ITEM_CREATE:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_CREATE",CHECKLIST_ITEM_REMOVE:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_REMOVE",CHECKLIST_ITEM_RENAME:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_RENAME",CHECKLIST_ITEM_UNCHECK:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_UNCHECK",CHECKLIST_ITEM_CHECK:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_CHECK",CHECKLIST_ITEM_MAKE_IMPORTANT:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_MAKE_IMPORTANT",CHECKLIST_ITEM_MAKE_UNIMPORTANT:"TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_MAKE_UNIMPORTANT",UF_CRM_TASK_ADDED:"TASKS_V2_HISTORY_LOG_UF_CRM_TASK_ADDED",UF_CRM_TASK_DELETED:"TASKS_V2_HISTORY_LOG_UF_CRM_TASK_DELETED"},p={props:{getGrid:{type:Function,required:!0},taskId:{type:[Number,String],required:!0}},setup:()=>({localizationMap:h}),data:()=>({changeTypesRef:[],changeTypes:[]}),methods:{async update(){const t=this.getGrid().querySelectorAll("[data-changeset-location]");this.changeTypes=[...t].map(t=>this.getChange(t)),await this.$nextTick(),t.forEach(t=>{const e=this.getChange(t);t.append(this.changeTypesRef[e.rowId])})},getChange(t){const e=Number(t.closest("[data-id]").dataset.id),a=t.dataset.changesetLocation,s=["COMMENT","COMMENT_EDIT","COMMENT_DEL"].includes(a);return{rowId:e,changeType:this.loc(this.localizationMap[a]),isComment:s}},setRef(t,e){null!=this.changeTypesRef||(this.changeTypesRef={}),this.changeTypesRef[e]=t},handleClick(){BX.SidePanel.Instance.open("/task/comments/"+this.taskId,{width:1e3})}},template:'\n\t\t<template v-for="(changeType, id) in changeTypes" :key="id">\n\t\t\t<div\n\t\t\t\t:ref="(el) => setRef(el, changeType.rowId)"\n\t\t\t\t@click="() => changeType.isComment && handleClick()"\n\t\t\t\t:class="{ \'tasks-history-grid-comment-link\': changeType.isComment }"\n\t\t\t>\n\t\t\t\t{{ changeType.changeType }}\n\t\t\t</div>\n\t\t</template>\n\t'},m={components:{RichLoc:l.RichLoc},props:{changeset:{type:Object,required:!0},component:{type:Object,default:null},format:{type:Function,default:null}},template:'\n\t\t<RichLoc\n\t\t\tv-if="component || format"\n\t\t\t:text="loc(\'TASKS_V2_HISTORY_LOG_CHANGE\')"\n\t\t\t:placeholder="[\'[from/]\', \'[to/]\']"\n\t\t>\n\t\t\t<template #from>\n\t\t\t\t<component v-if="component" :is="component" :value="changeset.fromValue"/>\n\t\t\t\t<template v-else>{{ format(changeset.fromValue) }}</template>\n\t\t\t</template>\n\t\t\t<template #to>\n\t\t\t\t<component v-if="component" :is="component" :value="changeset.toValue"/>\n\t\t\t\t<template v-else>{{ format(changeset.toValue) }}</template>\n\t\t\t</template>\n\t\t</RichLoc>\n\t'},u=t=>{const e=1e3*Number(JSON.parse(t));if(e<=0)return"";const a=(e+_.timezone.getOffset(e))/1e3;return`${T.DateTimeFormat.format(T.DateTimeFormat.getFormat("SHORT_DATE_FORMAT"),a)} ${T.DateTimeFormat.format(T.DateTimeFormat.getFormat("SHORT_TIME_FORMAT"),a)}`},E=t=>{const e=Number(JSON.parse(t)),a=new T.DurationFormat(1e3*e);if(e<=0)return a.format({format:"i"});return Math.floor(e/3600)>0?a.format({format:"H i"}):a.format({format:"i s"})},I=t=>JSON.parse(t),O={DEADLINE:u,TIME_SPENT_IN_LOGS:E,TIME_ESTIMATE:E,DURATION_FACT:t=>{const e=60*Number(JSON.parse(t))*1e3;return new T.DurationFormat(e).format({format:"H i"})},TAGS:t=>JSON.parse(t).replace(",",", "),START_DATE_PLAN:u,END_DATE_PLAN:u,DURATION_PLAN_SECONDS:t=>{const e=1e3*Number(JSON.parse(t));return e<=0?"":new T.DurationFormat(e).format({format:"d H"})},STATUS:I,MARK:I,PRIORITY:I,ADD_IN_REPORT:I,STAGE:I,TITLE:I,CHECKLIST_ITEM_RENAME:I,CHECKLIST_ITEM_CREATE:I,CHECKLIST_ITEM_REMOVE:I,CHECKLIST_ITEM_MAKE_UNIMPORTANT:I,CHECKLIST_ITEM_MAKE_IMPORTANT:I},R={components:{UserElement:{props:{user:{type:Object,required:!0}},computed:{isCollaber(){var t;return"collaber"===(null==(t=this.user)?void 0:t.type)}},template:'\n\t\t<a\n\t\t\t:href="user?.link"\n\t\t\tclass="tasks-history-grid-user-element"\n\t\t\t:class="{ \'--collaber\': isCollaber }"\n\t\t>\n\t\t\t{{ user?.name }}\n\t\t</a>\n\t'}},props:{value:{type:String,default:""}},computed:{users(){return JSON.parse(this.value)}},template:"\n\t\t<template v-for=\"(user, index) of users\" :key=\"index\">\n\t\t\t<UserElement :user/>{{ index < users.length - 1 ? ', ': '' }}\n\t\t</template>\n\t"},A={components:{RelatedTaskElement:{props:{relatedTaskItem:{type:Object,required:!0}},computed:{isLinkFilled(){var t;return d.Type.isStringFilled(null==(t=this.relatedTaskItem)?void 0:t.link)}},template:'\n\t\t<a v-if="isLinkFilled" :href="relatedTaskItem?.link">{{ relatedTaskItem?.title }}</a>\n\t\t<span v-else>{{ relatedTaskItem?.title }}</span>\n\t'}},props:{value:{type:String,default:""}},computed:{relatedTaskItems(){return JSON.parse(this.value)},isNotFilled(){return d.Type.isNull(this.relatedTaskItems)},isHidden(){var t;return 0===(null==(t=this.relatedTaskItems)?void 0:t.length)}},template:'\n\t\t<span v-if="isNotFilled"/>\n\t\t<span v-else-if="isHidden">{{ loc(\'TASKS_V2_HISTORY_LOG_HIDDEN_VALUE\') }}</span>\n\t\t<template v-else v-for="(relatedTaskItem, index) of relatedTaskItems" :key="index">\n\t\t\t<RelatedTaskElement :relatedTaskItem/>{{ index < relatedTaskItems.length - 1 ? \', \': \'\' }}\n\t\t</template>\n\t'},L={props:{value:{type:String,default:""}},computed:{group(){return JSON.parse(this.value)},isNotFilled(){return d.Type.isNull(this.group)},isHidden(){return 0===Object.keys(this.group).length},isLinkFilled(){var t;return d.Type.isStringFilled(null==(t=this.group)?void 0:t.link)}},template:'\n\t\t<span v-if="isNotFilled"/>\n\t\t<span v-else-if="isHidden">{{ loc(\'TASKS_V2_HISTORY_LOG_HIDDEN_VALUE\') }}</span>\n\t\t<a v-else-if="isLinkFilled" :href="group?.link" target="_top">{{ group?.name }}</a>\n\t\t<span v-else>{{ group?.name }}</span>\n\t'},g={props:{value:{type:String,default:""}},data:()=>({viewFormExtension:null}),computed:{flow(){return JSON.parse(this.value)},isNotFilled(){return d.Type.isNull(this.flow)},isHidden(){return 0===Object.keys(this.flow).length},flowName(){var t;return(null==(t=this.flow)?void 0:t.name)||""}},async beforeMount(){const t=await d.Runtime.loadExtension("tasks.flow.view-form");this.viewFormExtension=t.ViewForm},methods:{handleClick(){var t,e;null==(t=this.viewFormExtension)||t.showInstance({flowId:null==(e=this.flow)?void 0:e.id,bindElement:this.$refs.flowLink})}},template:'\n\t\t<span v-if="isNotFilled"/>\n\t\t<span v-else-if="isHidden">{{ loc(\'TASKS_V2_HISTORY_LOG_HIDDEN_VALUE\') }}</span>\n\t\t<a v-else @click="handleClick" ref="flowLink">{{ flowName }}</a>\n\t'},f={components:{CrmElement:{props:{crmItem:{type:Object,required:!0}},template:'\n\t\t<a :href="crmItem?.link">{{ crmItem?.title }}</a>\n\t'}},props:{value:{type:String,default:""}},computed:{crmItems(){return JSON.parse(this.value)},isNotFilled(){return d.Type.isNull(this.crmItems)},isHidden(){var t;return 0===(null==(t=this.crmItems)?void 0:t.length)}},template:'\n\t\t<span v-if="isNotFilled"/>\n\t\t<span v-else-if="isHidden">{{ loc(\'TASKS_V2_HISTORY_LOG_HIDDEN_VALUE\') }}</span>\n\t\t<template v-else v-for="(crmItem, index) of crmItems" :key="index">\n\t\t\t<CrmElement :crmItem/>{{ index < crmItems.length - 1 ? \', \': \'\' }}\n\t\t</template>\n\t'},C={props:{value:{type:String,default:""}},computed:{checkListItem(){return JSON.parse(this.value)}},template:'\n\t\t<span\n\t\t\tclass="tasks-history-grid-checklist-element"\n\t\t\t:class="{ \'--checked\' : checkListItem?.isChecked }"\n\t\t>\n\t\t\t{{ checkListItem?.title }}\n\t\t</span>\n\t'},N={RESPONSIBLE_ID:R,AUDITORS:R,CREATED_BY:R,ACCOMPLICES:R,PARENT_ID:A,DEPENDS_ON:A,GROUP_ID:L,FLOW_ID:g,UF_CRM_TASK_DELETED:f,UF_CRM_TASK_ADDED:f,CHECKLIST_ITEM_CHECK:C,CHECKLIST_ITEM_UNCHECK:C},H={components:{HistoryChange:m},props:{getGrid:{type:Function,required:!0}},setup:()=>({formatMap:O,componentMap:N}),data:()=>({changesetRef:[],changesetLocations:[]}),methods:{async update(){const t=this.getGrid().querySelectorAll("[data-changeset-from-value][data-changeset-to-value]");this.changesetLocations=[...t].map(t=>this.getChangesetInfo(t)),await this.$nextTick(),t.forEach(t=>{const e=this.getChangesetInfo(t);t.append(this.changesetRef[e.rowId])})},getChangesetInfo(t){const e=Number(t.closest("[data-id]").dataset.id);return{location:this.getGrid().querySelector(`[data-id="${e}"] [data-changeset-location]`).dataset.changesetLocation,rowId:e,changesetValue:{fromValue:t.dataset.changesetFromValue,toValue:t.dataset.changesetToValue}}},setRef(t,e){null!=this.changesetRef||(this.changesetRef={}),this.changesetRef[e]=t}},template:'\n\t\t<template v-for="(changesetLocation, id) in changesetLocations" :key="id">\n\t\t\t<HistoryChange\n\t\t\t\t:changeset="changesetLocation.changesetValue"\n\t\t\t\t:component="componentMap[changesetLocation.location]"\n\t\t\t\t:format="formatMap[changesetLocation.location]"\n\t\t\t\t:ref="(el) => setRef(el?.$el, changesetLocation.rowId)"\n\t\t\t/>\n\t\t</template>\n\t'},D={template:'\n\t\t<div class="tasks-history-grid-loader-spinner"/>\n\t'},v={name:"HistoryGrid",components:{HeadlineXl:i.HeadlineXl,GridLoader:D,ChangesetTime:S,Authors:c,ChangesetLocations:p,ChangesetValues:H},props:{taskId:{type:[Number,String],required:!0}},mounted(){s.EventEmitter.subscribe("Grid::beforeRequest",this.handleBeforeGridRequest),s.EventEmitter.subscribe("Grid::updated",this.update),this.getData()},beforeUnmount(){var t,e,a;s.EventEmitter.unsubscribe("Grid::beforeRequest",this.handleBeforeGridRequest),s.EventEmitter.unsubscribe("Grid::updated",this.update),null==(t=BX.Main)||null==(e=t.gridManager)||e.destroy("tasks-history-grid"),null==(a=n.PopupManager.getPopupById("tasks-history-grid-grid-settings-window"))||a.destroy()},methods:{async getData(){const{html:t}=await r.apiClient.post("Task.HistoryGrid.get",{taskId:this.taskId});await d.Runtime.html(this.$refs.grid,t),this.update()},handleBeforeGridRequest(t){const[,e]=t.getData();var a;e.url&&(this.nav=new d.Uri(null!=(a=e.url)?a:"").getQueryParams().nav);e.url="/bitrix/services/main/ajax.php?action=tasks.v2.Task.HistoryGrid.getData&nav="+this.nav,e.method="POST",e.data={taskId:this.taskId}},update(){this.$refs.changesetTime.update(),this.$refs.authors.update(),this.$refs.changesetLocations.update(),this.$refs.changesetValues.update()}},template:'\n\t\t<div class="tasks-history-grid-container">\n\t\t\t<div class="tasks-history-grid-header">\n\t\t\t\t<HeadlineXl>{{ loc(\'TASKS_V2_HISTORY_LOG_HEADER\') }}</HeadlineXl>\n\t\t\t</div>\n\t\t\t<div ref="grid" class="tasks-history-grid-main-content"><GridLoader/></div>\n\t\t\t<Authors ref="authors" :getGrid="() => this.$refs.grid"/>\n\t\t\t<ChangesetTime ref="changesetTime" :getGrid="() => this.$refs.grid"/>\n\t\t\t<ChangesetLocations ref="changesetLocations" :getGrid="() => this.$refs.grid" :taskId/>\n\t\t\t<ChangesetValues ref="changesetValues" :getGrid="() => this.$refs.grid"/>\n\t\t</div>\n\t'};var M=babelHelpers.classPrivateFieldLooseKey("application"),K=babelHelpers.classPrivateFieldLooseKey("params"),y=babelHelpers.classPrivateFieldLooseKey("mountApplication"),G=babelHelpers.classPrivateFieldLooseKey("unmountApplication");function V(t){const s=e.BitrixVue.createApp(v,babelHelpers.classPrivateFieldLooseBase(this,K)[K]);return s.mixin(a.locMixin),s.mount(t),s}function k(){var t;null==(t=babelHelpers.classPrivateFieldLooseBase(this,M)[M])||t.unmount()}t.HistoryGrid=class{constructor(t={}){Object.defineProperty(this,G,{value:k}),Object.defineProperty(this,y,{value:V}),Object.defineProperty(this,M,{writable:!0,value:void 0}),Object.defineProperty(this,K,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,K)[K]=t}static openHistoryGrid(t){let e=null;BX.SidePanel.Instance.open("tasks-history-grid",{contentCallback:a=>(e=new this(t),e.mount(a)),events:{onClose:()=>{var t;return null==(t=e)?void 0:t.unmount()}},cacheable:!1,width:1200})}mount(t){babelHelpers.classPrivateFieldLooseBase(this,M)[M]=babelHelpers.classPrivateFieldLooseBase(this,y)[y](t.getContentContainer())}unmount(){babelHelpers.classPrivateFieldLooseBase(this,G)[G]()}}}(this.BX.Tasks.V2.Application=this.BX.Tasks.V2.Application||{},BX.Vue3,BX.Vue3.Mixins,BX.Event,BX.Main,BX.UI.System.Typography.Vue,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Main,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Tasks = this.BX.Tasks || {};
+this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
+(function (exports, ui_vue3, ui_vue3_mixins_locMixin, main_core, main_core_events, main_popup, ui_system_typography_vue, tasks_v2_lib_apiClient, tasks_v2_lib_timezone, main_date, tasks_v2_provider_service_userService, ui_vue3_components_richLoc) {
+	'use strict';
+
+	// @vue/component
+	const ChangesetTime = {
+		props: {
+			getGrid: {
+				type: Function,
+				required: true
+			}
+		},
+		data() {
+			return {
+				changesetTimeRef: [],
+				changesetTime: []
+			};
+		},
+		methods: {
+			async update() {
+				const time = this.getGrid().querySelectorAll('[data-time]');
+				this.changesetTime = [...time].map(changesetTimeNode => this.getChangesetTime(changesetTimeNode));
+				await this.$nextTick();
+				time.forEach(changesetTimeNode => {
+					const changesetTime = this.getChangesetTime(changesetTimeNode);
+					changesetTimeNode.append(this.changesetTimeRef[changesetTime.rowId]);
+				});
+			},
+			getChangesetTime(changesetTimeNode) {
+				const rowId = Number(changesetTimeNode.closest('[data-id]').dataset.id);
+				const offsetTimestamp = this.getOffsetTimestamp(changesetTimeNode.dataset.time);
+				return {
+					rowId,
+					offsetTimestamp
+				};
+			},
+			getOffsetTimestamp(timestampString) {
+				const timestamp = Number(timestampString) * 1000;
+				const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
+				const offsetTimestamp = (timestamp + offset) / 1000;
+				return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), offsetTimestamp);
+			},
+			setRef(element, rowId) {
+				this.changesetTimeRef ??= {};
+				this.changesetTimeRef[rowId] = element;
+			}
+		},
+		template: `
+		<template v-for="(time, id) in changesetTime" :key="id">
+			<div :ref="(el) => setRef(el, time.rowId)">{{ time.offsetTimestamp }}</div>
+		</template>
+	`
+	};
+
+	// @vue/component
+	const Authors = {
+		props: {
+			getGrid: {
+				type: Function,
+				required: true
+			}
+		},
+		data() {
+			return {
+				authorsRefs: [],
+				authors: []
+			};
+		},
+		methods: {
+			async update() {
+				const authors = this.getGrid().querySelectorAll('[data-author][data-author-id]');
+				this.authors = [...authors].map(authorNode => this.getAuthor(authorNode));
+				await this.$nextTick();
+				authors.forEach(authorNode => {
+					const author = this.getAuthor(authorNode);
+					authorNode.append(this.authorsRefs[author.rowId]);
+				});
+			},
+			getAuthor(authorNode) {
+				const rowId = Number(authorNode.closest('[data-id]').dataset.id);
+				const author = JSON.parse(authorNode.dataset.author);
+				const authorId = Number(authorNode.dataset.authorId);
+				const type = JSON.parse(authorNode.dataset.authorType);
+				return {
+					rowId,
+					author,
+					authorId,
+					type
+				};
+			},
+			setRef(element, rowId) {
+				this.authorsRefs ??= {};
+				this.authorsRefs[rowId] = element;
+			},
+			getUserUrl(userId) {
+				return tasks_v2_provider_service_userService.userService.getUrl(userId);
+			}
+		},
+		template: `
+		<template v-for="(author, id) in authors" :key="id">
+			<a
+				:ref="(el) => setRef(el, author.rowId)"
+				:href="getUserUrl(author.authorId)"
+				class="tasks-history-grid-author-column-element"
+				:class="{ '--collaber' : author.type === 'collaber'}"
+			>
+				{{ author.author }}
+			</a>
+		</template>
+	`
+	};
+
+	const localizationMap = {
+		NEW: 'TASKS_V2_HISTORY_LOG_NEW',
+		TITLE: 'TASKS_V2_HISTORY_LOG_TITLE',
+		DESCRIPTION: 'TASKS_V2_HISTORY_LOG_DESCRIPTION',
+		CREATED_BY: 'TASKS_V2_HISTORY_LOG_CREATED_BY',
+		RESPONSIBLE_ID: 'TASKS_V2_HISTORY_LOG_RESPONSIBLE_ID',
+		FLOW_ID: 'TASKS_V2_HISTORY_LOG_FLOW_ID',
+		DEADLINE: 'TASKS_V2_HISTORY_LOG_DEADLINE',
+		ACCOMPLICES: 'TASKS_V2_HISTORY_LOG_ACCOMPLICES',
+		AUDITORS: 'TASKS_V2_HISTORY_LOG_AUDITORS',
+		UF_TASK_WEBDAV_FILES: 'TASKS_V2_HISTORY_LOG_UF_TASK_WEBDAV_FILES',
+		TAGS: 'TASKS_V2_HISTORY_LOG_TAGS',
+		PRIORITY: 'TASKS_V2_HISTORY_LOG_PRIORITY',
+		GROUP_ID: 'TASKS_V2_HISTORY_LOG_GROUP_ID',
+		STAGE: 'TASKS_V2_HISTORY_LOG_STAGE',
+		PARENT_ID: 'TASKS_V2_HISTORY_LOG_PARENT_ID',
+		DEPENDS_ON: 'TASKS_V2_HISTORY_LOG_DEPENDS_ON',
+		STATUS: 'TASKS_V2_HISTORY_LOG_STATUS',
+		MARK: 'TASKS_V2_HISTORY_LOG_MARK',
+		ADD_IN_REPORT: 'TASKS_V2_HISTORY_LOG_ADD_IN_REPORT',
+		DELETE: 'TASKS_V2_HISTORY_LOG_DELETE',
+		RENEW: 'TASKS_V2_HISTORY_LOG_RENEW',
+		MOVE_TO_SPRINT: 'TASKS_V2_HISTORY_LOG_MOVE_TO_SPRINT',
+		MOVE_TO_BACKLOG: 'TASKS_V2_HISTORY_LOG_MOVE_TO_BACKLOG',
+		DELETED_FILES: 'TASKS_V2_HISTORY_LOG_DELETED_FILES',
+		NEW_FILES: 'TASKS_V2_HISTORY_LOG_NEW_FILES',
+		COMMENT: 'TASKS_V2_HISTORY_LOG_COMMENT',
+		COMMENT_EDIT: 'TASKS_V2_HISTORY_LOG_COMMENT_EDIT',
+		COMMENT_DEL: 'TASKS_V2_HISTORY_LOG_COMMENT_DEL',
+		RESULT_REMOVE: 'TASKS_V2_HISTORY_LOG_RESULT_REMOVE',
+		RESULT_EDIT: 'TASKS_V2_HISTORY_LOG_RESULT_EDIT',
+		RESULT: 'TASKS_V2_HISTORY_LOG_RESULT',
+		START_DATE_PLAN: 'TASKS_V2_HISTORY_LOG_START_DATE_PLAN',
+		END_DATE_PLAN: 'TASKS_V2_HISTORY_LOG_END_DATE_PLAN',
+		DURATION_PLAN: 'TASKS_V2_HISTORY_LOG_DURATION_PLAN',
+		DURATION_PLAN_SECONDS: 'TASKS_V2_HISTORY_LOG_DURATION_PLAN_SECONDS',
+		DURATION_FACT: 'TASKS_V2_HISTORY_LOG_DURATION_FACT',
+		TIME_ESTIMATE: 'TASKS_V2_HISTORY_LOG_TIME_ESTIMATE',
+		TIME_SPENT_IN_LOGS: 'TASKS_V2_HISTORY_LOG_TIME_SPENT_IN_LOGS',
+		CHECKLIST_ITEM_CREATE: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_CREATE',
+		CHECKLIST_ITEM_REMOVE: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_REMOVE',
+		CHECKLIST_ITEM_RENAME: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_RENAME',
+		CHECKLIST_ITEM_UNCHECK: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_UNCHECK',
+		CHECKLIST_ITEM_CHECK: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_CHECK',
+		CHECKLIST_ITEM_MAKE_IMPORTANT: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_MAKE_IMPORTANT',
+		CHECKLIST_ITEM_MAKE_UNIMPORTANT: 'TASKS_V2_HISTORY_LOG_CHECKLIST_ITEM_MAKE_UNIMPORTANT',
+		UF_CRM_TASK_ADDED: 'TASKS_V2_HISTORY_LOG_UF_CRM_TASK_ADDED',
+		UF_CRM_TASK_DELETED: 'TASKS_V2_HISTORY_LOG_UF_CRM_TASK_DELETED'
+	};
+
+	// @vue/component
+	const ChangesetLocations = {
+		props: {
+			getGrid: {
+				type: Function,
+				required: true
+			},
+			taskId: {
+				type: [Number, String],
+				required: true
+			}
+		},
+		setup() {
+			return {
+				localizationMap
+			};
+		},
+		data() {
+			return {
+				changeTypesRef: [],
+				changeTypes: []
+			};
+		},
+		methods: {
+			async update() {
+				const changes = this.getGrid().querySelectorAll('[data-changeset-location]');
+				this.changeTypes = [...changes].map(changeNode => {
+					return this.getChange(changeNode);
+				});
+				await this.$nextTick();
+				changes.forEach(changeNode => {
+					const change = this.getChange(changeNode);
+					changeNode.append(this.changeTypesRef[change.rowId]);
+				});
+			},
+			getChange(changeTypeNode) {
+				const rowId = Number(changeTypeNode.closest('[data-id]').dataset.id);
+				const changeType = changeTypeNode.dataset.changesetLocation;
+				const isComment = ['COMMENT', 'COMMENT_EDIT', 'COMMENT_DEL'].includes(changeType);
+				return {
+					rowId,
+					changeType: this.loc(this.localizationMap[changeType]),
+					isComment
+				};
+			},
+			setRef(element, rowId) {
+				this.changeTypesRef ??= {};
+				this.changeTypesRef[rowId] = element;
+			},
+			handleClick() {
+				BX.SidePanel.Instance.open(`/task/comments/${this.taskId}`, {
+					width: 1000
+				});
+			}
+		},
+		template: `
+		<template v-for="(changeType, id) in changeTypes" :key="id">
+			<div
+				:ref="(el) => setRef(el, changeType.rowId)"
+				@click="() => changeType.isComment && handleClick()"
+				:class="{ 'tasks-history-grid-comment-link': changeType.isComment }"
+			>
+				{{ changeType.changeType }}
+			</div>
+		</template>
+	`
+	};
+
+	// @vue/component
+	const HistoryChange = {
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			changeset: {
+				/** @type HistoryChangeset */
+				type: Object,
+				required: true
+			},
+			component: {
+				type: Object,
+				default: null
+			},
+			format: {
+				type: Function,
+				default: null
+			}
+		},
+		template: `
+		<RichLoc
+			v-if="component || format"
+			:text="loc('TASKS_V2_HISTORY_LOG_CHANGE')"
+			:placeholder="['[from/]', '[to/]']"
+		>
+			<template #from>
+				<component v-if="component" :is="component" :value="changeset.fromValue"/>
+				<template v-else>{{ format(changeset.fromValue) }}</template>
+			</template>
+			<template #to>
+				<component v-if="component" :is="component" :value="changeset.toValue"/>
+				<template v-else>{{ format(changeset.toValue) }}</template>
+			</template>
+		</RichLoc>
+	`
+	};
+
+	const offsetDateTimeFormat = value => {
+		const timestamp = Number(JSON.parse(value)) * 1000;
+		if (timestamp <= 0) {
+			return '';
+		}
+		const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
+		const timestampOffset = (timestamp + offset) / 1000;
+		const date = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), timestampOffset);
+		const time = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), timestampOffset);
+		return `${date} ${time}`;
+	};
+
+	const elapsedPreciseTimeFormat = value => {
+		const durationInSeconds = Number(JSON.parse(value));
+		const durationFormat = new main_date.DurationFormat(durationInSeconds * 1000);
+		if (durationInSeconds <= 0) {
+			return durationFormat.format({
+				format: 'i'
+			});
+		}
+		const hours = Math.floor(durationInSeconds / 3600);
+		if (hours > 0) {
+			return durationFormat.format({
+				format: 'H i'
+			});
+		}
+		return durationFormat.format({
+			format: 'i s'
+		});
+	};
+
+	const elapsedTimeFormat = value => {
+		const durationInMinutes = Number(JSON.parse(value));
+		const durationInMilliseconds = durationInMinutes * 60 * 1000;
+		return new main_date.DurationFormat(durationInMilliseconds).format({
+			format: 'H i'
+		});
+	};
+
+	const tagsFormat = value => {
+		return JSON.parse(value).replace(',', ', ');
+	};
+
+	const durationPlanFormat = value => {
+		const durationInSeconds = Number(JSON.parse(value)) * 1000;
+		if (durationInSeconds <= 0) {
+			return '';
+		}
+		return new main_date.DurationFormat(durationInSeconds).format({
+			format: 'd H'
+		});
+	};
+
+	const defaultFormat = value => JSON.parse(value);
+
+	const formatMap = {
+		DEADLINE: offsetDateTimeFormat,
+		TIME_SPENT_IN_LOGS: elapsedPreciseTimeFormat,
+		TIME_ESTIMATE: elapsedPreciseTimeFormat,
+		DURATION_FACT: elapsedTimeFormat,
+		TAGS: tagsFormat,
+		START_DATE_PLAN: offsetDateTimeFormat,
+		END_DATE_PLAN: offsetDateTimeFormat,
+		DURATION_PLAN_SECONDS: durationPlanFormat,
+		STATUS: defaultFormat,
+		MARK: defaultFormat,
+		PRIORITY: defaultFormat,
+		ADD_IN_REPORT: defaultFormat,
+		STAGE: defaultFormat,
+		TITLE: defaultFormat,
+		CHECKLIST_ITEM_RENAME: defaultFormat,
+		CHECKLIST_ITEM_CREATE: defaultFormat,
+		CHECKLIST_ITEM_REMOVE: defaultFormat,
+		CHECKLIST_ITEM_MAKE_UNIMPORTANT: defaultFormat,
+		CHECKLIST_ITEM_MAKE_IMPORTANT: defaultFormat
+	};
+
+	// @vue/component
+	const UserElement = {
+		props: {
+			/** @type UserChangeset */
+			user: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			isCollaber() {
+				return this.user?.type === 'collaber';
+			}
+		},
+		template: `
+		<a
+			:href="user?.link"
+			class="tasks-history-grid-user-element"
+			:class="{ '--collaber': isCollaber }"
+		>
+			{{ user?.name }}
+		</a>
+	`
+	};
+
+	// @vue/component
+	const UserElementList = {
+		components: {
+			UserElement
+		},
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			users() {
+				return JSON.parse(this.value);
+			}
+		},
+		template: `
+		<template v-for="(user, index) of users" :key="index">
+			<UserElement :user/>{{ index < users.length - 1 ? ', ': '' }}
+		</template>
+	`
+	};
+
+	// @vue/component
+	const RelatedTaskElement = {
+		props: {
+			/** @type RelatedTaskChangeset */
+			relatedTaskItem: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			isLinkFilled() {
+				return main_core.Type.isStringFilled(this.relatedTaskItem?.link);
+			}
+		},
+		template: `
+		<a v-if="isLinkFilled" :href="relatedTaskItem?.link">{{ relatedTaskItem?.title }}</a>
+		<span v-else>{{ relatedTaskItem?.title }}</span>
+	`
+	};
+
+	// @vue/component
+	const RelatedTaskElementList = {
+		components: {
+			RelatedTaskElement
+		},
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			relatedTaskItems() {
+				return JSON.parse(this.value);
+			},
+			isNotFilled() {
+				return main_core.Type.isNull(this.relatedTaskItems);
+			},
+			isHidden() {
+				return this.relatedTaskItems?.length === 0;
+			}
+		},
+		template: `
+		<span v-if="isNotFilled"/>
+		<span v-else-if="isHidden">{{ loc('TASKS_V2_HISTORY_LOG_HIDDEN_VALUE') }}</span>
+		<template v-else v-for="(relatedTaskItem, index) of relatedTaskItems" :key="index">
+			<RelatedTaskElement :relatedTaskItem/>{{ index < relatedTaskItems.length - 1 ? ', ': '' }}
+		</template>
+	`
+	};
+
+	// @vue/component
+	const GroupElement = {
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			group() {
+				return JSON.parse(this.value);
+			},
+			isNotFilled() {
+				return main_core.Type.isNull(this.group);
+			},
+			isHidden() {
+				return Object.keys(this.group).length === 0;
+			},
+			isLinkFilled() {
+				return main_core.Type.isStringFilled(this.group?.link);
+			}
+		},
+		template: `
+		<span v-if="isNotFilled"/>
+		<span v-else-if="isHidden">{{ loc('TASKS_V2_HISTORY_LOG_HIDDEN_VALUE') }}</span>
+		<a v-else-if="isLinkFilled" :href="group?.link" target="_top">{{ group?.name }}</a>
+		<span v-else>{{ group?.name }}</span>
+	`
+	};
+
+	// @vue/component
+	const FlowElement = {
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		data() {
+			return {
+				viewFormExtension: null
+			};
+		},
+		computed: {
+			flow() {
+				return JSON.parse(this.value);
+			},
+			isNotFilled() {
+				return main_core.Type.isNull(this.flow);
+			},
+			isHidden() {
+				return Object.keys(this.flow).length === 0;
+			},
+			flowName() {
+				return this.flow?.name || '';
+			}
+		},
+		async beforeMount() {
+			const extension = await main_core.Runtime.loadExtension('tasks.flow.view-form');
+			this.viewFormExtension = extension.ViewForm;
+		},
+		methods: {
+			handleClick() {
+				this.viewFormExtension?.showInstance({
+					flowId: this.flow?.id,
+					bindElement: this.$refs.flowLink
+				});
+			}
+		},
+		template: `
+		<span v-if="isNotFilled"/>
+		<span v-else-if="isHidden">{{ loc('TASKS_V2_HISTORY_LOG_HIDDEN_VALUE') }}</span>
+		<a v-else @click="handleClick" ref="flowLink">{{ flowName }}</a>
+	`
+	};
+
+	// @vue/component
+	const CrmElement = {
+		props: {
+			/** @type CrmChangeset */
+			crmItem: {
+				type: Object,
+				required: true
+			}
+		},
+		template: `
+		<a :href="crmItem?.link">{{ crmItem?.title }}</a>
+	`
+	};
+
+	// @vue/component
+	const CrmElementList = {
+		components: {
+			CrmElement
+		},
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			crmItems() {
+				return JSON.parse(this.value);
+			},
+			isNotFilled() {
+				return main_core.Type.isNull(this.crmItems);
+			},
+			isHidden() {
+				return this.crmItems?.length === 0;
+			}
+		},
+		template: `
+		<span v-if="isNotFilled"/>
+		<span v-else-if="isHidden">{{ loc('TASKS_V2_HISTORY_LOG_HIDDEN_VALUE') }}</span>
+		<template v-else v-for="(crmItem, index) of crmItems" :key="index">
+			<CrmElement :crmItem/>{{ index < crmItems.length - 1 ? ', ': '' }}
+		</template>
+	`
+	};
+
+	// @vue/component
+	const CheckListElement = {
+		props: {
+			value: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			checkListItem() {
+				return JSON.parse(this.value);
+			}
+		},
+		template: `
+		<span
+			class="tasks-history-grid-checklist-element"
+			:class="{ '--checked' : checkListItem?.isChecked }"
+		>
+			{{ checkListItem?.title }}
+		</span>
+	`
+	};
+
+	const componentMap = {
+		RESPONSIBLE_ID: UserElementList,
+		AUDITORS: UserElementList,
+		CREATED_BY: UserElementList,
+		ACCOMPLICES: UserElementList,
+		PARENT_ID: RelatedTaskElementList,
+		DEPENDS_ON: RelatedTaskElementList,
+		GROUP_ID: GroupElement,
+		FLOW_ID: FlowElement,
+		UF_CRM_TASK_DELETED: CrmElementList,
+		UF_CRM_TASK_ADDED: CrmElementList,
+		CHECKLIST_ITEM_CHECK: CheckListElement,
+		CHECKLIST_ITEM_UNCHECK: CheckListElement
+	};
+
+	// @vue/component
+	const ChangesetValues = {
+		components: {
+			HistoryChange
+		},
+		props: {
+			getGrid: {
+				type: Function,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				formatMap,
+				componentMap
+			};
+		},
+		data() {
+			return {
+				changesetRef: [],
+				changesetLocations: []
+			};
+		},
+		methods: {
+			async update() {
+				const changesetValues = this.getGrid().querySelectorAll('[data-changeset-from-value][data-changeset-to-value]');
+				this.changesetLocations = [...changesetValues].map(changesetValueNode => {
+					return this.getChangesetInfo(changesetValueNode);
+				});
+				await this.$nextTick();
+				changesetValues.forEach(changesetValueNode => {
+					const changeset = this.getChangesetInfo(changesetValueNode);
+					changesetValueNode.append(this.changesetRef[changeset.rowId]);
+				});
+			},
+			getChangesetInfo(changesetValueNode) {
+				const rowId = Number(changesetValueNode.closest('[data-id]').dataset.id);
+				const location = this.getGrid().querySelector(`[data-id="${rowId}"] [data-changeset-location]`).dataset.changesetLocation;
+				return {
+					location,
+					rowId,
+					changesetValue: {
+						fromValue: changesetValueNode.dataset.changesetFromValue,
+						toValue: changesetValueNode.dataset.changesetToValue
+					}
+				};
+			},
+			setRef(element, rowId) {
+				this.changesetRef ??= {};
+				this.changesetRef[rowId] = element;
+			}
+		},
+		template: `
+		<template v-for="(changesetLocation, id) in changesetLocations" :key="id">
+			<HistoryChange
+				:changeset="changesetLocation.changesetValue"
+				:component="componentMap[changesetLocation.location]"
+				:format="formatMap[changesetLocation.location]"
+				:ref="(el) => setRef(el?.$el, changesetLocation.rowId)"
+			/>
+		</template>
+	`
+	};
+
+	// @vue/component
+	const GridLoader = {
+		template: `
+		<div class="tasks-history-grid-loader-spinner"/>
+	`
+	};
+
+	const gridId = 'tasks-history-grid';
+
+	// @vue/component
+	const App = {
+		name: 'HistoryGrid',
+		components: {
+			HeadlineXl: ui_system_typography_vue.HeadlineXl,
+			GridLoader,
+			ChangesetTime,
+			Authors,
+			ChangesetLocations,
+			ChangesetValues
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			}
+		},
+		mounted() {
+			main_core_events.EventEmitter.subscribe('Grid::beforeRequest', this.handleBeforeGridRequest);
+			main_core_events.EventEmitter.subscribe('Grid::updated', this.update);
+			void this.getData();
+		},
+		beforeUnmount() {
+			main_core_events.EventEmitter.unsubscribe('Grid::beforeRequest', this.handleBeforeGridRequest);
+			main_core_events.EventEmitter.unsubscribe('Grid::updated', this.update);
+			BX.Main?.gridManager?.destroy(gridId);
+			main_popup.PopupManager.getPopupById(`${gridId}-grid-settings-window`)?.destroy();
+		},
+		methods: {
+			async getData() {
+				const {
+					html
+				} = await tasks_v2_lib_apiClient.apiClient.post('Task.HistoryGrid.get', {
+					taskId: this.taskId
+				});
+				await main_core.Runtime.html(this.$refs.grid, html);
+				this.update();
+			},
+			handleBeforeGridRequest(event) {
+				const [, eventArgs] = event.getData();
+				if (eventArgs.url) {
+					this.nav = new main_core.Uri(eventArgs.url ?? '').getQueryParams().nav;
+				}
+				eventArgs.url = `/bitrix/services/main/ajax.php?action=tasks.v2.Task.HistoryGrid.getData&nav=${this.nav}`;
+				eventArgs.method = 'POST';
+				eventArgs.data = {
+					taskId: this.taskId
+				};
+			},
+			update() {
+				void this.$refs.changesetTime.update();
+				void this.$refs.authors.update();
+				void this.$refs.changesetLocations.update();
+				void this.$refs.changesetValues.update();
+			}
+		},
+		template: `
+		<div class="tasks-history-grid-container">
+			<div class="tasks-history-grid-header">
+				<HeadlineXl>{{ loc('TASKS_V2_HISTORY_LOG_HEADER') }}</HeadlineXl>
+			</div>
+			<div ref="grid" class="tasks-history-grid-main-content"><GridLoader/></div>
+			<Authors ref="authors" :getGrid="() => this.$refs.grid"/>
+			<ChangesetTime ref="changesetTime" :getGrid="() => this.$refs.grid"/>
+			<ChangesetLocations ref="changesetLocations" :getGrid="() => this.$refs.grid" :taskId/>
+			<ChangesetValues ref="changesetValues" :getGrid="() => this.$refs.grid"/>
+		</div>
+	`
+	};
+
+	class HistoryGrid {
+		#application;
+		#params;
+		constructor(params = {}) {
+			this.#params = params;
+		}
+		static openHistoryGrid(params) {
+			let historyGrid = null;
+			BX.SidePanel.Instance.open('tasks-history-grid', {
+				contentCallback: slider => {
+					historyGrid = new this(params);
+					return historyGrid.mount(slider);
+				},
+				events: {
+					onClose: () => historyGrid?.unmount()
+				},
+				cacheable: false,
+				width: 1200
+			});
+		}
+		mount(slider) {
+			this.#application = this.#mountApplication(slider.getContentContainer());
+		}
+		unmount() {
+			this.#unmountApplication();
+		}
+		#mountApplication(container) {
+			const application = ui_vue3.BitrixVue.createApp(App, this.#params);
+			application.mixin(ui_vue3_mixins_locMixin.locMixin);
+			application.mount(container);
+			return application;
+		}
+		#unmountApplication() {
+			this.#application?.unmount();
+		}
+	}
+
+	exports.HistoryGrid = HistoryGrid;
+
+})(this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}, BX.Vue3, BX.Vue3.Mixins, BX, BX.Event, BX.Main, BX.UI.System.Typography.Vue, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Main, BX.Tasks.V2.Provider.Service, BX.UI.Vue3.Components);
 //# sourceMappingURL=history-grid.bundle.js.map

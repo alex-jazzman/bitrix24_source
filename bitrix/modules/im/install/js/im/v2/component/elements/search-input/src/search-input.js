@@ -1,12 +1,12 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
 import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loader';
 
 import './search-input.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const SearchInput = {
@@ -148,6 +148,8 @@ export const SearchInput = {
 		{
 			this.query = '';
 			this.hasFocus = false;
+			// move focus away from input to prevent auto-focus after pressing Esc
+			this.$refs.searchContainer.focus();
 			this.$emit('queryChange', this.query);
 			this.$emit('closeByEsc');
 		},
@@ -167,7 +169,12 @@ export const SearchInput = {
 		},
 	},
 	template: `
-		<div class="bx-im-search-input__scope bx-im-search-input__container" :class="{'--has-focus': hasFocus}">
+		<div 
+			class="bx-im-search-input__scope bx-im-search-input__container" 
+			ref="searchContainer"
+			tabindex="-1"
+			:class="{'--has-focus': hasFocus}"
+		>
 			<div v-if="!isLoading" class="bx-im-search-input__search-icon"></div>
 			<Spinner 
 				v-if="withLoader && isLoading" 

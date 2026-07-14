@@ -4,6 +4,7 @@
 jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Color, Component } = require('tokens');
+	const { requireLazy } = require('require-lazy');
 
 	const { CalendarType } = require('calendar/enums');
 	const { DateHelper } = require('calendar/date-helper');

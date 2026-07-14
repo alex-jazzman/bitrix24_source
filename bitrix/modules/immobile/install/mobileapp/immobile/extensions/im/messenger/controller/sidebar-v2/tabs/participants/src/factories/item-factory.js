@@ -4,7 +4,7 @@
 jn.define(
 	'im/messenger/controller/sidebar-v2/tabs/participants/src/factories/item-factory',
 	(require, exports, module) => {
-		const { DialogHelper } = require('im/messenger/lib/helper/dialog');
+		const { DialogHelper } = require('im/messenger/lib/helper');
 		const { ParticipantType } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/const');
 		const { resolveParticipantsType } = require(
 			'im/messenger/controller/sidebar-v2/tabs/participants/src/type-resolver',

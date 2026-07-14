@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/lib/filter/common'
 	const { WelcomeScreen } = require('im/messenger/lib/widget/chat-recent/welcome-screen');
 
 	/**
+	 * @implements IWelcomeScreen
 	 * @class CommonFilterEmptyScreen
 	 */
 	class CommonFilterEmptyScreen
@@ -27,6 +28,16 @@ jn.define('im/messenger/controller/recent/service/empty-state/lib/filter/common'
 		toChatRecentWidgetItem()
 		{
 			return this.welcomeScreen.toChatRecentWidgetItem();
+		}
+
+		isLayoutComponentSupported()
+		{
+			return false;
+		}
+
+		toLayoutComponent()
+		{
+			return null;
 		}
 	}
 

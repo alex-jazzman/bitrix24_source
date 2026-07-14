@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
+	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -247,13 +248,22 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		 * @param {Array<Number>} addManagersIds
 		 * @void
 		 */
-		onSelectManagers = (addManagersIds) => {
+		onSelectManagers = async (addManagersIds) => {
 			const currentManagersIdsList = new Set(this.managersView.state.users.map((user) => user.id));
 			const uniqueId = addManagersIds.filter((id) => !currentManagersIdsList.has(id));
-			if (uniqueId.length > 0)
+			if (uniqueId.length === 0)
 			{
-				this.onClickManagersSelectorDoneButton(uniqueId);
+				return;
 			}
+
+			const parentChatId = this.getDialogModel()?.parentChatId ?? 0;
+			const canAdd = await ProjectAccessGuard.canAddUsersToProjectChildChat(parentChatId, uniqueId);
+			if (!canAdd)
+			{
+				return;
+			}
+
+			this.onClickManagersSelectorDoneButton(uniqueId);
 		};
 
 		/**
@@ -279,6 +289,13 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		{
 			const initSelectedIds = await this.getCurrentMemberIds();
 			logger.log(`${this.constructor.name}.onClickParticipantAction.initSelectedIds`, initSelectedIds);
+
+			// Capture the selection in onClose, but defer the access guard / REST update
+			// until the selector widget is fully removed from the stack. Showing the
+			// native confirm while the host widget is being dismissed causes it to be
+			// auto-dismissed by the platform.
+			let pendingSelectedEntity = null;
+
 			const selector = new NestedDepartmentSelector({
 				initSelectedIds,
 				undeselectableIds: EntitySelectorHelper.createUserList([serviceLocator.get('core').getUserId()]),
@@ -294,6 +311,16 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 				closeOnSelect: true,
 				events: {
 					onClose: (selectedEntity) => {
+						pendingSelectedEntity = selectedEntity;
+					},
+					onViewRemoved: () => {
+						if (pendingSelectedEntity === null)
+						{
+							return;
+						}
+
+						const selectedEntity = pendingSelectedEntity;
+						pendingSelectedEntity = null;
 						this.onCloseParticipantSelector(selectedEntity, initSelectedIds);
 					},
 				},
@@ -533,29 +560,38 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		 * @param {Array<Array>} initSelectedIds
 		 * @void
 		 */
-		onCloseParticipantSelector(selectedEntity, initSelectedIds)
+		async onCloseParticipantSelector(selectedEntity, initSelectedIds)
 		{
 			const initTupleSet = new Set(initSelectedIds.map(([type, id]) => `${type}-${id}`));
-			const addedMemberEntities = selectedEntity
-				.filter(({ type, id }) => !initTupleSet.has(`${type}-${id}`))
-				.map(({ type, id }) => [type, id]);
+			const addedEntities = selectedEntity
+				.filter(({ type, id }) => !initTupleSet.has(`${type}-${id}`));
+			const addedMemberEntities = addedEntities.map(({ type, id }) => [type, id]);
 
 			const selectedSet = new Set(selectedEntity.map(({ type, id }) => `${type}-${id}`));
 			const deletedMemberEntities = initSelectedIds.filter(([type, id]) => !selectedSet.has(`${type}-${id}`));
 
-			if (addedMemberEntities.length > 0 || deletedMemberEntities.length > 0)
+			if (addedMemberEntities.length === 0 && deletedMemberEntities.length === 0)
 			{
-				this.restChatUpdate({ addedMemberEntities, deletedMemberEntities })
-					.then((result) => {
-						if (result !== true)
-						{
-							return;
-						}
-						this.showSuccessfullyToast();
-						// the repository is not updated by server because we do not save departments in the model
-					})
-					.catch((error) => logger.log(`${this.constructor.name}.onCloseParticipantSelector.catch:`, error));
+				return;
 			}
+
+			const parentChatId = this.getDialogModel()?.parentChatId ?? 0;
+			const canAdd = await ProjectAccessGuard.canAddEntitiesToProjectChildChat(parentChatId, addedEntities);
+			if (!canAdd)
+			{
+				return;
+			}
+
+			this.restChatUpdate({ addedMemberEntities, deletedMemberEntities })
+				.then((result) => {
+					if (result !== true)
+					{
+						return;
+					}
+					this.showSuccessfullyToast();
+					// the repository is not updated by server because we do not save departments in the model
+				})
+				.catch((error) => logger.log(`${this.constructor.name}.onCloseParticipantSelector.catch:`, error));
 		}
 
 		/**

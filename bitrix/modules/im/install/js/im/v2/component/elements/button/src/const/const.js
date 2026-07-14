@@ -37,5 +37,6 @@ export type CustomColorScheme = {
 	backgroundColor: string,
 	iconColor: string,
 	textColor: string,
+	textHoverColor: string,
 	hoverColor: string
 };

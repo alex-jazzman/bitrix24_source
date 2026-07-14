@@ -7,6 +7,7 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 	const { NotifyManager } = require('notify-manager');
 	const { confirmDefaultAction } = require('alert');
 	const { Type } = require('type');
+	const { requireLazy } = require('require-lazy');
 
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { Icon, IconView } = require('ui-system/blocks/icon');

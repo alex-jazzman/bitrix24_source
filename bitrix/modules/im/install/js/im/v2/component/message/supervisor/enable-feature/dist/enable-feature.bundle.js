@@ -261,6 +261,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
 				callback: () => onHelpClick('20922794')
 			}
+		},
+		[im_v2_component_message_supervisor_base.EnableFeatures.checkInV2]: {
+			title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_TITLE'),
+			description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_DESCRIPTION'),
+			detailButton: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+				callback: () => openCheckInQrCode()
+			},
+			infoButton: {
+				text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+				callback: () => onHelpClick('28435980')
+			}
 		}
 	};
 

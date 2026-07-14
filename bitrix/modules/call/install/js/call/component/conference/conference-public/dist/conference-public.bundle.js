@@ -73,12 +73,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getActionCommitFile",
 	    value: function getActionCommitFile() {
-	      return 'call.disk.commit';
+	      return 'call.Disk.commit';
 	    }
 	  }, {
 	    key: "getActionUploadChunk",
 	    value: function getActionUploadChunk() {
-	      return 'call.disk.upload';
+	      return 'call.Disk.upload';
 	    }
 	  }]);
 	  return ConferenceTextareaUploadHandler;
@@ -588,7 +588,7 @@ this.BX = this.BX || {};
 	  },
 	  created: function created() {
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
-	    this.getApplication().callView.blockButtons(['microphone', 'camera']);
+	    this.getApplication().viewPort.blockButtons(['microphone', 'camera']);
 	  },
 	  beforeDestroy: function beforeDestroy() {
 	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
@@ -696,8 +696,8 @@ this.BX = this.BX || {};
 	              });
 	            case 6:
 	              devices = _context2.sent;
-	              _this.getApplication().callView.showButtons(['camera', 'microphone']);
-	              _this.getApplication().callView.unblockButtons(devices);
+	              _this.getApplication().viewPort.showButtons(['camera', 'microphone']);
+	              _this.getApplication().viewPort.unblockButtons(devices);
 	              _context2.next = 17;
 	              break;
 	            case 11:
@@ -1108,12 +1108,42 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div class=\"bx-im-component-call-wait-container\">\n\t\t\t<div class=\"bx-im-component-call-wait-main\">\n\t\t\t\t<div class=\"bx-im-component-call-wait-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-wait-title\">{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_TITLE'] }}</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-wait-user-counter\">\n\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_USER_COUNT'] }} {{ userCounter }}\n\t\t\t</div>\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
 	};
 
-	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var UserListItem = {
 	  props: {
-	    userId: {
+	    user: {
+	      type: Object,
+	      required: true
+	    },
+	    userCallStatus: {
+	      type: Object,
+	      required: true
+	    },
+	    currentUserId: {
 	      type: Number,
+	      required: true
+	    },
+	    isCurrentUserExternal: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isBroadcast: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isUserPresenter: {
+	      type: Boolean,
+	      required: true
+	    },
+	    pinAvailable: {
+	      type: Boolean,
+	      required: true
+	    },
+	    chatOwner: {
+	      type: Number,
+	      required: true
+	    },
+	    conferenceState: {
+	      type: String,
 	      required: true
 	    }
 	  },
@@ -1126,25 +1156,9 @@ this.BX = this.BX || {};
 	      onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
 	    };
 	  },
-	  computed: _objectSpread$7({
-	    user: function user() {
-	      return this.$store.getters['users/get'](this.userId, true);
-	    },
-	    // statuses
-	    currentUser: function currentUser() {
-	      return this.application.common.userId;
-	    },
-	    chatOwner: function chatOwner() {
-	      if (!this.dialog) {
-	        return 0;
-	      }
-	      return this.dialog.ownerId;
-	    },
+	  computed: {
 	    isCurrentUserOwner: function isCurrentUserOwner() {
-	      return this.chatOwner === this.currentUser;
-	    },
-	    isCurrentUserExternal: function isCurrentUserExternal() {
-	      return !!this.conference.user.hash;
+	      return this.chatOwner === this.currentUserId;
 	    },
 	    isMobile: function isMobile() {
 	      return im_lib_utils.Utils.device.isMobile();
@@ -1154,29 +1168,10 @@ this.BX = this.BX || {};
 	    },
 	    isGuestWithDefaultName: function isGuestWithDefaultName() {
 	      var guestDefaultName = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME');
-	      return this.user.id === this.currentUser && this.user.extranet && this.user.name === guestDefaultName;
-	    },
-	    userCallStatus: function userCallStatus() {
-	      return this.$store.getters['call/getUser'](this.user.id);
+	      return this.user.id === this.currentUserId && this.user.extranet && this.user.name === guestDefaultName;
 	    },
 	    isUserInCall: function isUserInCall() {
 	      return this.onlineStates.includes(this.userCallStatus.state);
-	    },
-	    userInCallCount: function userInCallCount() {
-	      var _this = this;
-	      var usersInCall = Object.values(this.call.users).filter(function (user) {
-	        return _this.onlineStates.includes(user.state);
-	      });
-	      return usersInCall.length;
-	    },
-	    isBroadcast: function isBroadcast() {
-	      return this.conference.common.isBroadcast;
-	    },
-	    presentersList: function presentersList() {
-	      return this.conference.common.presenters;
-	    },
-	    isUserPresenter: function isUserPresenter() {
-	      return this.presentersList.includes(this.user.id);
 	    },
 	    // end statuses
 	    formattedSubtitle: function formattedSubtitle() {
@@ -1198,20 +1193,20 @@ this.BX = this.BX || {};
 	      return subtitle;
 	    },
 	    isMenuNeeded: function isMenuNeeded() {
-	      return this.getMenuItems.length > 0;
+	      return this.menuItems.length > 0;
 	    },
 	    menuItems: function menuItems() {
-	      var _this2 = this;
+	      var _this = this;
 	      var items = [];
 	      // for self
-	      if (this.user.id === this.currentUser) {
+	      if (this.user.id === this.currentUserId) {
 	        // self-rename
 	        if (this.isCurrentUserExternal) {
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME_SELF'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.onRenameStart();
+	              _this.closeMenu();
+	              _this.onRenameStart();
 	            }
 	          });
 	        }
@@ -1220,8 +1215,8 @@ this.BX = this.BX || {};
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_CHANGE_BACKGROUND'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.$emit('userChangeBackground');
+	              _this.closeMenu();
+	              _this.$emit('userChangeBackground');
 	            }
 	          });
 	        }
@@ -1233,8 +1228,8 @@ this.BX = this.BX || {};
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.onRenameStart();
+	              _this.closeMenu();
+	              _this.onRenameStart();
 	            }
 	          });
 	        }
@@ -1243,22 +1238,22 @@ this.BX = this.BX || {};
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_KICK'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.$emit('userKick', {
-	                user: _this2.user
+	              _this.closeMenu();
+	              _this.$emit('userKick', {
+	                user: _this.user
 	              });
 	            }
 	          });
 	        }
-	        if (this.isUserInCall && this.userCallStatus.cameraState && this.userInCallCount > 2) {
+	        if (this.isUserInCall && this.userCallStatus.cameraState && this.pinAvailable) {
 	          // pin
 	          if (!this.userCallStatus.pinned) {
 	            items.push({
 	              text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_PIN'),
 	              onclick: function onclick() {
-	                _this2.closeMenu();
-	                _this2.$emit('userPin', {
-	                  user: _this2.user
+	                _this.closeMenu();
+	                _this.$emit('userPin', {
+	                  user: _this.user
 	                });
 	              }
 	            });
@@ -1268,8 +1263,8 @@ this.BX = this.BX || {};
 	            items.push({
 	              text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_UNPIN'),
 	              onclick: function onclick() {
-	                _this2.closeMenu();
-	                _this2.$emit('userUnpin');
+	                _this.closeMenu();
+	                _this.$emit('userUnpin');
 	              }
 	            });
 	          }
@@ -1279,18 +1274,18 @@ this.BX = this.BX || {};
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_CHAT'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.$emit('userOpenChat', {
-	                user: _this2.user
+	              _this.closeMenu();
+	              _this.$emit('userOpenChat', {
+	                user: _this.user
 	              });
 	            }
 	          });
 	          items.push({
 	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_PROFILE'),
 	            onclick: function onclick() {
-	              _this2.closeMenu();
-	              _this2.$emit('userOpenProfile', {
-	                user: _this2.user
+	              _this.closeMenu();
+	              _this.$emit('userOpenProfile', {
+	                user: _this.user
 	              });
 	            }
 	          });
@@ -1299,9 +1294,9 @@ this.BX = this.BX || {};
 	        items.push({
 	          text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_INSERT_NAME'),
 	          onclick: function onclick() {
-	            _this2.closeMenu();
-	            _this2.$emit('userInsertName', {
-	              user: _this2.user
+	            _this.closeMenu();
+	            _this.$emit('userInsertName', {
+	              user: _this.user
 	            });
 	          }
 	        });
@@ -1341,9 +1336,9 @@ this.BX = this.BX || {};
 	    },
 	    isCallStatusPanelNeeded: function isCallStatusPanelNeeded() {
 	      if (this.isBroadcast) {
-	        return this.conference.common.state === call_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
+	        return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
 	      } else {
-	        return this.conference.common.state === call_const.ConferenceStateType.call && this.isUserInCall;
+	        return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall;
 	      }
 	    },
 	    callMenuIconClasses: function callMenuIconClasses() {
@@ -1390,23 +1385,10 @@ this.BX = this.BX || {};
 	      }
 	      return classes;
 	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    application: function application(state) {
-	      return state.application;
-	    },
-	    conference: function conference(state) {
-	      return state.conference;
-	    },
-	    call: function call(state) {
-	      return state.call;
-	    },
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    }
-	  })),
+	  },
 	  methods: {
 	    openMenu: function openMenu() {
-	      var _this3 = this;
+	      var _this2 = this;
 	      if (this.menuPopup) {
 	        this.closeMenu();
 	        return false;
@@ -1429,10 +1411,10 @@ this.BX = this.BX || {};
 	        items: this.menuItems,
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this3.menuPopup.destroy();
+	            return _this2.menuPopup.destroy();
 	          },
 	          onPopupDestroy: function onPopupDestroy() {
-	            return _this3.menuPopup = null;
+	            return _this2.menuPopup = null;
 	          }
 	        }
 	      });
@@ -1443,12 +1425,12 @@ this.BX = this.BX || {};
 	      this.menuPopup = null;
 	    },
 	    onRenameStart: function onRenameStart() {
-	      var _this4 = this;
+	      var _this3 = this;
 	      this.newName = this.user.name;
 	      this.renameMode = true;
 	      this.$nextTick(function () {
-	        _this4.$refs['rename-input'].focus();
-	        _this4.$refs['rename-input'].select();
+	        _this3.$refs['rename-input'].focus();
+	        _this3.$refs['rename-input'].select();
 	      });
 	    },
 	    onRenameKeyDown: function onRenameKeyDown(event) {
@@ -1462,7 +1444,7 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    changeName: function changeName() {
-	      var _this5 = this;
+	      var _this4 = this;
 	      if (this.user.name === this.newName.trim() || this.newName === '') {
 	        this.renameMode = false;
 	        return false;
@@ -1472,7 +1454,7 @@ this.BX = this.BX || {};
 	        newName: this.newName
 	      });
 	      this.$nextTick(function () {
-	        _this5.renameMode = false;
+	        _this4.renameMode = false;
 	      });
 	    },
 	    onFocus: function onFocus(event) {
@@ -1486,8 +1468,8 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div :class=\"itemClasses\">\n\t\t\t<!-- Avatar -->\n\t\t\t<div :class=\"avatarWrapClasses\">\n\t\t\t\t<div :class=\"avatarClasses\" :style=\"avatarStyle\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-avatar-inner-text\" v-if=\"avatarInnerText\">{{ avatarInnerText }}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Body -->\n\t\t\t<div :class=\"bodyClasses\">\n\t\t\t\t<!-- Introduce yourself blinking mode -->\n\t\t\t\t<template v-if=\"!renameMode && isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div @click=\"onRenameStart\" class=\"bx-im-component-call-user-list-introduce-yourself\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-introduce-yourself-text\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_INTRODUCE_YOURSELF') }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Rename mode -->\n\t\t\t\t<template v-else-if=\"renameMode\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-container\">\n\t\t\t\t\t\t\t<div @click=\"renameMode = false\" class=\"bx-im-component-call-user-list-change-name-cancel\"></div>\n\t\t\t\t\t\t\t<input @keydown=\"onRenameKeyDown\" @focus=\"onFocus\" @blur=\"onBlur\" v-model=\"newName\" :ref=\"'rename-input'\" type=\"text\" class=\"bx-im-component-call-user-list-change-name-input\">\n\t\t\t\t\t\t\t<div v-if=\"!renameRequested\" @click=\"changeName\" class=\"bx-im-component-call-user-list-change-name-confirm\"></div>\n\t\t\t\t\t\t\t<div v-else class=\"bx-im-component-call-user-list-change-name-loader\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-loader-icon\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"!renameMode && !isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name-wrap\">\n\t\t\t\t\t\t\t<!-- Name -->\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name\">{{ user.name }}</div>\n\t\t\t\t\t\t\t<!-- Status subtitle -->\n\t\t\t\t\t\t\t<div v-if=\"formattedSubtitle !== ''\" class=\"bx-im-component-call-user-list-item-name-subtitle\">{{ formattedSubtitle }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"isCallStatusPanelNeeded\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-icons\">\n\t\t\t\t\t\t<!-- Context menu icon -->\n\t\t\t\t\t\t<div :class=\"callMenuIconClasses\" v-if=\"menuItems.length > 0 && !isMobile\" @click=\"openMenu\" ref=\"user-menu\"></div>\n\t\t\t\t\t\t<div :class=\"callLeftIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callCenterIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callRightIconClasses\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
-	function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$8(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$8(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$8(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var UserList = {
 	  components: {
 	    UserListItem: UserListItem
@@ -1502,7 +1484,8 @@ this.BX = this.BX || {};
 	        user: 0,
 	        newName: '',
 	        renameRequested: false
-	      }
+	      },
+	      onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
 	    };
 	  },
 	  created: function created() {
@@ -1514,7 +1497,25 @@ this.BX = this.BX || {};
 	  beforeDestroy: function beforeDestroy() {
 	    this.loaderObserver = null;
 	  },
-	  computed: _objectSpread$8({
+	  computed: _objectSpread$7({
+	    chatOwner: function chatOwner() {
+	      var _this$dialog;
+	      return ((_this$dialog = this.dialog) === null || _this$dialog === void 0 ? void 0 : _this$dialog.ownerId) || 0;
+	    },
+	    pinAvailable: function pinAvailable() {
+	      var _this = this;
+	      var onlineUsers = 0;
+	      var users = Object.values(this.call.users);
+	      users.forEach(function (user) {
+	        if (_this.onlineStates.includes(user.state) && ++onlineUsers > 2) {
+	          return true;
+	        }
+	      });
+	      return false;
+	    },
+	    isCurrentUserExternal: function isCurrentUserExternal() {
+	      return Boolean(this.conference.user.hash);
+	    },
 	    userId: function userId() {
 	      return this.application.common.userId;
 	    },
@@ -1522,9 +1523,9 @@ this.BX = this.BX || {};
 	      return this.conference.common.isBroadcast;
 	    },
 	    usersList: function usersList() {
-	      var _this = this;
+	      var _this2 = this;
 	      var users = this.conference.common.users.filter(function (user) {
-	        return !_this.presentersList.includes(user) && _this.call.users[user] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(_this.call.users[user].state);
+	        return !_this2.presentersList.includes(user) && _this2.call.users[user] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(_this2.call.users[user].state);
 	      });
 	      return babelHelpers.toConsumableArray(users).sort(this.userSortFunction);
 	    },
@@ -1552,8 +1553,14 @@ this.BX = this.BX || {};
 	    }
 	  })),
 	  methods: {
+	    getUserInfo: function getUserInfo(userId) {
+	      return this.$store.getters['users/get'](userId, true);
+	    },
+	    getUserStatus: function getUserStatus(userId) {
+	      return this.$store.getters['call/getUser'](userId);
+	    },
 	    requestUsers: function requestUsers() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	        _ref$firstPage = _ref.firstPage,
 	        firstPage = _ref$firstPage === void 0 ? false : _ref$firstPage;
@@ -1564,20 +1571,20 @@ this.BX = this.BX || {};
 	      }).then(function (result) {
 	        im_lib_logger.Logger.warn('Conference: getting next user list result', result.data());
 	        var users = result.data();
-	        _this2.pagesLoaded++;
-	        if (users.length < _this2.usersPerPage) {
-	          _this2.hasMoreToLoad = false;
+	        _this3.pagesLoaded++;
+	        if (users.length < _this3.usersPerPage) {
+	          _this3.hasMoreToLoad = false;
 	        }
-	        _this2.$store.dispatch('users/set', users);
+	        _this3.$store.dispatch('users/set', users);
 	        var usersIds = users.map(function (user) {
 	          return user.id;
 	        });
-	        return _this2.$store.dispatch('conference/setUsers', {
+	        return _this3.$store.dispatch('conference/setUsers', {
 	          users: usersIds
 	        });
 	      }).then(function () {
 	        if (firstPage) {
-	          _this2.firstPageLoaded = true;
+	          _this3.firstPageLoaded = true;
 	        }
 	      })["catch"](function (result) {
 	        im_lib_logger.Logger.warn('Conference: error getting users list', result.error().ex);
@@ -1588,7 +1595,7 @@ this.BX = this.BX || {};
 	      this.showUserKickConfirm(user);
 	    },
 	    showUserKickConfirm: function showUserKickConfirm(user) {
-	      var _this3 = this;
+	      var _this4 = this;
 	      if (this.userKickConfirm) {
 	        this.userKickConfirm.close();
 	      }
@@ -1601,17 +1608,17 @@ this.BX = this.BX || {};
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 	        onOk: function onOk() {
-	          _this3.kickUser(user);
-	          _this3.userKickConfirm.close();
+	          _this4.kickUser(user);
+	          _this4.userKickConfirm.close();
 	        },
 	        onCancel: function onCancel() {
-	          _this3.userKickConfirm.close();
+	          _this4.userKickConfirm.close();
 	        }
 	      });
 	      this.userKickConfirm.show();
 	    },
 	    kickUser: function kickUser(user) {
-	      var _this4 = this;
+	      var _this5 = this;
 	      this.$store.dispatch('conference/removeUsers', {
 	        users: [user.id]
 	      });
@@ -1620,7 +1627,7 @@ this.BX = this.BX || {};
 	        chat_id: this.application.dialog.chatId
 	      })["catch"](function (error) {
 	        im_lib_logger.Logger.error('Conference: removing user from chat error', error);
-	        _this4.$store.dispatch('conference/setUsers', {
+	        _this5.$store.dispatch('conference/setUsers', {
 	          users: [user.id]
 	        });
 	      });
@@ -1638,7 +1645,7 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    onUserChangeName: function onUserChangeName(_ref4) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      var user = _ref4.user,
 	        newName = _ref4.newName;
 	      var method = user.id === this.userId ? 'call.user.update' : 'call.user.force.rename';
@@ -1656,12 +1663,12 @@ this.BX = this.BX || {};
 	        user_id: user.id
 	      }).then(function () {
 	        im_lib_logger.Logger.warn('Conference: rename completed', user.id, newName);
-	        if (oldName === _this5.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME')) {
-	          _this5.getApplication().setUserWasRenamed();
+	        if (oldName === _this6.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME')) {
+	          _this6.getApplication().setUserWasRenamed();
 	        }
 	      })["catch"](function (error) {
 	        im_lib_logger.Logger.error('Conference: renaming error', error);
-	        _this5.$store.dispatch('users/update', {
+	        _this6.$store.dispatch('users/update', {
 	          id: user.id,
 	          fields: {
 	            name: oldName,
@@ -1690,7 +1697,7 @@ this.BX = this.BX || {};
 	    },
 	    // Helpers
 	    getLoaderObserver: function getLoaderObserver() {
-	      var _this6 = this;
+	      var _this7 = this;
 	      var options = {
 	        root: document.querySelector('.bx-im-component-call-right-users'),
 	        threshold: 0.01
@@ -1699,7 +1706,7 @@ this.BX = this.BX || {};
 	        entries.forEach(function (entry) {
 	          if (entry.isIntersecting && entry.intersectionRatio > 0.01) {
 	            im_lib_logger.Logger.warn('Conference: UserList: I see loader! Load next page!');
-	            _this6.requestUsers();
+	            _this7.requestUsers();
 	          }
 	        });
 	      };
@@ -1745,13 +1752,13 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-user-list\">\n\t\t\t<!-- Loading first page -->\n\t\t\t<div v-if=\"!firstPageLoaded\" class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Loading completed -->\n\t\t\t<template v-else>\n\t\t\t\t<!-- Speakers list section (if broadcast) -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speakers category title -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PRESENTERS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ presentersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Speakers list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"presenter in presentersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\"\n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:userId=\"presenter\"\n\t\t\t\t\t\t\t\t:key=\"presenter\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Participants list section (if there are any users) -->\n\t\t\t\t<template v-if=\"usersList.length > 0\">\n\t\t\t\t\t<!-- Show participants category title if broadcast -->\n\t\t\t\t\t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-user-list-category bx-im-component-call-user-list-category-participants\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PARTICIPANTS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ usersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Participants list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"user in usersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\" \n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:userId=\"user\"\n\t\t\t\t\t\t\t\t:key=\"user\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Next page loader -->\n\t\t\t\t<div v-if=\"hasMoreToLoad\" v-bx-im-directive-user-list-observer class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-user-list\">\n\t\t\t<!-- Loading first page -->\n\t\t\t<div v-if=\"!firstPageLoaded\" class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Loading completed -->\n\t\t\t<template v-else>\n\t\t\t\t<!-- Speakers list section (if broadcast) -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speakers category title -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PRESENTERS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ presentersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Speakers list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"presenter in presentersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\"\n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:user=\"getUserInfo(presenter)\"\n\t\t\t\t\t\t\t\t:userCallStatus=\"getUserStatus(presenter)\"\n\t\t\t\t\t\t\t\t:currentUserId=\"userId\"\n\t\t\t\t\t\t\t\t:isCurrentUserExternal=\"isCurrentUserExternal\"\n\t\t\t\t\t\t\t\t:isBroadcast=\"isBroadcast\"\n\t\t\t\t\t\t\t\t:isUserPresenter=\"presentersList.includes(presenter)\"\n\t\t\t\t\t\t\t\t:pinAvailable=\"pinAvailable\"\n\t\t\t\t\t\t\t\t:chatOwner=\"dialog.ownerId\"\n\t\t\t\t\t\t\t\t:conferenceState=\"conference.common.state\"\n\t\t\t\t\t\t\t\t:key=\"presenter\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Participants list section (if there are any users) -->\n\t\t\t\t<template v-if=\"usersList.length > 0\">\n\t\t\t\t\t<!-- Show participants category title if broadcast -->\n\t\t\t\t\t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-user-list-category bx-im-component-call-user-list-category-participants\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PARTICIPANTS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ usersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Participants list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"user in usersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\" \n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:user=\"getUserInfo(user)\"\n\t\t\t\t\t\t\t\t:userCallStatus=\"getUserStatus(user)\"\n\t\t\t\t\t\t\t\t:currentUserId=\"userId\"\n\t\t\t\t\t\t\t\t:isCurrentUserExternal=\"isCurrentUserExternal\"\n\t\t\t\t\t\t\t\t:isBroadcast=\"isBroadcast\"\n\t\t\t\t\t\t\t\t:isUserPresenter=\"presentersList.includes(user)\"\n\t\t\t\t\t\t\t\t:pinAvailable=\"pinAvailable\"\n\t\t\t\t\t\t\t\t:chatOwner=\"dialog.ownerId\"\n\t\t\t\t\t\t\t\t:conferenceState=\"conference.common.state\"\n\t\t\t\t\t\t\t\t:key=\"user\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Next page loader -->\n\t\t\t\t<div v-if=\"hasMoreToLoad\" v-bx-im-directive-user-list-observer class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\n\t\t</div>\n\t"
 	};
 
-	function ownKeys$9(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$9(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$9(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$9(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$8(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$8(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$8(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var UserListHeader = {
-	  computed: _objectSpread$9({
+	  computed: _objectSpread$8({
 	    userId: function userId() {
 	      return this.application.common.userId;
 	    },
@@ -1875,8 +1882,8 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div class=\"bx-im-component-call-user-list-header\">\n\t\t\t<div class=\"bx-im-component-call-user-list-header-top-actions\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-left\">\n\t\t\t\t\t<div @click=\"onCloseUsers\" class=\"bx-im-component-call-user-list-header-close\" :title=\"$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-right\">\n\t\t\t\t\t<div @click=\"openMenu\" class=\"bx-im-component-call-user-list-header-more\" ref=\"user-list-header-menu\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-user-list-header-users-summary\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-title\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
-	function ownKeys$a(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$a(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$a(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$a(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$9(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$9(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$9(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$9(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	//const
 	var popupModes = Object.freeze({
@@ -1947,7 +1954,7 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.hideSmiles, this.onHideSmiles);
 	    clearInterval(this.durationInterval);
 	  },
-	  computed: _objectSpread$a({
+	  computed: _objectSpread$9({
 	    EventType: function EventType() {
 	      return im_const.EventType;
 	    },
@@ -2138,7 +2145,7 @@ this.BX = this.BX || {};
 	      this.getApplication().toggleSmiles();
 	    },
 	    onBeforeUnload: function onBeforeUnload(event) {
-	      if (!this.getApplication().callView) {
+	      if (!this.getApplication().viewPort) {
 	        return;
 	      }
 	      if (!this.isPreparationStep) {

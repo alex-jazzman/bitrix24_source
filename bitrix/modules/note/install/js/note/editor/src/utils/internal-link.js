@@ -1,7 +1,6 @@
-type InternalNoteLink = {
-	type: 'document',
-	id: number,
-};
+type InternalNoteLink =
+	| { type: 'document', id: number, hash?: string }
+	| { type: 'anchor', hash: string };
 
 const DOCUMENT_PATH_PATTERN = /^\/note\/document\/(\d+)\/?$/;
 
@@ -55,11 +54,30 @@ function extractPathname(href: string, currentOrigin: string | null): string | n
 	}
 }
 
+function extractHash(href: string): string
+{
+	const index = href.indexOf('#');
+	if (index === -1)
+	{
+		return '';
+	}
+
+	return href.slice(index + 1).trim();
+}
+
 export function parseInternalNoteLink(href: mixed, origin?: string | null): InternalNoteLink | null
 {
 	if (typeof href !== 'string' || href === '')
 	{
 		return null;
+	}
+
+	// Pure in-document anchor: "#slug".
+	if (href.startsWith('#'))
+	{
+		const hash = href.slice(1).trim();
+
+		return hash === '' ? null : { type: 'anchor', hash };
 	}
 
 	const currentOrigin = origin === undefined ? resolveCurrentOrigin() : origin;
@@ -81,5 +99,7 @@ export function parseInternalNoteLink(href: mixed, origin?: string | null): Inte
 		return null;
 	}
 
-	return { type: 'document', id };
+	const hash = extractHash(href);
+
+	return hash === '' ? { type: 'document', id } : { type: 'document', id, hash };
 }

@@ -1,9 +1,7 @@
 input.tasks-elements-radio[type="radio"] {
 	--tasks-element-radio-transition: all 100ms ease-in-out;
 
-	-webkit-appearance: none;
-
-	        appearance: none;
+	appearance: none;
 	position: relative;
 	width: 20px;
 	height: 20px;

@@ -1,7 +1,7 @@
 import { Headline } from 'ui.system.typography.vue';
 import { RecoveryCodeInput } from './recovery-code-input';
 import { Captcha } from './captcha';
-import { sendData } from 'ui.analytics';
+import { sendOtpAnalytics } from '../analytics';
 import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
 
 // @vue/component
@@ -45,9 +45,7 @@ export const RecoveryCodes = {
 	mounted()
 	{
 		BX.UI.Hint.init(this.rootNode);
-		sendData({
-			tool: 'security',
-			category: 'fa_auth_form',
+		sendOtpAnalytics({
 			event: 'form_code_show',
 		});
 	},

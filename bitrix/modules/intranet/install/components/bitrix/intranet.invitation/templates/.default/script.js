@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, main_core_events, ui_analytics, intranet_departmentControl, main_popup, ui_buttons, intranet_invitationInput, ui_system_typography, ui_avatar, ui_system_input, ui_switcher, ui_system_chip) {
+(function (exports, main_core, main_core_events, ui_analytics, intranet_departmentControl, ui_buttons, humanresources_departmentCreationPopup, ui_system_input, main_popup, ui_system_typography, ui_avatar, intranet_invitationInput, main_loader, ui_switcher, ui_system_chip) {
 	'use strict';
 
 	class ActiveDirectory {
@@ -273,55 +273,237 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
-	class Transport {
-		#componentName;
-		#signedParameters;
-		#onSuccess;
-		#analytics;
+	class DepartmentControlBlock {
+		#container;
+		#departmentControl;
+		#canCreateDepartment;
+		#createButton;
+		#onCreateClick;
+		#departmentCreationPopup = null;
+		constructor(options = {}) {
+			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
+			this.#canCreateDepartment = options.canCreateDepartment === true;
+			this.#onCreateClick = main_core.Type.isFunction(options.onCreateClick) ? options.onCreateClick : () => {};
+		}
+		render() {
+			if (this.#container) {
+				return this.#container;
+			}
+			this.#container = main_core.Tag.render`
+			<div class="intranet-invitation-block__department-control">
+				<div class="intranet-invitation-block__department-control-inner">
+					${this.#departmentControl?.render()}
+				</div>
+				${this.#renderCreateButtonContainer()}
+			</div>
+		`;
+			return this.#container;
+		}
+		#renderCreateButtonContainer() {
+			if (!this.#canCreateDepartment || !this.#departmentControl?.canSelectDepartments()) {
+				return '';
+			}
+			return main_core.Tag.render`
+			<div class="intranet-invitation-block__department-control-button">
+				${this.#getCreateButton().render()}
+			</div>
+		`;
+		}
+		#getCreateButton() {
+			this.#createButton ??= new ui_buttons.Button({
+				useAirDesign: true,
+				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CREATE_BUTTON'),
+				style: ui_buttons.AirButtonStyle.TINTED,
+				size: ui_buttons.ButtonSize.LARGE,
+				icon: BX.UI.IconSet.Outline.PLUS_L,
+				onclick: () => {
+					this.#handleCreateDepartmentClick();
+					this.#onCreateClick();
+				}
+			});
+			return this.#createButton;
+		}
+		#handleCreateDepartmentClick() {
+			if (!this.#canCreateDepartment || !this.#departmentControl?.canSelectDepartments()) {
+				return;
+			}
+			this.#departmentCreationPopup ??= new humanresources_departmentCreationPopup.DepartmentCreationPopup({
+				onCreate: async result => {
+					this.#departmentControl.handleDepartmentCreated(result?.node);
+				}
+			});
+			this.#departmentCreationPopup.show({
+				parentDepartmentId: this.#departmentControl.getSelectedDepartmentId()
+			});
+		}
+	}
+
+	class ContactsInput {
+		#input;
+		getInput() {
+			this.#input ??= new ui_system_input.Input({
+				placeholder: this.getPlaceholder(),
+				design: ui_system_input.InputDesign.Grey,
+				withClear: true,
+				onBlur: this.#validateContactsInput.bind(this),
+				onInput: this.#onInput.bind(this),
+				onClear: this.#onClear.bind(this),
+				dataTestId: 'invite-page-contact-input'
+			});
+			return this.#input;
+		}
+		getValue() {
+			throw new Error('Not Implemented');
+		}
+		getPlaceholder() {
+			throw new Error('Not Implemented');
+		}
+		isValidValue(value) {
+			throw new Error('Not Implemented');
+		}
+		getValidationErrorMessage() {
+			throw new Error('Not Implemented');
+		}
+		#onInput() {
+			this.getInput().setError('');
+		}
+		#onClear() {
+			this.getInput().setError('');
+		}
+		#validateContactsInput() {
+			const value = this.getInput().getValue();
+			if (value && !this.isValidValue(value)) {
+				this.getInput().setError(this.getValidationErrorMessage());
+			} else {
+				this.getInput().setError('');
+			}
+		}
+	}
+
+	class InputRow {
+		#container;
+		#contactsInput;
+		#id;
 		constructor(options) {
-			this.#componentName = options.componentName;
-			this.#signedParameters = options.signedParameters;
-			this.#analytics = options.analytics;
-			this.#onSuccess = options.onSuccess;
-			this.onError = options.onError;
+			this.#id = options.id;
+			this.#contactsInput = options.contactsInput;
 		}
-		send(request, onError = null, analyticsData = null) {
-			request.data.analyticsData = analyticsData ?? this.#analytics.getDataForAction();
-			return main_core.ajax.runComponentAction(this.#componentName, request.action, {
-				signedParameters: this.#signedParameters,
-				mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
-				method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
-				data: request.data,
-				analyticsLabel: request.analyticsLabel
-			}).then(response => {
-				this.#onSuccess(response);
-				return response;
-			}).catch(reject => {
-				if (onError) {
-					onError(reject);
-				} else {
-					this.onError(reject);
-				}
+		render() {
+			this.#container ??= main_core.Tag.render`
+			<div data-test-id="invite-input-row${this.#id}" class="intranet-invite-form-row">
+				${this.#contactsInput.getInput().render()}
+			</div>
+		`;
+			return this.#container;
+		}
+		renderTo(target) {
+			main_core.Dom.append(this.render(), target);
+		}
+		isEmpty() {
+			return !this.#contactsInput.getInput().getValue();
+		}
+		isInvitationRowEmpty() {
+			return !main_core.Type.isStringFilled(this.getContactsValue());
+		}
+		getValue() {
+			return this.#contactsInput.getValue();
+		}
+		getContactsValue() {
+			return this.#contactsInput.getInput().getValue();
+		}
+		setContactsError(error) {
+			this.#contactsInput.getInput().setError(error);
+		}
+		hasContactsError() {
+			return main_core.Type.isStringFilled(this.#contactsInput.getInput().getError());
+		}
+		clear() {
+			this.#contactsInput.getInput().setValue('');
+		}
+	}
+
+	class EmailInput extends ContactsInput {
+		getValue() {
+			return {
+				EMAIL: this.getInput().getValue()
+			};
+		}
+		isValidValue(value) {
+			return main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
+		}
+		getPlaceholder() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+		}
+		getValidationErrorMessage() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
+		}
+	}
+
+	const PHONE_REGEX = /^[\d+][\d ()-]{4,22}\d$/;
+	class PhoneValidator {
+		static isValid(phone) {
+			return PHONE_REGEX.test(phone);
+		}
+	}
+
+	class PhoneInput extends ContactsInput {
+		getValue() {
+			return {
+				PHONE: this.getInput().getValue()
+			};
+		}
+		isValidValue(value) {
+			return PhoneValidator.isValid(value);
+		}
+		getPlaceholder() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_PHONE');
+		}
+		getValidationErrorMessage() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE');
+		}
+	}
+
+	class EmailOrPhoneInput extends ContactsInput {
+		getValue() {
+			const rawValue = this.getInput().getValue();
+			return PhoneValidator.isValid(rawValue) ? {
+				PHONE: rawValue
+			} : {
+				EMAIL: rawValue
+			};
+		}
+		isValidValue(value) {
+			return PhoneValidator.isValid(value) || main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
+		}
+		getPlaceholder() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
+		}
+		getValidationErrorMessage() {
+			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE');
+		}
+	}
+
+	class InputRowFactory {
+		#inviteType;
+		constructor(params) {
+			this.#inviteType = params.inviteType ?? InviteType.ALL;
+		}
+		createInputsRow(id) {
+			return new InputRow({
+				id,
+				contactsInput: this.#createContactsInput()
 			});
 		}
-		sendAction(request, onError = null, analyticsData = null) {
-			request.data.analyticsData = analyticsData ?? this.#analytics.getDataForAction();
-			return main_core.ajax.runAction(request.action, {
-				signedParameters: this.#signedParameters,
-				mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
-				method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
-				data: request.data,
-				analytics: request.data.analyticsData
-			}).then(response => {
-				this.#onSuccess(response);
-				return response;
-			}).catch(reject => {
-				if (onError) {
-					onError(reject);
-				} else {
-					this.onError(reject);
-				}
-			});
+		#createContactsInput() {
+			switch (this.#inviteType) {
+				case InviteType.EMAIL:
+					return new EmailInput();
+				case InviteType.PHONE:
+					return new PhoneInput();
+				case InviteType.All:
+				default:
+					return new EmailOrPhoneInput();
+			}
 		}
 	}
 
@@ -600,442 +782,54 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
-	class InviteEmailPopup {
-		#popup;
-		#input;
-		#sendButton;
-		#departmentControl;
-		#inviteType;
+	class Transport {
+		#componentName;
+		#signedParameters;
+		#onSuccess;
 		#analytics;
-		#transport;
 		constructor(options) {
-			this.#departmentControl = options.departmentControl;
-			this.#inviteType = options.inviteType;
+			this.#componentName = options.componentName;
+			this.#signedParameters = options.signedParameters;
 			this.#analytics = options.analytics;
-			this.#transport = options.transport;
+			this.#onSuccess = options.onSuccess;
+			this.onError = options.onError;
 		}
-		show() {
-			this.#getPopup().show();
-		}
-		#getInput() {
-			this.#input ??= new intranet_invitationInput.InvitationInput({
-				id: 'invite-page-popup-invitation-input',
-				inputType: this.#inviteType,
-				onReadySave: this.onReadySaveInputHandler.bind(this),
-				onUnreadySave: this.onUnreadySaveInputHandler.bind(this),
-				placeholder: this.#getPlaceholder()
-			});
-			return this.#input;
-		}
-		#getPlaceholder() {
-			switch (this.#inviteType) {
-				case InviteType.EMAIL:
-					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INVITE_POPUP_INPUT_EMAIL_PLACEHOLDER');
-				case InviteType.PHONE:
-					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_PHONE_PLACEHOLDER');
-				case InviteType.ALL:
-				default:
-					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_OR_PHONE_PLACEHOLDER');
-			}
-		}
-		#getPopup() {
-			this.#popup ??= new main_popup.Popup({
-				content: this.#getPopupContent(),
-				id: 'email-invitation-email',
-				className: 'email-invitation-container',
-				closeIcon: true,
-				autoHide: false,
-				closeByEsc: true,
-				width: 515,
-				closeIconSize: main_popup.CloseIconSize.LARGE,
-				padding: 0,
-				overlay: {
-					backgroundColor: 'rgba(0, 32, 78, 0.46)'
-				}
-			});
-			return this.#popup;
-		}
-		#getPopupContent() {
-			return main_core.Tag.render`
-			<div class="intranet-invitation-popup">
-				<div class="intranet-invitation-popup__title">
-					<span class="ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE')}</span>
-				</div>
-				<div class="intranet-invitation-popup__body">
-					<p class="intranet-invitation-description ui-text --sm">
-						${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION_MSGVER_1')}
-					</p>
-					<div class="email-popup-container__input">
-						${this.#getInput().render()}
-					</div>
-				</div>
-				<div class="intranet-invitation-popup__footer">
-					${this.#getActionContent()}
-				</div>
-			</div>
-		`;
-		}
-		#getActionContent() {
-			return main_core.Tag.render`
-			<div class="intranet-invitation-popup__footer-button-container">
-				${this.#getSendButton().render()}
-				${this.#getCancelButton().render()}
-			</div>
-		`;
-		}
-		#getSendButton() {
-			this.#sendButton ??= new ui_buttons.Button({
-				id: 'invite-popup-send-button',
-				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_SEND'),
-				state: ui_buttons.ButtonState.DISABLED,
-				style: ui_buttons.AirButtonStyle.FILLED,
-				useAirDesign: true,
-				onclick: () => {
-					if (this.#sendButton.getState() === ui_buttons.ButtonState.WAITING) {
-						return;
-					}
-					const departmentIds = this.#departmentControl.getValues();
-					const workgroupIds = this.#departmentControl.getGroupValues();
-					this.#sendButton.setState(ui_buttons.ButtonState.WAITING);
-					this.#getInput().inviteToDepartmentGroup(departmentIds, workgroupIds, this.#analytics.getDataForAction('mass')).then(response => {
-						if (response.data.invitedUserIds.length > 0) {
-							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
-						}
-						this.#getPopup().close();
-						this.#sendButton.setState(null);
-						if (response.data?.firedUserList && response.data?.firedUserList.length > 0) {
-							new RestoreFiredUsersPopup({
-								userList: response.data.firedUserList,
-								isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
-								transport: this.#transport,
-								departmentIds,
-								workgroupIds
-							}).show();
-						}
-					}).catch(() => {
-						this.#sendButton.setState(null);
-					});
-				}
-			});
-			return this.#sendButton;
-		}
-		#getCancelButton() {
-			return new ui_buttons.Button({
-				id: 'invite-popup-cancel-button',
-				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
-				useAirDesign: true,
-				style: ui_buttons.AirButtonStyle.OUTLINE,
-				onclick: () => this.#getPopup().close()
-			});
-		}
-		onReadySaveInputHandler() {
-			this.#getSendButton().setState(null);
-		}
-		onUnreadySaveInputHandler() {
-			this.#getSendButton().setState(ui_buttons.ButtonState.DISABLED);
-		}
-	}
-
-	class LocalEmailPage extends Page {
-		#container;
-		#departmentControl;
-		#inviteEmailPopup = null;
-		#analytics = null;
-		#transport;
-		#needConfirmRegistration;
-		constructor(options) {
-			super();
-			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
-			this.#analytics = options.analytics;
-			this.#transport = options.transport;
-			this.#needConfirmRegistration = options.needConfirmRegistration === true;
-		}
-		render() {
-			if (this.#container) {
-				return this.#container;
-			}
-			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
-				<div class="intranet-invitation-block__content">
-					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE')}</span>
-					<ol class="intranet-invitation-list ui-text --md">
-						<li class="intranet-invitation-list-item">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_1')}</li>
-						<li class="intranet-invitation-list-item">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_2')}</li>
-						<li class="intranet-invitation-list-item">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_3')}</li>
-						<li class="intranet-invitation-list-item">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_4')}</li>
-					</ol>
-					${this.#renderDescription()}
-					<div class="intranet-invitation-block__footer">
-						${this.#getInviteButton().render()}
-					</div>
-				</div>
-			</div>
-		`;
-			return this.#container;
-		}
-		#renderDescription() {
-			const description = main_core.Tag.render`
-			<span class="intranet-invitation-description ui-text --md">
-				${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_SERVICE_MSGVER_1', {
-			'[LINK]': '<span class="ui-link ui-link-secondary ui-link-dashed ui-text --md">',
-			'[/LINK]': '</span>'
-		})}
-			</span>
-		`;
-			const link = description.querySelector('.ui-link');
-			if (main_core.Type.isDomNode(link)) {
-				main_core.Event.bind(link, 'click', this.#openEmailInputPopup.bind(this));
-			}
-			return description;
-		}
-		#getInviteButton() {
-			return new ui_buttons.Button({
-				useAirDesign: true,
-				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'),
-				style: ui_buttons.AirButtonStyle.FILLED,
-				onclick: this.#onSubmitWithLocalEmailProgram.bind(this),
-				props: {
-					'data-test-id': 'invite-local-email-program-button'
-				}
-			});
-		}
-		#openEmailInputPopup() {
-			if (!this.#inviteEmailPopup) {
-				this.#inviteEmailPopup = new InviteEmailPopup({
-					id: 'open-invite-popup',
-					departmentControl: this.#departmentControl,
-					inviteType: InviteType.EMAIL,
-					transport: this.#transport,
-					analytics: this.#analytics
-				});
-			}
-			this.#analytics.sendOpenMassInvitePopup(InviteType.EMAIL);
-			this.#inviteEmailPopup.show();
-		}
-		#onSubmitWithLocalEmailProgram() {
-			const departmentsId = this.#departmentControl.getValues();
-			this.#transport.send({
-				action: 'getInviteLink',
-				data: {
-					departmentsId,
-					analyticsType: 'by_local_email_program'
-				}
+		send(request, onError = null, analyticsData = null) {
+			request.data.analyticsData = analyticsData ?? this.#analytics.getDataForAction();
+			return main_core.ajax.runComponentAction(this.#componentName, request.action, {
+				signedParameters: this.#signedParameters,
+				mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
+				method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
+				data: request.data,
+				analyticsLabel: request.analyticsLabel
 			}).then(response => {
-				const invitationUrl = response.data?.invitationLink;
-				if (main_core.Type.isStringFilled(invitationUrl)) {
-					this.#openLocalMailProgram(invitationUrl);
+				this.#onSuccess(response);
+				return response;
+			}).catch(reject => {
+				if (onError) {
+					onError(reject);
+				} else {
+					this.onError(reject);
 				}
-			}).catch(reject => {});
-		}
-		#openLocalMailProgram(invitationUrl) {
-			this.#analytics.sendLocalEmailProgram(this.#departmentControl, this.#needConfirmRegistration);
-			const subject = `subject=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_SUBJECT'))}`;
-			const body = `body=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_BODY'))} ${invitationUrl}`;
-			window.location = `mailto:?${subject}&${body}`;
-		}
-		getAnalyticTab() {
-			return Analytics.TAB_LOCAL_EMAIL;
-		}
-	}
-
-	class ContactsInput {
-		#input;
-		getInput() {
-			this.#input ??= new ui_system_input.Input({
-				placeholder: this.getPlaceholder(),
-				design: ui_system_input.InputDesign.Grey,
-				withClear: true,
-				onBlur: this.#validateContactsInput.bind(this),
-				onInput: this.#onInput.bind(this),
-				onClear: this.#onClear.bind(this),
-				dataTestId: 'invite-page-contact-input'
-			});
-			return this.#input;
-		}
-		getValue() {
-			throw new Error('Not Implemented');
-		}
-		getPlaceholder() {
-			throw new Error('Not Implemented');
-		}
-		isValidValue(value) {
-			throw new Error('Not Implemented');
-		}
-		getValidationErrorMessage() {
-			throw new Error('Not Implemented');
-		}
-		#onInput() {
-			this.getInput().setError('');
-		}
-		#onClear() {
-			this.getInput().setError('');
-		}
-		#validateContactsInput() {
-			const value = this.getInput().getValue();
-			if (value && !this.isValidValue(value)) {
-				this.getInput().setError(this.getValidationErrorMessage());
-			} else {
-				this.getInput().setError('');
-			}
-		}
-	}
-
-	class InputRow {
-		#container;
-		#nameInput;
-		#lastNameInput;
-		#contactsInput;
-		#id;
-		constructor(options) {
-			this.#id = options.id;
-			this.#contactsInput = options.contactsInput;
-			this.#nameInput = options.nameInput;
-			this.#lastNameInput = options.lastNameInput;
-		}
-		render() {
-			this.#container ??= main_core.Tag.render`
-			<div data-test-id="invite-input-row${this.#id}" class="intranet-invite-form-row">
-				${this.#contactsInput.getInput().render()}
-				${this.#nameInput.render()}
-				${this.#lastNameInput.render()}
-			</div>
-		`;
-			return this.#container;
-		}
-		renderTo(target) {
-			main_core.Dom.append(this.render(), target);
-		}
-		isEmpty() {
-			return !(this.#contactsInput.getInput().getValue() || this.#nameInput.getValue() || this.#lastNameInput.getValue());
-		}
-		isInvitationRowEmpty() {
-			return !main_core.Type.isStringFilled(this.getContactsValue());
-		}
-		getValue() {
-			return {
-				NAME: this.#nameInput.getValue(),
-				LAST_NAME: this.#lastNameInput.getValue(),
-				...this.#contactsInput.getValue()
-			};
-		}
-		getContactsValue() {
-			return this.#contactsInput.getInput().getValue();
-		}
-		setContactsError(error) {
-			this.#contactsInput.getInput().setError(error);
-		}
-		hasContactsError() {
-			return main_core.Type.isStringFilled(this.#contactsInput.getInput().getError());
-		}
-		clear() {
-			this.#contactsInput.getInput().setValue('');
-			this.#nameInput.setValue('');
-			this.#lastNameInput.setValue('');
-		}
-	}
-
-	class EmailInput extends ContactsInput {
-		getValue() {
-			return {
-				EMAIL: this.getInput().getValue()
-			};
-		}
-		isValidValue(value) {
-			return main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
-		}
-		getPlaceholder() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
-		}
-		getValidationErrorMessage() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
-		}
-	}
-
-	const PHONE_REGEX = /^[\d+][\d ()-]{4,22}\d$/;
-	class PhoneValidator {
-		static isValid(phone) {
-			return PHONE_REGEX.test(phone);
-		}
-	}
-
-	class PhoneInput extends ContactsInput {
-		getValue() {
-			return {
-				PHONE: this.getInput().getValue()
-			};
-		}
-		isValidValue(value) {
-			return PhoneValidator.isValid(value);
-		}
-		getPlaceholder() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_PHONE');
-		}
-		getValidationErrorMessage() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE');
-		}
-	}
-
-	class EmailOrPhoneInput extends ContactsInput {
-		getValue() {
-			const rawValue = this.getInput().getValue();
-			return PhoneValidator.isValid(rawValue) ? {
-				PHONE: rawValue
-			} : {
-				EMAIL: rawValue
-			};
-		}
-		isValidValue(value) {
-			return PhoneValidator.isValid(value) || main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
-		}
-		getPlaceholder() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
-		}
-		getValidationErrorMessage() {
-			return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE');
-		}
-	}
-
-	class InputRowFactory {
-		#inviteType;
-		constructor(params) {
-			this.#inviteType = params.inviteType ?? InviteType.ALL;
-		}
-		createInputsRow(id) {
-			return new InputRow({
-				id,
-				contactsInput: this.#createContactsInput(),
-				nameInput: this.#createNameInput(),
-				lastNameInput: this.#createLastNameInput()
 			});
 		}
-		#createContactsInput() {
-			switch (this.#inviteType) {
-				case InviteType.EMAIL:
-					return new EmailInput();
-				case InviteType.PHONE:
-					return new PhoneInput();
-				case InviteType.All:
-				default:
-					return new EmailOrPhoneInput();
-			}
-		}
-		#createNameInput() {
-			return new ui_system_input.Input({
-				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey,
-				withClear: true,
-				dataTestId: 'invite-page-name-input'
-			});
-		}
-		#createLastNameInput() {
-			return new ui_system_input.Input({
-				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey,
-				withClear: true,
-				dataTestId: 'invite-page-last-name-input'
+		sendAction(request, onError = null, analyticsData = null) {
+			request.data.analyticsData = analyticsData ?? this.#analytics.getDataForAction();
+			return main_core.ajax.runAction(request.action, {
+				signedParameters: this.#signedParameters,
+				mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
+				method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
+				data: request.data,
+				analytics: request.data.analyticsData
+			}).then(response => {
+				this.#onSuccess(response);
+				return response;
+			}).catch(reject => {
+				if (onError) {
+					onError(reject);
+				} else {
+					this.onError(reject);
+				}
 			});
 		}
 	}
@@ -1046,12 +840,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#inputsRows;
 		#transport;
 		#departmentControl;
+		#departmentControlBlock;
 		constructor(options) {
 			super();
 			this.#inputsRows = [];
 			this.#transport = options.transport;
 			this.#inputsFactory = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
 			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
+			this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock ? options.departmentControlBlock : null;
 		}
 		render() {
 			if (this.#container) {
@@ -1067,9 +863,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.#container = main_core.Tag.render`
 			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
+				${this.#departmentControlBlock?.render()}
 				<div class="intranet-invitation-block__content">
 					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
 					${rowsContainer}
@@ -1335,416 +1129,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
-	class LinkOptionsPopup {
-		#optionsPopup;
-		#linkRegisterEnabled;
-		#needConfirmRegistration;
-		#isCloud;
-		#allowRegisterWhiteList;
-		#transport;
-		#whitelist;
-		#confirmRegistrationSwitcher;
-		#allowInviteWithLinkSwitcher;
-		#onDisable;
-		#saveButton;
-		#analytics;
-		constructor(options) {
-			this.#linkRegisterEnabled = options.linkRegisterEnabled;
-			this.#needConfirmRegistration = options.needConfirmRegistration;
-			this.#isCloud = options.isCloud;
-			this.#transport = options.transport;
-			this.#whitelist = options.whiteList;
-			this.#onDisable = options.onDisable;
-			this.#analytics = options.analytics;
-		}
-		show() {
-			this.#getPopup().show();
-		}
-		#getPopup() {
-			this.#optionsPopup ??= new main_popup.Popup({
-				id: 'intranet-invitation-link-options-popup',
-				content: this.#getPopupContent(),
-				closeByEsc: true,
-				closeIcon: true,
-				closeIconSize: main_popup.CloseIconSize.LARGE,
-				autoHide: true,
-				padding: 0,
-				overlay: {
-					backgroundColor: 'rgba(0, 32, 78, 0.46)'
-				},
-				events: {
-					onClose: this.#resetOptions.bind(this)
-				}
-			});
-			return this.#optionsPopup;
-		}
-		#getPopupContent() {
-			const allowInviteWithLinkSwitcherContainer = main_core.Tag.render`
-			<div class="intranet-invitation-popup__switcher">
-				<div class="intranet-invitation-popup__switcher-header">
-					${this.#getAllowInviteWithLinkSwitcher().getNode()}
-					<span class="intranet-invitation-popup__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
-				</div>
-				<div class="intranet-invitation-popup__switcher-description">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT')}</div>
-			</div>
-		`;
-			const confirmRegistrationSwitcherContainer = main_core.Tag.render`
-			<div class="intranet-invitation-popup__switcher">
-				<div class="intranet-invitation-popup__switcher-header">
-					${this.#getConfirmRegistrationSwitcher().getNode()}
-					<span class="intranet-invitation-popup__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
-				</div>
-			</div>
-		`;
-			const optionsContainer = main_core.Tag.render`
-			<div class="intranet-invitation-popup__body --divided">
-				<div class="intranet-invitation-popup__item">
-					${allowInviteWithLinkSwitcherContainer}
-				</div>
-			</div>
-		`;
-			if (this.#isCloud) {
-				main_core.Dom.append(main_core.Tag.render`
-				<div class="intranet-invitation-popup__item">
-					${confirmRegistrationSwitcherContainer}
-					${this.#getAllowRegisterWhiteList().render()}
-				</div>
-			`, optionsContainer);
-			}
-			return main_core.Tag.render`
-			<div class="intranet-invitation-popup">
-				<div class="intranet-invitation-popup__title">
-					<span class="ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
-				</div>
-				${optionsContainer}
-				<div class="intranet-invitation-popup__footer">
-					<div class="intranet-invitation-popup__footer-button-container">
-						${this.#getSaveButton().render()}
-						${this.#getCancelButton().render()}
-					</div>
-					${this.#renderRegenerateSecretButton()}
-				</div>
-			</div>
-		`;
-		}
-		#renderRegenerateSecretButton() {
-			const regenerateSecretButton = main_core.Tag.render`
-			<div class="intranet-invitation-popup__footer-link" id="invite-link-options-popup-regenerate-button">
-				<i class="ui-icon-set --o-refresh"></i>
-				<span class="ui-link ui-link-secondary ui-link-dashed">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS_BUTTON_UPDATE')}</span>
-			</div>
-		`;
-			main_core.Event.bind(regenerateSecretButton, 'click', this.#regenerateSecret.bind(this));
-			return regenerateSecretButton;
-		}
-		#getSaveButton() {
-			this.#saveButton ??= new ui_buttons.SaveButton({
-				id: 'invite-link-options-popup-save-button',
-				useAirDesign: true,
-				style: ui_buttons.AirButtonStyle.FILLED,
-				onclick: () => {
-					if (this.#saveButton.isWaiting()) {
-						return;
-					}
-					const whiteListChipsToSave = this.#getAllowRegisterWhiteList().getChips().filter(chip => chip.getDesign() !== ui_system_chip.ChipDesign.TintedAlert);
-					const whiteList = whiteListChipsToSave.map(chip => chip.getText()).join(';');
-					this.#saveButton.setState(ui_buttons.ButtonState.WAITING);
-					this.#transport.send({
-						action: 'self',
-						data: {
-							allow_register: this.#getAllowInviteWithLinkSwitcher().isChecked() ? 'Y' : 'N',
-							allow_register_secret: main_core.Text.getRandom(8),
-							allow_register_confirm: this.#getConfirmRegistrationSwitcher().isChecked() ? 'Y' : 'N',
-							allow_register_whitelist: whiteList
-						}
-					}, () => {}).then(() => {
-						this.#linkRegisterEnabled = this.#getAllowInviteWithLinkSwitcher().isChecked();
-						this.#needConfirmRegistration = this.#getConfirmRegistrationSwitcher().isChecked();
-						this.#whitelist = whiteList;
-						this.#addDefaultChips();
-						this.#saveButton.setState(null);
-						this.#getPopup().close();
-						if (!this.#linkRegisterEnabled) {
-							this.#getPopup().destroy();
-							this.#onDisable();
-						}
-					}).catch(reject => {
-						console.error(reject);
-						this.#saveButton.setState(null);
-					});
-				}
-			});
-			return this.#saveButton;
-		}
-		#getCancelButton() {
-			return new ui_buttons.CancelButton({
-				id: 'invite-link-options-popup-cancel-button',
-				useAirDesign: true,
-				style: ui_buttons.AirButtonStyle.OUTLINE,
-				onclick: () => {
-					this.#getPopup().close();
-				}
-			});
-		}
-		#getAllowInviteWithLinkSwitcher() {
-			this.#allowInviteWithLinkSwitcher ??= new ui_switcher.Switcher({
-				id: 'allow-invite-with-link-switcher',
-				checked: this.#linkRegisterEnabled,
-				size: ui_switcher.SwitcherSize.medium,
-				useAirDesign: true,
-				handlers: {
-					// There is in error in Switcher UI, so we have inversion in event names
-					unchecked: () => {
-						this.#getAllowRegisterWhiteList().setDesign(this.#getConfirmRegistrationSwitcher().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
-						this.#getConfirmRegistrationSwitcher().disable(false);
-					},
-					checked: () => {
-						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Disabled);
-						this.#getConfirmRegistrationSwitcher().disable(true);
-					}
-				}
-			});
-			return this.#allowInviteWithLinkSwitcher;
-		}
-		#getAllowRegisterWhiteList() {
-			if (!this.#allowRegisterWhiteList) {
-				this.#allowRegisterWhiteList = new ui_system_input.Input({
-					label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS'),
-					placeholder: 'example.com',
-					design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled,
-					onInput: this.#onAllowRegisterWhiteListInput.bind(this),
-					onChipClear: (chip, event) => {
-						this.#allowRegisterWhiteList.removeChip(chip);
-					}
-				});
-				this.#addDefaultChips();
-			}
-			return this.#allowRegisterWhiteList;
-		}
-		#getConfirmRegistrationSwitcher() {
-			this.#confirmRegistrationSwitcher ??= new ui_switcher.Switcher({
-				id: 'confirm-registration-switcher',
-				checked: this.#needConfirmRegistration,
-				size: ui_switcher.SwitcherSize.medium,
-				useAirDesign: true,
-				disabled: !this.#linkRegisterEnabled,
-				handlers: {
-					// There is in error in Switcher UI, so we have inversion in event names
-					unchecked: () => {
-						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Grey);
-					},
-					checked: () => {
-						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Disabled);
-					}
-				}
-			});
-			return this.#confirmRegistrationSwitcher;
-		}
-		#resetOptions() {
-			this.#getConfirmRegistrationSwitcher().check(this.#needConfirmRegistration);
-			this.#getAllowInviteWithLinkSwitcher().check(this.#linkRegisterEnabled);
-			this.#addDefaultChips();
-		}
-		#regenerateSecret() {
-			this.#transport.send({
-				action: 'self',
-				data: {
-					allow_register_secret: main_core.Text.getRandom(8)
-				}
-			}).then(response => {
-				top.BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
-					autoHideDelay: 2500
-				});
-				this.#analytics.sendRegenerateLink();
-			}).catch(reject => {
-				top.BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
-					autoHideDelay: 2500
-				});
-			});
-		}
-		#onAllowRegisterWhiteListInput(event) {
-			const specialSymbols = [' ', ',', ';'];
-			if (specialSymbols.includes(event.data)) {
-				const value = this.#getAllowRegisterWhiteList().getValue().slice(0, -1).trim();
-				if (value.length > 0) {
-					this.#addChip(value);
-					this.#getAllowRegisterWhiteList().setValue('');
-				}
-			}
-		}
-		#addDefaultChips() {
-			this.#allowRegisterWhiteList?.removeChips();
-			if (this.#whitelist.trim().length > 0) {
-				this.#whitelist.split(';').forEach(domain => {
-					if (domain.trim().length > 0) {
-						this.#addChip(domain.trim());
-					}
-				});
-			}
-		}
-		#addChip(value) {
-			if (this.#isValidDomain(value)) {
-				this.#allowRegisterWhiteList?.addChip({
-					text: value,
-					design: ui_system_chip.ChipDesign.TintedSuccess,
-					withClear: true
-				});
-			} else {
-				this.#allowRegisterWhiteList?.addChip({
-					text: value,
-					design: ui_system_chip.ChipDesign.TintedAlert,
-					withClear: true
-				});
-			}
-		}
-		#isValidDomain(domain) {
-			if (!domain) {
-				return true;
-			}
-			const domainPattern = /^(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.)+[a-z]{2,}$/i;
-			return domainPattern.test(domain);
-		}
-	}
-
-	class LinkPage extends Page {
-		#container;
-		#isAdmin;
-		#isCloud;
-		#needConfirmRegistration;
-		#whiteList;
-		#departmentControl;
-		#linkRegisterEnabled;
-		#analytics;
-		#transport;
-		#optionsPopup = null;
-		constructor(options) {
-			super();
-			this.#isAdmin = options.isAdmin === true;
-			this.#isCloud = options.isCloud === true;
-			this.#needConfirmRegistration = options.needConfirmRegistration === true;
-			this.#whiteList = main_core.Type.isStringFilled(options.whiteList) ? options.whiteList : '';
-			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
-			this.#linkRegisterEnabled = options.linkRegisterEnabled;
-			this.#analytics = options.analytics;
-			this.#transport = options.transport;
-		}
-		render() {
-			if (this.#container) {
-				return this.#container;
-			}
-			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block"></div>
-		`;
-			main_core.Dom.append(main_core.Tag.render`
-			<div class="intranet-invitation-block__department-control">
-				<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-			</div>
-		`, this.#container);
-			const copyLinkButton = new ui_buttons.Button({
-				useAirDesign: true,
-				text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_LINK'),
-				icon: BX.UI.IconSet.Outline.LINK,
-				style: ui_buttons.AirButtonStyle.FILLED,
-				onclick: this.#copyRegisterUrl.bind(this),
-				props: {
-					'data-test-id': 'invite-link-page-copy-link-button'
-				}
-			});
-			main_core.Dom.append(main_core.Tag.render`
-			<div class="intranet-invitation-block__content">
-				<div class="intranet-invitation-block__footer">
-					${copyLinkButton.render()}
-					${this.#renderLinkOptionButton()}
-				</div>
-			</div>
-		`, this.#container);
-			return this.#container;
-		}
-		#copyRegisterUrl(copyLinkButton) {
-			if (copyLinkButton.getState() === ui_buttons.ButtonState.WAITING) {
-				return;
-			}
-			copyLinkButton.setState(ui_buttons.ButtonState.WAITING);
-			this.#transport.send({
-				action: 'getInviteLink',
-				data: {
-					departmentsId: this.#departmentControl.getValues(),
-					workgroupIds: this.#departmentControl.getGroupValues(),
-					analyticsType: 'by_link'
-				}
-			}, reject => {
-				copyLinkButton.setState(null);
-				this.#transport.onError(reject);
-			}).then(response => {
-				copyLinkButton.setState(null);
-				const invitationUrl = response.data?.invitationLink;
-				if (main_core.Type.isStringFilled(invitationUrl)) {
-					this.#copyToClipboard(invitationUrl).then(() => {
-						top.BX.UI.Notification.Center.notify({
-							content: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL_MSGVER_2'),
-							autoHideDelay: 4000,
-							useAirDesign: true
-						});
-					}).catch(e => {
-						console.log(e);
-					});
-					this.#analytics.sendCopyLink(this.#departmentControl, this.#needConfirmRegistration);
-				}
-			}).catch(reject => {
-				console.error(reject);
-			});
-		}
-		async #copyToClipboard(textToCopy) {
-			if (!main_core.Type.isString(textToCopy)) {
-				return Promise.reject();
-			}
-
-			// navigator.clipboard defined only if window.isSecureContext === true
-			// so or https should be activated, or localhost address
-			if (window.isSecureContext && navigator.clipboard) {
-				// safari not allowed clipboard manipulation as result of ajax request
-				// so timeout is hack for this, to prevent "not have permission"
-				return new Promise((resolve, reject) => {
-					setTimeout(() => navigator.clipboard.writeText(textToCopy).then(() => resolve()).catch(e => reject(e)), 0);
-				});
-			}
-			return BX.clipboard?.copy(textToCopy) ? Promise.resolve() : Promise.reject();
-		}
-		#renderLinkOptionButton() {
-			if (!this.#isAdmin) {
-				return '';
-			}
-			const onclick = () => {
-				this.#getOptionsPopup().show();
-			};
-			return main_core.Tag.render`
-			<span data-test-id="invite-link-page-option-button" onclick="${onclick}" class="ui-link ui-link-secondary ui-link-dashed">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
-		`;
-		}
-		#getOptionsPopup() {
-			this.#optionsPopup ??= new LinkOptionsPopup({
-				linkRegisterEnabled: this.#linkRegisterEnabled,
-				needConfirmRegistration: this.#needConfirmRegistration,
-				isCloud: this.#isCloud,
-				transport: this.#transport,
-				whiteList: this.#whiteList,
-				analytics: this.#analytics,
-				onDisable: () => {
-					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
-						selfEnabled: false
-					});
-					this.#optionsPopup = null;
-				}
-			});
-			return this.#optionsPopup;
-		}
-		getAnalyticTab() {
-			return Analytics.TAB_LINK;
-		}
-	}
-
 	class InputRowsContainer {
 		#inputRows;
 		#container;
@@ -1808,10 +1192,147 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	class InviteEmailPopup {
+		#popup;
+		#input;
+		#sendButton;
+		#departmentControl;
+		#inviteType;
+		#analytics;
+		#transport;
+		constructor(options) {
+			this.#departmentControl = options.departmentControl;
+			this.#inviteType = options.inviteType;
+			this.#analytics = options.analytics;
+			this.#transport = options.transport;
+		}
+		show() {
+			this.#getPopup().show();
+		}
+		#getInput() {
+			this.#input ??= new intranet_invitationInput.InvitationInput({
+				id: 'invite-page-popup-invitation-input',
+				inputType: this.#inviteType,
+				onReadySave: this.onReadySaveInputHandler.bind(this),
+				onUnreadySave: this.onUnreadySaveInputHandler.bind(this),
+				placeholder: this.#getPlaceholder()
+			});
+			return this.#input;
+		}
+		#getPlaceholder() {
+			switch (this.#inviteType) {
+				case InviteType.EMAIL:
+					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INVITE_POPUP_INPUT_EMAIL_PLACEHOLDER');
+				case InviteType.PHONE:
+					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_PHONE_PLACEHOLDER');
+				case InviteType.ALL:
+				default:
+					return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_OR_PHONE_PLACEHOLDER');
+			}
+		}
+		#getPopup() {
+			this.#popup ??= new main_popup.Popup({
+				content: this.#getPopupContent(),
+				id: 'email-invitation-email',
+				className: 'email-invitation-container',
+				closeIcon: true,
+				autoHide: false,
+				closeByEsc: true,
+				width: 515,
+				closeIconSize: main_popup.CloseIconSize.LARGE,
+				padding: 0,
+				overlay: {
+					backgroundColor: 'rgba(0, 32, 78, 0.46)'
+				}
+			});
+			return this.#popup;
+		}
+		#getPopupContent() {
+			return main_core.Tag.render`
+			<div class="intranet-invitation-popup">
+				<div class="intranet-invitation-popup__title">
+					<span class="ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE')}</span>
+				</div>
+				<div class="intranet-invitation-popup__body">
+					<p class="intranet-invitation-description ui-text --sm">
+						${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION_MSGVER_1')}
+					</p>
+					<div class="email-popup-container__input">
+						${this.#getInput().render()}
+					</div>
+				</div>
+				<div class="intranet-invitation-popup__footer">
+					${this.#getActionContent()}
+				</div>
+			</div>
+		`;
+		}
+		#getActionContent() {
+			return main_core.Tag.render`
+			<div class="intranet-invitation-popup__footer-button-container">
+				${this.#getSendButton().render()}
+				${this.#getCancelButton().render()}
+			</div>
+		`;
+		}
+		#getSendButton() {
+			this.#sendButton ??= new ui_buttons.Button({
+				id: 'invite-popup-send-button',
+				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_SEND'),
+				state: ui_buttons.ButtonState.DISABLED,
+				style: ui_buttons.AirButtonStyle.FILLED,
+				useAirDesign: true,
+				onclick: () => {
+					if (this.#sendButton.getState() === ui_buttons.ButtonState.WAITING) {
+						return;
+					}
+					const departmentIds = this.#departmentControl.getValues();
+					const workgroupIds = this.#departmentControl.getGroupValues();
+					this.#sendButton.setState(ui_buttons.ButtonState.WAITING);
+					this.#getInput().inviteToDepartmentGroup(departmentIds, workgroupIds, this.#analytics.getDataForAction('mass')).then(response => {
+						if (response.data.invitedUserIds.length > 0) {
+							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+						}
+						this.#getPopup().close();
+						this.#sendButton.setState(null);
+						if (response.data?.firedUserList && response.data?.firedUserList.length > 0) {
+							new RestoreFiredUsersPopup({
+								userList: response.data.firedUserList,
+								isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+								transport: this.#transport,
+								departmentIds,
+								workgroupIds
+							}).show();
+						}
+					}).catch(() => {
+						this.#sendButton.setState(null);
+					});
+				}
+			});
+			return this.#sendButton;
+		}
+		#getCancelButton() {
+			return new ui_buttons.Button({
+				id: 'invite-popup-cancel-button',
+				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				onclick: () => this.#getPopup().close()
+			});
+		}
+		onReadySaveInputHandler() {
+			this.#getSendButton().setState(null);
+		}
+		onUnreadySaveInputHandler() {
+			this.#getSendButton().setState(ui_buttons.ButtonState.DISABLED);
+		}
+	}
+
 	class InvitePage extends Page {
 		#container;
 		#inputsFactory;
 		#departmentControl;
+		#departmentControlBlock;
 		#transport;
 		#inviteType;
 		#inviteEmailPopup;
@@ -1822,6 +1343,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			super();
 			this.#inputsFactory = options.inputsFactory;
 			this.#departmentControl = options.departmentControl;
+			this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock ? options.departmentControlBlock : null;
 			this.#transport = options.transport;
 			this.#inviteType = options.inviteType;
 			this.#showMassInviteButton = options.showMassInviteButton;
@@ -1833,16 +1355,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.#container = main_core.Tag.render`
 			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
+				${this.#departmentControlBlock?.render()}
 				<div class="intranet-invitation-block__content">
 					<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
 					${this.#getInputRowsContainer().render()}
 					<span class="intranet-invitation-actions">
 						${this.#getAddButton().render()}
 						${this.#showMassInviteButton ? main_core.Tag.render`
-							<span class="intranet-invitation-description ui-text --sm">
+							<span class="ui-text --sm">
 								${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_OR')}
 							</span>
 							${this.#renderMassInviteButton()}
@@ -2003,6 +1523,748 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	class LinkDisabledPage extends Page {
+		#container;
+		#isAdmin;
+		#transport;
+		constructor(options) {
+			super();
+			this.#isAdmin = options.isAdmin === true;
+			this.#transport = options.transport;
+		}
+		render() {
+			if (this.#container) {
+				return this.#container;
+			}
+			this.#container = main_core.Tag.render`
+			<div class="intranet-invitation-block" data-role="self-block"></div>
+		`;
+			const statusBlock = main_core.Tag.render`
+			<div class="intranet-invitation-status --invite-link-disabled">
+				<div class="intranet-invitation-status__content">
+					<span class="intranet-invitation-status__title ui-headline --md">${main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</span>
+					<p class="intranet-invitation-status__description ui-text --lg">
+						${main_core.Loc.getMessage(this.#isAdmin ? 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION' : 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION_NOT_ADMIN')}
+					</p>
+				</div>
+			</div>
+		`;
+			if (this.#isAdmin) {
+				main_core.Dom.append(main_core.Tag.render`
+				<div class="intranet-invitation-status__footer">${this.#getEnableButton().render()}</div>
+			`, statusBlock);
+			}
+			main_core.Dom.append(main_core.Tag.render`
+			<div class="intranet-invitation-block__content">
+				${statusBlock}
+			</div>
+		`, this.#container);
+			return this.#container;
+		}
+		#getEnableButton() {
+			const enableButton = new ui_buttons.Button({
+				useAirDesign: true,
+				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ENABLE_BUTTON'),
+				style: ui_buttons.AirButtonStyle.FILLED,
+				props: {
+					'data-test-id': 'invite-link-page-enable-button'
+				},
+				onclick: () => {
+					if (enableButton.isWaiting()) {
+						return;
+					}
+					enableButton.setState(ui_buttons.ButtonState.WAITING);
+					this.#transport.send({
+						action: 'self',
+						data: {
+							allow_register: 'Y'
+						}
+					}).then(() => {
+						enableButton.setState(null);
+						main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+							selfEnabled: true
+						});
+					}).catch(() => {
+						enableButton.setState(null);
+					});
+				}
+			});
+			return enableButton;
+		}
+		getAnalyticTab() {
+			return Analytics.TAB_LINK;
+		}
+	}
+
+	class LinkOptionsSection {
+		#isAdmin;
+		#isCloud;
+		#needConfirmRegistration;
+		#whiteList;
+		#linkRegisterEnabled;
+		#analytics;
+		#transport;
+		#allowRegisterWhiteList;
+		#confirmRegistrationSwitcher;
+		#allowInviteWithLinkSwitcher;
+		#regenerateSecretButton;
+		#section;
+		#optionsExpanded = false;
+		#isSaving = false;
+		#isRegenerating = false;
+		#needSaveAfterCurrentRequest = false;
+		#isWhiteListEnterBound = false;
+		#onRegenerateStart = null;
+		#onRegenerate = null;
+		#onRegenerateError = null;
+		#onNeedConfirmRegistrationChange = null;
+		#onNeedConfirmRegistrationChangeStart = null;
+		#onNeedConfirmRegistrationChangeEnd = null;
+		#onExpandedChange = null;
+		constructor(options) {
+			this.#isAdmin = options.isAdmin === true;
+			this.#isCloud = options.isCloud === true;
+			this.#needConfirmRegistration = options.needConfirmRegistration === true;
+			this.#whiteList = main_core.Type.isStringFilled(options.whiteList) ? options.whiteList : '';
+			this.#linkRegisterEnabled = options.linkRegisterEnabled === true;
+			this.#analytics = options.analytics;
+			this.#transport = options.transport;
+			this.#onRegenerateStart = main_core.Type.isFunction(options.onRegenerateStart) ? options.onRegenerateStart : null;
+			this.#onRegenerate = main_core.Type.isFunction(options.onRegenerate) ? options.onRegenerate : null;
+			this.#onRegenerateError = main_core.Type.isFunction(options.onRegenerateError) ? options.onRegenerateError : null;
+			this.#onNeedConfirmRegistrationChange = main_core.Type.isFunction(options.onNeedConfirmRegistrationChange) ? options.onNeedConfirmRegistrationChange : null;
+			this.#onNeedConfirmRegistrationChangeStart = main_core.Type.isFunction(options.onNeedConfirmRegistrationChangeStart) ? options.onNeedConfirmRegistrationChangeStart : null;
+			this.#onNeedConfirmRegistrationChangeEnd = main_core.Type.isFunction(options.onNeedConfirmRegistrationChangeEnd) ? options.onNeedConfirmRegistrationChangeEnd : null;
+			this.#onExpandedChange = main_core.Type.isFunction(options.onExpandedChange) ? options.onExpandedChange : null;
+		}
+		renderSection() {
+			if (!this.#isAdmin) {
+				return '';
+			}
+			if (this.#section) {
+				return this.#section;
+			}
+			const allowInviteWithLinkSwitcherContainer = main_core.Tag.render`
+			<div class="intranet-invitation-link-options__switcher">
+				<div class="intranet-invitation-link-options__switcher-header">
+					${this.#getAllowInviteWithLinkSwitcher().getNode()}
+					<span class="intranet-invitation-link-options__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
+				</div>
+				<div class="intranet-invitation-link-options__switcher-description">${main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT_MSGVER_1')}</div>
+			</div>
+		`;
+			const confirmRegistrationSwitcherContainer = main_core.Tag.render`
+			<div class="intranet-invitation-link-options__switcher">
+				<div class="intranet-invitation-link-options__switcher-header">
+					${this.#getConfirmRegistrationSwitcher().getNode()}
+					<span class="intranet-invitation-link-options__switcher-title">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
+				</div>
+			</div>
+		`;
+			const body = main_core.Tag.render`
+			<div class="intranet-invitation-link-options__body --divided">
+				<div class="intranet-invitation-link-options__item">
+					${allowInviteWithLinkSwitcherContainer}
+				</div>
+			</div>
+		`;
+			if (this.#isCloud) {
+				main_core.Dom.append(main_core.Tag.render`
+				<div class="intranet-invitation-link-options__item">
+					${confirmRegistrationSwitcherContainer}
+					${this.#getAllowRegisterWhiteList().render()}
+				</div>
+			`, body);
+			}
+			this.#section = main_core.Tag.render`
+			<div class="intranet-invitation-block__options-section intranet-invitation-link-options">
+				${body}
+				<div class="intranet-invitation-link-options__footer">
+					${this.#renderRegenerateSecretButton()}
+				</div>
+			</div>
+		`;
+			main_core.Dom.addClass(this.#section, '--collapsed');
+			this.#refreshSectionHeight();
+			this.#bindAllowRegisterWhiteListEnterHandler();
+			return this.#section;
+		}
+		toggleSection() {
+			if (this.#optionsExpanded) {
+				this.#hideSection();
+				return;
+			}
+			this.#showSection();
+		}
+		#showSection() {
+			if (!this.#section) {
+				return;
+			}
+			this.#optionsExpanded = true;
+			this.#onExpandedChange?.(true);
+			this.#refreshSectionHeight();
+			requestAnimationFrame(() => {
+				main_core.Dom.removeClass(this.#section, '--collapsed');
+			});
+		}
+		#hideSection() {
+			if (!this.#section) {
+				return;
+			}
+			this.#optionsExpanded = false;
+			this.#onExpandedChange?.(false);
+			this.#refreshSectionHeight();
+			requestAnimationFrame(() => {
+				this.#section?.classList.add('--collapsed');
+			});
+		}
+		#refreshSectionHeight() {
+			if (!this.#section) {
+				return;
+			}
+			this.#section.style.setProperty('--link-options-section-height', `${this.#section.scrollHeight}px`);
+		}
+		#renderRegenerateSecretButton() {
+			this.#regenerateSecretButton ??= new ui_buttons.Button({
+				useAirDesign: true,
+				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS_BUTTON_UPDATE'),
+				style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
+				icon: BX.UI.IconSet.Outline.REFRESH,
+				props: {
+					id: 'invite-link-options-inline-regenerate-button'
+				},
+				onclick: this.#regenerateSecret.bind(this)
+			});
+			return this.#regenerateSecretButton.render();
+		}
+		#getAllowInviteWithLinkSwitcher() {
+			this.#allowInviteWithLinkSwitcher ??= new ui_switcher.Switcher({
+				id: 'allow-invite-with-link-switcher',
+				checked: this.#linkRegisterEnabled,
+				size: ui_switcher.SwitcherSize.medium,
+				useAirDesign: true,
+				handlers: {
+					unchecked: () => {
+						this.#getAllowRegisterWhiteList().setDesign(this.#getConfirmRegistrationSwitcher().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
+						this.#getConfirmRegistrationSwitcher().disable(false);
+					},
+					checked: () => {
+						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Disabled);
+						this.#getConfirmRegistrationSwitcher().disable(true);
+					},
+					toggled: this.#saveOptions.bind(this)
+				}
+			});
+			return this.#allowInviteWithLinkSwitcher;
+		}
+		#getAllowRegisterWhiteList() {
+			if (!this.#allowRegisterWhiteList) {
+				this.#allowRegisterWhiteList = new ui_system_input.Input({
+					label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS'),
+					placeholder: 'example.com',
+					design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled,
+					onInput: this.#onAllowRegisterWhiteListInput.bind(this),
+					onBlur: this.#onAllowRegisterWhiteListBlur.bind(this),
+					onChipClear: chip => {
+						this.#allowRegisterWhiteList.removeChip(chip);
+						this.#refreshSectionHeight();
+						this.#allowRegisterWhiteList.focus();
+						void this.#saveOptions();
+					}
+				});
+				this.#addDefaultChips();
+			}
+			return this.#allowRegisterWhiteList;
+		}
+		#getConfirmRegistrationSwitcher() {
+			this.#confirmRegistrationSwitcher ??= new ui_switcher.Switcher({
+				id: 'confirm-registration-switcher',
+				checked: this.#needConfirmRegistration,
+				size: ui_switcher.SwitcherSize.medium,
+				useAirDesign: true,
+				disabled: !this.#linkRegisterEnabled,
+				handlers: {
+					unchecked: () => {
+						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Grey);
+					},
+					checked: () => {
+						this.#getAllowRegisterWhiteList().setDesign(ui_system_input.InputDesign.Disabled);
+					},
+					toggled: this.#saveOptions.bind(this)
+				}
+			});
+			return this.#confirmRegistrationSwitcher;
+		}
+		#bindAllowRegisterWhiteListEnterHandler() {
+			if (this.#isWhiteListEnterBound) {
+				return;
+			}
+			const input = this.#getAllowRegisterWhiteList().render().querySelector('.ui-system-input-value');
+			if (!input) {
+				return;
+			}
+			main_core.Event.bind(input, 'keydown', this.#onAllowRegisterWhiteListKeydown.bind(this));
+			this.#isWhiteListEnterBound = true;
+		}
+		async #regenerateSecret() {
+			if (this.#isRegenerating) {
+				return;
+			}
+			this.#isRegenerating = true;
+			this.#setRegenerateButtonLoadingState(true);
+			this.#onRegenerateStart?.();
+			try {
+				await this.#transport.send({
+					action: 'self',
+					data: {
+						allow_register_secret: main_core.Text.getRandom(8)
+					}
+				}, reject => {
+					this.#transport.onError(reject);
+					throw reject;
+				});
+				top.BX.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
+					autoHideDelay: 2500
+				});
+				this.#analytics.sendRegenerateLink();
+				await this.#onRegenerate?.();
+			} catch {
+				this.#onRegenerateError?.();
+				top.BX.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
+					autoHideDelay: 2500
+				});
+			} finally {
+				this.#isRegenerating = false;
+				this.#setRegenerateButtonLoadingState(false);
+			}
+		}
+		#setRegenerateButtonLoadingState(isLoading) {
+			this.#regenerateSecretButton?.setState(isLoading ? ui_buttons.ButtonState.WAITING : null);
+		}
+		#onAllowRegisterWhiteListBlur() {
+			this.#commitWhiteListInput();
+		}
+		#onAllowRegisterWhiteListInput(event) {
+			if (![' ', ','].includes(event.data)) {
+				return;
+			}
+			this.#collectWhiteListInputValue(false);
+		}
+		#onAllowRegisterWhiteListKeydown(event) {
+			if (event.key !== 'Enter') {
+				return;
+			}
+			event.preventDefault();
+			this.#commitWhiteListInput();
+		}
+		#addDefaultChips() {
+			this.#allowRegisterWhiteList?.removeChips();
+			if (this.#whiteList.trim().length > 0) {
+				this.#whiteList.split(';').forEach(domain => {
+					if (domain.trim().length > 0) {
+						this.#addChip(domain.trim());
+					}
+				});
+			}
+			this.#refreshSectionHeight();
+		}
+		#addChip(value) {
+			if (this.#isValidDomain(value)) {
+				this.#allowRegisterWhiteList?.addChip({
+					text: value,
+					design: ui_system_chip.ChipDesign.TintedSuccess,
+					withClear: true
+				});
+			} else {
+				this.#allowRegisterWhiteList?.addChip({
+					text: value,
+					design: ui_system_chip.ChipDesign.TintedAlert,
+					withClear: true
+				});
+			}
+		}
+		#isValidDomain(domain) {
+			if (!domain) {
+				return true;
+			}
+			const domainPattern = /^(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.)+[a-z]{2,}$/i;
+			return domainPattern.test(domain);
+		}
+		#getWhiteListValue() {
+			return this.#getAllowRegisterWhiteList().getChips().filter(chip => chip.getDesign() !== ui_system_chip.ChipDesign.TintedAlert).map(chip => chip.getText()).join(';');
+		}
+		#commitWhiteListInput() {
+			this.#collectWhiteListInputValue(true);
+		}
+		#collectWhiteListInputValue(shouldSave) {
+			const input = this.#getAllowRegisterWhiteList();
+			const normalizedValue = input.getValue().replace(/[,\s]+$/g, '').trim();
+			if (normalizedValue.length > 0) {
+				this.#addChip(normalizedValue);
+				input.setValue('');
+				this.#refreshSectionHeight();
+			}
+			if (shouldSave) {
+				void this.#saveOptions();
+			}
+		}
+		async #saveOptions() {
+			const allowRegister = this.#getAllowInviteWithLinkSwitcher().isChecked();
+			const needConfirmRegistration = this.#getConfirmRegistrationSwitcher().isChecked();
+			const whiteList = this.#getWhiteListValue();
+			const isNeedConfirmRegistrationChanged = needConfirmRegistration === this.#needConfirmRegistration;
+			if (allowRegister === this.#linkRegisterEnabled && needConfirmRegistration === this.#needConfirmRegistration && whiteList === this.#whiteList) {
+				return;
+			}
+			if (this.#isSaving) {
+				this.#needSaveAfterCurrentRequest = true;
+				return;
+			}
+			this.#isSaving = true;
+			this.#needSaveAfterCurrentRequest = false;
+			this.#setSavingState(true);
+			if (isNeedConfirmRegistrationChanged) {
+				this.#onNeedConfirmRegistrationChangeStart?.();
+				await this.#waitForNextFrame();
+			}
+			const savedLinkRegisterEnabled = this.#linkRegisterEnabled;
+			const savedNeedConfirmRegistration = this.#needConfirmRegistration;
+			const savedWhiteList = this.#whiteList;
+			try {
+				await this.#transport.send({
+					action: 'self',
+					data: {
+						allow_register: allowRegister ? 'Y' : 'N',
+						allow_register_confirm: needConfirmRegistration ? 'Y' : 'N',
+						allow_register_whitelist: whiteList
+					}
+				}, reject => {
+					this.#transport.onError(reject);
+					throw reject;
+				});
+				this.#linkRegisterEnabled = allowRegister;
+				this.#needConfirmRegistration = needConfirmRegistration;
+				this.#whiteList = whiteList;
+				this.#onNeedConfirmRegistrationChange?.(this.#needConfirmRegistration);
+				if (!this.#linkRegisterEnabled) {
+					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+						selfEnabled: false
+					});
+				}
+			} catch (reject) {
+				this.#linkRegisterEnabled = savedLinkRegisterEnabled;
+				this.#needConfirmRegistration = savedNeedConfirmRegistration;
+				this.#whiteList = savedWhiteList;
+				this.#getAllowInviteWithLinkSwitcher().check(this.#linkRegisterEnabled, false);
+				this.#getConfirmRegistrationSwitcher().check(this.#needConfirmRegistration, false);
+				this.#getConfirmRegistrationSwitcher().disable(!this.#linkRegisterEnabled, false);
+				this.#addDefaultChips();
+				console.error(reject);
+			} finally {
+				if (isNeedConfirmRegistrationChanged) {
+					this.#onNeedConfirmRegistrationChangeEnd?.();
+				}
+				this.#isSaving = false;
+				this.#setSavingState(false);
+				if (this.#needSaveAfterCurrentRequest) {
+					void this.#saveOptions();
+				}
+			}
+		}
+		#waitForNextFrame() {
+			return new Promise(resolve => {
+				requestAnimationFrame(() => resolve());
+			});
+		}
+		#setSavingState(isSaving) {
+			this.#allowInviteWithLinkSwitcher?.setLoading(isSaving);
+			this.#confirmRegistrationSwitcher?.setLoading(isSaving);
+			this.#getAllowRegisterWhiteList().setDesign(isSaving ? ui_system_input.InputDesign.Disabled : this.#getConfirmRegistrationSwitcher().isChecked() && this.#getAllowInviteWithLinkSwitcher().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
+		}
+	}
+
+	class LinkPage extends Page {
+		static #COPY_BUTTON_DEFAULT_TEXT = 'BX24_INVITE_DIALOG_COPY_LINK';
+		static #COPY_BUTTON_SUCCESS_TEXT = 'INTRANET_INVITE_DIALOG_LINK_COPIED_BUTTON';
+		#container;
+		#isAdmin;
+		#isCloud;
+		#needConfirmRegistration;
+		#departmentControl;
+		#departmentControlBlock;
+		#inviteLink = '';
+		#isLinkLoading = true;
+		#inviteLinkRequestId = 0;
+		#isDepartmentControlSubscribed = false;
+		#whiteList = '';
+		#linkRegisterEnabled = false;
+		#analytics;
+		#transport;
+		#linkInput;
+		#copyLinkButton;
+		#isCopyLinkButtonSuccess = false;
+		#linkOptionsSection = null;
+		#linkOptionsButton = null;
+		#isLinkOptionsExpanded = false;
+		#loader = null;
+		#loaderOverlay = null;
+		constructor(options) {
+			super();
+			this.#isAdmin = options.isAdmin === true;
+			this.#isCloud = options.isCloud === true;
+			this.#needConfirmRegistration = options.needConfirmRegistration === true;
+			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
+			this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock ? options.departmentControlBlock : null;
+			this.#inviteLink = main_core.Type.isString(options.invitationLink) ? options.invitationLink : '';
+			this.#isLinkLoading = !main_core.Type.isStringFilled(this.#inviteLink);
+			this.#whiteList = main_core.Type.isStringFilled(options.whiteList) ? options.whiteList : '';
+			this.#linkRegisterEnabled = options.linkRegisterEnabled === true;
+			this.#analytics = options.analytics;
+			this.#transport = options.transport;
+		}
+		render() {
+			if (this.#container) {
+				return this.#container;
+			}
+			this.#container = main_core.Tag.render`
+			<div class="intranet-invitation-block" data-role="self-block">
+				${this.#departmentControlBlock?.render()}
+				<div class="intranet-invitation-block__content">
+					<div class="intranet-invitation-block__header">
+						<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_INVITATION_TITLE')}</span>
+					</div>
+					<div class="intranet-invitation-block__copy-link-wrapper">
+						<div class="intranet-invitation-block__copy-link-input-wrapper">
+							${this.#getLinkInput().render()}
+						</div>
+						${this.#getCopyLinkButton().render()}
+					</div>
+					<div class="intranet-invitation-block__footer">
+						${this.#renderLinkOptionsButton()}
+					</div>
+				</div>
+				<div class="intranet-invitation-block__loader-overlay"></div>
+			</div>
+		`;
+			this.#loaderOverlay = this.#container.querySelector('.intranet-invitation-block__loader-overlay');
+			this.#subscribeToDepartmentChanges();
+			if (this.#isLinkLoading) {
+				void this.#loadInviteLink();
+			}
+			return this.#container;
+		}
+		#getLoader() {
+			this.#loader ??= new main_loader.Loader({
+				target: this.#loaderOverlay,
+				color: 'var(--ui-color-accent-main-primary-alt-2)'
+			});
+			return this.#loader;
+		}
+		#setConfirmRegistrationLoadingState(isLoading) {
+			if (!this.#container) {
+				return;
+			}
+			main_core.Dom.toggleClass(this.#container, '--loading', isLoading);
+			main_core.Dom.toggleClass(this.#loaderOverlay, '--shown', isLoading);
+			if (isLoading) {
+				void this.#getLoader().show();
+				return;
+			}
+			void this.#loader?.hide();
+		}
+		#getLinkInput() {
+			this.#linkInput ??= new ui_system_input.Input({
+				design: this.#isLinkLoading ? ui_system_input.InputDesign.Disabled : ui_system_input.InputDesign.Grey,
+				value: this.#inviteLink,
+				readonly: true
+			});
+			return this.#linkInput;
+		}
+		#getCopyLinkButton() {
+			this.#copyLinkButton ??= new ui_buttons.Button({
+				useAirDesign: true,
+				text: main_core.Loc.getMessage(LinkPage.#COPY_BUTTON_DEFAULT_TEXT),
+				icon: BX.UI.IconSet.Outline.LINK,
+				style: ui_buttons.AirButtonStyle.FILLED,
+				onclick: this.#copyRegisterUrl.bind(this),
+				size: BX.UI.ButtonSize.LARGE,
+				props: {
+					'data-test-id': 'invite-link-page-copy-link-button'
+				}
+			});
+			return this.#copyLinkButton;
+		}
+		#renderLinkOptionsButton() {
+			if (!this.#isAdmin) {
+				return '';
+			}
+			this.#linkOptionsButton ??= main_core.Tag.render`
+			<div
+				class="intranet-invitation-link__footer-link ${this.#isLinkOptionsExpanded ? '--expanded' : ''}"
+				data-test-id="invite-link-page-option-button"
+				onclick="${() => this.#toggleLinkOptionsSection()}"
+			>
+				<span class="ui-link ui-link-secondary ui-link-dashed">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
+				<i class="ui-icon-set --chevron-down-l"></i>
+			</div>
+		`;
+			return this.#linkOptionsButton;
+		}
+		#getLinkOptionsSection() {
+			this.#linkOptionsSection ??= new LinkOptionsSection({
+				isAdmin: this.#isAdmin,
+				isCloud: this.#isCloud,
+				needConfirmRegistration: this.#needConfirmRegistration,
+				whiteList: this.#whiteList,
+				linkRegisterEnabled: this.#linkRegisterEnabled,
+				analytics: this.#analytics,
+				transport: this.#transport,
+				onRegenerateStart: () => {
+					this.#setLinkLoadingState(true);
+				},
+				onRegenerate: () => {
+					return this.#loadInviteLink();
+				},
+				onRegenerateError: () => {
+					this.#setLinkLoadingState(false);
+				},
+				onNeedConfirmRegistrationChange: needConfirmRegistration => {
+					this.#needConfirmRegistration = needConfirmRegistration === true;
+				},
+				onNeedConfirmRegistrationChangeStart: () => {
+					this.#setConfirmRegistrationLoadingState(true);
+				},
+				onNeedConfirmRegistrationChangeEnd: () => {
+					this.#setConfirmRegistrationLoadingState(false);
+				},
+				onExpandedChange: isExpanded => {
+					this.#setLinkOptionsButtonExpandedState(isExpanded);
+				}
+			});
+			return this.#linkOptionsSection;
+		}
+		#toggleLinkOptionsSection() {
+			const linkOptionsSection = this.#getLinkOptionsSection();
+			const sectionNode = linkOptionsSection.renderSection();
+			if (!sectionNode.isConnected) {
+				const footerNode = this.#container?.querySelector('.intranet-invitation-block__footer');
+				footerNode?.after(sectionNode);
+			}
+			linkOptionsSection.toggleSection();
+		}
+		#setLinkOptionsButtonExpandedState(isExpanded) {
+			this.#isLinkOptionsExpanded = isExpanded === true;
+			main_core.Dom.toggleClass(this.#isLinkOptionsExpanded, '--expanded');
+		}
+		#copyRegisterUrl(copyLinkButton) {
+			if (copyLinkButton.getState() === ui_buttons.ButtonState.WAITING || this.#isLinkLoading) {
+				return;
+			}
+			const invitationUrl = this.#getLinkInput().getValue();
+			if (!main_core.Type.isStringFilled(invitationUrl)) {
+				return;
+			}
+			copyLinkButton.setState(ui_buttons.ButtonState.WAITING);
+			this.#copyToClipboard(invitationUrl).then(() => {
+				copyLinkButton.setState(null);
+				this.#setCopyLinkButtonSuccessState();
+				this.#analytics.sendCopyLink(this.#departmentControl, this.#needConfirmRegistration);
+			}).catch(reject => {
+				copyLinkButton.setState(null);
+				console.error(reject);
+			});
+		}
+		#subscribeToDepartmentChanges() {
+			if (this.#isDepartmentControlSubscribed || !(this.#departmentControl instanceof intranet_departmentControl.DepartmentControl)) {
+				return;
+			}
+			this.#departmentControl.subscribe('onChange', this.#onDepartmentChange.bind(this));
+			this.#isDepartmentControlSubscribed = true;
+		}
+		#onDepartmentChange() {
+			void this.#loadInviteLink();
+		}
+		async #loadInviteLink() {
+			const requestId = ++this.#inviteLinkRequestId;
+			this.#setLinkLoadingState(true);
+			try {
+				const response = await this.#transport.send({
+					action: 'getInviteLink',
+					data: {
+						departmentsId: this.#departmentControl.getValues(),
+						workgroupIds: this.#departmentControl.getGroupValues(),
+						analyticsType: 'by_link'
+					}
+				}, reject => {
+					this.#transport.onError(reject);
+					throw reject;
+				});
+				if (requestId !== this.#inviteLinkRequestId) {
+					return;
+				}
+				this.#setInviteLink(main_core.Type.isString(response.data?.invitationLink) ? response.data.invitationLink : '');
+			} catch (reject) {
+				if (requestId === this.#inviteLinkRequestId) {
+					this.#setInviteLink('');
+				}
+				console.error(reject);
+			} finally {
+				if (requestId === this.#inviteLinkRequestId) {
+					this.#setLinkLoadingState(false);
+				}
+			}
+		}
+		#setLinkLoadingState(isLoading) {
+			this.#isLinkLoading = isLoading;
+			this.#linkInput?.setDesign(isLoading ? ui_system_input.InputDesign.Disabled : ui_system_input.InputDesign.Grey);
+		}
+		#setInviteLink(inviteLink) {
+			const normalizedInviteLink = main_core.Type.isString(inviteLink) ? inviteLink : '';
+			const isInviteLinkChanged = normalizedInviteLink !== this.#inviteLink;
+			this.#inviteLink = normalizedInviteLink;
+			this.#linkInput?.setValue(this.#inviteLink);
+			if (isInviteLinkChanged) {
+				this.#resetCopyLinkButtonState();
+			}
+		}
+		#setCopyLinkButtonSuccessState() {
+			this.#isCopyLinkButtonSuccess = true;
+			this.#copyLinkButton?.setStyle(ui_buttons.AirButtonStyle.FILLED_SUCCESS);
+			this.#copyLinkButton?.setText(main_core.Loc.getMessage(LinkPage.#COPY_BUTTON_SUCCESS_TEXT));
+			this.#copyLinkButton?.setIcon('s-check');
+		}
+		#resetCopyLinkButtonState() {
+			if (!this.#isCopyLinkButtonSuccess) {
+				return;
+			}
+			this.#isCopyLinkButtonSuccess = false;
+			this.#copyLinkButton?.setStyle(ui_buttons.AirButtonStyle.FILLED);
+			this.#copyLinkButton?.setText(main_core.Loc.getMessage(LinkPage.#COPY_BUTTON_DEFAULT_TEXT));
+			this.#copyLinkButton?.setIcon(BX.UI.IconSet.Outline.LINK);
+		}
+		async #copyToClipboard(textToCopy) {
+			if (!main_core.Type.isString(textToCopy)) {
+				return Promise.reject();
+			}
+
+			// navigator.clipboard defined only if window.isSecureContext === true
+			// so or https should be activated, or localhost address
+			if (window.isSecureContext && navigator.clipboard) {
+				// safari not allowed clipboard manipulation as result of ajax request
+				// so timeout is hack for this, to prevent "not have permission"
+				return new Promise((resolve, reject) => {
+					setTimeout(() => navigator.clipboard.writeText(textToCopy).then(() => resolve()).catch(e => reject(e)), 0);
+				});
+			}
+			return BX.clipboard?.copy(textToCopy) ? Promise.resolve() : Promise.reject();
+		}
+		getAnalyticTab() {
+			return Analytics.TAB_LINK;
+		}
+	}
+
 	class MassInvitationField {
 		#input;
 		#invitationType;
@@ -2104,15 +2366,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	class RegisterPage extends Page {
 		#container;
 		#departmentControl;
+		#departmentControlBlock;
 		#emailInput;
 		#nameInput;
 		#lastNameInput;
-		#positionInput;
 		#checkboxInput;
 		#transport;
 		constructor(options) {
 			super();
 			this.#departmentControl = options.departmentControl instanceof intranet_departmentControl.DepartmentControl ? options.departmentControl : null;
+			this.#departmentControlBlock = options.departmentControlBlock instanceof DepartmentControlBlock ? options.departmentControlBlock : null;
 			this.#transport = options.transport;
 		}
 		render() {
@@ -2121,19 +2384,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.#container = main_core.Tag.render`
 			<div class="intranet-invitation-block">
-				<div class="intranet-invitation-block__department-control">
-					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
-				</div>
+				${this.#departmentControlBlock?.render()}
 				<div class="intranet-invitation-block__content">
 					<div class="intranet-invitation-block__header">
-						<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_TITLE')}</span>
-						<p class="intranet-invitation-description ui-text --md">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_DESCRIPTION')}</p>
+						<span class="intranet-invitation-status__title ui-headline --sm">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_TITLE_MSGVER_1')}</span>
+<!--						<p class="intranet-invitation-description ui-text &#45;&#45;md">${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_DESCRIPTION_MSGVER_1')}</p>-->
 					</div>
 					<div class="intranet-invitation-block__body">
 						${this.#getEmailInput().render()}
-						${this.#getNameInput().render()}
-						${this.#getLastNameInput().render()}
-						${this.#getPositionInput().render()}
+						<div class="intranet-invitation-block__inline-input">
+							${this.#getNameInput().render()}
+							${this.#getLastNameInput().render()}
+						</div>
 					</div>
 					${this.#renderCheckbox()}
 					<div class="intranet-invitation-block__footer">
@@ -2149,7 +2411,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#emailInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_LABEL'),
 				placeholder: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey
+				design: ui_system_input.InputDesign.Grey,
+				stretched: true
 			});
 			return this.#emailInput;
 		}
@@ -2157,7 +2420,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#nameInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'),
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey
+				design: ui_system_input.InputDesign.Grey,
+				stretched: true
 			});
 			return this.#nameInput;
 		}
@@ -2165,17 +2429,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#lastNameInput ??= new ui_system_input.Input({
 				label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'),
 				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey
+				design: ui_system_input.InputDesign.Grey,
+				stretched: true
 			});
 			return this.#lastNameInput;
-		}
-		#getPositionInput() {
-			this.#positionInput ??= new ui_system_input.Input({
-				label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_POSITION_TITLE'),
-				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_POSITION_PLACEHOLDER'),
-				design: ui_system_input.InputDesign.Grey
-			});
-			return this.#positionInput;
 		}
 		#renderCheckbox() {
 			return main_core.Tag.render`
@@ -2225,7 +2482,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 							ADD_EMAIL: this.#getEmailInput().getValue(),
 							ADD_NAME: this.#getNameInput().getValue(),
 							ADD_LAST_NAME: this.#getLastNameInput().getValue(),
-							ADD_POSITION: this.#getPositionInput().getValue(),
 							ADD_SEND_PASSWORD: notSendInvitationChecked ? 'Y' : 'N',
 							SONET_GROUPS_CODE: workgroupIds,
 							departmentIds
@@ -2239,7 +2495,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 						this.#getEmailInput().setValue('');
 						this.#getNameInput().setValue('');
 						this.#getLastNameInput().setValue('');
-						this.#getPositionInput().setValue('');
 						if (response.data.firedUserList) {
 							new RestoreFiredUsersPopup({
 								userList: response.data.firedUserList,
@@ -2279,79 +2534,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
-	class LinkDisabledPage extends Page {
-		#container;
-		#isAdmin;
-		#transport;
-		constructor(options) {
-			super();
-			this.#isAdmin = options.isAdmin === true;
-			this.#transport = options.transport;
-		}
-		render() {
-			if (this.#container) {
-				return this.#container;
-			}
-			this.#container = main_core.Tag.render`
-			<div class="intranet-invitation-block" data-role="self-block"></div>
-		`;
-			const statusBlock = main_core.Tag.render`
-			<div class="intranet-invitation-status --invite-link-disabled">
-				<div class="intranet-invitation-status__content">
-					<span class="intranet-invitation-status__title ui-headline --md">${main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</span>
-					<p class="intranet-invitation-status__description ui-text --lg">
-						${main_core.Loc.getMessage(this.#isAdmin ? 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION' : 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION_NOT_ADMIN')}
-					</p>
-				</div>
-			</div>
-		`;
-			if (this.#isAdmin) {
-				main_core.Dom.append(main_core.Tag.render`
-				<div class="intranet-invitation-status__footer">${this.#getEnableButton().render()}</div>
-			`, statusBlock);
-			}
-			main_core.Dom.append(main_core.Tag.render`
-			<div class="intranet-invitation-block__content">
-				${statusBlock}
-			</div>
-		`, this.#container);
-			return this.#container;
-		}
-		#getEnableButton() {
-			const enableButton = new ui_buttons.Button({
-				useAirDesign: true,
-				text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ENABLE_BUTTON'),
-				style: ui_buttons.AirButtonStyle.FILLED,
-				props: {
-					'data-test-id': 'invite-link-page-enable-button'
-				},
-				onclick: () => {
-					if (enableButton.isWaiting()) {
-						return;
-					}
-					enableButton.setState(ui_buttons.ButtonState.WAITING);
-					this.#transport.send({
-						action: 'self',
-						data: {
-							allow_register: 'Y'
-						}
-					}).then(() => {
-						enableButton.setState(null);
-						main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
-							selfEnabled: true
-						});
-					}).catch(() => {
-						enableButton.setState(null);
-					});
-				}
-			});
-			return enableButton;
-		}
-		getAnalyticTab() {
-			return Analytics.TAB_LINK;
-		}
-	}
-
 	class PageFactory {
 		#options;
 		#userOptions;
@@ -2359,32 +2541,32 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#options = options;
 			this.#userOptions = userOptions;
 		}
-		createLocalEmailPage() {
-			return new LocalEmailPage({
-				...this.#options,
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [intranet_departmentControl.EntityType.DEPARTMENT])
-			});
-		}
 		createInvitePage(inviteType, showMassInviteButton = true) {
+			const departmentControl = this.createDepartmentControl([intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP, intranet_departmentControl.EntityType.EXTRANET]);
 			return new InvitePage({
 				...this.#options,
 				inviteType,
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP, intranet_departmentControl.EntityType.EXTRANET]),
+				departmentControl,
+				departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 				inputsFactory: this.createInputRowFactory(inviteType),
 				showMassInviteButton
 			});
 		}
 		createExtranetPage() {
+			const departmentControl = this.createDepartmentControl([intranet_departmentControl.EntityType.EXTRANET]);
 			return new ExtranetPage({
 				...this.#options,
 				inputsFactory: this.createInputRowFactory(InviteType.ALL),
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_EXTRANET'), [intranet_departmentControl.EntityType.EXTRANET])
+				departmentControl,
+				departmentControlBlock: this.createDepartmentControlBlock(departmentControl)
 			});
 		}
 		createRegisterPage() {
+			const departmentControl = this.createDepartmentControl([intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP, intranet_departmentControl.EntityType.EXTRANET]);
 			return new RegisterPage({
 				...this.#options,
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP, intranet_departmentControl.EntityType.EXTRANET]),
+				departmentControl,
+				departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
 				inputsFactory: this.createInputRowFactory()
 			});
 		}
@@ -2394,9 +2576,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		createLinkPage() {
+			const departmentControl = this.createDepartmentControl([intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP]);
 			return new LinkPage({
 				...this.#options,
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [intranet_departmentControl.EntityType.DEPARTMENT, intranet_departmentControl.EntityType.GROUP])
+				departmentControl,
+				departmentControlBlock: this.createDepartmentControlBlock(departmentControl)
 			});
 		}
 		createLinkDisabledPage() {
@@ -2405,11 +2589,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		createMassPage() {
+			const departmentControl = this.createDepartmentControl([intranet_departmentControl.EntityType.DEPARTMENT]);
 			return new MassPage({
-				departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [intranet_departmentControl.EntityType.DEPARTMENT])
+				departmentControl,
+				departmentControlBlock: this.createDepartmentControlBlock(departmentControl)
 			});
 		}
-		createDepartmentControl(description, entitiesType) {
+		createDepartmentControlBlock(departmentControl) {
+			return new DepartmentControlBlock({
+				departmentControl,
+				canCreateDepartment: this.#options.canCurrentUserCreateDepartment === true
+			});
+		}
+		createDepartmentControl(entitiesType) {
 			const departmentsId = main_core.Type.isArray(this.#userOptions?.departmentList) ? this.#userOptions.departmentList : [];
 			let groupOptions = {};
 			const preselectedItems = [];
@@ -2431,16 +2623,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return new intranet_departmentControl.DepartmentControl({
 				id: 'invite-page-department-control',
 				title: '',
-				description,
+				description: '',
 				entitiesType,
 				groupOptions,
 				preselectedItems,
 				departmentList: departmentsId,
+				showDepartmentCreationFooter: true,
+				showDepartmentCreationFooterInRecentTab: true,
+				showDepartmentCreationFooterInSearchTab: true,
 				dialogOptions: {
 					alwaysShowLabels: true
 				},
 				rootDepartment: main_core.Type.isObject(rootDepartment) ? rootDepartment : null,
-				addButtonCaption: withGroups ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION')
+				addButtonCaption: withGroups ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP_MSGVER_1') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_MSGVER_1')
 			});
 		}
 		createInputRowFactory(inviteType) {
@@ -2465,13 +2660,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		provide() {
 			this.#pages = new Map();
 			if (this.#options.canCurrentUserInvite) {
-				if (this.#options.useLocalEmailProgram) {
-					this.#pages.set('invite-email', this.#options.isSelfRegisterEnabled ? this.#pageFactory.createLocalEmailPage() : this.#pageFactory.createInvitePage(InviteType.EMAIL));
-					this.#pages.set('invite', this.#pageFactory.createInvitePage(InviteType.PHONE));
-					this.#pages.set('invite-with-group-dp', this.#pageFactory.createInvitePage(InviteType.EMAIL, false));
-				} else {
-					this.#pages.set('invite', this.#pageFactory.createInvitePage(this.#options.smsAvailable ? InviteType.ALL : InviteType.EMAIL));
-				}
+				this.#pages.set('invite', this.#pageFactory.createInvitePage(this.#options.smsAvailable ? InviteType.ALL : InviteType.EMAIL));
 				this.#pages.set('add', this.#pageFactory.createRegisterPage());
 				this.#pages.set('self', this.#options.isSelfRegisterEnabled ? this.#pageFactory.createLinkPage() : this.#pageFactory.createLinkDisabledPage());
 			}
@@ -2490,13 +2679,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			if (!this.#pages) {
 				return;
 			}
-			if (event.data?.selfEnabled) {
-				this.#pages.set('invite-email', this.#pageFactory.createLocalEmailPage());
-				this.#pages.set('self', this.#pageFactory.createLinkPage());
-			} else {
-				this.#pages.set('invite-email', this.#pageFactory.createInvitePage(InviteType.EMAIL));
-				this.#pages.set('self', this.#pageFactory.createLinkDisabledPage());
-			}
+			this.#pages.set('self', event.data?.selfEnabled ? this.#pageFactory.createLinkPage() : this.#pageFactory.createLinkDisabledPage());
 			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:pageUpdate', {
 				pages: this.#pages
 			});
@@ -2567,9 +2750,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.analyticsLabel = params.analyticsLabel;
 			this.projectLimitExceeded = main_core.Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 			this.projectLimitFeatureId = main_core.Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
+			this.invitationLink = main_core.Type.isString(params.invitationLink) ? params.invitationLink : '';
 			this.whitelistValue = main_core.Type.isStringFilled(params.whitelistValue) ? params.whitelistValue : '';
 			this.isCollabEnabled = params.isCollabEnabled === 'Y';
 			this.registerNeedConfirm = params.registerConfirm === true;
+			this.canCurrentUserCreateDepartment = params.canCurrentUserCreateDepartment === true;
 			this.useLocalEmailProgram = params.useLocalEmailProgram === true;
 		}
 		initTransport(params) {
@@ -2692,11 +2877,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 					useLocalEmailProgram: this.useLocalEmailProgram,
 					isAdmin: this.isAdmin,
 					needConfirmRegistration: this.registerNeedConfirm,
+					invitationLink: this.invitationLink,
 					whiteList: this.whitelistValue,
 					isCloud: this.isCloud,
 					linkRegisterEnabled: this.isSelfRegisterEnabled,
 					isExtranetInstalled: this.isExtranetInstalled,
-					canCurrentUserInvite: this.canCurrentUserInvite
+					canCurrentUserInvite: this.canCurrentUserInvite,
+					canCurrentUserCreateDepartment: this.canCurrentUserCreateDepartment
 				}, this.userOptions).provide()
 			});
 		}
@@ -2722,5 +2909,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.Form = Form;
 	exports.MassInvitationField = MassInvitationField;
 
-})(this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}, BX, BX.Event, BX.UI.Analytics, BX.Intranet, BX.Main, BX.UI, BX.Intranet, BX.UI.System.Typography, BX.UI, BX.UI.System.Input, BX.UI, BX.UI.System.Chip);
+})(this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}, BX, BX.Event, BX.UI.Analytics, BX.Intranet, BX.UI, BX.HumanResources, BX.UI.System.Input, BX.Main, BX.UI.System.Typography, BX.UI, BX.Intranet, BX, BX.UI, BX.UI.System.Chip);
 //# sourceMappingURL=script.js.map

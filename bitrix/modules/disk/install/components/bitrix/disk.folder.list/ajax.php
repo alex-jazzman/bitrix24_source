@@ -19,6 +19,7 @@ use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\Public\Provider\ExternalLinkProvider;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
@@ -68,11 +69,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 	private ?array $prevRightsOnStorage = null;
 	private ServiceLocator $serviceLocator;
+	private ExternalLinkProvider $externalLinkProvider;
 
 	public function __construct()
 	{
 		$this->serviceLocator = ServiceLocator::getInstance();
 		parent::__construct();
+
+		$this->externalLinkProvider = $this->serviceLocator->get(ExternalLinkProvider::class);
 	}
 
 	protected function listActions()
@@ -1749,17 +1753,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
-		$extLinks = $object->getExternalLinks(array(
-			'filter' => array(
-				'OBJECT_ID' => $object->getId(),
-				'CREATED_BY' => $this->getUser()->getId(),
-				'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
-				'IS_EXPIRED' => false,
-			),
-			'limit' => 1,
-		));
 
-		return array($object, array_pop($extLinks));
+		return [$object, $this->externalLinkProvider->getForUse($object->getRealObjectId())];
 	}
 
 	protected function processActionDisableExternalLink($objectId)
@@ -1776,7 +1771,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionGetExternalLink($objectId)
 	{
 		/** @var ExternalLink $extLink */
-		[, $extLink] = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
 		{
@@ -1787,10 +1782,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		}
 		$this->sendJsonSuccessResponse(array(
 			'hash' => $extLink->getHash(),
-			'link' => Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-				'hash' => $extLink->getHash(),
-				'action' => 'default',
-			), true),
+			'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink(
+				object: $object,
+				hash: $extLink->getHash(),
+			),
 		));
 	}
 
@@ -1807,7 +1802,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		if($forceCreate && !$extLink)
 		{
-			$extLink = $object->addExternalLink(array(
+			$extLink = $object->getRealObject()->addExternalLink(array(
 				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => ExternalLinkTable::TYPE_MANUAL,
 			));
@@ -1839,10 +1834,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				'hasDeathTime' => $extLink->hasDeathTime(),
 				'deathTime' => $extLink->hasDeathTime()? (string)$extLink->getDeathTime() : null,
 				'hash' => $extLink->getHash(),
-				'link' => Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-					'hash' => $extLink->getHash(),
-					'action' => 'default',
-				), true),
+				'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink(
+					object: $object,
+					hash: $extLink->getHash(),
+				),
 			),
 		));
 	}
@@ -1887,10 +1882,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				'hasPassword' => $extLink->hasPassword(),
 				'hasDeathTime' => $extLink->hasDeathTime(),
 				'hash' => $extLink->getHash(),
-				'link' => Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-					'hash' => $extLink->getHash(),
-					'action' => 'default',
-				), true),
+				'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink(
+					object: $object,
+					hash: $extLink->getHash(),
+				),
 			),
 		));
 	}
@@ -1921,7 +1916,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink)
 		{
-			$extLink = $object->addExternalLink(array(
+			$extLink = $object->getRealObject()->addExternalLink(array(
 				'CREATED_BY' => $this->getUser()->getId(),
 				'TYPE' => ExternalLinkTable::TYPE_MANUAL,
 			));
@@ -1935,10 +1930,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$this->sendJsonSuccessResponse(array(
 			'hash' => $extLink->getHash(),
-			'link' => Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-				'hash' => $extLink->getHash(),
-				'action' => 'default',
-			), true),
+			'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink($object, $extLink->getHash()),
 		));
 	}
 

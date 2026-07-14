@@ -3,7 +3,7 @@ import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
 import { FadeAnimation } from 'im.v2.component.animation';
 import { ChatType, EventType, MessageComponent, ActionByRole } from 'im.v2.const';
-import { FeatureManager } from 'im.v2.lib.feature';
+import { TariffManager } from 'im.v2.lib.feature';
 import { MessageMenuManager } from 'im.v2.lib.menu';
 import { MessageComponentManager } from 'im.v2.lib.message-component';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -121,7 +121,7 @@ export const MessageList = {
 		},
 		isHistoryLimitExceeded(): boolean
 		{
-			return !FeatureManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
+			return !TariffManager.chatHistory.isAvailable() && this.dialog.tariffRestrictions.isHistoryLimitExceeded;
 		},
 		showDialogStatus(): boolean
 		{

@@ -1,69 +1,44 @@
-import { type JsonObject } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
-
-import { EventType } from 'im.v2.const';
-import { SlideAnimation } from 'im.v2.component.animation';
-import { EscEventAction } from 'im.v2.lib.esc-manager';
+import { CloseIcon } from './components/close-icon';
 
 import './css/list-slider.css';
 
 // @vue/component
 export const RecentListSlider = {
 	name: 'RecentListSlider',
-	components: { SlideAnimation, BIcon },
-	emits: ['beforeClose', 'afterClose'],
-	data(): JsonObject
-	{
-		return {
-			showSlider: true,
-		};
+	components: { CloseIcon },
+	props: {
+		compactMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
+	emits: ['close'],
 	computed: {
-		OutlineIcons: () => OutlineIcons,
-	},
-	created()
-	{
-		EventEmitter.subscribe(EventType.recent.closeListSlider, this.onCloseSliderEvent);
-	},
-	beforeUnmount()
-	{
-		EventEmitter.unsubscribe(EventType.recent.closeListSlider, this.onCloseSliderEvent);
+		containerClasses(): Record<string, boolean>
+		{
+			return { '--compact-mode': this.compactMode };
+		},
 	},
 	methods: {
-		onCloseSlider()
+		onClose()
 		{
-			this.$emit('beforeClose');
-			this.showSlider = false;
-		},
-		onCloseSliderEvent(): $Values<typeof EscEventAction>
-		{
-			this.onCloseSlider();
-
-			return EscEventAction.handled;
+			this.$emit('close');
 		},
 	},
 	template: `
-		<SlideAnimation appear @after-leave="$emit('afterClose')">
-			<div v-if="showSlider" class="bx-im-list-container-slider">
-				<div class="bx-im-list-container-slider__header">
-					<div class="bx-im-list-container-slider__header_content">
-						<BIcon
-							:name="OutlineIcons.CHEVRON_LEFT_L"
-							:hoverable="true"
-							class="bx-im-list-container-slider__back-icon"
-							@click="onCloseSlider"
-						/>
-						<slot name="header"></slot>
-					</div>
-					<div v-if="$slots['subheader']" class="bx-im-list-container-slider__subheader_content">
-						<slot name="subheader"></slot>
-					</div>
+		<div class="bx-im-list-container-slider" :class="containerClasses">
+			<div class="bx-im-list-container-slider__header">
+				<div class="bx-im-list-container-slider__header_content">
+					<CloseIcon @click="onClose" />
+					<slot name="header"></slot>
 				</div>
-				<div class="bx-im-list-container-slider__content">
-					<slot name="content"></slot>
+				<div v-if="$slots['subheader']" class="bx-im-list-container-slider__subheader_content">
+					<slot name="subheader"></slot>
 				</div>
 			</div>
-		</SlideAnimation>
+			<div class="bx-im-list-container-slider__content">
+				<slot name="content"></slot>
+			</div>
+		</div>
 	`,
 };

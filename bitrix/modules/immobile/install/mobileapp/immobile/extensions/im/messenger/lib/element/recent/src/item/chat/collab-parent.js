@@ -2,8 +2,12 @@
  * @module im/messenger/lib/element/recent/item/chat/collab-parent
  */
 jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { RecentTab } = require('im/messenger/const');
+
 	const { CollabItem } = require('im/messenger/lib/element/recent/item/chat/collab');
 	const {
 		CounterPrefix,
@@ -17,6 +21,17 @@ jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, e
 	 */
 	class CollabParentChatItem extends CollabItem
 	{
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @param {object} options
+		 */
+		constructor(modelItem = {}, options = {})
+		{
+			super(modelItem, options);
+
+			this.createAccentStyles();
+		}
+
 		/**
 		 * @return {CollabParentChatItem}
 		 */
@@ -101,6 +116,28 @@ jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, e
 				this.getAddToFolderAction(),
 				this.getReadAction(),
 			].filter(Boolean);
+
+			return this;
+		}
+
+		createAccentStyles()
+		{
+			const store = serviceLocator.get('core').getStore();
+			const hasPinnedChats = store.getters['recentModel/hasPinnedItemInSection'](RecentTab.collabDefault, this.dialog.chatId);
+			const hasCollaber = this.getDialogHelper()?.hasCollaber;
+
+			this.styles.background = {
+				color: hasPinnedChats
+					? Color.bgContentSecondary.toHex()
+					: Color.bgContentPrimary.toHex(),
+				bubble: {
+					borderRadius: 8,
+					background: hasCollaber ? Color.collabBgContent1.toHex() : Color.accentSoftBlue3.toHex(),
+					borderColor: hasCollaber ? Color.bgSeparatorSecondary.toHex() : Color.accentSoftBlue1.toHex(),
+					borderWidth: hasPinnedChats ? 1 : 0,
+				},
+				highlightColor: hasCollaber ? Color.collabBgContent2.toHex() : Color.accentSoftBlue2.toHex(),
+			};
 
 			return this;
 		}

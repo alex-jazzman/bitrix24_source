@@ -1,5 +1,5 @@
-import type { JsonObject } from 'main.core';
-import type { MessageStatus } from 'im.v2.const';
+import { type JsonObject } from 'main.core';
+import { type MessageStatus } from 'im.v2.const';
 
 export type RawTariffRestrictions = {
 	isHistoryLimitExceeded: boolean,
@@ -23,7 +23,7 @@ export type RawMessage = {
 	uuid: string | null,
 	viewed: boolean,
 	viewedByOthers: boolean,
-	builder: RawBuilder | null,
+	block: RawBlock | null,
 };
 
 export type RawCommentInfo = {
@@ -235,7 +235,6 @@ export type RawCopilotRole = {
 export type RawCopilot = {
 	chats: {[string]: string},
 	messages: {[number]: string},
-	recommendedRoles?: string[],
 	aiProvider?: string,
 	roles: {[string]: RawCopilotRole},
 }
@@ -323,8 +322,11 @@ export type RawStickerMessage = {
 	packType: RawPackType,
 };
 
-export type RawBuilder = {
-	blocks: JsonObject[],
+export type RawBlockConfig = {
+	background?: string | null,
 };
 
-export type RawBuilderMessage = RawBuilder & { messageId: number };
+export type RawBlock = {
+	config: RawBlockConfig,
+	elements: JsonObject[],
+};

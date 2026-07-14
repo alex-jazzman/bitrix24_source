@@ -1,7 +1,16 @@
 import { type JsonObject } from 'main.core';
 
-import type { RecentTypeItem } from 'im.v2.const';
-import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage, RawBuilder } from './common';
+import { type RecentTypeItem } from 'im.v2.const';
+import {
+	type RawChat,
+	type RawFile,
+	type RawUser,
+	type RawMessage,
+	type RawMultidialog,
+	type RawLines,
+	type MultipleRawMessage,
+	type RawBlock,
+} from './common';
 
 export type MessageAddParams = {
 	chat?: {[chatId: string]: RawChat} | [],
@@ -34,7 +43,7 @@ export type MessageUpdateParams = {
 	text: string,
 	textLegacy: string,
 	type: string,
-	builder: RawBuilder | null,
+	block: RawBlock | null,
 };
 
 export type LastMessageViewsParams = {
@@ -240,24 +249,26 @@ export type RawReaction = {
 	ownReactions?: string[]
 };
 
-export type BuilderBlockAppendParams = {
+export type MessageBlockElementAppendParams = {
 	chatId: number,
-	block: JsonObject,
+	element: JsonObject,
 	messageId: number,
-	text: string
+	text: string,
+	files: {[fileId: string]: RawFile} | [],
 };
 
-export type BuilderBlockUpdateParams = {
+export type MessageBlockElementUpdateParams = {
 	chatId: number,
-	block: JsonObject,
-	blockId: string,
+	element: JsonObject,
+	elementId: string,
 	messageId: number,
-	text: string
+	text: string,
+	files: {[fileId: string]: RawFile} | [],
 };
 
-export type BuilderBlockDeleteParams = {
+export type MessageBlockElementDeleteParams = {
 	chatId: number,
-	blockId: string,
+	elementId: string,
 	messageId: number,
 	text: string
 };

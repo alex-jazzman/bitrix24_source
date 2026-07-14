@@ -15,6 +15,7 @@ export type Params = TaskModel & {
 	url?: string,
 	link?: LinkOptions,
 	closeCompleteUrl?: string,
+	onCloseEmbedded?: () => void,
 };
 
 export type EmbedParams = {
@@ -163,7 +164,7 @@ export class TaskCard
 
 		return {
 			mount: (container: HTMLElement) => {
-				const skeleton = Tag.render`<div style="width: 100%; height: 100%"/>`;
+				const skeleton = Tag.render`<div style="width: 100%; height: 100%" />`;
 
 				Dom.append(skeleton, container);
 

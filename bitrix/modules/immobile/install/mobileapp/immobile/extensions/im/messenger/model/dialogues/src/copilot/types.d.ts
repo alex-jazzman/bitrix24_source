@@ -48,6 +48,7 @@ export type copilotPrompt = {
 export type CopilotModelActions =
 	'dialoguesModel/copilotModel/update'
 	| 'dialoguesModel/copilotModel/updateRole'
+	| 'dialoguesModel/copilotModel/updateTitleIsCustom'
 	| 'dialoguesModel/copilotModel/setCollection'
 	| 'dialoguesModel/copilotModel/setFromSync'
 
@@ -61,6 +62,7 @@ export type CopilotUpdateActions =
 	'setCollection'
 	| 'update'
 	| 'updateRole'
+	| 'updateTitleIsCustom'
 export interface CopilotUpdateData extends PayloadData
 {
 	dialogId: DialogId;
@@ -96,6 +98,7 @@ export interface ChatsCopilotDataItem
 	dialogId: DialogId;
 	role: string;
 	engine: string;
+	titleIsCustom: boolean;
 }
 
 export interface CopilotPayloadDataItem

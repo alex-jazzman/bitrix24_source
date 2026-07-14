@@ -4,12 +4,11 @@ import { BaseChatContent } from 'im.v2.component.content.elements';
 
 import { CopilotChatHeader } from './components/header';
 import { CopilotTextarea } from './components/textarea';
-import { CopilotDisclaimer } from './components/disclaimer/copilot-disclaimer';
 
 // @vue/component
 export const CopilotContent = {
 	name: 'CopilotContent',
-	components: { BaseChatContent, CopilotChatHeader, CopilotTextarea, CopilotDisclaimer },
+	components: { BaseChatContent, CopilotChatHeader, CopilotTextarea },
 	props:
 	{
 		dialogId: {
@@ -34,8 +33,8 @@ export const CopilotContent = {
 					<CopilotChatHeader :dialogId="dialogId" :key="dialogId"/>
 				</slot>
 			</template>
-			<template #after-textarea>
-				<CopilotDisclaimer/>
+			<template v-if="$slots.dialog" #dialog>
+				<slot name="dialog"></slot>
 			</template>
 			<template #textarea="{ onTextareaMount }">
 				<CopilotTextarea

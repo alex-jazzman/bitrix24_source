@@ -2,8 +2,8 @@ export const PromoId = Object.freeze({
 	createGroupChat: 'im:group-chat-create:20062023:all',
 	createConference: 'im:conference-create:24082023:all',
 	createChannel: 'im:channel-create:04032024:all',
-	createCollabDescription: 'im:collab-create:12092024:all',
 	addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
+	createCollabDescription: 'im:collab-create:12092024:all',
 	changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
 	collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
 	downloadSeveralFiles: 'im:download-several-files:22112024:all',
@@ -16,4 +16,7 @@ export const PromoId = Object.freeze({
 	desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
 	stickersAvailable: 'im:stickers-available:27112025:all',
 	createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all',
+	collabCardNavigation: 'im:collab-card-navigation:28042026:all',
+	collabCreateChat: 'im:collab-create-chat:28042026:all',
+	collabAi: 'socialnetwork:collab-project-ai:28042026:all',
 });

@@ -22,7 +22,7 @@ if (!$USER->isAdmin())
 
 $cacheType = Bitrix\Main\Config\Option::get('cluster', 'cache_type', 'memcache');
 
-if ($cacheType != 'memcache' && $cacheType != 'memcached')
+if ($cacheType !== 'memcache' && $cacheType !== 'memcached')
 {
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 	ShowError(Loc::getMessage('CLU_MEMCACHE_DISABLED'));
@@ -31,16 +31,16 @@ if ($cacheType != 'memcache' && $cacheType != 'memcached')
 }
 
 if (
-	($cacheType == 'memcache' && !extension_loaded('memcache'))
-	|| ($cacheType == 'memcached' && !extension_loaded('memcached'))
+	($cacheType === 'memcache' && !extension_loaded('memcache'))
+	|| ($cacheType === 'memcached' && !extension_loaded('memcached'))
 )
 {
 	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
-	if ($cacheType == 'memcache')
+	if ($cacheType === 'memcache')
 	{
 		ShowError(Loc::getMessage('CLU_MEMCACHE_NO_EXTENTION'));
 	}
-	elseif ($cacheType == 'memcached')
+	elseif ($cacheType === 'memcached')
 	{
 		ShowError(Loc::getMessage('CLU_MEMCACHED_NO_EXTENTION'));
 	}
@@ -49,7 +49,7 @@ if (
 	die();
 }
 
-if ($cacheType == 'memcache')
+if ($cacheType === 'memcache')
 {
 	$cache = CClusterMemcache::class;
 }
@@ -179,36 +179,36 @@ if ($message)
 	echo $message->Show();
 }
 
-?><form method="POST" action="<?=$APPLICATION->GetCurPage()?>"  enctype="multipart/form-data" name="editform" id="editform"><?
+?><form method="POST" action="<?=$APPLICATION->GetCurPage()?>"  enctype="multipart/form-data" name="editform" id="editform"><?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 if (is_array($server)):
-	?><tr><?
-		?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_ID')?>:</td><?
-		?><td><?=intval($server['ID']);?></td><?
-	?></tr><?
+	?><tr><?php
+		?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_ID')?>:</td><?php
+		?><td><?=intval($server['ID']);?></td><?php
+	?></tr><?php
 endif;
-?><tr><?
-	?><td width="40%"><?=Loc::getMessage('CLU_MEMCACHE_EDIT_HOST')?>:</td><?
-	?><td width="60%"><input type="text" size="20" name="HOST" value="<?=$str_HOST?>"></td><?
-?></tr><tr><?
-	?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_PORT')?>:</td><?
-	?><td><input type="text" size="6" name="PORT" value="<?=$str_PORT?>"></td><?
-?></tr><tr><?
-	?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_WEIGHT')?>:</td><?
-	?><td><input type="text" size="6" name="WEIGHT" value="<?=$str_WEIGHT?>"></td><?
-?></tr><?
+?><tr><?php
+	?><td width="40%"><?=Loc::getMessage('CLU_MEMCACHE_EDIT_HOST')?>:</td><?php
+	?><td width="60%"><input type="text" size="20" name="HOST" value="<?=$str_HOST?>"></td><?php
+?></tr><tr><?php
+	?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_PORT')?>:</td><?php
+	?><td><input type="text" size="6" name="PORT" value="<?=$str_PORT?>"></td><?php
+?></tr><tr><?php
+	?><td><?=Loc::getMessage('CLU_MEMCACHE_EDIT_WEIGHT')?>:</td><?php
+	?><td><input type="text" size="6" name="WEIGHT" value="<?=$str_WEIGHT?>"></td><?php
+?></tr><?php
 
 $tabControl->Buttons(['back_url' => 'cluster_memcache_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $groupID]);
 echo bitrix_sessid_post();
-?><input type="hidden" name="lang" value="<?=LANGUAGE_ID?>"><input type="hidden" name="group_id" value="<?=$groupID?>"><?
+?><input type="hidden" name="lang" value="<?=LANGUAGE_ID?>"><input type="hidden" name="group_id" value="<?=$groupID?>"><?php
 
 if (is_array($server)):
-	?><input type="hidden" name="ID" value="<?=intval($server['ID'])?>"><?
+	?><input type="hidden" name="ID" value="<?=intval($server['ID'])?>"><?php
 endif;
 
 $tabControl->End();
-?></form><?
+?></form><?php
 
 $tabControl->ShowWarnings('editform', $message);
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

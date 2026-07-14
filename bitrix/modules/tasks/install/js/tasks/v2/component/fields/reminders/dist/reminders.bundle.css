@@ -85,7 +85,6 @@
 }
 
 .tasks-field-reminders-list-header {
-	position: -webkit-sticky;
 	position: sticky;
 	top: 0;
 	display: flex;
@@ -95,23 +94,6 @@
 	border-bottom: 1px solid var(--ui-color-divider-default);
 	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
 	z-index: 1;
-}
-
-.tasks-field-reminder-sheet {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-sm);
-}
-
-.tasks-field-reminder-sheet-header {
-	display: flex;
-	justify-content: space-between;
-}
-
-.tasks-field-reminder-sheet-header .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-	cursor: pointer;
 }
 
 .tasks-field-reminders-row.--header {
@@ -187,4 +169,21 @@
 	border-radius: 1in;
 	margin-right: var(--ui-space-inline-xs);
 	padding: 1px;
+}
+
+.tasks-field-reminder-sheet {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-field-reminder-sheet-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-field-reminder-sheet-header .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
 }

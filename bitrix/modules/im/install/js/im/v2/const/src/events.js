@@ -51,7 +51,7 @@ export const EventType = {
 	{
 		openSearch: 'IM.Recent:openSearch',
 		openNestedList: 'IM.Recent:openNestedList',
-		closeListSlider: 'IM.Recent:closeListSlider',
+		closeNestedList: 'IM.Recent:closeNestedList',
 	},
 	mention:
 	{
@@ -63,25 +63,21 @@ export const EventType = {
 	{
 		onReactionSelected: 'IM:Reaction:onReactionSelected',
 	},
-	slider:
-	{
-		onClose: 'onChatSliderClose',
-	},
 	request:
 	{
 		onAuthError: 'IM:request:onAuthError',
 	},
 	audioPlayer:
 	{
-		play: 'IM:AudioPlayer:play',
-		stop: 'IM:AudioPlayer:stop',
 		pause: 'IM:AudioPlayer:pause',
-		preload: 'IM:AudioPlayer:preload',
 	},
 	roundVideoPlayer:
 	{
-		playNext: 'IM:RoundVideoPlayer:playNext',
 		onClickPlay: 'IM:RoundVideoPlayer:onClickPlay',
+	},
+	player:
+	{
+		playNext: 'IM:Player:playNext',
 	},
 	key:
 	{
@@ -104,6 +100,10 @@ export const EventType = {
 		onLayoutChange: 'IM.Layout:onLayoutChange',
 		onOpenNotifications: 'IM.Layout:onOpenNotifications',
 	},
+	slider:
+	{
+		onClose: 'onChatSliderClose',
+	},
 	counter:
 	{
 		onNotificationCounterChange: 'onImUpdateCounterNotify',
@@ -115,6 +115,10 @@ export const EventType = {
 	{
 		onMembersCountChange: 'tasks:card:onMembersCountChange',
 		openCardFromMessage: 'tasks:chat-action:before-execute',
+	},
+	collab:
+	{
+		onFirstOpen: 'IM:Collab:onFirstOpen',
 	},
 	call:
 	{

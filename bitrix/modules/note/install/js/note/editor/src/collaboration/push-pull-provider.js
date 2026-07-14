@@ -12,6 +12,7 @@ import { uint8ArrayToBase64, base64ToUint8Array } from '../utils/binary';
 export class PushPullYjsProvider
 {
 	documentId: number;
+	collectionId: number;
 	#userId: number;
 	#userName: string;
 	#userColor: string;
@@ -27,6 +28,13 @@ export class PushPullYjsProvider
 	onDisconnect: Function | null;
 	onConnectError: Function | null;
 	onNeedReconnect: Function | null;
+	onRemoteDocumentUpdate: Function | null;
+	onRemoteArchive: Function | null;
+	onRemoteRestore: Function | null;
+	onRemoteDelete: Function | null;
+	onRemoteHardDelete: Function | null;
+	onRemoteContentOverwritten: Function | null;
+	onRemoteCapabilities: Function | null;
 
 	#flushManager: FlushManager;
 	#pullTransport: PullTransport;
@@ -49,6 +57,7 @@ export class PushPullYjsProvider
 	})
 	{
 		this.documentId = documentId;
+		this.collectionId = 0;
 		this.#userId = userId;
 		this.#userName = userName;
 		this.#userColor = userColor;
@@ -64,6 +73,13 @@ export class PushPullYjsProvider
 		this.onDisconnect = null;
 		this.onConnectError = null;
 		this.onNeedReconnect = null;
+		this.onRemoteDocumentUpdate = null;
+		this.onRemoteArchive = null;
+		this.onRemoteRestore = null;
+		this.onRemoteDelete = null;
+		this.onRemoteHardDelete = null;
+		this.onRemoteContentOverwritten = null;
+		this.onRemoteCapabilities = null;
 
 		this.#flushManager = new FlushManager({ documentId });
 		this.#pullTransport = new PullTransport({ documentId });
@@ -121,7 +137,9 @@ export class PushPullYjsProvider
 			schema: this.#schema,
 		});
 
-		if (yjsState === null && this.document)
+		// Skip genesis save when server holds raw markdown — ydoc-factory has no MD parser,
+		// so the Y.Doc would be empty and would clobber the real content in DB.
+		if (yjsState === null && this.document && !Type.isString(markdown))
 		{
 			await this.#saveGenesisState();
 		}
@@ -277,6 +295,42 @@ export class PushPullYjsProvider
 		}
 	}
 
+	freezeWrites(): void
+	{
+		this.#flushManager.unregisterBeforeUnload();
+		this.#flushManager.stop();
+		this.#compactManager.stopInterval();
+
+		if (this.#awarenessManager)
+		{
+			this.#awarenessManager.leave();
+		}
+	}
+
+	refreshCollectionWatch(): void
+	{
+		this.#pullTransport.refreshCollectionWatch();
+	}
+
+	unfreezeWrites(): void
+	{
+		if (this.#isDestroyed || !this.document)
+		{
+			return;
+		}
+
+		this.#flushManager.start({
+			document: this.document,
+			getCursorPosition: () => this.#getCursorPosition(),
+		});
+		this.#flushManager.registerBeforeUnload();
+
+		if (this.#awarenessManager)
+		{
+			this.#awarenessManager.start();
+		}
+	}
+
 	async compact(getEditorMarkdown: () => string | null): Promise<void>
 	{
 		if (this.#isDestroyed || !this.document)
@@ -336,10 +390,24 @@ export class PushPullYjsProvider
 			const fullState = Y.encodeStateAsUpdate(this.document);
 			const yjsState = uint8ArrayToBase64(fullState);
 
-			await DocumentService.saveYjsState({
+			const response = await DocumentService.saveYjsState({
 				documentId: this.documentId,
 				yjsState,
 			});
+
+			const applied = response?.data?.applied;
+			const serverState = response?.data?.yjsState ?? null;
+			if (applied === false && Type.isStringFilled(serverState))
+			{
+				// Lost the genesis race: discard our orphan baseline and rebuild from the
+				// authoritative server state so transport/awareness/flush/editor bind to it.
+				this.document = createYDoc({
+					yjsState: serverState,
+					markdown: null,
+					patches: [],
+					schema: this.#schema,
+				});
+			}
 		}
 		catch
 		{
@@ -426,7 +494,68 @@ export class PushPullYjsProvider
 					this.onNeedReconnect();
 				}
 			},
+			onDocumentUpdate: (params) => {
+				if (this.onRemoteDocumentUpdate)
+				{
+					this.onRemoteDocumentUpdate(params);
+				}
+			},
+			onArchive: (params) => {
+				if (this.onRemoteArchive)
+				{
+					this.onRemoteArchive(params);
+				}
+			},
+			onRestore: (params) => {
+				if (this.onRemoteRestore)
+				{
+					this.onRemoteRestore(params);
+				}
+			},
+			onDelete: (params) => {
+				if (this.onRemoteDelete)
+				{
+					this.onRemoteDelete(params);
+				}
+			},
+			onHardDelete: (params) => {
+				if (this.onRemoteHardDelete)
+				{
+					this.onRemoteHardDelete(params);
+				}
+			},
+			onContentOverwritten: (params) => {
+				this.#handleContentOverwritten(params);
+			},
+			onCapabilities: (params) => {
+				if (this.onRemoteCapabilities)
+				{
+					this.onRemoteCapabilities(params);
+				}
+			},
+			getCollectionId: () => Number(this.collectionId) || 0,
 		});
+	}
+
+	#handleContentOverwritten(params: Object): void
+	{
+		if (this.#isDestroyed)
+		{
+			return;
+		}
+
+		if (Number(params?.documentId) !== this.documentId)
+		{
+			return;
+		}
+
+		// Provider only dispatches — feature layer owns the rebuild. Going through connect(null)
+		// here pipes raw markdown into ydoc-factory, which has no parser and clobbers the doc
+		// with an empty Y.Doc via saveGenesisState.
+		if (this.onRemoteContentOverwritten)
+		{
+			this.onRemoteContentOverwritten(params);
+		}
 	}
 
 	#getCursorPosition(): Object | null

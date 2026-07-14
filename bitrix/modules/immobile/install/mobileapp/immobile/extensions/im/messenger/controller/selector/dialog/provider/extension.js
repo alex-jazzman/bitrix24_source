@@ -9,7 +9,12 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatSearchProvider: SearchProvider } = require('im/messenger/lib/chat-search');
+	const {
+		ChatSearchProvider: SearchProvider,
+		ChatSearchConfig,
+		DialogLocalSearchStrategy,
+		DefaultServerSearchStrategy,
+	} = require('im/messenger/lib/chat-search');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogType } = require('im/messenger/const');
@@ -54,20 +59,32 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 			this.store = serviceLocator.get('core').getMessengerStore();
 
-			this.searchProvider = new SearchProvider({
-				filter: {
+			this.searchProvider = this.#createSearchProvider();
+
+			this.logger = getLoggerWithContext('dialog-selector-provider', this);
+		}
+
+		/**
+		 * @private
+		 * @return {ChatSearchProvider}
+		 */
+		#createSearchProvider()
+		{
+			return new SearchProvider({
+				localStrategy: new DialogLocalSearchStrategy({
 					exceptDialogTypes: [
 						DialogType.copilot,
 						DialogType.lines,
 						DialogType.comment,
 						DialogType.tasksTask,
 					],
-				},
+				}),
+				serverStrategy: new DefaultServerSearchStrategy({
+					config: new ChatSearchConfig(),
+				}),
 				loadSearchProcessed: this.#onLocalSearchComplete,
 				loadSearchComplete: this.#onServerSearchComplete,
 			});
-
-			this.logger = getLoggerWithContext('dialog-selector-provider', this);
 		}
 
 		loadRecent()

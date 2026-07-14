@@ -104,6 +104,7 @@ return [
 		'im:messenger/controller/dialog/lib/message-sender',
 		'im:messenger/controller/dialog/lib/clipboard-image',
 		'im:messenger/controller/dialog/lib/suggests-manager',
+		'im:messenger/controller/dialog/lib/message-footer-action',
 		'im:messenger/controller/dialog/lib/optimistic-chat-manager',
 		'im:messenger/controller/dialog/lib/markdown-table',
 	],

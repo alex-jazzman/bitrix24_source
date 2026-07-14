@@ -6,7 +6,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const GetParameterByChatType = {
-		[im_v2_const.ChatType.taskComments]: im_v2_const.GetParameter.openTaskComments
+		[im_v2_const.ChatType.taskComments]: im_v2_const.GetParameter.openTaskComments,
+		[im_v2_const.ChatType.collab]: im_v2_const.GetParameter.openCollab
 	};
 	const ChatManager = {
 		buildChatLink(dialogId) {

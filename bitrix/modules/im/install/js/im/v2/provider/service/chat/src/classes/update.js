@@ -8,7 +8,7 @@ import { runAction } from 'im.v2.lib.rest';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Utils } from 'im.v2.lib.utils';
 
-import { type ChatUpdateConfig, type CollabUpdateConfig, type GetMemberEntitiesConfig } from '../types/update-chat';
+import { type ChatUpdateConfig, type GetMemberEntitiesConfig, type CollabUpdateConfig } from '../types/update-chat';
 
 export class UpdateService
 {

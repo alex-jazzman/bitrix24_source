@@ -87,8 +87,8 @@ if ($arResult['HAS_ACCESS_TO_MAILBOX_GRID'])
 		'color' => Color::LIGHT_BORDER,
 		'tag' => Tag::LINK,
 		'text' => Loc::getMessage('MAIL_MESSAGE_MAILBOX_GRID_BTN'),
-		'counter' => $arResult['PENDING_CONNECTION_REQUESTS_COUNT'] > 0
-			? $arResult['PENDING_CONNECTION_REQUESTS_COUNT']
+		'counter' => $arResult['MAILBOX_GRID_BUTTON_COUNTER'] > 0
+			? $arResult['MAILBOX_GRID_BUTTON_COUNTER']
 			: null,
 		'dataset' => [
 			'toolbar-collapsed-icon' => Icon::LIST,
@@ -1249,31 +1249,63 @@ $APPLICATION->includeComponent(
 		activeFeaturePromoter.show();
 	}
 
-	BX.addCustomEvent('onPullEvent-mail', function(command, params) {
-		if (command !== 'connection_request_count_changed')
+		<?php if ($arResult['HAS_ACCESS_TO_MAILBOX_GRID']): ?>
+		function refreshMailboxGridButtonCounter()
 		{
-			return;
-		}
+			const node = document.querySelector('[data-id="mail-mailbox-grid-button"]');
+			if (
+				!node
+				|| !BX.ajax
+				|| typeof BX.ajax.runComponentAction !== 'function'
+				|| !BX.UI
+				|| !BX.UI.ButtonManager
+			)
+			{
+				return;
+			}
 
-		const count = params?.pendingCount ?? 0;
-		const node = document.querySelector('[data-id="mail-mailbox-grid-button"]');
-		if (!node)
-		{
-			return;
-		}
+			BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'getMailboxGridButtonCounter', {
+				mode: 'class',
+			}).then(function(response) {
+			const count = response?.data?.count ?? 0;
+			const button = BX.UI.ButtonManager.createFromNode(node);
+			if (!button)
+			{
+				return;
+			}
 
-		const button = BX.UI.ButtonManager.createFromNode(node);
-		if (count <= 0)
-		{
-			button.setRightCounter(null);
+			if (count <= 0)
+			{
+				button.setRightCounter(null);
 
-			return;
-		}
+				return;
+			}
 
-		button.setRightCounter({
-			value: count,
-			size: BX.UI.CounterSize.SMALL,
+			const counter = button.getRightCounter();
+			if (counter)
+			{
+				counter.setValue(count);
+
+				return;
+			}
+
+			button.setRightCounter({
+				value: count,
+			});
+		}).catch(function() {});
+	}
+
+		BX.addCustomEvent('onPullEvent-mail', function(command) {
+			if (
+				command !== 'connection_request_count_changed'
+				&& command !== 'mailbox_grid_button_counter_refresh'
+			)
+			{
+				return;
+			}
+
+			refreshMailboxGridButtonCounter();
 		});
-	});
+		<?php endif; ?>
 
-</script>
+		</script>

@@ -95,6 +95,10 @@ export const TaskCommentsContent = {
 				LocalStorageManager.getInstance().set(LocalStorageKey.taskCommentsCardOpened, this.isTaskCardOpened);
 			}, WRITE_TO_STORAGE_TIMEOUT);
 		},
+		onTaskCardClose()
+		{
+			this.toggleTaskCard();
+		},
 	},
 	template: `
 		<BaseChatContent :dialogId="dialogId">
@@ -111,6 +115,7 @@ export const TaskCommentsContent = {
 						v-if="isTaskCardAvailable && isTaskCardOpened"
 						:dialogId="dialogId"
 						:taskId="taskId"
+						@close="onTaskCardClose"
 					/>
 				</SidebarAnimation>
 			</template>

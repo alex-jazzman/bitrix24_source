@@ -2,6 +2,7 @@ import { Core } from 'tasks.v2.core';
 import { Model, Endpoint } from 'tasks.v2.const';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { idUtils } from 'tasks.v2.lib.id-utils';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { CrmItemModel } from 'tasks.v2.model.crm-items';
 
 import { mapDtoToModel } from './mappers';
@@ -20,6 +21,9 @@ export const crmService = new class
 		const data = await (idUtils.isTemplate(id) ? this.#listTemplate(id, ids) : this.#listTask(id, ids));
 
 		const crmItems = data.map((dto: CrmItemDto): CrmItemModel => mapDtoToModel(dto));
+
+		const actualIds = data.map((dto: CrmItemDto): number => dto.id);
+		taskService.updateStoreTask(id, { crmItemIds: actualIds });
 
 		await Core.getStore().dispatch(`${Model.CrmItems}/upsertMany`, crmItems);
 	}

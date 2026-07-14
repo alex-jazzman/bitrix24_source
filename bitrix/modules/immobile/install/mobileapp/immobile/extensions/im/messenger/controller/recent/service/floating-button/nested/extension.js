@@ -2,6 +2,7 @@
  * @module im/messenger/controller/recent/service/floating-button/nested
  */
 jn.define('im/messenger/controller/recent/service/floating-button/nested', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { isEqual } = require('utils/object');
 	const { Icon } = require('ui-system/blocks/icon');
@@ -12,6 +13,7 @@ jn.define('im/messenger/controller/recent/service/floating-button/nested', (requ
 	/**
 	 * @implements {IFloatingButtonService}
 	 * @class NestedFloatingButtonService
+	 * @extends {BaseUiRecentService<NestedFloatingButtonServiceProps>}
 	 */
 	class NestedFloatingButtonService extends BaseUiRecentService
 	{
@@ -22,6 +24,11 @@ jn.define('im/messenger/controller/recent/service/floating-button/nested', (requ
 			this.isTapProcessing = false;
 			this.renderedButton = {};
 			this.itemCollectionSize = null;
+
+			this.checkShouldShowButton = Type.isFunction(this.props.checkShouldShowButton)
+				? this.props.checkShouldShowButton
+				: () => true
+			;
 
 			this.tapHandler = async () => {
 				if (this.isTapProcessing)
@@ -81,11 +88,21 @@ jn.define('im/messenger/controller/recent/service/floating-button/nested', (requ
 
 		async renderButton()
 		{
+			if (!this.checkShouldShowButton())
+			{
+				return;
+			}
+
 			void this.setFloatingButtonIfNeeded(this.createButton());
 		}
 
 		async renderAccentButton()
 		{
+			if (!this.checkShouldShowButton())
+			{
+				return;
+			}
+
 			void this.setFloatingButtonIfNeeded(this.createAccentButton());
 		}
 
@@ -100,11 +117,11 @@ jn.define('im/messenger/controller/recent/service/floating-button/nested', (requ
 
 			if (itemCollectionSize > 0)
 			{
-				void this.setFloatingButtonIfNeeded(this.createButton());
+				await this.renderButton();
 			}
 			else
 			{
-				void this.setFloatingButtonIfNeeded(this.createAccentButton());
+				await this.renderAccentButton();
 			}
 
 			this.itemCollectionSize = itemCollectionSize;

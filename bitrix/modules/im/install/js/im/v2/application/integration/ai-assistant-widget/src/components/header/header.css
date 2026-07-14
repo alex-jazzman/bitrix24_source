@@ -1,15 +1,42 @@
 .bx-im-ai-assistant-chat-header__container {
+	position: relative;
 	display: flex;
 	align-items: center;
 	height: 58px;
-	padding: 11px 15px;
-	background-color: var(--im-color-palette-white-base);
+	padding: 11px 16px 11px 15px;
+	background-color: transparent;
+	border-left: 1px solid var(--ui-color-divider-vibrant-less);
+}
+
+.bx-im-ai-assistant-chat-header__container::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1px;
+	height: 24px;
+	background-color: var(--ui-color-base-0);
+	opacity: var(--ui-opacity-20);
+}
+
+.bx-im-ai-assistant-chat-header__container .bx-im-chat-title__scope {
+	--im-chat-title__font-color: var(--ui-color-base-0);
+	--im-chat-title__background-image: none;
+	--im-chat-title__text-fill-color: var(--ui-color-base-0);
+	--im-chat-title-bot-color: var(--ui-color-base-0);
+}
+
+.bx-im-ai-assistant-chat-header__container .bx-im-elements-editable-chat-title__scope {
+	--im-elements-editable-chat-title__background-color_input: transparent;
+	--im-elements-editable-chat-title__font-color_input: var(--ui-color-base-0);
 }
 
 .bx-im-ai-assistant-chat-header__back {
-	--ui-icon-set__icon-color: var(--ui-color-base-40);
 	flex-shrink: 0;
 	margin-right: 12px;
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+	opacity: var(--ui-opacity-40);
 	cursor: pointer;
 }
 
@@ -28,15 +55,59 @@
 .bx-im-ai-assistant-chat-header__subtitle {
 	font: var(--im-font-size-md) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-normal);
-	color: var(--im-color-palette-gray-60);
+	color: var(--ui-color-base-0);
+	opacity: var(--ui-opacity-60);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 }
 
-.bx-im-ai-assistant-chat-header__icon {
-	--ui-icon-set__icon-color: var(--ui-color-base-40);
+.bx-im-ai-assistant-chat-header__create-chat {
 	flex-shrink: 0;
 	margin-left: 12px;
+}
+
+.bx-im-ai-assistant-chat-header__create-chat .bx-im-ai-assistant-create-chat-button__scope {
+	--im-ai-assistant-create-chat-button__icon-background: var(--ui-color-design-tinted-content-icon);
+	--im-ai-assistant-create-chat-button__background: var(--ui-color-design-tinted-bg);
+}
+
+.bx-im-ai-assistant-chat-header__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+	flex-shrink: 0;
+	margin-left: 12px;
+	opacity: var(--ui-opacity-40);
 	cursor: pointer;
+}
+
+.bx-im-ai-assistant-chat-header__container.--legacy {
+	background-color: var(--ui-color-background-primary);
+	border-left: none;
+	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.bx-im-ai-assistant-chat-header__container.--legacy::after {
+	display: none;
+}
+
+.bx-im-ai-assistant-chat-header__container.--legacy .bx-im-chat-title__scope {
+	--im-chat-title__font-color: initial;
+	--im-chat-title__background-image: initial;
+	--im-chat-title__text-fill-color: initial;
+	--im-chat-title-bot-color: initial;
+}
+
+.bx-im-ai-assistant-chat-header__container.--legacy .bx-im-elements-editable-chat-title__scope {
+	--im-elements-editable-chat-title__background-color_input: initial;
+	--im-elements-editable-chat-title__font-color_input: initial;
+}
+
+.--legacy .bx-im-ai-assistant-chat-header__subtitle {
+	color: var(--ui-color-text-subtle);
+	opacity: 1;
+}
+
+.--legacy .bx-im-ai-assistant-chat-header__icon {
+	--ui-icon-set__icon-color: var(--ui-color-text-subtle);
+	opacity: 1;
 }

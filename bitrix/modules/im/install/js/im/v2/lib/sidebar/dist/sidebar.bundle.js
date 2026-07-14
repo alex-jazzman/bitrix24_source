@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_application_core, im_v2_lib_feature, im_v2_const, im_v2_lib_channel, im_v2_lib_market, main_core) {
+(function (exports, im_v2_application_core, im_v2_lib_feature, im_v2_const, im_v2_lib_channel, im_v2_lib_market, main_core, im_v2_lib_collab) {
 	'use strict';
 
 	class BlockFilter {
@@ -38,7 +38,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#hasHistoryLimit() {
 			const isChannelCommentsChat = im_v2_const.ChatType.comment === this.#chat.type;
 			const isChannelChat = im_v2_lib_channel.ChannelManager.isChannel(this.#dialogId);
-			if (isChannelChat || isChannelCommentsChat || im_v2_lib_feature.FeatureManager.chatHistory.isAvailable()) {
+			if (isChannelChat || isChannelCommentsChat || im_v2_lib_feature.TariffManager.chatHistory.isAvailable()) {
 				return false;
 			}
 			return im_v2_application_core.Core.getStore().getters['sidebar/hasHistoryLimit'](this.#chat.chatId);
@@ -157,7 +157,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const isCollab = chatContext => chatContext.type === im_v2_const.ChatType.collab;
 	const collabPreset = new SidebarPreset({
 		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.collabHelpdesk],
-		getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_COLLAB_HEADER_TITLE')
+		getHeaderTitle: () => im_v2_lib_collab.CollabManager.getSidebarHeaderText()
 	});
 
 	const isSupport = chatContext => im_v2_application_core.Core.getStore().getters['sidebar/multidialog/isSupport'](chatContext.dialogId);
@@ -253,5 +253,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.SidebarManager = SidebarManager;
 	exports.SidebarPreset = SidebarPreset;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib);
 //# sourceMappingURL=sidebar.bundle.js.map

@@ -1,0 +1,17 @@
+.bx-im-message-ai-assistant-v2-base-message__container .bx-im-message-base__body {
+	min-width: 250px;
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bx-im-message-ai-assistant-v2-answer__container {
+	position: relative;
+	overflow: hidden;
+	border-radius: inherit;
+	padding-top: 12px;
+	background: url('./images/glow.png') no-repeat top left;
+	background-size: 100% 117px;
+}
+
+.bx-im-message-ai-assistant-v2-answer__container.--error {
+	background-color: var(--ui-color-palette-red-20);
+}

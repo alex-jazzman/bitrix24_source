@@ -1,3 +1,6 @@
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { CounterManager } from 'im.v2.lib.counter';
 
 import './css/menu-item.css';
@@ -6,6 +9,7 @@ export const MenuItemIcon = {
 	chat: 'chat',
 	channel: 'channel',
 	collab: 'collab',
+	collabV2: 'collab-v2',
 	conference: 'conference',
 	upload: 'upload',
 	file: 'file',
@@ -19,13 +23,15 @@ export const MenuItemIcon = {
 	calendarSlot: 'calendar-slot',
 	documentSign: 'document-sign',
 	b24: 'b24',
+	aiAssistant: 'ai-assistant',
+	lock: 'lock',
 };
 
 // @vue/component
 export const MenuItem = {
 	name: 'MenuItem',
-	props:
-	{
+	components: { BIcon },
+	props: {
 		icon: {
 			type: String,
 			required: false,
@@ -56,8 +62,8 @@ export const MenuItem = {
 			default: false,
 		},
 	},
-	computed:
-	{
+	computed: {
+		OutlineIcons: () => OutlineIcons,
 		formattedCounter(): string
 		{
 			if (this.counter === 0)
@@ -67,21 +73,44 @@ export const MenuItem = {
 
 			return CounterManager.formatCounter(this.counter);
 		},
-		containerClasses(): Record<string, boolean>
+		preparedIcon(): string
+		{
+			return this.disabled ? MenuItemIcon.lock : this.icon;
+		},
+		containerClasses(): { [string]: boolean }
 		{
 			return {
 				'--disabled': this.disabled,
 				'--bottom-border': this.withBottomBorder,
 			};
 		},
+		isAiAssistantItem(): boolean
+		{
+			if (!FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
+			{
+				return false;
+			}
+
+			return this.icon === MenuItemIcon.aiAssistant;
+		},
 	},
 	template: `
 		<div class="bx-im-menu-item__container" :class="containerClasses">
-			<div class="bx-im-menu-item__content" :class="{'--with-icon': !!icon}">
-				<div v-if="icon" class="bx-im-menu_item__icon" :class="'--' + icon"></div>
+			<div class="bx-im-menu-item__content" :class="{'--with-icon': !!preparedIcon}">
+				<BIcon
+					v-if="isAiAssistantItem"
+					:name="OutlineIcons.BITRIX_GPT"
+					class="bx-im-menu_item__ai-assistant-icon"
+				/>
+				<div v-else-if="preparedIcon" class="bx-im-menu_item__icon" :class="'--' + preparedIcon"></div>
 				<div class="bx-im-menu-item__text-content" :class="{'--with-subtitle': !!subtitle}">
 					<div class="bx-im-menu-item__title">
-						<div class="bx-im-menu-item__title_text">{{ title }}</div>
+						<div 
+							class="bx-im-menu-item__title_text"
+							:class="{ '--ai-assistant': isAiAssistantItem }"
+						>
+							{{ title }}
+						</div>
 						<slot name="after-title"></slot>
 						<div v-if="counter" class="bx-im-menu-item__title_counter">{{ formattedCounter }}</div>
 					</div>

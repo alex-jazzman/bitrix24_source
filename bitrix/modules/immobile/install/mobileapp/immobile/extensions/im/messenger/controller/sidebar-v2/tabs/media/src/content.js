@@ -166,14 +166,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 		 */
 		onDeleteSidebarFilesStore(mutation)
 		{
-			const { fileId, chatId: eventChatId } = mutation.payload.data;
+			const { id, chatId: eventChatId } = mutation.payload.data;
 
 			if (String(eventChatId) !== String(this.chatId))
 			{
 				return;
 			}
 
-			this.mediaGridRef?.delete([fileId]);
+			this.mediaGridRef?.delete([id]);
 		}
 
 		onDeleteAllDataSidebarFilesStore(mutation)
@@ -185,7 +185,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 				return;
 			}
 
-			const fileIds = this.getItems().map((item) => item.data.fileId);
+			const fileIds = this.getItems().map((item) => item.data.id);
 			this.mediaGridRef?.delete(fileIds);
 			this.setState({
 				hasNextPage: false,
@@ -288,17 +288,21 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 
 		onItemClick = ({ fileId, type, customData }) => {
 			const mediaList = this.getItems().map((item) => {
+				const author = this.store.getters['usersModel/getById'](item.data.authorId);
+
 				return {
 					...item.file,
 					id: item.data.fileId,
 					messageId: item.data.messageId,
+					date: item.data.dateCreate,
+					authorName: author?.name || item.file?.authorName,
 				};
 			}).reverse();
 
 			DialogMediaGallery.open({
 				messageId: customData.messageId,
 				direction: 'right',
-				mediaId: fileId,
+				mediaId: customData.mediaId,
 				mediaType: type,
 				forceDelete: true,
 				dialogLocator: this.dialogLocator,
@@ -362,9 +366,9 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 			return uniqBy(
 				[...map]
 					.map(([_, value]) => (value))
-					.sort((a, b) => new Date(b.dateCreate).getTime() - new Date(a.dateCreate).getTime())
+					.sort((a, b) => b.id - a.id)
 					.map((data) => new SidebarTabMediaItemModel(this.store, data)),
-				(item) => item.getId(),
+				(item) => `${item.getId()}-${item.getMessageId()}`,
 			);
 		}
 

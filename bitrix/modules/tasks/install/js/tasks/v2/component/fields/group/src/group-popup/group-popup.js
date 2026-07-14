@@ -1,14 +1,16 @@
 import { Event, Loc } from 'main.core';
-import type { PopupOptions } from 'main.popup';
 
-import { Popup } from 'ui.vue3.components.popup';
+import { type PopupOptions } from 'main.popup';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
+import { Popup } from 'ui.vue3.components.popup';
 
 import { GroupType, Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
+import { type GroupModel } from 'tasks.v2.model.groups';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { userService } from 'tasks.v2.provider.service.user-service';
-import type { GroupModel } from 'tasks.v2.model.groups';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+
 import './group-popup.css';
 
 export const GroupPopup = {
@@ -25,7 +27,7 @@ export const GroupPopup = {
 			required: true,
 		},
 	},
-	emits: ['close'],
+	emits: ['openGroup', 'close'],
 	setup(): { task: TaskModel }
 	{
 		return {
@@ -74,8 +76,14 @@ export const GroupPopup = {
 		},
 		groupAboutFormatted(): string
 		{
+			const collabTitle = (
+				Core.getParams().features.isNewProjectsOn
+					? this.loc('TASKS_V2_GROUP_ABOUT')
+					: this.loc('TASKS_V2_GROUP_ABOUT_COLLAB')
+			);
+
 			return {
-				[GroupType.Collab]: this.loc('TASKS_V2_GROUP_ABOUT_COLLAB'),
+				[GroupType.Collab]: collabTitle,
 				[GroupType.Scrum]: this.loc('TASKS_V2_GROUP_ABOUT_SCRUM'),
 			}[this.group?.type] ?? this.loc('TASKS_V2_GROUP_ABOUT');
 		},
@@ -87,11 +95,11 @@ export const GroupPopup = {
 		Event.bind(this.bindElement, 'mouseleave', this.handleMouseLeave);
 	},
 	methods: {
-		async openGroup(): Promise<void>
+		openGroup(): void
 		{
-			const href = await groupService.getUrl(this.group.id, this.group.type);
+			this.closePopup();
 
-			BX.SidePanel.Instance.emulateAnchorClick(href);
+			this.$emit('openGroup');
 		},
 		handleClick(): void
 		{

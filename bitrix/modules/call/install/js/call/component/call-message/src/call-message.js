@@ -25,6 +25,7 @@ const MESSAGE_TYPE = {
 	declined: 'DECLINED',
 	busy: 'BUSY',
 	missed: 'MISSED',
+	cancelled: 'CANCELLED',
 }
 
 // @vue/component
@@ -82,6 +83,7 @@ export const CallMessage = {
 				case MESSAGE_TYPE.declined:
 				case MESSAGE_TYPE.busy:
 				case MESSAGE_TYPE.missed:
+				case MESSAGE_TYPE.cancelled:
 					result.push('bx-call-message__icon--danger');
 					break;
 				default:

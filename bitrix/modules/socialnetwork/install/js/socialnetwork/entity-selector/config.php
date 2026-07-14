@@ -135,6 +135,12 @@ $userOptions = [
 	]
 ];
 
+$groupSuperTitle = Loc::getMessage('SOCNET_ENTITY_SELECTOR_PROJECT_SUPER_TITLE');
+$collabSuperTitle = Loc::getMessage('SOCNET_ENTITY_SELECTOR_COLLAB_SUPER_TITLE');
+$projectSuperTitle = Loc::getMessage('SOCNET_ENTITY_SELECTOR_NEW_PROJECT_SUPER_TITLE');
+
+$isNewProjectsOn = \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn();
+
 $projectOptions = [
 	'dynamicLoad' => true,
 	'dynamicSearch' => true,
@@ -142,8 +148,12 @@ $projectOptions = [
 		'default' => [
 			'avatar' => Config::getProjectAvatarTypes()['default'],
 			'link' => ProjectProvider::getProjectUrl().'card/',
-			'linkTitle' => Loc::getMessage('SOCNET_ENTITY_SELECTOR_PROJECT_LINK_TITLE'),
-			'supertitle' => Loc::getMessage('SOCNET_ENTITY_SELECTOR_PROJECT_SUPER_TITLE')
+			'linkTitle' => (
+				$isNewProjectsOn
+					? Loc::getMessage('SOCNET_ENTITY_SELECTOR_NEW_PROJECT_LINK_TITLE')
+					: Loc::getMessage('SOCNET_ENTITY_SELECTOR_PROJECT_LINK_TITLE')
+			),
+			'supertitle' => $isNewProjectsOn ? $projectSuperTitle : $groupSuperTitle
 		],
 		'extranet' => [
 			'avatar' => Config::getProjectAvatarTypes()['extranet'],
@@ -159,7 +169,7 @@ $projectOptions = [
 		'collab' => [
 			'avatar' => Config::getProjectAvatarTypes()['collab'],
 			'textColor' => '#00a94e',
-			'supertitle' => Loc::getMessage('SOCNET_ENTITY_SELECTOR_COLLAB_SUPER_TITLE'),
+			'supertitle' => $isNewProjectsOn ? $projectSuperTitle : $collabSuperTitle,
 			'link' => '',
 		],
 	],
@@ -182,9 +192,13 @@ return [
 		'main.core',
 		'sidepanel',
 		'ui.entity-selector',
+		'im.public',
 	],
 	'skip_core' => false,
 	'settings' => [
+		'features' => [
+			'isNewProjectsOn' => $isNewProjectsOn,
+		],
 		'entities' => [
 			[
 				'id' => 'user',

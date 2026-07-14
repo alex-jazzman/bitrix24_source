@@ -36,6 +36,6 @@ return [
 		'USER_TO_GROUP_INITIATED_BY_GROUP' => UserToGroupTable::INITIATED_BY_GROUP,
 	],
 	'settings' => [
-		'isCollabConverterEnabled' => \Bitrix\Socialnetwork\Collab\Converter\ConverterFeature::isOn(),
+		'isCollabConverterEnabled' => \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn(),
 	]
 ];

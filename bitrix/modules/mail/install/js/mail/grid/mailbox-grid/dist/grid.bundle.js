@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
-(function (exports, main_core, ui_avatar, ui_cnt, main_date, ui_notification, ui_system_chip, main_popup, ui_icons_b24, ui_icon, ui_buttons, ui_analytics) {
+(function (exports, main_core, ui_avatar, ui_cnt, main_date, ui_notification, ui_system_chip, main_popup, ui_icons_b24, ui_icon, ui_analytics, ui_buttons) {
 	'use strict';
 
 	class BaseField {
@@ -110,11 +110,16 @@ this.BX.Mail = this.BX.Mail || {};
 		render(params) {
 			const counterNode = this.renderCounter(params.count, params.isOverLimit, params.counterHintText);
 			const iconNode = this.#renderProviderIcon(params.serviceName);
+			const emailContent = main_core.Tag.render`
+			<div class="mailbox-grid_email-content">
+				<span class="mailbox-grid_email-text">${main_core.Text.encode(params.email)}</span>
+				${counterNode}
+			</div>
+		`;
 			const emailContainer = main_core.Tag.render`
 			<div class="mailbox-grid_email-container">
 				${iconNode}
-				<span class="mailbox-grid_email-text">${main_core.Text.encode(params.email)}</span>
-				${counterNode}
+				${emailContent}
 			</div>
 		`;
 			this.appendToFieldNode(emailContainer);
@@ -907,6 +912,9 @@ this.BX.Mail = this.BX.Mail || {};
 						id: 'mailbox-grid_action-button-error-action'
 					}
 				});
+				button.setRightCounter({
+					value: 1
+				});
 				buttonNode = button.render();
 				main_core.Dom.append(buttonNode, actionContainer);
 			} else {
@@ -1024,5 +1032,5 @@ this.BX.Mail = this.BX.Mail || {};
 	exports.MonthlySentCountField = MonthlySentCountField;
 	exports.SenderNameField = SenderNameField;
 
-})(this.BX.Mail.MailboxList = this.BX.Mail.MailboxList || {}, BX, BX.UI, BX.UI, BX.Main, BX, BX.UI.System.Chip, BX.Main, BX, BX, BX.UI, BX.UI.Analytics);
+})(this.BX.Mail.MailboxList = this.BX.Mail.MailboxList || {}, BX, BX.UI, BX.UI, BX.Main, BX, BX.UI.System.Chip, BX.Main, BX, BX, BX.UI.Analytics, BX.UI);
 //# sourceMappingURL=grid.bundle.js.map

@@ -16,7 +16,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 	const { voteModel } = require('im/messenger/model/messages/vote/model');
 	const { pinModel } = require('im/messenger/model/messages/pin/model');
 	const { playbackModel } = require('im/messenger/model/messages/playback/model');
-	const { builderModel } = require('im/messenger/model/messages/builder/model');
+	const { blockModel } = require('im/messenger/model/messages/block/model');
 	const { validate } = require('im/messenger/model/messages/validator');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -39,7 +39,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			pinModel,
 			voteModel,
 			playbackModel,
-			builderModel,
+			blockModel,
 		},
 		getters: {
 			/**
@@ -57,7 +57,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						...state.collection[messageId],
 						reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
 						vote: rootGetters['messagesModel/voteModel/getByMessageId'](messageId),
-						builder: rootGetters['messagesModel/builderModel/getByMessageId'](messageId),
+						block: rootGetters['messagesModel/blockModel/getByMessageId'](messageId),
 					};
 				}).sort((a, b) => sortCollection(a, b));
 			},
@@ -81,7 +81,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					...message,
 					reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
 					vote: rootGetters['messagesModel/voteModel/getByMessageId'](messageId),
-					builder: rootGetters['messagesModel/builderModel/getByMessageId'](messageId),
+					block: rootGetters['messagesModel/blockModel/getByMessageId'](messageId),
 				};
 			},
 
@@ -104,7 +104,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						const fullMessageData = {
 							...message,
 							reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](id),
-							builder: rootGetters['messagesModel/builderModel/getByMessageId'](id),
+							block: rootGetters['messagesModel/blockModel/getByMessageId'](id),
 						};
 
 						messageCollection.push(fullMessageData);
@@ -130,7 +130,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return {
 						...message,
 						reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
-						builder: rootGetters['messagesModel/builderModel/getByMessageId'](messageId),
+						block: rootGetters['messagesModel/blockModel/getByMessageId'](messageId),
 					};
 				}
 
@@ -465,7 +465,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages,
 					actionName,
 				});
@@ -522,7 +522,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					messages = [messages];
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages,
 					actionName: 'setFromLocalDatabase',
 				});
@@ -563,7 +563,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages: payload,
 					actionName: 'setFromPush',
 				});
@@ -612,7 +612,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages,
 					actionName: 'store',
 				});
@@ -641,7 +641,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages,
 					actionName: 'storeToLocalDatabase',
 				});
@@ -667,7 +667,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				waiter.addMutation('setChatCollection');
 				const handlersComplete = waiter.waitComplete();
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages: [payload],
 					actionName,
 				});
@@ -727,7 +727,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				waiter.addMutation('setChatCollection');
 				const handlersComplete = waiter.waitComplete();
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages: payload.messageList,
 					actionName,
 				});
@@ -802,16 +802,24 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				if (payload.fields?.builder?.blocks)
+				// fallback on builder: legacy format or SQLite data
+				const blockData = payload.fields?.block ?? payload.fields?.builder;
+				if (blockData?.elements || blockData?.blocks)
 				{
-					await store.dispatch('builderModel/set', {
+					await store.dispatch('blockModel/set', {
 						messageId: id,
-						builder: payload.fields.builder,
+						block: blockData,
 						actionName: 'updateWithId',
 					});
 				}
 
 				const fields = validate(payload.fields);
+
+				const isIdChanged = fields.id && fields.id !== id;
+				if (isIdChanged && store.getters['blockModel/getByMessageId'](id))
+				{
+					await store.dispatch('blockModel/updateWithId', { oldId: id, newId: fields.id });
+				}
 
 				if (
 					fields.params?.componentId === MessageComponent.vote
@@ -843,8 +851,8 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function messagesModel/updateBuilderText */
-			updateBuilderText: (store, { id, text }) => {
+			/** @function messagesModel/updateBlockText */
+			updateBlockText: (store, { id, text }) => {
 				const storedMessage = store.state.collection[id];
 				if (!storedMessage || storedMessage.text === text)
 				{
@@ -859,7 +867,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				store.dispatch('pinModel/updateMessage', updateMessageData);
 
 				store.commit('update', {
-					actionName: 'updateBuilderState',
+					actionName: 'updateBlockState',
 					data: updateMessageData,
 				});
 			},
@@ -871,11 +879,13 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				if (fields?.builder?.blocks)
+				// fallback on builder: legacy format or SQLite data
+				const blockUpdateData = fields?.block ?? fields?.builder;
+				if (blockUpdateData?.elements || blockUpdateData?.blocks)
 				{
-					await store.dispatch('builderModel/set', {
+					await store.dispatch('blockModel/set', {
 						messageId: id,
-						builder: fields.builder,
+						block: blockUpdateData,
 						actionName: 'update',
 					});
 				}
@@ -998,7 +1008,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return false;
 				}
 
-				await store.dispatch('builderModel/setList', {
+				await store.dispatch('blockModel/setList', {
 					messages: filteredMessageList,
 					actionName,
 				});
@@ -1092,7 +1102,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			deleteByChatId: (store, payload) => {
 				const chatId = parseInt(payload.chatId, 10);
 				store.dispatch('pinModel/deleteMessagesByChatId', { chatId });
-				store.dispatch('builderModel/deleteByChatId', { chatId });
+				store.dispatch('blockModel/deleteByChatId', { chatId });
 
 				store.commit('deleteByChatId', {
 					actionName: 'deleteByChatId',
@@ -1139,7 +1149,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					},
 				});
 
-				await store.dispatch('builderModel/deleteByIdList', { idList });
+				await store.dispatch('blockModel/deleteByIdList', { idList });
 
 				if (!isEmpty(filesGroupedByChatId))
 				{
@@ -1154,7 +1164,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				const { id } = payload;
 
 				store.dispatch('pinModel/deleteMessage', { id });
-				store.dispatch('builderModel/delete', { messageId: id });
+				store.dispatch('blockModel/delete', { messageId: id });
 
 				if (store.getters.isUploadingMessage(id))
 				{
@@ -1490,7 +1500,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('builderModel/deleteByChatId', { chatId });
+				await store.dispatch('blockModel/deleteByChatId', { chatId });
 
 				store.commit('clearCollection', {
 					actionName: 'clearChatCollection',

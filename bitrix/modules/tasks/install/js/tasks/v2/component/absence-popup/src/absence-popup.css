@@ -1,0 +1,50 @@
+.tasks-task-absence-popup {
+	padding: 12px;
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+}
+
+.tasks-task-absence-popup-content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 2px 20px 6px 10px;
+}
+
+.tasks-task-absence-popup-body {
+	color: rgba(255, 255, 255, 0.80);
+}
+
+.tasks-task-absence-popup-footer {
+	display: flex;
+	justify-content: start;
+	width: 100%;
+}
+
+.tasks-task-absence-popup-footer-btn {
+	padding: 0;
+	margin: 0;
+	background: none;
+	border: none;
+	color: var(--ui-color-accent-main-link);
+	text-decoration-line: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-accent-main-link-underline);
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+}
+
+.tasks-task-absence-popup-body-text {
+	color: inherit;
+}
+
+.tasks-task-absence-popup-footer-btn span {
+	max-width: max-content;
+	border-bottom: 1px dashed;
+}
+
+.tasks-task-absence-popup-footer-btn span:not(:hover) {
+	opacity: 0.8;
+}

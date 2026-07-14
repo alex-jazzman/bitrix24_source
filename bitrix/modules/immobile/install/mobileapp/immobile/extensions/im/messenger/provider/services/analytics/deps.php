@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/utils',
+		'im:messenger/lib/feature',
 		'im:messenger/provider/data',
 		'im:messenger/provider/services/analytics/helper',
 	],

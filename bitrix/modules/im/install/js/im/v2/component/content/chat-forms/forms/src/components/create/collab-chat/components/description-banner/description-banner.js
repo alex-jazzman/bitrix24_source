@@ -21,7 +21,7 @@ export const DescriptionBanner = {
 		OutlineIcons: () => OutlineIcons,
 		preparedText(): string
 		{
-			return this.loc('IM_CREATE_COLLAB_CHAT_BANNER_TEXT', {
+			return this.loc('IM_CREATE_COLLAB_CHAT_BANNER_TEXT_MSGVER_1', {
 				'#BR#': '\n',
 			});
 		},

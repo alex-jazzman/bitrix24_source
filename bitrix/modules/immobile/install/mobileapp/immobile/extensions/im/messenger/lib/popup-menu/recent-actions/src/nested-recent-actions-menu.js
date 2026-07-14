@@ -7,7 +7,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 	const { PopupMenu } = require('ui-system/popups/popup-menu');
 
 	const { Loc } = require('im/messenger/loc');
-	const { RecentMenuSection } = require('im/messenger/const');
+	const { RecentFilterId, RecentMenuSection } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -76,6 +76,8 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 		{
 			try
 			{
+				serviceLocator.get('navigation-manager')?.getActiveNestedTabCounters()?.update();
+
 				const items = await this.#buildItems();
 				if (items.length === 0)
 				{
@@ -158,6 +160,14 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 		}
 
 		/**
+		 * @returns {RecentController|null}
+		 */
+		#getNestedRecent()
+		{
+			return serviceLocator.get('recent-manager')?.getActiveNestedRecent() ?? null;
+		}
+
+		/**
 		 * @returns {PopupMenuItem}
 		 */
 		#createFilterAllItem()
@@ -166,6 +176,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 				id: NestedActionId.filterAll,
 				title: Loc.getMessage('IMMOBILE_MESSENGER_RECENT_ACTIONS_MENU_FILTER_ALL'),
 				sectionCode: RecentMenuSection.filter,
+				checked: this.#getNestedRecent()?.getCurrentFilterId() === RecentFilterId.all,
 			};
 		}
 
@@ -174,11 +185,28 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 		 */
 		#createFilterUnreadItem()
 		{
-			return {
+			const recent = this.#getNestedRecent();
+			const isChecked = recent?.getCurrentFilterId() === RecentFilterId.unread;
+
+			const item = {
 				id: NestedActionId.filterUnread,
 				title: Loc.getMessage('IMMOBILE_MESSENGER_RECENT_ACTIONS_MENU_FILTER_UNREAD'),
 				sectionCode: RecentMenuSection.filter,
+				checked: isChecked,
 			};
+
+			if (!isChecked && recent)
+			{
+				const counterLabel = serviceLocator.get('navigation-manager')
+					?.getActiveNestedTabCounters()
+					?.getCounterLabel(recent.id) ?? '';
+				if (counterLabel)
+				{
+					item.counterValue = counterLabel;
+				}
+			}
+
+			return item;
 		}
 
 		/**
@@ -267,7 +295,21 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			{
 				case NestedActionId.filterAll:
 				case NestedActionId.filterUnread:
-				case NestedActionId.calendar:
+				{
+					const recent = this.#getNestedRecent();
+					if (!recent)
+					{
+						logger.warn('handleItemSelected: nested recent not found, filter not applied', item.id);
+						break;
+					}
+
+					const filterId = item.id === NestedActionId.filterAll
+						? RecentFilterId.all
+						: RecentFilterId.unread;
+					void recent.applyFilter(filterId);
+					break;
+				}
+
 				case NestedActionId.readAll:
 					Notification.showComingSoon();
 					break;
@@ -278,6 +320,10 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 
 				case NestedActionId.files:
 					void this.#openProjectFiles();
+					break;
+
+				case NestedActionId.calendar:
+					void this.#openProjectCalendar();
 					break;
 
 				default:
@@ -349,6 +395,28 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
 				void ProjectOpener.openDisk({ projectId: projectId });
+			}
+			catch (error)
+			{
+				logger.error('openProjectFiles: failed', error);
+				Notification.showErrorToast();
+			}
+		}
+
+		async #openProjectCalendar()
+		{
+			const projectId = this.#getProjectId();
+			if (Type.isNull(projectId))
+			{
+				Notification.showErrorToast();
+
+				return;
+			}
+
+			try
+			{
+				const { ProjectOpener } = await requireLazy('project/opener');
+				void ProjectOpener.openCalendar({ projectId: projectId });
 			}
 			catch (error)
 			{

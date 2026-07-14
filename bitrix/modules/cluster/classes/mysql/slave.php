@@ -30,27 +30,27 @@ class CClusterSlave
 				ob_end_clean();
 			}
 
-			$rs = $masterDB->Query('show master status', false, '', ['fixed_connection' => true]);
-			if ($arMasterStatus = $rs->Fetch())
+			$arMasterStatus = CClusterDBNode::getMasterStatus($masterDB);
+			if ($arMasterStatus)
 			{
 				ob_start();
 				$nodeDB = CDatabase::GetDBNodeConnection($arNode['ID'], true);
 				ob_end_clean();
 				if (is_object($nodeDB))
 				{
-					$rs = $nodeDB->Query("
-						CHANGE MASTER TO
-							MASTER_HOST = '" . $DB->ForSql($arNode['MASTER_HOST']) . "'
-							,MASTER_USER = '" . $DB->ForSql($masterDB->DBLogin) . "'
-							,MASTER_PASSWORD = '" . $DB->ForSql($masterDB->DBPassword) . "'
-							,MASTER_PORT = " . $DB->ForSql($arNode['MASTER_PORT']) . "
-							,MASTER_LOG_FILE = '" . $arMasterStatus['File'] . "'
-							,MASTER_LOG_POS = " . $arMasterStatus['Position'] . '
-					', false, '', ['fixed_connection' => true]);
+					$rs = CClusterDBNode::startMaster(
+						$nodeDB
+						,$arNode['MASTER_HOST']
+						,$masterDB->DBLogin
+						,$masterDB->DBPassword
+						,$arNode['MASTER_PORT']
+						,$arMasterStatus['File']
+						,$arMasterStatus['Position']
+					);
 
 					if ($rs)
 					{
-						$rs = $nodeDB->Query('START SLAVE');
+						$rs = CClusterDBNode::startSlave($nodeDB);
 					}
 
 					if ($rs)
@@ -66,49 +66,49 @@ class CClusterSlave
 		}
 		elseif ($arNode['ROLE_ID'] == 'MASTER' && preg_match('/^(.+):(\\d+)$/', $arNode['DB_HOST'], $match))
 		{
-			$rs = $DB->Query('show master status', false, '', ['fixed_connection' => true]);
-			if ($arMasterStatus = $rs->Fetch())
+			$arMasterStatus = CClusterDBNode::getMasterStatus($DB);
+			if ($arMasterStatus)
 			{
 				ob_start();
 				$nodeDB = CDatabase::GetDBNodeConnection($arNode['ID'], true);
 				ob_end_clean();
 				if (is_object($nodeDB))
 				{
-					$nodeDB->Query('STOP SLAVE', false, '', ['fixed_connection' => true]);
+					CClusterDBNode::stopSlave($nodeDB);
 
-					$nodeDB->Query("
-						CHANGE MASTER TO
-							MASTER_HOST = '" . $DB->ForSql($arNode['MASTER_HOST']) . "'
-							,MASTER_USER = '" . $DB->ForSql($DB->DBLogin) . "'
-							,MASTER_PASSWORD = '" . $DB->ForSql($DB->DBPassword) . "'
-							,MASTER_PORT = " . $DB->ForSql($arNode['MASTER_PORT']) . "
-							,MASTER_LOG_FILE = '" . $arMasterStatus['File'] . "'
-							,MASTER_LOG_POS = " . $arMasterStatus['Position'] . '
-					', false, '', ['fixed_connection' => true]);
+					CClusterDBNode::startMaster(
+						$nodeDB
+						,$arNode['MASTER_HOST']
+						,$DB->DBLogin
+						,$DB->DBPassword
+						,$arNode['MASTER_PORT']
+						,$arMasterStatus['File']
+						,$arMasterStatus['Position']
+					);
 
-					$nodeDB->Query('START SLAVE', false, '', ['fixed_connection' => true]);
+					CClusterDBNode::startSlave($nodeDB);
 
-					$rs = $nodeDB->Query('show master status', false, '', ['fixed_connection' => true]);
-					if ($arMasterStatus = $rs->Fetch())
+					$arMasterStatus = CClusterDBNode::getMasterStatus($nodeDB);
+					if ($arMasterStatus)
 					{
-						$rs = $DB->Query('STOP SLAVE', true, '', ['fixed_connection' => true]);
+						$rs = CClusterDBNode::stopSlave($DB);
 
 						if ($rs)
 						{
-							$rs = $DB->Query("
-								CHANGE MASTER TO
-									MASTER_HOST = '" . $DB->ForSql($match[1]) . "'
-									,MASTER_USER = '" . $DB->ForSql($arNode['DB_LOGIN']) . "'
-									,MASTER_PASSWORD = '" . $DB->ForSql($arNode['DB_PASSWORD']) . "'
-									,MASTER_PORT = " . $DB->ForSql($match[2]) . "
-									,MASTER_LOG_FILE = '" . $arMasterStatus['File'] . "'
-									,MASTER_LOG_POS = " . $arMasterStatus['Position'] . '
-							', false, '', ['fixed_connection' => true]);
+							$rs = CClusterDBNode::startMaster(
+								$DB
+								,$match[1]
+								,$arNode['DB_LOGIN']
+								,$arNode['DB_PASSWORD']
+								,$match[2]
+								,$arMasterStatus['File']
+								,$arMasterStatus['Position']
+							);
 						}
 
 						if ($rs)
 						{
-							$rs = $DB->Query('START SLAVE');
+							$rs = CClusterDBNode::startSlave($DB);
 						}
 
 						if ($rs)
@@ -152,7 +152,7 @@ class CClusterSlave
 			return;
 		}
 
-		$rs = $nodeDB->Query('STOP SLAVE SQL_THREAD', false, '', ['fixed_connection' => true]);
+		$rs = CClusterDBNode::stopSlave($nodeDB);
 		if ($rs)
 		{
 			$ob = new CClusterDBNode;
@@ -186,7 +186,7 @@ class CClusterSlave
 			return;
 		}
 
-		$rs = $nodeDB->Query('START SLAVE', false, '', ['fixed_connection' => true]);
+		$rs = CClusterDBNode::startSlave($nodeDB);
 		if ($rs)
 		{
 			$ob = new CClusterDBNode;
@@ -220,7 +220,7 @@ class CClusterSlave
 			return false;
 		}
 
-		$rs = $nodeDB->Query('STOP SLAVE', false, '', ['fixed_connection' => true]);
+		$rs = CClusterDBNode::stopSlave($nodeDB);
 		if ($rs)
 		{
 			$ob = new CClusterDBNode;
@@ -262,7 +262,7 @@ class CClusterSlave
 			if (is_object($nodeDB))
 			{
 				//TODO check if started just make active
-				$rs = $nodeDB->Query('STOP SLAVE', false, '', ['fixed_connection' => true]);
+				$rs = CClusterDBNode::stopSlave($nodeDB);
 
 				if ($rs)
 				{
@@ -275,7 +275,7 @@ class CClusterSlave
 
 				if ($rs)
 				{
-					$nodeDB->Query('START SLAVE', false, '', ['fixed_connection' => true]);
+					CClusterDBNode::startSlave($nodeDB);
 				}
 			}
 		}
@@ -356,72 +356,62 @@ class CClusterSlave
 
 			if ($bSlaveStatus)
 			{
-				$rs = $nodeDB->Query('SHOW MASTER STATUS', true, '', ['fixed_connection' => true]);
-				if (!$rs)
+				$ar = CClusterDBNode::getMasterStatus($nodeDB);
+				if ($ar === false)
 				{
-					return GetMessage('CLU_NO_PRIVILEGES', ['#sql#' => "GRANT REPLICATION CLIENT on *.* to '" . $nodeDB->DBLogin . "'@'%';"]);
+					return GetMessage('CLU_NO_PRIVILEGES', ['#sql#' => "1GRANT REPLICATION CLIENT on *.* to '" . $nodeDB->DBLogin . "'@'%';"]);
 				}
 
-				$ar = $rs->Fetch();
-				if (is_array($ar))
+				foreach ($ar as $key => $value)
 				{
-					foreach ($ar as $key => $value)
+					if (array_key_exists($key, $arStatus))
 					{
-						if ($key == 'Last_Error')
-						{
-							$key = 'Last_SQL_Error';
-						}
-
-						if (array_key_exists($key, $arStatus))
-						{
-							$arStatus[$key] = $value;
-						}
+						$arStatus[$key] = $value;
 					}
 				}
 			}
 		}
 
-		if ($arNode['MASTER_ID'] <> '')
+		if ($arNode['MASTER_ID'])
 		{
-			$arStatus = array_merge($arStatus, [
-				'Slave_IO_State' => null,
-				'Slave_IO_Running' => null,
-				'Read_Master_Log_Pos' => null,
-				'Slave_SQL_Running' => null,
-				'Exec_Master_Log_Pos' => null,
-				'Seconds_Behind_Master' => null,
-				'Last_IO_Error' => null,
-				'Last_SQL_Error' => null,
-				'Com_select' => null,
-			]);
-
 			if ($bSlaveStatus)
 			{
-				$rs = $nodeDB->Query('SHOW SLAVE STATUS', true, '', ['fixed_connection' => true]);
-				if (!$rs)
+				$ar = CClusterDBNode::getSlaveStatus($nodeDB);
+				if ($ar === false)
 				{
-					return GetMessage('CLU_NO_PRIVILEGES', ['#sql#' => "GRANT REPLICATION CLIENT on *.* to '" . $nodeDB->DBLogin . "'@'%';"]);
+					return GetMessage('CLU_NO_PRIVILEGES', ['#sql#' => "2GRANT REPLICATION CLIENT on *.* to '" . $nodeDB->DBLogin . "'@'%';"]);
 				}
 
-				$ar = $rs->Fetch();
-				if (is_array($ar))
-				{
-					foreach ($ar as $key => $value)
-					{
-						if ($key == 'Last_Error')
-						{
-							$key = 'Last_SQL_Error';
-						}
+				$arFields = [
+					'Slave_IO_State' => 'Replica_IO_State',
+					'Slave_IO_Running' => 'Replica_IO_Running',
+					'Read_Master_Log_Pos' => 'Read_Source_Log_Pos',
+					'Slave_SQL_Running' => 'Replica_SQL_Running',
+					'Exec_Master_Log_Pos' => 'Exec_Source_Log_Pos',
+					'Seconds_Behind_Master' => 'Seconds_Behind_Source',
+					'Last_IO_Error' => 'Last_IO_Error',
+					'Last_SQL_Error' => 'Last_SQL_Error',
+				];
 
-						if (array_key_exists($key, $arStatus))
-						{
-							$arStatus[$key] = $value;
-						}
+				foreach ($arFields as $key1 => $key2)
+				{
+					if (array_key_exists($key2, $ar))
+					{
+						$arStatus[$key2] = $ar[$key2];
+					}
+					elseif (array_key_exists($key1, $ar))
+					{
+						$arStatus[$key1] = $ar[$key1];
+					}
+					else
+					{
+						$arStatus[$key1] = null;
 					}
 				}
 			}
 		}
 
+		$arStatus['Com_select'] = null;
 		if ($bGlobalStatus)
 		{
 			$rs = $nodeDB->Query("show global status where Variable_name in ('Com_select', 'Com_do')", true, '', ['fixed_connection' => true]);

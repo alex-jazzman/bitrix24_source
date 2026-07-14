@@ -10,7 +10,8 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 	 */
 	class Button extends LayoutComponent
 	{
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
 			this.state = {
 				selected: false,
@@ -20,6 +21,16 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 		get icon()
 		{
 			return BX.prop.getString(this.props, 'icon', null);
+		}
+
+		get iconSelected()
+		{
+			return BX.prop.getString(this.props, 'iconSelected', null);
+		}
+
+		get activeWhenSelected()
+		{
+			return BX.prop.getBoolean(this.props, 'activeWhenSelected', false);
 		}
 
 		get buttonText()
@@ -49,6 +60,12 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 
 		render()
 		{
+			const { selected } = this.state;
+			const currentIcon = this.iconSelected && selected ? this.iconSelected : this.icon;
+			const isActive = this.iconSelected && (this.activeWhenSelected ? selected : !selected);
+			const bgOpacity = this.enabled ? (isActive ? 1 : 0.3) : 0.07;
+			const bgColor = !this.iconSelected && this.isSwitchable && selected ? PRESSED_COLOR : DEFAULT_COLOR;
+
 			return View(
 				{
 					style: {
@@ -74,55 +91,58 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 					View(
 						{
 							style: {
-								width: 47,
-								height: 47,
+								width: 48,
+								height: 48,
 								borderRadius: 23.5,
 								backgroundColor: {
-									default: this.getBackgroundColor(),
+									default: bgColor,
 									pressed: this.enabled ? PRESSED_COLOR : DEFAULT_COLOR,
 								},
-								opacity: this.enabled ? 0.3 : 0.07,
+								opacity: bgOpacity,
 							},
 							testId: this.testId,
 							onTouchesBegan: () => {
-								if (this.isSwitchable)
+								if (this.isSwitchable && this.eventName && this.props.onUiEvent && this.enabled)
 								{
-									if (this.eventName && this.props.onUiEvent && this.enabled)
-									{
-										this.setState({
-											selected: !this.state.selected
-										}, () => {
+									this.setState(
+										{
+											selected: !selected,
+										},
+										() => {
+											const { selected: newSelected } = this.state;
+
 											this.props.onUiEvent({
 												eventName: this.eventName,
 												params: {
-													selected: this.state.selected,
+													selected: newSelected,
 												},
 											});
 
 											if (this.props.onClick)
 											{
-												this.props.onClick({selected: this.state.selected});
+												this.props.onClick({
+													selected: newSelected,
+												});
 											}
-										});
-									}
+										},
+									);
 								}
 							},
 							onClick: () => {
-								if (!this.isSwitchable)
+								if (!this.isSwitchable && this.eventName && this.props.onUiEvent && this.enabled)
 								{
-									if (this.eventName && this.props.onUiEvent && this.enabled)
-									{
-										this.props.onUiEvent({
-											eventName: this.eventName,
-											params: {
-												selected: this.state.selected,
-											},
-										});
+									this.props.onUiEvent({
+										eventName: this.eventName,
+										params: {
+											selected,
+										},
+									});
 
-										if (this.props.onClick)
-										{
-											this.props.onClick({selected: this.state.selected});
-										}
+									if (this.props.onClick)
+									{
+										this.props.onClick({
+											selected,
+										});
 									}
 								}
 							},
@@ -141,12 +161,12 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 						},
 						Image({
 							style: {
-								width: 35,
-								height: 35,
+								width: 34,
+								height: 34,
 								opacity: this.enabled ? 1 : 0.4,
 							},
 							svg: {
-								content: this.icon,
+								content: currentIcon,
 							},
 						}),
 					),
@@ -161,16 +181,6 @@ jn.define('call/calls-card/card-content/elements/button', (require, exports, mod
 					text: this.buttonText,
 				}),
 			);
-		}
-
-		getBackgroundColor()
-		{
-			if (this.isSwitchable && this.state.selected)
-			{
-				return PRESSED_COLOR;
-			}
-
-			return DEFAULT_COLOR;
 		}
 	}
 

@@ -20,9 +20,7 @@ jn.define('im/messenger/controller/recent/config/src/global/task', (require, exp
 				props: {
 					savePageAction: 'recentModel/setTask',
 					filter: {
-						dialogTypes: [
-							DialogType.tasksTask,
-						],
+						ignoreParentChatId: true,
 						limit: 50,
 					},
 				},
@@ -55,6 +53,7 @@ jn.define('im/messenger/controller/recent/config/src/global/task', (require, exp
 				props: {
 					recentTab: RecentTab.tasksTask,
 					sections: [ChatSearchSelectorSection.recent, ChatSearchSelectorSection.common],
+					parentId: null,
 				},
 			},
 			[RecentServiceName.filter]: {

@@ -421,6 +421,7 @@ jn.define('tasks/project', (require, exports, module) => {
 		static get types()
 		{
 			return {
+				collab: 'collab',
 				public: 'public',
 				private: 'private',
 				secret: 'secret',
@@ -444,6 +445,7 @@ jn.define('tasks/project', (require, exports, module) => {
 			this.id = `tmp-id-${Date.now()}`;
 			this.name = '';
 			this.image = '';
+			this.type = null;
 
 			this.userGroupId = 0;
 			this.numberOfMembers = 0;
@@ -469,6 +471,7 @@ jn.define('tasks/project', (require, exports, module) => {
 			this.id = Number(row.id);
 			this.name = row.name;
 			this.image = row.image;
+			this.type = row.type ?? this.type;
 
 			this.numberOfMembers = Number(row.numberOfMembers);
 			this.numberOfModerators = Number(row.numberOfModerators);
@@ -506,6 +509,11 @@ jn.define('tasks/project', (require, exports, module) => {
 			if (has.call(row, 'image'))
 			{
 				this.image = row.image;
+			}
+
+			if (has.call(row, 'type'))
+			{
+				this.type = row.type ?? this.type;
 			}
 
 			if (has.call(row, 'numberOfMembers'))
@@ -580,6 +588,11 @@ jn.define('tasks/project', (require, exports, module) => {
 
 		getType()
 		{
+			if (this.isCollab())
+			{
+				return Project.types.collab;
+			}
+
 			if (this.isExtranet)
 			{
 				return Project.types.extranet;
@@ -596,6 +609,11 @@ jn.define('tasks/project', (require, exports, module) => {
 			}
 
 			return Project.types.secret;
+		}
+
+		isCollab()
+		{
+			return this.type === Project.types.collab;
 		}
 
 		getCounter()

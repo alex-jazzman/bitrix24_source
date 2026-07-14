@@ -20,9 +20,12 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/copilo
 
 		createAvatar()
 		{
+			const dialogModel = this.store.getters['dialoguesModel/getById'](this.getDialogId());
+
 			return {
 				testId: 'copilot-item',
-				dialogId: this.getDialogId(),
+				dialogId: this.getUserId(),
+				options: { chatId: dialogModel?.chatId },
 			};
 		}
 

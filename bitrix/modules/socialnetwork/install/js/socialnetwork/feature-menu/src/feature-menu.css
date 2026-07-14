@@ -1,0 +1,8 @@
+.socnet-feature-menu-skeleton-popup {
+	overflow-y: auto;
+	overflow-x: hidden;
+	/* @chef-ignore */
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	max-height: 97vh;
+}

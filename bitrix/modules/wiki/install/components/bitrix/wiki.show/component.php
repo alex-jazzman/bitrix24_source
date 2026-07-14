@@ -1,5 +1,7 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
+
 global $CACHE_MANAGER;
 
 $arParams['IN_COMPLEX'] = 'N';
@@ -160,6 +162,52 @@ if (!CWikiUtils::IsReadable())
 {
 	ShowError(GetMessage('WIKI_ACCESS_DENIED'));
 	return;
+}
+
+// If this wiki base was imported into the note module, its old entry points
+// retire in favour of the new knowledge base. The decision is per-user (it
+// depends on access to the target note collection), so it runs before the
+// result cache below.
+if (CModule::IncludeModule('note'))
+{
+	$noteLink = new \Bitrix\Note\Public\Provider\WikiImportLinkProvider();
+	$wikiIblockId = (int)$arParams['IBLOCK_ID'];
+	$wikiGroupId = !empty($arParams['SOCNET_GROUP_ID']) ? (int)$arParams['SOCNET_GROUP_ID'] : null;
+	$noteCollectionId = $noteLink->resolveCollectionId($wikiIblockId, $wikiGroupId);
+
+	if ($noteCollectionId !== null)
+	{
+		if ($noteLink->currentUserCanView($noteCollectionId))
+		{
+			$pageName = CWikiUtils::htmlspecialcharsback((string)$arParams['ELEMENT_NAME']);
+			$noteDocumentId = $pageName !== ''
+				? $noteLink->resolveDocumentId($wikiIblockId, $wikiGroupId, $pageName)
+				: null;
+
+			LocalRedirect(
+				$noteDocumentId !== null
+					? $noteLink->getDocumentUrl($noteDocumentId)
+					: $noteLink->getCollectionUrl($noteCollectionId)
+			);
+		}
+		else
+		{
+			// Rare access-transfer gap: the base is migrated but this user has no
+			// access to the target collection. Linking them to a collection they
+			// cannot open would only lead to a 403, so show a standard access-denied
+			// screen (the component appends the "contact your administrator" note),
+			// and do not render the stale wiki page.
+			$APPLICATION->IncludeComponent(
+				'bitrix:ui.info.error',
+				'',
+				[
+					'TITLE' => Loc::getMessage('WIKI_NOTE_ACCESS_DENIED_TITLE'),
+				]
+			);
+
+			return;
+		}
+	}
 }
 
 $_arParams = $arParams;

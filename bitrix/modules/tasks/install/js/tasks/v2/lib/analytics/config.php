@@ -22,9 +22,9 @@ return [
 	'js' => 'dist/analytics.bundle.js',
 	'rel' => [
 		'main.core',
+		'tasks.v2.const',
 		'ui.analytics',
 		'ui.uploader.core',
-		'tasks.v2.const',
 	],
 	'skip_core' => false,
 	'settings' => $configService->getAnalyticsSettings($userId),

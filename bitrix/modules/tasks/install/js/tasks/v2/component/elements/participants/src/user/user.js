@@ -11,6 +11,7 @@ import type { UserModel } from 'tasks.v2.model.users';
 
 // @vue/component
 export const User = {
+	name: 'TaskUser',
 	components: {
 		HoverPill,
 		UserLabel,
@@ -111,5 +112,6 @@ export const User = {
 			<UserLabel :user/>
 		</HoverPill>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<slot :getUserEl="() => $refs.user?.$el" :user="user"/>
 	`,
 };

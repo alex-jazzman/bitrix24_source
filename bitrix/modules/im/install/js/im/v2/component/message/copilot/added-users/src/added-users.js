@@ -1,12 +1,13 @@
+import { type JsonObject } from 'main.core';
+
 import { Messenger } from 'im.public';
-import { BaseMessage } from 'im.v2.component.message.base';
 import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
+import { BaseMessage } from 'im.v2.component.message.base';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelMessage } from 'im.v2.model';
 
 import './css/copilot-added-users-message.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const ChatCopilotAddedUsersMessage = {
@@ -33,6 +34,14 @@ export const ChatCopilotAddedUsersMessage = {
 		message(): ImModelMessage
 		{
 			return this.item;
+		},
+		isCopilot2026Style(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
+		containerClasses(): string[]
+		{
+			return { '--legacy': !this.isCopilot2026Style };
 		},
 		addedUsers(): {first: number, restUsers: number[]}
 		{
@@ -95,7 +104,7 @@ export const ChatCopilotAddedUsersMessage = {
 			:withReactions="false"
 			:withBackground="false"
 		>
-			<div class="bx-im-message-copilot-added-users__container">
+			<div class="bx-im-message-copilot-added-users__container" :class="containerClasses">
 				<div class="bx-im-message-copilot-added-users__image"></div>
 				<div class="bx-im-message-copilot-added-users__content">
 					<div class="bx-im-message-copilot-added-users__title">

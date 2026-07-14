@@ -21,9 +21,11 @@ global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 use Bitrix\Blog\Item\Permissions;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
 use Bitrix\Socialnetwork\Collab\Url\UrlManager;
 use Bitrix\Socialnetwork\Item\Helper;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\ComponentHelper;
@@ -1406,6 +1408,8 @@ if(
 							{
 								if ($arSocNetGroup = CSocNetGroup::GetByID($vv["ENTITY_ID"]))
 								{
+									$workgroup = Workgroup::getById((int)$vv["ENTITY_ID"]);
+
 									$SGClosedList[] = $arSocNetGroup["CLOSED"];
 
 									$name = $arSocNetGroup["NAME"];
@@ -1443,6 +1447,17 @@ if(
 									elseif ($isCollabEntity)
 									{
 										$link = UrlManager::getCollabUrlById((int)$vv["ENTITY_ID"]);
+									}
+
+									if (
+										!$isCollabEntity
+										&& $workgroup
+										&& $workgroup->isScrumProject()
+									)
+									{
+										$link = (new Uri($link))
+											->addParams(['scrum' => 'y'])
+											->getUri();
 									}
 
 									if (defined("BX_COMP_MANAGED_CACHE"))

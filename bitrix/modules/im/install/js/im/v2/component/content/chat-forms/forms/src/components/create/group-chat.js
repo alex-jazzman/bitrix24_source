@@ -13,7 +13,7 @@ import {
 	RightsSection,
 	AppearanceSection,
 } from 'im.v2.component.content.chat-forms.elements';
-import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -89,7 +89,7 @@ export const GroupChatCreation = {
 	},
 	methods:
 	{
-		onMembersChange(currentTags: [string, number | string][])
+		onMembersChange(currentTags: SelectorEntityItem[])
 		{
 			this.chatMembers = currentTags;
 		},

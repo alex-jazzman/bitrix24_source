@@ -10,10 +10,10 @@ return [
 	'rel' => [
 		'main.core',
 		'spotlight',
-		'ui.tour',
-		'tasks.v2.core',
 		'tasks.v2.const',
+		'tasks.v2.core',
 		'tasks.v2.provider.service.option-service',
+		'ui.tour',
 	],
 	'skip_core' => false,
 ];

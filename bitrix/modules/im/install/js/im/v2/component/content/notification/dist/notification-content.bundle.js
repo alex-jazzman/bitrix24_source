@@ -539,6 +539,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		mail: '--o-mail',
 		invoice: '--o-invoice'
 	});
+	const MailNotificationIconTitleClass = Object.freeze({
+		mail: '--o-mail'
+	});
 	const SonetNotificationIconTitleClass = Object.freeze({
 		newsfeed: '--o-newsfeed',
 		wiki: '--wiki',
@@ -1596,6 +1599,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<slot name="content"></slot>
 						<ItemReaction v-if="hasReaction" :notification="notificationItem" />
 					</div>
+					<slot name="after-content"></slot>
 					<QuickAnswer
 						v-if="hasQuickAnswer"
 						:notification="notificationItem"
@@ -2021,6 +2025,95 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const DetailedLinks = {
+		name: 'DetailedLinks',
+		props: {
+			notificationParams: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			params() {
+				return this.notificationParams;
+			},
+			links() {
+				return this.params?.links ?? [];
+			},
+			hasLinks() {
+				return this.links.length > 0;
+			}
+		},
+		methods: {
+			getLinkClass(link) {
+				return {
+					'bx-im-content-notification-item-content__link': true,
+					'--accent': link.accent !== false,
+					'--muted': link.accent === false
+				};
+			}
+		},
+		template: `
+		<div v-if="hasLinks" class="bx-im-content-notification-item-content__links">
+			<a
+				v-for="link in links"
+				:key="link.href"
+				:href="link.href"
+				:class="getLinkClass(link)"
+			>{{ link.title }}</a>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MailNotificationItem = {
+		name: 'MailNotificationItem',
+		components: {
+			DetailedTitle,
+			DetailedText,
+			DetailedGrid,
+			DetailedChangedValue,
+			DetailedLinks,
+			BaseNotificationItem
+		},
+		props: {
+			notification: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			Color: () => im_v2_const.Color,
+			notificationItem() {
+				return this.notification;
+			},
+			notificationParams() {
+				return this.notificationItem.params?.componentParams ?? null;
+			},
+			iconClass() {
+				return MailNotificationIconTitleClass.mail;
+			}
+		},
+		template: `
+		<BaseNotificationItem :notification="notificationItem">
+			<template #content>
+				<DetailedTitle
+					:notificationParams="notificationParams"
+					:icon="iconClass"
+					:color="Color.accentMainPrimaryAlt"
+				/>
+				<DetailedGrid :notificationParams="notificationParams" />
+				<DetailedChangedValue :notificationParams="notificationParams" />
+				<DetailedText :notificationParams="notificationParams" />
+			</template>
+			<template #after-content>
+				<DetailedLinks :notificationParams="notificationParams" />
+			</template>
+		</BaseNotificationItem>
+	`
+	};
+
 	const NotificationComponents = {
 		TaskEntity: TaskNotificationItem,
 		CalendarEntity: CalendarNotificationItem,
@@ -2028,7 +2121,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		CrmEntity: CrmNotificationItem,
 		BizprocEntity: BizprocNotificationItem,
 		SonetEntity: SonetNotificationItem,
-		DefaultEntity: DefaultNotificationItem
+		DefaultEntity: DefaultNotificationItem,
+		MailEntity: MailNotificationItem
 	};
 
 	const ItemPlaceholder = {

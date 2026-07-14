@@ -17,7 +17,9 @@ export type PlainMessageParams = BaseMessageParams & {
 export type CopilotModeParams = {
 	reasoning?: string,
 	forceSearch?: string,
+	agentMode?: string,
 	mcpAuthId?: number,
+	pageContext: { system: JsonObject, custom: JsonObject },
 };
 
 export type CopilotPromptParams = {

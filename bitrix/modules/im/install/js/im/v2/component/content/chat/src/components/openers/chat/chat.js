@@ -1,36 +1,35 @@
-import 'ui.notification';
 import { type EventEmitter } from 'main.core.events';
+import 'ui.notification';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { Messenger } from 'im.public';
 import { ChatType, Layout, UserRole, ErrorCode, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
-import { Utils } from 'im.v2.lib.utils';
-import { ChannelManager } from 'im.v2.lib.channel';
 import { PromoManager } from 'im.v2.lib.promo';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelLayout } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { BaseChatContent, BaseEmptyState as EmptyState } from 'im.v2.component.content.elements';
 
+import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
 import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
+import { CopilotContent } from '../../content/copilot/copilot';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { SelfChatContent } from '../../content/self-chat/self-chat';
-import { CopilotContent } from '../../content/copilot/copilot';
-import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
 import { TaskCommentsContent } from '../../content/task-comments/task-comments';
 import { ChannelEmptyState } from './components/empty-state/channel';
-import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
-import { CollabEmptyState } from './components/empty-state/collab';
+import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
+import { CollabEmptyStateWrapper } from './components/empty-state/collab/wrapper.js';
 import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
 import { TaskEmptyState } from './components/empty-state/task';
 import { UserService } from './classes/user-service';
 
 import './css/default-chat-content.css';
-
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { ImModelChat, ImModelLayout } from 'im.v2.model';
 
 type ContentComponentConfigItem = {
 	condition: boolean,
@@ -139,7 +138,7 @@ export const ChatOpener = {
 		{
 			const EmptyStateComponentByLayout = {
 				[Layout.channel]: ChannelEmptyState,
-				[Layout.collab]: CollabEmptyState,
+				[Layout.collab]: CollabEmptyStateWrapper,
 				[Layout.copilot]: CopilotEmptyState,
 				[Layout.chat]: this.chatEmptyStateComponent,
 				[Layout.taskComments]: TaskEmptyState,

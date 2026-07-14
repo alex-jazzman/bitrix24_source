@@ -13,6 +13,9 @@ export type DepartmentControlType = {
 	groupOptions: ?Object,
 	preselectedItems: ?Array,
 	addButtonCaption: ?string,
+	showDepartmentCreationFooter: ?boolean,
+	showDepartmentCreationFooterInRecentTab: ?boolean,
+	showDepartmentCreationFooterInSearchTab: ?boolean,
 	dialogOptions: ?Object,
 	id: ?string,
 }
@@ -32,6 +35,9 @@ export class DepartmentControl extends EventEmitter
 	#groupOptions: Object;
 	#preselectedItems: Array;
 	#addButtonCaption: ?string;
+	#showDepartmentCreationFooter: boolean;
+	#showDepartmentCreationFooterInRecentTab: boolean;
+	#showDepartmentCreationFooterInSearchTab: boolean;
 	#dialogOptions: Object;
 	#id: string;
 
@@ -47,6 +53,9 @@ export class DepartmentControl extends EventEmitter
 		this.#groupOptions = Type.isObject(options.groupOptions) ? options.groupOptions : {};
 		this.#preselectedItems = Type.isArray(options.preselectedItems) ? options.preselectedItems : [];
 		this.#addButtonCaption = Type.isStringFilled(options.addButtonCaption) ? options.addButtonCaption : null;
+		this.#showDepartmentCreationFooter = options.showDepartmentCreationFooter === true;
+		this.#showDepartmentCreationFooterInRecentTab = options.showDepartmentCreationFooterInRecentTab === true;
+		this.#showDepartmentCreationFooterInSearchTab = options.showDepartmentCreationFooterInSearchTab === true;
 		this.#dialogOptions = Type.isObject(options.dialogOptions) ? options.dialogOptions : {};
 		this.#tagSelector = this.#initTagSelector(options);
 		this.#id = Type.isStringFilled(options.id) ? options.id : BX.Text.getRandom(5);
@@ -58,6 +67,7 @@ export class DepartmentControl extends EventEmitter
 			tagTextColor: '#1E8D36',
 			tagBgColor: '#D4FDB0',
 			items: this.getDefaultItems(),
+			addButtonCaption: this.#addButtonCaption,
 			addButtonCaptionMore: this.#addButtonCaption,
 			events: {
 				onBeforeTagRemove: (event: BaseEvent) => {
@@ -99,11 +109,34 @@ export class DepartmentControl extends EventEmitter
 					},
 					onLoad: (event: BaseEvent) => {
 						const dialog: Dialog = event.getTarget();
+
+						if (this.#showDepartmentCreationFooterInRecentTab)
+						{
+							this.#setDepartmentCreationFooter(dialog.getRecentTab(), dialog);
+						}
+
+						if (this.#showDepartmentCreationFooterInSearchTab)
+						{
+							this.#setDepartmentCreationFooter(dialog.getTab('search'), dialog);
+						}
+
 						dialog.selectTab('structure-departments-tab');
 					},
 				},
 			},
 		});
+	}
+
+	#setDepartmentCreationFooter(tab: ?Object, dialog: Dialog): void
+	{
+		if (!tab)
+		{
+			return;
+		}
+
+		tab.setFooter('BX.HumanResources.EntitySelector.DepartmentCreationFooter');
+		dialog.appendFooter(tab.getFooter());
+		dialog.adjustFooter();
 	}
 
 	#getDialogOptionsEntities(): Array
@@ -117,6 +150,9 @@ export class DepartmentControl extends EventEmitter
 				options: {
 					selectMode: 'departmentsOnly',
 					restricted: 'inviteUser',
+					showDepartmentCreationFooter: this.#showDepartmentCreationFooter,
+					showDepartmentCreationFooterInRecentTab: this.#showDepartmentCreationFooterInRecentTab,
+					showDepartmentCreationFooterInSearchTab: this.#showDepartmentCreationFooterInSearchTab,
 				},
 			});
 		}
@@ -248,6 +284,60 @@ export class DepartmentControl extends EventEmitter
 			});
 
 		return collection;
+	}
+
+	canSelectDepartments(): boolean
+	{
+		return this.#entitiesType.includes(EntityType.DEPARTMENT);
+	}
+
+	getSelectedDepartmentId(): ?number
+	{
+		const selectedDepartment = this.#tagSelector.getDialog()
+			.getSelectedItems()
+			.find((item) => item.entityId === 'structure-node')
+		;
+
+		const departmentId = parseInt(selectedDepartment?.id, 10);
+
+		return departmentId > 0 ? departmentId : null;
+	}
+
+	handleDepartmentCreated(node: Object): void
+	{
+		if (!this.canSelectDepartments() || !node?.id)
+		{
+			return;
+		}
+
+		const dialog = this.#tagSelector.getDialog();
+		let item = dialog.getItem(['structure-node', node.id]);
+
+		if (!item)
+		{
+			item = dialog.addItem({
+				id: node.id,
+				entityId: 'structure-node',
+				entityType: 'department',
+				title: node.name,
+				avatar: '/bitrix/js/humanresources/entity-selector/src/images/department.svg',
+				tagOptions: {
+					avatar: '/bitrix/js/humanresources/entity-selector/src/images/department.svg',
+					fontWeight: '700',
+					bgColor: '#ade7e4',
+					textColor: '#207976',
+				},
+				customData: {
+					accessCode: node.accessCode,
+					nodeEntityType: 'department',
+				},
+			});
+		}
+
+		if (!item.isSelected())
+		{
+			item.select();
+		}
 	}
 
 	getAllValues(): Object

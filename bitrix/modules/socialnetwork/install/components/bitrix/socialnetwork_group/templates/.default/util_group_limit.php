@@ -25,7 +25,13 @@ if ($group === null)
 $isScrumProject = $group->isScrumProject();
 if (
 	($isScrumProject && Feature::isFeatureEnabled(Feature::SCRUM_CREATE))
-	|| (!$isScrumProject && Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId))
+	|| (
+		!$isScrumProject
+		&& (
+			Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId)
+			|| Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS)
+		)
+	)
 )
 {
 	return;

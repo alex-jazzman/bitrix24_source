@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Cluster;
 
+use Bitrix\Main\Localization\Loc;
+
 class ClusterCache
 {
 	protected static string $type = 'memcache';
@@ -105,6 +107,7 @@ class ClusterCache
 				'ID' => $id,
 				'GROUP_ID' => $servers[$id]['GROUP_ID'],
 				'STATUS' => $fields['STATUS'] ?? $servers[$id]['STATUS'],
+				'WEIGHT' => isset($fields['WEIGHT']) ? (int)$fields['WEIGHT'] : ($servers[$id]['WEIGHT'] ?? 100),
 				'HOST' => $fields['HOST'] ?? $servers[$id]['HOST'],
 				'PORT' => $fields['PORT'] ?? $servers[$id]['PORT'],
 				'MODE' => strtoupper($servers[$id]['MODE'] ?? ''),
@@ -140,7 +143,7 @@ class ClusterCache
 			{
 				$error[] = [
 					'id' => $fields['HOST'],
-					'text' => Loc:: getMessage('CLU_' . strtoupper(static::$type) . '_CANNOT_CONNECT')
+					'text' => Loc::getMessage('CLU_' . strtoupper(static::$type) . '_CANNOT_CONNECT')
 				];
 			}
 		}
@@ -148,7 +151,7 @@ class ClusterCache
 		if (!empty($error))
 		{
 			global $APPLICATION;
-			$e = new CAdminException($error);
+			$e = new \CAdminException($error);
 			$APPLICATION->ThrowException($e);
 			return [];
 		}
@@ -162,11 +165,11 @@ class ClusterCache
 		return static::getStatus($server);
 	}
 
-	static function getStatus(array $server): array
+	public static function getStatus(array $server): array
 	{
 	}
 
-	static function saveConfig(array $servers): void
+	public static function saveConfig(array $servers): void
 	{
 	}
 }

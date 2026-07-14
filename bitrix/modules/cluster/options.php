@@ -14,23 +14,24 @@ if ($right < 'R')
 
 function getCacheType(string $moduleID): string
 {
-	return match(Bitrix\Main\Config\Option::get($moduleID, 'cache_type', 'memcache'))
+	$result = match (Bitrix\Main\Config\Option::get($moduleID, 'cache_type', 'memcache'))
 	{
 		'memcache' => 'memcache',
 		'memcached' => 'memcached',
 		'redis' => 'redis',
 		'default' => 'memcache',
 	};
+	return $result;
 }
 
 function getCache(string $moduleID): string
 {
 	$cacheType = getCacheType($moduleID);
-	if ($cacheType == 'memcache')
+	if ($cacheType === 'memcache')
 	{
 		$cache = CClusterMemcache::class;
 	}
-	elseif ($cacheType == 'redis')
+	elseif ($cacheType === 'redis')
 	{
 		$cache = CClusterRedis::class;
 	}
@@ -230,4 +231,5 @@ $tabControl->Buttons();
 	?><input type="submit" name="RestoreDefaults" title="<?php echo Loc::getMessage('MAIN_HINT_RESTORE_DEFAULTS')?>" onclick="confirm('<?php echo addslashes(Loc::getMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>')" value="<?php echo GetMessage('MAIN_RESTORE_DEFAULTS')?>"><?php
 	echo bitrix_sessid_post();
 	$tabControl->End();
-?></form>
+?>
+</form>

@@ -9,7 +9,7 @@ class CClusterMemcache extends \Bitrix\Cluster\ClusterCache
 	public static null|bool $systemConfigurationUpdate = null;
 	protected static string $type = 'memcache';
 
-	public static function SaveConfig($servers): void
+	public static function saveConfig($servers): void
 	{
 		self::$systemConfigurationUpdate = ClusterCacheConfig::getInstance('memcache')->saveConfig(
 			$servers,

@@ -69,13 +69,15 @@ this.BX.Call = this.BX.Call || {};
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im',
-	  ai: 'ai'
+	  ai: 'ai',
+	  task: 'task'
 	});
 	const AnalyticsCategory = Object.freeze({
 	  call: 'call',
 	  callDocs: 'call_docs',
 	  messenger: 'messenger',
 	  callsOperations: 'calls_operations',
+	  chatOperations: 'chat_operations',
 	  callFollowup: 'call_followup',
 	  callRecord: 'call_record',
 	  collabCall: 'collab_call'
@@ -84,6 +86,8 @@ this.BX.Call = this.BX.Call || {};
 	  private: 'private',
 	  group: 'group',
 	  videoconf: 'videoconf',
+	  video: 'video',
+	  audio: 'audio',
 	  resume: 'resume',
 	  doc: 'doc',
 	  presentation: 'presentation',
@@ -98,6 +102,9 @@ this.BX.Call = this.BX.Call || {};
 	  callPopup: 'call_popup',
 	  chatList: 'chat_list',
 	  chatWindow: 'chat_window',
+	  taskChat: 'task_chat',
+	  taskCard: 'task_card',
+	  chatTasks: 'chat_tasks',
 	  callMessage: 'call_message',
 	  callFollowup: 'call_followup',
 	  call: 'call'
@@ -105,7 +112,8 @@ this.BX.Call = this.BX.Call || {};
 	const AnalyticsSubSection = Object.freeze({
 	  finishButton: 'finish_button',
 	  contextMenu: 'context_menu',
-	  window: 'window'
+	  window: 'window',
+	  taskCard: 'task_card'
 	});
 	const AnalyticsElement = Object.freeze({
 	  answerButton: 'answer_button',
@@ -296,8 +304,28 @@ this.BX.Call = this.BX.Call || {};
 	var _screenShareStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("screenShareStarted");
 	var _getCallElementParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCallElementParam");
 	var _getCallTypeParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCallTypeParam");
+	var _getSectionParamByChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSectionParamByChatType");
+	var _isTaskCardSliderOpen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTaskCardSliderOpen");
+	var _getTaskIdParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskIdParam");
+	var _setTaskIdParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTaskIdParam");
+	var _sendTaskCardCallClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendTaskCardCallClick");
 	class Analytics {
 	  constructor() {
+	    Object.defineProperty(this, _sendTaskCardCallClick, {
+	      value: _sendTaskCardCallClick2
+	    });
+	    Object.defineProperty(this, _setTaskIdParam, {
+	      value: _setTaskIdParam2
+	    });
+	    Object.defineProperty(this, _getTaskIdParam, {
+	      value: _getTaskIdParam2
+	    });
+	    Object.defineProperty(this, _isTaskCardSliderOpen, {
+	      value: _isTaskCardSliderOpen2
+	    });
+	    Object.defineProperty(this, _getSectionParamByChatType, {
+	      value: _getSectionParamByChatType2
+	    });
 	    Object.defineProperty(this, _getCallTypeParam, {
 	      value: _getCallTypeParam2
 	    });
@@ -767,7 +795,7 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.messenger,
 	      event: AnalyticsEvent.clickCallButton,
-	      c_section: AnalyticsSection.chatWindow,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getSectionParamByChatType)[_getSectionParamByChatType](params.dialog.type),
 	      c_sub_section: AnalyticsSubSection.window,
 	      p5: `chatId_${params.dialog.chatId}`
 	    };
@@ -776,6 +804,7 @@ this.BX.Call = this.BX.Call || {};
 	    if (params.dialog.type === im_v2_const.ChatType.collab) {
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.dialog.chatId);
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendTaskCardCallClick)[_sendTaskCardCallClick](params.dialog, params.callType);
 	    ui_analytics.sendData(resultData);
 	  }
 	  onContextMenuStartCallClick(params) {
@@ -783,7 +812,7 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.messenger,
 	      event: AnalyticsEvent.clickCallButton,
-	      c_section: AnalyticsSection.chatWindow,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getSectionParamByChatType)[_getSectionParamByChatType](params.context.type),
 	      c_sub_section: AnalyticsSubSection.contextMenu,
 	      p5: `chatId_${params.context.chatId}`
 	    };
@@ -792,6 +821,7 @@ this.BX.Call = this.BX.Call || {};
 	    if (params.context.type === im_v2_const.ChatType.collab) {
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.context.chatId);
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendTaskCardCallClick)[_sendTaskCardCallClick](params.context, params.callType);
 	    ui_analytics.sendData(resultData);
 	  }
 	  onStartConferenceClick(params) {
@@ -855,7 +885,7 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.messenger,
 	      event: AnalyticsEvent.clickCallButton,
-	      c_section: AnalyticsSection.callMessage,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getSectionParamByChatType)[_getSectionParamByChatType](params.dialog.type),
 	      c_element: AnalyticsElement.startMessage,
 	      p5: `chatId_${params.dialog.chatId}`
 	    };
@@ -863,6 +893,7 @@ this.BX.Call = this.BX.Call || {};
 	    if (params.dialog.type === im_v2_const.ChatType.collab) {
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.dialog.chatId);
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendTaskCardCallClick)[_sendTaskCardCallClick](params.dialog, call_const.CallTypes.video.id);
 	    ui_analytics.sendData(resultData);
 	  }
 	  onFinishCallMessageClick(params) {
@@ -870,7 +901,7 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.messenger,
 	      event: AnalyticsEvent.clickCallButton,
-	      c_section: AnalyticsSection.callMessage,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getSectionParamByChatType)[_getSectionParamByChatType](params.dialog.type),
 	      c_element: AnalyticsElement.finishMessage,
 	      p5: `chatId_${params.dialog.chatId}`
 	    };
@@ -878,6 +909,7 @@ this.BX.Call = this.BX.Call || {};
 	    if (params.dialog.type === im_v2_const.ChatType.collab) {
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.dialog.chatId);
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendTaskCardCallClick)[_sendTaskCardCallClick](params.dialog, call_const.CallTypes.video.id);
 	    ui_analytics.sendData(resultData);
 	  }
 	  onOpenCallSettings(params) {
@@ -992,6 +1024,58 @@ this.BX.Call = this.BX.Call || {};
 	}
 	function _getCallTypeParam2(type) {
 	  return type === im_v2_const.ChatType.user ? AnalyticsType.private : AnalyticsType.group;
+	}
+	function _getSectionParamByChatType2(chatType) {
+	  if (![im_v2_const.ChatType.taskComments].includes(chatType)) {
+	    return AnalyticsSection.chatWindow;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isTaskCardSliderOpen)[_isTaskCardSliderOpen]() ? AnalyticsSection.taskCard : AnalyticsSection.taskChat;
+	}
+	function _isTaskCardSliderOpen2() {
+	  var _BX$SidePanel, _BX$SidePanel$Instanc;
+	  const topSlider = (_BX$SidePanel = BX.SidePanel) == null ? void 0 : (_BX$SidePanel$Instanc = _BX$SidePanel.Instance) == null ? void 0 : _BX$SidePanel$Instanc.getTopSlider();
+	  return topSlider !== null && topSlider !== undefined && /\/tasks\/task\/view\/\d+\//.test(topSlider.getUrl());
+	}
+	function _getTaskIdParam2(dialogData) {
+	  var _dialogData$entityLin;
+	  if (![im_v2_const.ChatType.taskComments].includes(dialogData == null ? void 0 : dialogData.type)) {
+	    return '';
+	  }
+	  const taskId = Number.parseInt(dialogData == null ? void 0 : (_dialogData$entityLin = dialogData.entityLink) == null ? void 0 : _dialogData$entityLin.id, 10);
+	  if (!Number.isInteger(taskId)) {
+	    return 'taskId_0';
+	  }
+	  return `taskId_${taskId}`;
+	}
+	function _setTaskIdParam2(resultData, dialogData) {
+	  const taskIdParam = babelHelpers.classPrivateFieldLooseBase(this, _getTaskIdParam)[_getTaskIdParam](dialogData);
+	  if (taskIdParam) {
+	    resultData.p1 = taskIdParam;
+	  }
+	}
+	function _sendTaskCardCallClick2(dialogData, callType) {
+	  const isTaskChat = [im_v2_const.ChatType.taskComments].includes(dialogData == null ? void 0 : dialogData.type);
+	  if (!isTaskChat) {
+	    return;
+	  }
+	  const taskIdParam = babelHelpers.classPrivateFieldLooseBase(this, _getTaskIdParam)[_getTaskIdParam](dialogData);
+	  if (!taskIdParam) {
+	    return;
+	  }
+	  const isTaskCard = babelHelpers.classPrivateFieldLooseBase(this, _isTaskCardSliderOpen)[_isTaskCardSliderOpen]();
+	  const resultData = {
+	    tool: AnalyticsTool.task,
+	    category: AnalyticsCategory.chatOperations,
+	    event: AnalyticsEvent.clickCallButton,
+	    type: callType === call_const.CallTypes.audio.id ? AnalyticsType.audio : AnalyticsType.video,
+	    p1: taskIdParam
+	  };
+	  if (isTaskCard) {
+	    resultData.c_sub_section = AnalyticsSubSection.taskCard;
+	  } else {
+	    resultData.c_section = AnalyticsSection.chatTasks;
+	  }
+	  ui_analytics.sendData(resultData);
 	}
 	Object.defineProperty(Analytics, _instance, {
 	  writable: true,

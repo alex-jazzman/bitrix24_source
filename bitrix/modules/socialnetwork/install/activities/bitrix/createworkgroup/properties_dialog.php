@@ -1,5 +1,11 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Socialnetwork\V2\Feature;
+
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -11,26 +17,31 @@ global $DB, $USER, $APPLICATION;
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
+
+$isNewProjectsOn = (CModule::IncludeModule("socialnetwork") && Feature::isNewProjectsOn());
+$messageSuffix = ($isNewProjectsOn ? '_V2' : '');
 ?>
 <tr>
-	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_GROUP_NAME") ?>:</span></td>
+	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_GROUP_NAME" . $messageSuffix) ?>:</span></td>
 	<td width="60%">
 		<?=CBPDocument::ShowParameterField("string", 'group_name', $arCurrentValues['group_name'], Array('size'=> 50))?>
 	</td>
 </tr>
 <tr>
-	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_OWNER") ?>:</span></td>
+	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_OWNER" . $messageSuffix) ?>:</span></td>
 	<td width="60%">
 		<?=CBPDocument::ShowParameterField("user", 'owner_id', $arCurrentValues['owner_id'], Array('rows'=> 1))?>
 	</td>
 </tr>
 <tr>
-	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_USERS") ?>:</span></td>
+	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPCWG_USERS" . $messageSuffix) ?>:</span></td>
 	<td width="60%">
 		<?=CBPDocument::ShowParameterField("user", 'users', $arCurrentValues['users'], Array('rows'=> 3))?>
 	</td>
 </tr>
-<?
+<?php
+if (!$isNewProjectsOn)
+{
 foreach ($arDocumentFields as $fieldKey => $fieldValue)
 {
 	?>
@@ -40,7 +51,7 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 			<?
 			if ($fieldValue["UserField"])
 			{
-				if ($arCurrentValues[$fieldKey])
+				if ($arCurrentValues[$fieldKey] ?? null)
 				{
 					if ($fieldValue["UserField"]["USER_TYPE_ID"] == "boolean")
 					{
@@ -98,4 +109,6 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 		</script>
 	</td>
 </tr>
-<? echo $APPLICATION->GetCSS();?>
+<?
+}
+echo $APPLICATION->GetCSS();

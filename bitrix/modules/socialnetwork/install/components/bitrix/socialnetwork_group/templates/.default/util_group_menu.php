@@ -1,9 +1,10 @@
 <?php
-
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
+
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
@@ -13,6 +14,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
+
+$groupId = (int)$arResult['VARIABLES']['group_id'];
+
+$projectProvider = new ProjectProvider();
+if ($projectProvider->isProject($groupId))
+{
+	return;
+}
 
 $arReturnGroupMenu = $APPLICATION->IncludeComponent(
 	"bitrix:socialnetwork.group_menu",
@@ -43,7 +52,7 @@ $arReturnGroupMenu = $APPLICATION->IncludeComponent(
 		"PATH_TO_GROUP_CONTENT_SEARCH" => $arResult["PATH_TO_GROUP_CONTENT_SEARCH"],
 		"FILES_GROUP_IBLOCK_ID" => $arParams["FILES_GROUP_IBLOCK_ID"],
 		"GROUP_ID" => $arResult["VARIABLES"]["group_id"],
-		"PAGE_ID" => $pageId,
+		"PAGE_ID" => $pageId ?? null,
 		'componentPage' => $arResult['componentPage'],
 		"USE_MAIN_MENU" => $arParams["USE_MAIN_MENU"],
 		"MAIN_MENU_TYPE" => ($arParams["MAIN_MENU_TYPE"] ?? 'left'),

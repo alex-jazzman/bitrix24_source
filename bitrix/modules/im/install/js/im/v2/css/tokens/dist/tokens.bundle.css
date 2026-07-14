@@ -168,6 +168,29 @@
 	--im-color-palette-copilot-light: #ECDEFF;
 	--im-color-palette-copilot-secondary: var(--ui-color-copilot-secondary);
 	--im-color-palette-copilot-secondary-rgb: var(--ui-color-copilot-secondary-rgb);
+	--im-gradient-ai-assistant: linear-gradient(
+		251deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4, #F046B7) 21.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3, #9D48FF) 52.44%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2, #3F68FF) 76.41%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1, #0098EA) 97.21%
+	);
+	--im-gradient-ai-assistant-tinted: linear-gradient(
+		251deg,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5, #f89ecb) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4, #ed99e0) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3, #cc9afd) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2, #92aefe) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73c6f3) 97.21%
+	);
+	--im-gradient-ai-assistant-bg: linear-gradient(
+		268deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, #FCEFF8) 14.06%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #F1F0FF) 48.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #F0F7FF) 98.35%
+	);
 	--im-color-accent-light-blue: var(--ui-color-accent-light-blue, #559be6);
 	--im-color-accent-light-blue-rgb: 85, 155, 230;
 	--im-color-accent-purple: var(--ui-color-accent-purple);
@@ -195,6 +218,7 @@
 	--im-color-collab-10: #f2fee2;
 
 	--im-color-extranet-orange-60: #e89b06;
+	--im-color-ai-assistant-primary: #4c40a8;
 	--im-color-accent-main-primary: #0075ff;
 	--im-color-accent-main-link: #0154C8;
 }

@@ -1,0 +1,31 @@
+.bx-im-message-ai-assistant-v2-answer__actions-panel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 12px 12px 8px;
+	user-select: none;
+}
+
+.bx-im-message-ai-assistant-v2-answer__actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.bx-im-message-ai-assistant-v2-answer__action-icon {
+	--ui-icon-set__icon-color: var(--ui-color-design-plain-content-icon-secondary);
+	--ui-icon-set__icon-size: 20px;
+}
+
+.bx-im-message-ai-assistant-v2-answer__action-icon:hover {
+	cursor: pointer;
+}
+
+.bx-im-message-ai-assistant-v2-answer__action-icon.--active {
+	--ui-icon-set__icon-color: var(--ui-color-design-plain-a-content-icon);
+}
+
+.bx-im-message-ai-assistant-v2-answer__status {
+	display: flex;
+	align-items: flex-end;
+}

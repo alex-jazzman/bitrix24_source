@@ -11,6 +11,7 @@ return [
 		'utils/url',
 		'toast',
 		'alert',
+		'require-lazy',
 
 		'ui-system/layout/box',
 		'ui-system/layout/area',

@@ -104,8 +104,15 @@ class FlowDialog
 			return null;
 		}
 
+		const flowId = Number(item.getId()) || 0;
+
+		if (flowId <= 0)
+		{
+			return null;
+		}
+
 		const flow = {
-			id: item.getId(),
+			id: flowId,
 			name: item.getTitle(),
 			groupId: item.getCustomData().get('groupId'),
 			templateId: item.getCustomData().get('templateId'),
@@ -121,7 +128,7 @@ class FlowDialog
 
 	get #items(): ItemId[]
 	{
-		return [[EntitySelectorEntity.Flow, this.#flowId]];
+		return this.#flowId > 0 ? [[EntitySelectorEntity.Flow, this.#flowId]] : [];
 	}
 
 	get #flowId(): TaskModel

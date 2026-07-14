@@ -7,12 +7,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/mailer.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'mail.client.binding',
 		'mail.client.errorbox',
 		'mail.client.filtertoolbar',
 		'mail.client.mailboxselector',
+		'main.core',
 		'main.core.events',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -1,8 +1,9 @@
-import { BaseField } from './base-field';
 import { Loc, Tag, Dom } from 'main.core';
-import { Button, AirButtonStyle } from 'ui.buttons';
 import { sendData as analyticsSendData } from 'ui.analytics';
+import { Button, AirButtonStyle } from 'ui.buttons';
+
 import { GridManager } from '../grid-manager';
+import { BaseField } from './base-field';
 
 type ActionFieldParams = {
 	url: string;
@@ -123,6 +124,10 @@ export class ActionField extends BaseField
 				},
 				className: 'mailbox-grid_action-button',
 				dataset: { id: 'mailbox-grid_action-button-error-action' },
+			});
+
+			button.setRightCounter({
+				value: 1,
 			});
 
 			buttonNode = button.render();

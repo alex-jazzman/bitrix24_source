@@ -2,7 +2,7 @@ import { Tag, Event, Dom, Cache } from 'main.core';
 import { Popup, type PopupOptions } from 'main.popup';
 
 import { PopupType } from 'im.v2.const';
-import { FeatureManager } from 'im.v2.lib.feature';
+import { TariffManager } from 'im.v2.lib.feature';
 
 import '../css/limit-popup.css';
 
@@ -58,10 +58,10 @@ export class HistoryLimitPopup
 				<div class="bx-im-history-limit-popup__container">
 					<div class="bx-im-history-limit-popup__image"></div>
 					<div class="bx-im-history-limit-popup__title">
-						${FeatureManager.chatHistory.getLimitTitle()}
+						${TariffManager.chatHistory.getLimitTitle()}
 					</div>
 					<div class="bx-im-history-limit-popup__subtitle">
-						${FeatureManager.chatHistory.getLimitSubtitle()}
+						${TariffManager.chatHistory.getLimitSubtitle()}
 					</div>
 				</div>
 			`;
@@ -77,7 +77,7 @@ export class HistoryLimitPopup
 		return this.#cache.remember('', () => {
 			return Tag.render`
 				<div class="bx-im-history-limit-popup__button">
-					${FeatureManager.chatHistory.getLearnMoreText()}
+					${TariffManager.chatHistory.getLearnMoreText()}
 				</div>
 			`;
 		});
@@ -86,7 +86,7 @@ export class HistoryLimitPopup
 	#bindEvents(): void
 	{
 		Event.bind(this.#getButtonContainer(), 'click', () => {
-			FeatureManager.chatHistory.openFeatureSlider();
+			TariffManager.chatHistory.openFeatureSlider();
 			this.close();
 		});
 	}

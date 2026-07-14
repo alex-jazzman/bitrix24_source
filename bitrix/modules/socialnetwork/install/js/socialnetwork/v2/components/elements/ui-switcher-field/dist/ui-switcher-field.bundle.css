@@ -1,0 +1,45 @@
+.sonet-elements-switcher-field {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.sonet-elements-switcher-field-toggle {
+	height: 28px;
+}
+
+.sonet-elements-switcher-field-label_wrapper {
+	display: flex;
+	flex-direction: row;
+	gap: var(--ui-space-inline-2xs);
+	align-items: center;
+}
+
+.sonet-elements-switcher-field-label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.sonet-elements-switcher-field-title {
+	color: var(--ui-color-base-2, #525c69);
+	white-space: nowrap;
+}
+
+.socialnetwork--project-wizard--ui-switcher-field--description {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.socialnetwork--project-wizard--ui-switcher-field--line {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	align-items: center;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.socialnetwork--project-wizard--ui-switcher-field--left-col {
+	flex-grow: 0;
+	flex-shrink: 0;
+	min-width: 2em;
+}

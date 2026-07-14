@@ -1,0 +1,22 @@
+.bx-im-parent-access-popup__container {
+	display: flex;
+	align-items: center;
+
+	box-sizing: border-box;
+}
+
+.bx-im-parent-access-popup__image {
+	width: 80px;
+	height: 80px;
+
+	background-image: url('./images/parent-access.png?v2');
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.bx-im-parent-access-popup__text {
+	max-width: 352px;
+	margin-right: 20px;
+	font: var(--im-font-size-lg)/20px var(--im-font-family-system);
+	color: var(--ui-color-base-1);
+}

@@ -5,12 +5,10 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 	const { Type } = require('type');
 	const { EventType, ChatSearchSelectorSection } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
-	const { ChatSearchProvider } = require('im/messenger/lib/chat-search/src/provider');
 	const { RecentSearchUiConverter } = require('im/messenger/lib/converter/ui/recent-search');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { formatDateByDialogId } = require('im/messenger/lib/chat-search/src/helper/search-date-formatter');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
@@ -36,8 +34,7 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 		 *
 		 * @param {JNBaseList} ui
 		 * @param {object} params
-		 * @param {DialoguesFilter} [params.filter]
-		 * @param {string} [params.recentTab]
+		 * @param {ChatSearchProvider} params.provider — pre-built provider with strategies wired in
 		 * @param {Array<string>} [params.sections]
 		 */
 		constructor(ui, params = {})
@@ -47,15 +44,13 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 			this.isOpen = false;
 			this.sections = {};
 
-			this.filter = params.filter;
-			this.recentTab = params.recentTab;
 			this.enabledSections = params.sections;
 
 			/**
 			 * @protected
 			 * @type {ChatSearchProvider}
 			 */
-			this.provider = null;
+			this.provider = params.provider;
 
 			/** @type {Array<string>} */
 			this.recentItems = [];
@@ -79,49 +74,17 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 			this.onSearchItemSelectedHandler = this.onSearchItemSelected.bind(this);
 			this.searchSectionButtonClickHandler = this.searchSectionButtonClick.bind(this);
 
-			this.initProvider();
+			this.#wireProviderCallbacks();
 			this.subscribeEvents();
 			this.setSections();
-		}
-
-		open()
-		{
-			this.ui.showSearchBar();
-
-			this.loadRecentSearchFromServer();
-			this.isOpen = true;
-			this.drawRecent(this.recentItems);
-
-			AnalyticsService.getInstance().sendOpenSearch();
 		}
 
 		/**
 		 * @private
 		 */
-		subscribeEvents()
+		#wireProviderCallbacks()
 		{
-			this.ui.on(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
-			this.ui.on(EventType.recent.userTypeText, this.onUserTypeTextHandler);
-			this.ui.on(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
-			this.ui.on(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
-		}
-
-		unsubscribeEvents()
-		{
-			this.ui.off(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
-			this.ui.off(EventType.recent.userTypeText, this.onUserTypeTextHandler);
-			this.ui.off(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
-			this.ui.off(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
-		}
-
-		/**
-		 * @protected
-		 */
-		initProvider()
-		{
-			this.provider = new ChatSearchProvider({
-				filter: this.filter,
-				recentTab: this.recentTab,
+			this.provider.setCallbacks({
 				loadLatestSearchProcessed: () => {
 					Logger.log('ChatSearchSelector.loadLatestSearchProcessed');
 					this.isRecentLoading = true;
@@ -163,6 +126,36 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 					AnalyticsService.getInstance().sendSearchResult(Type.isArrayFilled(searchIds));
 				},
 			});
+		}
+
+		open()
+		{
+			this.ui.showSearchBar();
+
+			this.loadRecentSearchFromServer();
+			this.isOpen = true;
+			this.drawRecent(this.recentItems);
+
+			AnalyticsService.getInstance().sendOpenSearch();
+		}
+
+		/**
+		 * @private
+		 */
+		subscribeEvents()
+		{
+			this.ui.on(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.ui.on(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.ui.on(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.ui.on(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.ui.off(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.ui.off(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.ui.off(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.ui.off(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
 		}
 
 		/**
@@ -387,7 +380,7 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 		 */
 		onScopeSelected(...args)
 		{
-			console.log('onScopeSelected', args);
+			Logger.log('onScopeSelected', args);
 		}
 
 		/**
@@ -445,7 +438,15 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 				})
 			;
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId });
+			const skipNestedStrategy = !DialogHelper.createByDialogId(dialogId)?.isCollab;
+
+			serviceLocator.get('dialog-manager').openDialog({
+				dialogId,
+				skipNestedStrategy,
+			})
+				.catch((error) => {
+					Logger.error('ChatSearchSelector.onSearchItemSelected: open dialog error', error);
+				});
 
 			if (!this.isSearchStarted)
 			{
@@ -465,7 +466,7 @@ jn.define('im/messenger/lib/chat-search/src/selector', (require, exports, module
 		 */
 		searchSectionButtonClick(...args)
 		{
-			console.log('searchSectionButtonClick', args);
+			Logger.log('searchSectionButtonClick', args);
 		}
 		// endregion
 

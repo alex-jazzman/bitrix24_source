@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 export type GroupDto = {
 	id: number,
 	name: string,
@@ -5,6 +7,17 @@ export type GroupDto = {
 	type: GroupType,
 	stages: StageDto[],
 };
+
+export function createGroupDto(raw: Object): GroupDto
+{
+	return {
+		id: raw.id ?? null,
+		name: raw.name ?? '',
+		image: raw.image ?? null,
+		type: raw.type ?? null,
+		stages: Type.isArray(raw.stages) ? raw.stages.map((stage) => createStageDto(stage)) : [],
+	};
+}
 
 type GroupType = 'group' | 'project' | 'scrum' | 'collab';
 
@@ -15,6 +28,17 @@ export type StageDto = {
 	systemType: string,
 	sort: number,
 };
+
+function createStageDto(raw: Object): StageDto
+{
+	return {
+		id: raw.id ?? null,
+		title: raw.title ?? '',
+		color: raw.color ?? '',
+		systemType: raw.systemType ?? '',
+		sort: raw.sort ?? 0,
+	};
+}
 
 export type GroupInfo = {
 	ownerId: number,

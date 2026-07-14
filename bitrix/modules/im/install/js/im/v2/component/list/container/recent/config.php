@@ -29,6 +29,7 @@ return [
 		'im.v2.provider.service.copilot',
 		'main.core',
 		'main.core.events',
+		'ui.icon-set.api.vue',
 		'ui.info-helper',
 	],
 	'skip_core' => false,

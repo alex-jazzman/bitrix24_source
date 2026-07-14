@@ -24,7 +24,7 @@ export const AiAssistantBotContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar" :withDropArea="false">
+		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar" :withDropArea="false" :withChatContentDisclaimer="false">
 			<template #header v-if="$slots['header']">
 				<slot name="header"></slot>
 			</template>

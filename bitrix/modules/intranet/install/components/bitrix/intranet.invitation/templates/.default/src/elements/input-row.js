@@ -1,19 +1,14 @@
 import { Dom, Tag, Type } from 'main.core';
-import { Input } from 'ui.system.input';
 import { ContactsInput } from './inputs/contacts-input';
 
 export type InputRowOptions = {
 	id: number,
-	nameInput: Input;
-	lastNameInput: Input;
 	contactsInput: ContactsInput;
 }
 
 export class InputRow
 {
 	#container: HTMLElement;
-	#nameInput: Input;
-	#lastNameInput: Input;
 	#contactsInput: ContactsInput;
 	#id: number;
 
@@ -21,8 +16,6 @@ export class InputRow
 	{
 		this.#id = options.id;
 		this.#contactsInput = options.contactsInput;
-		this.#nameInput = options.nameInput;
-		this.#lastNameInput = options.lastNameInput;
 	}
 
 	render(): HTMLElement
@@ -30,8 +23,6 @@ export class InputRow
 		this.#container ??= Tag.render`
 			<div data-test-id="invite-input-row${this.#id}" class="intranet-invite-form-row">
 				${this.#contactsInput.getInput().render()}
-				${this.#nameInput.render()}
-				${this.#lastNameInput.render()}
 			</div>
 		`;
 
@@ -45,11 +36,7 @@ export class InputRow
 
 	isEmpty(): boolean
 	{
-		return !(
-			this.#contactsInput.getInput().getValue()
-			|| this.#nameInput.getValue()
-			|| this.#lastNameInput.getValue()
-		);
+		return !this.#contactsInput.getInput().getValue();
 	}
 
 	isInvitationRowEmpty(): boolean
@@ -59,11 +46,7 @@ export class InputRow
 
 	getValue(): Object
 	{
-		return {
-			NAME: this.#nameInput.getValue(),
-			LAST_NAME: this.#lastNameInput.getValue(),
-			...this.#contactsInput.getValue(),
-		};
+		return this.#contactsInput.getValue();
 	}
 
 	getContactsValue(): string
@@ -84,7 +67,5 @@ export class InputRow
 	clear(): void
 	{
 		this.#contactsInput.getInput().setValue('');
-		this.#nameInput.setValue('');
-		this.#lastNameInput.setValue('');
 	}
 }

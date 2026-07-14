@@ -2,15 +2,17 @@ import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-
 import { RecentManager } from 'im.v2.lib.recent';
 import { Utils } from 'im.v2.lib.utils';
 import { type ImModelRecentItem } from 'im.v2.model';
+import { FadeAnimation } from 'im.v2.component.animation';
 
 import { BaseRecentItem } from './recent-item/recent-item';
+import { FixedItemContainer } from './fixed-item-container/fixed-item-container';
 
 import '../css/base-list.css';
 
 // @vue/component
 export const BaseRecentList = {
 	name: 'BaseRecentList',
-	components: { LoadingState, BaseRecentItem },
+	components: { LoadingState, BaseRecentItem, FixedItemContainer, FadeAnimation },
 	props: {
 		collection: {
 			type: Array,
@@ -86,34 +88,37 @@ export const BaseRecentList = {
 	},
 	template: `
 		<div class="bx-im-list-base__container">
-			<slot name="before-list"></slot>
+			<slot name="before-scroll"></slot>
 			<LoadingState v-if="showMainLoader" />
-			<div v-else @scroll="onScroll" class="bx-im-list-base__scroll-container">
-				<slot v-if="isEmptyCollection" name="empty-state" />
-				<div v-if="showPinnedItems" class="bx-im-list-base__pinned_container">
-					<template v-for="item in pinnedItems" :key="item.dialogId">
-						<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
-							<BaseRecentItem
-								:item="item"
-								@click="onClick(item)"
-								@click.right="onRightClick(item, $event)"
-							/>
-						</slot>
-					</template>
+			<FadeAnimation :duration="200">
+				<div v-if="!showMainLoader" @scroll="onScroll" class="bx-im-list-base__scroll-container">
+					<slot name="before-list"></slot>
+					<slot v-if="isEmptyCollection" name="empty-state" />
+					<FixedItemContainer v-if="showPinnedItems" class="bx-im-list-base__pinned_container">
+						<template v-for="item in pinnedItems" :key="item.dialogId">
+							<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
+								<BaseRecentItem
+									:item="item"
+									@click="onClick(item)"
+									@click.right="onRightClick(item, $event)"
+								/>
+							</slot>
+						</template>
+					</FixedItemContainer>
+					<div class="bx-im-list-base__general_container">
+						<template v-for="item in generalItems" :key="item.dialogId">
+							<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
+								<BaseRecentItem
+									:item="item"
+									@click="onClick(item)"
+									@click.right="onRightClick(item, $event)"
+								/>
+							</slot>
+						</template>
+					</div>
+					<LoadingState v-if="showBottomLoader" />
 				</div>
-				<div class="bx-im-list-base__general_container">
-					<template v-for="item in generalItems" :key="item.dialogId">
-						<slot name="item" :item="item" :onClick="onClick" :onRightClick="onRightClick">
-							<BaseRecentItem
-								:item="item"
-								@click="onClick(item)"
-								@click.right="onRightClick(item, $event)"
-							/>
-						</slot>
-					</template>
-				</div>
-				<LoadingState v-if="showBottomLoader" />
-			</div>
+			</FadeAnimation>
 		</div>
 	`,
 };

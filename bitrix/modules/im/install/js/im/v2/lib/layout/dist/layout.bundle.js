@@ -215,12 +215,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				hasAccess,
 				errorCode
-			} = await im_v2_lib_access.AccessManager.checkMessageAccess(messageId);
+			} = await im_v2_lib_access.MessageAccessManager.checkMessageAccess(messageId);
 			if (!hasAccess && errorCode === im_v2_const.ErrorCode.message.accessDeniedByTariff) {
 				im_v2_lib_analytics.Analytics.getInstance().historyLimit.onGoToContextLimitExceeded({
 					dialogId
 				});
-				im_v2_lib_feature.FeatureManager.chatHistory.openFeatureSlider();
+				im_v2_lib_feature.TariffManager.chatHistory.openFeatureSlider();
 				return Promise.resolve(false);
 			}
 			return Promise.resolve(true);
@@ -232,7 +232,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const {
 				type
 			} = this.#getChat(entityId);
-			const isCollab = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isNestedListAvailable) && type === im_v2_const.ChatType.collab;
+			const isCollabV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabV2Available);
+			const isCollab = isCollabV2Available && type === im_v2_const.ChatType.collab;
 			if (isCollab) {
 				return false;
 			}

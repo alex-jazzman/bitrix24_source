@@ -170,7 +170,9 @@ export class NotePermissionsMembers
 			return { entityId: ENTITY_TYPE_DEPARTMENT, entityItemId: match[1] };
 		}
 
-		match = normalized.match(/^SG(\d+)$/);
+		// Socnet group: a bare SG{id} (added through the UI) or a role-suffixed
+		// SG{id}_K/_E/_A (written by the wiki import) — both denote the same group.
+		match = normalized.match(/^SG(\d+)(?:_[AEK])?$/);
 		if (match)
 		{
 			return { entityId: ENTITY_TYPE_PROJECT, entityItemId: match[1] };
@@ -201,7 +203,10 @@ export class NotePermissionsMembers
 			case 'structure-node':
 				return `DR${id}`;
 			case ENTITY_TYPE_PROJECT:
-				return `SG${id}`;
+				// Store the member code: group members carry SG{id}_K in their access
+				// codes, so this is the variant that actually grants the group access
+				// (a bare SG{id} matches no user's codes and would grant nobody).
+				return `SG${id}_K`;
 			default:
 				return '';
 		}

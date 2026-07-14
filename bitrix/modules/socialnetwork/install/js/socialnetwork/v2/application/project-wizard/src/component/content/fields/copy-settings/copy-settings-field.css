@@ -1,0 +1,93 @@
+/* normalize */
+.scn-pw-copy-settings__option-head-action {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+.scn-pw-copy-settings__options { margin: 0; padding: 0; }
+.scn-pw-copy-settings__option { list-style: none; }
+/* normalize end */
+
+.socialnetwork--project-wizard-copy-settings-field {}
+.scn-pw-copy-settings {
+	--whitespace-vertical: var(--ui-space-inline-sm2) ;
+}
+
+.scn-pw-copy-settings .socialnetwork--project-wizard--ui-field_label {}
+
+.scn-pw-copy-settings .socialnetwork--project-wizard--ui-field_field {}
+
+.scn-pw-copy-settings__options {
+	display: flex;
+	flex-direction: column;
+	gap: var(--whitespace-vertical);
+	padding: var(--whitespace-vertical) var(--ui-space-inline-md2);
+}
+
+.scn-pw-copy-settings__option {
+	display: flex;
+	gap: 10px;
+}
+.scn-pw-copy-settings__option.scn-pw-copy-settings__option_active {}
+
+.scn-pw-copy-settings__option-vis {
+	padding: 7px 0 0 0;
+}
+
+.scn-pw-copy-settings__option-checkbox {}
+
+.scn-pw-copy-settings__option-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.scn-pw-copy-settings__option-head {
+	display: flex;
+	gap: 5px;
+	padding: 5px 0 5px 0;
+}
+.scn-pw-copy-settings__option:not(.scn-pw-copy-settings__option_active) .scn-pw-copy-settings__option-head {
+	color: var(--ui-color-base-2);
+}
+
+.scn-pw-copy-settings__option-head-text {}
+
+.scn-pw-copy-settings__option-head-action {
+	--colour-content: var(--ui-color-accent-main-link);
+	position: relative;
+	padding: 0 15px 0 0;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	letter-spacing: inherit;
+	font-weight: inherit;
+	color: var(--colour-content);
+}
+.scn-pw-copy-settings__option-head-action:disabled {
+	--colour-content: var(--ui-color-base-3);
+}
+.scn-pw-copy-settings__option-head-action.scn-pw-copy-settings__option-head-action_opened {}
+
+.scn-pw-copy-settings__option-head-action::after {
+	content: '';
+	position: absolute;
+	right: 3px;
+	top: 50%;
+	border-bottom: 1px solid var(--colour-content);
+	border-left: 1px solid var(--colour-content);
+	width: 6px;
+	height: 6px;
+	transition: transform 0.2s ease-in-out;
+	transform-origin: center center;
+	transform: translate(0, -75%) rotate(-45deg);
+}
+.scn-pw-copy-settings__option-head-action.scn-pw-copy-settings__option-head-action_opened::after {
+	transform: translate(0, -25%) rotate(135deg);
+}
+
+.scn-pw-copy-settings__option-descr {
+	color: var(--ui-color-base-3);
+}

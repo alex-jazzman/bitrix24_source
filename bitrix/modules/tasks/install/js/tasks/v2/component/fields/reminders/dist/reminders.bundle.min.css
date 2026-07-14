@@ -1,1 +1,191 @@
-.tasks-field-reminders{display:flex;flex-direction:column;background:var(--ui-color-base-8);border-radius:var(--ui-border-radius-md)}.tasks-field-reminders-title{display:flex;align-items:center;flex-direction:row;padding:var(--ui-space-inset-sm) var(--ui-space-inset-md2)}.tasks-field-reminders-main{display:flex;align-items:center;cursor:pointer;flex:1}.tasks-field-reminders-main.--readonly{cursor:default}.tasks-field-reminders-main .ui-icon-set{margin-right:var(--ui-space-inline-2xs2);--ui-icon-set__icon-color:var(--ui-color-accent-main-primary)}.tasks-field-reminders-icon{margin-left:auto;--ui-icon-set__icon-size:20px;--ui-icon-set__icon-color:var(--ui-color-base-4);cursor:pointer}.tasks-field-reminders-edit-container{margin-left:auto;align-items:center}.tasks-field-reminders-sheet{height:100%;display:flex;flex-direction:column}.tasks-field-reminders-sheet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ui-space-stack-md2)}.tasks-field-reminders-sheet-close{--ui-icon-set__icon-color:var(--ui-color-base-4);cursor:pointer}.tasks-field-reminders-sheet-content{position:relative;overflow:auto;scrollbar-width:none;height:100%;display:flex;flex-direction:column}.tasks-field-reminders-sheet-footer{display:flex;justify-content:flex-end;gap:var(--ui-space-inline-sm);margin-top:auto;padding:var(--ui-space-inline-xl) 0 0;border-top:var(--ui-border-width-thin) solid var(--ui-color-divider-default)}.tasks-field-reminders-list{display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:100%}.tasks-field-reminders-list-header{position:-webkit-sticky;position:sticky;top:0;display:flex;background:var(--ui-color-bg-content-primary);min-height:32px;border-top:1px solid var(--ui-color-divider-default);border-bottom:1px solid var(--ui-color-divider-default);box-shadow:0 1px 9px rgba(0,0,0,.04);z-index:1}.tasks-field-reminder-sheet{flex:1;display:flex;flex-direction:column;gap:var(--ui-space-stack-sm)}.tasks-field-reminder-sheet-header{display:flex;justify-content:space-between}.tasks-field-reminder-sheet-header .ui-icon-set{--ui-icon-set__icon-color:var(--ui-color-base-4);cursor:pointer}.tasks-field-reminders-row.--header{flex:1;padding:0;height:auto}.tasks-field-reminders-column.--header{gap:var(--ui-space-inline-2xs);--ui-icon-set__icon-size:16px;--ui-icon-set__icon-color:var(--ui-color-base-4)}.tasks-field-reminders-column.--header .ui-text{color:var(--ui-color-base-4)}.tasks-field-reminders-row{display:flex;align-items:center;gap:var(--ui-space-inline-md);height:62px;box-sizing:border-box;border-bottom:1px solid var(--ui-color-divider-default)}.tasks-field-reminders-row:last-child{border-bottom:none}.tasks-field-reminders-column{display:flex;align-items:center;overflow:hidden;white-space:nowrap;--ui-icon-set__icon-size:20px;--ui-icon-set__icon-color:var(--ui-color-base-4)}.tasks-field-reminders-column .ui-text{text-overflow:ellipsis;overflow:hidden}.tasks-field-reminders-column.--via{width:5%}.tasks-field-reminders-column.--date{width:35%}.tasks-field-reminders-column.--recipients{flex:1}.tasks-field-reminders-column.--action{min-width:52px;margin-left:auto;gap:var(--ui-space-inline-sm)}.tasks-field-reminders-column.--action .ui-icon-set{cursor:pointer}.tasks-field-reminders-to{--ui-icon-set__icon-size:20px;--ui-icon-set__icon-color:var(--ui-color-accent-main-primary);display:flex;background:var(--ui-color-accent-soft-blue-2);border-radius:1in;margin-right:var(--ui-space-inline-xs);padding:1px}
+.tasks-field-reminders {
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.tasks-field-reminders-title {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+}
+
+.tasks-field-reminders-main {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	flex: 1;
+}
+
+.tasks-field-reminders-main.--readonly {
+	cursor: default;
+}
+
+.tasks-field-reminders-main .ui-icon-set {
+	margin-right: var(--ui-space-inline-2xs2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-reminders-icon {
+	margin-left: auto;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-edit-container {
+	margin-left: auto;
+	align-items: center;
+}
+
+.tasks-field-reminders-sheet {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+.tasks-field-reminders-sheet-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-sheet-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	margin-top: auto;
+	padding: var(--ui-space-inline-xl) 0 0;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-reminders-list {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+}
+
+.tasks-field-reminders-list-header {
+	position: sticky;
+	top: 0;
+	display: flex;
+	background: var(--ui-color-bg-content-primary);
+	min-height: 32px;
+	border-top: 1px solid var(--ui-color-divider-default);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+	z-index: 1;
+}
+
+.tasks-field-reminders-row.--header {
+	flex: 1;
+	padding: 0;
+	height: auto;
+}
+
+.tasks-field-reminders-column.--header {
+	gap: var(--ui-space-inline-2xs);
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column.--header .ui-text {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+	height: 62px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.tasks-field-reminders-row:last-child {
+	border-bottom: none;
+}
+
+.tasks-field-reminders-column {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	white-space: nowrap;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column .ui-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.tasks-field-reminders-column.--via {
+	width: 5%;
+}
+
+.tasks-field-reminders-column.--date {
+	width: 35%;
+}
+
+.tasks-field-reminders-column.--recipients {
+	flex: 1;
+}
+
+.tasks-field-reminders-column.--action {
+	min-width: 52px;
+	margin-left: auto;
+	gap: var(--ui-space-inline-sm);
+}
+
+.tasks-field-reminders-column.--action .ui-icon-set {
+	cursor: pointer;
+}
+
+.tasks-field-reminders-to {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	display: flex;
+	background: var(--ui-color-accent-soft-blue-2);
+	border-radius: 1in;
+	margin-right: var(--ui-space-inline-xs);
+	padding: 1px;
+}
+
+.tasks-field-reminder-sheet {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-field-reminder-sheet-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-field-reminder-sheet-header .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC8zdHIweUQiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wLzN0cjB5RCIsInNvdXJjZXNDb250ZW50IjpbIi50YXNrcy1maWVsZC1yZW1pbmRlcnMge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xuXHRiYWNrZ3JvdW5kOiB2YXIoLS11aS1jb2xvci1iYXNlLTgpO1xuXHRib3JkZXItcmFkaXVzOiB2YXIoLS11aS1ib3JkZXItcmFkaXVzLW1kKTtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy10aXRsZSB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdHBhZGRpbmc6IHZhcigtLXVpLXNwYWNlLWluc2V0LXNtKSB2YXIoLS11aS1zcGFjZS1pbnNldC1tZDIpO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLW1haW4ge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRjdXJzb3I6IHBvaW50ZXI7XG5cdGZsZXg6IDE7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtbWFpbi4tLXJlYWRvbmx5IHtcblx0Y3Vyc29yOiBkZWZhdWx0O1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLW1haW4gLnVpLWljb24tc2V0IHtcblx0bWFyZ2luLXJpZ2h0OiB2YXIoLS11aS1zcGFjZS1pbmxpbmUtMnhzMik7XG5cdC0tdWktaWNvbi1zZXRfX2ljb24tY29sb3I6IHZhcigtLXVpLWNvbG9yLWFjY2VudC1tYWluLXByaW1hcnkpO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWljb24ge1xuXHRtYXJnaW4tbGVmdDogYXV0bztcblx0LS11aS1pY29uLXNldF9faWNvbi1zaXplOiAyMHB4O1xuXHQtLXVpLWljb24tc2V0X19pY29uLWNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTQpO1xuXHRjdXJzb3I6IHBvaW50ZXI7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtZWRpdC1jb250YWluZXIge1xuXHRtYXJnaW4tbGVmdDogYXV0bztcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy1zaGVldCB7XG5cdGhlaWdodDogMTAwJTtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy1zaGVldC1oZWFkZXIge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47XG5cdG1hcmdpbi1ib3R0b206IHZhcigtLXVpLXNwYWNlLXN0YWNrLW1kMik7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtc2hlZXQtY2xvc2Uge1xuXHQtLXVpLWljb24tc2V0X19pY29uLWNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTQpO1xuXHRjdXJzb3I6IHBvaW50ZXI7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtc2hlZXQtY29udGVudCB7XG5cdHBvc2l0aW9uOiByZWxhdGl2ZTtcblx0b3ZlcmZsb3c6IGF1dG87XG5cdHNjcm9sbGJhci13aWR0aDogbm9uZTtcblx0aGVpZ2h0OiAxMDAlO1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLXNoZWV0LWZvb3RlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGp1c3RpZnktY29udGVudDogZmxleC1lbmQ7XG5cdGdhcDogdmFyKC0tdWktc3BhY2UtaW5saW5lLXNtKTtcblx0bWFyZ2luLXRvcDogYXV0bztcblx0cGFkZGluZzogdmFyKC0tdWktc3BhY2UtaW5saW5lLXhsKSAwIDA7XG5cdGJvcmRlci10b3A6IHZhcigtLXVpLWJvcmRlci13aWR0aC10aGluKSBzb2xpZCB2YXIoLS11aS1jb2xvci1kaXZpZGVyLWRlZmF1bHQpO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWxpc3Qge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xuXHRib3gtc2l6aW5nOiBib3JkZXItYm94O1xuXHR3aWR0aDogMTAwJTtcblx0aGVpZ2h0OiAxMDAlO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWxpc3QtaGVhZGVyIHtcblx0cG9zaXRpb246IHN0aWNreTtcblx0dG9wOiAwO1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRiYWNrZ3JvdW5kOiB2YXIoLS11aS1jb2xvci1iZy1jb250ZW50LXByaW1hcnkpO1xuXHRtaW4taGVpZ2h0OiAzMnB4O1xuXHRib3JkZXItdG9wOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItZGl2aWRlci1kZWZhdWx0KTtcblx0Ym9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLXVpLWNvbG9yLWRpdmlkZXItZGVmYXVsdCk7XG5cdGJveC1zaGFkb3c6IDAgMXB4IDlweCByZ2JhKDAsIDAsIDAsIDAuMDQpO1xuXHR6LWluZGV4OiAxO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLXJvdy4tLWhlYWRlciB7XG5cdGZsZXg6IDE7XG5cdHBhZGRpbmc6IDA7XG5cdGhlaWdodDogYXV0bztcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy1jb2x1bW4uLS1oZWFkZXIge1xuXHRnYXA6IHZhcigtLXVpLXNwYWNlLWlubGluZS0yeHMpO1xuXHQtLXVpLWljb24tc2V0X19pY29uLXNpemU6IDE2cHg7XG5cdC0tdWktaWNvbi1zZXRfX2ljb24tY29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtNCk7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtY29sdW1uLi0taGVhZGVyIC51aS10ZXh0IHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtNCk7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtcm93IHtcblx0ZGlzcGxheTogZmxleDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcblx0Z2FwOiB2YXIoLS11aS1zcGFjZS1pbmxpbmUtbWQpO1xuXHRoZWlnaHQ6IDYycHg7XG5cdGJveC1zaXppbmc6IGJvcmRlci1ib3g7XG5cdGJvcmRlci1ib3R0b206IDFweCBzb2xpZCB2YXIoLS11aS1jb2xvci1kaXZpZGVyLWRlZmF1bHQpO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLXJvdzpsYXN0LWNoaWxkIHtcblx0Ym9yZGVyLWJvdHRvbTogbm9uZTtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy1jb2x1bW4ge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHR3aGl0ZS1zcGFjZTogbm93cmFwO1xuXHQtLXVpLWljb24tc2V0X19pY29uLXNpemU6IDIwcHg7XG5cdC0tdWktaWNvbi1zZXRfX2ljb24tY29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtNCk7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtY29sdW1uIC51aS10ZXh0IHtcblx0dGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7XG5cdG92ZXJmbG93OiBoaWRkZW47XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlcnMtY29sdW1uLi0tdmlhIHtcblx0d2lkdGg6IDUlO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWNvbHVtbi4tLWRhdGUge1xuXHR3aWR0aDogMzUlO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWNvbHVtbi4tLXJlY2lwaWVudHMge1xuXHRmbGV4OiAxO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLWNvbHVtbi4tLWFjdGlvbiB7XG5cdG1pbi13aWR0aDogNTJweDtcblx0bWFyZ2luLWxlZnQ6IGF1dG87XG5cdGdhcDogdmFyKC0tdWktc3BhY2UtaW5saW5lLXNtKTtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVycy1jb2x1bW4uLS1hY3Rpb24gLnVpLWljb24tc2V0IHtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuXG4udGFza3MtZmllbGQtcmVtaW5kZXJzLXRvIHtcblx0LS11aS1pY29uLXNldF9faWNvbi1zaXplOiAyMHB4O1xuXHQtLXVpLWljb24tc2V0X19pY29uLWNvbG9yOiB2YXIoLS11aS1jb2xvci1hY2NlbnQtbWFpbi1wcmltYXJ5KTtcblx0ZGlzcGxheTogZmxleDtcblx0YmFja2dyb3VuZDogdmFyKC0tdWktY29sb3ItYWNjZW50LXNvZnQtYmx1ZS0yKTtcblx0Ym9yZGVyLXJhZGl1czogMWluO1xuXHRtYXJnaW4tcmlnaHQ6IHZhcigtLXVpLXNwYWNlLWlubGluZS14cyk7XG5cdHBhZGRpbmc6IDFweDtcbn1cblxuLnRhc2tzLWZpZWxkLXJlbWluZGVyLXNoZWV0IHtcblx0ZmxleDogMTtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0Z2FwOiB2YXIoLS11aS1zcGFjZS1zdGFjay1zbSk7XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlci1zaGVldC1oZWFkZXIge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47XG59XG5cbi50YXNrcy1maWVsZC1yZW1pbmRlci1zaGVldC1oZWFkZXIgLnVpLWljb24tc2V0IHtcblx0LS11aS1pY29uLXNldF9faWNvbi1jb2xvcjogdmFyKC0tdWktY29sb3ItYmFzZS00KTtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuIl19 */

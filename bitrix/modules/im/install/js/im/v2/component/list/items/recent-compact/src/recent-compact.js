@@ -4,6 +4,7 @@ import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { RecentType } from 'im.v2.const';
 import 'im.v2.css.tokens';
+import 'im.v2.css.classes';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { RecentManager } from 'im.v2.lib.recent';
 import { Utils } from 'im.v2.lib.utils';

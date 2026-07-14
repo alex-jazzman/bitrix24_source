@@ -42,6 +42,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		folderDeleted: 'folderDeleted',
 		folderSorted: 'folderSorted',
 		folderSetChat: 'folderSetChat',
+		marketAppsEmpty: 'marketAppsEmpty',
 	};
 
 	const ToastIconName = {
@@ -58,6 +59,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		[ToastType.folderDeleted]: Icon.CIRCLE_CHECK.getIconName(),
 		[ToastType.folderSorted]: Icon.CIRCLE_CHECK.getIconName(),
 		[ToastType.folderSetChat]: Icon.CIRCLE_CHECK.getIconName(),
+		[ToastType.marketAppsEmpty]: Icon.APPS.getIconName(),
 	};
 
 	const ToastPhrase = {
@@ -79,7 +81,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		},
 		get deleteCollab()
 		{
-			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_COLLAB');
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_PROJECT');
 		},
 		get deleteChannel()
 		{
@@ -172,6 +174,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		get folderSetChat()
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_SET_CHAT');
+		},
+		get marketAppsEmpty()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MARKET_APPS_EMPTY');
 		},
 	};
 

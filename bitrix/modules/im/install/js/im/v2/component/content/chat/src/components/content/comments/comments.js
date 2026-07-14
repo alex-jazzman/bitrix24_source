@@ -22,7 +22,7 @@ export const CommentsContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId">
+		<BaseChatContent :dialogId="dialogId" :withChatContentDisclaimer="false">
 			<template #header>
 				<CommentsHeader :dialogId="dialogId" :channelId="channelId" :key="dialogId" />
 			</template>

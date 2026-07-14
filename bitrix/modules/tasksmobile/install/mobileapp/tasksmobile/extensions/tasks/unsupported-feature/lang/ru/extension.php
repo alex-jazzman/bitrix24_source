@@ -2,6 +2,14 @@
 
 $MESS['TASKS_UNSUPPORTED_FEATURE_OPEN_WEB'] = 'Настроить в веб-версии';
 
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_TITLE'] = 'Потоки — очередь задач с автораспределением';
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_QR_TITLE'] = 'Потоки';
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_TYPICAL_TASKS'] = "Объедините типовые задачи:\nсправки, счета, дизайн";
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_TEAM_LOAD'] = "Руководитель видит загрузку\nкоманды и узкие места";
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_CUSTOMER_VISIBILITY'] = "Заказчик видит исполнителя,\nстатус задачи и сроки";
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_FOOTNOTE'] = 'После настройки доступно в приложении';
+$MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_BUTTON'] = 'Настроить в веб-версии';
+
 $MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_SCRUM_TITLE'] = "Управляйте проектами\nпо скраму";
 $MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_SCRUM_QR_TITLE'] = 'Скрам';
 $MESS['TASKS_UNSUPPORTED_FEATURE_TYPE_SCRUM_ITEM_BACKLOG'] = "Общий бэклог и спринты\nс понятными целями";

@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 
-import { ChatAction } from 'tasks.v2.const';
+import { ChatAction, TaskStatus } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { statusService } from 'tasks.v2.provider.service.status-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -24,6 +24,13 @@ class CompleteTaskAction extends BaseAction
 			throw new Error('Invalid payload');
 		}
 
+		if (this.#isCompleted(payload))
+		{
+			this.#showCompletedHint(payload);
+
+			return;
+		}
+
 		if (!this.hasPermission(payload))
 		{
 			this.#showAccessDeniedHint(payload);
@@ -41,9 +48,21 @@ class CompleteTaskAction extends BaseAction
 		return task && task.rights?.complete === true;
 	}
 
+	#isCompleted(payload: ActionPayload): boolean
+	{
+		const task = taskService.getStoreTask(payload.taskId);
+
+		return [TaskStatus.Completed, TaskStatus.SupposedlyCompleted].includes(task?.status);
+	}
+
 	#showAccessDeniedHint(payload: ActionPayload): void
 	{
 		void chatHint.show(Loc.getMessage('TASKS_V2_CHAT_ACTION_COMPLETE_TASK_NO_PERMISSION'), payload);
+	}
+
+	#showCompletedHint(payload: ActionPayload): void
+	{
+		void chatHint.show(Loc.getMessage('TASKS_V2_CHAT_ACTION_TASK_COMPLETED'), payload);
 	}
 
 	get $store(): Store

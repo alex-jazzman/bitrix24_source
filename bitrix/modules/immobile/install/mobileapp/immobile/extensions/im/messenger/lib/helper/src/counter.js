@@ -95,29 +95,38 @@ jn.define('im/messenger/lib/helper/counter', (require, exports, module) => {
 			return this.state.parentChatId > 0;
 		}
 
+		/**
+		 * @param {string} tabName
+		 * @return {boolean}
+		 */
+		hasTab(tabName)
+		{
+			return this.#tabs.has(tabName);
+		}
+
 		get hasChatTab()
 		{
-			return this.#tabs.has(RecentTab.chat);
+			return this.hasTab(RecentTab.chat);
 		}
 
 		get hasCopilotTab()
 		{
-			return this.#tabs.has(RecentTab.copilot);
+			return this.hasTab(RecentTab.copilot);
 		}
 
 		get hasCollabTab()
 		{
-			return this.#tabs.has(RecentTab.collab);
+			return this.hasTab(RecentTab.collab);
 		}
 
 		get hasOpenlinesTab()
 		{
-			return this.#tabs.has(RecentTab.openlines);
+			return this.hasTab(RecentTab.openlines);
 		}
 
 		get hasTasksTab()
 		{
-			return this.#tabs.has(RecentTab.tasksTask);
+			return this.hasTab(RecentTab.tasksTask);
 		}
 
 		get isMuted()

@@ -25,6 +25,7 @@ export enum UpdatingBlocksEnum {
 	reactionAnimate ='reaction_animate_',
 	withoutUi ='without-ui',
 	aiAnimation ='aiAnimation',
+	actions = 'actions',
 }
 
 export interface ChatWidgetViewInterface extends JNBaseClassInterface {

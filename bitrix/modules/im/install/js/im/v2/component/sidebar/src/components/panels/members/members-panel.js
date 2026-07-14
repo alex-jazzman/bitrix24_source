@@ -58,6 +58,10 @@ export const MembersPanel = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
+		isCollab(): boolean
+		{
+			return this.dialog.type === ChatType.collab;
+		},
 		userDialogIds(): string[]
 		{
 			const users = this.$store.getters['sidebar/members/get'](this.chatId);
@@ -106,11 +110,11 @@ export const MembersPanel = {
 				return false;
 			}
 
-			return this.dialog.type !== ChatType.collab;
+			return !this.isCollab;
 		},
 		addMembersPopupComponent(): BitrixVueComponentProps
 		{
-			return this.dialog.type === ChatType.collab ? AddToCollab : AddToChat;
+			return this.isCollab ? AddToCollab : AddToChat;
 		},
 	},
 	watch:

@@ -3540,8 +3540,6 @@ value=""/>`)));
 	    if (main_core.Type.isArray(this.values)) {
 	      main_core.Event.bind(this.input, 'click', this.onClick.bind(this));
 	      if (this.editable) {
-	        main_core.Event.bind(this.input, 'focus', this.onFocus.bind(this));
-	        main_core.Event.bind(this.input, 'blur', this.onBlur.bind(this));
 	        main_core.Event.bind(this.input, 'keyup', this.onKeyup.bind(this));
 	      } else {
 	        main_core.Event.bind(this.input, 'focus', function () {
@@ -3630,22 +3628,12 @@ value=""/>`)));
 	    main_popup.MenuManager.destroy(this.id);
 	    this.shown = false;
 	  }
-	  onFocus() {
-	    setTimeout(function () {
-	      if (!this.shown) {
-	        this.showPopup();
-	      }
-	    }.bind(this), 200);
-	  }
 	  onClick() {
 	    if (this.shown) {
 	      this.closePopup();
 	    } else {
 	      this.showPopup();
 	    }
-	  }
-	  onBlur() {
-	    setTimeout(this.closePopup.bind(this), 200);
 	  }
 	  onKeyup() {
 	    setTimeout(this.closePopup.bind(this), 50);
@@ -3672,8 +3660,6 @@ value=""/>`)));
 	      main_core.Event.unbind(this.input, 'keyup', this.onChangeCallback);
 	    }
 	    main_core.Event.unbind(this.input, 'click', this.onClick.bind(this));
-	    main_core.Event.unbind(this.input, 'focus', this.onFocus.bind(this));
-	    main_core.Event.unbind(this.input, 'blur', this.onBlur.bind(this));
 	    main_core.Event.unbind(this.input, 'keyup', this.onKeyup.bind(this));
 	    if (this.popupMenu) {
 	      this.popupMenu.close();

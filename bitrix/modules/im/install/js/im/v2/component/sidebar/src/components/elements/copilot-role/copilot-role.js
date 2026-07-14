@@ -1,21 +1,22 @@
-import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
-import { PromoManager } from 'im.v2.lib.promo';
-import { PromoId } from 'im.v2.const';
+import { type JsonObject } from 'main.core';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { CopilotService } from './classes/copilot-service';
+import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
+import { PromoId } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { PromoManager } from 'im.v2.lib.promo';
+import { type ImModelCopilotRole } from 'im.v2.model';
+
+import { CopilotService, type RawRole } from './classes/copilot-service';
 import { ChangeRolePromo } from './components/change-role-promo';
 
 import './css/copilot-role.css';
 
-import type { JsonObject } from 'main.core';
-import type { RawRole } from './classes/copilot-service';
-
 // @vue/component
 export const CopilotRole = {
 	name: 'CopilotRole',
-	components: { ChangeRolePromo, CopilotRolesDialog },
-	props:
-	{
+	components: { ChangeRolePromo, CopilotRolesDialog, BIcon },
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
@@ -28,8 +29,8 @@ export const CopilotRole = {
 			showRolesDialog: false,
 		};
 	},
-	computed:
-	{
+	computed: {
+		OutlineIcons: () => OutlineIcons,
 		chatRole(): ImModelCopilotRole
 		{
 			const chatRole = this.$store.getters['copilot/chats/getRole'](this.dialogId);
@@ -51,6 +52,10 @@ export const CopilotRole = {
 
 			return !needShowAddUsersToChatHint && needToShowChangeRolePromo;
 		},
+		isBitrixGptV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
 	},
 	mounted()
 	{
@@ -64,8 +69,7 @@ export const CopilotRole = {
 		this.showRolesDialog = false;
 		this.shouldShowChangeRolePromo = false;
 	},
-	methods:
-	{
+	methods: {
 		handleChangeRole()
 		{
 			this.showRolesDialog = true;
@@ -90,12 +94,24 @@ export const CopilotRole = {
 	template: `
 		<div class="bx-im-sidebar-copilot-role__container" @click="handleChangeRole" ref="change-role">
 			<div class="bx-im-sidebar-copilot-role__title">
-				<div class="bx-im-sidebar-copilot-role__title-icon"></div>
-				<div class="bx-im-sidebar-copilot-role__title-text">
+				<BIcon
+					v-if="isBitrixGptV2Available"
+					:name="OutlineIcons.BITRIX_GPT"
+					class="bx-im-sidebar-copilot-role__bgpt-icon"
+				/>
+				<div v-else class="bx-im-sidebar-copilot-role__title-icon"></div>
+				<div
+					:class="{'--bgpt-v2': isBitrixGptV2Available}"
+					class="bx-im-sidebar-copilot-role__title-text"
+				>
 					{{ roleName }}
 				</div>
 			</div>
-			<div class="bx-im-sidebar-copilot-role__arrow-icon"></div>
+			<BIcon
+				:name="OutlineIcons.CHEVRON_RIGHT_M"
+				:hoverable="true"
+				class="bx-im-sidebar-copilot-role__arrow-icon"
+			/>
 			<ChangeRolePromo 
 				v-if="shouldShowChangeRolePromo"
 				:bindElement="$refs['change-role']"

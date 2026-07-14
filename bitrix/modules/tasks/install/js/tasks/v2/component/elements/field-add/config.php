@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/field-add.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.icon-set.api.vue',
 		'tasks.v2.component.elements.hover-pill',
+		'ui.icon-set.api.vue',
 	],
 	'skip_core' => true,
 ];

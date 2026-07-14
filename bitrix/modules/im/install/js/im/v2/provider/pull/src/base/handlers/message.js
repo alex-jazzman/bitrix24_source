@@ -27,9 +27,9 @@ import {
 	type MessageDeleteCompletePreparedParams,
 	type PrepareDeleteMessageParams,
 	type RawReaction,
-	type BuilderBlockAppendParams,
-	type BuilderBlockDeleteParams,
-	type BuilderBlockUpdateParams,
+	type MessageBlockElementAppendParams,
+	type MessageBlockElementDeleteParams,
+	type MessageBlockElementUpdateParams,
 } from '../../types/message';
 import { MessageDeleteManager } from './classes/message-delete-manager';
 import { NewMessageManager } from '../../classes/new-message-manager';
@@ -263,28 +263,30 @@ export class MessagePullHandler
 		});
 	}
 
-	handleBuilderBlockAppend(params: BuilderBlockAppendParams)
+	handleMessageBlockElementAppend(params: MessageBlockElementAppendParams)
 	{
-		Logger.warn('MessagePullHandler: handleBuilderBlockAppend', params);
-		const { block, messageId, text, chatId } = params;
-		void this.#store.dispatch('messages/builder/appendBlock', { messageId, block });
+		Logger.warn('MessagePullHandler: handleMessageBlockElementAppend', params);
+		const { element, messageId, text, chatId, files } = params;
+		void this.#store.dispatch('messages/builder/appendBlock', { messageId, block: element });
 		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
+		void this.#store.dispatch('files/set', files);
 		this.#sendScrollEvent(chatId, DialogScrollThreshold.halfScreenUp);
 	}
 
-	handleBuilderBlockUpdate(params: BuilderBlockUpdateParams)
+	handleMessageBlockElementUpdate(params: MessageBlockElementUpdateParams)
 	{
-		Logger.warn('MessagePullHandler: handleBuilderBlockUpdate', params);
-		const { block, blockId, messageId, text } = params;
-		void this.#store.dispatch('messages/builder/updateBlock', { messageId, blockId, block });
+		Logger.warn('MessagePullHandler: handleMessageBlockElementUpdate', params);
+		const { element, elementId, messageId, text, files } = params;
+		void this.#store.dispatch('messages/builder/updateBlock', { messageId, blockId: elementId, block: element });
 		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
+		void this.#store.dispatch('files/set', files);
 	}
 
-	handleBuilderBlockDelete(params: BuilderBlockDeleteParams)
+	handleMessageBlockElementDelete(params: MessageBlockElementDeleteParams)
 	{
-		Logger.warn('MessagePullHandler: builderBlockDelete', params);
-		const { blockId, messageId, text } = params;
-		void this.#store.dispatch('messages/builder/deleteBlock', { messageId, blockId });
+		Logger.warn('MessagePullHandler: handleMessageBlockElementDelete', params);
+		const { elementId, messageId, text } = params;
+		void this.#store.dispatch('messages/builder/deleteBlock', { messageId, blockId: elementId });
 		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
 	}
 

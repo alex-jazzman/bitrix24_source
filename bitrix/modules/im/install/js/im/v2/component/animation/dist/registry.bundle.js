@@ -107,7 +107,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		props: {
 			duration: {
 				type: Number,
-				default: 300
+				default: 200
 			},
 			entrySide: {
 				type: String,
@@ -205,6 +205,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.FadeAnimation = FadeAnimation;
 	exports.SidebarAnimation = SidebarAnimation;
 	exports.SlideAnimation = SlideAnimation;
+	exports.SlideEntrySide = EntrySide;
 
 })(this.BX.Messenger.v2.Component.Animation = this.BX.Messenger.v2.Component.Animation || {}, BX);
 //# sourceMappingURL=registry.bundle.js.map

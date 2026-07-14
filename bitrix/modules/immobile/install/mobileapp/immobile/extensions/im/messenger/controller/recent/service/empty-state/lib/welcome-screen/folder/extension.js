@@ -1,12 +1,14 @@
 /**
  * @module im/messenger/controller/recent/service/empty-state/lib/welcome-screen/folder
  */
-jn.define(
-	'im/messenger/controller/recent/service/empty-state/lib/welcome-screen/folder',
-	(require, exports, module) => {
+jn.define('im/messenger/controller/recent/service/empty-state/lib/welcome-screen/folder',(require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 	const { WelcomeScreen } = require('im/messenger/lib/widget/chat-recent/welcome-screen');
 
+	/**
+	 * @implements IWelcomeScreen
+	 * @class FolderWelcomeScreen
+	 */
 	class FolderWelcomeScreen
 	{
 		constructor()
@@ -22,8 +24,17 @@ jn.define(
 		{
 			return this.welcomeScreen.toChatRecentWidgetItem();
 		}
+
+		isLayoutComponentSupported()
+		{
+			return false;
+		}
+
+		toLayoutComponent()
+		{
+			return undefined;
+		}
 	}
 
 	module.exports = FolderWelcomeScreen;
-	},
-);
+});

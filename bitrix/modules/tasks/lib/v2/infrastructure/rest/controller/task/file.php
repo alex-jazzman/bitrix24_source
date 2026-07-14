@@ -1,0 +1,84 @@
+<?php
+
+namespace Bitrix\Tasks\V2\Infrastructure\Rest\Controller\Task;
+
+use Bitrix\Main\Command\Exception\CommandValidationException;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Rest\V3\Controller\RestController;
+use Bitrix\Rest\V3\Exception\AccessDeniedException;
+use Bitrix\Rest\V3\Exception\Validation\InvalidRequestFieldTypeException;
+use Bitrix\Rest\V3\Exception\Validation\RequestValidationException;
+use Bitrix\Rest\V3\Interaction\Response\BooleanResponse;
+use Bitrix\Tasks\V2\Infrastructure\Rest\Controller\ActionFilter\IsEnabledFilter;
+use Bitrix\Tasks\V2\Internal\Access\Context\Context;
+use Bitrix\Tasks\V2\Internal\Access\Task\Attachment\Permission\Attach;
+use Bitrix\Tasks\V2\Internal\Entity\Task as TaskEntity;
+use Bitrix\Tasks\V2\Public\Command\Task\Attachment\AttachFilesCommand;
+
+class File extends RestController
+{
+	protected ?Context $context = null;
+
+	protected int $userId;
+
+	protected function init(): void
+	{
+		$this->userId = (int)CurrentUser::get()->getId();
+		$this->context = new Context($this->userId);
+
+		parent::init();
+	}
+
+	protected function getDefaultPreFilters(): array
+	{
+		return [
+			...parent::getDefaultPreFilters(),
+			new IsEnabledFilter(),
+		];
+	}
+
+	public function attachAction(int $taskId, array $fileIds): BooleanResponse
+	{
+		$task = TaskEntity::mapFromId($taskId);
+		$accessProvider = new Attach();
+		if (!$accessProvider->check($task, $this->context))
+		{
+			throw new AccessDeniedException();
+		}
+
+		foreach ($fileIds as $fileId)
+		{
+			if (gettype($fileId) !== 'integer')
+			{
+				throw new InvalidRequestFieldTypeException('fileIds', 'integer');
+			}
+		}
+
+		$commandFileIds = [];
+
+		foreach ($fileIds as $fileId)
+		{
+			$commandFileIds[] = 'n' . $fileId;
+		}
+
+		try
+		{
+			$result = (new AttachFilesCommand(
+				taskId: $task->id,
+				userId: $this->userId,
+				fileIds: $commandFileIds,
+			))->run();
+		}
+		catch (CommandValidationException $exception)
+		{
+			throw new RequestValidationException($exception->getValidationErrors());
+		}
+
+		if (!$result->isSuccess())
+		{
+			throw new RequestValidationException($result->getErrors());
+		}
+
+		return new BooleanResponse();
+	}
+}

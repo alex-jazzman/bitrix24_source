@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 	const { Feature: MobileFeature } = require('feature');
+	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { NativeFeatureWrapper } = require('im/messenger/lib/src/native-feature');
 
@@ -208,6 +209,12 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		{
 			return Feature.isBitrixGptV2Available
 				&& Feature.nativeFeature.isFeatureEnabled('bitrix_gpt_brand_v1');
+		}
+
+		static get isAvatarRadialGradientEnabled()
+		{
+			return Feature.isBitrixGptV2Available
+				&& Feature.nativeFeature?.isFeatureEnabled('avatar_radial_gradient');
 		}
 
 		static showUnsupportedWidget(options = {}, parentWidget = PageManager)
@@ -457,8 +464,7 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isAiAssistantMCPSelectorAvailable()
 		{
 			return this.isAssistantButtonsSupported
-				&& MessengerParams.getImFeatures().aiAssistantMcpSelectorAvailable
-				&& MessengerParams.isAiAssistantMcpSelectorAvailable();
+				&& MessengerParams.getImFeatures().aiAssistantMcpSelectorAvailable;
 		}
 
 		static get isMarkdownParserEnabled()
@@ -496,19 +502,39 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.getTasksRecentListAvailable();
 		}
 
+		static get isAiAssistantFeedbackAvailable()
+		{
+			return MessengerParams.getImFeatures().isAiAssistantFeedbackAvailable;
+		}
+
+		static get isAiAssistantRegenerateAvailable()
+		{
+			return MessengerParams.getImFeatures().isAiAssistantRegenerateAvailable;
+		}
+
 		static get isCopilotMCPButtonAvailable()
 		{
-			return MessengerParams.getCopilotMCPButtonAvailable();
+			return MessengerParams.getImFeatures().aiAssistantMcpSelectorAvailable;
 		}
 
 		static get isSearchModeButtonAvailable()
 		{
-			return MessengerParams.getSearchModeButtonAvailable();
+			const features = MessengerParams.getImFeatures();
+
+			return features.isCopilotForceSearchAvailable
+				&& features.isCopilotWebSearchEnabledByAdmin;
 		}
 
 		static get isAgentButtonAvailable()
 		{
-			return MessengerParams.getAgentButtonAvailable();
+			return MessengerParams.getImFeatures().isAiAssistantAgentModeAvailable;
+		}
+
+		static get isAssistantMarketButtonAvailable()
+		{
+			return this.isAssistantButtonsSupported
+				&& Feature.nativeFeature?.isFeatureEnabled('chat_mention_actions')
+				&& MessengerParams.isMarketAvailable();
 		}
 
 		static get isNativeStickerMessageSupported()
@@ -519,6 +545,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isEmptyFilterIconSupported()
 		{
 			return Feature.nativeFeature?.isFeatureEnabled('ws_empty_filter') ?? false;
+		}
+
+		static get isWelcomeScreenLayoutComponentSupported()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('welcome_screen_layout_component') ?? false;
 		}
 
 		static get isRecentFilterAvailable()
@@ -542,12 +573,12 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature?.isFeatureEnabled('footnote_message_id') ?? false;
 		}
 
-		static get isBuilderMessageAvailable()
+		static get isBlockMessageAvailable()
 		{
-			return MessengerParams.getImFeatures().isMessageBuilderAvailable && this.isBuilderMessageSupported;
+			return MessengerParams.getImFeatures().isMessageBuilderAvailable && this.isBlockMessageSupported;
 		}
 
-		static get isBuilderMessageSupported()
+		static get isBlockMessageSupported()
 		{
 			return Feature.nativeFeature.isFeatureEnabled('chat_builder');
 		}
@@ -595,9 +626,19 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.isExternalChatMessageForwardingAvailable();
 		}
 
+		static get isMessageActionsSupported()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('chat_message_actions_v1') ?? false;
+		}
+
 		static get isSystemMessageStyleSupported()
 		{
 			return Feature.nativeFeature?.isFeatureEnabled('chat_additional_styles') ?? false;
+		}
+
+		static get isRecentMultiBadgeAvailable()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_recent_multi_badge');
 		}
 
 		static get isChatFoldersAvailable()

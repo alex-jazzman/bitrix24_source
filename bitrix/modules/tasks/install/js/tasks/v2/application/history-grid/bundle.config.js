@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/history-grid.bundle.js',
 	namespace: 'BX.Tasks.V2.Application',
 	browserslist: true,
-	minification: true,
 };

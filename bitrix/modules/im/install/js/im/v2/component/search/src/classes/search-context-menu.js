@@ -53,10 +53,14 @@ export class SearchContextMenu extends RecentMenu
 			return null;
 		}
 
+		let title = Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT');
+		if (this.isChannel())
+		{
+			title = Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL');
+		}
+
 		return {
-			title: this.isOpenChat()
-				? Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT')
-				: Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL'),
+			title,
 			onClick: () => {
 				this.chatService.joinChat(dialogId);
 				this.menuInstance.close();

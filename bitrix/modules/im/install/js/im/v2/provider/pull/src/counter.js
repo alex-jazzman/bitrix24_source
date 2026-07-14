@@ -115,14 +115,16 @@ export class CounterPullHandler
 	handleRecentUpdate(params: RecentUpdateParams)
 	{
 		const { chat, recentConfig } = params;
+		const { id: chatId, parent_chat_id: parentChatId, mute_list: muteList } = chat;
+
+		const isMuted = muteList[Core.getUserId()] === true;
 
 		// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
-		const counterItem: ImModelCounter = {
-			chatId: chat.id,
-			isMarkedAsUnread: false,
-			isMuted: false,
-			parentChatId: chat.parent_chat_id,
+		const counterItem: Partial<ImModelCounter> = {
+			chatId,
+			parentChatId,
 			recentSections: recentConfig.sections,
+			isMuted,
 		};
 
 		void Core.getStore().dispatch('counters/setCounters', [counterItem]);

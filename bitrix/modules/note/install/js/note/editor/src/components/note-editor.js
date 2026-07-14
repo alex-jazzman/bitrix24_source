@@ -325,6 +325,7 @@ export const DocumentEditorComponent = {
 					uploadService,
 					provider: this.provider,
 					user: this.normalizedCurrentUser,
+					documentId: this.documentId,
 				}),
 				...extraExtensions,
 			];

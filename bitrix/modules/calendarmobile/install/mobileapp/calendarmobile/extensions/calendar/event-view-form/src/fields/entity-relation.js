@@ -7,6 +7,7 @@ jn.define('calendar/event-view-form/fields/entity-relation', (require, exports, 
 	const { NotifyManager } = require('notify-manager');
 	const { Text5 } = require('ui-system/typography/text');
 	const { inAppUrl } = require('in-app-url');
+	const { requireLazy } = require('require-lazy');
 
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { Icon, IconView } = require('ui-system/blocks/icon');

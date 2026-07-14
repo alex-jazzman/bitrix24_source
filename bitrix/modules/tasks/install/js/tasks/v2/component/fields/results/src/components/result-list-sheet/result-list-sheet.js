@@ -222,7 +222,7 @@ export const ResultListSheet = {
 		{
 			const { taskId, resultId } = event.getData();
 
-			if (this.taskId !== taskId || !this.isShown)
+			if (this.taskId !== taskId)
 			{
 				return;
 			}

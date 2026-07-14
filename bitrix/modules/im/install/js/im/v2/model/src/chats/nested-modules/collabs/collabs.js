@@ -1,13 +1,9 @@
-import { BuilderModel } from 'ui.vue3.vuex';
-import { Type } from 'main.core';
+import { BuilderModel, type ActionTree, type MutationTree, type GetterTree } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
 
-import { formatFieldsWithConfig } from 'im.v2.model';
+import { formatFieldsWithConfig, type ImModelCollabInfo } from 'im.v2.model';
 
 import { collabFieldsConfig } from './format/field-config';
-
-import type { JsonObject } from 'main.core';
-import type { ActionTree, MutationTree, GetterTree } from 'ui.vue3.vuex';
-import type { ImModelCollabInfo } from 'im.v2.model';
 
 type CollabsState = {
 	collection: {

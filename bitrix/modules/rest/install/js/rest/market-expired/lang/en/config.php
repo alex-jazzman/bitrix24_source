@@ -46,3 +46,4 @@ $MESS["REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_MARKET_PLUS"] = "Your Marke
 $MESS["REST_MARKET_EXPIRED_POPUP_TITLE_WARNING"] = "Bitrix24 Market important service annoucement";
 $MESS["REST_MARKET_EXPIRED_POPUP_WARNING_DESCRIPTION"] = "If you already have integrations set up but do not have a subscription, they will stop working from #DATE#. To avoid disruptions, you can subscribe right now.";
 $MESS["REST_MARKET_EXPIRED_POPUP_WARNING_DESCRIPTION_DEMO"] = "If you already have integrations set up but do not have a subscription, they will stop working from #DATE#. To avoid disruptions, you can activate a free 15-day trial period and subscribe during this time.";
+

@@ -5,12 +5,17 @@ import type { GroupDto, StageDto } from './types';
 
 export function mapDtoToModel(groupDto: GroupDto): GroupModel
 {
+	const stagesIds = (Type.isArray(groupDto.stages) ? groupDto.stages : [])
+		.map((stage) => Number(stage.id) || 0)
+		.filter((id) => id > 0)
+	;
+
 	return {
 		id: groupDto.id,
 		name: groupDto.name,
 		image: groupDto.image?.src,
 		type: groupDto.type,
-		stagesIds: groupDto.stages?.map(({ id }) => id),
+		stagesIds,
 	};
 }
 

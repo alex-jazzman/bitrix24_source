@@ -1,5 +1,4 @@
 import Item from './item';
-import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
 
 export default class ItemSharing extends Item
 {
@@ -7,33 +6,45 @@ export default class ItemSharing extends Item
 	{
 		super(trackedObjectId, itemData);
 
-		const object = {
-			id: itemData['dataset']['objectId'],
-			name: itemData['dataset']['objectName'],
-		}
+		const dataset = itemData.dataset || {};
+		const objectId = dataset.objectId;
+		const objectName = dataset.objectName;
+		const mode = dataset.type;
+		const supportsSharingAccessPopup = dataset.supportsSharingAccessPopup === 'true';
 
 		this.data['onclick'] = () => {
 			this.emit('close');
 
-			switch (this.data['dataset']['type'])
+			if (!supportsSharingAccessPopup)
 			{
-				case SharingControlType.WITH_CHANGE_RIGHTS:
-					(new LegacyPopup()).showSharingDetailWithChangeRights({
-						object: object
+				const legacyMethodByMode = {
+					'without-edit': 'showSharingDetailWithoutEdit',
+					'with-change-rights': 'showSharingDetailWithChangeRights',
+					'with-sharing': 'showSharingDetailWithSharing',
+				};
+				const legacyMethod = legacyMethodByMode[mode] ?? 'showSharingDetailWithChangeRights';
+
+				BX.Runtime.loadExtension('disk.sharing-legacy-popup').then(({ LegacyPopup }) => {
+					const popup = new LegacyPopup();
+					popup[legacyMethod]({
+						object: {
+							id: Number(objectId),
+							name: objectName,
+							isFolder: false,
+						},
 					});
-					break;
-				case SharingControlType.WITH_SHARING:
-					(new LegacyPopup()).showSharingDetailWithChangeRights({
-						object: object
-					});
-					break;
-				case SharingControlType.WITHOUT_EDIT:
-					(new LegacyPopup()).showSharingDetailWithoutEdit({
-						object: object
-					});
-					break;
+				});
+
+				return;
 			}
-		}
+
+			BX.Runtime.loadExtension('disk.sharing-access-popup').then(({ SharingPopupDialog }) => {
+				const popup = new SharingPopupDialog();
+				popup.open({
+					objectId: Number(objectId),
+				});
+			});
+		};
 	}
 
 	static detect(itemData)
@@ -41,4 +52,3 @@ export default class ItemSharing extends Item
 		return itemData['id'] === 'sharing';
 	}
 }
-

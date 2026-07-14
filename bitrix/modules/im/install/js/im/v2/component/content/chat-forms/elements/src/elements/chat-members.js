@@ -8,7 +8,7 @@ import {
 
 import { Core } from 'im.v2.application.core';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { SelectorEntity } from 'im.v2.const';
+import { SelectorEntity, type SelectorEntityItem } from 'im.v2.const';
 
 import './css/chat-members.css';
 
@@ -26,7 +26,7 @@ export const ChatMembersSelector = {
 		},
 		undeselectedItems: {
 			type: Array,
-			default(): [[string, number | string]] {
+			default(): SelectorEntityItem[] {
 				return [[SelectorEntity.user, Core.getUserId()]];
 			},
 		},
@@ -125,7 +125,7 @@ export const ChatMembersSelector = {
 			const selectedItems: SelectorItem[] = dialog.getSelectedItems();
 			this.$emit('membersChange', selectedItems.map((item) => this.prepareTag(item)));
 		},
-		prepareTag(tag: SelectorItem): [string, number | string]
+		prepareTag(tag: SelectorItem): SelectorEntityItem
 		{
 			return [tag.getEntityId(), tag.getId()];
 		},

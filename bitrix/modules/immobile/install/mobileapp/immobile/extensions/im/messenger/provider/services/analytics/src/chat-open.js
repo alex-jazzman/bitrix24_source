@@ -12,7 +12,7 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 	} = require('im/messenger/const');
 
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
@@ -104,7 +104,7 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					analytics.setP4(AnalyticsHelper.getFormattedParentChatId(chatData.parentChatId));
 				}
 
-				if (chatHelper.isCopilot)
+				if (chatHelper.isCopilot && !Feature.isBitrixGptV2Enabled)
 				{
 					const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
 					if (copilotMainRole)
@@ -112,7 +112,7 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 						analytics.setP4(AnalyticsHelper.getCopilotRole(copilotMainRole.code));
 					}
 				}
-				else
+				else if (!chatHelper.isCopilot)
 				{
 					const p3 = (chatData.role === UserRole.guest || chatData.role === UserRole.none)
 						? Analytics.P3.isMemberN

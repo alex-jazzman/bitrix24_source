@@ -1,1 +1,248 @@
-this.BX=this.BX||{},this.BX.Intranet=this.BX.Intranet||{},function(t,e,n,i,s,r){"use strict";var a,o,l,c,d,u,h,_,p,g,T,b;function m(t,e,n){v(t,e),e.set(t,n)}function v(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")}function E(t,e){return t.get(L(t,e))}function L(t,e,n){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:n;throw new TypeError("Private element is not present on this object")}var S=new WeakMap,N=new WeakMap,w=new WeakSet;function I(){return E(S,this).remember("header-container",()=>{e.Event.bind(L(w,this,A).call(this),"click",()=>{e.Dom.toggleClass(L(w,this,O).call(this),"--show"),e.Dom.toggleClass(L(w,this,R).call(this),"--show")});return e.Tag.render(a||(a=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="intranet-user-otp-list__section-row-header-wrapper">\n\t\t\t\t\t<div class="intranet-user-otp-list__section-row-header">\n\t\t\t\t\t\t<div class="intranet-user-otp-list__row-label ui-text --md">\n\t\t\t\t\t\t\t<span class="ui-icon-set --o-note"></span>\n\t\t\t\t\t\t\t',"\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t",'\n\t\t\t\t\t</div>\n\t\t\t\t\t<p class="intranet-user-otp-list__section-row-description">\n\t\t\t\t\t\t','\n\t\t\t\t\t</p>\n\t\t\t\t\t<a onclick="','" class="intranet-user-otp-list__section-row-link ui-link ui-link-secondary ui-link-dashed">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t"])),e.Loc.getMessage("INTRANET_USER_OTP_LIST_RECOVERED_CODES"),L(w,this,A).call(this),e.Loc.getMessage("INTRANET_USER_OTP_LIST_CODE_DESCRIPTION"),t=>{t.preventDefault(),top.BX.Helper.show("redirect=detail&code=26676294")},e.Loc.getMessage("INTRANET_USER_OTP_LIST_MORE_BTN"))})}function R(){return E(S,this).remember("body-container",()=>e.Tag.render(o||(o=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div id="row-content" class="intranet-user-otp-list__section-row-content">\n\t\t\t\t\t<div class="intranet-user-otp-list__section-row-content-wrapper">\n\t\t\t\t\t\t<div class="intranet-user-otp-list__section-row-divider"></div>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])),E(N,this).codes.length>0?L(w,this,f).call(this):L(w,this,U).call(this)))}function A(){return E(S,this).remember("status-container",()=>e.Tag.render(l||(l=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div id="row-status" class="intranet-user-otp-list__row-status intranet-user-otp-list__row-status--clickable">\n\t\t\t\t\t',"\n\t\t\t\t\t","\n\t\t\t\t</div>\n\t\t\t"])),L(w,this,D).call(this),L(w,this,O).call(this)))}function D(){let t=null,n=null;E(N,this).codes.length>0?(t=e.Tag.render(c||(c=babelHelpers.taggedTemplateLiteral(['<div class="ui-icon-set --o-circle-check"></div>']))),n=e.Loc.getMessage("INTRANET_USER_OTP_LIST_RECOVERED_CODES_COUNT",{"#COUNT#":E(N,this).codes.length})):(t=e.Tag.render(d||(d=babelHelpers.taggedTemplateLiteral(['<div class="ui-icon-set --o-alert-accent"></div>']))),n=e.Loc.getMessage("INTRANET_USER_OTP_LIST_RECOVERED_CODES_ENDED"));const i=e.Tag.render(u||(u=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="intranet-user-otp-list__row-value ui-text --md">\n\t\t\t\t',"\n\t\t\t</div>\n\t\t"])),n);return e.Dom.prepend(t,i),i}function O(){return E(S,this).remember("chevron",()=>e.Tag.render(h||(h=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div id="row-chevron" class="ui-icon-set --chevron-down-s"></div>\n\t\t\t']))))}function f(){return E(S,this).remember("recovery-codes-list",()=>e.Tag.render(_||(_=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="intranet-otp-codes">\n\t\t\t\t\t',"\n\t\t\t\t\t","\n\t\t\t\t</div>\n\t\t\t"])),L(w,this,B).call(this),L(w,this,C).call(this)))}function B(){return E(S,this).remember("recovery-codes-grid",()=>{const t=e.Tag.render(p||(p=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<ol class="intranet-otp-codes__grid ui-alert ui-alert-primary"/>\n\t\t\t'])));return L(w,this,y).call(this,t),t})}function y(t){E(N,this).codes.forEach(n=>{e.Dom.append(e.Tag.render(g||(g=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<li class="ui-text --sm intranet-otp-codes__grid-item">\n\t\t\t\t\t',"\n\t\t\t\t</li>\n\t\t\t"])),e.Text.encode(n.VALUE)),t)})}function C(){return E(S,this).remember("buttons-container",()=>e.Tag.render(T||(T=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="intranet-otp-codes__button-section">\n\t\t\t\t\t<div class="intranet-otp-codes__button-container">\n\t\t\t\t\t\t',"\n\t\t\t\t\t\t",'\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="intranet-otp-codes__button-container">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])),L(w,this,k).call(this).render(),L(w,this,P).call(this).render(),L(w,this,M).call(this).render()))}function k(){return E(S,this).remember("print-button",()=>new n.Button({text:e.Loc.getMessage("INTRANET_USER_OTP_LIST_PRINT_BTN"),size:n.Button.Size.SMALL,style:n.AirButtonStyle.PLAIN_NO_ACCENT,useAirDesign:!0,icon:i.Outline.PRINTER,onclick:()=>{r.SidePanel.Instance.open("/bitrix/templates/bitrix24/components/bitrix/security.user.recovery.codes/push/print.php"),L(w,this,X).call(this,"print_codes_click")}}))}function P(){return E(S,this).remember("download-button",()=>new n.Button({text:e.Loc.getMessage("INTRANET_USER_OTP_LIST_DOWNLOAD_BTN"),size:n.Button.Size.SMALL,style:n.AirButtonStyle.PLAIN_NO_ACCENT,useAirDesign:!0,icon:i.Outline.DOWNLOAD,tag:n.Button.Tag.LINK,link:E(N,this).downloadLink,onclick:()=>{L(w,this,X).call(this,"install_codes_click")}}))}function M(){return E(S,this).remember("reload-button",()=>new n.Button({text:e.Loc.getMessage("INTRANET_USER_OTP_LIST_RELOAD_BTN"),size:n.Button.Size.SMALL,style:n.AirButtonStyle.PLAIN_ACCENT,useAirDesign:!0,icon:i.Outline.REFRESH,onclick:t=>{L(w,this,X).call(this,"refresh_code_click","security"),t.setWaiting(!0),L(w,this,x).call(this).then(()=>{t.setWaiting(!1)})}}))}function U(){return E(S,this).remember("button-stub",()=>e.Tag.render(b||(b=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="intranet-otp-codes__button-section">\n\t\t\t\t\t',"\n\t\t\t\t</div>\n\t\t\t"])),L(w,this,H).call(this).render()))}function H(){return E(S,this).remember("stub-reload-button",()=>new n.Button({text:e.Loc.getMessage("INTRANET_USER_OTP_LIST_RELOAD_BTN"),size:n.Button.Size.MEDIUM,style:n.AirButtonStyle.FILLED,useAirDesign:!0,icon:i.Outline.REFRESH,wide:!0,onclick:t=>{L(w,this,X).call(this,"refresh_code_click","baloon"),t.setWaiting(!0),L(w,this,x).call(this).then(()=>{t.setWaiting(!1),e.Dom.replace(L(w,this,U).call(this),L(w,this,f).call(this))})}}))}function x(){return new Promise((t,n)=>{e.ajax.runComponentAction("bitrix:security.user.recovery.codes","regenerateRecoveryCodes",{mode:"ajax"}).then(n=>{E(N,this).codes=n.data,e.Dom.clean(L(w,this,B).call(this)),L(w,this,y).call(this,L(w,this,B).call(this)),t()}).catch(t=>{n(t)})})}function X(t){let e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:null;const n={tool:"user_settings",category:"security",event:t};e&&(n.c_section=e),s.sendData(n)}t.RecoveryCodes=class{constructor(t){var n,i;v(n=this,i=w),i.add(n),m(this,S,new e.Cache.MemoryCache),m(this,N,void 0),function(t,e,n){t.set(L(t,e),n)}(N,this,t)}renderTo(t){e.Dom.append(L(w,this,I).call(this),t),e.Dom.append(L(w,this,R).call(this),t)}}}(this.BX.Intranet.Security=this.BX.Intranet.Security||{},BX,BX.UI,BX.UI.IconSet,BX.UI.Analytics,BX.SidePanel);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Intranet = this.BX.Intranet || {};
+(function (exports, main_core, ui_buttons, ui_iconSet_api_core, ui_analytics, main_sidepanel) {
+	'use strict';
+
+	class RecoveryCodes {
+		#cache = new main_core.Cache.MemoryCache();
+		#options;
+		constructor(options) {
+			this.#options = options;
+		}
+		renderTo(element) {
+			main_core.Dom.append(this.#getHeaderContainer(), element);
+			main_core.Dom.append(this.#getBodyContainer(), element);
+		}
+		#getHeaderContainer() {
+			return this.#cache.remember('header-container', () => {
+				main_core.Event.bind(this.#getStatusContainer(), 'click', () => {
+					main_core.Dom.toggleClass(this.#getChevron(), '--show');
+					main_core.Dom.toggleClass(this.#getBodyContainer(), '--show');
+				});
+				const onclick = event => {
+					event.preventDefault();
+					top.BX.Helper.show('redirect=detail&code=26676294');
+				};
+				return main_core.Tag.render`
+				<div class="intranet-user-otp-list__section-row-header-wrapper">
+					<div class="intranet-user-otp-list__section-row-header">
+						<div class="intranet-user-otp-list__row-label ui-text --md">
+							<span class="ui-icon-set --o-note"></span>
+							${main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_RECOVERED_CODES')}
+						</div>
+						${this.#getStatusContainer()}
+					</div>
+					<p class="intranet-user-otp-list__section-row-description">
+						${main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_CODE_DESCRIPTION')}
+					</p>
+					<a onclick="${onclick}" class="intranet-user-otp-list__section-row-link ui-link ui-link-secondary ui-link-dashed">
+						${main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_MORE_BTN')}
+					</p>
+				</div>
+			`;
+			});
+		}
+		#getBodyContainer() {
+			return this.#cache.remember('body-container', () => {
+				return main_core.Tag.render`
+				<div id="row-content" class="intranet-user-otp-list__section-row-content">
+					<div class="intranet-user-otp-list__section-row-content-wrapper">
+						<div class="intranet-user-otp-list__section-row-divider"></div>
+						${this.#options.codes.length > 0 ? this.#getBodyContent() : this.#getButtonStub()}
+					</div>
+				</div>
+			`;
+			});
+		}
+		#getStatusContainer() {
+			return this.#cache.remember('status-container', () => {
+				return main_core.Tag.render`
+				<div id="row-status" class="intranet-user-otp-list__row-status intranet-user-otp-list__row-status--clickable">
+					${this.#getRemainderCodes()}
+					${this.#getChevron()}
+				</div>
+			`;
+			});
+		}
+		#getRemainderCodes() {
+			let icon = null;
+			let text = null;
+			if (this.#options.codes.length > 0) {
+				icon = main_core.Tag.render`<div class="ui-icon-set --o-circle-check"></div>`;
+				text = main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_RECOVERED_CODES_COUNT', {
+					'#COUNT#': this.#options.codes.length
+				});
+			} else {
+				icon = main_core.Tag.render`<div class="ui-icon-set --o-alert-accent"></div>`;
+				text = main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_RECOVERED_CODES_ENDED');
+			}
+			const container = main_core.Tag.render`
+			<div class="intranet-user-otp-list__row-value ui-text --md">
+				${text}
+			</div>
+		`;
+			main_core.Dom.prepend(icon, container);
+			return container;
+		}
+		#getChevron() {
+			return this.#cache.remember('chevron', () => {
+				return main_core.Tag.render`
+				<div id="row-chevron" class="ui-icon-set --chevron-down-s"></div>
+			`;
+			});
+		}
+		#getBodyContent() {
+			return this.#cache.remember('recovery-codes-list', () => {
+				return main_core.Tag.render`
+				<div class="intranet-otp-codes">
+					${this.#getRecoveryCodesGrid()}
+					${this.#getButtonsContainer()}
+				</div>
+			`;
+			});
+		}
+		#getRecoveryCodesGrid() {
+			return this.#cache.remember('recovery-codes-grid', () => {
+				const container = main_core.Tag.render`
+				<ol class="intranet-otp-codes__grid ui-alert ui-alert-primary"/>
+			`;
+				this.#setRecoveryCodes(container);
+				return container;
+			});
+		}
+		#setRecoveryCodes(container) {
+			this.#options.codes.forEach(code => {
+				main_core.Dom.append(main_core.Tag.render`
+				<li class="ui-text --sm intranet-otp-codes__grid-item">
+					${main_core.Text.encode(code.VALUE)}
+				</li>
+			`, container);
+			});
+		}
+		#getButtonsContainer() {
+			return this.#cache.remember('buttons-container', () => {
+				return main_core.Tag.render`
+				<div class="intranet-otp-codes__button-section">
+					<div class="intranet-otp-codes__button-container">
+						${this.#getPrintButton().render()}
+						${this.#getDownloadButton().render()}
+					</div>
+					<div class="intranet-otp-codes__button-container">
+						${this.#getReloadButton().render()}
+					</div>
+				</div>
+			`;
+			});
+		}
+		#getPrintButton() {
+			return this.#cache.remember('print-button', () => {
+				return new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_PRINT_BTN'),
+					size: ui_buttons.Button.Size.SMALL,
+					style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+					useAirDesign: true,
+					icon: ui_iconSet_api_core.Outline.PRINTER,
+					onclick: () => {
+						main_sidepanel.SidePanel.Instance.open('/bitrix/templates/bitrix24/components/bitrix/security.user.recovery.codes/push/print.php');
+						this.#sendAnalyticsEvent('print_codes_click');
+					}
+				});
+			});
+		}
+		#getDownloadButton() {
+			return this.#cache.remember('download-button', () => {
+				return new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_DOWNLOAD_BTN'),
+					size: ui_buttons.Button.Size.SMALL,
+					style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+					useAirDesign: true,
+					icon: ui_iconSet_api_core.Outline.DOWNLOAD,
+					tag: ui_buttons.Button.Tag.LINK,
+					link: this.#options.downloadLink,
+					onclick: () => {
+						this.#sendAnalyticsEvent('install_codes_click');
+					}
+				});
+			});
+		}
+		#getReloadButton() {
+			return this.#cache.remember('reload-button', () => {
+				return new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_RELOAD_BTN'),
+					size: ui_buttons.Button.Size.SMALL,
+					style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
+					useAirDesign: true,
+					icon: ui_iconSet_api_core.Outline.REFRESH,
+					onclick: button => {
+						this.#sendAnalyticsEvent('refresh_code_click', 'security');
+						button.setWaiting(true);
+						// eslint-disable-next-line promise/catch-or-return
+						this.#reloadCodes().then(() => {
+							button.setWaiting(false);
+						});
+					}
+				});
+			});
+		}
+		#getButtonStub() {
+			return this.#cache.remember('button-stub', () => {
+				return main_core.Tag.render`
+				<div class="intranet-otp-codes__button-section">
+					${this.#getStubReloadButton().render()}
+				</div>
+			`;
+			});
+		}
+		#getStubReloadButton() {
+			return this.#cache.remember('stub-reload-button', () => {
+				return new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_USER_OTP_LIST_RELOAD_BTN'),
+					size: ui_buttons.Button.Size.MEDIUM,
+					style: ui_buttons.AirButtonStyle.FILLED,
+					useAirDesign: true,
+					icon: ui_iconSet_api_core.Outline.REFRESH,
+					wide: true,
+					onclick: button => {
+						this.#sendAnalyticsEvent('refresh_code_click', 'baloon');
+						button.setWaiting(true);
+						// eslint-disable-next-line promise/catch-or-return
+						this.#reloadCodes().then(() => {
+							button.setWaiting(false);
+							main_core.Dom.replace(this.#getButtonStub(), this.#getBodyContent());
+						});
+					}
+				});
+			});
+		}
+		#reloadCodes() {
+			return new Promise((resolve, reject) => {
+				main_core.ajax.runComponentAction('bitrix:security.user.recovery.codes', 'regenerateRecoveryCodes', {
+					mode: 'ajax'
+				}).then(response => {
+					this.#options.codes = response.data;
+					main_core.Dom.clean(this.#getRecoveryCodesGrid());
+					this.#setRecoveryCodes(this.#getRecoveryCodesGrid());
+					resolve();
+				}).catch(error => {
+					reject(error);
+				});
+			});
+		}
+		#sendAnalyticsEvent(eventName, cSection = null) {
+			const data = {
+				tool: 'user_settings',
+				category: 'security',
+				event: eventName
+			};
+			if (cSection) {
+				data.c_section = cSection;
+			}
+			ui_analytics.sendData(data);
+		}
+	}
+
+	exports.RecoveryCodes = RecoveryCodes;
+
+})(this.BX.Intranet.Security = this.BX.Intranet.Security || {}, BX, BX.UI, BX.UI.IconSet, BX.UI.Analytics, BX.SidePanel);
+//# sourceMappingURL=script.js.map

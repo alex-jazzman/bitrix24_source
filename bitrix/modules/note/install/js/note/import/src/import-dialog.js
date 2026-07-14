@@ -4,7 +4,9 @@ import { Dialog } from 'ui.system.dialog';
 import 'ui.notification';
 import { NoteThemeContext } from 'note.ui.theme-context';
 import {
+	SOURCE_TYPES,
 	SOURCE_TYPE_OUTLINE,
+	SOURCE_TYPE_WIKI,
 	IMPORT_POLL_INTERVAL_MS,
 	IMPORT_PROGRESS_STATUS,
 	IMPORT_SCREEN,
@@ -49,6 +51,7 @@ export class ImportDialog
 	#destroyed: boolean;
 	#requestId: number;
 	#onComplete: ?Function;
+	#availableSources: Array<Object>;
 
 	constructor(options: ImportDialogOptions = {})
 	{
@@ -71,6 +74,11 @@ export class ImportDialog
 		this.#destroyed = false;
 		this.#requestId = 0;
 		this.#onComplete = Type.isFunction(options.onComplete) ? options.onComplete : null;
+
+		const wikiImportEnabled = options.wikiImportEnabled === true;
+		this.#availableSources = SOURCE_TYPES.filter(
+			(source) => source.id !== SOURCE_TYPE_WIKI || wikiImportEnabled,
+		);
 	}
 
 	show(): void
@@ -178,6 +186,14 @@ export class ImportDialog
 
 		if (field === 'url')
 		{
+			// Wiki reads local bases — no URL/token needed.
+			if (this.#isWikiSource())
+			{
+				errors.url = '';
+
+				return;
+			}
+
 			const value = String(this.#connectionForm.url || '').trim();
 			if (value === '')
 			{
@@ -200,9 +216,21 @@ export class ImportDialog
 
 		if (field === 'token')
 		{
+			if (this.#isWikiSource())
+			{
+				errors.token = '';
+
+				return;
+			}
+
 			const value = String(this.#connectionForm.token || '').trim();
 			errors.token = value === '' ? Loc.getMessage('NOTE_IMPORT_TOKEN_REQUIRED') : '';
 		}
+	}
+
+	#isWikiSource(): boolean
+	{
+		return String(this.#connectionForm.sourceType || this.#sourceType || '').trim() === SOURCE_TYPE_WIKI;
 	}
 
 	#validateAllConnectionFields(): void
@@ -318,6 +346,12 @@ export class ImportDialog
 				this.#sourceToken,
 			));
 			this.#collectionsState.collections = response.collections;
+			// Pre-select every base by default: importing all of them is the common
+			// case, so the user only has to deselect what they don't want instead of
+			// ticking each base manually.
+			this.#collectionsState.selectedCollectionIds = new Set(
+				response.collections.map((collection) => collection.id),
+			);
 		}
 		catch (error)
 		{
@@ -779,7 +813,7 @@ export class ImportDialog
 				onSubmit: () => {
 					this.#onConnect();
 				},
-			});
+			}, this.#availableSources);
 		}
 
 		this.#connectionScreen.applyState(this.#connectionForm);
@@ -800,7 +834,10 @@ export class ImportDialog
 				size: ButtonSize.LARGE,
 				style: AirButtonStyle.FILLED,
 				useAirDesign: true,
-				text: Loc.getMessage('NOTE_IMPORT_CONNECT'),
+				// Wiki has no connection step — the action just reveals the bases to pick.
+				text: this.#isWikiSource()
+					? Loc.getMessage('NOTE_IMPORT_SELECT')
+					: Loc.getMessage('NOTE_IMPORT_CONNECT'),
 				onclick: () => {
 					this.#onConnect();
 				},
@@ -1024,9 +1061,20 @@ export class ImportDialog
 		}
 
 		const sourceType = String(this.#connectionForm.sourceType || this.#sourceType || '').trim();
+		if (sourceType === '')
+		{
+			return false;
+		}
+
+		// Wiki needs no URL/token — selecting the source is enough to connect.
+		if (sourceType === SOURCE_TYPE_WIKI)
+		{
+			return true;
+		}
+
 		const url = String(this.#connectionForm.url || '').trim();
 		const token = String(this.#connectionForm.token || '').trim();
-		if (sourceType === '' || url === '' || token === '')
+		if (url === '' || token === '')
 		{
 			return false;
 		}

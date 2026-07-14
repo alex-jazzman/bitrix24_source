@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings } from 'im.v2.const';
+import { CollabManager } from 'im.v2.lib.collab';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import {
@@ -98,13 +99,13 @@ const resolveBackgroundId = (dialogId?: string): string => {
 		return userBackground;
 	}
 
-	const chatType = Core.getStore().getters['chats/get'](dialogId, true).type;
-	if (chatType === ChatType.collab)
+	const chat = Core.getStore().getters['chats/get'](dialogId, true);
+	if (chat.type === ChatType.collab)
 	{
-		return SpecialBackgroundId.collab;
+		return CollabManager.getBackgroundId(chat);
 	}
 
-	if (chatType === ChatType.copilot)
+	if (chat.type === ChatType.copilot)
 	{
 		if (FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
 		{
@@ -161,8 +162,11 @@ const getHighlightBackgroundStyleLayer = (backgroundId: string): ?BackgroundStyl
 		return null;
 	}
 
+	const hasExtension = fileName.includes('.');
+	const fullName = hasExtension ? fileName : `${fileName}.png`;
+
 	return {
-		image: `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`,
+		image: `url('${IMAGE_FOLDER_PATH}/${fullName}')`,
 		position: 'center',
 		repeat: 'no-repeat',
 		size: 'cover',

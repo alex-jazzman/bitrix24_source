@@ -199,6 +199,7 @@ export const EditorToolbarComponent = {
 		Event.bind(document, 'keydown', this.handleDocumentKeydown, true);
 		Event.bind(window, 'resize', this.handleWindowResize, { passive: true });
 		document.addEventListener('scroll', this.handleWindowScroll, { capture: true, passive: true });
+		this.$nextTick(() => this.updateScrollIndicator());
 	},
 	beforeUnmount()
 	{
@@ -243,6 +244,7 @@ export const EditorToolbarComponent = {
 			{
 				this.schedulePopoverPositionSync();
 			}
+			this.updateScrollIndicator();
 		},
 		handleWindowResize(): void
 		{
@@ -250,6 +252,49 @@ export const EditorToolbarComponent = {
 			{
 				this.schedulePopoverPositionSync();
 			}
+			this.updateScrollIndicator();
+		},
+		updateScrollIndicator(): void
+		{
+			const s = this.$refs.toolbarScroll;
+			const r = this.$refs.toolbarRoot;
+			if (!s || !r)
+			{
+				return;
+			}
+			const overflow = s.scrollWidth - s.clientWidth;
+			const track = Math.max(0, s.clientWidth - 32);
+			const thumb = overflow > 1 ? Math.max(24, Math.min(track, s.clientWidth / s.scrollWidth * track)) : 0;
+			const offset = overflow > 1 ? 16 + s.scrollLeft / overflow * (track - thumb) : 0;
+			r.style.setProperty('--thumb-width', `${Math.round(thumb)}px`);
+			r.style.setProperty('--thumb-offset', `${Math.round(offset)}px`);
+		},
+		handleThumbPointerDown(event: PointerEvent): void
+		{
+			const s = this.$refs.toolbarScroll;
+			const overflow = s ? s.scrollWidth - s.clientWidth : 0;
+			if (overflow <= 1)
+			{
+				return;
+			}
+			const track = Math.max(0, s.clientWidth - 32);
+			const thumb = Math.max(24, Math.min(track, s.clientWidth / s.scrollWidth * track));
+			const ratio = overflow / Math.max(1, track - thumb);
+			const startX = event.clientX;
+			const startScroll = s.scrollLeft;
+			const target = event.currentTarget;
+			target.setPointerCapture?.(event.pointerId);
+			const move = (e: PointerEvent) => { s.scrollLeft = startScroll + (e.clientX - startX) * ratio; };
+			const up = (e: PointerEvent) => {
+				target.releasePointerCapture?.(e.pointerId);
+				target.removeEventListener('pointermove', move);
+				target.removeEventListener('pointerup', up);
+				target.removeEventListener('pointercancel', up);
+			};
+			target.addEventListener('pointermove', move);
+			target.addEventListener('pointerup', up);
+			target.addEventListener('pointercancel', up);
+			event.preventDefault();
 		},
 		handleWindowScroll(): void
 		{
@@ -415,15 +460,15 @@ export const EditorToolbarComponent = {
 	template: `
 		<div
 			ref="toolbarRoot"
-			class="note-editor-toolbar"
+			class="note-editor-toolbar-wrap"
 			:class="{
 				'note-editor-toolbar-fixed': fixed,
 				'note-editor-toolbar-menu-open': hasOpenMenu,
 			}"
 			:style="toolbarStyle"
 			@mousedown="handleToolbarMouseDown"
-			@scroll.passive="handleToolbarScroll"
 		>
+			<div ref="toolbarScroll" class="note-editor-toolbar" @scroll.passive="handleToolbarScroll">
 			<ToolbarHistoryGroupComponent :can-undo="canUndo" :can-redo="canRedo" :on-undo="undo" :on-redo="redo" />
 			<div class="note-editor-toolbar-separator"></div>
 
@@ -501,6 +546,8 @@ export const EditorToolbarComponent = {
 				:on-insert-image="insertImageStub"
 				:on-insert-video="insertVideoStub"
 			/>
+			</div>
+			<div class="note-editor-toolbar-thumb" aria-hidden="true" @pointerdown="handleThumbPointerDown"></div>
 		</div>
 	`,
 };

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_public, im_v2_component_message_base, im_v2_component_elements_userListPopup, im_v2_lib_copilot) {
+(function (exports, im_public, im_v2_component_elements_userListPopup, im_v2_component_message_base, im_v2_lib_copilot, im_v2_lib_feature) {
 	'use strict';
 
 	// @vue/component
@@ -31,6 +31,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			message() {
 				return this.item;
+			},
+			isCopilot2026Style() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			},
+			containerClasses() {
+				return {
+					'--legacy': !this.isCopilot2026Style
+				};
 			},
 			addedUsers() {
 				const addedUsers = this.message.componentParams.addedUsers;
@@ -81,7 +89,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:withReactions="false"
 			:withBackground="false"
 		>
-			<div class="bx-im-message-copilot-added-users__container">
+			<div class="bx-im-message-copilot-added-users__container" :class="containerClasses">
 				<div class="bx-im-message-copilot-added-users__image"></div>
 				<div class="bx-im-message-copilot-added-users__content">
 					<div class="bx-im-message-copilot-added-users__title">
@@ -122,5 +130,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatCopilotAddedUsersMessage = ChatCopilotAddedUsersMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=added-users.bundle.js.map

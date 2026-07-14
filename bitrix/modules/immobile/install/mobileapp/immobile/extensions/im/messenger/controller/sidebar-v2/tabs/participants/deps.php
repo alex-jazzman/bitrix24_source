@@ -50,6 +50,7 @@ return [
 		'./src/menu/base',
 		'./src/menu/group',
 		'./src/menu/direct',
+		'./src/menu/project',
 		'./src/model/base',
 		'./src/model/user',
 		'./src/model/copilot',

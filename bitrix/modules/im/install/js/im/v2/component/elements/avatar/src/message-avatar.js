@@ -1,21 +1,25 @@
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
 import { UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { type ImModelUser } from 'im.v2.model';
 
-import { AvatarSize } from './const/const';
+import { MartaAvatar } from './components/marta-avatar';
 import { Avatar } from './components/base/avatar';
 import { CollaberAvatar } from './components/collab/collaber';
 import { CopilotAvatar } from './components/copilot/copilot';
-import { AiAssistantAvatar } from './components/ai-assistant-avatar';
 import { ExtranetUserAvatar } from './components/extranet/extranet-user-avatar';
-
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { ImModelUser } from 'im.v2.model';
+import { AvatarSize } from './const/const';
 
 // @vue/component
 export const MessageAvatar = {
 	name: 'MessageAvatar',
 	props: {
 		messageId: {
+			type: [String, Number],
+			default: 0,
+		},
+		contextDialogId: {
 			type: [String, Number],
 			default: 0,
 		},
@@ -69,7 +73,7 @@ export const MessageAvatar = {
 
 			return avatarMap[this.user.type] ?? Avatar;
 		},
-		isAiAssistant(): boolean
+		isAiAssistantMarta(): boolean
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.authorId);
 		},
@@ -78,9 +82,9 @@ export const MessageAvatar = {
 	{
 		getBotAvatar(): BitrixVueComponentProps
 		{
-			if (this.isAiAssistant)
+			if (this.isAiAssistantMarta)
 			{
-				return AiAssistantAvatar;
+				return MartaAvatar;
 			}
 
 			const copilotManager = new CopilotManager();

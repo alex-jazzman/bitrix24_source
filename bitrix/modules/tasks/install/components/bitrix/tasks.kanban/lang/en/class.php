@@ -12,6 +12,7 @@ $MESS["TASK_LIST_ACCESS_DENIED"] = "You cannot view task list because access was
 $MESS["TASK_LIST_ACCESS_DENIED_V2"] = "Insufficient permissions to view task list. Please contact your supervisor or Bitrix24 administrator.";
 $MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED"] = "You cannot view task list for this group because access was denied.";
 $MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED_V2"] = "Insufficient permissions to view workgroup task list. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED_V3"] = "Insufficient permission to view tasks in this project.";
 $MESS["TASK_LIST_COLUMN_NOT_EMPTY"] = "There are tasks in this stage. Move them before deleting the stage.";
 $MESS["TASK_LIST_COLUMN_TITLE_EMPTY"] = "Stage name cannot be empty.";
 $MESS["TASK_LIST_ERROR_CHANGE_DEADLINE"] = "Task deadline cannot be changed.";

@@ -3,7 +3,7 @@ import { CalendarSection } from './calendarsection';
 
 export class CalendarTaskSection extends CalendarSection
 {
-	constructor(data = {}, {type, userId, ownerId})
+	constructor(data = {}, {type, userId, ownerId, isNewProjectsOn})
 	{
 		const defaultColor = '#ff5b55';
 		let belongToUser = false;
@@ -16,7 +16,11 @@ export class CalendarTaskSection extends CalendarSection
 		}
 		else if(type === 'group')
 		{
-			defaultName = Loc.getMessage('EC_SEC_GROUP_TASK_DEFAULT');
+			defaultName = (
+				isNewProjectsOn
+					? Loc.getMessage('EC_SEC_PROJECT_TASK_DEFAULT')
+					: Loc.getMessage('EC_SEC_GROUP_TASK_DEFAULT')
+			);
 		}
 
 		super({

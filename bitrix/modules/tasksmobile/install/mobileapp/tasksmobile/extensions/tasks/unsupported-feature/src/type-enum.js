@@ -9,6 +9,36 @@ jn.define('tasks/unsupported-feature/src/type-enum', (require, exports, module) 
 
 	class UnsupportedFeatureType extends BaseEnum
 	{
+		static FLOWS = new UnsupportedFeatureType('FLOWS', {
+			testIdPrefix: 'tasks-flow-empty-state',
+			title: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_TITLE'),
+			footnote: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_FOOTNOTE'),
+			image: {
+				name: 'zefir-flow-list.png',
+				folder: 'empty-states',
+				moduleId: 'tasks',
+				width: 199,
+				height: 158,
+			},
+			items: [
+				{
+					icon: Icon.BUSINES_PROCESS_STAGES,
+					text: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_TYPICAL_TASKS'),
+				},
+				{
+					icon: Icon.BOTTLENECK,
+					text: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_TEAM_LOAD'),
+				},
+				{
+					icon: Icon.CARD,
+					text: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_ITEM_CUSTOMER_VISIBILITY'),
+				},
+			],
+			redirectUrl: `/company/personal/user/${env.userId}/tasks/flow/`,
+			qrTitle: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_QR_TITLE'),
+			buttonText: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_FLOWS_BUTTON'),
+		});
+
 		static ANALYTICS = new UnsupportedFeatureType('ANALYTICS', {
 			testIdPrefix: 'tasks-analytics-empty-state',
 			title: Loc.getMessage('TASKS_UNSUPPORTED_FEATURE_TYPE_ANALYTICS_TITLE'),
@@ -103,9 +133,9 @@ jn.define('tasks/unsupported-feature/src/type-enum', (require, exports, module) 
 
 		getImageUri()
 		{
-			const { name, folder } = this.getValue().image;
+			const { name, folder, moduleId } = this.getValue().image;
 
-			return makeLibraryImagePath(name, folder);
+			return makeLibraryImagePath(name, folder, moduleId);
 		}
 
 		getItems()

@@ -5,12 +5,15 @@ type ClearHandlerByChatTypeMap = {
 	[chatType: ChatTypeItem]: Array<(type: ChatTypeItem) => void>
 }
 
+const BaseClearHandlers = [
+	(type) => Core.getStore().dispatch('counters/clearByRecentType', { recentType: type }),
+	(type) => Core.getStore().dispatch('chats/clearMarkedChatsByType', { type }),
+	(type) => Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', { type }),
+];
+
 export const CounterClearHandlersByChatType: ClearHandlerByChatTypeMap = {
-	[ChatType.taskComments]: [
-		(type) => Core.getStore().dispatch('counters/clearByRecentType', { recentType: type }),
-		(type) => Core.getStore().dispatch('chats/clearMarkedChatsByType', { type }),
-		(type) => Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', { type }),
-	],
+	[ChatType.taskComments]: BaseClearHandlers,
+	[ChatType.collab]: BaseClearHandlers,
 };
 
 export const CounterClearActions = [

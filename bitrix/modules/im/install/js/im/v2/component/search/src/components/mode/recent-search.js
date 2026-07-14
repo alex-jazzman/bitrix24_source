@@ -33,6 +33,10 @@ export const RecentSearch = {
 			type: String,
 			default: RecentType.default,
 		},
+		parentChatId: {
+			type: Number || null,
+			default: 0,
+		},
 	},
 	emits: ['loading', 'openItem', 'closeSearch'],
 	data(): JsonObject
@@ -83,7 +87,12 @@ export const RecentSearch = {
 	},
 	created()
 	{
-		this.searchService = new SearchService({ searchRecentSection: this.recentSectionType });
+		const searchParams = {
+			searchRecentSection: this.recentSectionType,
+			parentId: this.parentChatId,
+		};
+
+		this.searchService = new SearchService(searchParams);
 		this.runServerSearch = Runtime.debounce(this.searchOnServer, SEARCH_DEBOUNCE_MS, this);
 		this.initContextMenu();
 

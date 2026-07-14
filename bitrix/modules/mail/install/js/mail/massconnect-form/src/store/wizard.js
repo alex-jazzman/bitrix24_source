@@ -1,4 +1,5 @@
 import { defineStore } from 'ui.vue3.pinia';
+import { mapSettingsConfigToState, resolveSettingValue } from 'mail.connecting.settings-config';
 import type {
 	BackendPayload,
 	CrmOptionsPayload,
@@ -13,36 +14,6 @@ import type {
 	SettingOption,
 } from './type';
 import { YES_VALUE, NO_VALUE, SERVICE_CONFIG } from './const';
-
-function normalizeOptions(options: ?Array<{value: string | number, label: string}>): SettingOption[]
-{
-	if (!Array.isArray(options))
-	{
-		return [];
-	}
-
-	return options.map((option): SettingOption => ({
-		value: String(option.value),
-		label: option.label || String(option.value),
-	}));
-}
-
-function resolveSettingValue(options: SettingOption[], currentValue: ?(string | number), defaultValue: ?(string | number)): string
-{
-	const normalizedCurrentValue = currentValue !== null && currentValue !== undefined ? String(currentValue) : '';
-	if (options.some((option) => option.value === normalizedCurrentValue))
-	{
-		return normalizedCurrentValue;
-	}
-
-	const normalizedDefaultValue = defaultValue !== null && defaultValue !== undefined ? String(defaultValue) : '';
-	if (options.some((option) => option.value === normalizedDefaultValue))
-	{
-		return normalizedDefaultValue;
-	}
-
-	return options[0]?.value || '';
-}
 
 export const useWizardStore = defineStore('wizard', {
 	state: () => ({
@@ -141,53 +112,47 @@ export const useWizardStore = defineStore('wizard', {
 		},
 		setMailboxSettingsConfig(settingsConfig: MailboxSettingsConfig): void
 		{
-			const defaults = settingsConfig?.defaults || {};
-			const mailSyncOptions = normalizeOptions(settingsConfig?.mailSyncIntervals);
-			const crmSyncOptions = normalizeOptions(settingsConfig?.crmSyncIntervals);
-			const crmEntityOptions = normalizeOptions(settingsConfig?.crmEntities);
-			const crmSourceOptions = normalizeOptions(settingsConfig?.crmSources);
+			const mapped = mapSettingsConfigToState(settingsConfig);
 
-			this.mailSyncOptions = mailSyncOptions;
-			this.crmSyncOptions = crmSyncOptions;
-			this.crmEntityOptions = crmEntityOptions;
-			this.crmSourceOptions = crmSourceOptions;
+			this.mailSyncOptions = mapped.mailSyncOptions;
+			this.crmSyncOptions = mapped.crmSyncOptions;
+			this.crmEntityOptions = mapped.crmEntityOptions;
+			this.crmSourceOptions = mapped.crmSourceOptions;
 
-			this.mailSettings.sync.enabled = defaults.mailSyncEnabled ?? this.mailSettings.sync.enabled;
+			this.mailSettings.sync.enabled = mapped.mailSyncEnabled;
 			this.mailSettings.sync.periodValue = resolveSettingValue(
-				mailSyncOptions,
+				mapped.mailSyncOptions,
 				this.mailSettings.sync.periodValue,
-				defaults.messageMaxAge,
+				mapped.messageMaxAge,
 			);
 
-			this.crmSettings.enabled = defaults.crmEnabled ?? this.crmSettings.enabled;
-			this.crmSettings.sync.enabled = defaults.crmSyncEnabled ?? this.crmSettings.sync.enabled;
+			this.crmSettings.enabled = mapped.crmEnabled;
+			this.crmSettings.sync.enabled = mapped.crmSyncEnabled;
 			this.crmSettings.sync.periodValue = resolveSettingValue(
-				crmSyncOptions,
+				mapped.crmSyncOptions,
 				this.crmSettings.sync.periodValue,
-				defaults.crmSyncPeriod,
+				mapped.crmSyncPeriod,
 			);
-			this.crmSettings.assignKnownClientEmails = defaults.crmAssignKnownClientEmails
-				?? this.crmSettings.assignKnownClientEmails;
-			this.crmSettings.incoming.enabled = defaults.crmIncomingCreate ?? this.crmSettings.incoming.enabled;
+			this.crmSettings.assignKnownClientEmails = mapped.crmAssignKnownClientEmails;
+			this.crmSettings.incoming.enabled = mapped.crmIncomingCreate;
 			this.crmSettings.incoming.createAction = resolveSettingValue(
-				crmEntityOptions,
+				mapped.crmEntityOptions,
 				this.crmSettings.incoming.createAction,
-				defaults.crmIncomingEntity,
+				mapped.crmIncomingEntity,
 			);
-			this.crmSettings.outgoing.enabled = defaults.crmOutgoingCreate ?? this.crmSettings.outgoing.enabled;
+			this.crmSettings.outgoing.enabled = mapped.crmOutgoingCreate;
 			this.crmSettings.outgoing.createAction = resolveSettingValue(
-				crmEntityOptions,
+				mapped.crmEntityOptions,
 				this.crmSettings.outgoing.createAction,
-				defaults.crmOutgoingEntity,
+				mapped.crmOutgoingEntity,
 			);
 			this.crmSettings.source = resolveSettingValue(
-				crmSourceOptions,
+				mapped.crmSourceOptions,
 				this.crmSettings.source,
-				defaults.crmSource || settingsConfig?.defaultCrmSource,
+				mapped.crmSource,
 			);
-			this.calendarSettings.enabled = defaults.calendarAutoAddEvents ?? this.calendarSettings.enabled;
-			this.calendarSettings.autoAddEvents = defaults.calendarAutoAddEvents
-				?? this.calendarSettings.autoAddEvents;
+			this.calendarSettings.enabled = mapped.calendarAutoAddEvents;
+			this.calendarSettings.autoAddEvents = mapped.calendarAutoAddEvents;
 		},
 		setCalendarSettings(newSettings: CalendarSettingsState): void
 		{
@@ -226,7 +191,7 @@ export const useWizardStore = defineStore('wizard', {
 
 			if (this.crmSettings.responsibleQueue.length > 0)
 			{
-				crmOptions.config.crm_lead_resp = this.crmSettings.responsibleQueue.map((item) => item.id);
+				crmOptions.config.crm_lead_resp = this.crmSettings.responsibleQueue.map((item) => Number(item.id));
 			}
 
 			if (this.crmSettings.leadCreationAddresses.length > 0)

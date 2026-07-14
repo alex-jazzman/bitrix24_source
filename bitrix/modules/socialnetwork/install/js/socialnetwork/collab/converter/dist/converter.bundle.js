@@ -1,317 +1,8 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
-(function (exports,main_sidepanel,ui_buttons,main_popup,ui_vue3,ui_vue3_mixins_locMixin,main_core,ui_loader,ui_avatar,ui_iconSet_api_vue,ui_iconSet_api_core,ui_vue3_components_button) {
+(function (exports,main_popup,ui_vue3,ui_vue3_mixins_locMixin,ui_loader,ui_avatar,ui_iconSet_api_vue,ui_iconSet_api_core,ui_vue3_components_button,ui_iconSet_outline,main_core) {
 	'use strict';
-
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8;
-	var _groupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupId");
-	var _errors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _prepareErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareErrors");
-	var _getPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
-	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
-	var _renderHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHeader");
-	var _renderDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
-	var _renderLinkMore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLinkMore");
-	var _renderButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderButtons");
-	var _getContentConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContentConfig");
-	var _getMultipleErrorsPopupConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMultipleErrorsPopupConfig");
-	var _getOnlyFlowErrorPopupConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOnlyFlowErrorPopupConfig");
-	var _hasMultipleErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMultipleErrors");
-	var _hasOnlyFlowError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasOnlyFlowError");
-	class ErrorPopup {
-	  constructor(params) {
-	    Object.defineProperty(this, _hasOnlyFlowError, {
-	      value: _hasOnlyFlowError2
-	    });
-	    Object.defineProperty(this, _hasMultipleErrors, {
-	      value: _hasMultipleErrors2
-	    });
-	    Object.defineProperty(this, _getOnlyFlowErrorPopupConfig, {
-	      value: _getOnlyFlowErrorPopupConfig2
-	    });
-	    Object.defineProperty(this, _getMultipleErrorsPopupConfig, {
-	      value: _getMultipleErrorsPopupConfig2
-	    });
-	    Object.defineProperty(this, _getContentConfig, {
-	      value: _getContentConfig2
-	    });
-	    Object.defineProperty(this, _renderButtons, {
-	      value: _renderButtons2
-	    });
-	    Object.defineProperty(this, _renderLinkMore, {
-	      value: _renderLinkMore2
-	    });
-	    Object.defineProperty(this, _renderDescription, {
-	      value: _renderDescription2
-	    });
-	    Object.defineProperty(this, _renderHeader, {
-	      value: _renderHeader2
-	    });
-	    Object.defineProperty(this, _renderPopupContent, {
-	      value: _renderPopupContent2
-	    });
-	    Object.defineProperty(this, _getPopup, {
-	      value: _getPopup2
-	    });
-	    Object.defineProperty(this, _prepareErrors, {
-	      value: _prepareErrors2
-	    });
-	    this.ERROR_CODE_HAS_FLOWS = 10002;
-	    Object.defineProperty(this, _groupId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _errors, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _popup, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId] = params.groupId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors] = babelHelpers.classPrivateFieldLooseBase(this, _prepareErrors)[_prepareErrors](params.errors);
-	  }
-	  show() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().show();
-	  }
-	}
-	function _prepareErrors2(errors) {
-	  const supportedCodes = new Set([this.ERROR_CODE_HAS_FLOWS]);
-	  const supportedErrors = errors.filter(error => supportedCodes.has(error.code));
-	  if (errors.length > supportedErrors.length) {
-	    const unsupportedErrors = errors.filter(error => !supportedCodes.has(error.code));
-	    console.error('Unexpected errors', unsupportedErrors);
-	  }
-	  return supportedErrors;
-	}
-	function _getPopup2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup({
-	      cacheable: false,
-	      width: 400,
-	      borderRadius: 'var(--ui-border-radius-3xl)',
-	      angle: false,
-	      closeIcon: false,
-	      content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
-	      closeByEsc: false,
-	      autoHide: false,
-	      padding: 18,
-	      contentPadding: 0,
-	      overlay: true,
-	      className: 'socialnetwork-collab-converter-error-popup'
-	    });
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
-	}
-	function _renderPopupContent2() {
-	  const config = babelHelpers.classPrivateFieldLooseBase(this, _getContentConfig)[_getContentConfig]();
-	  return main_core.Tag.render(_t || (_t = _`
-			<div class="socialnetwork-collab-converter-error-popup-content">
-				${0}
-				${0}
-				${0}
-				${0}
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHeader)[_renderHeader](config), babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription](config), babelHelpers.classPrivateFieldLooseBase(this, _renderLinkMore)[_renderLinkMore](config), babelHelpers.classPrivateFieldLooseBase(this, _renderButtons)[_renderButtons](config));
-	}
-	function _renderHeader2(config) {
-	  const headerText = config.header.length > 0 ? main_core.Tag.render(_t2 || (_t2 = _`<div class="socialnetwork-collab-converter-error-popup-header-text">${0}</div>`), config.header) : '';
-	  const closeIcon = main_core.Tag.render(_t3 || (_t3 = _`
-			<div class="ui-icon-set --${0} socialnetwork-collab-converter-error-popup-close-icon"/>
-		`), ui_iconSet_api_core.Outline.CROSS_L);
-	  main_core.Event.bind(closeIcon, 'click', () => {
-	    var _babelHelpers$classPr;
-	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
-	  });
-	  return main_core.Tag.render(_t4 || (_t4 = _`
-			<div class="socialnetwork-collab-converter-error-popup-header">
-				${0}
-				${0}
-			</div>
-		`), headerText, closeIcon);
-	}
-	function _renderDescription2(config) {
-	  const nodes = [];
-	  config.descriptionParagraphs.forEach(paragraph => {
-	    const node = main_core.Tag.render(_t5 || (_t5 = _`
-				<div class="socialnetwork-collab-converter-error-popup-description-paragraph">
-					${0}
-				</div>
-			`), paragraph);
-	    nodes.push(node);
-	  });
-	  return main_core.Tag.render(_t6 || (_t6 = _`
-			<div class="socialnetwork-collab-converter-error-popup-description">
-				${0}
-			</div>
-		`), nodes);
-	}
-	function _renderLinkMore2(config) {
-	  if (!config.helperCode) {
-	    return null;
-	  }
-	  const node = main_core.Tag.render(_t7 || (_t7 = _`
-			<div class="socialnetwork-collab-converter-error-popup-link-more">
-				<div class="ui-icon-set --${0} socialnetwork-collab-converter-error-popup-link-more-icon"></div>
-				<div class="socialnetwork-collab-converter-error-popup-link-more-text">
-					${0}
-				</div>
-			</div>
-		`), ui_iconSet_api_core.Outline.KNOWLEDGE_BASE, main_core.Loc.getMessage('SN_COLLAB_CONVERTER_LINK_MORE'));
-	  main_core.Event.bind(node, 'click', () => BX.Helper.show(`redirect=detail&code=${config.helperCode}`));
-	  return node;
-	}
-	function _renderButtons2(config) {
-	  return main_core.Tag.render(_t8 || (_t8 = _`
-			<div class="socialnetwork-collab-converter-error-popup-buttons">
-				${0}
-			</div>
-		`), config.buttons.map(button => button.render()));
-	}
-	function _getContentConfig2() {
-	  let config = null;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasMultipleErrors)[_hasMultipleErrors]()) {
-	    config = babelHelpers.classPrivateFieldLooseBase(this, _getMultipleErrorsPopupConfig)[_getMultipleErrorsPopupConfig]();
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _hasOnlyFlowError)[_hasOnlyFlowError]()) {
-	    config = babelHelpers.classPrivateFieldLooseBase(this, _getOnlyFlowErrorPopupConfig)[_getOnlyFlowErrorPopupConfig]();
-	  }
-	  return config;
-	}
-	function _getMultipleErrorsPopupConfig2() {
-	  const closeButton = new ui_buttons.Button({
-	    useAirDesign: true,
-	    noCaps: true,
-	    size: ui_buttons.ButtonSize.LARGE,
-	    text: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_GET_IT'),
-	    onclick: () => {
-	      var _babelHelpers$classPr2;
-	      return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.close();
-	    }
-	  });
-	  return {
-	    header: '',
-	    descriptionParagraphs: [main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_MULTIPLE')],
-	    helperCode: '25356654#int',
-	    buttons: [closeButton]
-	  };
-	}
-	function _getOnlyFlowErrorPopupConfig2() {
-	  const flowsLink = main_core.Loc.getMessage('SN_COLLAB_CONVERTER_FLOW_URL_TEMPLATE', {
-	    '#groupId#': babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId]
-	  });
-	  const clickHandler = event => {
-	    var _babelHelpers$classPr3;
-	    main_sidepanel.SidePanel.Instance.open(flowsLink);
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.close();
-	  };
-	  const openFlowsButton = new ui_buttons.Button({
-	    useAirDesign: true,
-	    noCaps: true,
-	    size: ui_buttons.ButtonSize.LARGE,
-	    text: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_BUTTON_CONFIRM_FLOWS'),
-	    onclick: clickHandler
-	  });
-	  const cancelButton = new ui_buttons.Button({
-	    useAirDesign: true,
-	    noCaps: true,
-	    style: ui_buttons.AirButtonStyle.OUTLINE,
-	    size: ui_buttons.ButtonSize.LARGE,
-	    text: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_CANCEL'),
-	    onclick: () => {
-	      var _babelHelpers$classPr4;
-	      return (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr4.close();
-	    }
-	  });
-	  return {
-	    header: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_TITLE_FLOWS'),
-	    descriptionParagraphs: [main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_FLOWS')],
-	    helperCode: 21307012,
-	    buttons: [openFlowsButton, cancelButton]
-	  };
-	}
-	function _hasMultipleErrors2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length > 1;
-	}
-	function _hasOnlyFlowError2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length === 1 && babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors][0].code === this.ERROR_CODE_HAS_FLOWS;
-	}
-
-	function mapMemberDtoToModel(memberDto) {
-	  const role = {
-	    true: 'member',
-	    [memberDto.isModerator || memberDto.isScrumMaster]: 'moderator',
-	    [memberDto.isOwner]: 'owner'
-	  }.true;
-	  return {
-	    id: memberDto.id,
-	    avatar: memberDto.photo,
-	    role
-	  };
-	}
-	function mapFeatureDtoToModel(featureDto) {
-	  return {
-	    name: featureDto.featureName,
-	    isActive: featureDto.active
-	  };
-	}
-	function mapGroupDtoToModel(groupDto) {
-	  var _avatarTypes$avatarTy;
-	  const avatarType = groupDto.AVATAR_TYPE;
-	  const avatarTypes = groupDto.AVATAR_TYPES;
-	  const image = groupDto.AVATAR || (avatarTypes == null ? void 0 : (_avatarTypes$avatarTy = avatarTypes[avatarType]) == null ? void 0 : _avatarTypes$avatarTy.entitySelectorUrl) || '';
-	  return {
-	    id: groupDto.ID,
-	    name: groupDto.NAME,
-	    image,
-	    members: groupDto.LIST_OF_MEMBERS.map(memberDto => mapMemberDtoToModel(memberDto)),
-	    features: groupDto.FEATURES.map(featureDto => mapFeatureDtoToModel(featureDto))
-	  };
-	}
-
-	class Api {
-	  async validateGroup(groupId) {
-	    const result = await main_core.ajax.runAction('socialnetwork.collab.Converter.validateGroup', {
-	      data: {
-	        id: groupId
-	      }
-	    });
-	    return {
-	      isValid: result.data.isValid,
-	      errors: result.errors
-	    };
-	  }
-	  async getGroup(groupId) {
-	    const result = await main_core.ajax.runAction('socialnetwork.api.workgroup.get', {
-	      data: {
-	        params: {
-	          groupId,
-	          select: ['LIST_OF_MEMBERS', 'AVATAR', 'AVATAR_TYPES', 'FEATURES']
-	        }
-	      }
-	    });
-	    return mapGroupDtoToModel(result.data);
-	  }
-	  async convertToCollab(groupId) {
-	    const result = await main_core.ajax.runAction('socialnetwork.collab.Converter.convertToCollab', {
-	      data: {
-	        id: groupId
-	      }
-	    });
-	    return result.data;
-	  }
-	}
-	const api = new Api();
 
 	//TODO: move to ui
 
@@ -740,6 +431,63 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	`
 	};
 
+	function mapMemberDtoToModel(memberDto) {
+	  const role = {
+	    true: 'member',
+	    [memberDto.isModerator || memberDto.isScrumMaster]: 'moderator',
+	    [memberDto.isOwner]: 'owner'
+	  }.true;
+	  return {
+	    id: memberDto.id,
+	    avatar: memberDto.photo,
+	    role
+	  };
+	}
+	function mapFeatureDtoToModel(featureDto) {
+	  return {
+	    name: featureDto.featureName,
+	    isActive: featureDto.active
+	  };
+	}
+	function mapGroupDtoToModel(groupDto) {
+	  var _avatarTypes$avatarTy;
+	  const avatarType = groupDto.AVATAR_TYPE;
+	  const avatarTypes = groupDto.AVATAR_TYPES;
+	  const image = groupDto.AVATAR || (avatarTypes == null ? void 0 : (_avatarTypes$avatarTy = avatarTypes[avatarType]) == null ? void 0 : _avatarTypes$avatarTy.entitySelectorUrl) || '';
+	  return {
+	    id: groupDto.ID,
+	    name: groupDto.NAME,
+	    image,
+	    members: groupDto.LIST_OF_MEMBERS.map(memberDto => mapMemberDtoToModel(memberDto)),
+	    features: groupDto.FEATURES.map(featureDto => mapFeatureDtoToModel(featureDto))
+	  };
+	}
+
+	class Api {
+	  async getGroup(groupId) {
+	    const result = await main_core.ajax.runAction('socialnetwork.api.workgroup.get', {
+	      data: {
+	        params: {
+	          groupId,
+	          select: ['LIST_OF_MEMBERS', 'AVATAR', 'AVATAR_TYPES', 'FEATURES']
+	        }
+	      }
+	    });
+	    return mapGroupDtoToModel(result.data);
+	  }
+	  async convertToCollab(groupId) {
+	    const result = await main_core.ajax.runAction('socialnetwork.v2.Convert.convertToProject', {
+	      data: {
+	        group: {
+	          id: groupId
+	        }
+	      }
+	    });
+	    return result.data;
+	  }
+	}
+	const api = new Api();
+
 	// @vue/component
 	const App = {
 	  name: 'SocialnetworkCollabConverter',
@@ -922,14 +670,14 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	`
 	};
 
-	let _$1 = t => t,
-	  _t$1;
+	let _ = t => t,
+	  _t;
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
 	var _wizardPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wizardPopup");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _showPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showPopup");
-	var _renderPopupContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
+	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
 	var _mountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountApplication");
 	var _unmountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unmountApplication");
 	var _subscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribe");
@@ -950,8 +698,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    Object.defineProperty(this, _mountApplication, {
 	      value: _mountApplication2
 	    });
-	    Object.defineProperty(this, _renderPopupContent$1, {
-	      value: _renderPopupContent2$1
+	    Object.defineProperty(this, _renderPopupContent, {
+	      value: _renderPopupContent2
 	    });
 	    Object.defineProperty(this, _showPopup, {
 	      value: _showPopup2
@@ -1008,7 +756,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	      height: 439,
 	      borderRadius: 'var(--ui-border-radius-3xl)',
 	      angle: false,
-	      content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent$1)[_renderPopupContent$1](),
+	      content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
 	      closeByEsc: false,
 	      autoHide: false,
 	      closeIcon: false,
@@ -1037,8 +785,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardPopup)[_wizardPopup].show();
 	  });
 	}
-	function _renderPopupContent2$1() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wizardContainer = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	function _renderPopupContent2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wizardContainer = main_core.Tag.render(_t || (_t = _`
 			<div class="socialnetwork-collab-converter-wizard-popup-content"></div>
 		`));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wizardContainer;
@@ -1071,28 +819,14 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1] = params;
 	  }
 	  convertToCollab(groupId) {
-	    api.validateGroup(groupId).then(result => {
-	      if (!result.isValid) {
-	        new ErrorPopup({
-	          groupId,
-	          errors: result.errors
-	        }).show();
-	        return;
-	      }
-	      void new Wizard({
-	        groupId,
-	        redirectAfterSuccess: babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].redirectAfterSuccess
-	      }).show();
-	    }).catch(result => {
-	      new ErrorPopup({
-	        groupId,
-	        errors: result.errors
-	      }).show();
-	    });
+	    void new Wizard({
+	      groupId,
+	      redirectAfterSuccess: babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].redirectAfterSuccess
+	    }).show();
 	  }
 	}
 
 	exports.Converter = Converter;
 
-}((this.BX.Socialnetwork.Collab = this.BX.Socialnetwork.Collab || {}),BX.SidePanel,BX.UI,BX.Main,BX.Vue3,BX.Vue3.Mixins,BX,BX.UI,BX.UI,BX.UI.IconSet,BX.UI.IconSet,BX.Vue3.Components));
+}((this.BX.Socialnetwork.Collab = this.BX.Socialnetwork.Collab || {}),BX.Main,BX.Vue3,BX.Vue3.Mixins,BX.UI,BX.UI,BX.UI.IconSet,BX.UI.IconSet,BX.Vue3.Components,BX,BX));
 //# sourceMappingURL=converter.bundle.js.map

@@ -7,10 +7,12 @@ import { showCheckListAction } from './action/check-list/show-check-list-action'
 import { showCheckListItemsAction } from './action/check-list/show-check-list-items-action';
 import { changeDeadlineAction } from './action/change-deadline-action.js';
 import { completeTaskAction } from './action/complete-task-action.js';
+import { openGroupAction } from './action/open-group-action';
 import { openResultAction } from './action/open-result-action';
-import { type BaseAction } from './action/base-action';
-import { type Coordinates } from './type/coordinates';
-import { type Link } from './type/link.js';
+import { openTimeTrackingAction } from './action/open-time-tracking-action';
+import type { BaseAction } from './action/base-action';
+import type { Coordinates } from './type/coordinates';
+import type { Link } from './type/link.js';
 
 type Dependencies = {
 	actionDispatcher: ChatActionDispatcher,
@@ -26,9 +28,11 @@ export class ChatActionService
 	#defaultActions: Array<BaseAction> = [
 		changeDeadlineAction,
 		completeTaskAction,
+		openGroupAction,
 		openResultAction,
 		showCheckListAction,
 		showCheckListItemsAction,
+		openTimeTrackingAction,
 	];
 
 	#actionDispatcher: ChatActionDispatcher;

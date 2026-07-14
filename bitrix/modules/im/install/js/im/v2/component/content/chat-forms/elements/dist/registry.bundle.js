@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_elements_button, main_core, im_v2_component_elements_avatar, im_v2_provider_service_chat, ui_entitySelector, im_v2_application_core, im_v2_lib_feature, im_v2_const, im_v2_component_elements_hint, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_component_animation, ui_forms, im_v2_component_elements_dropdown) {
+(function (exports, im_v2_component_elements_button, main_core, im_v2_component_elements_avatar, im_v2_provider_service_chat, ui_entitySelector, im_v2_application_core, im_v2_lib_feature, im_v2_const, im_v2_component_elements_hint, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_component_animation, ui_forms, im_v2_component_elements_dropdown, im_v2_lib_access, im_v2_lib_utils) {
 	'use strict';
 
 	// @vue/component
@@ -460,7 +460,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		methods: {
 			onChangeAutoDeleteState() {
 				if (!this.isFeatureEnabled) {
-					im_v2_lib_feature.FeatureManager.messagesAutoDelete.openFeatureSlider();
+					im_v2_lib_feature.TariffManager.messagesAutoDelete.openFeatureSlider();
 					return;
 				}
 				if (this.isEnabled) {
@@ -1210,10 +1210,73 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	class ChatMemberDiffManager {
+		#initialManagers = [];
+		#initialMembers = [];
+		setInitialManagers(initialManagers) {
+			this.#initialManagers = initialManagers;
+		}
+		setInitialChatMembers(initialMembers) {
+			this.#initialMembers = initialMembers;
+		}
+		getAddedMemberEntities(modifiedEntities) {
+			const originalSet = new Set(this.#initialMembers.map(elem => JSON.stringify(elem)));
+			return modifiedEntities.filter(elem => !originalSet.has(JSON.stringify(elem)));
+		}
+		getDeletedMemberEntities(modifiedEntities) {
+			const modifiedSet = new Set(modifiedEntities.map(elem => JSON.stringify(elem)));
+			return this.#initialMembers.filter(elem => !modifiedSet.has(JSON.stringify(elem)));
+		}
+		getAddedManagers(modifiedArray) {
+			const originalSet = new Set(this.#initialManagers);
+			return modifiedArray.filter(elem => !originalSet.has(elem));
+		}
+		getDeletedManagers(modifiedArray) {
+			const modifiedSet = new Set(modifiedArray);
+			return this.#initialManagers.filter(elem => !modifiedSet.has(elem));
+		}
+	}
+
+	const checkParentAccess = params => {
+		const {
+			memberEntities,
+			managerIds,
+			ownerId,
+			parentChatId
+		} = params;
+		if (hasSelectedDepartments(memberEntities)) {
+			return im_v2_lib_access.ChatAccessManager.askForParentAccess();
+		}
+		const parentDialogId = im_v2_lib_utils.Utils.dialog.buildChatDialogId(parentChatId);
+		const allUserIds = collectChatUserIds({
+			memberEntities,
+			managerIds,
+			ownerId
+		});
+		return im_v2_lib_access.ChatAccessManager.canAddUsersToParent(parentDialogId, allUserIds);
+	};
+	const hasSelectedDepartments = selectorEntities => {
+		return selectorEntities.some(([entityType]) => entityType === im_v2_const.SelectorEntity.department);
+	};
+	const collectChatUserIds = params => {
+		const {
+			memberEntities,
+			managerIds,
+			ownerId
+		} = params;
+		const entityUserIds = getEntityUserIds(memberEntities);
+		const allIds = new Set([...entityUserIds, ...managerIds, ownerId]);
+		return [...allIds].map(id => String(id));
+	};
+	const getEntityUserIds = memberEntities => {
+		return memberEntities.filter(([entityType]) => entityType === im_v2_const.SelectorEntity.user).map(([, userId]) => Number(userId));
+	};
+
 	exports.AppearanceSection = AppearanceSection;
 	exports.AutoDelete = AutoDelete;
 	exports.ButtonPanel = ButtonPanel;
 	exports.ChatAvatar = ChatAvatar;
+	exports.ChatMemberDiffManager = ChatMemberDiffManager;
 	exports.ChatMembersSelector = ChatMembersSelector;
 	exports.ConferenceSection = ConferenceSection;
 	exports.CreateChatExternalSection = CreateChatExternalSection;
@@ -1225,6 +1288,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.SettingsSection = SettingsSection;
 	exports.TextareaInput = TextareaInput;
 	exports.TitleInput = TitleInput;
+	exports.checkParentAccess = checkParentAccess;
 
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX.Messenger.v2.Component.Elements, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.UI.EntitySelector, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation, BX, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX.Messenger.v2.Component.Elements, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.UI.EntitySelector, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

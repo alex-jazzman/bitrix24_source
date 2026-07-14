@@ -6,8 +6,9 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { TaskField } from 'tasks.v2.const';
+import type { Item } from 'tasks.v2.lib.entity-selector-dialog';
 import { relationError } from 'tasks.v2.lib.relation-error';
-import { ganttDialog, type Item } from 'tasks.v2.lib.relation-tasks-dialog';
+import { ganttDialog } from 'tasks.v2.lib.relation-tasks-dialog';
 import { ganttService } from 'tasks.v2.provider.service.relation-service';
 
 import { GanttMenu } from './gantt-menu';

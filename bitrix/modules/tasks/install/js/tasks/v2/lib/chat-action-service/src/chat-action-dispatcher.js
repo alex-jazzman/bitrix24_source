@@ -1,7 +1,10 @@
 import { Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+
+import { EventName } from 'tasks.v2.const';
 
 import { BaseAction } from './action/base-action.js';
-import type { ActionPayload } from './type/action-payload.js';
+import { type ActionPayload } from './type/action-payload.js';
 
 export class ChatActionDispatcher
 {
@@ -30,6 +33,8 @@ export class ChatActionDispatcher
 		{
 			throw new Error(`Action '${actionName}' not found`);
 		}
+
+		EventEmitter.emit(EventName.CloseAllBottomSheets, { actionName: actionName.trim() });
 
 		await action.execute(payload);
 	}

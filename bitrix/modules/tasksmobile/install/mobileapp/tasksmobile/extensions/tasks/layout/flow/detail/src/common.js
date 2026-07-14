@@ -5,11 +5,12 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { makeLibraryImagePath } = require('asset-manager');
 	const { Duration } = require('utils/date');
-	const { Alert } = require('alert');
 	const { ScrollView } = require('layout/ui/scroll-view');
 	const { Card } = require('ui-system/layout/card');
 	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
@@ -45,14 +46,6 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 		{
 			if (Type.isNil(this.props.flow))
 			{
-				Alert.alert(
-					Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_ALERT_TITLE'),
-					Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_ALERT_DESCRIPTION'),
-					() => {
-						this.props.layout.close();
-					},
-				);
-
 				return this.renderFlowDataNotFound();
 			}
 
@@ -72,19 +65,23 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 		}
 
 		renderFlowDataNotFound = () => {
-			return View(
-				{
-					style: {
-						width: '100%',
-						paddingVertical: Indent.L.toNumber(),
-						paddingHorizontal: Indent.XL3.toNumber(),
-					},
+			return StatusBlock({
+				testId: `${this.testId}-flow-not-found`,
+				style: {
+					width: '100%',
+					flex: 1,
 				},
-				H3({
-					text: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_DESCRIPTION'),
-					color: Color.base1,
+				image: Image({
+					resizeMode: 'contain',
+					style: {
+						width: 216,
+						height: 216,
+					},
+					uri: makeLibraryImagePath('zefir-flow-not-found.png', 'empty-states', 'tasks'),
 				}),
-			);
+				title: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_TITLE'),
+				description: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_DESCRIPTION'),
+			});
 		};
 
 		renderFlowTitle = () => {

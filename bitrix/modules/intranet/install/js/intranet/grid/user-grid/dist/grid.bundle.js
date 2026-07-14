@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports, main_core, ui_avatar, ui_label, ui_dialogs_messagebox, ui_formElements_field, bitrix24_firstAdminGuard, intranet_fireEmployeeWizard, ui_cnt, intranet_reinvite, ui_iconSet_main, ui_entitySelector, im_public) {
+(function (exports, main_core, ui_avatar, ui_label, ui_dialogs_messagebox, ui_formElements_field, bitrix24_firstAdminGuard, intranet_fireEmployeeWizard, ui_cnt, intranet_reinvite, ui_iconSet_main, ui_entitySelector, ui_hint, ui_iconSet_api_core, ui_system_chip, im_public) {
 	'use strict';
 
 	class BaseField {
@@ -638,6 +638,54 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	const StatusDesign = {
+		enabled: ui_system_chip.ChipDesign.TintedSuccess,
+		update_required: ui_system_chip.ChipDesign.TintedWarning,
+		update_recommended: ui_system_chip.ChipDesign.Filled,
+		enable_required: ui_system_chip.ChipDesign.TintedAlert,
+		disabled: ui_system_chip.ChipDesign.TintedNoAccent
+	};
+	const otpHint = ui_hint.Hint.createInstance({
+		popupParameters: {
+			maxWidth: 350,
+			offsetLeft: 9,
+			offsetTop: 2,
+			bindOptions: {
+				forceBindPosition: true
+			}
+		}
+	});
+	class OtpStatusField extends BaseField {
+		render(params) {
+			const {
+				status,
+				label,
+				hint
+			} = params;
+			const design = StatusDesign[status] || StatusDesign.disabled;
+			const testId = `intranet-otp-user-list-otp-status-${status ?? 'disabled'}`;
+			const chip = new ui_system_chip.Chip({
+				text: label,
+				design,
+				size: ui_system_chip.ChipSize.Sm,
+				icon: ui_iconSet_api_core.Outline.QUESTION,
+				rounded: true
+			});
+			const chipElement = chip.render();
+			chipElement.setAttribute('data-testid', testId);
+			this.appendToFieldNode(chipElement);
+			if (hint) {
+				const iconElement = chipElement.querySelector('.ui-chip-icon');
+				if (iconElement) {
+					iconElement.setAttribute('data-hint', hint);
+					iconElement.setAttribute('data-hint-no-icon', '');
+					main_core.Event.bind(chipElement, 'mouseenter', () => otpHint.show(iconElement, hint, false, true));
+					main_core.Event.bind(chipElement, 'mouseleave', () => otpHint.hide(iconElement));
+				}
+			}
+		}
+	}
+
 	/**
 	 * @abstract
 	 */
@@ -1234,8 +1282,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.EmployeeField = EmployeeField;
 	exports.FullNameField = FullNameField;
 	exports.GridManager = GridManager;
+	exports.OtpStatusField = OtpStatusField;
 	exports.Panel = Panel;
 	exports.PhotoField = PhotoField;
 
-})(this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}, BX, BX.UI, BX.UI, BX.UI.Dialogs, BX.UI.FormElements, BX.Bitrix24, BX.Intranet, BX.UI, BX.Intranet.Reinvite, window, BX.UI.EntitySelector, BX.Messenger.v2.Lib);
+})(this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}, BX, BX.UI, BX.UI, BX.UI.Dialogs, BX.UI.FormElements, BX.Bitrix24, BX.Intranet, BX.UI, BX.Intranet.Reinvite, window, BX.UI.EntitySelector, BX.UI, BX.UI.IconSet, BX.UI.System.Chip, BX.Messenger.v2.Lib);
 //# sourceMappingURL=grid.bundle.js.map

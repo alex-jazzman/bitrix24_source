@@ -7,6 +7,7 @@ import { analytics } from 'tasks.v2.lib.analytics';
 import { ScrumManager } from 'tasks.v2.lib.scrum-manager';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { idUtils } from 'tasks.v2.lib.id-utils';
+import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -164,6 +165,11 @@ export const statusService = new class
 		});
 
 		void resultService.closeResults(id);
+
+		if (task.maxDeadlineChanges)
+		{
+			await deadlineService.updateDeadlineChangeCount(id);
+		}
 
 		return null;
 	}

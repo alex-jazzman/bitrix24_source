@@ -124,7 +124,7 @@ export const EditableChatTitle = {
 			@click="onTitleClick"
 			@mouseover="showEditIcon = true"
 			@mouseleave="showEditIcon = false"
-			class="bx-im-elements-editable-chat-title__wrap"
+			class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__wrap"
 			:class="{'--can-rename': canBeRenamed}"
 		>
 			<div class="bx-im-elements-editable-chat-title__container">
@@ -134,7 +134,7 @@ export const EditableChatTitle = {
 				<div v-if="showEditIcon && canBeRenamed" class="bx-im-elements-editable-chat-title__edit-icon"></div>
 			</div>
 		</div>
-		<div v-else class="bx-im-elements-editable-chat-title__input_container">
+		<div v-else class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__input_container">
 			<input
 				v-model="chatTitle"
 				:style="inputStyle"

@@ -23,12 +23,12 @@ $MESS['TASKS_V2_TASK_FULL_CARD_RENEW'] = 'Возобновить';
 $MESS['TASKS_V2_TASK_FULL_CARD_COMPLETE'] = 'Завершить';
 $MESS['TASKS_V2_TASK_FULL_CARD_DELETE'] = 'Удалить';
 //lifecycle actions menu end
-//template lifecycle actions menu
+//creation actions menu
 $MESS['TASKS_V2_TASK_TEMPLATE_CREATE_TASK'] = 'Создать задачу';
 $MESS['TASKS_V2_TASK_TEMPLATE_CREATE_SUBTASK'] = 'Создать подзадачу для шаблона';
 $MESS['TASKS_V2_TASK_TEMPLATE_COPY'] = 'Копировать шаблон';
 $MESS['TASKS_V2_TASK_TEMPLATE_DELETE'] = 'Удалить';
-//template lifecycle actions menu end
+//creation actions menu end
 //burger menu
 $MESS['TASKS_V2_TASK_FULL_CARD_FAVOR_ACTION'] = 'Добавить в избранное';
 $MESS['TASKS_V2_TASK_FULL_CARD_FAVOR_NOTIF_SUCC'] = 'Задача добавлена в избранное';
@@ -50,18 +50,19 @@ $MESS['TASKS_V2_TASK_FULL_CARD_UNMUTE_ACTION'] = 'Включить звук';
 $MESS['TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_SUCC_TITLE'] = 'Звук включён';
 $MESS['TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_SUCC_DESCR'] = 'Счётчики по задаче активны и учитываются в общем счётчике задач';
 $MESS['TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_FAIL'] = 'Не удалось включить звук по задаче';
+$MESS['TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_ACTION'] = 'Скопировать ссылку';
+$MESS['TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_NOTIF_SUCC'] = 'Ссылка скопирована';
+$MESS['TASKS_V2_TASK_FULL_CARD_COPY_TASK_URL_NOTIF_FAIL'] = 'Не удалось скопировать ссылку';
 $MESS['TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK'] = 'Создать задачу';
 $MESS['TASKS_V2_TASK_FULL_CARD_CREATE_SUBTASK'] = 'Создать подзадачу';
 $MESS['TASKS_V2_TASK_FULL_CARD_CREATE_TASK_COPY'] = 'Копировать задачу';
 $MESS['TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK_WITH_TEMPLATE'] = 'Создать задачу из шаблона';
 $MESS['TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'] = 'Сохранить как шаблон';
-$MESS['TASKS_V2_TASK_FULL_CARD_COPY_TASK_ID_ACTION'] = 'Скопировать ID задачи';
-$MESS['TASKS_V2_TASK_FULL_CARD_COPY_TASK_ID_NOTIF'] = 'ID задачи скопирован';
 $MESS['TASKS_V2_TASK_FULL_CARD_GO_TO_ROBOTS'] = 'Автоматизировать задачи';
 $MESS['TASKS_V2_TASK_FULL_CARD_GO_TO_BITRIX_MARKET'] = 'Маркетплейс';
+$MESS['TASKS_V2_TASK_FULL_CARD_OPEN_TASK_NEW_TAB'] = 'Открыть в новой вкладке';
 //burger menu end
 $MESS['TASKS_V2_TASK_FULL_CARD_MORE'] = 'Ещё';
-$MESS['TASKS_V2_TASK_FULL_CARD_OPEN_FULL'] = 'Открыть полностью';
 // chat menu
 $MESS['TASKS_V2_TASK_FULL_CARD_MESSAGE_ADD_RESULT'] = 'Добавить в результаты';
 $MESS['TASKS_V2_TASK_FULL_CARD_MESSAGE_DELETE_RESULT'] = 'Убрать из результатов';

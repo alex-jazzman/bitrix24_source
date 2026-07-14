@@ -205,8 +205,10 @@ Class socialnetwork extends CModule
 		$eventManager->registerEventHandler('im', 'onDiskRecordShare', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Im\Chat\CallRecord', 'onDiskRecordShare');
 		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Controller', 'onContextGetMessages');
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\AI\Settings', 'onTuningLoad');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'socialnetwork', '\Bitrix\Socialnetwork\V2\Internal\EventHandler\HasCollabersHandler', 'onUserAdd');
 		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
 		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'socialnetwork', '\Bitrix\Socialnetwork\V2\Internal\EventHandler\HasCollabersHandler', 'onUserDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'socialnetwork', '\Bitrix\Socialnetwork\Internals\Space\Counter\Cache', 'invalidateCache');
 		$eventManager->registerEventHandler('intranet', 'onCopyCollabInviteLink', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'onCopyCollabInviteLink');
 		$eventManager->registerEventHandler('forum', 'OnAfterCommentAdd', 'socialnetwork', '\Bitrix\Socialnetwork\Collab\Entity\Event\EventDispatcher', 'OnAfterCommentAdd');
@@ -326,6 +328,79 @@ Class socialnetwork extends CModule
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
 			'onMemberUpdated'
+		);
+
+		// project 2.0
+		$eventManager->registerEventHandler(
+			'im',
+			'OnBeforeUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersAddEvent\PrepareUsersAdd',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\SyncChatMembersWithProject',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\EnsureProjectCopilotChat',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnBeforeUsersDeleteExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersDeleteEvent\PrepareUsersDelete',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterUsersDeleteExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersDeleteEvent\SyncChatMembersWithProject',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterLoadExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterLoadEvent\TriggerLazyProjectConvert',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnResolveRecentFixedChatIdsExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnResolveRecentFixedChatIdsEvent\AddProjectFixedChatIds',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnFilterUsersByAccessExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnFilterUsersByAccessEvent\CheckAccess',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnCollectTariffRestrictions',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
+			'execute',
 		);
 
 		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
@@ -722,6 +797,79 @@ Class socialnetwork extends CModule
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
 			'onMemberUpdated'
+		);
+
+		// project 2.0
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnBeforeUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersAddEvent\PrepareUsersAdd',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\SyncChatMembersWithProject',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterUsersAddExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersAddEvent\EnsureProjectCopilotChat',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnBeforeUsersDeleteExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnBeforeUsersDeleteEvent\PrepareUsersDelete',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterUsersDeleteExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterUsersDeleteEvent\SyncChatMembersWithProject',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterLoadExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterLoadEvent\TriggerLazyProjectConvert',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnResolveRecentFixedChatIdsExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnResolveRecentFixedChatIdsEvent\AddProjectFixedChatIds',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnFilterUsersByAccessExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnFilterUsersByAccessEvent\CheckAccess',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnCollectTariffRestrictions',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
+			'execute',
 		);
 
 		UnRegisterModule("socialnetwork");

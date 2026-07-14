@@ -20,6 +20,8 @@ type Params = {
 
 let dialog: EntitySelectorDialog = null;
 
+export type { Item as UserDialogItem };
+
 export const usersDialog = new class
 {
 	#ids: number[];
@@ -159,8 +161,10 @@ export const usersDialog = new class
 					},
 					onClose: (): void => {
 						this.#fillStore();
-						const ids = dialog.getSelectedItems().map((item: Item) => item.getId());
-						this.#onClose?.(ids);
+						const items = dialog.getSelectedItems();
+						const ids = items.map((item: Item) => item.getId());
+
+						this.#onClose?.(ids, items);
 					},
 				},
 			},

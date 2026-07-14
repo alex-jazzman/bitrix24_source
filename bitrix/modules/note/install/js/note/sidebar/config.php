@@ -17,6 +17,7 @@ return [
 		'note.ui.action-menu',
 		'note.ui.loader',
 		'note.ui.theme-context',
+		'pull.client',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'ui.entity-selector',

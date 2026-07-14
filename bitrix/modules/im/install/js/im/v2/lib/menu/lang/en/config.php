@@ -33,6 +33,7 @@ $MESS["IM_LIB_MENU_UNPIN_MSGVER_1"] = "Unpin";
 $MESS["IM_LIB_MENU_UNREAD"] = "Mark to read later";
 $MESS["IM_LIB_MENU_USER_KICK_FROM_CHAT"] = "Remove from chat";
 $MESS["IM_LIB_MENU_USER_KICK_FROM_COLLAB"] = "Remove from collab";
+$MESS["IM_LIB_MENU_USER_KICK_FROM_COLLAB_V2"] = "Remove from project";
 $MESS["IM_LIB_MENU_USER_MENTION"] = "Mention";
 $MESS["IM_LIB_MENU_USER_WRITE"] = "Send private message";
 $MESS["IM_LIB_MENU_WRITE_V2"] = "Send private message";

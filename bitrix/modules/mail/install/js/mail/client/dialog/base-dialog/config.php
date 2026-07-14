@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/base-dialog.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.loader',
 		'main.popup',
 		'ui.buttons',
 	],

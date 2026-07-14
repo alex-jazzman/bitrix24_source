@@ -82,7 +82,7 @@ export const DeadlineChangeReasonPopup = {
 		},
 		handleSave(): void
 		{
-			if (this.reason === '')
+			if (this.reason.trim() === '')
 			{
 				return;
 			}
@@ -128,7 +128,7 @@ export const DeadlineChangeReasonPopup = {
 				<UiButton
 					:text="loc('TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_SAVE')"
 					:size="ButtonSize.MEDIUM"
-					:disabled="reason === ''"
+					:disabled="reason.trim() === ''"
 					:style="AirButtonStyle.FILLED"
 					:dataset="{
 						deadlineChangeReasonButtonId: 'save',

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_css_tokens, im_v2_lib_menu, im_v2_lib_recent, im_v2_lib_utils, im_v2_provider_service_recent, call_component_compactActiveCallList, ui_designTokens_air, main_core, ui_iconSet_api_vue, im_v2_lib_analytics, im_v2_lib_counter, im_v2_component_elements_avatar) {
+(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_css_tokens, im_v2_css_classes, im_v2_lib_menu, im_v2_lib_recent, im_v2_lib_utils, im_v2_provider_service_recent, call_component_compactActiveCallList, ui_designTokens_air, main_core, im_v2_lib_feature, ui_iconSet_api_vue, im_v2_lib_analytics, im_v2_lib_counter, im_v2_component_elements_avatar) {
 	'use strict';
 
 	// @vue/component
@@ -98,7 +98,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const CompactNavigationItems = [im_v2_const.NavigationMenuItem.notification, im_v2_const.NavigationMenuItem.copilot, im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2];
 	// @vue/component
 	const CompactNavigation = {
 		name: 'CompactNavigation',
@@ -112,7 +111,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return items.map(item => item.id);
 			},
 			preparedNavigationItems() {
-				return CompactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
+				return this.compactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
+			},
+			compactNavigationItems() {
+				const items = [im_v2_const.NavigationMenuItem.notification];
+				if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+					items.push(im_v2_const.NavigationMenuItem.copilot);
+				}
+				items.push(im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2);
+				return items;
 			}
 		},
 		template: `
@@ -339,5 +346,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, BX??{}, BX??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});
 //# sourceMappingURL=recent-compact.bundle.js.map

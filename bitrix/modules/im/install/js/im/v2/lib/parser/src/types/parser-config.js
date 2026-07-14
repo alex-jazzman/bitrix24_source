@@ -7,5 +7,6 @@ export type ParserConfig = {
 	showImageFromLink: boolean,
 	urlTarget: string,
 	removeLinks?: boolean,
-	contextDialogId?: string
+	contextDialogId?: string,
+	removeNewLines?: boolean,
 };

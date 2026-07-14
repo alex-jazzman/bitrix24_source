@@ -1,0 +1,6 @@
+.bx-im-nested-list-collab-header__loader {
+	width: 100%;
+	height: 38px;
+	background-image: url('./images/header-loader.svg');
+	background-repeat: no-repeat;
+}

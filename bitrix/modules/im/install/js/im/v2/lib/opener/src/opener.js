@@ -1,11 +1,11 @@
 import { Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
-import { EventType, GetParameter, Layout, NavigationMenuItem, ChatType } from 'im.v2.const';
+import { EventType, GetParameter, Layout, NavigationMenuItem } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { CreateChatManager, type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { type NavigationMenuItemParams, NavigationManager } from 'im.v2.lib.navigation';
@@ -13,14 +13,14 @@ import { PhoneManager } from 'im.v2.lib.phone';
 import { MessengerSlider } from 'im.v2.lib.slider';
 import { Utils } from 'im.v2.lib.utils';
 import { BotContextService } from 'im.v2.provider.service.bot';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import { LinesService } from './classes/lines-service';
 import {
 	checkHistoryDialogId,
 	prepareHistorySliderLink,
 	normalizeEntityId,
-	isEmbeddedModeWithActiveSlider,
-	openChatInNewTab,
+	handleOpenTarget,
 } from './functions/helpers';
 
 export const Opener = {
@@ -32,27 +32,13 @@ export const Opener = {
 			return this.openLines(preparedDialogId);
 		}
 
-		if (isEmbeddedModeWithActiveSlider())
-		{
-			openChatInNewTab({
-				navigationItem: NavigationMenuItem.chat,
-				dialogId: preparedDialogId,
-				messageId,
-			});
-
-			return Promise.resolve();
-		}
-
-		await MessengerSlider.getInstance().openSlider();
-		const layoutParams = {
-			name: Layout.chat,
-			entityId: preparedDialogId,
+		const config = {
+			navigationItem: NavigationMenuItem.chat,
+			dialogId: preparedDialogId,
+			messageId,
 		};
-		if (messageId > 0)
-		{
-			layoutParams.contextId = messageId;
-		}
-		await LayoutManager.getInstance().setLayout(layoutParams);
+
+		await handleOpenTarget(config);
 
 		return Promise.resolve();
 	},
@@ -76,24 +62,17 @@ export const Opener = {
 			preparedDialogId = await linesService.getDialogIdByUserCode(preparedDialogId);
 		}
 
-		if (isEmbeddedModeWithActiveSlider())
-		{
-			openChatInNewTab({
-				navigationItem: NavigationMenuItem.openlines,
-				dialogId: preparedDialogId,
-			});
-
-			return Promise.resolve();
-		}
-
-		await MessengerSlider.getInstance().openSlider();
-
 		const optionOpenLinesV2Activated = FeatureManager.isFeatureAvailable(Feature.openLinesV2);
+		const navigationItem = optionOpenLinesV2Activated ? NavigationMenuItem.openlinesV2 : NavigationMenuItem.openlines;
 
-		return LayoutManager.getInstance().setLayout({
-			name: optionOpenLinesV2Activated ? Layout.openlinesV2 : Layout.openlines,
-			entityId: preparedDialogId,
-		});
+		const config = {
+			navigationItem,
+			dialogId: preparedDialogId,
+		};
+
+		await handleOpenTarget(config);
+
+		return Promise.resolve();
 	},
 
 	async openCopilot(dialogId: string = '', contextId = 0): Promise
@@ -113,9 +92,9 @@ export const Opener = {
 	{
 		const preparedDialogId = dialogId.toString();
 
-		if (!FeatureManager.collab.isAvailable())
+		if (!TariffManager.collab.isAvailable())
 		{
-			FeatureManager.collab.openFeatureSlider();
+			TariffManager.collab.openFeatureSlider();
 
 			return null;
 		}
@@ -123,8 +102,8 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		const withCollabId = Type.isStringFilled(preparedDialogId);
-		const isNestedListAvailable = FeatureManager.isFeatureAvailable(Feature.isNestedListAvailable);
-		if (!withCollabId || !isNestedListAvailable)
+		const isCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+		if (!withCollabId || !isCollabV2Available)
 		{
 			return LayoutManager.getInstance().setLayout({
 				name: Layout.collab,
@@ -132,18 +111,13 @@ export const Opener = {
 			});
 		}
 
-		if (!Utils.dialog.isChatDialogId(dialogId))
+		if (!Utils.dialog.isChatDialogId(dialogId) && !Utils.dialog.isGroupExternalId(dialogId))
 		{
 			return Promise.resolve();
 		}
 
-		const chatId = Utils.dialog.getChatIdFromDialogId(dialogId);
-
-		await this.openChat();
-		EventEmitter.emit(EventType.recent.openNestedList, {
-			chatType: ChatType.collab,
-			parentChatId: chatId,
-		});
+		await this.openCollab();
+		EventEmitter.emit(EventType.recent.openNestedList, { parentDialogId: dialogId });
 
 		return Promise.resolve();
 	},
@@ -260,6 +234,20 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		return CreateChatManager.getInstance().startChatCreation(chatType, params);
+	},
+
+	async openChatUpdate(dialogId: string): Promise
+	{
+		Logger.warn('Slider: openChatUpdate', dialogId);
+
+		await MessengerSlider.getInstance().openSlider();
+
+		await (new ChatService()).loadChat(dialogId);
+
+		return LayoutManager.getInstance().setLayout({
+			name: Layout.updateChat,
+			entityId: dialogId,
+		});
 	},
 
 	startVideoCall(dialogId: string = '', withVideo: boolean = true): Promise

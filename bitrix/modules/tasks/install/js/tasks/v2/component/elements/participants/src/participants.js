@@ -1,5 +1,5 @@
 import type { PopupOptions } from 'main.popup';
-import { showLimit } from 'tasks.v2.lib.show-limit';
+
 import { Popup } from 'ui.vue3.components.popup';
 import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { Outline } from 'ui.icon-set.api.vue';
@@ -12,8 +12,10 @@ import { FieldHoverButton } from 'tasks.v2.component.elements.field-hover-button
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { UserLabel } from 'tasks.v2.component.elements.user-label';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import { idUtils } from 'tasks.v2.lib.id-utils';
-import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
+import { usersDialog, type UserDialogItem } from 'tasks.v2.lib.user-selector-dialog';
+import { loadUsersAbsenceInfo } from 'tasks.v2.component.absence-popup';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import type { UserModel } from 'tasks.v2.model.users';
 
@@ -25,6 +27,7 @@ const maxUsers = 4;
 
 // @vue/component
 export const Participants = {
+	name: 'TaskParticipants',
 	components: {
 		RichLoc,
 		Popup,
@@ -105,8 +108,12 @@ export const Participants = {
 			type: Boolean,
 			default: false,
 		},
+		warnAboutAbsence: {
+			type: [Boolean, String],
+			default: false,
+		},
 	},
-	emits: ['update', 'hintClick'],
+	emits: ['update', 'hintClick', 'absenceLoaded'],
 	setup(): Object
 	{
 		return {
@@ -258,13 +265,46 @@ export const Participants = {
 				isMultiple: !this.single && (!this.multipleOnPlus || plus),
 			});
 		},
-		handleDialogClose(userIds: number[]): void
+		handleDialogClose(userIds: number[], items: UserDialogItem[]): void
 		{
 			this.isDialogShown = false;
 			if (usersDialog.getDialog().isLoaded())
 			{
-				this.updateUsers(userIds);
+				this.updateUsers(this.getUserIds(items));
+
+				if (this.warnAboutAbsence)
+				{
+					void this.loadUsersAbsenceInfo(items);
+				}
 			}
+		},
+		getUserIds(items: UserDialogItem[]): number[]
+		{
+			if (!Array.isArray(items))
+			{
+				return [];
+			}
+
+			const itemsNew = [...items];
+			const itemsSorted = itemsNew.sort((a, b) => {
+				const getIsOnVacation = (item: UserDialogItem): boolean => {
+					return item.customData?.get?.('isOnVacation') === true;
+				};
+
+				const isOnVacationA = getIsOnVacation(a);
+				const isOnVacationB = getIsOnVacation(b);
+
+				if (isOnVacationA === isOnVacationB)
+				{
+					return 0;
+				}
+
+				return isOnVacationA ? 1 : -1;
+			});
+			const ids = itemsSorted.map(({ id }) => id);
+			const idsFiltered = ids.filter((id) => typeof id === 'number');
+
+			return idsFiltered;
 		},
 		removeUser(userId: number): void
 		{
@@ -288,10 +328,19 @@ export const Participants = {
 
 			this.isHintShown = false;
 		},
+		async loadUsersAbsenceInfo(items: UserDialogItem[] = []): Promise<void>
+		{
+			const loadedUserIds = await loadUsersAbsenceInfo(items);
+
+			if (loadedUserIds.length > 0)
+			{
+				this.$emit('absenceLoaded', loadedUserIds);
+			}
+		},
 	},
 	template: `
 		<div v-bind="dataset" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
-			<FieldAdd 
+			<FieldAdd
 				v-if="userCount === 0"
 				:icon="Outline.PERSON"
 				:isLocked
@@ -299,7 +348,7 @@ export const Participants = {
 			/>
 			<div v-else-if="inline && userCount > 1 || avatarOnly" class="tasks-field-users-inline">
 				<HoverPill compact @click="handleClick">
-					<template v-for="userId in bodyUserIds">
+					<template v-for="userId in bodyUserIds" :key="userId">
 						<UserLabel class="tasks-field-user --inline" :user="getUser(userId)" avatarOnly/>
 					</template>
 				</HoverPill>
@@ -332,7 +381,11 @@ export const Participants = {
 					:forceEdit
 					@edit="showDialog"
 					@remove="removeUser"
-				/>
+				>
+					<template #user="slotProps">
+						<slot name="user" v-bind="slotProps"/>
+					</template>
+				</Users>
 				<More
 					:count="moreUserIds.length"
 					:withRemove
@@ -356,7 +409,11 @@ export const Participants = {
 				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
-			/>
+			>
+				<template #user="slotProps">
+					<slot name="user" v-bind="slotProps"/>
+				</template>
+			</Users>
 		</Popup>
 		<Hint v-if="isHintShown" :bindElement="$refs.anchor" @close="closeHint">
 			<RichLoc class="tasks-field-users-hint" :text="hintText" placeholder="[action]">

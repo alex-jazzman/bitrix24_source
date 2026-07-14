@@ -1,0 +1,44 @@
+.sonet--project-wizard--access-rights {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm, 12px);
+	padding: var(--ui-space-inline-3xs, 2px) 0;
+}
+
+.sonet--project-wizard--access-rights-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.sonet--project-wizard--access-rights-item-title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-2);
+	padding-bottom: var(--ui-space-inline-2xs, 4px);
+}
+
+.sonet--project-wizard--access-rights > .sonet--project-wizard--access-rights-item:last-child > *:last-child {
+	display: none;
+}
+
+.sonet--project-wizard--access-rights--reset-button {
+	width: min-content;
+}
+
+.sonet--project-wizard--access-rights-locked {
+	align-items: center;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: var(--ui-border-radius-md, 10px);
+	box-shadow:
+		var(--ui-box-shadow-contrast-default-x, 0)
+		var(--ui-box-shadow-contrast-default-y, 1px)
+		var(--ui-area-box-shadow-default-blur, 1px)
+		var(--ui-box-shadow-contrast-default-spread, 0)
+		var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+	cursor: pointer;
+	display: flex;
+	gap: var(--ui-space-inline-xs, 8px);
+	min-height: 62px;
+	padding: var(--ui-space-inline-sm, 12px) var(--ui-space-inline-md2, 18px);
+}

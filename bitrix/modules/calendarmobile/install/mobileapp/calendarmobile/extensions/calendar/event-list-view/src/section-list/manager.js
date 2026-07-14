@@ -145,6 +145,11 @@ jn.define('calendar/event-list-view/section-list/manager', (require, exports, mo
 
 			if (this.calType === CalendarType.GROUP)
 			{
+				if (SettingsManager.isNewProjectsOn())
+				{
+					return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_PROJECT');
+				}
+
 				return SettingsManager.isCollabCalendarContext()
 					? Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_COLLAB')
 					: Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_GROUP')
@@ -164,15 +169,21 @@ jn.define('calendar/event-list-view/section-list/manager', (require, exports, mo
 
 		#getAdditionalSectionsTitle(calType)
 		{
-			switch (calType)
+			if (calType === CalendarType.COMPANY_CALENDAR)
 			{
-				case CalendarType.COMPANY_CALENDAR:
-					return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_COMPANY');
-				case CalendarType.GROUP:
-					return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_GROUP');
-				default:
-					return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_COLLAB');
+				return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_COMPANY');
 			}
+
+			const groupTitle = (
+				calType === CalendarType.GROUP
+					? Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_GROUP')
+					: Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_COLLAB')
+			);
+
+			return SettingsManager.isNewProjectsOn()
+				? Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_PROJECT')
+				: groupTitle
+			;
 		}
 
 		#getSyncSectionsTitle(externalType)

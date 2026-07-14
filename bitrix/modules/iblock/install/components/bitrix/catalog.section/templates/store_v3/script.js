@@ -5,10 +5,10 @@
 (function() {
 	'use strict';
 
-	if (!!window.JCCatalogSectionComponent)
+	if (!!window.JCCatalogSectionComponentStoreV3)
 		return;
 
-	window.JCCatalogSectionComponent = function(params) {
+	window.JCCatalogSectionComponentStoreV3 = function(params) {
 		this.formPosting = false;
 		this.siteId = params.siteId || '';
 		this.ajaxId = params.ajaxId || '';
@@ -74,7 +74,7 @@
 		}
 	};
 
-	window.JCCatalogSectionComponent.prototype =
+	window.JCCatalogSectionComponentStoreV3.prototype =
 	{
 		checkButton: function()
 		{

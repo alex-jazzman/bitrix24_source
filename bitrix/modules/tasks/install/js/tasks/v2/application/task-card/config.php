@@ -23,8 +23,8 @@ return [
 	'rel' => [
 		'main.core',
 		'main.popup',
-		'ui.system.skeleton',
 		'tasks.v2.lib.id-utils',
+		'ui.system.skeleton',
 	],
 	'settings' => $configService->getTaskCardSettings($userId),
 	'skip_core' => false,

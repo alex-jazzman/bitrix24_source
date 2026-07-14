@@ -5,6 +5,7 @@
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_CHAT_TITLE'] = 'О чате';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_CHANNEL_TITLE'] = 'О канале';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_TITLE'] = 'О коллабе';
+$MESS['IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_TITLE'] = 'О проекте';
 
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_TABS_AUDIO_TITLE'] = 'Аудио';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_TABS_COMMON_CHATS_TITLE'] = 'Общие чаты';
@@ -91,7 +92,9 @@ $MESS['IMMOBILE_SIDEBAR_V2_COMMON_USER_CALENDAR_TITLE'] = 'Календарь';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_CHAT_INFO_PARENT_CHANNEL'] = '[color]Канал[/color]: #NAME#';
 
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_NOT_EMPTY'] = 'Нельзя удалить коллабу, пока в ней есть файлы, задачи и встречи';
+$MESS['IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_DELETE_ERROR_NOT_EMPTY'] = 'Нельзя удалить проект, пока в нём есть файлы, задачи и встречи';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_DEFAULT'] = 'Не удалось удалить коллабу, попробуйте позже';
+$MESS['IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_DELETE_ERROR_DEFAULT'] = 'Не удалось удалить проект, попробуйте позже';
 
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_USER_INVITED_FROM_STRUCTURE'] = 'Из этого чата нельзя выйти, в него добавлен ваш отдел';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_DEFAULT'] = 'Не удалось покинуть чат, попробуйте позже';

@@ -1,7 +1,14 @@
 import { Event, Loc, Type, Runtime } from 'main.core';
 
 import {AbstractCall} from './abstract_call';
-import { CallEngine, CallState, CallEvent, UserState, Provider, DisconnectReason } from './engine';
+import {
+	CallEngine,
+	CallState,
+	CallEvent,
+	UserState,
+	Provider,
+	DisconnectReason,
+} from './engine';
 import {View} from '../view/view';
 import { MediaRenderer } from '../view/media-renderer';
 import {SimpleVAD} from './simple_vad';
@@ -15,12 +22,14 @@ import {
 	CloudRecordStatus,
 	ConnectionType,
 } from '../call_api.js';
+import { CallLegacy } from '../call-api-legacy.js';
 import { CallStreamManager } from '../media-stream-manager';
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 
 const ajaxActions = {
 	decline: 'call.Call.decline',
+	finish: 'call.CallManager.finish',
 };
 
 const clientEvents = {
@@ -88,6 +97,8 @@ export class ServerPlainCall extends AbstractCall
 
 	#connectionType: boolean;
 
+	#keepStreams: boolean;
+
 	#screenShared: boolean;
 
 	#onUnloadHandler: Function;
@@ -134,9 +145,11 @@ export class ServerPlainCall extends AbstractCall
 
 		this.CallApi = null;
 		this.#connectionType = ConnectionType.PeerToPeer;
+		this.#keepStreams = false;
 
 		this._reconnectionEventCount = 0;
 		this.waitForAnswerTimeout = null;
+		this.iceConnectionStateTimer = null;
 
 		this.#isCloudRecordFeaturesEnabled = CallSettingsManager.plainCallCloudRecordingEnabled;
 
@@ -222,6 +235,11 @@ export class ServerPlainCall extends AbstractCall
 	get useMediaServer(): boolean
 	{
 		return this.#connectionType === ConnectionType.MediaServer;
+	}
+
+	set keepStreams(keepStreams): void
+	{
+		this.#keepStreams = Boolean(keepStreams);
 	}
 
 	initPeers(userIds)
@@ -335,17 +353,29 @@ export class ServerPlainCall extends AbstractCall
 		return !this.mediaMutedBySystem && !this.CallApi?.isMediaMutedBySystem;
 	}
 
-	setMuted = (event) => {
+	setMuted = async (event) => {
 		if (this.muted === event.data.isMicrophoneMuted)
 		{
 			return;
 		}
 
-		this.muted = event.data.isMicrophoneMuted;
 		const tag = 'main';
 		const audioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
 
-		if (this.muted && this.CallApi.isAudioPublished())
+		if (!event.data.isMicrophoneMuted)
+		{
+			const permission = await navigator.permissions.query({ name: 'microphone' });
+			if (permission.state !== 'granted' || !audioTrack || audioTrack?.readyState === 'ended')
+			{
+				await this.#tryUnmute(tag);
+
+				return;
+			}
+		}
+
+		this.muted = event.data.isMicrophoneMuted;
+
+		if (this.muted && this.CallApi && this.CallApi.isAudioPublished())
 		{
 			this.CallApi.disableAudio({ calledFrom: 'setMuted' });
 		}
@@ -362,6 +392,28 @@ export class ServerPlainCall extends AbstractCall
 		this.signaling.sendMicrophoneState(this.users, !this.muted);
 		this.sendTalkingState();
 	};
+
+	async #tryUnmute(tag)
+	{
+		try
+		{
+			await this.replaceLocalAudioStream(tag);
+			this.muted = false;
+
+			if (this.useMediaServer)
+			{
+				await this.CallApi.enableAudio({ calledFrom: 'setMuted' });
+			}
+
+			this.signaling.sendMicrophoneState(this.users, true);
+			this.sendTalkingState();
+		}
+		catch (error)
+		{
+			Hardware.isMicrophoneMuted = true;
+		}
+	}
+
 
 	setCameraId(cameraId)
 	{
@@ -407,6 +459,7 @@ export class ServerPlainCall extends AbstractCall
 
 	setUseMediaServer(useMediaServer)
 	{
+		clearTimeout(this.iceConnectionStateTimer);
 		if (useMediaServer && !this.useMediaServer)
 		{
 			this.#connectionType = ConnectionType.MediaServer;
@@ -418,6 +471,14 @@ export class ServerPlainCall extends AbstractCall
 		else
 		{
 			return;
+		}
+
+		if (useMediaServer)
+		{
+			for (const peer of Object.values(this.peers))
+			{
+				peer._destroyPeerConnection();
+			}
 		}
 
 		if (this.CallApi)
@@ -549,7 +610,14 @@ export class ServerPlainCall extends AbstractCall
 		{
 			try
 			{
-				this.CallApi = new Call(this.userId);
+				if (Util.canUseNewCallApi(this.connectionData.roomType))
+				{
+					this.CallApi = new Call(this.userId);
+				}
+				else
+				{
+					this.CallApi = new CallLegacy(this.userId);
+				}
 				this.CallApi.needToStopStreams = false;
 
 				if (!this.CallApi)
@@ -589,6 +657,7 @@ export class ServerPlainCall extends AbstractCall
 					videoSimulcast: true,
 					audioDeviceId: this.microphoneId,
 					videoDeviceId: this.cameraId,
+					autoSubscribe: true,
 					...this.connectionData,
 				});
 			}
@@ -723,15 +792,18 @@ export class ServerPlainCall extends AbstractCall
 	 * Recursively tries to get user media stream with array of constraints
 	 *
 	 * @param constraintsArray array of constraints objects
+	 * @param lastError error from navigator.mediaDevices.getUserMedia
 	 * @returns {Promise}
 	 */
-	async getUserMedia(constraintsArray): Promise<MediaStream>
+	async getUserMedia(constraintsArray, lastError): Promise<{stream: MediaStream, error: ?Error}>
 	{
 		const currentConstraints = constraintsArray[0];
 
 		try
 		{
-			return await CallStreamManager.getUserMedia(currentConstraints);
+			const stream = await CallStreamManager.getUserMedia(currentConstraints);
+
+			return { stream, error: lastError };
 		}
 		catch (error)
 		{
@@ -740,7 +812,7 @@ export class ServerPlainCall extends AbstractCall
 
 			if (constraintsArray.length > 1)
 			{
-				return this.getUserMedia(constraintsArray.slice(1));
+				return this.getUserMedia(constraintsArray.slice(1), error);
 			}
 
 			this.log('Last fallback constraints used, failing');
@@ -791,9 +863,9 @@ export class ServerPlainCall extends AbstractCall
 				constraintsArray.push(this.getMediaConstraints({ videoEnabled: false }));
 			}
 
-			this.getUserMedia(constraintsArray).then((mediaStream) => {
+			this.getUserMedia(constraintsArray).then((result) => {
 				this.log('Local media stream received');
-				const stream = mediaStream.clone();
+				const stream = result.stream.clone();
 				this.localStreams[tag] = stream;
 				stream.getVideoTracks().forEach((track) => {
 					track.addEventListener('ended', () => this.onLocalVideoTrackEnded());
@@ -839,11 +911,38 @@ export class ServerPlainCall extends AbstractCall
 					});
 				}
 
+				const hasActiveVideoTrack = stream.getVideoTracks()[0]?.readyState === 'live';
+
+				if (!hasActiveVideoTrack && result.error)
+				{
+					this.runCallback(CallEvent.onGetUserMediaFailed, {
+						error: result.error,
+						options: { video: true },
+					});
+				}
+
 				resolve(this.localStreams[tag]);
 			}).catch((error) => {
 				this.log('Could not get local media stream.', error);
 				this.log('Request constraints: .', constraintsArray);
 				this.runCallback('onLocalMediaError', { tag, error });
+
+				if (Hardware.isCameraOn)
+				{
+					this.runCallback(CallEvent.onGetUserMediaFailed, {
+						error,
+						options: { video: true },
+					});
+				}
+
+				if (fallbackToAudio)
+				{
+					this.runCallback(CallEvent.onGetUserMediaFailed, {
+						error,
+						options: { audio: true },
+					});
+				}
+
 				reject(error);
 			});
 		});
@@ -855,9 +954,16 @@ export class ServerPlainCall extends AbstractCall
 		{
 			tag = 'main';
 		}
-		if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length)
+
+		const currentAudioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
+		if (currentAudioTrack?.readyState === 'live')
 		{
 			return Promise.resolve(this.localStreams[tag]);
+		}
+
+		if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length > 0)
+		{
+			Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
 		}
 
 		this.log("Requesting access to audio devices");
@@ -866,7 +972,7 @@ export class ServerPlainCall extends AbstractCall
 		{
 			let constraintsArray = [this.getMediaConstraints({videoEnabled: false})];
 
-			this.getUserMedia(constraintsArray).then((stream) =>
+			this.getUserMedia(constraintsArray).then(({ stream }) =>
 			{
 				this.log("Local audio stream received");
 
@@ -892,6 +998,7 @@ export class ServerPlainCall extends AbstractCall
 						}
 					}
 				}
+
 				if (this.deviceList.length === 0)
 				{
 					Hardware.getCurrentDeviceList().then((deviceList) =>
@@ -904,18 +1011,18 @@ export class ServerPlainCall extends AbstractCall
 				}
 
 				resolve(this.localStreams[tag]);
-			}).catch((e) =>
-			{
-				this.log("Could not get local audio stream.", e);
+			}).catch((error) => {
+				this.log("Could not get local audio stream.", error);
 				this.log("Request constraints: .", constraintsArray);
-				this.runCallback("onLocalMediaError", {
-					tag: tag,
-					error: e
+				this.runCallback("onLocalMediaError", { tag, error });
+				this.runCallback(CallEvent.onGetUserMediaFailed, {
+					error,
+					options: { audio: true },
 				});
-				reject(e);
+				reject(error);
 			});
-		})
-	};
+		});
+	}
 
 	setRecorderState(state)
 	{
@@ -1358,7 +1465,7 @@ export class ServerPlainCall extends AbstractCall
 		});
 	};
 
-	hangup(force: boolean = false): Promise<void>
+	hangup(force: boolean = false, _reason: string = '', finishCall: boolean = false): Promise<void>
 	{
 		if (!this.ready && !force)
 		{
@@ -1377,15 +1484,42 @@ export class ServerPlainCall extends AbstractCall
 		this.connectionData = {};
 		this.#screenShared = false;
 
+		// Explicitly finish the call on the backend when "finish for all" was
+		// requested, or when there is at most one remote participant (typical
+		// 1-on-1 Plain call — a fast cancel before the callee answers must
+		// end the call rather than leave a zombie that the backend only
+		// cleans up by the long-running stale-call agent). Legacy multi-user
+		// Plain calls (3+ participants over TURN mesh) must NOT be escalated
+		// to finish-for-all on a plain leave. Kept out of #beforeLeaveCall()
+		// to avoid a duplicate on Call::finish pull event, which also funnels
+		// through #beforeLeaveCall() via destroy().
+		if (this.uuid && (finishCall || this.users.length <= 1))
+		{
+			BX.ajax.runAction(ajaxActions.finish, {
+				data: {
+					callUuid: this.uuid,
+				},
+			});
+		}
+
 		return new Promise((resolve, reject) => {
 			const peers = Object.values(this.peers);
 			peers.forEach((peer) => {
 				peer.disconnect();
 			});
 
-			this.#beforeLeaveCall();
+			// Propagate finishCall so CallApi.hangup(finishCall) asks the media
+			// server to close the whole room instead of just leaving.
+			this.#beforeLeaveCall(finishCall);
 
-			this.runCallback(CallEvent.onLeave, { local: true });
+			// Finalize locally instead of waiting for Call::finish pull. That pull
+			// may never arrive (e.g. finishAction hit an already-finished call and
+			// early-returned without broadcasting, or the balancer returned stale
+			// data and the "call" was a zombie from the start). destroy() is
+			// idempotent, so the pull-driven #onPullEventFinish will no-op later.
+			this.destroy(finishCall);
+
+			resolve();
 		});
 	}
 
@@ -1421,14 +1555,14 @@ export class ServerPlainCall extends AbstractCall
 						}
 					}
 				}
+
 				resolve();
-			}).catch((e) =>
-			{
-				console.error('Could not get access to hardware; don\'t really know what to do. error:', e);
-				reject(e);
+			}).catch((error) => {
+				console.error('Could not get access to hardware; don\'t really know what to do. error:', error);
+				reject(error);
 			});
-		})
-	};
+		});
+	}
 
 	replaceLocalAudioStream(tag: string = "main")
 	{
@@ -1452,13 +1586,12 @@ export class ServerPlainCall extends AbstractCall
 					}
 				}
 				resolve();
-			}).catch((e) =>
-			{
-				console.error('Could not get access to hardware; don\'t really know what to do. error:', e);
-				reject(e);
+			}).catch((error) => {
+				console.error('Could not get access to hardware; don\'t really know what to do. error:', error);
+				reject(error);
 			});
-		})
-	};
+		});
+	}
 
 	sendAllStreams(userId)
 	{
@@ -1490,6 +1623,11 @@ export class ServerPlainCall extends AbstractCall
 
 		for (const peer of Object.values(this.peers))
 		{
+			if (this.useMediaServer && peer.calculatedState === UserState.Connecting)
+			{
+				peer.updateCalculatedState();
+			}
+
 			if (peer.calculatedState === UserState.Connected)
 			{
 				peer.sendMedia();
@@ -1694,13 +1832,23 @@ export class ServerPlainCall extends AbstractCall
 		{
 			if (this.instanceId != params.callInstanceId)
 			{
+				if (this.ready)
+				{
+					return;
+				}
 				// self hangup elsewhere
 				this.runCallback(CallEvent.onLeave, {local: false});
 			}
 			return;
 		}
 
-		if (!this.peers[senderId] || this.peers[senderId].participant)
+		if (!this.peers[senderId])
+		{
+			this.hangup().then(() => this.destroy()).catch(() => this.destroy());
+			return;
+		}
+
+		if (this.peers[senderId].participant && params.code != 603)
 		{
 			return;
 		}
@@ -1715,7 +1863,7 @@ export class ServerPlainCall extends AbstractCall
 
 		if (!this.isAnyoneParticipating() && this.ready)
 		{
-			this.hangup();
+			this.hangup().then(() => this.destroy()).catch(() => this.destroy());
 		}
 	};
 
@@ -1798,8 +1946,8 @@ export class ServerPlainCall extends AbstractCall
 			{
 				peer.addIceCandidate(params.connectionId, candidates[i]);
 				this.log("User: " + params.senderId + "; Added remote ICE candidate: ", JSON.stringify(candidates[i]));
-			}		
-			
+			}
+
 		} catch (e)
 		{
 			this.log('Error parsing serialized candidate: ', e);
@@ -2023,6 +2171,14 @@ export class ServerPlainCall extends AbstractCall
 		{
 			this.signaling.sendLocalRecordState(this.userId, this.commonRecordState);
 		}
+
+		this.iceConnectionStateTimer = setTimeout(() => {
+			const state = peer.peerConnection?.iceConnectionState;
+			if (state === 'new')
+			{
+				this.setUseMediaServer(true);
+			}
+		}, 4000);
 	};
 
 	#onParticipantLeaved = (participant) => {
@@ -2464,11 +2620,11 @@ export class ServerPlainCall extends AbstractCall
 			usersToSendReports[userId][source][index] = report;
 		};
 
-		stats.sender.forEach((report) => {
+		stats.publisher.forEach((report) => {
 			processReport(report);
 		});
 
-		stats.recipient.forEach((report) => {
+		stats.subscriber.forEach((report) => {
 			processReport(report);
 		});
 
@@ -2491,6 +2647,7 @@ export class ServerPlainCall extends AbstractCall
 	};
 
 	#onConnectionTypeChanged = (event) => {
+		clearTimeout(this.iceConnectionStateTimer);
 		const userId = Number(event.fromUserId);
 		const connectionType = Number(event.type);
 
@@ -2557,6 +2714,14 @@ export class ServerPlainCall extends AbstractCall
 			this.prevMainStream = null;
 		}
 
+		if (!this.#keepStreams)
+		{
+			CallStreamManager.stopStream(MediaStreamsKinds.Microphone);
+			CallStreamManager.stopStream(MediaStreamsKinds.Camera);
+			CallStreamManager.stopStream(MediaStreamsKinds.Screen);
+			CallStreamManager.stopStream(MediaStreamsKinds.ScreenAudio);
+		}
+
 		if (this.voiceDetection)
 		{
 			this.voiceDetection.destroy();
@@ -2567,12 +2732,21 @@ export class ServerPlainCall extends AbstractCall
 		Event.unbind(window, 'unload', this.#onUnloadHandler);
 		Event.unbind(window, 'online', this.#onOnlineHandler);
 
+		clearTimeout(this.iceConnectionStateTimer);
 		clearInterval(this.statsInterval);
 		clearInterval(this.microphoneLevelInterval);
 	}
 
 	destroy(finishCall)
 	{
+		// Idempotent: hangup() also triggers destroy locally so that engine.calls
+		// gets a CallStub even if the Call::finish pull never reaches us.
+		if (this.destroyed)
+		{
+			return;
+		}
+		this.destroyed = true;
+
 		this.ready = false;
 		const tempError = new Error();
 		tempError.name = "Call stack:";
@@ -2915,26 +3089,25 @@ class Peer
 		}.bind(this)
 	};
 
-	sendMedia(skipOffer)
+	sendMedia(skipOffer: boolean): void
 	{
-		if (!this.peerConnection)
+		if (!this.peerConnection && !this.call.useMediaServer)
 		{
 			if (!this.isInitiator())
 			{
 				this.log('waiting for the other side to send connection offer');
 				this.sendNegotiationNeeded(false);
+
 				return;
 			}
-		}
 
-		if (!this.peerConnection)
-		{
 			const connectionId = Util.getUuidv4();
 			this.#createPeerConnection(connectionId);
 		}
+
 		this.updateOutgoingTracks();
 
-		if (!skipOffer)
+		if (!skipOffer && !this.call.useMediaServer)
 		{
 			this.applyResolutionScale();
 			this.createAndSendOffer();
@@ -3238,7 +3411,7 @@ class Peer
 
 	isParticipating()
 	{
-		if (this.calling)
+		if (this.calling || this.calculatedState === UserState.Connected)
 		{
 			return true;
 		}
@@ -3331,7 +3504,11 @@ class Peer
 			return UserState.Connecting;
 		}
 
-		if (this.peerConnection)
+		if (this.call.useMediaServer && this.ready)
+		{
+			return UserState.Connected;
+		}
+		else if (this.peerConnection)
 		{
 			if (this.failureReason !== '')
 			{
@@ -3600,6 +3777,10 @@ class Peer
 
 	#createPeerConnection(id)
 	{
+		if (this.call.useMediaServer)
+		{
+			return;
+		}
 
 		const iceServers = this.call.CallApi?.iceServers || this.call.iceServers;
 		const connectionConfig = { iceServers };
@@ -4320,6 +4501,10 @@ class Peer
 
 	reconnect(event): void
 	{
+		if (this.call.useMediaServer)
+		{
+			return;
+		}
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
 		this.connectionAttempt++;

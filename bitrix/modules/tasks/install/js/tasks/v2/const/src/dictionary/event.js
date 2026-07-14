@@ -45,4 +45,6 @@ export const EventName = Object.freeze({
 	OpenTemplateHistory: 'tasks:template:openHistory',
 	UpdateReplicateParams: 'tasks:template:update-replicate-params',
 	ChatActionBeforeExecute: 'tasks:chat-action:before-execute',
+	OpenTimeTrackingPopup: 'task:card:open-time-tracking-popup',
+	CloseAllBottomSheets: 'tasks:card:close-all-bottom-sheets',
 });

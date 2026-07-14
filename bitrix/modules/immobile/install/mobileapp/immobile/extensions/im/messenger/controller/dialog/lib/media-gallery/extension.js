@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 	const { isEmpty } = require('utils/object');
 	const { parser } = require('im/messenger/lib/parser');
 	const { MediaGallery } = require('media-gallery');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const { PropTypes } = require('utils/validation');
 	const { FileType } = require('im/messenger/const');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
@@ -78,14 +78,14 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 		 */
 		createMediaCollection(mediaMenu)
 		{
-			const { mediaId, direction } = this.props;
+			const { mediaId, messageId, direction } = this.props;
 
 			const mediaList = this.getMediaList().map((media) => ({
 				id: media.id,
 				type: media.type,
 				url: media.urlShow,
 				previewUrl: media.urlPreview,
-				default: media.id === Number(mediaId),
+				default: media.id === Number(mediaId) && String(media.messageId) === String(messageId),
 				description: parser.simplify({ text: media.description }),
 				header: {
 					title: media.authorName,
@@ -115,17 +115,43 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 
 			return this.getMessageList()
 				.flatMap((message) => {
-					if (isEmpty(message.files))
+					const messageHelper = MessageHelper.createByModel(message);
+					const isBlockMedia = messageHelper.hasBlockGallery;
+					let fileIds = [];
+					if (!isEmpty(message.files))
+					{
+						fileIds = message.files;
+					}
+					else if (isBlockMedia)
+					{
+						fileIds = messageHelper.getBlockMediaFiles().map((file) => file.id);
+					}
+
+					if (fileIds.length === 0)
 					{
 						return [];
 					}
 
-					return this.#getModelStateList(message.files)
-						.map((file, index) => ({
-							...file,
-							description: index === 0 ? message.text : '',
-							messageId: message.id,
-						}));
+					return this.#getModelStateList(fileIds)
+						.map((file, index) => {
+							const item = {
+								...file,
+								description: index === 0 ? message.text : '',
+								messageId: message.id,
+							};
+
+							if (isBlockMedia)
+							{
+								item.date = message.date;
+								const author = this.store.getters['usersModel/getById'](message.authorId);
+								if (author?.name)
+								{
+									item.authorName = author.name;
+								}
+							}
+
+							return item;
+						});
 				})
 				.filter((file) => file && (file.type === FileType.image || file.type === FileType.video));
 		}

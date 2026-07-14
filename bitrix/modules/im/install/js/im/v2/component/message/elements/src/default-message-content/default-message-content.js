@@ -8,6 +8,7 @@ import { MessageAttach } from '../attach/attach.js';
 import { MessageStatus } from '../message-status/message-status.js';
 import { ReactionList } from '../reaction/list.js';
 import { TextContent } from '../text-content/text-content.js';
+import { BuilderContent } from '../message-builder/builder-content/builder-content.js';
 
 import './default-message-content.css';
 
@@ -20,9 +21,9 @@ export const DefaultMessageContent = {
 		ReactionList,
 		Reply,
 		TextContent,
+		BuilderContent,
 	},
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -43,9 +44,12 @@ export const DefaultMessageContent = {
 			type: Boolean,
 			default: true,
 		},
+		withBuilder: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	computed:
-	{
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -66,12 +70,21 @@ export const DefaultMessageContent = {
 		{
 			return this.$store.getters['messages/isForward'](this.message.id);
 		},
+		hasBuilderBlocks(): boolean
+		{
+			if (!this.withBuilder)
+			{
+				return false;
+			}
+
+			return this.$store.getters['messages/builder/hasBlocks'](this.message.id);
+		},
 	},
 	template: `
-		<div class="bx-im-message-default-content__container" :class="{'--no-text': !withText}">
+		<div class="bx-im-message-default-content__container" :class="{'--no-text': !withText || hasBuilderBlocks}">
 			<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
-			<TextContent v-if="withText" :text="formattedText" />
-			<slot></slot>
+			<TextContent v-if="withText && !hasBuilderBlocks" :text="formattedText" />
+			<BuilderContent v-else :item="item" :dialogId="dialogId"/>
 			<div v-if="withAttach && message.attach.length > 0" class="bx-im-message-default-content__attach">
 				<MessageAttach :item="message" :dialogId="dialogId" />
 			</div>

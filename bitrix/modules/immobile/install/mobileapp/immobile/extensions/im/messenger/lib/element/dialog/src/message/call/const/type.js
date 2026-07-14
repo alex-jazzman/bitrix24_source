@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/const/type', (require, e
 		BUSY: 'BUSY',
 		DECLINED: 'DECLINED',
 		MISSED: 'MISSED',
+		CANCELLED: 'CANCELLED',
 	});
 
 	module.exports = {

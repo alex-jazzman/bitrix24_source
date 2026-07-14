@@ -28,7 +28,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 	/** @type AssistantButton */
 	const ModeMenuButton = {
 		id: AssistantButtonType.menu,
-		text: '',
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ASSISTANT_BUTTON_MODE'),
 		testId: buildTestId(AssistantButtonType.menu),
 		viewId: AssistantButtonType.menu,
 		iconName: Icon.AI_STARS.getIconName(),
@@ -79,6 +79,20 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 		dropdown: false,
 	};
 
+	/** @type AssistantButton */
+	const MarketButton = {
+		id: AssistantButtonType.market,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ASSISTANT_BUTTON_MARKET'),
+		testId: buildTestId(AssistantButtonType.market),
+		viewId: AssistantButtonType.market,
+		iconName: Icon.APPS.getIconName(),
+		size: AssistantButtonSize.S,
+		design: AssistantButtonDesign.grey,
+		mode: AssistantButtonMode.outline,
+		rounded: true,
+		dropdown: false,
+	};
+
 	/**
 	 * @param {string} type
 	 */
@@ -93,5 +107,6 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 		MCPButton,
 		SearchModeButton,
 		AgentButton,
+		MarketButton,
 	};
 });

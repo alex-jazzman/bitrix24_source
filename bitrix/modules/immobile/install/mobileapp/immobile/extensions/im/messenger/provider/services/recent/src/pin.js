@@ -64,7 +64,7 @@ jn.define('im/messenger/provider/services/recent/pin', (require, exports, module
 					{
 						Alert.confirm(
 							null,
-							Loc.getMessage('IMMOBILE_MESSENGER_PROVIDER_SERVICES_RECENT_ERROR_MAX_PINNED'),
+							Loc.getMessage('IMMOBILE_MESSENGER_PROVIDER_SERVICES_RECENT_ERROR_MAX_PINNED_V2'),
 							[
 								{
 									type: ButtonType.DEFAULT,

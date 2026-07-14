@@ -15,19 +15,14 @@ export const CopilotWidgetRecentList = {
 			type: Boolean,
 			default: true,
 		},
-		isCreating: {
-			type: Boolean,
-			default: false,
-		},
 	},
-	emits: ['newChat', 'close', 'chatSelect'],
+	emits: ['close', 'chatSelect', 'createChat'],
 
 	template: `
 		<div class="bx-im-ai-assistant-chat-recent-list">
 			<CopilotWidgetListHeader
-				:isCreating="isCreating"
-				@newChat="$emit('newChat')"
 				@close="$emit('close')"
+				@createChat="$emit('createChat')"
 			/>
 			<CopilotList @selectChat="$emit('chatSelect', $event)"/>
 		</div>

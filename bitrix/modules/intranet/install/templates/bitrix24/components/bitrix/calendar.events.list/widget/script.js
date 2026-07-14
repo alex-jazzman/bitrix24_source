@@ -1,1 +1,130 @@
-!function(t,e,i){"use strict";var s;t.Reflection.namespace("BX.Calendar").NextEventList=class{constructor(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};babelHelpers.defineProperty(this,"DOM",{}),this.maxEntryAmount=e.maxEntryAmount||5,e&&e.entries?this.renderList(e.entries):this.displayEventList(),this.displayEventListDebounce=t.Runtime.debounce(this.displayEventList,3e3,this),t.Event.bind(document,"visibilitychange",this.checkDisplayEventList.bind(this)),i.EventEmitter.subscribe("SidePanel.Slider:onCloseComplete",this.checkDisplayEventList.bind(this)),i.EventEmitter.subscribe("onPullEvent-calendar",this.displayEventListDebounce)}checkDisplayEventList(){this.needReload&&this.displayEventListDebounce()}displayEventList(){this.isDisplayingNow()?(this.showLoader(),this.getEventList().then(t=>{this.hideLoader(),this.renderList(t)})):this.needReload=!0}getEventList(){return new Promise(t=>{BX.ajax.runAction("calendar.api.calendarentryajax.getnearestevents",{data:{ownerId:this.ownerId,type:this.type,futureDaysAmount:60,maxEntryAmount:this.maxEntryAmount}}).then(e=>{var i;t(null==e||null===(i=e.data)||void 0===i?void 0:i.entries)})})}showWidget(){this.getOuterWrap().style.display=""}hideWidget(){this.getOuterWrap().style.display="none"}showLoader(){this.hideLoader(),this.DOM.loader=this.getEventListWrap().appendChild(e.Util.getLoader(40,"next-events-loader"))}hideLoader(){t.Type.isDomNode(this.DOM.loader)&&t.Dom.remove(this.DOM.loader)}renderList(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[];t.Type.isArray(e)||(e=[]),e=e.slice(0,this.maxEntryAmount),t.Dom.clean(this.getEventListWrap());const i=this.getEventListWrap();e.forEach((t,e)=>{0===e&&this.setReloadTimeout(t),i.appendChild(this.renderEntry(t))}),e.length?this.showWidget():this.hideWidget(),this.needReload=!1}renderEntry(e){const i=BX.Calendar.Util.parseDate(e.DATE_FROM);return t.Tag.render(s||(s=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a href="','" class="sidebar-widget-item">\n\t\t\t\t<span class="calendar-item-text">\n\t\t\t\t\t<span class="calendar-item-link">','</span>\n\t\t\t\t</span>\n\t\t\t\t<span class="calendar-item-date">','</span>\n\t\t\t\t<span class="calendar-item-icon">\n\t\t\t\t\t<span class="calendar-item-icon-day">','</span>\n\t\t\t\t\t<span class="calendar-item-icon-date">',"</span>\n\t\t\t\t</span>\n\t\t\t</a>\n\t\t"])),t.Text.encode(e["~URL"]),t.Text.encode(e.NAME),e["~FROM_TO_HTML"],t.Text.encode(e["~WEEK_DAY"]),i.getDate())}getOuterWrap(){return this.DOM.outerWrap||(this.DOM.outerWrap=document.querySelector(".sidebar-widget.sidebar-widget-calendar")),this.DOM.outerWrap}getEventListWrap(){return this.DOM.listWrap||(this.DOM.listWrap=this.getOuterWrap().querySelector(".calendar-events-wrap")),this.DOM.listWrap}setReloadTimeout(e){this.reloadTimeout&&(clearTimeout(this.reloadTimeout),this.reloadTimeout=null);const i=BX.Calendar.Util.parseDate(e.DATE_TO);if(t.Type.isDate(i)){const t=new Date,e=Math.min(Math.max(i.getTime()-t.getTime()+6e4,6e4),864e5);this.reloadTimeout=setTimeout(this.displayEventList.bind(this),e)}}isDisplayingNow(){return!document.hidden&&!BX.SidePanel.Instance.getOpenSliders().length}}}(BX,BX.Calendar,BX.Event);
+/* eslint-disable */
+(function (main_core, calendar_util, main_core_events) {
+	'use strict';
+
+	class NextEventList {
+		DOM = {};
+		constructor(options = {}) {
+			this.maxEntryAmount = options.maxEntryAmount || 5;
+			if (options && options.entries) {
+				this.renderList(options.entries);
+			} else {
+				this.displayEventList();
+			}
+			this.displayEventListDebounce = main_core.Runtime.debounce(this.displayEventList, 3000, this);
+			main_core.Event.bind(document, 'visibilitychange', this.checkDisplayEventList.bind(this));
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', this.checkDisplayEventList.bind(this));
+			main_core_events.EventEmitter.subscribe('onPullEvent-calendar', this.displayEventListDebounce);
+		}
+		checkDisplayEventList() {
+			if (this.needReload) {
+				this.displayEventListDebounce();
+			}
+		}
+		displayEventList() {
+			if (this.isDisplayingNow()) {
+				this.showLoader();
+				this.getEventList().then(entryList => {
+					this.hideLoader();
+					this.renderList(entryList);
+				});
+			} else {
+				this.needReload = true;
+			}
+		}
+		getEventList() {
+			return new Promise(resolve => {
+				BX.ajax.runAction('calendar.api.calendarentryajax.getnearestevents', {
+					data: {
+						ownerId: this.ownerId,
+						type: this.type,
+						futureDaysAmount: 60,
+						maxEntryAmount: this.maxEntryAmount
+					}
+				}).then(response => {
+					resolve(response?.data?.entries);
+				});
+			});
+		}
+		showWidget() {
+			this.getOuterWrap().style.display = '';
+		}
+		hideWidget() {
+			this.getOuterWrap().style.display = 'none';
+		}
+		showLoader() {
+			this.hideLoader();
+			this.DOM.loader = this.getEventListWrap().appendChild(calendar_util.Util.getLoader(40, 'next-events-loader'));
+		}
+		hideLoader() {
+			if (main_core.Type.isDomNode(this.DOM.loader)) {
+				main_core.Dom.remove(this.DOM.loader);
+			}
+		}
+		renderList(entryList = []) {
+			if (!main_core.Type.isArray(entryList)) {
+				entryList = [];
+			}
+			entryList = entryList.slice(0, this.maxEntryAmount);
+			main_core.Dom.clean(this.getEventListWrap());
+			const wrap = this.getEventListWrap();
+			entryList.forEach((entry, i) => {
+				if (i === 0) {
+					this.setReloadTimeout(entry);
+				}
+				wrap.appendChild(this.renderEntry(entry));
+			});
+			if (entryList.length) {
+				this.showWidget();
+			} else {
+				this.hideWidget();
+			}
+			this.needReload = false;
+		}
+		renderEntry(entry) {
+			const fromDate = BX.Calendar.Util.parseDate(entry['DATE_FROM']);
+			return main_core.Tag.render`
+			<a href="${main_core.Text.encode(entry['~URL'])}" class="sidebar-widget-item">
+				<span class="calendar-item-text">
+					<span class="calendar-item-link">${main_core.Text.encode(entry['NAME'])}</span>
+				</span>
+				<span class="calendar-item-date">${entry['~FROM_TO_HTML']}</span>
+				<span class="calendar-item-icon">
+					<span class="calendar-item-icon-day">${main_core.Text.encode(entry['~WEEK_DAY'])}</span>
+					<span class="calendar-item-icon-date">${fromDate.getDate()}</span>
+				</span>
+			</a>
+		`;
+		}
+		getOuterWrap() {
+			if (!this.DOM.outerWrap) {
+				this.DOM.outerWrap = document.querySelector('.sidebar-widget.sidebar-widget-calendar');
+			}
+			return this.DOM.outerWrap;
+		}
+		getEventListWrap() {
+			if (!this.DOM.listWrap) {
+				this.DOM.listWrap = this.getOuterWrap().querySelector('.calendar-events-wrap');
+			}
+			return this.DOM.listWrap;
+		}
+		setReloadTimeout(entry) {
+			if (this.reloadTimeout) {
+				clearTimeout(this.reloadTimeout);
+				this.reloadTimeout = null;
+			}
+			const finishEventDate = BX.Calendar.Util.parseDate(entry['DATE_TO']);
+			if (main_core.Type.isDate(finishEventDate)) {
+				const currentDate = new Date();
+				const offset = Math.min(Math.max(finishEventDate.getTime() - currentDate.getTime() + 60000, 60000), 86400000);
+				this.reloadTimeout = setTimeout(this.displayEventList.bind(this), offset);
+			}
+		}
+		isDisplayingNow() {
+			return !document.hidden && !BX.SidePanel.Instance.getOpenSliders().length;
+		}
+	}
+	main_core.Reflection.namespace('BX.Calendar').NextEventList = NextEventList;
+
+})(BX, BX.Calendar, BX.Event);
+//# sourceMappingURL=script.js.map

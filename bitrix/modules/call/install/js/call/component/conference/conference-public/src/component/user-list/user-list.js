@@ -19,9 +19,10 @@ const UserList = {
 			rename: {
 				user: 0,
 				newName: '',
-				renameRequested: false
-			}
-		}
+				renameRequested: false,
+			},
+			onlineStates: [ConferenceUserState.Ready, ConferenceUserState.Connected],
+		};
 	},
 	created()
 	{
@@ -34,6 +35,28 @@ const UserList = {
 	},
 	computed:
 	{
+		chatOwner()
+		{
+			return this.dialog?.ownerId || 0;
+		},
+		pinAvailable()
+		{
+			let onlineUsers = 0;
+			const users = Object.values(this.call.users);
+
+			users.forEach((user) => {
+				if (this.onlineStates.includes(user.state) && ++onlineUsers > 2)
+				{
+					return true;
+				}
+			});
+
+			return false;
+		},
+		isCurrentUserExternal()
+		{
+			return Boolean(this.conference.user.hash);
+		},
 		userId()
 		{
 			return this.application.common.userId;
@@ -44,8 +67,10 @@ const UserList = {
 		},
 		usersList()
 		{
-			const users = this.conference.common.users.filter(user => {
-				return !this.presentersList.includes(user) && this.call.users[user] && [ConferenceUserState.Ready, ConferenceUserState.Connected].includes(this.call.users[user].state);
+			const users = this.conference.common.users.filter((user) => {
+				return !this.presentersList.includes(user)
+					&& this.call.users[user]
+					&& [ConferenceUserState.Ready, ConferenceUserState.Connected].includes(this.call.users[user].state);
 			});
 
 			return [...users].sort(this.userSortFunction);
@@ -68,6 +93,14 @@ const UserList = {
 	},
 	methods:
 	{
+		getUserInfo(userId)
+		{
+			return this.$store.getters['users/get'](userId, true);
+		},
+		getUserStatus(userId)
+		{
+			return this.$store.getters['call/getUser'](userId);
+		},
 		requestUsers({firstPage = false} = {})
 		{
 			this.$Bitrix.RestClient.get().callMethod('im.dialog.users.list', {
@@ -306,7 +339,15 @@ const UserList = {
 								@userChangeBackground="onUserMenuChangeBackground"
 								@userOpenChat="onUserMenuOpenChat"
 								@userOpenProfile="onUserMenuOpenProfile"
-								:userId="presenter"
+								:user="getUserInfo(presenter)"
+								:userCallStatus="getUserStatus(presenter)"
+								:currentUserId="userId"
+								:isCurrentUserExternal="isCurrentUserExternal"
+								:isBroadcast="isBroadcast"
+								:isUserPresenter="presentersList.includes(presenter)"
+								:pinAvailable="pinAvailable"
+								:chatOwner="dialog.ownerId"
+								:conferenceState="conference.common.state"
 								:key="presenter"
 							/>
 						</template>
@@ -335,7 +376,15 @@ const UserList = {
 								@userChangeBackground="onUserMenuChangeBackground"
 								@userOpenChat="onUserMenuOpenChat"
 								@userOpenProfile="onUserMenuOpenProfile"
-								:userId="user"
+								:user="getUserInfo(user)"
+								:userCallStatus="getUserStatus(user)"
+								:currentUserId="userId"
+								:isCurrentUserExternal="isCurrentUserExternal"
+								:isBroadcast="isBroadcast"
+								:isUserPresenter="presentersList.includes(user)"
+								:pinAvailable="pinAvailable"
+								:chatOwner="dialog.ownerId"
+								:conferenceState="conference.common.state"
 								:key="user" />
 						</template>
 					</div>

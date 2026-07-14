@@ -170,6 +170,25 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {{chatId: number, dialogId: DialogId}} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleSetCopilotTitle(params, extra)
+		{
+			if (this.interceptEvent(extra) || !Feature.isAvatarRadialGradientEnabled)
+			{
+				return;
+			}
+
+			this.logger.info('handleSetCopilotTitle:', params);
+
+			await this.store.dispatch('dialoguesModel/copilotModel/updateTitleIsCustom', {
+				dialogId: params.dialogId,
+				titleIsCustom: true,
+			});
+		}
+
+		/**
 		 * @desc maybe it is legacy and not used
 		 * @param {GeneralChatIdPullHandlerParams} params
 		 * @param {PullExtraParams} extra

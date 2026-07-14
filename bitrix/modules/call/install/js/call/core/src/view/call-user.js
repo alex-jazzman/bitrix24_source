@@ -117,6 +117,7 @@ export class CallUser
 		this.incomingVideoConstraints = {
 			width: 0, height: 0
 		}
+
 		if (config.audioElement)
 		{
 			this.elements.audio = config.audioElement;
@@ -149,6 +150,7 @@ export class CallUser
 		});
 
 		this.connectionStats = {};
+		this.mediaServerId = null;
 		this.connectionStatsVisible = false;
 
 		this.avatarBackground = config.avatarBackground || Util.getAvatarBackground();
@@ -457,6 +459,16 @@ export class CallUser
 		}
 	}
 
+	set audioElement(audioElement)
+	{
+		this.elements.audio = audioElement;
+	}
+
+	set screenAudioElement(screenAudioElement)
+	{
+		this.elements.screenAudio = screenAudioElement;
+	}
+
 	isVisibleMediaStateIcon(isActive)
 	{
 		return !isActive && this.userModel.state === UserState.Connected;
@@ -472,9 +484,10 @@ export class CallUser
 		return this.isVisibleMediaStateIcon(this.userModel.microphoneState);
 	};
 
-	showStats(stats)
+	showStats(stats, mediaServerId)
 	{
 		this.connectionStats = stats;
+		this.mediaServerId = mediaServerId;
 		if (this.elements.statsOverlay && this.connectionStatsVisible)
 		{
 			this.showConnectionStats();
@@ -949,6 +962,10 @@ export class CallUser
 			statsString += failedTracksResult;
 		}
 
+		if (this.mediaServerId)
+		{
+			statsString += `Media server: #${this.mediaServerId}\n\n`;
+		}
 		if (cameraStats || !screenStats)
 		{
 			statsString += 'Video stats:\n';
@@ -1506,7 +1523,6 @@ export class CallUser
 				&& (this.userModel.microphoneState || this.userModel.cameraState || this.userModel.screenState)
 				&& this.currentBitrixCall
 				&& this.currentBitrixCall.provider !== Provider.Plain;
-			//&& !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
 
 			if (this.isShowRemoteParticipantButtonMenu && this.elements.remoteParticipantButtonMenu)
 			{

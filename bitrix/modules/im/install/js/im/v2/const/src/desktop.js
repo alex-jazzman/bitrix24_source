@@ -17,6 +17,7 @@ export const DesktopBxLink = {
 	openTab: 'openTab',
 	openPage: 'openPage',
 	chatCreation: 'chatCreation',
+	chatUpdate: 'chatUpdate',
 	botContext: 'botContext',
 	openLayout: 'openLayout',
 };

@@ -13,6 +13,10 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 	const { DateHelper, Url } = require('im/messenger/lib/helper');
 	const { DialogBackgroundId } = require('im/messenger/const');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
+	const { Query } = require('im/messenger/db/query-builder/builder');
+	const { equalField } = require('im/messenger/db/query-builder/condition');
+	const { DialogSchema, RecentSchema } = require('im/messenger/db/table-schema');
+	const { getStartWordsSearchCondition } = require('im/messenger/db/helper/start-words');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const logger = getLogger('repository--dialog');
@@ -113,6 +117,15 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			await this.internal.deleteByIdList([dialogId]);
 
 			return this.dialogTable.deleteByIdList([dialogId]);
+		}
+
+		/**
+		 * @param {Array<number>} chatIds
+		 * @return {Promise<Array<string>>}
+		 */
+		async getDialogIdsByParentChatIds(chatIds)
+		{
+			return this.dialogTable.getDialogIdsByParentChatIds(chatIds);
 		}
 
 		async deleteByChatIdList(chatIdList)
@@ -453,6 +466,87 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			return result;
 		}
 
+		/**
+		 * @typedef {{ dialog: DialogStoredData, recent?: object }} DialogWithRecent
+		 */
+
+		/**
+		 * @param {object} params
+		 * @param {string} params.searchText
+		 * @param {Array<string>} [params.dialogTypes] - positive whitelist; takes precedence over exceptDialogTypes
+		 * @param {Array<string>} [params.exceptDialogTypes]
+		 * @param {number} [params.limit]
+		 * @return {Promise<{items: Array<DialogWithRecent>}>}
+		 */
+		async searchByText({ searchText, dialogTypes = [], exceptDialogTypes = [], limit = 25 })
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isStringFilled(searchText))
+			{
+				return { items: [] };
+			}
+
+			const result = await Query.select()
+				.from(DialogSchema)
+				.leftJoin(RecentSchema, equalField(DialogSchema.dialogId, RecentSchema.id))
+				.where(
+					getStartWordsSearchCondition(DialogSchema.name, searchText),
+					Type.isArrayFilled(dialogTypes) && DialogSchema.type.in(dialogTypes),
+					Type.isArrayFilled(exceptDialogTypes) && DialogSchema.type.notIn(exceptDialogTypes),
+				)
+				.orderBy(
+					RecentSchema.lastActivityDate.desc().nullsLast(),
+					DialogSchema.lastMessageId.desc(),
+				)
+				.limit(limit)
+				.execute()
+			;
+
+			const items = result.map((row) => {
+				const entry = { dialog: row.extract(DialogSchema) };
+				if (row.has(RecentSchema))
+				{
+					entry.recent = row.extract(RecentSchema);
+				}
+
+				return entry;
+			});
+
+			return { items };
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {Array<string>} params.types
+		 * @param {number} [params.limit]
+		 * @return {Promise<{items: Array<DialogWithRecent>}>}
+		 */
+		async getRecentListByTypes({ types, limit = 100 })
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(types))
+			{
+				return { items: [] };
+			}
+
+			const result = await Query.select()
+				.from(DialogSchema)
+				.innerJoin(RecentSchema, equalField(DialogSchema.dialogId, RecentSchema.id))
+				.where(DialogSchema.type.in(types))
+				.orderBy(
+					RecentSchema.lastActivityDate.desc().nullsLast(),
+					DialogSchema.lastMessageId.desc(),
+				)
+				.limit(limit)
+				.execute()
+			;
+
+			const items = result.map((row) => ({
+				dialog: row.extract(DialogSchema),
+				recent: row.extract(RecentSchema),
+			}));
+
+			return { items };
+		}
+
 		/* region internal */
 
 		/**
@@ -505,26 +599,6 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			logger.log('DialogRepository.getWasCompletelySyncByIdList complete: ', idList, result);
 
 			return result;
-		}
-
-		/**
-		 * @param {Partial<SearchOptions>} searchOptions
-		 * @param {DialoguesFilter | {}} filter
-		 *
-		 * @returns {Promise<{items: *[]}>}
-		 */
-		async searchByText({
-			searchOptions = {},
-			filter = {},
-		})
-		{
-			const {
-				searchText = '',
-				order = 'desc',
-				limit = 25,
-			} = searchOptions;
-
-			return this.dialogTable.searchByText(searchText, order, limit, filter);
 		}
 
 		/* endregion internal */

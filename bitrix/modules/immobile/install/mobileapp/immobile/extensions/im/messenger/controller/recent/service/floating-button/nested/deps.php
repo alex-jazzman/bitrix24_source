@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
 		'utils/object',
 		'ui-system/blocks/icon',

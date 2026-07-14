@@ -1,7 +1,4 @@
 .bx-im-list-recent-empty-state__container {
-	--im-list-recent-empty-state__font-color_title: var(--im-color-palette-gray-70);
-	--im-list-recent-empty-state__font-color_subtitle: var(--im-color-palette-gray-50);
-
 	width: 100%;
 	display: flex;
 	flex-direction: column;
@@ -9,29 +6,63 @@
 	padding-top: 40px;
 }
 
-.bx-im-list-recent-empty-state__image {
-	width: 113px;
-	height: 113px;
-	background-image: url('./images/empty-state.svg');
-	background-position: center;
-	background-repeat: no-repeat;
-	background-size: contain;
-	margin-bottom: 24px;
-}
-
 .bx-im-list-recent-empty-state__title {
-	margin-bottom: 8px;
-
-	font: var(--im-font-size-xl)/21px var(--im-font-family-system);
-	font-weight: var(--im-font-weight-medium);
-	color: var(--im-list-recent-empty-state__font-color_title);
+	margin-bottom: 6px;
+	font-size: 19px;
+	line-height: 26px;
+	font-weight: 500;
+	color: var(--ui-color-base-1);
 }
 
 .bx-im-list-recent-empty-state__subtitle {
-	max-width: 250px;
-	margin-bottom: 12px;
+	margin-bottom: 34px;
+	width: 291px;
 	text-align: center;
+	font-size: var(--im-font-size-xl);
+	line-height: 21px;
+	font-weight: 400;
+	color: var(--ui-color-base-2);
+}
 
-	font: var(--im-font-size-xs)/16px var(--im-font-family-system);
-	color: var(--im-list-recent-empty-state__font-color_subtitle);
+.bx-im-list-recent-empty-state__image {
+	width: 212px;
+	height: 212px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin-bottom: 6px;
+}
+
+.bx-im-list-recent-empty-state__image.--base {
+	width: 108px;
+	height: 122px;
+	background-image: url("./images/base.png");
+}
+
+.bx-im-list-recent-empty-state__image.--tasksTask {
+	background-image: url("./images/tasks.png");
+}
+
+.bx-im-list-recent-empty-state__image.--calendar {
+	background-image: url("./images/calendar.png");
+}
+
+.bx-im-list-recent-empty-state__image.--openChannel {
+	background-image: url("./images/channel.png");
+}
+
+.bx-im-list-recent-empty-state__image.--collabChat {
+	background-image: url("./images/collab.png");
+}
+
+.bx-im-list-recent-empty-state__image.--collab {
+	background-image: url("./images/collab.png");
+}
+
+.bx-im-list-recent-empty-state__image.--copilot {
+	background-image: url("./images/copilot.png");
+}
+
+.bx-im-list-recent-empty-state__image.--default {
+	background-image: url("./images/default.png");
 }

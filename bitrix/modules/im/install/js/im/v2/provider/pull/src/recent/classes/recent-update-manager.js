@@ -28,18 +28,24 @@ export class RecentUpdateManager
 			lastActivityDate: this.#params.lastActivityDate,
 		};
 		const sections = this.#params.recentConfig?.sections || [RecentType.default];
-		this.applyRecentUpdateActions(sections, newRecentItem);
+
+		this.addItemToCollection(sections, newRecentItem, this.#getParentChatId());
 	}
 
-	applyRecentUpdateActions(sections: RecentTypeItem[], recentItem: ImModelRecentItem): void
+	addItemToCollection(sections: RecentTypeItem[], recentItem: ImModelRecentItem, parentChatId: number): void
 	{
 		sections.forEach((recentSection) => {
 			void Core.getStore().dispatch('recent/setCollection', {
 				type: recentSection,
 				items: [recentItem],
-				parentChatId: this.#getParentChatId(),
+				parentChatId,
 			});
 		});
+	}
+
+	#getParentChatId(): number
+	{
+		return this.#params.chat.parent_chat_id;
 	}
 
 	#setLastMessageInfo(): void
@@ -58,11 +64,6 @@ export class RecentUpdateManager
 	#getChatId(): number
 	{
 		return this.#params.chat.id;
-	}
-
-	#getParentChatId(): number
-	{
-		return this.#params.chat.parent_chat_id;
 	}
 
 	#getLastMessageId(): number | string

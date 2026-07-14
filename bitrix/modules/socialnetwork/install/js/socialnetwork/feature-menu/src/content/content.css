@@ -1,0 +1,23 @@
+.socnet-feature-menu-content__wrapper {
+	padding: var(--ui-space-stack-sm) var(--ui-space-stack-md);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
+	user-select: none;
+}
+
+.socnet-feature-menu-content__wrapper.--base {
+	padding: 20px;
+}
+
+.socnet-feature-menu-base-content-features__wrapper {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+	align-items: start;
+	width: 100%;
+}

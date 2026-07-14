@@ -167,6 +167,29 @@ export class SidebarApi
 		return this.#client.run('note.infrastructure.CollectionController.archive', { id });
 	}
 
+	async getMyCollectionAccess(id: number): Promise<{
+		collectionId: number,
+		level: string,
+		policyLevel: string,
+		canEditCollection: boolean,
+		canManagePermissions: boolean,
+	} | null>
+	{
+		const data: mixed = await this.#client.run('note.infrastructure.CollectionController.getMyAccess', { id });
+		if (!Type.isPlainObject(data))
+		{
+			return null;
+		}
+
+		return {
+			collectionId: Number(data.collectionId) || id,
+			level: typeof data.level === 'string' ? data.level : 'none',
+			policyLevel: typeof data.policyLevel === 'string' ? data.policyLevel : 'none',
+			canEditCollection: Boolean(data.canEditCollection),
+			canManagePermissions: Boolean(data.canManagePermissions),
+		};
+	}
+
 	async moveCollection(
 		id: number,
 		position: number | null,

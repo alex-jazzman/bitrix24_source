@@ -1,5 +1,5 @@
 import { Type, Dom } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Page } from './page/page';
 
 export class Navigation extends EventEmitter

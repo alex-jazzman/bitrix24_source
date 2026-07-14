@@ -1,16 +1,33 @@
 (function (window){
 	'use strict';
 
-	if (window.JCCatalogItem)
+	if (window.JCCatalogItemStoreV3)
 		return;
 
 	var BasketButton = function(params)
 	{
-		BasketButton.superclass.constructor.apply(this, arguments);
+		params = params || {};
+		this.popupWindow = null;
+		this.params = params;
+		this.text = params.text || '';
+		this.id = params.id || '';
+		this.className = params.className || '';
+		this.events = params.events || {};
+		this.contextEvents = {};
+
+		for (var eventName in this.events)
+		{
+			if (this.events.hasOwnProperty(eventName) && BX.type.isFunction(this.events[eventName]))
+			{
+				this.contextEvents[eventName] = BX.proxy(this.events[eventName], this);
+			}
+		}
+
 		this.buttonNode = BX.create('button', {
 			props: {className: 'btn btn-primary btn-buy btn-sm', id: this.id},
+			attrs: {type: 'button', tabindex: '0'},
 			style: typeof params.style === 'object' ? params.style : {},
-			text: params.text,
+			text: this.text,
 			events: this.contextEvents
 		});
 
@@ -21,7 +38,7 @@
 	};
 	BX.extend(BasketButton, BX.PopupWindowButton);
 
-	window.JCCatalogItem = function (arParams)
+	window.JCCatalogItemStoreV3 = function (arParams)
 	{
 		this.productType = 0;
 		this.showQuantity = true;
@@ -463,7 +480,7 @@
 		}
 	};
 
-	window.JCCatalogItem.prototype = {
+	window.JCCatalogItemStoreV3.prototype = {
 		init: function()
 		{
 			var i = 0,

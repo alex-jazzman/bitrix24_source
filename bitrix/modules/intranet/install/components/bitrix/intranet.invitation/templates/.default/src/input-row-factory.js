@@ -1,5 +1,3 @@
-import { Loc } from 'main.core';
-import { Input, InputDesign } from 'ui.system.input';
 import { InputRow } from './elements/input-row';
 import InviteType from './type/invite-type';
 import { ContactsInput } from './elements/inputs/contacts-input';
@@ -25,8 +23,6 @@ export class InputRowFactory
 		return new InputRow({
 			id,
 			contactsInput: this.#createContactsInput(),
-			nameInput: this.#createNameInput(),
-			lastNameInput: this.#createLastNameInput(),
 		});
 	}
 
@@ -42,25 +38,5 @@ export class InputRowFactory
 			default:
 				return new EmailOrPhoneInput();
 		}
-	}
-
-	#createNameInput(): Input
-	{
-		return new Input({
-			placeholder: Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
-			design: InputDesign.Grey,
-			withClear: true,
-			dataTestId: 'invite-page-name-input',
-		});
-	}
-
-	#createLastNameInput(): Input
-	{
-		return new Input({
-			placeholder: Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
-			design: InputDesign.Grey,
-			withClear: true,
-			dataTestId: 'invite-page-last-name-input',
-		});
 	}
 }

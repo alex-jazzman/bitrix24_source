@@ -25,4 +25,5 @@ export const ColorToken = Object.freeze({
 	primary: 'primary',
 	secondary: 'secondary',
 	alert: 'alert',
+	aiAssistant: 'ai-assistant',
 });

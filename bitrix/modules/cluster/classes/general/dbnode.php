@@ -536,14 +536,16 @@ abstract class CAllClusterDBNode
 				$ar = ExecuteModuleEventEx($arEvent);
 				if (is_array($ar))
 				{
-					$cur_node_id = intval(COption::GetOptionString($ar['MODULE']->MODULE_ID, 'dbnode_id'));
+					/* @var $module CModule */
+					$module = $ar['MODULE'];
+					$cur_node_id = intval(COption::GetOptionString($module->MODULE_ID, 'dbnode_id'));
 					if ($cur_node_id < 1)
 					{
 						$cur_node_id = 1;
 					}
 					$cur_node_id = CClusterDBNode::GetByID($cur_node_id);
-					$ar['TITLE'] = $ar['MODULE']->MODULE_NAME . ' (' . $cur_node_id['NAME'] . ')';
-					$arModules[$ar['MODULE']->MODULE_ID] = $ar;
+					$ar['TITLE'] = $module->MODULE_NAME . ' (' . $cur_node_id['NAME'] . ')';
+					$arModules[$module->MODULE_ID] = $ar;
 				}
 			}
 		}
@@ -558,5 +560,30 @@ abstract class CAllClusterDBNode
 			,['=ACTIVE' => 'Y', '=ROLE_ID' => 'MODULE', '=STATUS' => 'READY']
 			,['ID', 'NAME']
 		);
+	}
+
+	public static function getMasterStatus($DB)
+	{
+		return false;
+	}
+
+	public static function startMaster($DB, $host, $user, $password, $port, $log_file, $log_pos)
+	{
+		return false;
+	}
+
+	public static function getSlaveStatus($DB)
+	{
+		return false;
+	}
+
+	public static function startSlave($DB)
+	{
+		return false;
+	}
+
+	public static function stopSlave($DB)
+	{
+		return false;
 	}
 }

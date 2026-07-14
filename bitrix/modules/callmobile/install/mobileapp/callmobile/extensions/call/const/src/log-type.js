@@ -10,6 +10,7 @@ jn.define('call/const/log-type', (require, exports, module) => {
 	const Status = Object.freeze({
 		MISSED: 'missed',
 		ANSWERED: 'answered',
+		DECLINED: 'declined',
 	});
 
 	const CallLogType = Object.freeze({ Type, Status });

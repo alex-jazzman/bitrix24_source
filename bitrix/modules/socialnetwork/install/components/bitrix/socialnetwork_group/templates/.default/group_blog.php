@@ -12,9 +12,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
-?>
-	<div class="feed-blog-post-list"><?php
-
 $pageId = "group_blog";
 $blogPageId = '';
 
@@ -22,6 +19,17 @@ include("util_group_menu.php");
 include("util_group_profile.php");
 include('util_group_blog_menu.php');
 include("util_group_limit.php");
+
+if (include('util_project_navigation.php'))
+{
+	return;
+}
+
+?>
+<div class="feed-blog-post-list">
+<?php
+
+$groupId = (int)($arResult['VARIABLES']['group_id'] ?? 0);
 
 if (
 	COption::GetOptionString("blog", "socNetNewPerms", "N") === "N"
@@ -107,7 +115,7 @@ $APPLICATION->IncludeComponent(
 		"POPUP_COMPONENT_PARENT" => $this->getComponent(),
 		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
-		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
+		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $groupId,
 		'USE_UI_TOOLBAR' => 'Y',
 	]
 );

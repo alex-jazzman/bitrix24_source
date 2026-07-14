@@ -21,5 +21,6 @@ export type GlobalPermissions = {
 	canEditCollections: boolean,
 	canEditGlobalPermissions: boolean,
 	canImport: boolean,
+	canImportWiki: boolean,
 	hasManageableCollection: boolean,
 };

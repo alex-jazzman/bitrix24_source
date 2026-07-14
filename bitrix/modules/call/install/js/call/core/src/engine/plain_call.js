@@ -1486,6 +1486,12 @@ export class PlainCall extends AbstractCall
 		{
 			if (this.instanceId != params.callInstanceId)
 			{
+				if (this.ready)
+				{
+					//Received remote self-answer in ready state, ignoring
+					return;
+				}
+
 				// self hangup elsewhere
 				this.runCallback(CallEvent.onLeave, {local: false});
 			}
@@ -1494,6 +1500,7 @@ export class PlainCall extends AbstractCall
 
 		if (!this.peers[senderId])
 		{
+			this.hangup().then(() => this.destroy()).catch(() => this.destroy());
 			return;
 		}
 
@@ -1507,7 +1514,7 @@ export class PlainCall extends AbstractCall
 
 		if (!this.isAnyoneParticipating() && this.ready)
 		{
-			this.hangup();
+			this.hangup().then(() => this.destroy()).catch(() => this.destroy());
 		}
 	};
 

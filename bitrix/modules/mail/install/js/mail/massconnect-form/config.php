@@ -8,7 +8,10 @@ return [
 	'css' => 'dist/massconnect-form.bundle.css',
 	'js' => 'dist/massconnect-form.bundle.js',
 	'rel' => [
-		'mail.setting-selector',
+		'mail.connecting.calendar-integration',
+		'mail.connecting.crm-integration',
+		'mail.connecting.mail-sync-settings',
+		'mail.connecting.settings-config',
 		'main.core',
 		'ui.analytics',
 		'ui.buttons',

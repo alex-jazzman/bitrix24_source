@@ -269,4 +269,16 @@ const rawMetaData = {
 			callback: () => onHelpClick('20922794'),
 		},
 	},
+	[EnableFeatures.checkInV2]: {
+		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHECK_IN_V2_DESCRIPTION'),
+		detailButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+			callback: () => openCheckInQrCode(),
+		},
+		infoButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+			callback: () => onHelpClick('28435980'),
+		},
+	},
 };

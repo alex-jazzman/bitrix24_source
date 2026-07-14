@@ -3,13 +3,17 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, main_core_events, tasks_v2_lib_showLimit, ui_vue3_vuex, ui_vue3_directives_hint, ui_vue3_components_menu, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_animated, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_lib_ahaMoments, tasks_v2_lib_fieldHighlighter, tasks_v2_component_elements_hint, tasks_v2_provider_service_resultService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_stateService, ui_vue3, tasks_v2_lib_calendar, tasks_v2_component_elements_userAvatar, tasks_v2_component_entityText, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_provider_service_userService, tasks_v2_provider_service_fileService, ui_vue3_components_button, tasks_v2_component_elements_bottomSheet, tasks_v2_lib_highlighter, ui_system_skeleton_vue, tasks_v2_component_dropZone, ui_textEditor, tasks_v2_lib_analytics, ui_system_chip_vue) {
+(function (exports, main_core, main_core_events, tasks_v2_lib_showLimit, ui_vue3_vuex, ui_vue3_directives_hint, ui_vue3_components_menu, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_animated, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_lib_ahaMoments, tasks_v2_lib_fieldHighlighter, tasks_v2_component_elements_hint, tasks_v2_provider_service_resultService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_stateService, ui_vue3, tasks_v2_component_tasksPopupButtonQuote, tasks_v2_lib_calendar, tasks_v2_component_elements_userAvatar, tasks_v2_component_entityText, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_provider_service_userService, tasks_v2_provider_service_fileService, ui_vue3_components_button, tasks_v2_component_elements_bottomSheet, tasks_v2_lib_highlighter, ui_system_skeleton_vue, tasks_v2_component_dropZone, tasks_v2_lib_analytics, ui_system_chip_vue) {
 	'use strict';
 
 	const resultsMeta = Object.freeze({
 		id: tasks_v2_const.TaskField.Results,
 		title: main_core.Loc.getMessage('TASKS_V2_RESULT_TITLE_META')
 	});
+
+	const TYPES_QUOTE_ACTIONS$1 = {
+		MESSAGE: tasks_v2_component_tasksPopupButtonQuote.TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE
+	};
 
 	// @vue/component
 	const ResultCardItem = {
@@ -19,6 +23,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar,
 			UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent,
 			EntityCollapsibleText: tasks_v2_component_entityText.EntityCollapsibleText,
+			TasksPopupButtonQuote: tasks_v2_component_tasksPopupButtonQuote.TasksPopupButtonQuote,
 			TextSm: ui_system_typography_vue.TextSm,
 			TextXs: ui_system_typography_vue.TextXs,
 			TextMd: ui_system_typography_vue.TextMd,
@@ -28,6 +33,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			hint: ui_vue3_directives_hint.hint
 		},
 		inject: {
+			task: {},
 			taskId: {}
 		},
 		props: {
@@ -51,6 +57,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		data() {
 			return {
+				elementAnchorQuote: null,
+				elementScrollContainerQuote: null,
 				opened: false,
 				isMenuShown: false,
 				showResultFromMessageHint: false,
@@ -58,8 +66,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			};
 		},
 		computed: {
+			actionsQuote() {
+				const actionQuoteMessage = {
+					type: TYPES_QUOTE_ACTIONS$1.MESSAGE,
+					chatId: this.task.chatId
+				};
+				return [actionQuoteMessage];
+			},
 			result() {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Results, "/getById")](this.resultId);
+				return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](this.resultId);
 			},
 			isEdit() {
 				return main_core.Type.isNumber(this.resultId) && this.resultId > 0;
@@ -76,8 +91,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return tasks_v2_lib_calendar.calendar.formatDateTime(this.result.createdAtTs);
 			},
 			resultText() {
-				var _this$result$text;
-				return (_this$result$text = this.result.text) !== null && _this$result$text !== void 0 ? _this$result$text : '';
+				return this.result.text ?? '';
 			},
 			resultAuthor() {
 				return this.result.author;
@@ -101,7 +115,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			menuOptions() {
 				return {
-					id: "result-action-menu-".concat(main_core.Text.getRandom()),
+					id: `result-action-menu-${main_core.Text.getRandom()}`,
 					bindOptions: {
 						forceBindPosition: true
 					},
@@ -120,7 +134,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					icon: ui_iconSet_api_vue.Outline.EDIT_L,
 					onClick: this.handleEditClick.bind(this),
 					dataset: {
-						id: "MenuResultEdit-".concat(this.resultId)
+						id: `MenuResultEdit-${this.resultId}`
 					}
 				}, this.result.rights.remove && {
 					design: 'alert',
@@ -128,7 +142,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					icon: ui_iconSet_api_vue.Outline.TRASHCAN,
 					onClick: this.handleDeleteClick.bind(this),
 					dataset: {
-						id: "MenuResultRemove-".concat(this.resultId)
+						id: `MenuResultRemove-${this.resultId}`
 					}
 				}].filter(Boolean);
 			},
@@ -152,12 +166,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.opened = false;
 			},
 			resultText() {
-				var _this$$refs$collapsib;
-				void this.$nextTick((_this$$refs$collapsib = this.$refs.collapsible) === null || _this$$refs$collapsib === void 0 ? void 0 : _this$$refs$collapsib.updateIsOverflowing);
+				void this.$nextTick(this.$refs.collapsible?.updateIsOverflowing);
 			}
 		},
 		mounted() {
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.ResultFromMessageAdded, this.handleResultFromMessageAdded);
+			this.elementAnchorQuote = this.$refs.collapsible.$el.parentNode?.querySelector('.tasks-card-entity-collapsible-text');
+			this.elementScrollContainerQuote = this.elementAnchorQuote?.closest('.tasks-full-card-content');
 		},
 		beforeUnmount() {
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ResultFromMessageAdded, this.handleResultFromMessageAdded);
@@ -198,7 +213,102 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaResultFromMessagePopup);
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-field-results-result --card print-no-border print-no-box-shadow\"\n\t\t\t:data-task-field-id=\"resultsMeta.id\"\n\t\t\tdata-field-container\n\t\t>\n\t\t\t<div\n\t\t\t\tclass=\"tasks-field-results-title\"\n\t\t\t\tref=\"title\"\n\t\t\t\t@click=\"$emit('titleClick', resultId)\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-field-results-title-main\">\n\t\t\t\t\t<BIcon :name=\"Outline.WINDOW_FLAG\"/>\n\t\t\t\t\t<TextMd accent>{{ resultTitle }}</TextMd>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-field-results-title-actions print-ignore\">\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\tv-if=\"hasMenuItems\"\n\t\t\t\t\t\tclass=\"tasks-field-results-title-icon\"\n\t\t\t\t\t\t:name=\"Outline.MORE_L\"\n\t\t\t\t\t\thoverable\n\t\t\t\t\t\tref=\"moreIcon\"\n\t\t\t\t\t\t@click.stop=\"isMenuShown = true\"\n\t\t\t\t\t/>\n\t\t\t\t\t<BMenu v-if=\"isMenuShown\" :options=\"menuOptions\" @close=\"isMenuShown = false\"/>\n\t\t\t\t\t<Hint\n\t\t\t\t\t\tv-if=\"showResultFromMessageHint\"\n\t\t\t\t\t\t:bindElement=\"$refs.moreIcon.$el\"\n\t\t\t\t\t\t:options=\"{\n\t\t\t\t\t\t\tcloseIcon: true,\n\t\t\t\t\t\t\toffsetLeft: 10,\n\t\t\t\t\t\t\tminWidth: 340,\n\t\t\t\t\t\t\tmaxWidth: 340,\n\t\t\t\t\t\t\tbindOptions: {\n\t\t\t\t\t\t\t\tforceBindPosition: true,\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t}\"\n\t\t\t\t\t\t@close=\"handleResultFromMessageHintClose\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-field-results-hint-info\">\n\t\t\t\t\t\t\t<TextMd className=\"tasks-field-results-hint-info-text\">\n\t\t\t\t\t\t\t\t{{ loc('TASKS_V2_RESULT_AHA_RESULT_FROM_MESSAGE') }}\n\t\t\t\t\t\t\t</TextMd>\n\t\t\t\t\t\t\t<TextXs\n\t\t\t\t\t\t\t\tclassName=\"tasks-field-results-hint-info-link\"\n\t\t\t\t\t\t\t\t@click.stop=\"handleResultFromMessageHintCloseComplete\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ loc('TASKS_V2_RESULT_AHA_SHOW_NO_MORE') }}\n\t\t\t\t\t\t\t</TextXs>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</Hint>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-field-results-result-content\" ref=\"content\">\n\t\t\t\t<div class=\"tasks-field-results-result-author-border print-no-after\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-field-results-result-author-border-clickable\"\n\t\t\t\t\t\t@click=\"handleAuthorClick\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<UserAvatar\n\t\t\t\t\t\t\t:src=\"resultAuthor.image\"\n\t\t\t\t\t\t\t:type=\"resultAuthor.type\"\n\t\t\t\t\t\t\t:size=\"UserAvatarSize.XS\"\n\t\t\t\t\t\t\t:bx-tooltip-user-id=\"resultAuthor.id\"\n\t\t\t\t\t\t\tbx-tooltip-context=\"b24\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<TextSm\n\t\t\t\t\t\t\tclassName=\"tasks-field-results-result-author-name\"\n\t\t\t\t\t\t\t:bx-tooltip-user-id=\"resultAuthor.id\"\n\t\t\t\t\t\t\tbx-tooltip-context=\"b24\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ resultAuthor.name }}\n\t\t\t\t\t\t</TextSm>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<EntityCollapsibleText\n\t\t\t\t\tref=\"collapsible\"\n\t\t\t\t\t:files\n\t\t\t\t\t:content=\"resultText\"\n\t\t\t\t\treadonly\n\t\t\t\t\t:showFilesIndicator=\"false\"\n\t\t\t\t\tv-model:opened=\"opened\"\n\t\t\t\t/>\n\t\t\t\t<div v-if=\"filesCount > 0\" class=\"tasks-field-results-result-files print-ignore\" :key=\"resultId\">\n\t\t\t\t\t<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-field-results-result --card print-no-border print-no-box-shadow"
+			:data-task-field-id="resultsMeta.id"
+			data-field-container
+		>
+			<div
+				class="tasks-field-results-title"
+				ref="title"
+				@click="$emit('titleClick', resultId)"
+			>
+				<div class="tasks-field-results-title-main">
+					<BIcon :name="Outline.WINDOW_FLAG"/>
+					<TextMd accent>{{ resultTitle }}</TextMd>
+				</div>
+				<div class="tasks-field-results-title-actions print-ignore">
+					<BIcon
+						v-if="hasMenuItems"
+						class="tasks-field-results-title-icon"
+						:name="Outline.MORE_L"
+						hoverable
+						ref="moreIcon"
+						@click.stop="isMenuShown = true"
+					/>
+					<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+					<Hint
+						v-if="showResultFromMessageHint"
+						:bindElement="$refs.moreIcon.$el"
+						:options="{
+							closeIcon: true,
+							offsetLeft: 10,
+							minWidth: 340,
+							maxWidth: 340,
+							bindOptions: {
+								forceBindPosition: true,
+							},
+						}"
+						@close="handleResultFromMessageHintClose"
+					>
+						<div class="tasks-field-results-hint-info">
+							<TextMd className="tasks-field-results-hint-info-text">
+								{{ loc('TASKS_V2_RESULT_AHA_RESULT_FROM_MESSAGE') }}
+							</TextMd>
+							<TextXs
+								className="tasks-field-results-hint-info-link"
+								@click.stop="handleResultFromMessageHintCloseComplete"
+							>
+								{{ loc('TASKS_V2_RESULT_AHA_SHOW_NO_MORE') }}
+							</TextXs>
+						</div>
+					</Hint>
+				</div>
+			</div>
+			<div class="tasks-field-results-result-content" ref="content">
+				<div class="tasks-field-results-result-author-border print-no-after">
+					<div
+						class="tasks-field-results-result-author-border-clickable"
+						@click="handleAuthorClick"
+					>
+						<UserAvatar
+							:src="resultAuthor.image"
+							:type="resultAuthor.type"
+							:size="UserAvatarSize.XS"
+							:bx-tooltip-user-id="resultAuthor.id"
+							bx-tooltip-context="b24"
+						/>
+						<TextSm
+							className="tasks-field-results-result-author-name"
+							:bx-tooltip-user-id="resultAuthor.id"
+							bx-tooltip-context="b24"
+						>
+							{{ resultAuthor.name }}
+						</TextSm>
+					</div>
+				</div>
+				<EntityCollapsibleText
+					ref="collapsible"
+					:files
+					:content="resultText"
+					readonly
+					:showFilesIndicator="false"
+					v-model:opened="opened"
+				/>
+				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId">
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+				</div>
+			</div>
+			<TasksPopupButtonQuote
+				v-if="elementAnchorQuote"
+				:isQuoteTrimmed="true"
+				:elementAnchor="elementAnchorQuote"
+				:elementScrollContainer="elementScrollContainerQuote"
+				:actions="actionsQuote"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -239,7 +349,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return this.hasResults ? this.loc('TASKS_V2_RESULT_AHA_REQUIRE_NEW_RESULT_RESPONSIBLE_DESC') : this.loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_RESPONSIBLE_DESC');
 			}
 		},
-		template: "\n\t\t<Hint\n\t\t\t:bindElement\n\t\t\t:options=\"{\n\t\t\t\tcloseIcon: true,\n\t\t\t\tminWidth: popupWidth,\n\t\t\t\tmaxWidth: popupWidth,\n\t\t\t\tpadding: 0,\n\t\t\t}\"\n\t\t\t@close=\"$emit('close')\"\n\t\t>\n\t\t\t<div class=\"tasks-field-results-hint-container\">\n\t\t\t\t<div class=\"tasks-field-results-hint-icon\"/>\n\t\t\t\t<div class=\"tasks-field-results-hint-info\">\n\t\t\t\t\t<HeadlineSm className=\"tasks-field-results-hint-info-text\">{{ title }}</HeadlineSm>\n\t\t\t\t\t<TextMd className=\"tasks-field-results-hint-info-text\">{{ description }}</TextMd>\n\t\t\t\t\t<div class=\"tasks-field-results-hint-button\">\n\t\t\t\t\t\t<UiButton\n\t\t\t\t\t\t\t:text=\"loc('TASKS_V2_RESULT_ADD')\"\n\t\t\t\t\t\t\t:size=\"ButtonSize.SMALL\"\n\t\t\t\t\t\t\t:style=\"AirButtonStyle.TINTED\"\n\t\t\t\t\t\t\t:leftIcon=\"Outline.PLUS_L\"\n\t\t\t\t\t\t\t:wide=\"false\"\n\t\t\t\t\t\t\t@click=\"$emit('addResult')\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</Hint>\n\t"
+		template: `
+		<Hint
+			:bindElement
+			:options="{
+				closeIcon: true,
+				minWidth: popupWidth,
+				maxWidth: popupWidth,
+				padding: 0,
+			}"
+			@close="$emit('close')"
+		>
+			<div class="tasks-field-results-hint-container">
+				<div class="tasks-field-results-hint-icon"/>
+				<div class="tasks-field-results-hint-info">
+					<HeadlineSm className="tasks-field-results-hint-info-text">{{ title }}</HeadlineSm>
+					<TextMd className="tasks-field-results-hint-info-text">{{ description }}</TextMd>
+					<div class="tasks-field-results-hint-button">
+						<UiButton
+							:text="loc('TASKS_V2_RESULT_ADD')"
+							:size="ButtonSize.SMALL"
+							:style="AirButtonStyle.TINTED"
+							:leftIcon="Outline.PLUS_L"
+							:wide="false"
+							@click="$emit('addResult')"
+						/>
+					</div>
+				</div>
+			</div>
+		</Hint>
+	`
+	};
+
+	const TYPES_QUOTE_ACTIONS = {
+		MESSAGE: tasks_v2_component_tasksPopupButtonQuote.TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE
 	};
 
 	// @vue/component
@@ -249,6 +392,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			BIcon: ui_iconSet_api_vue.BIcon,
 			BMenu: ui_vue3_components_menu.BMenu,
 			HeadlineSm: ui_system_typography_vue.HeadlineSm,
+			TasksPopupButtonQuote: tasks_v2_component_tasksPopupButtonQuote.TasksPopupButtonQuote,
 			UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar,
 			UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent,
 			EntityCollapsibleText: tasks_v2_component_entityText.EntityCollapsibleText,
@@ -258,6 +402,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			hint: ui_vue3_directives_hint.hint
 		},
 		inject: {
+			task: {},
 			embedded: {}
 		},
 		props: {
@@ -290,6 +435,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		data() {
 			return {
 				isSticky: false,
+				elementAnchorQuote: null,
+				elementScrollContainerQuote: null,
 				scrollContainer: null,
 				mutationObserver: null,
 				isMenuShown: false,
@@ -297,8 +444,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			};
 		},
 		computed: {
+			actionsQuote() {
+				const actionQuoteMessage = {
+					type: TYPES_QUOTE_ACTIONS.MESSAGE,
+					chatId: this.task.chatId
+				};
+				return [actionQuoteMessage];
+			},
 			result() {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Results, "/getById")](this.resultId);
+				return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](this.resultId);
 			},
 			isEdit() {
 				return main_core.Type.isNumber(this.resultId) && this.resultId > 0;
@@ -315,8 +469,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return tasks_v2_lib_calendar.calendar.formatDateTime(this.result.createdAtTs);
 			},
 			resultText() {
-				var _this$result$text;
-				return (_this$result$text = this.result.text) !== null && _this$result$text !== void 0 ? _this$result$text : '';
+				return this.result.text ?? '';
 			},
 			resultAuthor() {
 				return this.result.author;
@@ -340,7 +493,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			menuOptions() {
 				return {
-					id: "result-action-menu-".concat(main_core.Text.getRandom()),
+					id: `result-action-menu-${main_core.Text.getRandom()}`,
 					bindOptions: {
 						forceBindPosition: true
 					},
@@ -359,7 +512,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					icon: ui_iconSet_api_vue.Outline.EDIT_L,
 					onClick: this.handleEditClick.bind(this),
 					dataset: {
-						id: "MenuResultEdit-".concat(this.resultId)
+						id: `MenuResultEdit-${this.resultId}`
 					}
 				}, this.result.rights.remove && {
 					design: 'alert',
@@ -367,7 +520,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					icon: ui_iconSet_api_vue.Outline.TRASHCAN,
 					onClick: this.handleDeleteClick.bind(this),
 					dataset: {
-						id: "MenuResultRemove-".concat(this.resultId)
+						id: `MenuResultRemove-${this.resultId}`
 					}
 				}].filter(Boolean);
 			},
@@ -386,8 +539,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		mounted() {
-			var _this$$el;
-			this.scrollContainer = (_this$$el = this.$el) === null || _this$$el === void 0 ? void 0 : _this$$el.closest('.tasks-field-results-result-list-content');
+			this.elementAnchorQuote = this.$refs.collapsible.$el.parentNode?.querySelector('.tasks-card-entity-collapsible-text');
+			this.scrollContainer = this.$el?.closest('.tasks-field-results-result-list-content');
 			if (this.scrollContainer) {
 				main_core.Event.bind(this.scrollContainer, 'scroll', this.handleScroll);
 				void this.$nextTick(this.checkSticky);
@@ -396,6 +549,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					childList: true,
 					subtree: true
 				});
+				this.elementScrollContainerQuote = this.scrollContainer;
 			}
 		},
 		beforeUnmount() {
@@ -431,7 +585,92 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.resultAuthor.id));
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-results-result --list-mode\">\n\t\t\t<div\n\t\t\t\tclass=\"tasks-field-results-title --list-mode\"\n\t\t\t\t:class=\"{ '--sticky': isSticky }\"\n\t\t\t\tref=\"title\"\n\t\t\t\t@click=\"$emit('titleClick', resultId)\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-field-results-title-main\">\n\t\t\t\t\t<BIcon :name=\"Outline.WINDOW_FLAG\"/>\n\t\t\t\t\t<HeadlineSm>{{ resultTitle }}</HeadlineSm>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-field-results-title-actions print-ignore\">\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\tv-if=\"hasMenuItems\"\n\t\t\t\t\t\tclass=\"tasks-field-results-title-icon --big\"\n\t\t\t\t\t\t:name=\"Outline.MORE_L\"\n\t\t\t\t\t\thoverable\n\t\t\t\t\t\tref=\"moreIcon\"\n\t\t\t\t\t\t@click.stop=\"isMenuShown = true\"\n\t\t\t\t\t/>\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\tv-if=\"isSticky && !embedded\"\n\t\t\t\t\t\tclass=\"tasks-field-results-title-icon --big\"\n\t\t\t\t\t\t:name=\"resizeIcon\"\n\t\t\t\t\t\thoverable\n\t\t\t\t\t\t@click.stop=\"handleResizeClick\"\n\t\t\t\t\t/>\n\t\t\t\t\t<div v-if=\"isSticky\" class=\"tasks-field-results-result-empty\"/>\n\t\t\t\t\t<BMenu\n\t\t\t\t\t\tv-if=\"isMenuShown\"\n\t\t\t\t\t\t:options=\"menuOptions\"\n\t\t\t\t\t\t@close=\"isMenuShown = false\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass=\"tasks-field-results-result-content\"\n\t\t\t\tref=\"content\"\n\t\t\t>\n\t\t\t\t<div\n\t\t\t\t\tclass=\"tasks-field-results-result-author\"\n\t\t\t\t\t@click=\"handleAuthorClick\"\n\t\t\t\t>\n\t\t\t\t\t<UserAvatar\n\t\t\t\t\t\t:src=\"resultAuthor.image\"\n\t\t\t\t\t\t:type=\"resultAuthor.type\"\n\t\t\t\t\t\t:size=\"UserAvatarSize.XS\"\n\t\t\t\t\t\t:bx-tooltip-user-id=\"resultAuthor.id\"\n\t\t\t\t\t\tbx-tooltip-context=\"b24\"\n\t\t\t\t\t/>\n\t\t\t\t\t<TextSm\n\t\t\t\t\t\tclassName=\"tasks-field-results-result-author-name\"\n\t\t\t\t\t\t:bx-tooltip-user-id=\"resultAuthor.id\"\n\t\t\t\t\t\tbx-tooltip-context=\"b24\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ resultAuthor.name }}\n\t\t\t\t\t</TextSm>\n\t\t\t\t</div>\n\t\t\t\t<EntityCollapsibleText\n\t\t\t\t\tref=\"collapsible\"\n\t\t\t\t\t:content=\"resultText\"\n\t\t\t\t\t:files\n\t\t\t\t\treadonly\n\t\t\t\t\tshowFilesIndicator\n\t\t\t\t\topenByDefault\n\t\t\t\t\topened\n\t\t\t\t/>\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"filesCount > 0\"\n\t\t\t\t\tclass=\"tasks-field-results-result-files --list-mode\"\n\t\t\t\t>\n\t\t\t\t\t<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"showDelimiter\" class=\"tasks-field-results-result-separator\"/>\n\t\t\t<div v-else class=\"tasks-field-results-result-last-padding\"/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-results-result --list-mode">
+			<div
+				class="tasks-field-results-title --list-mode"
+				:class="{ '--sticky': isSticky }"
+				ref="title"
+				@click="$emit('titleClick', resultId)"
+			>
+				<div class="tasks-field-results-title-main">
+					<BIcon :name="Outline.WINDOW_FLAG"/>
+					<HeadlineSm>{{ resultTitle }}</HeadlineSm>
+				</div>
+				<div class="tasks-field-results-title-actions print-ignore">
+					<BIcon
+						v-if="hasMenuItems"
+						class="tasks-field-results-title-icon --big"
+						:name="Outline.MORE_L"
+						hoverable
+						ref="moreIcon"
+						@click.stop="isMenuShown = true"
+					/>
+					<BIcon
+						v-if="isSticky && !embedded"
+						class="tasks-field-results-title-icon --big"
+						:name="resizeIcon"
+						hoverable
+						@click.stop="handleResizeClick"
+					/>
+					<div v-if="isSticky" class="tasks-field-results-result-empty"/>
+					<BMenu
+						v-if="isMenuShown"
+						:options="menuOptions"
+						@close="isMenuShown = false"
+					/>
+				</div>
+			</div>
+			<div
+				class="tasks-field-results-result-content"
+				ref="content"
+			>
+				<div
+					class="tasks-field-results-result-author"
+					@click="handleAuthorClick"
+				>
+					<UserAvatar
+						:src="resultAuthor.image"
+						:type="resultAuthor.type"
+						:size="UserAvatarSize.XS"
+						:bx-tooltip-user-id="resultAuthor.id"
+						bx-tooltip-context="b24"
+					/>
+					<TextSm
+						className="tasks-field-results-result-author-name"
+						:bx-tooltip-user-id="resultAuthor.id"
+						bx-tooltip-context="b24"
+					>
+						{{ resultAuthor.name }}
+					</TextSm>
+				</div>
+				<EntityCollapsibleText
+					ref="collapsible"
+					:content="resultText"
+					:files
+					readonly
+					showFilesIndicator
+					openByDefault
+					opened
+				/>
+				<div
+					v-if="filesCount > 0"
+					class="tasks-field-results-result-files --list-mode"
+				>
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+				</div>
+			</div>
+			<div v-if="showDelimiter" class="tasks-field-results-result-separator"/>
+			<div v-else class="tasks-field-results-result-last-padding"/>
+			<TasksPopupButtonQuote
+				v-if="elementAnchorQuote"
+				:isQuoteTrimmed="true"
+				:elementAnchor="elementAnchorQuote"
+				:elementScrollContainer="elementScrollContainerQuote"
+				:actions="actionsQuote"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -439,7 +678,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		components: {
 			BLine: ui_system_skeleton_vue.BLine
 		},
-		template: "\n\t\t<div class=\"tasks-field-results-result-skeleton-container\">\n\t\t\t<BLine :width=\"460\" :height=\"12\" :radius=\"60\"/>\n\t\t\t<BLine :width=\"460\" :height=\"12\" :radius=\"60\"/>\n\t\t\t<BLine :width=\"460\" :height=\"12\" :radius=\"60\"/>\n\t\t\t<BLine :width=\"197\" :height=\"12\" :radius=\"60\"/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-results-result-skeleton-container">
+			<BLine :width="460" :height="12" :radius="60"/>
+			<BLine :width="460" :height="12" :radius="60"/>
+			<BLine :width="460" :height="12" :radius="60"/>
+			<BLine :width="197" :height="12" :radius="60"/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -511,13 +757,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				currentUserId: "".concat(tasks_v2_const.Model.Interface, "/currentUserId")
+				currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
 			}),
 			result() {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Results, "/getById")](this.resultId);
+				return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](this.resultId);
 			},
 			currentUser() {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Users, "/getById")](this.currentUserId);
+				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.currentUserId);
 			},
 			isEdit() {
 				return main_core.Type.isNumber(this.resultId) && this.resultId > 0;
@@ -540,12 +786,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return this.isEdit ? this.loc('TASKS_V2_RESULT_BUTTON_SAVE') : this.loc('TASKS_V2_RESULT_BUTTON_SEND');
 			},
 			readonly() {
-				var _this$result;
 				if (!this.result) {
-					var _this$task;
-					return !((_this$task = this.task) !== null && _this$task !== void 0 && (_this$task = _this$task.rights) !== null && _this$task !== void 0 && _this$task.read);
+					return !this.task?.rights?.read;
 				}
-				return !((_this$result = this.result) !== null && _this$result !== void 0 && (_this$result = _this$result.rights) !== null && _this$result !== void 0 && _this$result.edit);
+				return !this.result?.rights?.edit;
 			},
 			editor() {
 				return this.entityTextEditor.getEditor();
@@ -565,7 +809,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		mounted() {
 			if (!this.task.filledFields[resultsMeta.id]) {
-				void this.$store.dispatch("".concat(tasks_v2_const.Model.Tasks, "/setFieldFilled"), {
+				void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/setFieldFilled`, {
 					id: this.taskId,
 					fieldName: resultsMeta.id
 				});
@@ -576,7 +820,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		unmounted() {
 			if (!this.isEdit && !this.isSaving) {
-				void this.$store.dispatch("".concat(tasks_v2_const.Model.Results, "/delete"), this.resultId);
+				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/delete`, this.resultId);
 				tasks_v2_provider_service_fileService.fileService.delete(this.resultId, tasks_v2_provider_service_fileService.EntityTypes.Result);
 				tasks_v2_component_entityText.entityTextEditor.delete(this.resultId, tasks_v2_component_entityText.EntityTextTypes.Result);
 			}
@@ -641,9 +885,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			},
 			handleEditorChange() {
-				var _this$editor;
 				const preparedOldText = this.getPreparedText(this.content);
-				const preparedNewText = this.getPreparedText((_this$editor = this.editor) === null || _this$editor === void 0 ? void 0 : _this$editor.getText());
+				const preparedNewText = this.getPreparedText(this.editor?.getText());
 				this.hasChanges = preparedOldText !== preparedNewText;
 				this.buttonDisabled = !main_core.Type.isStringFilled(preparedNewText);
 			},
@@ -651,8 +894,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return text.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
 			},
 			focusToEnd() {
-				var _this$editor2;
-				(_this$editor2 = this.editor) === null || _this$editor2 === void 0 || _this$editor2.focus(null, {
+				this.editor?.focus(null, {
 					defaultSelection: 'rootEnd'
 				});
 			},
@@ -663,7 +905,58 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('close');
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-result-editor-wrapper\" ref=\"wrapper\">\n\t\t\t<div class=\"tasks-result-editor-header\" ref=\"resultHeader\">\n\t\t\t\t<div class=\"tasks-result-editor-title\">{{ title }}</div>\n\t\t\t\t<div class=\"tasks-result-editor-field-actions\">\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\tv-if=\"showResize\"\n\t\t\t\t\t\tclass=\"tasks-result-editor-field-icon\"\n\t\t\t\t\t\t:name=\"resizeIcon\"\n\t\t\t\t\t\thoverable\n\t\t\t\t\t\t@click=\"$emit('resize')\"\n\t\t\t\t\t/>\n\t\t\t\t\t<BIcon\n\t\t\t\t\t\t:name=\"Outline.CROSS_L\"\n\t\t\t\t\t\thoverable\n\t\t\t\t\t\tclass=\"tasks-result-editor-field-icon\"\n\t\t\t\t\t\t@click=\"handleClose\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-result-editor-container\">\n\t\t\t\t<EntityTextArea\n\t\t\t\t\t:entityId=\"resultId\"\n\t\t\t\t\t:entityType=\"EntityTextTypes.Result\"\n\t\t\t\t\t:readonly\n\t\t\t\t\t:removeFromServer=\"!isEdit\"\n\t\t\t\t\tref=\"resultTextArea\"\n\t\t\t\t\t@change=\"handleEditorChange\"\n\t\t\t\t\t@filesChange=\"hasFilesChanges = true\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div v-if=\"!readonly\" class=\"tasks-result-editor-footer\" ref=\"resultActions\">\n\t\t\t\t<div class=\"tasks-result-editor-action-list\">\n\t\t\t\t\t<AttachButton v-if=\"isDiskModuleInstalled\" :fileService/>\n\t\t\t\t\t<MentionButton :editor/>\n\t\t\t\t\t<BulletListButton :editor/>\n\t\t\t\t\t<NumberListButton :editor/>\n\t\t\t\t\t<MoreButton :editor/>\n\t\t\t\t\t<CopilotButton v-if=\"isCopilotEnabled\" :editor/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-result-editor-footer-buttons\">\n\t\t\t\t\t<UiButton\n\t\t\t\t\t\t:text=\"buttonTitle\"\n\t\t\t\t\t\t:size=\"ButtonSize.MEDIUM\"\n\t\t\t\t\t\t:color=\"ButtonColor.PRIMARY\"\n\t\t\t\t\t\t:disabled=\"buttonDisabled || isSaving\"\n\t\t\t\t\t\t@click=\"handleEditButtonClick\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-result-editor-wrapper" ref="wrapper">
+			<div class="tasks-result-editor-header" ref="resultHeader">
+				<div class="tasks-result-editor-title">{{ title }}</div>
+				<div class="tasks-result-editor-field-actions">
+					<BIcon
+						v-if="showResize"
+						class="tasks-result-editor-field-icon"
+						:name="resizeIcon"
+						hoverable
+						@click="$emit('resize')"
+					/>
+					<BIcon
+						:name="Outline.CROSS_L"
+						hoverable
+						class="tasks-result-editor-field-icon"
+						@click="handleClose"
+					/>
+				</div>
+			</div>
+			<div class="tasks-result-editor-container">
+				<EntityTextArea
+					:entityId="resultId"
+					:entityType="EntityTextTypes.Result"
+					:readonly
+					:removeFromServer="!isEdit"
+					ref="resultTextArea"
+					@change="handleEditorChange"
+					@filesChange="hasFilesChanges = true"
+				/>
+			</div>
+			<div v-if="!readonly" class="tasks-result-editor-footer" ref="resultActions">
+				<div class="tasks-result-editor-action-list">
+					<AttachButton v-if="isDiskModuleInstalled" :fileService/>
+					<MentionButton :editor/>
+					<BulletListButton :editor/>
+					<NumberListButton :editor/>
+					<MoreButton :editor/>
+					<CopilotButton v-if="isCopilotEnabled" :editor/>
+				</div>
+				<div class="tasks-result-editor-footer-buttons">
+					<UiButton
+						:text="buttonTitle"
+						:size="ButtonSize.MEDIUM"
+						:color="ButtonColor.PRIMARY"
+						:disabled="buttonDisabled || isSaving"
+						@click="handleEditButtonClick"
+					/>
+				</div>
+			</div>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -705,10 +998,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		computed: {
 			result() {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Results, "/getById")](this.resultId);
+				return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](this.resultId);
 			},
 			bottomSheetContainer() {
-				return document.getElementById("b24-bottom-sheet-".concat(this.uniqueKey)) || null;
+				return document.getElementById(`b24-bottom-sheet-${this.uniqueKey}`) || null;
 			},
 			isDiskModuleInstalled() {
 				return tasks_v2_core.Core.getParams().features.disk;
@@ -733,7 +1026,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<BottomSheet\n\t\t\t:sheetBindProps\n\t\t\t:isExpanded=\"isResized\"\n\t\t\t:padding=\"0\"\n\t\t\t:popupPadding=\"0\"\n\t\t\t:uniqueKey\n\t\t\t@close=\"$emit('close')\"\n\t\t>\n\t\t\t<ResultEditor\n\t\t\t\t:resultId\n\t\t\t\t:isResized\n\t\t\t\t:content=\"result.text || ''\"\n\t\t\t\t:showResize=\"shouldShowResize\"\n\t\t\t\t@close=\"$emit('close')\"\n\t\t\t\t@resize=\"isResized = !isResized\"\n\t\t\t/>\n\t\t\t<DropZone\n\t\t\t\tv-if=\"isDiskModuleInstalled\"\n\t\t\t\t:container=\"bottomSheetContainer || {}\"\n\t\t\t\t:entityId=\"resultId || 0\"\n\t\t\t\t:entityType=\"EntityTypes.Result\"\n\t\t\t/>\n\t\t</BottomSheet>\n\t"
+		template: `
+		<BottomSheet
+			:sheetBindProps
+			:isExpanded="isResized"
+			:padding="0"
+			:popupPadding="0"
+			:uniqueKey
+			@close="$emit('close')"
+		>
+			<ResultEditor
+				:resultId
+				:isResized
+				:content="result.text || ''"
+				:showResize="shouldShowResize"
+				@close="$emit('close')"
+				@resize="isResized = !isResized"
+			/>
+			<DropZone
+				v-if="isDiskModuleInstalled"
+				:container="bottomSheetContainer || {}"
+				:entityId="resultId || 0"
+				:entityType="EntityTypes.Result"
+			/>
+		</BottomSheet>
+	`
 	};
 
 	// @vue/component
@@ -751,7 +1068,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
-		template: "\n\t\t<div class=\"tasks-field-results-result-list-empty\">\n\t\t\t<div class=\"tasks-field-results-result-list-empty-image\"/>\n\t\t\t<TextLg className=\"tasks-field-results-result-list-empty-title\">\n\t\t\t\t{{ loc('TASKS_V2_RESULT_LIST_EMPTY') }}\n\t\t\t</TextLg>\n\t\t\t<div class=\"tasks-field-results-result-list-empty-button\">\n\t\t\t\t<UiButton\n\t\t\t\t\t:text=\"loc('TASKS_V2_RESULT_ADD')\"\n\t\t\t\t\t:size=\"ButtonSize.MEDIUM\"\n\t\t\t\t\t:style=\"AirButtonStyle.FILLED\"\n\t\t\t\t\t:leftIcon=\"Outline.PLUS_L\"\n\t\t\t\t\t:wide=\"false\"\n\t\t\t\t\t@click=\"$emit('addResult')\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-results-result-list-empty">
+			<div class="tasks-field-results-result-list-empty-image"/>
+			<TextLg className="tasks-field-results-result-list-empty-title">
+				{{ loc('TASKS_V2_RESULT_LIST_EMPTY') }}
+			</TextLg>
+			<div class="tasks-field-results-result-list-empty-button">
+				<UiButton
+					:text="loc('TASKS_V2_RESULT_ADD')"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.FILLED"
+					:leftIcon="Outline.PLUS_L"
+					:wide="false"
+					@click="$emit('addResult')"
+				/>
+			</div>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -833,7 +1167,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			isResultLoaded(resultId) {
-				return Boolean(this.$store.getters["".concat(tasks_v2_const.Model.Results, "/getById")](resultId));
+				return Boolean(this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](resultId));
 			},
 			focusTo(resultId) {
 				if (!resultId) {
@@ -859,7 +1193,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			scrollToTarget(targetId, offset, shouldHighlight) {
 				setTimeout(() => {
-					const targetNode = this.$refs.scrollContainer.querySelector("[data-result-id=\"".concat(targetId, "\"]"));
+					const targetNode = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
 					if (!targetNode) {
 						return;
 					}
@@ -870,7 +1204,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}, 0);
 			},
 			highlightResult(targetId) {
-				const highlightElement = this.$refs.scrollContainer.querySelector("[data-result-id=\"".concat(targetId, "\"]"));
+				const highlightElement = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
 				if (highlightElement) {
 					void tasks_v2_lib_highlighter.highlighter.highlight(highlightElement);
 				}
@@ -882,7 +1216,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					taskId: this.taskId,
 					author: tasks_v2_core.Core.getParams().currentUser
 				};
-				void this.$store.dispatch("".concat(tasks_v2_const.Model.Results, "/insert"), payload);
+				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/insert`, payload);
 				this.isResultEditorShown = true;
 			},
 			openEditResult(resultId) {
@@ -917,13 +1251,71 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					taskId,
 					resultId
 				} = event.getData();
-				if (this.taskId !== taskId || !this.isShown) {
+				if (this.taskId !== taskId) {
 					return;
 				}
 				this.focusTo(resultId);
 			}
 		},
-		template: "\n\t\t<BottomSheet\n\t\t\t:sheetBindProps\n\t\t\t:isExpanded=\"isResized\"\n\t\t\t:padding=\"0\"\n\t\t\t:popupPadding=\"0\"\n\t\t\t@close=\"$emit('close')\"\n\t\t>\n\t\t\t<div class=\"tasks-field-results-result-list\" ref=\"main\">\n\t\t\t\t<div class=\"tasks-field-results-result-list-close-icon\">\n\t\t\t\t\t<BIcon :name=\"Outline.CROSS_L\" hoverable @click=\"$emit('close')\"/>\n\t\t\t\t</div>\n\t\t\t\t<div  v-if=\"isEmptyState\" class=\"tasks-field-results-result-list-header\">\n\t\t\t\t\t<HeadlineMd className=\"tasks-field-results-result-list-title\">\n\t\t\t\t\t\t{{ loc('TASKS_V2_RESULT_LIST_EMPTY_TITLE') }}\n\t\t\t\t\t</HeadlineMd>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-field-results-result-list-content\" ref=\"scrollContainer\">\n\t\t\t\t\t<ResultListEmpty v-if=\"isEmptyState\" @addResult=\"openAddResultSheet\"/>\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-else\n\t\t\t\t\t\tv-for=\"(result, resultIndex) in results\"\n\t\t\t\t\t\t:key=\"result\"\n\t\t\t\t\t\t:data-result-id=\"result\"\n\t\t\t\t\t\tclass=\"tasks-field-results-result-item\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<ResultListItem\n\t\t\t\t\t\t\tv-if=\"isResultLoaded(result)\"\n\t\t\t\t\t\t\t:resultId=\"result\"\n\t\t\t\t\t\t\tlistMode\n\t\t\t\t\t\t\t:showDelimiter=\"resultIndex !== results.length - 1\"\n\t\t\t\t\t\t\t:isResized\n\t\t\t\t\t\t\t@edit=\"openEditResult\"\n\t\t\t\t\t\t\t@resize=\"isResized = !isResized\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<ResultSkeleton v-else/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-if=\"!isEmptyState\"\n\t\t\t\tclass=\"tasks-field-results-result-add-button\"\n\t\t\t>\n\t\t\t\t<UiButton\n\t\t\t\t\t:text=\"loc('TASKS_V2_RESULT_ADD')\"\n\t\t\t\t\t:style=\"AirButtonStyle.SELECTION\"\n\t\t\t\t\t:size=\"ButtonSize.SMALL\"\n\t\t\t\t\t@click=\"openAddResultSheet\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<ResultEditorSheet\n\t\t\t\tv-if=\"isResultEditorShown\"\n\t\t\t\t:resultId=\"editResultId\"\n\t\t\t\t:sheetBindProps\n\t\t\t\t:showResize=\"false\"\n\t\t\t\t@close=\"closeResultEditor\"\n\t\t\t/>\n\t\t</BottomSheet>\n\t"
+		template: `
+		<BottomSheet
+			:sheetBindProps
+			:isExpanded="isResized"
+			:padding="0"
+			:popupPadding="0"
+			@close="$emit('close')"
+		>
+			<div class="tasks-field-results-result-list" ref="main">
+				<div class="tasks-field-results-result-list-close-icon">
+					<BIcon :name="Outline.CROSS_L" hoverable @click="$emit('close')"/>
+				</div>
+				<div  v-if="isEmptyState" class="tasks-field-results-result-list-header">
+					<HeadlineMd className="tasks-field-results-result-list-title">
+						{{ loc('TASKS_V2_RESULT_LIST_EMPTY_TITLE') }}
+					</HeadlineMd>
+				</div>
+				<div class="tasks-field-results-result-list-content" ref="scrollContainer">
+					<ResultListEmpty v-if="isEmptyState" @addResult="openAddResultSheet"/>
+					<div
+						v-else
+						v-for="(result, resultIndex) in results"
+						:key="result"
+						:data-result-id="result"
+						class="tasks-field-results-result-item"
+					>
+						<ResultListItem
+							v-if="isResultLoaded(result)"
+							:resultId="result"
+							listMode
+							:showDelimiter="resultIndex !== results.length - 1"
+							:isResized
+							@edit="openEditResult"
+							@resize="isResized = !isResized"
+						/>
+						<ResultSkeleton v-else/>
+					</div>
+				</div>
+			</div>
+			<div
+				v-if="!isEmptyState"
+				class="tasks-field-results-result-add-button"
+			>
+				<UiButton
+					:text="loc('TASKS_V2_RESULT_ADD')"
+					:style="AirButtonStyle.SELECTION"
+					:size="ButtonSize.SMALL"
+					@click="openAddResultSheet"
+				/>
+			</div>
+			<ResultEditorSheet
+				v-if="isResultEditorShown"
+				:resultId="editResultId"
+				:sheetBindProps
+				:showResize="false"
+				@close="closeResultEditor"
+			/>
+		</BottomSheet>
+	`
 	};
 
 	// @vue/component
@@ -981,20 +1373,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				stateFlags: "".concat(tasks_v2_const.Model.Interface, "/stateFlags"),
-				templateStateFlags: "".concat(tasks_v2_const.Model.Interface, "/templateStateFlags")
+				stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+				templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 			}),
 			requireResult() {
-				var _this$task;
-				return ((_this$task = this.task) === null || _this$task === void 0 ? void 0 : _this$task.requireResult) || false;
+				return this.task?.requireResult || false;
 			},
 			isCreator() {
-				return tasks_v2_core.Core.getParams().currentUser.id === (this === null || this === void 0 ? void 0 : this.task.creatorId);
+				return tasks_v2_core.Core.getParams().currentUser.id === this?.task.creatorId;
 			},
 			isResponsible() {
-				var _this$task2, _this$task3;
 				const userId = tasks_v2_core.Core.getParams().currentUser.id;
-				return ((_this$task2 = this.task) === null || _this$task2 === void 0 || (_this$task2 = _this$task2.responsibleIds) === null || _this$task2 === void 0 ? void 0 : _this$task2.includes(userId)) || ((_this$task3 = this.task) === null || _this$task3 === void 0 ? void 0 : _this$task3.accomplicesIds.includes(userId));
+				return this.task?.responsibleIds?.includes(userId) || this.task?.accomplicesIds.includes(userId);
 			},
 			containsResults() {
 				return this.task.containsResults;
@@ -1025,7 +1415,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			menuOptions() {
 				return {
-					id: "result-field-menu-".concat(main_core.Text.getRandom()),
+					id: `result-field-menu-${main_core.Text.getRandom()}`,
 					bindOptions: {
 						forceBindPosition: true
 					},
@@ -1046,7 +1436,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						icon: ui_iconSet_api_vue.Outline.PLUS_L,
 						onClick: this.openAddResultSheet,
 						dataset: {
-							id: "MenuResultAdd-".concat(this.taskId)
+							id: `MenuResultAdd-${this.taskId}`
 						}
 					});
 				}
@@ -1057,7 +1447,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						icon: ui_iconSet_api_vue.Outline.CROSS_L,
 						onClick: this.handleUnrequireResult,
 						dataset: {
-							id: "MenuResultNotRequire-".concat(this.taskId)
+							id: `MenuResultNotRequire-${this.taskId}`
 						}
 					});
 				} else {
@@ -1067,7 +1457,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						isLocked: this.isLocked,
 						onClick: this.handleRequireResult,
 						dataset: {
-							id: "MenuResultRequire-".concat(this.taskId)
+							id: `MenuResultRequire-${this.taskId}`
 						}
 					});
 				}
@@ -1131,7 +1521,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					taskId: this.taskId,
 					author: tasks_v2_core.Core.getParams().currentUser
 				};
-				void this.$store.dispatch("".concat(tasks_v2_const.Model.Results, "/insert"), payload);
+				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/insert`, payload);
 				this.openEditSheet(id);
 			},
 			handleResponsibleHintButtonClick() {
@@ -1141,7 +1531,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			handleRequireResult() {
 				if (this.isLocked) {
 					void tasks_v2_lib_showLimit.showLimit({
-						code: "limit_".concat(this.featureId),
+						code: `limit_${this.featureId}`,
 						bindElement: this.$refs.moreIcon.$el,
 						analytics: {
 							type: 'limit_tasks_status_summary'
@@ -1162,19 +1552,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				if (this.isTemplate) {
-					await this.$store.dispatch("".concat(tasks_v2_const.Model.Interface, "/updateTemplateStateFlags"), {
+					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, {
 						defaultRequireResult: requireResult
 					});
 					void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
 				} else {
-					await this.$store.dispatch("".concat(tasks_v2_const.Model.Interface, "/updateStateFlags"), {
+					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
 						defaultRequireResult: requireResult
 					});
 					void tasks_v2_provider_service_stateService.stateService.set(this.stateFlags);
 				}
 			},
 			tryShowResultHints() {
-				if (!this.requireResult || this.containsResults) {
+				if (!this.requireResult || this.containsResults || this.isTemplate) {
 					return;
 				}
 				if (!this.isEdit && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaRequiredResultCreatorPopup)) {
@@ -1185,7 +1575,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (this.isEdit && this.isResponsible && !this.isCreator && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup)) {
 					tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup);
 					setTimeout(() => {
-						this.showResponsibleHint();
+						const event = new main_core_events.BaseEvent({
+							data: {
+								taskId: this.taskId
+							}
+						});
+						this.showResponsibleHint(event);
 					}, 2000);
 				}
 			},
@@ -1244,8 +1639,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(resultsMeta.id);
 			},
 			getRequiredResultAhaWidth() {
-				var _this$$refs;
-				return main_core.Type.isNumber((_this$$refs = this.$refs) === null || _this$$refs === void 0 || (_this$$refs = _this$$refs.resultsContainer) === null || _this$$refs === void 0 ? void 0 : _this$$refs.offsetWidth) ? Math.min(this.$refs.resultsContainer.offsetWidth, 530) : 530;
+				return main_core.Type.isNumber(this.$refs?.resultsContainer?.offsetWidth) ? Math.min(this.$refs.resultsContainer.offsetWidth, 530) : 530;
 			},
 			openEditSheet(resultId) {
 				this.sheetResultId = resultId;
@@ -1262,7 +1656,130 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update:isListSheetShown', isShown);
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-field-results print-no-box-shadow\"\n\t\t\t:data-task-id=\"taskId\"\n\t\t>\n\t\t\t<template v-if=\"lastResultId\">\n\t\t\t\t<div ref=\"resultsContainer\">\n\t\t\t\t\t<ResultCardItem\n\t\t\t\t\t\t:resultId=\"lastResultId\"\n\t\t\t\t\t\t@titleClick=\"openResultSheet\"\n\t\t\t\t\t\t@add=\"openAddResultSheet\"\n\t\t\t\t\t\t@edit=\"openEditSheet\"\n\t\t\t\t\t\t@highlightField=\"highlightField\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-field-results-more-container\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"showMore\"\n\t\t\t\t\t\tclass=\"tasks-field-results-more\"\n\t\t\t\t\t\t@click=\"openMore\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-field-results-more-text\">{{ moreText }}</div>\n\t\t\t\t\t\t<BIcon\n\t\t\t\t\t\t\tclass=\"tasks-field-results-title-icon --auto-left print-ignore\"\n\t\t\t\t\t\t\t:name=\"Outline.CHEVRON_RIGHT_L\"\n\t\t\t\t\t\t\thoverable\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-field-results-more print-ignore\"\n\t\t\t\t\t\t:class=\"{ '--border': showMore }\"\n\t\t\t\t\t\t@click=\"openAddResultSheet\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-field-results-more-text\">{{ loc('TASKS_V2_RESULT_ADD_MORE') }}</div>\n\t\t\t\t\t\t<BIcon\n\t\t\t\t\t\t\tclass=\"tasks-field-results-title-icon --auto-left\"\n\t\t\t\t\t\t\t:name=\"Outline.PLUS_L\"\n\t\t\t\t\t\t\thoverable\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div\n\t\t\t\t\tclass=\"tasks-field-results-empty-container\"\n\t\t\t\t\t:data-task-field-id=\"resultsMeta.id\"\n\t\t\t\t\tdata-field-container\n\t\t\t\t\tref=\"resultsContainer\"\n\t\t\t\t>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-field-results-title\"\n\t\t\t\t\t\t:class=\"{ '--non-clickable': isTemplate }\"\n\t\t\t\t\t\t@click=\"handleTitleClick\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isLoading\"\n\t\t\t\t\t\t\tclass=\"tasks-field-results-title-main\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<BIcon :name=\"Animated.LOADER_WAIT\"/>\n\t\t\t\t\t\t\t<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\tclass=\"tasks-field-results-title-main\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<BIcon :name=\"Outline.WINDOW_FLAG\"/>\n\t\t\t\t\t\t\t<TextMd accent>{{ emptyResultTitle }}</TextMd>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-field-results-title-actions print-ignore\">\n\t\t\t\t\t\t\t<BIcon\n\t\t\t\t\t\t\t\tv-if=\"showMoreIcon\"\n\t\t\t\t\t\t\t\tclass=\"tasks-field-results-title-icon\"\n\t\t\t\t\t\t\t\t:name=\"Outline.MORE_L\"\n\t\t\t\t\t\t\t\thoverable\n\t\t\t\t\t\t\t\tref=\"moreIcon\"\n\t\t\t\t\t\t\t\t@click.stop=\"isMenuShown = true\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<BIcon\n\t\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\t\tclass=\"tasks-field-results-title-icon\"\n\t\t\t\t\t\t\t\t:name=\"Outline.PLUS_L\"\n\t\t\t\t\t\t\t\thoverable\n\t\t\t\t\t\t\t\t:data-task-results-add=\"resultsMeta.id\"\n\t\t\t\t\t\t\t\t@click.stop=\"openAddResultSheet\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<BMenu\n\t\t\t\t\t\tv-if=\"isMenuShown\"\n\t\t\t\t\t\t:options=\"menuOptions\"\n\t\t\t\t\t\t@close=\"isMenuShown = false\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<Hint\n\t\t\t\t\tv-if=\"showCreatorResultHint\"\n\t\t\t\t\t:bindElement=\"$refs.resultsContainer\"\n\t\t\t\t\t:options=\"{ closeIcon: true }\"\n\t\t\t\t\t@close=\"handleCreatorHintClose\"\n\t\t\t\t>\n\t\t\t\t\t{{ loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }}\n\t\t\t\t</Hint>\n\t\t\t</template>\n\t\t\t<ResultRequiredAha\n\t\t\t\tv-if=\"showResponsibleResultHint\"\n\t\t\t\t:bindElement=\"$refs.resultsContainer\"\n\t\t\t\t:popupWidth=\"getRequiredResultAhaWidth()\"\n\t\t\t\t:hasResults\n\t\t\t\t@close=\"handleResponsibleHintClose\"\n\t\t\t\t@addResult=\"handleResponsibleHintButtonClick\"\n\t\t\t/>\n\t\t</div>\n\t\t<ResultEditorSheet\n\t\t\tv-if=\"isSheetShown\"\n\t\t\t:resultId=\"sheetResultId\"\n\t\t\t:sheetBindProps\n\t\t\t@close=\"setSheetShown(false)\"\n\t\t/>\n\t\t<ResultListSheet\n\t\t\tv-if=\"isListSheetShown\"\n\t\t\t:resultId=\"sheetResultId\"\n\t\t\t:sheetBindProps\n\t\t\t@close=\"setListSheetShown(false)\"\n\t\t/>\n\t"
+		template: `
+		<div
+			class="tasks-field-results print-no-box-shadow"
+			:data-task-id="taskId"
+		>
+			<template v-if="lastResultId">
+				<div ref="resultsContainer">
+					<ResultCardItem
+						:resultId="lastResultId"
+						@titleClick="openResultSheet"
+						@add="openAddResultSheet"
+						@edit="openEditSheet"
+						@highlightField="highlightField"
+					/>
+				</div>
+				<div class="tasks-field-results-more-container">
+					<div
+						v-if="showMore"
+						class="tasks-field-results-more"
+						@click="openMore"
+					>
+						<div class="tasks-field-results-more-text">{{ moreText }}</div>
+						<BIcon
+							class="tasks-field-results-title-icon --auto-left print-ignore"
+							:name="Outline.CHEVRON_RIGHT_L"
+							hoverable
+						/>
+					</div>
+					<div
+						class="tasks-field-results-more print-ignore"
+						:class="{ '--border': showMore }"
+						@click="openAddResultSheet"
+					>
+						<div class="tasks-field-results-more-text">{{ loc('TASKS_V2_RESULT_ADD_MORE') }}</div>
+						<BIcon
+							class="tasks-field-results-title-icon --auto-left"
+							:name="Outline.PLUS_L"
+							hoverable
+						/>
+					</div>
+				</div>
+			</template>
+			<template v-else>
+				<div
+					class="tasks-field-results-empty-container"
+					:data-task-field-id="resultsMeta.id"
+					data-field-container
+					ref="resultsContainer"
+				>
+					<div
+						class="tasks-field-results-title"
+						:class="{ '--non-clickable': isTemplate }"
+						@click="handleTitleClick"
+					>
+						<div
+							v-if="isLoading"
+							class="tasks-field-results-title-main"
+						>
+							<BIcon :name="Animated.LOADER_WAIT"/>
+							<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>
+						</div>
+						<div
+							v-else
+							class="tasks-field-results-title-main"
+						>
+							<BIcon :name="Outline.WINDOW_FLAG"/>
+							<TextMd accent>{{ emptyResultTitle }}</TextMd>
+						</div>
+						<div class="tasks-field-results-title-actions print-ignore">
+							<BIcon
+								v-if="showMoreIcon"
+								class="tasks-field-results-title-icon"
+								:name="Outline.MORE_L"
+								hoverable
+								ref="moreIcon"
+								@click.stop="isMenuShown = true"
+							/>
+							<BIcon
+								v-else
+								class="tasks-field-results-title-icon"
+								:name="Outline.PLUS_L"
+								hoverable
+								:data-task-results-add="resultsMeta.id"
+								@click.stop="openAddResultSheet"
+							/>
+						</div>
+					</div>
+					<BMenu
+						v-if="isMenuShown"
+						:options="menuOptions"
+						@close="isMenuShown = false"
+					/>
+				</div>
+				<Hint
+					v-if="showCreatorResultHint"
+					:bindElement="$refs.resultsContainer"
+					:options="{ closeIcon: true }"
+					@close="handleCreatorHintClose"
+				>
+					{{ loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }}
+				</Hint>
+			</template>
+			<ResultRequiredAha
+				v-if="showResponsibleResultHint"
+				:bindElement="$refs.resultsContainer"
+				:popupWidth="getRequiredResultAhaWidth()"
+				:hasResults
+				@close="handleResponsibleHintClose"
+				@addResult="handleResponsibleHintButtonClick"
+			/>
+		</div>
+		<ResultEditorSheet
+			v-if="isSheetShown"
+			:resultId="sheetResultId"
+			:sheetBindProps
+			@close="setSheetShown(false)"
+		/>
+		<ResultListSheet
+			v-if="isListSheetShown"
+			:resultId="sheetResultId"
+			:sheetBindProps
+			@close="setListSheetShown(false)"
+		/>
+	`
 	};
 
 	// @vue/component
@@ -1306,9 +1823,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				currentUserId: "".concat(tasks_v2_const.Model.Interface, "/currentUserId"),
-				stateFlags: "".concat(tasks_v2_const.Model.Interface, "/stateFlags"),
-				templateStateFlags: "".concat(tasks_v2_const.Model.Interface, "/templateStateFlags")
+				currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
+				stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+				templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 			}),
 			design() {
 				return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
@@ -1318,7 +1835,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			menuOptions() {
 				return {
-					id: "result-chip-menu-".concat(main_core.Text.getRandom()),
+					id: `result-chip-menu-${main_core.Text.getRandom()}`,
 					bindOptions: {
 						forceBindPosition: true,
 						forceTop: true,
@@ -1338,7 +1855,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					icon: ui_iconSet_api_vue.Outline.PLUS_L,
 					onClick: this.openAddResultSheet,
 					dataset: {
-						id: "MenuResultAdd-".concat(this.taskId)
+						id: `MenuResultAdd-${this.taskId}`
 					}
 				}, {
 					title: this.loc('TASKS_V2_RESULT_REQUIRE'),
@@ -1346,7 +1863,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					onClick: this.requireResult,
 					isLocked: this.isLocked,
 					dataset: {
-						id: "MenuResultRequire-".concat(this.taskId)
+						id: `MenuResultRequire-${this.taskId}`
 					}
 				}];
 			},
@@ -1434,8 +1951,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				event.preventDefault();
 				void tasks_v2_provider_service_resultService.resultService.delete(resultId);
 			},
-			openAddResultSheet() {
-				let text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+			openAddResultSheet(text = null) {
 				const id = main_core.Text.getRandom();
 				const payload = {
 					id,
@@ -1443,14 +1959,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					taskId: this.taskId,
 					author: this.getUser(this.currentUserId)
 				};
-				void this.$store.dispatch("".concat(tasks_v2_const.Model.Results, "/insert"), payload);
+				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/insert`, payload);
 				this.sheetResultId = id;
 				this.setSheetShown(true);
 			},
 			async requireResult() {
 				if (this.isLocked) {
 					void tasks_v2_lib_showLimit.showLimit({
-						code: "limit_".concat(this.featureId),
+						code: `limit_${this.featureId}`,
 						bindElement: this.$refs.chip.$el,
 						analytics: {
 							type: 'limit_tasks_status_summary'
@@ -1465,12 +1981,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				if (this.isTemplate) {
-					await this.$store.dispatch("".concat(tasks_v2_const.Model.Interface, "/updateTemplateStateFlags"), {
+					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, {
 						defaultRequireResult: true
 					});
 					void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
 				} else {
-					await this.$store.dispatch("".concat(tasks_v2_const.Model.Interface, "/updateStateFlags"), {
+					await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
 						defaultRequireResult: true
 					});
 					void tasks_v2_provider_service_stateService.stateService.set(this.stateFlags);
@@ -1480,7 +1996,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(resultsMeta.id);
 			},
 			getUser(userId) {
-				return this.$store.getters["".concat(tasks_v2_const.Model.Users, "/getById")](userId);
+				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](userId);
 			},
 			getUserDto(userId) {
 				return tasks_v2_provider_service_userService.UserMappers.mapModelToDto(this.getUser(userId));
@@ -1509,7 +2025,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.openAddResultSheet(text);
 			}
 		},
-		template: "\n\t\t<Chip\n\t\t\t:design\n\t\t\t:text=\"resultsMeta.title\"\n\t\t\t:icon=\"Outline.WINDOW_FLAG\"\n\t\t\t:data-task-id=\"taskId\"\n\t\t\t:data-task-chip-id=\"resultsMeta.id\"\n\t\t\tref=\"chip\"\n\t\t\t@click=\"handleClick\"\n\t\t/>\n\t\t<BMenu v-if=\"isMenuShown\" :options=\"menuOptions\" @close=\"isMenuShown = false\"/>\n\t\t<ResultEditorSheet\n\t\t\tv-if=\"isSheetShown\"\n\t\t\t:resultId=\"sheetResultId\"\n\t\t\t:sheetBindProps\n\t\t\t@close=\"setSheetShown(false)\"\n\t\t/>\n\t"
+		template: `
+		<Chip
+			:design
+			:text="resultsMeta.title"
+			:icon="Outline.WINDOW_FLAG"
+			:data-task-id="taskId"
+			:data-task-chip-id="resultsMeta.id"
+			ref="chip"
+			@click="handleClick"
+		/>
+		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<ResultEditorSheet
+			v-if="isSheetShown"
+			:resultId="sheetResultId"
+			:sheetBindProps
+			@close="setSheetShown(false)"
+		/>
+	`
 	};
 
 	exports.ResultEditorSheet = ResultEditorSheet;
@@ -1518,5 +2051,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ResultsChip = ResultsChip;
 	exports.resultsMeta = resultsMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.Tasks.V2.Lib, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX, BX, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component, BX.UI.TextEditor, BX.Tasks.V2.Lib, BX.UI.System.Chip.Vue);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.Tasks.V2.Lib, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.UI.System.Chip.Vue);
 //# sourceMappingURL=results.bundle.js.map

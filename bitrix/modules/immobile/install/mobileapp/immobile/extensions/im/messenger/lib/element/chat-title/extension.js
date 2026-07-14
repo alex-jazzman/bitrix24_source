@@ -186,7 +186,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 				case DialogType.collab:
 				{
-					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB');
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_PROJECT');
 				}
 
 				case DialogType.tasksTask:

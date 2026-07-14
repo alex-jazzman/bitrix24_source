@@ -146,9 +146,9 @@ else
 	$showDescription = !empty($arResult['PREVIEW_TEXT']) || !empty($arResult['DETAIL_TEXT']);
 }
 $showBuyBtn = in_array('BUY', $arParams['ADD_TO_BASKET_ACTION']);
-$buyButtonClassName = in_array('BUY', $arParams['ADD_TO_BASKET_ACTION_PRIMARY']) ? 'btn-primary' : 'btn-link';
+$buyButtonClassName = 'btn-primary';
 $showAddBtn = in_array('ADD', $arParams['ADD_TO_BASKET_ACTION']);
-$showButtonClassName = in_array('ADD', $arParams['ADD_TO_BASKET_ACTION_PRIMARY']) ? 'btn-primary' : 'btn-link';
+$showButtonClassName = 'btn-primary';
 $showSubscribe = $arParams['PRODUCT_SUBSCRIPTION'] === 'Y' && ($arResult['PRODUCT']['SUBSCRIBE'] === 'Y' || $haveOffers);
 
 $arParams['MESS_BTN_BUY'] = $arParams['MESS_BTN_BUY'] ?: Loc::getMessage('CT_BCE_CATALOG_BUY');

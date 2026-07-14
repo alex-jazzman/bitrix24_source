@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/tasks-entities-demonstrator.bundle.css',
 	'js' => 'dist/tasks-entities-demonstrator.bundle.js',
 	'rel' => [
-		'main.polyfill.intersectionobserver',
 		'main.core',
-		'tasks.v2.component.tasks-popup',
+		'main.polyfill.intersectionobserver',
 		'tasks.v2.component.tasks-entities-picker',
+		'tasks.v2.component.tasks-popup',
 		'ui.icon-set.api.vue',
 		'ui.vue3',
 	],

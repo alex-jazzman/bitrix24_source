@@ -5,6 +5,7 @@ import { BizprocNotificationItem } from './modules/bizproc/bizproc-item';
 import { SonetNotificationItem } from './modules/sonet/sonet';
 import { CompatibilityNotificationItem } from './modules/compatibility/compatibility-item';
 import { DefaultNotificationItem } from './modules/default/default-item';
+import { MailNotificationItem } from './modules/mail/mail-item';
 
 export const NotificationComponents = {
 	TaskEntity: TaskNotificationItem,
@@ -14,4 +15,5 @@ export const NotificationComponents = {
 	BizprocEntity: BizprocNotificationItem,
 	SonetEntity: SonetNotificationItem,
 	DefaultEntity: DefaultNotificationItem,
+	MailEntity: MailNotificationItem,
 };

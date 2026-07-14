@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
-		'alert',
 		'type',
 		'loc',
+		'asset-manager',
 		'require-lazy',
 		'utils/date',
 		'project/opener',
@@ -21,6 +21,7 @@ return [
 		'ui-system/blocks/link',
 		'ui-system/layout/card',
 		'ui-system/blocks/avatar',
+		'ui-system/blocks/status-block',
 		'ui-system/popups/aha-moment',
 		'ui-system/blocks/chips/chip-status',
 

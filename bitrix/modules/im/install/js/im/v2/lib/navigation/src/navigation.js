@@ -204,7 +204,7 @@ function changeLayout({ layoutName, layoutEntityId }: LayoutParams)
 		entityId = lastOpenedElement;
 	}
 
-	EventEmitter.emit(EventType.recent.closeListSlider);
+	EventEmitter.emit(EventType.recent.closeNestedList);
 
 	void layoutManager.setLayout({ name: layoutName, entityId });
 }

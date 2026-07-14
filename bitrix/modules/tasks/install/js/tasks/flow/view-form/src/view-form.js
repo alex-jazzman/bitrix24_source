@@ -375,7 +375,7 @@ export class ViewForm
 	#renderEntity(entity: Entity): HTMLElement
 	{
 		return Tag.render`
-			<a class="tasks-flow__view-form_entity" href="${encodeURI(entity.url)}">
+			<a class="tasks-flow__view-form_entity" href="${encodeURI(entity.uri)}">
 				${this.#renderAvatar(entity)}
 				<div class="tasks-flow__view-form_entity-name" title="${Text.encode(entity.name)}">
 					${Text.encode(entity.name)}

@@ -12,6 +12,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.copilot',
 		'im.v2.lib.esc-manager',
+		'im.v2.lib.feature',
 		'im.v2.lib.permission',
 		'im.v2.lib.text-highlighter',
 		'main.core',

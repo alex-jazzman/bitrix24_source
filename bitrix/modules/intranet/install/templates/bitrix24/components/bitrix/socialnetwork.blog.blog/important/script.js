@@ -1,1 +1,389 @@
-this.BX=this.BX||{},function(t,i,s,e){"use strict";var a,n;function h(t,i,s){l(t,i),i.set(t,s)}function l(t,i){if(i.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")}function c(t,i){return t.get(r(t,i))}function o(t,i,s){return t.set(r(t,i),s),s}function r(t,i,s){if("function"==typeof t?t===i:t.has(i))return arguments.length<3?i:s;throw new TypeError("Private element is not present on this object")}var d=new WeakMap,u=new WeakMap,m=new WeakMap,g=new WeakMap,v=new WeakMap,p=new WeakMap,f=new WeakMap,b=new WeakMap,C=new WeakMap,D=new WeakMap,w=new WeakSet;function E(){return!0===c(p,this).bDescPageNumbering&&c(p,this).NavPageNomer>1||c(u,this).length<c(p,this).NavRecordCount}async function N(){const t=await r(w,this,y).call(this),s=t.messages;r(w,this,k).call(this,t.pageSettings);for(const t of s)r(w,this,R).call(this,t.id)||(c(u,this).push(t),i.Dom.append(r(w,this,I).call(this,t,!1),r(w,this,q).call(this)))}function y(){return new Promise((t,s)=>{const e=c(g,this);c(p,this).bDescPageNumbering?c(p,this).iNumPage=c(p,this).NavPageNomer-1:c(p,this).iNumPage=c(p,this).NavPageNomer+1,e.page_settings=c(p,this),e.sessid=BX.bitrix_sessid(),i.ajax({method:"POST",processData:!0,url:c(v,this),data:e,onsuccess:i=>{const s=JSON.parse(i);t({messages:s.data,pageSettings:s.page_settings})},onfailure:t=>{s(t)}})})}function M(){c(u,this).forEach((t,s)=>{i.Dom.append(r(w,this,I).call(this,t,0===s),r(w,this,q).call(this))})}function I(t,s){return i.Tag.render(a||(a=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sidebar-imp-mess ','" data-message-id="','">\n\t\t\t\t<a href="','" class="sidebar-imp-mess-wrap">\n\t\t\t\t\t<div class="sidebar-imp-mess-avatar-block">\n\t\t\t\t\t\t<div class="sidebar-imp-mess-author-avatar ui-icon ui-icon-common-user"><i ','></i></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="sidebar-imp-mess-info">\n\t\t\t\t\t\t<div class="sidebar-imp-mess-title">','</div>\n\t\t\t\t\t\t<div class="sidebar-imp-mess-text">',"</div>\n\t\t\t\t\t</div>\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])),s?"--active":"",t.id,t.post_url,t.author_avatar,t.author_name,t.post_text)}async function P(){return!r(w,this,x).call(this)&&r(w,this,E).call(this)&&(r(w,this,K).call(this),await r(w,this,N).call(this),r(w,this,Q).call(this)),r(w,this,S).call(this).then(()=>{this.updateNavigation()}).catch(()=>{})}async function S(){return r(w,this,x).call(this)?new Promise((t,s)=>{const e=r(w,this,q).call(this).querySelector(".sidebar-imp-mess.--active"),a=e.nextElementSibling||r(w,this,q).call(this).firstElementChild;o(f,this,r(w,this,T).call(this)),i.Dom.addClass(e,"--slide-out-left"),i.Dom.addClass(a,"--active"),i.Dom.addClass(a,"--slide-in-right"),i.Event.bindOnce(e,"animationend",()=>{i.Dom.removeClass(e,"--active"),i.Dom.removeClass(e,"--slide-out-left"),i.Dom.removeClass(a,"--slide-in-right"),t()})}):Promise.resolve()}function B(){return r(w,this,W).call(this)?new Promise((t,s)=>{const e=r(w,this,q).call(this).querySelector(".sidebar-imp-mess.--active"),a=e.previousElementSibling||r(w,this,q).call(this).lastElementChild;o(f,this,r(w,this,A).call(this)),i.Dom.addClass(e,"--slide-out-right"),i.Dom.addClass(a,"--active"),i.Dom.addClass(a,"--slide-in-left"),i.Event.bindOnce(e,"animationend",()=>{i.Dom.removeClass(e,"--active"),i.Dom.removeClass(e,"--slide-out-right"),i.Dom.removeClass(a,"--slide-in-left"),t()})}):Promise.resolve()}async function _(t){const s=r(w,this,R).call(this,t),e=[];for(const t of c(m,this))e.push({post_id:s.id,name:t.name,value:t.value});let a=c(g,this);a.options=e,a.page_settings=c(p,this),a.sessid=BX.bitrix_sessid(),a=i.ajax.prepareData(a),r(w,this,K).call(this),!r(w,this,x).call(this)&&r(w,this,E).call(this)&&await r(w,this,N).call(this),i.ajax({method:"GET",url:c(v,this)+(c(v,this).includes("?")?"&":"?")+a,onsuccess:i=>{const s=JSON.parse(i);r(w,this,O).call(this,t,s.page_settings),r(w,this,Q).call(this)},onfailure:()=>{r(w,this,Q).call(this)}})}function k(t){o(p,this,t)}function x(){return c(f,this)+1<=c(u,this).length-1}function T(){return c(f,this)+1>c(u,this).length-1?0:c(f,this)+1}function W(){return c(f,this)-1>=0}function A(){return c(f,this)-1<0?c(u,this).length-1:c(f,this)-1}function O(t){let s=arguments.length>1&&void 0!==arguments[1]?arguments[1]:null;const e=()=>{const e=this.getActiveMessage();i.Dom.remove(a),o(u,this,c(u,this).filter(i=>i.id!==t)),o(f,this,Math.max(0,c(u,this).findIndex(t=>t.id===e.id))),null===s?r(w,this,k).call(this,{...c(p,this),NavRecordCount:Math.max(0,c(p,this).NavRecordCount-1)}):r(w,this,k).call(this,s),this.updateNavigation(),0===c(u,this).length&&this.hide()},a=r(w,this,q).call(this).querySelector('[data-message-id="'.concat(t,'"]')),n=r(w,this,X).call(this);a===n?r(w,this,x).call(this)?r(w,this,S).call(this).then(e).catch(()=>{}):r(w,this,W).call(this)?r(w,this,B).call(this).then(e).catch(()=>{}):e():e()}function X(){return r(w,this,q).call(this).querySelector(".--active")}function R(t){return c(u,this).find(i=>i.id===t)}function q(){return document.getElementById("sidebar-imp-mess-list")}function L(){return document.getElementById("sidebar-imp-mess-read-button")}function j(){return document.getElementById(c(d,this))}function J(){document.getElementById("sidebar-imp-mess-current-mess-number").textContent=c(f,this)+1}function z(){r(w,this,G).call(this).textContent=c(p,this).NavRecordCount}function G(){return document.getElementById("sidebar-imp-mess-total")}function H(){return[...r(w,this,q).call(this).children].indexOf(r(w,this,q).call(this).querySelector(".--active"))}function Y(){return document.getElementById("sidebar-imp-mess-prev")}function F(){return document.getElementById("sidebar-imp-mess-next")}function K(){o(C,this,i.Tag.render(n||(n=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sidebar-widget-content-overlay"></div>\n\t\t'])))),i.Dom.style(c(C,this),{position:"absolute",top:0,left:0,width:"100%",height:"100%",background:"rgba(255, 255, 255, 0.7)"}),i.Dom.append(c(C,this),r(w,this,j).call(this)),c(b,this)||o(b,this,new s.Loader({size:60,target:c(C,this),color:"#0154C8"})),c(b,this).show()}function Q(){var t;null===(t=c(b,this))||void 0===t||t.hide(),i.Dom.remove(c(C,this))}function U(){r(w,this,F).call(this).removeAttribute("disabled")}function V(){r(w,this,F).call(this).setAttribute("disabled",!0)}function Z(){r(w,this,Y).call(this).removeAttribute("disabled")}function $(){r(w,this,Y).call(this).setAttribute("disabled",!0)}t.ImportantMessagesWidget=class{constructor(t){var i,s;l(i=this,s=w),s.add(i),h(this,d,void 0),h(this,u,[]),h(this,m,{}),h(this,g,{}),h(this,v,""),h(this,p,{}),h(this,f,0),h(this,b,void 0),h(this,C,void 0),h(this,D,!1),o(d,this,t.widgetContainerId),o(u,this,t.messages),o(m,this,t.options),o(g,this,t.postInfo),o(v,this,t.url),o(p,this,t.pageSettings),c(g,this).AJAX_POST="Y",this.init()}init(){r(w,this,M).call(this),i.Event.bind(r(w,this,F).call(this),"click",()=>{c(D,this)||(o(D,this,!0),r(w,this,P).call(this).then(()=>{o(D,this,!1),this.updateNavigation()}).catch(()=>{o(D,this,!1)}))}),i.Event.bind(r(w,this,Y).call(this),"click",()=>{c(D,this)||(o(D,this,!0),r(w,this,B).call(this).then(()=>{o(D,this,!1),this.updateNavigation()}).catch(()=>{o(D,this,!1)}))}),i.Event.bind(r(w,this,L).call(this),"click",()=>{const t=this.getActiveMessage();r(w,this,_).call(this,t.id)}),e.EventEmitter.subscribe("onImportantPostRead",t=>{const[i]=t.getData();r(w,this,O).call(this,i)});const t=i.Runtime.debounce(()=>{r(w,this,N).call(this).then(()=>{this.updateNavigation(),this.show()}).catch(()=>{})},6e3);e.EventEmitter.subscribe("onPullEvent-main",s=>{if(c(u,this).length>0)return;const[e,a]=s.getCompatData();"user_counter"===e&&a[i.Loc.getMessage("SITE_ID")]&&a[i.Loc.getMessage("SITE_ID")].BLOG_POST_IMPORTANT&&t()}),this.updateNavigation()}show(){if(0===c(u,this).length)return;if(!this.getActiveMessage()){const t=c(u,this)[c(f,this)]||null,s=r(w,this,q).call(this).querySelector('[data-message-id="'.concat(null==t?void 0:t.id,'"]'));s&&i.Dom.addClass(s,"--active")}i.Dom.removeClass(r(w,this,j).call(this),["--hidden","--hiding"])}hide(){i.Dom.addClass(r(w,this,j).call(this),"--hiding"),i.Event.bindOnce(r(w,this,j).call(this),"transitionend",()=>{i.Dom.removeClass(r(w,this,j).call(this),"--hiding"),i.Dom.addClass(r(w,this,j).call(this),"--hidden")})}getActiveMessage(){return c(u,this)[r(w,this,H).call(this)]||null}updateNavigation(){c(f,this)>=c(p,this).NavRecordCount-1?r(w,this,V).call(this):c(p,this).NavRecordCount>1?r(w,this,U).call(this):r(w,this,V).call(this),0===c(f,this)?r(w,this,$).call(this):r(w,this,Z).call(this),r(w,this,J).call(this),r(w,this,z).call(this)}}}(this.BX.Intranet=this.BX.Intranet||{},BX,BX,BX.Event);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_loader, main_core_events) {
+	'use strict';
+
+	class ImportantMessagesWidget {
+		#widgetContainerId;
+		#messages = [];
+		#options = {};
+		#postInfo = {};
+		#url = '';
+		#pageSettings = {};
+		#activeMessageIndex = 0;
+		#loader;
+		#loaderOverlay;
+		#lockButtons = false;
+		constructor(options) {
+			this.#widgetContainerId = options.widgetContainerId;
+			this.#messages = options.messages;
+			this.#options = options.options;
+			this.#postInfo = options.postInfo;
+			this.#url = options.url;
+			this.#pageSettings = options.pageSettings;
+			this.#postInfo.AJAX_POST = 'Y';
+			this.init();
+		}
+		init() {
+			this.#renderMessages();
+			main_core.Event.bind(this.#getNextMessageButton(), 'click', () => {
+				if (this.#lockButtons) {
+					return;
+				}
+				this.#lockButtons = true;
+				this.#handleClickOnNextBtn().then(() => {
+					this.#lockButtons = false;
+					this.updateNavigation();
+				}).catch(() => {
+					this.#lockButtons = false;
+				});
+			});
+			main_core.Event.bind(this.#getPrevMessageButton(), 'click', () => {
+				if (this.#lockButtons) {
+					return;
+				}
+				this.#lockButtons = true;
+				this.#showPrevMessage().then(() => {
+					this.#lockButtons = false;
+					this.updateNavigation();
+				}).catch(() => {
+					this.#lockButtons = false;
+				});
+			});
+			main_core.Event.bind(this.#getReadMessageButton(), 'click', () => {
+				const activeMessage = this.getActiveMessage();
+				this.#readMessage(activeMessage.id);
+			});
+			main_core_events.EventEmitter.subscribe('onImportantPostRead', event => {
+				const [messageId] = event.getData();
+				this.#removeMessageFromList(messageId);
+			});
+			const loadNewMessages = main_core.Runtime.debounce(() => {
+				this.#loadNewMessages().then(() => {
+					this.updateNavigation();
+					this.show();
+				}).catch(() => {
+					// fail silently
+				});
+			}, 6000);
+			main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
+				if (this.#messages.length > 0) {
+					return;
+				}
+				const [command, params] = event.getCompatData();
+				if (command === 'user_counter' && params[main_core.Loc.getMessage('SITE_ID')] && params[main_core.Loc.getMessage('SITE_ID')]['BLOG_POST_IMPORTANT']) {
+					loadNewMessages();
+				}
+			});
+			this.updateNavigation();
+		}
+		show() {
+			if (this.#messages.length === 0) {
+				return;
+			}
+			const activeMessage = this.getActiveMessage();
+			if (!activeMessage) {
+				const message = this.#messages[this.#activeMessageIndex] || null;
+				const element = this.#getMessagesListContainer().querySelector(`[data-message-id="${message?.id}"]`);
+				if (element) {
+					main_core.Dom.addClass(element, '--active');
+				}
+			}
+			main_core.Dom.removeClass(this.#getWidgetContainer(), ['--hidden', '--hiding']);
+		}
+		hide() {
+			main_core.Dom.addClass(this.#getWidgetContainer(), '--hiding');
+			main_core.Event.bindOnce(this.#getWidgetContainer(), 'transitionend', () => {
+				main_core.Dom.removeClass(this.#getWidgetContainer(), '--hiding');
+				main_core.Dom.addClass(this.#getWidgetContainer(), '--hidden');
+			});
+		}
+		#needLoadNewMessages() {
+			return this.#pageSettings.bDescPageNumbering === true && this.#pageSettings.NavPageNomer > 1 || this.#messages.length < this.#pageSettings.NavRecordCount;
+		}
+		async #loadNewMessages() {
+			const data = await this.#fetchNewMessages();
+			const messages = data.messages;
+			this.#setPageSettings(data.pageSettings);
+			for (const message of messages) {
+				if (this.#getMessageById(message.id)) {
+					continue;
+				}
+				this.#messages.push(message);
+				main_core.Dom.append(this.#renderMessageElement(message, false), this.#getMessagesListContainer());
+			}
+		}
+		#fetchNewMessages() {
+			return new Promise((resolve, reject) => {
+				const request = this.#postInfo;
+				if (this.#pageSettings.bDescPageNumbering) {
+					this.#pageSettings.iNumPage = this.#pageSettings.NavPageNomer - 1;
+				} else {
+					this.#pageSettings.iNumPage = this.#pageSettings.NavPageNomer + 1;
+				}
+				request.page_settings = this.#pageSettings;
+				request.sessid = BX.bitrix_sessid();
+				main_core.ajax({
+					method: 'POST',
+					processData: true,
+					url: this.#url,
+					data: request,
+					onsuccess: response => {
+						const data = JSON.parse(response);
+						resolve({
+							messages: data.data,
+							pageSettings: data.page_settings
+						});
+					},
+					onfailure: error => {
+						reject(error);
+					}
+				});
+			});
+		}
+		#renderMessages() {
+			this.#messages.forEach((message, index) => {
+				main_core.Dom.append(this.#renderMessageElement(message, index === 0), this.#getMessagesListContainer());
+			});
+		}
+		#renderMessageElement(messageData, isActive) {
+			return main_core.Tag.render`
+			<div class="sidebar-imp-mess ${isActive ? '--active' : ''}" data-message-id="${messageData.id}">
+				<a href="${messageData.post_url}" class="sidebar-imp-mess-wrap">
+					<div class="sidebar-imp-mess-avatar-block">
+						<div class="sidebar-imp-mess-author-avatar ui-icon ui-icon-common-user"><i ${messageData.author_avatar}></i></div>
+					</div>
+					<div class="sidebar-imp-mess-info">
+						<div class="sidebar-imp-mess-title">${messageData.author_name}</div>
+						<div class="sidebar-imp-mess-text">${messageData.post_text}</div>
+					</div>
+				</a>
+			</div>
+		`;
+		}
+		async #handleClickOnNextBtn() {
+			if (!this.#hasNextMessage() && this.#needLoadNewMessages()) {
+				this.#showLoader();
+				await this.#loadNewMessages();
+				this.#hideLoader();
+			}
+			return this.#showNextMessage().then(() => {
+				this.updateNavigation();
+			}).catch(() => {});
+		}
+		async #showNextMessage() {
+			if (!this.#hasNextMessage()) {
+				return Promise.resolve();
+			}
+			return new Promise((resolve, reject) => {
+				const activeMessage = this.#getMessagesListContainer().querySelector('.sidebar-imp-mess.--active');
+				const nextMessage = activeMessage.nextElementSibling || this.#getMessagesListContainer().firstElementChild;
+				this.#activeMessageIndex = this.#getNextMessageIndex();
+				main_core.Dom.addClass(activeMessage, '--slide-out-left');
+				main_core.Dom.addClass(nextMessage, '--active');
+				main_core.Dom.addClass(nextMessage, '--slide-in-right');
+				main_core.Event.bindOnce(activeMessage, 'animationend', () => {
+					main_core.Dom.removeClass(activeMessage, '--active');
+					main_core.Dom.removeClass(activeMessage, '--slide-out-left');
+					main_core.Dom.removeClass(nextMessage, '--slide-in-right');
+					resolve();
+				});
+			});
+		}
+		#showPrevMessage() {
+			if (!this.#hasPrevMessage()) {
+				return Promise.resolve();
+			}
+			return new Promise((resolve, reject) => {
+				const activeMessage = this.#getMessagesListContainer().querySelector('.sidebar-imp-mess.--active');
+				const prevMessage = activeMessage.previousElementSibling || this.#getMessagesListContainer().lastElementChild;
+				this.#activeMessageIndex = this.#getPrevMessageIndex();
+				main_core.Dom.addClass(activeMessage, '--slide-out-right');
+				main_core.Dom.addClass(prevMessage, '--active');
+				main_core.Dom.addClass(prevMessage, '--slide-in-left');
+				main_core.Event.bindOnce(activeMessage, 'animationend', () => {
+					main_core.Dom.removeClass(activeMessage, '--active');
+					main_core.Dom.removeClass(activeMessage, '--slide-out-right');
+					main_core.Dom.removeClass(prevMessage, '--slide-in-left');
+					resolve();
+				});
+			});
+		}
+		async #readMessage(messageId) {
+			const data = this.#getMessageById(messageId);
+			const options = [];
+			for (const option of this.#options) {
+				options.push({
+					post_id: data.id,
+					name: option.name,
+					value: option.value
+				});
+			}
+			let request = this.#postInfo;
+			request.options = options;
+			request.page_settings = this.#pageSettings;
+			request.sessid = BX.bitrix_sessid();
+			request = main_core.ajax.prepareData(request);
+			this.#showLoader();
+			if (!this.#hasNextMessage() && this.#needLoadNewMessages()) {
+				await this.#loadNewMessages();
+			}
+			main_core.ajax({
+				method: 'GET',
+				url: this.#url + (this.#url.includes('?') ? '&' : '?') + request,
+				onsuccess: response => {
+					const data = JSON.parse(response);
+					this.#removeMessageFromList(messageId, data.page_settings);
+					this.#hideLoader();
+				},
+				onfailure: () => {
+					this.#hideLoader();
+				}
+			});
+		}
+		#setPageSettings(pageSettings) {
+			this.#pageSettings = pageSettings;
+		}
+		#hasNextMessage() {
+			return this.#activeMessageIndex + 1 <= this.#messages.length - 1;
+		}
+		#getNextMessageIndex() {
+			return this.#activeMessageIndex + 1 > this.#messages.length - 1 ? 0 : this.#activeMessageIndex + 1;
+		}
+		#hasPrevMessage() {
+			return this.#activeMessageIndex - 1 >= 0;
+		}
+		#getPrevMessageIndex() {
+			return this.#activeMessageIndex - 1 < 0 ? this.#messages.length - 1 : this.#activeMessageIndex - 1;
+		}
+		#removeMessageFromList(messageId, pageSettings = null) {
+			const finalize = () => {
+				const activeMessage = this.getActiveMessage();
+				main_core.Dom.remove(messageElement);
+				this.#messages = this.#messages.filter(message => message.id !== messageId);
+				this.#activeMessageIndex = Math.max(0, this.#messages.findIndex(message => message.id === activeMessage.id));
+				if (pageSettings === null) {
+					this.#setPageSettings({
+						...this.#pageSettings,
+						NavRecordCount: Math.max(0, this.#pageSettings.NavRecordCount - 1)
+					});
+				} else {
+					this.#setPageSettings(pageSettings);
+				}
+				this.updateNavigation();
+				if (this.#messages.length === 0) {
+					this.hide();
+				}
+			};
+			const messageElement = this.#getMessagesListContainer().querySelector(`[data-message-id="${messageId}"]`);
+			const activeMessageElement = this.#getActiveMessageElement();
+			if (messageElement === activeMessageElement) {
+				if (this.#hasNextMessage()) {
+					this.#showNextMessage().then(finalize).catch(() => {});
+				} else if (this.#hasPrevMessage()) {
+					this.#showPrevMessage().then(finalize).catch(() => {});
+				} else {
+					finalize();
+				}
+			} else {
+				finalize();
+			}
+		}
+		#getActiveMessageElement() {
+			return this.#getMessagesListContainer().querySelector('.--active');
+		}
+		#getMessageById(messageId) {
+			return this.#messages.find(message => message.id === messageId);
+		}
+		#getMessagesListContainer() {
+			return document.getElementById('sidebar-imp-mess-list');
+		}
+		#getReadMessageButton() {
+			return document.getElementById('sidebar-imp-mess-read-button');
+		}
+		#getWidgetContainer() {
+			return document.getElementById(this.#widgetContainerId);
+		}
+		#updateCurrentMessageNumber() {
+			const currentMessageNumberContainer = document.getElementById('sidebar-imp-mess-current-mess-number');
+			currentMessageNumberContainer.textContent = this.#activeMessageIndex + 1;
+		}
+		#updateTotalMessagesNumber() {
+			const totalMessagesNumberContainer = this.#getTotalMessagesNumberContainer();
+			totalMessagesNumberContainer.textContent = this.#pageSettings.NavRecordCount;
+		}
+		#getTotalMessagesNumberContainer() {
+			return document.getElementById('sidebar-imp-mess-total');
+		}
+		#getActiveMessageIndex() {
+			return [...this.#getMessagesListContainer().children].indexOf(this.#getMessagesListContainer().querySelector('.--active'));
+		}
+		getActiveMessage() {
+			return this.#messages[this.#getActiveMessageIndex()] || null;
+		}
+		#getPrevMessageButton() {
+			return document.getElementById('sidebar-imp-mess-prev');
+		}
+		#getNextMessageButton() {
+			return document.getElementById('sidebar-imp-mess-next');
+		}
+		#showLoader() {
+			this.#loaderOverlay = main_core.Tag.render`
+			<div class="sidebar-widget-content-overlay"></div>
+		`;
+			main_core.Dom.style(this.#loaderOverlay, {
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				width: '100%',
+				height: '100%',
+				background: 'rgba(255, 255, 255, 0.7)'
+			});
+			main_core.Dom.append(this.#loaderOverlay, this.#getWidgetContainer());
+			if (!this.#loader) {
+				this.#loader = new main_loader.Loader({
+					size: 60,
+					target: this.#loaderOverlay,
+					color: '#0154C8'
+				});
+			}
+			this.#loader.show();
+		}
+		#hideLoader() {
+			this.#loader?.hide();
+			main_core.Dom.remove(this.#loaderOverlay);
+		}
+		updateNavigation() {
+			if (this.#activeMessageIndex >= this.#pageSettings.NavRecordCount - 1) {
+				this.#disableNextButton();
+			} else if (this.#pageSettings.NavRecordCount > 1) {
+				this.#enableNextButton();
+			} else {
+				this.#disableNextButton();
+			}
+			if (this.#activeMessageIndex === 0) {
+				this.#disablePrevButton();
+			} else {
+				this.#enablePrevButton();
+			}
+			this.#updateCurrentMessageNumber();
+			this.#updateTotalMessagesNumber();
+		}
+		#enableNextButton() {
+			this.#getNextMessageButton().removeAttribute('disabled');
+		}
+		#disableNextButton() {
+			this.#getNextMessageButton().setAttribute('disabled', true);
+		}
+		#enablePrevButton() {
+			this.#getPrevMessageButton().removeAttribute('disabled');
+		}
+		#disablePrevButton() {
+			this.#getPrevMessageButton().setAttribute('disabled', true);
+		}
+	}
+
+	exports.ImportantMessagesWidget = ImportantMessagesWidget;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX, BX.Event);
+//# sourceMappingURL=script.js.map

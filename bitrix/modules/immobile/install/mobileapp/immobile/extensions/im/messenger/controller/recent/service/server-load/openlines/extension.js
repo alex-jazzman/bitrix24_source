@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/recent/service/server-load/openlines', (requi
 		MessengerInitRestMethod,
 		OpenlineStatus,
 		RestMethod,
+		RecentFilterId,
 	} = require('im/messenger/const');
 
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
@@ -67,11 +68,12 @@ jn.define('im/messenger/controller/recent/service/server-load/openlines', (requi
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @param {ServerLoadRequestContext} [context]
 		 * @return {object}
 		 */
-		getInitRequestOptions(mode)
+		getInitRequestOptions(mode, { currentFilterId } = {})
 		{
-			return {};
+			return currentFilterId === RecentFilterId.unread ? { unreadOnly: 'Y' } : {};
 		}
 
 		/**

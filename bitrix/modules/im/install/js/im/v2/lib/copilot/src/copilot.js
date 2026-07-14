@@ -22,7 +22,7 @@ export class CopilotManager
 			return Promise.resolve();
 		}
 
-		const { recommendedRoles, roles, chats, messages } = copilotData;
+		const { roles, chats, messages } = copilotData;
 		if (!roles)
 		{
 			return Promise.resolve();
@@ -31,7 +31,6 @@ export class CopilotManager
 		return Promise.all([
 			this.store.dispatch('copilot/chats/set', chats),
 			this.store.dispatch('copilot/roles/add', roles),
-			this.store.dispatch('copilot/setRecommendedRoles', recommendedRoles),
 			this.store.dispatch('copilot/messages/add', messages),
 		]);
 	}

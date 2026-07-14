@@ -6,8 +6,8 @@ jn.define('calendar/event-list-view/search/layout-view', (require, exports, modu
 	const { Preset } = require('calendar/event-list-view/search/preset');
 	const { observeState } = require('calendar/event-list-view/state');
 
-	const PRESET_LIST_LAYOUT_HEIGHT = 46;
-	const PRESET_WRAPPER_HEIGHT = 34;
+	const PRESET_LIST_LAYOUT_HEIGHT = 56;
+	const PRESET_WRAPPER_HEIGHT = 43;
 
 	/**
 	 * @class SearchLayoutView

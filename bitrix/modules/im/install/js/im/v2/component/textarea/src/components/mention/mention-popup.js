@@ -30,6 +30,10 @@ export const MentionPopup = {
 			type: String,
 			default: '',
 		},
+		withCopilot: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['close', 'onFocusTextarea'],
 	computed:
@@ -107,6 +111,7 @@ export const MentionPopup = {
 				:dialogId="dialogId"
 				:query="query"
 				:searchChats="searchChats"
+				:withCopilot="withCopilot"
 				@close="$emit('close');"
 				@adjustPosition="adjustPosition()"
 			/>

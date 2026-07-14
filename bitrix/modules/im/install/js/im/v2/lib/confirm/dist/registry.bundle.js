@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_channel, ui_dialogs_messagebox) {
+(function (exports, main_core, im_v2_application_core, im_v2_const, im_v2_lib_channel, im_v2_lib_collab, ui_dialogs_messagebox) {
 	'use strict';
 
 	const MESSENGER_CLASS = 'bx-im-messenger__scope';
@@ -104,8 +104,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		if (isCollab$2(dialogId)) {
 			return {
-				title: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_COLLAB_TITLE'),
-				text: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_COLLAB_TEXT'),
+				title: im_v2_lib_collab.CollabManager.getDeleteConfirmTitleText(),
+				text: im_v2_lib_collab.CollabManager.getDeleteConfirmText(),
 				firstButtonCaption: main_core.Loc.getMessage('IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM')
 			};
 		}
@@ -135,8 +135,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const getPhrases$2 = dialogId => {
 		if (isCollab$1(dialogId)) {
 			return {
-				title: main_core.Loc.getMessage('IM_LIB_CONFIRM_LEAVE_COLLAB_TITLE'),
-				text: main_core.Loc.getMessage('IM_LIB_CONFIRM_LEAVE_COLLAB_TEXT'),
+				title: im_v2_lib_collab.CollabManager.getLeaveConfirmTitleText(),
+				text: im_v2_lib_collab.CollabManager.getLeaveConfirmText(),
 				firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_LEAVE_CHAT_YES_MSGVER_1')
 			};
 		}
@@ -14253,8 +14253,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const getPhrases = dialogId => {
 		if (isCollab(dialogId)) {
 			return {
-				title: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_TITLE'),
-				text: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_TEXT'),
+				title: im_v2_lib_collab.CollabManager.getKickConfirmTitleText(),
+				text: im_v2_lib_collab.CollabManager.getKickConfirmText(),
 				firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES')
 			};
 		}
@@ -14311,5 +14311,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showStickerPackDeleteConfirm = showStickerPackDeleteConfirm;
 	exports.showStickerPackUnlinkConfirm = showStickerPackUnlinkConfirm;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.UI.Dialogs);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Dialogs);
 //# sourceMappingURL=registry.bundle.js.map

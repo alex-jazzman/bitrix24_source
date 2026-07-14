@@ -22,6 +22,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		ChatPermission,
 		UserPermission,
 	} = require('im/messenger/lib/permission-manager');
+	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	const {
@@ -294,18 +295,29 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		}
 
 		onSelectMembers = (membersIds) => {
-			const chatSettings = Application.storage.getObject('settings.chat', {
-				historyShow: true,
-			});
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const dialogHelper = dialog ? DialogHelper.createByModel(dialog) : null;
+			const accessCheck = dialogHelper?.inheritsParentChatMembership
+				? ProjectAccessGuard.canAddUsersToProjectChildChat(dialog.parentChatId ?? 0, membersIds)
+				: Promise.resolve(true);
 
-			const chatId = this.store.getters['dialoguesModel/getById'](this.dialogId).chatId;
-			const showHistory = chatSettings.historyShow;
-			const chatService = this.dialogLocator.get('chat-service');
-			chatService.addToChat(chatId, membersIds, showHistory)
+			accessCheck
+				.then((canAdd) => {
+					if (!canAdd)
+					{
+						return null;
+					}
+
+					const chatSettings = Application.storage.getObject('settings.chat', {
+						historyShow: true,
+					});
+					const chatService = this.dialogLocator.get('chat-service');
+
+					return chatService.addToChat(dialog.chatId, membersIds, chatSettings.historyShow);
+				})
 				.catch((errors) => {
 					Logger.error('MemberSelector.onSelectMembers error: ', errors);
-				})
-			;
+				});
 		};
 
 		/**

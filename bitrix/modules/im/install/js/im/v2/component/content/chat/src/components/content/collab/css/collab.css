@@ -1,18 +1,35 @@
 .bx-im-collab-header__add-people-icon {
 	width: 22px;
 	height: 22px;
-	background-image: url('./images/add-people.svg');
-	background-position: center;
-	background-repeat: no-repeat;
+	background-color: var(--ui-color-base-2);
+	mask-image: url('./images/add-people.svg');
+	mask-position: center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
 	cursor: pointer;
+	opacity: 0.35;
 }
 
 .bx-im-collab-header__add-people-icon:hover {
-	background-image: url('./images/add-people-hover.svg');
+	opacity: 0.7;
 }
 
 .bx-im-collab-header__add-people-icon.--active {
-	background-image: url('./images/add-people-active.svg');
+	background-color: #00ade3; /* no matching token */
+	opacity: 1;
+}
+
+.bx-im-collab-header__add-people-icon.--with-guest {
+	background-color: var(--ui-color-collab-accent-primary);
+	opacity: 1;
+}
+
+.bx-im-collab-header__add-people-icon.--with-guest:hover {
+	background-color: var(--ui-color-collab-accent-primary-alt);
+}
+
+.bx-im-collab-header__add-people-icon.--with-guest.--active {
+	background-color: var(--ui-color-collab-element-1);
 }
 
 .bx-im-collab-header__add-to-chat {

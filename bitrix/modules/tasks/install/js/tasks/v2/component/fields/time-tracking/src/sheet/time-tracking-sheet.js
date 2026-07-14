@@ -51,6 +51,14 @@ export const TimeTrackingSheet = {
 			type: Boolean,
 			required: false,
 		},
+		highlightElapsedId: {
+			type: [Number, null],
+			default: null,
+		},
+		highlightRequestKey: {
+			type: Number,
+			default: 0,
+		},
 	},
 	emits: ['close'],
 	setup(): { task: TaskModel }
@@ -155,6 +163,8 @@ export const TimeTrackingSheet = {
 						:numbers="Math.min(20, task.numberOfElapsedTimes)"
 						:loading
 						:sheetBindProps
+						:highlightElapsedId
+						:highlightRequestKey
 					/>
 				</div>
 				<div class="tasks-task-time-tracking-sheet-footer">

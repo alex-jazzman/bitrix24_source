@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_v2_lib_layout, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_utils, im_v2_lib_unreadMode, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
+(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_layout, im_v2_lib_utils, im_v2_lib_unreadMode, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
 	'use strict';
 
 	class BotPullHandler {
@@ -325,17 +325,18 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				messageId: params.messageId
 			});
 		}
-		handleBuilderBlockAppend(params) {
-			im_v2_lib_logger.Logger.warn('MessagePullHandler: handleBuilderBlockAppend', params);
+		handleMessageBlockElementAppend(params) {
+			im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageBlockElementAppend', params);
 			const {
-				block,
+				element,
 				messageId,
 				text,
-				chatId
+				chatId,
+				files
 			} = params;
 			void this.#store.dispatch('messages/builder/appendBlock', {
 				messageId,
-				block
+				block: element
 			});
 			void this.#store.dispatch('messages/update', {
 				id: messageId,
@@ -343,20 +344,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 					text
 				}
 			});
+			void this.#store.dispatch('files/set', files);
 			this.#sendScrollEvent(chatId, im_v2_const.DialogScrollThreshold.halfScreenUp);
 		}
-		handleBuilderBlockUpdate(params) {
-			im_v2_lib_logger.Logger.warn('MessagePullHandler: handleBuilderBlockUpdate', params);
+		handleMessageBlockElementUpdate(params) {
+			im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageBlockElementUpdate', params);
 			const {
-				block,
-				blockId,
+				element,
+				elementId,
 				messageId,
-				text
+				text,
+				files
 			} = params;
 			void this.#store.dispatch('messages/builder/updateBlock', {
 				messageId,
-				blockId,
-				block
+				blockId: elementId,
+				block: element
 			});
 			void this.#store.dispatch('messages/update', {
 				id: messageId,
@@ -364,17 +367,18 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 					text
 				}
 			});
+			void this.#store.dispatch('files/set', files);
 		}
-		handleBuilderBlockDelete(params) {
-			im_v2_lib_logger.Logger.warn('MessagePullHandler: builderBlockDelete', params);
+		handleMessageBlockElementDelete(params) {
+			im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageBlockElementDelete', params);
 			const {
-				blockId,
+				elementId,
 				messageId,
 				text
 			} = params;
 			void this.#store.dispatch('messages/builder/deleteBlock', {
 				messageId,
-				blockId
+				blockId: elementId
 			});
 			void this.#store.dispatch('messages/update', {
 				id: messageId,
@@ -700,15 +704,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			void this.#store.dispatch('counters/clearByParentId', {
 				parentChatId: chatId
 			});
-			const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-			if (chatIsOpened) {
-				void im_public.Messenger.openChat();
-			}
-			im_v2_lib_call.CallManager.getInstance().deleteRecentCall(dialogId);
-			const chatHasCall = im_v2_lib_call.CallManager.getInstance().getCurrentCallDialogId() === dialogId;
-			if (chatHasCall) {
-				im_v2_lib_call.CallManager.getInstance().leaveCurrentCall();
-			}
+			this.#onChatAccessLost(dialogId);
 		}
 		handleInputActionNotify(params) {
 			im_v2_lib_logger.Logger.warn('ChatPullHandler: handleInputActionNotify', params);
@@ -836,17 +832,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			void this.#store.dispatch('messages/clearChatCollection', {
 				chatId
 			});
-			const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-			if (chatIsOpened) {
+			if (this.#isChatOpen(dialogId)) {
 				im_v2_lib_analytics.Analytics.getInstance().chatDelete.onChatDeletedNotification(dialogId);
 				im_v2_lib_notifier.Notifier.chat.onNotFoundError();
-				void im_v2_lib_layout.LayoutManager.getInstance().clearCurrentLayoutEntityId();
-				void im_v2_lib_layout.LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
 			}
-			const chatHasCall = im_v2_lib_call.CallManager.getInstance().getCurrentCallDialogId() === dialogId;
-			if (chatHasCall) {
-				im_v2_lib_call.CallManager.getInstance().leaveCurrentCall();
-			}
+			this.#onChatAccessLost(dialogId);
 		}
 		handleMessagesAutoDeleteDelayChanged(params) {
 			im_v2_lib_logger.Logger.warn('ChatPullHandler: handleMessagesAutoDeleteDelayChanged', params);
@@ -858,6 +848,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				chatId,
 				delay
 			});
+		}
+		#isChatOpen(dialogId) {
+			return this.#store.getters['application/isChatOpen'](dialogId);
+		}
+		#onChatAccessLost(dialogId) {
+			if (this.#isChatOpen(dialogId)) {
+				void im_public.Messenger.openChat();
+			}
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList, {
+				dialogId
+			});
+			im_v2_lib_call.CallManager.getInstance().deleteRecentCall(dialogId);
+			const chatHasCall = im_v2_lib_call.CallManager.getInstance().getCurrentCallDialogId() === dialogId;
+			if (chatHasCall) {
+				im_v2_lib_call.CallManager.getInstance().leaveCurrentCall();
+			}
 		}
 		#updateChatUsers(params) {
 			if (params.users) {
@@ -883,9 +889,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				tariffRestrictions
 			} = params;
 			if (!tariffRestrictions) {
-				return;
-			}
-			if (tariffRestrictions.fullChatHistory?.isAvailable === true) {
 				return;
 			}
 			void im_v2_application_core.Core.getStore().dispatch('application/tariffRestrictions/set', tariffRestrictions);
@@ -1040,6 +1043,19 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			im_v2_lib_logger.Logger.warn('AiPullHandler: handleFileTranscription', params);
 			this.#store.dispatch('files/setTranscription', params);
 		}
+		handleSetCopilotTitle(params) {
+			im_v2_lib_logger.Logger.warn('AiPullHandler: handleSetCopilotTitle', params);
+			const {
+				dialogId
+			} = params;
+			if (!dialogId) {
+				return;
+			}
+			void this.#store.dispatch('copilot/chats/setTitleIsCustom', {
+				dialogId,
+				titleIsCustom: true
+			});
+		}
 		handleChatCopilotRoleUpdate(params) {
 			if (!params.copilotRole) {
 				return;
@@ -1124,14 +1140,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		handlePinDelete(params) {
 			this.#messageHandler.handlePinDelete(params);
 		}
-		handleBuilderBlockAppend(params) {
-			this.#messageHandler.handleBuilderBlockAppend(params);
+		handleMessageBlockElementAppend(params) {
+			this.#messageHandler.handleMessageBlockElementAppend(params);
 		}
-		handleBuilderBlockUpdate(params) {
-			this.#messageHandler.handleBuilderBlockUpdate(params);
+		handleMessageBlockElementUpdate(params) {
+			this.#messageHandler.handleMessageBlockElementUpdate(params);
 		}
-		handleBuilderBlockDelete(params) {
-			this.#messageHandler.handleBuilderBlockDelete(params);
+		handleMessageBlockElementDelete(params) {
+			this.#messageHandler.handleMessageBlockElementDelete(params);
 		}
 		// endregion 'message'
 
@@ -1250,6 +1266,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		handleChatCopilotRoleUpdate(params) {
 			this.#aiPullHandler.handleChatCopilotRoleUpdate(params);
 		}
+		handleSetCopilotTitle(params) {
+			this.#aiPullHandler.handleSetCopilotTitle(params);
+		}
 		// endregion 'ai'
 	}
 
@@ -1267,16 +1286,19 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				lastActivityDate: this.#params.lastActivityDate
 			};
 			const sections = this.#params.recentConfig?.sections || [im_v2_const.RecentType.default];
-			this.applyRecentUpdateActions(sections, newRecentItem);
+			this.addItemToCollection(sections, newRecentItem, this.#getParentChatId());
 		}
-		applyRecentUpdateActions(sections, recentItem) {
+		addItemToCollection(sections, recentItem, parentChatId) {
 			sections.forEach(recentSection => {
 				void im_v2_application_core.Core.getStore().dispatch('recent/setCollection', {
 					type: recentSection,
 					items: [recentItem],
-					parentChatId: this.#getParentChatId()
+					parentChatId
 				});
 			});
+		}
+		#getParentChatId() {
+			return this.#params.chat.parent_chat_id;
 		}
 		#setLastMessageInfo() {
 			this.#setMessageChat();
@@ -1289,9 +1311,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 		#getChatId() {
 			return this.#params.chat.id;
-		}
-		#getParentChatId() {
-			return this.#params.chat.parent_chat_id;
 		}
 		#getLastMessageId() {
 			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](this.#getDialogId());
@@ -1432,6 +1451,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 				dialogId
 			});
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.closeNestedList, {
+				dialogId
+			});
 		}
 		handleChatUserLeave(params) {
 			const {
@@ -1514,11 +1536,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 
 	class RecentUnreadUpdateManager extends RecentUpdateManager {
-		applyRecentUpdateActions(sections, recentItem) {
+		addItemToCollection(sections, recentItem, parentChatId) {
 			sections.forEach(recentSection => {
 				void im_v2_application_core.Core.getStore().dispatch('recent/setUnreadCollection', {
 					type: recentSection,
-					items: [recentItem]
+					items: [recentItem],
+					parentChatId
 				});
 			});
 		}
@@ -1537,11 +1560,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		handleReadAllChats() {
 			const recentSections = [im_v2_const.RecentType.default, im_v2_const.RecentType.taskComments];
 			recentSections.forEach(section => {
-				im_v2_lib_unreadMode.UnreadModeManager.clearClosedChats(section);
+				im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(section);
 			});
 		}
 		handleReadAllChatsByType(params) {
-			im_v2_lib_unreadMode.UnreadModeManager.clearClosedChats(params.type);
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(params.type);
 		}
 		handleReadMessageChat(params) {
 			const {
@@ -1552,26 +1575,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				recentConfig,
 				parentChatId
 			} = params;
-			if (this.#isChatOpen(dialogId)) {
-				return;
+			const shouldRemoveParentChat = !this.#isParentChatOpen(parentChatId) && !this.#hasParentChatCounters(parentChatId);
+			if (shouldRemoveParentChat) {
+				this.#removeParentChat(parentChatId);
 			}
-			if (this.#hasChatCounters(chatId, counter, unread)) {
-				return;
+			const shouldRemoveChat = !this.#isChatOpen(dialogId) && !this.#hasChatCounters(chatId, counter, unread);
+			if (shouldRemoveChat) {
+				this.#removeChat(recentConfig.sections, dialogId, parentChatId);
 			}
-			if (!parentChatId) {
-				im_v2_lib_unreadMode.UnreadModeManager.clearDialogIdBySections(recentConfig.sections, dialogId);
-				return;
-			}
-			const {
-				dialogId: parentDialogId
-			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](parentChatId, true);
-			if (this.#isChatOpen(parentDialogId)) {
-				return;
-			}
-			if (this.#hasParentChatCounters(parentChatId)) {
-				return;
-			}
-			im_v2_lib_unreadMode.UnreadModeManager.clearByDialogId(im_v2_const.RecentType.default, parentDialogId);
 		}
 		handleChatUnread(params) {
 			im_v2_lib_logger.Logger.warn('RecentUnreadPullHandler: handleChatUnread', params);
@@ -1579,17 +1590,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				muted,
 				active,
 				dialogId,
-				recentConfig
+				recentConfig,
+				parentChatId
 			} = params;
-			if (this.#isChatOpen(dialogId) || muted) {
-				return;
+			const shouldRemoveParentChat = !this.#hasParentChatCounters(parentChatId) && !this.#isParentChatOpen(parentChatId);
+			if (shouldRemoveParentChat) {
+				this.#removeParentChat(parentChatId);
 			}
-			if (active) {
+			const shouldAddChat = active && !muted;
+			if (shouldAddChat) {
 				const manager = new RecentUnreadUpdateManager(params);
 				manager.addToRecentCollection();
+				this.#addParentToRecentCollection(parentChatId, params);
 				return;
 			}
-			im_v2_lib_unreadMode.UnreadModeManager.clearDialogIdBySections(recentConfig.sections, dialogId);
+			const shouldRemoveChat = !this.#isChatOpen(dialogId);
+			if (shouldRemoveChat) {
+				this.#removeChat(recentConfig.sections, dialogId, parentChatId);
+			}
 		}
 		handleChatMuteNotify(params) {
 			const {
@@ -1598,18 +1616,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				recentConfig,
 				dialogId,
 				counter,
-				chatId
+				chatId,
+				parentChatId
 			} = params;
-			const isMutedClosedChat = muted && !this.#isChatOpen(dialogId);
-			if (isMutedClosedChat) {
-				im_v2_lib_unreadMode.UnreadModeManager.clearDialogIdBySections(recentConfig.sections, dialogId);
+			const shouldRemoveParentChat = muted && !this.#isParentChatOpen(parentChatId);
+			if (shouldRemoveParentChat) {
+				this.#removeParentChat(parentChatId);
+			}
+			const shouldAddChat = !muted && this.#hasChatCounters(chatId, counter, unread);
+			if (shouldAddChat) {
+				const manager = new RecentUnreadUpdateManager(params);
+				manager.addToRecentCollection();
+				this.#addParentToRecentCollection(parentChatId, params);
 				return;
 			}
-			if (muted || !this.#hasChatCounters(chatId, counter, unread)) {
-				return;
+			const shouldRemoveChat = muted && !this.#isChatOpen(dialogId);
+			if (shouldRemoveChat) {
+				this.#removeChat(recentConfig.sections, dialogId, parentChatId);
 			}
-			const manager = new RecentUnreadUpdateManager(params);
-			manager.addToRecentCollection();
 		}
 		handleMessageAdd(params, extra) {
 			const {
@@ -1620,39 +1644,31 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			} = params;
 			const chatMuteMap = userBlockChat[chatId];
 			const isMuted = chatMuteMap[im_v2_application_core.Core.getUserId()] === true;
-			if (counter === 0 || main_core.Type.isUndefined(counter) || isMuted) {
-				return;
-			}
 			im_v2_lib_logger.Logger.warn('UnreadRecentPullHandler: handleMessageAdd', params);
 			const manager = new NewMessageManager(params, extra);
-			if (!manager.isUserInChat()) {
-				return;
-			}
-			const hasParent = manager.getParentChatId() > 0;
-			if (hasParent) {
-				const parentChatId = manager.getParentChatId();
-				const parentRecentItem = this.#getParentRecentItem(parentChatId);
-				if (!parentRecentItem) {
-					return;
-				}
-				void im_v2_application_core.Core.getStore().dispatch('recent/setUnreadCollection', {
-					type: im_v2_const.RecentType.default,
-					items: [parentRecentItem]
-				});
-				return;
-			}
-			const newRecentItem = buildRecentItem(params);
+			const parentChatId = manager.getParentChatId();
 			const recentManager = new RecentUnreadUpdateManager(params);
-			recentManager.applyRecentUpdateActions(recentConfig.sections, newRecentItem);
+			const hasCounter = counter > 0 && !main_core.Type.isUndefined(counter);
+			const shouldAddChat = hasCounter && !isMuted && manager.isUserInChat();
+			if (shouldAddChat) {
+				const newRecentItem = buildRecentItem(params);
+				recentManager.addItemToCollection(recentConfig.sections, newRecentItem, parentChatId);
+			}
+			const shouldAddParentChat = parentChatId > 0 && shouldAddChat;
+			if (shouldAddParentChat) {
+				this.#addParentToRecentCollection(parentChatId, params);
+			}
 		}
 		#getParentRecentItem(parentChatId) {
-			const {
-				dialogId
-			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](parentChatId);
-			return im_v2_application_core.Core.getStore().getters['recent/get'](dialogId);
+			const parentDialogId = this.#getParentDialogId(parentChatId);
+			return im_v2_application_core.Core.getStore().getters['recent/get'](parentDialogId);
 		}
 		#isChatOpen(dialogId) {
 			return im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
+		}
+		#isParentChatOpen(parentChatId) {
+			const parentDialogId = this.#getParentDialogId(parentChatId);
+			return this.#isChatOpen(parentDialogId);
 		}
 		#hasChatCounters(chatId, counter, unread) {
 			const childrenCounter = im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](chatId);
@@ -1664,6 +1680,43 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			const parentCounter = im_v2_application_core.Core.getStore().getters['counters/getTotalCounterByIds']([parentChatId]);
 			const parentTotalCounter = parentChildrenCounter + parentCounter;
 			return parentTotalCounter > 0;
+		}
+		#addParentToRecentCollection(chatId, params) {
+			const parentRecentSections = this.#getParentSections(chatId);
+			const parentRecentItem = this.#getParentRecentItem(chatId);
+			const parentChatId = this.#getParentChatId(chatId);
+			const manager = new RecentUnreadUpdateManager(params);
+			manager.addItemToCollection(parentRecentSections, parentRecentItem, parentChatId);
+		}
+		#removeParentChat(parentChatId) {
+			const parentRecentSections = this.#getParentSections(parentChatId);
+			const parentDialogId = this.#getParentDialogId(parentChatId);
+			im_v2_lib_unreadMode.UnreadModeManager.removeDialogIdBySections({
+				recentSections: parentRecentSections,
+				dialogId: parentDialogId
+			});
+		}
+		#removeChat(recentSections, dialogId, parentChatId) {
+			im_v2_lib_unreadMode.UnreadModeManager.removeDialogIdBySections({
+				recentSections,
+				dialogId,
+				parentChatId
+			});
+		}
+		#getParentDialogId(parentChatId) {
+			const {
+				dialogId
+			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](parentChatId, true);
+			return dialogId;
+		}
+		#getParentSections(parentChatId) {
+			return im_v2_application_core.Core.getStore().getters['counters/getRecentSectionsByChatId'](parentChatId);
+		}
+		#getParentChatId(chatId) {
+			const {
+				parentChatId
+			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](chatId);
+			return parentChatId;
 		}
 	}
 
@@ -2326,14 +2379,19 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				chat,
 				recentConfig
 			} = params;
+			const {
+				id: chatId,
+				parent_chat_id: parentChatId,
+				mute_list: muteList
+			} = chat;
+			const isMuted = muteList[im_v2_application_core.Core.getUserId()] === true;
 
 			// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
 			const counterItem = {
-				chatId: chat.id,
-				isMarkedAsUnread: false,
-				isMuted: false,
-				parentChatId: chat.parent_chat_id,
-				recentSections: recentConfig.sections
+				chatId,
+				parentChatId,
+				recentSections: recentConfig.sections,
+				isMuted
 			};
 			void im_v2_application_core.Core.getStore().dispatch('counters/setCounters', [counterItem]);
 		}
@@ -2474,5 +2532,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.SidebarPullHandler = SidebarPullHandler;
 	exports.StickersPullHandler = StickersPullHandler;
 
-})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

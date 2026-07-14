@@ -92,6 +92,7 @@ else
 			<?php endif; ?>
 			errorMessage: '<?= CUtil::JSescape($arResult['ERROR_MESSAGE']) ?>',
 			canSendRequestRecoverAccess: <?= $arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] ? 'true' : 'false' ?>,
+			userId: <?= (int)($arResult['USER_ID'] ?? 0) ?>,
 		};
 		BX.Intranet.Login.OtpAuth.init(params);
 	});

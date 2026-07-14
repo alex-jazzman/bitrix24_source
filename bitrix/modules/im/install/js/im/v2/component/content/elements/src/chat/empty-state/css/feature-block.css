@@ -42,6 +42,14 @@
 	background-image: url('images/features/messages.svg?v3');
 }
 
+.bx-im-content-chat-start__block_icon.--copilot {
+	background-image: url("images/features/copilot.svg?v3");
+}
+
+.bx-im-content-chat-start__block_icon.--list {
+	background-image: url("images/features/list.svg?v3");
+}
+
 .bx-im-content-chat-start__block_title {
 	margin-bottom: 4px;
 	font: var(--im-font-size-xl)/19px var(--im-font-family-system);

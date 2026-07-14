@@ -1,0 +1,33 @@
+.socialnetwork--auto-delete-message-popup {
+	--sonet-auto-delete-message-popup__color_popup-title-text: var(--ui-color-base-1);
+	--sonet-auto-delete-message-popup__color_popup-info: var(--ui-color-palette-gray-60);
+	--sonet-auto-delete-message-popup__font-size_title-text: 19px;
+	font: var(--ui-font-size-md)/19px var(--ui-font-family-system);
+}
+
+.socialnetwork--auto-delete-message-popup .popup-window-titlebar {
+	display: flex;
+	align-items: center;
+	padding: 14px 13px 0 20px;
+}
+
+.socialnetwork--auto-delete-message-popup .popup-window-titlebar-text {
+	font-weight: var(--ui-font-size-md);
+	color: var(--sonet-auto-delete-message-popup__color_popup-title-text);
+	font-size: var(--sonet-auto-delete-message-popup__font-size_title-text);
+	line-height: 26px;
+}
+
+.socialnetwork--auto-delete-message-popup .popup-window-content {
+	border-radius: inherit;
+	overflow: hidden;
+}
+
+.socialnetwork--auto-delete-message-popup__container {
+	margin: 0 24px 18px;
+}
+
+.socialnetwork--auto-delete-message-popup__info {
+	margin: 8px 0;
+	color: var(--sonet-auto-delete-message-popup__color_popup-info);
+}

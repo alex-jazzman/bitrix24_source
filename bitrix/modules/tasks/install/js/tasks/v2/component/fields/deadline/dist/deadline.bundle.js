@@ -3,107 +3,105 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core_events,ui_notificationManager,ui_vue3_directives_hint,tasks_v2_component_taskSettingsPopup,tasks_v2_lib_heightTransition,tasks_v2_provider_service_deadlineService,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_settingsLabel,ui_vue3_vuex,ui_datePicker,tasks_v2_core,tasks_v2_lib_idUtils,tasks_v2_lib_timezone,tasks_v2_lib_analytics,tasks_v2_component_elements_hint,ui_iconSet_api_vue,ui_system_input_vue,ui_iconSet_outline,ui_vue3_components_button,ui_forms,ui_vue3_components_popup,main_date,ui_system_typography_vue,ui_system_chip_vue,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_duration,tasks_v2_lib_calendar,tasks_v2_provider_service_taskService,main_core,tasks_v2_const) {
+(function (exports, main_core, main_date, main_core_events, ui_notificationManager, ui_vue3_directives_hint, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_taskSettingsPopup, tasks_v2_component_elements_settingsLabel, tasks_v2_component_elements_hint, tasks_v2_component_elements_hoverPill, tasks_v2_lib_idUtils, tasks_v2_lib_calendar, tasks_v2_lib_fieldHighlighter, tasks_v2_lib_heightTransition, tasks_v2_provider_service_deadlineService, tasks_v2_provider_service_taskService, ui_system_chip_vue, ui_vue3_components_popup, ui_vue3_vuex, ui_datePicker, tasks_v2_lib_timezone, tasks_v2_lib_analytics, ui_system_input_vue, ui_vue3_components_button, ui_forms, tasks_v2_component_elements_questionMark, tasks_v2_component_elements_duration) {
 	'use strict';
 
 	// @vue/component
 	const DeadlineDefaultView = {
-	  components: {
-	    TextMd: ui_system_typography_vue.TextMd,
-	    Text2Xs: ui_system_typography_vue.Text2Xs,
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
-	    SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    deadlineFormatted: {
-	      type: String,
-	      required: true
-	    },
-	    deadlineFormattedForPrint: {
-	      type: String,
-	      required: true
-	    },
-	    isExpired: {
-	      type: Boolean,
-	      required: true
-	    },
-	    readonly: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isPopupShown: {
-	      type: Boolean,
-	      required: true
-	    },
-	    deadlineTs: {
-	      type: Number,
-	      default: null
-	    },
-	    isFlowFilledOnAdd: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isTemplate: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isHovered: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isFieldHovered: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isSettingsPopupShown: {
-	      type: Boolean,
-	      required: true
-	    },
-	    expiredDuration: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  emits: ['click', 'clear', 'keydown', 'settingsClick', 'update:isExceededHintShown'],
-	  computed: {
-	    task() {
-	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
-	    },
-	    canChangeSettings() {
-	      const features = tasks_v2_core.Core.getParams().features;
-	      if (!features.isV2Enabled) {
-	        return false;
-	      }
-	      return this.task.rights.edit;
-	    },
-	    iconName() {
-	      return this.isFlowFilledOnAdd ? ui_iconSet_api_vue.Outline.BOTTLENECK : ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS;
-	    },
-	    expiredFormatted() {
-	      return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
-	        '#EXPIRED_DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
-	      });
-	    },
-	    hintBindElement() {
-	      var _this$$refs$deadlineI, _this$$refs$deadlineI2, _this$$refs$deadline;
-	      return (_this$$refs$deadlineI = (_this$$refs$deadlineI2 = this.$refs.deadlineIcon) == null ? void 0 : _this$$refs$deadlineI2.$el) != null ? _this$$refs$deadlineI : (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : _this$$refs$deadline.$el;
-	    }
-	  },
-	  methods: {
-	    getHintBindElement() {
-	      return this.hintBindElement;
-	    },
-	    focusDeadline() {
-	      var _this$$refs$deadline2, _this$$refs$deadline3;
-	      (_this$$refs$deadline2 = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline3 = _this$$refs$deadline2.$el) == null ? void 0 : _this$$refs$deadline3.focus();
-	    }
-	  },
-	  template: `
+		components: {
+			TextMd: ui_system_typography_vue.TextMd,
+			Text2Xs: ui_system_typography_vue.Text2Xs,
+			BIcon: ui_iconSet_api_vue.BIcon,
+			HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+			SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			deadlineFormatted: {
+				type: String,
+				required: true
+			},
+			deadlineFormattedForPrint: {
+				type: String,
+				required: true
+			},
+			isExpired: {
+				type: Boolean,
+				required: true
+			},
+			readonly: {
+				type: Boolean,
+				required: true
+			},
+			isPopupShown: {
+				type: Boolean,
+				required: true
+			},
+			deadlineTs: {
+				type: Number,
+				default: null
+			},
+			isFlowFilledOnAdd: {
+				type: Boolean,
+				required: true
+			},
+			isTemplate: {
+				type: Boolean,
+				required: true
+			},
+			isHovered: {
+				type: Boolean,
+				required: true
+			},
+			isFieldHovered: {
+				type: Boolean,
+				required: true
+			},
+			isSettingsPopupShown: {
+				type: Boolean,
+				required: true
+			},
+			expiredDuration: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['click', 'clear', 'keydown', 'settingsClick', 'update:isExceededHintShown'],
+		computed: {
+			task() {
+				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+			},
+			canChangeSettings() {
+				const features = tasks_v2_core.Core.getParams().features;
+				if (!features.isV2Enabled) {
+					return false;
+				}
+				return this.task.rights.edit;
+			},
+			iconName() {
+				return this.isFlowFilledOnAdd ? ui_iconSet_api_vue.Outline.BOTTLENECK : ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS;
+			},
+			expiredFormatted() {
+				return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
+					'#EXPIRED_DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
+				});
+			},
+			hintBindElement() {
+				return this.$refs.deadlineIcon?.$el ?? this.$refs.deadline?.$el;
+			}
+		},
+		methods: {
+			getHintBindElement() {
+				return this.hintBindElement;
+			},
+			focusDeadline() {
+				this.$refs.deadline?.$el?.focus();
+			}
+		},
+		template: `
 		<div
 			class="tasks-field-deadline"
 			:class="{ '--expired': isExpired }"
@@ -160,131 +158,131 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const DeadlineChipView = {
-	  components: {
-	    Chip: ui_system_chip_vue.Chip
-	  },
-	  props: {
-	    deadlineFormatted: {
-	      type: String,
-	      required: true
-	    },
-	    isExpired: {
-	      type: Boolean,
-	      required: true
-	    },
-	    readonly: {
-	      type: Boolean,
-	      required: true
-	    },
-	    taskStatus: {
-	      type: String,
-	      required: true
-	    },
-	    isFlowFilledOnAdd: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isTemplate: {
-	      type: Boolean,
-	      required: true
-	    },
-	    deadlineTs: {
-	      type: Number,
-	      default: null
-	    }
-	  },
-	  emits: ['keydown', 'update:isExceededHintShown'],
-	  setup() {
-	    return {
-	      ChipSize: ui_system_chip_vue.ChipSize,
-	      ChipDesign: ui_system_chip_vue.ChipDesign,
-	      DeadlineState: tasks_v2_const.DeadlineState
-	    };
-	  },
-	  computed: {
-	    deadlineState() {
-	      if (this.taskStatus === tasks_v2_const.TaskStatus.Completed) {
-	        return tasks_v2_const.DeadlineState.Completed;
-	      }
-	      if (this.taskStatus === tasks_v2_const.TaskStatus.Deferred) {
-	        return tasks_v2_const.DeadlineState.Deferred;
-	      }
-	      if (this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted) {
-	        return tasks_v2_const.DeadlineState.SupposedlyCompleted;
-	      }
-	      if (!this.deadlineTs) {
-	        return tasks_v2_const.DeadlineState.None;
-	      }
-	      if (this.isExpired) {
-	        return tasks_v2_const.DeadlineState.Expired;
-	      }
-	      if (tasks_v2_lib_calendar.calendar.isToday(this.deadlineTs)) {
-	        return tasks_v2_const.DeadlineState.Today;
-	      }
-	      if (tasks_v2_lib_calendar.calendar.isTomorrow(this.deadlineTs)) {
-	        return tasks_v2_const.DeadlineState.Tomorrow;
-	      }
-	      if (tasks_v2_lib_calendar.calendar.isThisWeek(this.deadlineTs)) {
-	        return tasks_v2_const.DeadlineState.ThisWeek;
-	      }
-	      if (tasks_v2_lib_calendar.calendar.isNextWeek(this.deadlineTs)) {
-	        return tasks_v2_const.DeadlineState.NextWeek;
-	      }
-	      return tasks_v2_const.DeadlineState.MoreThanTwoWeeks;
-	    },
-	    design() {
-	      const designMap = {
-	        [tasks_v2_const.DeadlineState.None]: ui_system_chip_vue.ChipDesign.Outline,
-	        [tasks_v2_const.DeadlineState.Completed]: ui_system_chip_vue.ChipDesign.OutlineNoAccent,
-	        [tasks_v2_const.DeadlineState.Deferred]: ui_system_chip_vue.ChipDesign.Outline,
-	        [tasks_v2_const.DeadlineState.SupposedlyCompleted]: ui_system_chip_vue.ChipDesign.OutlineWarning,
-	        [tasks_v2_const.DeadlineState.Expired]: ui_system_chip_vue.ChipDesign.TintedAlert,
-	        [tasks_v2_const.DeadlineState.Today]: ui_system_chip_vue.ChipDesign.TintedWarning,
-	        [tasks_v2_const.DeadlineState.Tomorrow]: ui_system_chip_vue.ChipDesign.TintedSuccess,
-	        [tasks_v2_const.DeadlineState.ThisWeek]: ui_system_chip_vue.ChipDesign.Tinted,
-	        [tasks_v2_const.DeadlineState.NextWeek]: ui_system_chip_vue.ChipDesign.OutlineAccent2,
-	        [tasks_v2_const.DeadlineState.MoreThanTwoWeeks]: ui_system_chip_vue.ChipDesign.TintedNoAccent
-	      };
-	      return designMap[this.deadlineState] || ui_system_chip_vue.ChipDesign.Outline;
-	    },
-	    text() {
-	      if (this.isFlowFilledOnAdd || this.isTemplate) {
-	        return this.deadlineFormatted;
-	      }
-	      if (this.deadlineState === tasks_v2_const.DeadlineState.Completed) {
-	        return this.loc('TASKS_V2_DEADLINE_COMPLETED');
-	      }
-	      if (this.deadlineState === tasks_v2_const.DeadlineState.Deferred) {
-	        return this.loc('TASKS_V2_DEADLINE_DEFERRED');
-	      }
-	      if (this.deadlineState === tasks_v2_const.DeadlineState.SupposedlyCompleted) {
-	        return this.loc('TASKS_V2_DEADLINE_SUPPOSEDLY_COMPLETED');
-	      }
-	      if (this.deadlineState === tasks_v2_const.DeadlineState.Today) {
-	        return this.loc('TASKS_V2_DEADLINE_TODAY_FORMATTED', {
-	          '#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
-	        });
-	      }
-	      if (this.deadlineState === tasks_v2_const.DeadlineState.Tomorrow) {
-	        return this.loc('TASKS_V2_DEADLINE_TOMORROW_FORMATTED', {
-	          '#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
-	        });
-	      }
-	      return this.deadlineFormatted;
-	    },
-	    hintBindElement() {
-	      return this.$refs.deadline;
-	    }
-	  },
-	  methods: {
-	    focusDeadline() {
-	      this.$refs.deadline.focus();
-	    },
-	    getHintBindElement() {
-	      return this.hintBindElement;
-	    }
-	  },
-	  template: `
+		components: {
+			Chip: ui_system_chip_vue.Chip
+		},
+		props: {
+			deadlineFormatted: {
+				type: String,
+				required: true
+			},
+			isExpired: {
+				type: Boolean,
+				required: true
+			},
+			readonly: {
+				type: Boolean,
+				required: true
+			},
+			taskStatus: {
+				type: String,
+				required: true
+			},
+			isFlowFilledOnAdd: {
+				type: Boolean,
+				required: true
+			},
+			isTemplate: {
+				type: Boolean,
+				required: true
+			},
+			deadlineTs: {
+				type: Number,
+				default: null
+			}
+		},
+		emits: ['keydown', 'update:isExceededHintShown'],
+		setup() {
+			return {
+				ChipSize: ui_system_chip_vue.ChipSize,
+				ChipDesign: ui_system_chip_vue.ChipDesign,
+				DeadlineState: tasks_v2_const.DeadlineState
+			};
+		},
+		computed: {
+			deadlineState() {
+				if (this.taskStatus === tasks_v2_const.TaskStatus.Completed) {
+					return tasks_v2_const.DeadlineState.Completed;
+				}
+				if (this.taskStatus === tasks_v2_const.TaskStatus.Deferred) {
+					return tasks_v2_const.DeadlineState.Deferred;
+				}
+				if (this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted) {
+					return tasks_v2_const.DeadlineState.SupposedlyCompleted;
+				}
+				if (!this.deadlineTs) {
+					return tasks_v2_const.DeadlineState.None;
+				}
+				if (this.isExpired) {
+					return tasks_v2_const.DeadlineState.Expired;
+				}
+				if (tasks_v2_lib_calendar.calendar.isToday(this.deadlineTs)) {
+					return tasks_v2_const.DeadlineState.Today;
+				}
+				if (tasks_v2_lib_calendar.calendar.isTomorrow(this.deadlineTs)) {
+					return tasks_v2_const.DeadlineState.Tomorrow;
+				}
+				if (tasks_v2_lib_calendar.calendar.isThisWeek(this.deadlineTs)) {
+					return tasks_v2_const.DeadlineState.ThisWeek;
+				}
+				if (tasks_v2_lib_calendar.calendar.isNextWeek(this.deadlineTs)) {
+					return tasks_v2_const.DeadlineState.NextWeek;
+				}
+				return tasks_v2_const.DeadlineState.MoreThanTwoWeeks;
+			},
+			design() {
+				const designMap = {
+					[tasks_v2_const.DeadlineState.None]: ui_system_chip_vue.ChipDesign.Outline,
+					[tasks_v2_const.DeadlineState.Completed]: ui_system_chip_vue.ChipDesign.OutlineNoAccent,
+					[tasks_v2_const.DeadlineState.Deferred]: ui_system_chip_vue.ChipDesign.Outline,
+					[tasks_v2_const.DeadlineState.SupposedlyCompleted]: ui_system_chip_vue.ChipDesign.OutlineWarning,
+					[tasks_v2_const.DeadlineState.Expired]: ui_system_chip_vue.ChipDesign.TintedAlert,
+					[tasks_v2_const.DeadlineState.Today]: ui_system_chip_vue.ChipDesign.TintedWarning,
+					[tasks_v2_const.DeadlineState.Tomorrow]: ui_system_chip_vue.ChipDesign.TintedSuccess,
+					[tasks_v2_const.DeadlineState.ThisWeek]: ui_system_chip_vue.ChipDesign.Tinted,
+					[tasks_v2_const.DeadlineState.NextWeek]: ui_system_chip_vue.ChipDesign.OutlineAccent2,
+					[tasks_v2_const.DeadlineState.MoreThanTwoWeeks]: ui_system_chip_vue.ChipDesign.TintedNoAccent
+				};
+				return designMap[this.deadlineState] || ui_system_chip_vue.ChipDesign.Outline;
+			},
+			text() {
+				if (this.isFlowFilledOnAdd || this.isTemplate) {
+					return this.deadlineFormatted;
+				}
+				if (this.deadlineState === tasks_v2_const.DeadlineState.Completed) {
+					return this.loc('TASKS_V2_DEADLINE_COMPLETED');
+				}
+				if (this.deadlineState === tasks_v2_const.DeadlineState.Deferred) {
+					return this.loc('TASKS_V2_DEADLINE_DEFERRED');
+				}
+				if (this.deadlineState === tasks_v2_const.DeadlineState.SupposedlyCompleted) {
+					return this.loc('TASKS_V2_DEADLINE_SUPPOSEDLY_COMPLETED');
+				}
+				if (this.deadlineState === tasks_v2_const.DeadlineState.Today) {
+					return this.loc('TASKS_V2_DEADLINE_TODAY_FORMATTED', {
+						'#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
+					});
+				}
+				if (this.deadlineState === tasks_v2_const.DeadlineState.Tomorrow) {
+					return this.loc('TASKS_V2_DEADLINE_TOMORROW_FORMATTED', {
+						'#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
+					});
+				}
+				return this.deadlineFormatted;
+			},
+			hintBindElement() {
+				return this.$refs.deadline;
+			}
+		},
+		methods: {
+			focusDeadline() {
+				this.$refs.deadline.focus();
+			},
+			getHintBindElement() {
+				return this.hintBindElement;
+			}
+		},
+		template: `
 		<div
 			class="tasks-field-deadline-chip"
 			:class="{ '--read-only': readonly }"
@@ -303,258 +301,257 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const DeadlinePopupContent = {
-	  components: {
-	    Hint: tasks_v2_component_elements_hint.Hint
-	  },
-	  inject: {
-	    analytics: {},
-	    cardType: {}
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  emits: ['update', 'close'],
-	  setup() {
-	    return {
-	      today: new Date(),
-	      /** @type DatePicker */
-	      datePicker: null,
-	      dateTs: null,
-	      hour: null
-	    };
-	  },
-	  data() {
-	    return {
-	      isLimitHintShown: false,
-	      hintBindElement: null
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
-	    }),
-	    task() {
-	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
-	    },
-	    isEdit() {
-	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
-	    },
-	    isCreator() {
-	      return this.currentUserId === this.task.creatorId;
-	    },
-	    isAdmin() {
-	      return tasks_v2_core.Core.getParams().rights.user.admin;
-	    },
-	    canChangeDeadlineWithoutLimitation() {
-	      return !this.isEdit || this.isCreator || this.task.rights.edit || this.isAdmin;
-	    },
-	    maxDeadlineDate() {
-	      if (this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChangeDate) {
-	        return null;
-	      }
-	      const dateFormat = main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
-	      return ui_datePicker.createDate(this.task.maxDeadlineChangeDate, dateFormat);
-	    },
-	    presets() {
-	      const [year, month, date] = [this.today.getFullYear(), this.today.getMonth(), this.today.getDate()];
-	      const format = main_date.DateTimeFormat.getFormat('DAY_OF_WEEK_MONTH_FORMAT');
-	      const allPresets = [{
-	        id: `today-${this.taskId}`,
-	        title: this.loc('TASKS_V2_DEADLINE_TODAY'),
-	        date: new Date(year, month, date)
-	      }, {
-	        id: `tomorrow-${this.taskId}`,
-	        title: this.loc('TASKS_V2_DEADLINE_TOMORROW'),
-	        date: new Date(year, month, date + 1)
-	      }, {
-	        id: `end-week-${this.taskId}`,
-	        title: this.loc('TASKS_V2_DEADLINE_IN_THE_END_OF_THE_WEEK'),
-	        date: new Date(year, month, date - this.today.getDay() + 5)
-	      }, {
-	        id: `in-week-${this.taskId}`,
-	        title: this.loc('TASKS_V2_DEADLINE_IN_A_WEEK'),
-	        date: new Date(year, month, date + 7)
-	      }, {
-	        id: `month-${this.taskId}`,
-	        title: this.loc('TASKS_V2_DEADLINE_IN_THE_END_OF_THE_MONTH'),
-	        date: new Date(year, month + 1, 0)
-	      }];
-	      return allPresets.map(preset => {
-	        let disabled = false;
-	        if (this.maxDeadlineDate) {
-	          const presetUtcDate = ui_datePicker.createUtcDate(preset.date.getFullYear(), preset.date.getMonth(), preset.date.getDate());
-	          const maxUtcDate = ui_datePicker.createUtcDate(this.maxDeadlineDate.getUTCFullYear(), this.maxDeadlineDate.getUTCMonth(), this.maxDeadlineDate.getUTCDate());
-	          disabled = presetUtcDate > maxUtcDate;
-	        }
-	        return {
-	          id: preset.id,
-	          title: preset.title,
-	          timestamp: preset.date.getTime(),
-	          formatted: main_date.DateTimeFormat.format(format, preset.date),
-	          disabled
-	        };
-	      });
-	    },
-	    limitHintText() {
-	      if (!this.maxDeadlineDate) {
-	        return '';
-	      }
-	      const format = main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
-	      const date = main_date.DateTimeFormat.format(format, this.maxDeadlineDate.getTime() / 1000);
-	      return this.loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT', {
-	        '#DATE#': date
-	      });
-	    }
-	  },
-	  created() {
-	    this.datePicker = this.createDatePicker();
-	    const date = new Date(this.task.deadlineTs + tasks_v2_lib_timezone.timezone.getOffset(this.task.deadlineTs));
-	    this.dateTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-	    this.hour = date.getHours();
-	  },
-	  mounted() {
-	    this.datePicker.setTargetNode(this.$refs.picker);
-	    this.datePicker.show();
-	  },
-	  beforeUnmount() {
-	    this.datePicker.destroy();
-	  },
-	  methods: {
-	    createDatePicker() {
-	      const offset = tasks_v2_lib_timezone.timezone.getOffset(this.task.deadlineTs);
-	      const dayColors = [];
-	      if (this.maxDeadlineDate) {
-	        dayColors.push({
-	          matcher: date => {
-	            const compareDate = ui_datePicker.createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-	            return compareDate > this.maxDeadlineDate;
-	          },
-	          textColor: '#DFE0E3'
-	        });
-	      }
-	      const picker = new ui_datePicker.DatePicker({
-	        selectedDates: this.task.deadlineTs ? [this.task.deadlineTs + offset] : null,
-	        defaultTime: tasks_v2_lib_calendar.calendar.dayEndTime,
-	        inline: true,
-	        enableTime: true,
-	        dayColors,
-	        events: {
-	          [ui_datePicker.DatePickerEvent.SELECT]: event => {
-	            const {
-	              date
-	            } = event.getData();
-	            const dateTs = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
-	            this.$emit('update', dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs));
-	          },
-	          [ui_datePicker.DatePickerEvent.BEFORE_SELECT]: event => {
-	            if (!this.maxDeadlineDate) {
-	              return;
-	            }
-	            const {
-	              date
-	            } = event.getData();
-	            const selectedDate = ui_datePicker.createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-	            if (selectedDate > this.maxDeadlineDate) {
-	              event.preventDefault();
-	            }
-	          }
-	        }
-	      });
-	      picker.getPicker('day').subscribe('onSelect', event => {
-	        const {
-	          year,
-	          month,
-	          day
-	        } = event.getData();
-	        const dateTs = new Date(year, month, day).getTime();
-	        this.close();
-	        this.sendAnalytics(tasks_v2_const.Analytics.Element.Calendar);
-	        this.dateTs = dateTs;
-	      });
-	      picker.getPicker('day').subscribe('onFocus', this.handleDayFocus);
-	      picker.getPicker('time').subscribe('onSelect', event => {
-	        const {
-	          hour,
-	          minute
-	        } = event.getData();
-	        if (Number.isInteger(minute) || hour === this.hour) {
-	          this.close();
-	        }
-	        this.hour = hour;
-	      });
-	      return picker;
-	    },
-	    async focusDate(timestamp, disabled = false, event = null) {
-	      if (this.maxDeadlineDate) {
-	        this.isLimitHintShown = false;
-	        this.hintBindElement = null;
-	        await this.$nextTick();
-	        if (disabled && event) {
-	          const presetElement = event.currentTarget;
-	          if (presetElement && timestamp) {
-	            this.hintBindElement = presetElement;
-	            this.isLimitHintShown = true;
-	          }
-	          return;
-	        }
-	      }
-	      this.datePicker.setFocusDate(timestamp);
-	    },
-	    selectPresetDate(timestamp, disabled = false) {
-	      if (disabled) {
-	        return;
-	      }
-	      const date = new Date(timestamp);
-	      const [year, mount, day] = [date.getFullYear(), date.getMonth(), date.getDate()];
-	      this.datePicker.selectDate(new Date(`${mount + 1}/${day}/${year} ${tasks_v2_lib_calendar.calendar.dayEndTime}`));
-	      this.sendAnalytics(tasks_v2_const.Analytics.Element.DeadlinePreset);
-	      this.close();
-	    },
-	    close() {
-	      this.$emit('close');
-	    },
-	    sendAnalytics(element) {
-	      var _this$task$auditorsId, _this$task$auditorsId2, _this$task$accomplice, _this$task$accomplice2;
-	      tasks_v2_lib_analytics.analytics.sendDeadlineSet(this.analytics, {
-	        element,
-	        cardType: this.cardType,
-	        taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
-	        viewersCount: (_this$task$auditorsId = (_this$task$auditorsId2 = this.task.auditorsIds) == null ? void 0 : _this$task$auditorsId2.length) != null ? _this$task$auditorsId : 0,
-	        coexecutorsCount: (_this$task$accomplice = (_this$task$accomplice2 = this.task.accomplicesIds) == null ? void 0 : _this$task$accomplice2.length) != null ? _this$task$accomplice : 0
-	      });
-	    },
-	    async handleDayFocus(event) {
-	      const {
-	        year,
-	        month,
-	        day
-	      } = event.getData();
-	      const dayPicker = event.getTarget();
-	      if (!this.maxDeadlineDate) {
-	        return;
-	      }
-	      const dayElement = dayPicker.getMonthContainer().querySelector(`.ui-day-picker-day[data-year="${year}"][data-month="${month}"][data-day="${day}"]`);
-	      if (!dayElement) {
-	        return;
-	      }
-	      main_core.Dom.style(dayElement, 'cursor', 'pointer');
-	      this.isLimitHintShown = false;
-	      this.hintBindElement = null;
-	      await this.$nextTick();
-	      const focusedDate = ui_datePicker.createUtcDate(year, month, day);
-	      const maxUtcDate = ui_datePicker.createUtcDate(this.maxDeadlineDate.getUTCFullYear(), this.maxDeadlineDate.getUTCMonth(), this.maxDeadlineDate.getUTCDate());
-	      if (focusedDate > maxUtcDate) {
-	        this.datePicker.setFocusDate(null);
-	        main_core.Dom.style(dayElement, 'cursor', 'default');
-	        this.hintBindElement = dayElement;
-	        this.isLimitHintShown = true;
-	      }
-	    }
-	  },
-	  template: `
+		components: {
+			Hint: tasks_v2_component_elements_hint.Hint
+		},
+		inject: {
+			analytics: {},
+			cardType: {}
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			}
+		},
+		emits: ['update', 'close'],
+		setup() {
+			return {
+				today: new Date(),
+				/** @type DatePicker */
+				datePicker: null,
+				dateTs: null,
+				hour: null
+			};
+		},
+		data() {
+			return {
+				isLimitHintShown: false,
+				hintBindElement: null
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
+			}),
+			task() {
+				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+			},
+			isEdit() {
+				return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
+			},
+			isCreator() {
+				return this.currentUserId === this.task.creatorId;
+			},
+			isAdmin() {
+				return tasks_v2_core.Core.getParams().rights.user.admin;
+			},
+			canChangeDeadlineWithoutLimitation() {
+				return !this.isEdit || this.isCreator || this.task.rights.edit || this.isAdmin;
+			},
+			maxDeadlineDate() {
+				if (this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChangeDate) {
+					return null;
+				}
+				const dateFormat = main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
+				return ui_datePicker.createDate(this.task.maxDeadlineChangeDate, dateFormat);
+			},
+			presets() {
+				const [year, month, date] = [this.today.getFullYear(), this.today.getMonth(), this.today.getDate()];
+				const format = main_date.DateTimeFormat.getFormat('DAY_OF_WEEK_MONTH_FORMAT');
+				const allPresets = [{
+					id: `today-${this.taskId}`,
+					title: this.loc('TASKS_V2_DEADLINE_TODAY'),
+					date: new Date(year, month, date)
+				}, {
+					id: `tomorrow-${this.taskId}`,
+					title: this.loc('TASKS_V2_DEADLINE_TOMORROW'),
+					date: new Date(year, month, date + 1)
+				}, {
+					id: `end-week-${this.taskId}`,
+					title: this.loc('TASKS_V2_DEADLINE_IN_THE_END_OF_THE_WEEK'),
+					date: new Date(year, month, date - this.today.getDay() + 5)
+				}, {
+					id: `in-week-${this.taskId}`,
+					title: this.loc('TASKS_V2_DEADLINE_IN_A_WEEK'),
+					date: new Date(year, month, date + 7)
+				}, {
+					id: `month-${this.taskId}`,
+					title: this.loc('TASKS_V2_DEADLINE_IN_THE_END_OF_THE_MONTH'),
+					date: new Date(year, month + 1, 0)
+				}];
+				return allPresets.map(preset => {
+					let disabled = false;
+					if (this.maxDeadlineDate) {
+						const presetUtcDate = ui_datePicker.createUtcDate(preset.date.getFullYear(), preset.date.getMonth(), preset.date.getDate());
+						const maxUtcDate = ui_datePicker.createUtcDate(this.maxDeadlineDate.getUTCFullYear(), this.maxDeadlineDate.getUTCMonth(), this.maxDeadlineDate.getUTCDate());
+						disabled = presetUtcDate > maxUtcDate;
+					}
+					return {
+						id: preset.id,
+						title: preset.title,
+						timestamp: preset.date.getTime(),
+						formatted: main_date.DateTimeFormat.format(format, preset.date),
+						disabled
+					};
+				});
+			},
+			limitHintText() {
+				if (!this.maxDeadlineDate) {
+					return '';
+				}
+				const format = main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
+				const date = main_date.DateTimeFormat.format(format, this.maxDeadlineDate.getTime() / 1000);
+				return this.loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT', {
+					'#DATE#': date
+				});
+			}
+		},
+		created() {
+			this.datePicker = this.createDatePicker();
+			const date = new Date(this.task.deadlineTs + tasks_v2_lib_timezone.timezone.getOffset(this.task.deadlineTs));
+			this.dateTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+			this.hour = date.getHours();
+		},
+		mounted() {
+			this.datePicker.setTargetNode(this.$refs.picker);
+			this.datePicker.show();
+		},
+		beforeUnmount() {
+			this.datePicker.destroy();
+		},
+		methods: {
+			createDatePicker() {
+				const offset = tasks_v2_lib_timezone.timezone.getOffset(this.task.deadlineTs);
+				const dayColors = [];
+				if (this.maxDeadlineDate) {
+					dayColors.push({
+						matcher: date => {
+							const compareDate = ui_datePicker.createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+							return compareDate > this.maxDeadlineDate;
+						},
+						textColor: '#DFE0E3'
+					});
+				}
+				const picker = new ui_datePicker.DatePicker({
+					selectedDates: this.task.deadlineTs ? [this.task.deadlineTs + offset] : null,
+					defaultTime: tasks_v2_lib_calendar.calendar.dayEndTime,
+					inline: true,
+					enableTime: true,
+					dayColors,
+					events: {
+						[ui_datePicker.DatePickerEvent.SELECT]: event => {
+							const {
+								date
+							} = event.getData();
+							const dateTs = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
+							this.$emit('update', dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs));
+						},
+						[ui_datePicker.DatePickerEvent.BEFORE_SELECT]: event => {
+							if (!this.maxDeadlineDate) {
+								return;
+							}
+							const {
+								date
+							} = event.getData();
+							const selectedDate = ui_datePicker.createUtcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+							if (selectedDate > this.maxDeadlineDate) {
+								event.preventDefault();
+							}
+						}
+					}
+				});
+				picker.getPicker('day').subscribe('onSelect', event => {
+					const {
+						year,
+						month,
+						day
+					} = event.getData();
+					const dateTs = new Date(year, month, day).getTime();
+					this.close();
+					this.sendAnalytics(tasks_v2_const.Analytics.Element.Calendar);
+					this.dateTs = dateTs;
+				});
+				picker.getPicker('day').subscribe('onFocus', this.handleDayFocus);
+				picker.getPicker('time').subscribe('onSelect', event => {
+					const {
+						hour,
+						minute
+					} = event.getData();
+					if (Number.isInteger(minute) || hour === this.hour) {
+						this.close();
+					}
+					this.hour = hour;
+				});
+				return picker;
+			},
+			async focusDate(timestamp, disabled = false, event = null) {
+				if (this.maxDeadlineDate) {
+					this.isLimitHintShown = false;
+					this.hintBindElement = null;
+					await this.$nextTick();
+					if (disabled && event) {
+						const presetElement = event.currentTarget;
+						if (presetElement && timestamp) {
+							this.hintBindElement = presetElement;
+							this.isLimitHintShown = true;
+						}
+						return;
+					}
+				}
+				this.datePicker.setFocusDate(timestamp);
+			},
+			selectPresetDate(timestamp, disabled = false) {
+				if (disabled) {
+					return;
+				}
+				const date = new Date(timestamp);
+				const [year, mount, day] = [date.getFullYear(), date.getMonth(), date.getDate()];
+				this.datePicker.selectDate(new Date(`${mount + 1}/${day}/${year} ${tasks_v2_lib_calendar.calendar.dayEndTime}`));
+				this.sendAnalytics(tasks_v2_const.Analytics.Element.DeadlinePreset);
+				this.close();
+			},
+			close() {
+				this.$emit('close');
+			},
+			sendAnalytics(element) {
+				tasks_v2_lib_analytics.analytics.sendDeadlineSet(this.analytics, {
+					element,
+					cardType: this.cardType,
+					taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
+					viewersCount: this.task.auditorsIds?.length ?? 0,
+					coexecutorsCount: this.task.accomplicesIds?.length ?? 0
+				});
+			},
+			async handleDayFocus(event) {
+				const {
+					year,
+					month,
+					day
+				} = event.getData();
+				const dayPicker = event.getTarget();
+				if (!this.maxDeadlineDate) {
+					return;
+				}
+				const dayElement = dayPicker.getMonthContainer().querySelector(`.ui-day-picker-day[data-year="${year}"][data-month="${month}"][data-day="${day}"]`);
+				if (!dayElement) {
+					return;
+				}
+				main_core.Dom.style(dayElement, 'cursor', 'pointer');
+				this.isLimitHintShown = false;
+				this.hintBindElement = null;
+				await this.$nextTick();
+				const focusedDate = ui_datePicker.createUtcDate(year, month, day);
+				const maxUtcDate = ui_datePicker.createUtcDate(this.maxDeadlineDate.getUTCFullYear(), this.maxDeadlineDate.getUTCMonth(), this.maxDeadlineDate.getUTCDate());
+				if (focusedDate > maxUtcDate) {
+					this.datePicker.setFocusDate(null);
+					main_core.Dom.style(dayElement, 'cursor', 'default');
+					this.hintBindElement = dayElement;
+					this.isLimitHintShown = true;
+				}
+			}
+		},
+		template: `
 		<div class="tasks-field-deadline-popup">
 			<div class="tasks-field-deadline-picker-container">
 				<div class="tasks-field-deadline-picker" ref="picker"/>
@@ -594,53 +591,52 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const DeadlinePopup = {
-	  components: {
-	    Popup: ui_vue3_components_popup.Popup,
-	    DeadlinePopupContent
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    deadlineTs: {
-	      type: [Number, null],
-	      required: true
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    coordinates: {
-	      type: Object,
-	      default: null
-	    }
-	  },
-	  emits: ['update:deadlineTs', 'close'],
-	  computed: {
-	    options() {
-	      var _this$coordinates;
-	      const baseOptions = {
-	        id: `tasks-field-deadline-popup-${this.taskId}`,
-	        bindElement: this.bindElement,
-	        padding: 24,
-	        offsetTop: 5,
-	        offsetLeft: -100,
-	        targetContainer: document.body
-	      };
-	      if ((_this$coordinates = this.coordinates) != null && _this$coordinates.x) {
-	        const bindElementRect = this.bindElement.getBoundingClientRect();
-	        baseOptions.offsetLeft += this.coordinates.x - bindElementRect.left;
-	      }
-	      return baseOptions;
-	    }
-	  },
-	  methods: {
-	    handleUpdate(dateTs) {
-	      this.$emit('update:deadlineTs', dateTs);
-	    }
-	  },
-	  template: `
+		components: {
+			Popup: ui_vue3_components_popup.Popup,
+			DeadlinePopupContent
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			deadlineTs: {
+				type: [Number, null],
+				required: true
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			coordinates: {
+				type: Object,
+				default: null
+			}
+		},
+		emits: ['update:deadlineTs', 'close'],
+		computed: {
+			options() {
+				const baseOptions = {
+					id: `tasks-field-deadline-popup-${this.taskId}`,
+					bindElement: this.bindElement,
+					padding: 24,
+					offsetTop: 5,
+					offsetLeft: -100,
+					targetContainer: document.body
+				};
+				if (this.coordinates?.x) {
+					const bindElementRect = this.bindElement.getBoundingClientRect();
+					baseOptions.offsetLeft += this.coordinates.x - bindElementRect.left;
+				}
+				return baseOptions;
+			}
+		},
+		methods: {
+			handleUpdate(dateTs) {
+				this.$emit('update:deadlineTs', dateTs);
+			}
+		},
+		template: `
 		<Popup :options @close="$emit('close')">
 			<DeadlinePopupContent :taskId @update="handleUpdate" @close="$emit('close')"/>
 		</Popup>
@@ -649,76 +645,76 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const DeadlineChangeReasonPopup = {
-	  name: 'DeadlineChangeReasonPopup',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BInput: ui_system_input_vue.BInput,
-	    UiButton: ui_vue3_components_button.Button,
-	    Popup: ui_vue3_components_popup.Popup
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    modelValue: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['update:modelValue', 'close'],
-	  setup() {
-	    return {
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      resolve: null,
-	      reject: null
-	    };
-	  },
-	  computed: {
-	    options() {
-	      return {
-	        id: `tasks-deadline-change-reason-popup-${this.taskId}`,
-	        className: 'tasks-deadline-change-reason-popup',
-	        bindElement: this.bindElement,
-	        padding: 24,
-	        width: 472,
-	        height: 324,
-	        offsetLeft: -24,
-	        targetContainer: document.body
-	      };
-	    },
-	    reason: {
-	      get() {
-	        return this.modelValue;
-	      },
-	      set(value) {
-	        this.$emit('update:modelValue', value);
-	      }
-	    }
-	  },
-	  methods: {
-	    handleClose() {
-	      this.reason = '';
-	      this.$emit('close');
-	    },
-	    handleSave() {
-	      if (this.reason === '') {
-	        return;
-	      }
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
+		name: 'DeadlineChangeReasonPopup',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			BInput: ui_system_input_vue.BInput,
+			UiButton: ui_vue3_components_button.Button,
+			Popup: ui_vue3_components_popup.Popup
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			modelValue: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['update:modelValue', 'close'],
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				resolve: null,
+				reject: null
+			};
+		},
+		computed: {
+			options() {
+				return {
+					id: `tasks-deadline-change-reason-popup-${this.taskId}`,
+					className: 'tasks-deadline-change-reason-popup',
+					bindElement: this.bindElement,
+					padding: 24,
+					width: 472,
+					height: 324,
+					offsetLeft: -24,
+					targetContainer: document.body
+				};
+			},
+			reason: {
+				get() {
+					return this.modelValue;
+				},
+				set(value) {
+					this.$emit('update:modelValue', value);
+				}
+			}
+		},
+		methods: {
+			handleClose() {
+				this.reason = '';
+				this.$emit('close');
+			},
+			handleSave() {
+				if (this.reason.trim() === '') {
+					return;
+				}
+				this.$emit('close');
+			}
+		},
+		template: `
 		<Popup :options @close="handleClose">
 			<div class="tasks-deadline-change-reason-popup-header">
 				<div class="tasks-deadline-change-reason-popup-title">
@@ -756,7 +752,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<UiButton
 					:text="loc('TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_SAVE')"
 					:size="ButtonSize.MEDIUM"
-					:disabled="reason === ''"
+					:disabled="reason.trim() === ''"
 					:style="AirButtonStyle.FILLED"
 					:dataset="{
 						deadlineChangeReasonButtonId: 'save',
@@ -768,107 +764,105 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
-	const unitDurations = main_date.DurationFormat.getUnitDurations();
+	const unitDurations$1 = main_date.DurationFormat.getUnitDurations();
 	const Presets = Object.freeze({
-	  DAY_1: {
-	    id: '1d',
-	    multiplier: 1
-	  },
-	  DAYS_3: {
-	    id: '3d',
-	    multiplier: 3
-	  },
-	  WEEK: {
-	    id: '7d',
-	    multiplier: 7
-	  },
-	  WEEKS_2: {
-	    id: '14d',
-	    multiplier: 14
-	  }
+		DAY_1: {
+			id: '1d',
+			multiplier: 1
+		},
+		DAYS_3: {
+			id: '3d',
+			multiplier: 3
+		},
+		WEEK: {
+			id: '7d',
+			multiplier: 7
+		},
+		WEEKS_2: {
+			id: '14d',
+			multiplier: 14
+		}
 	});
 
 	// @vue/component
 	const DeadlineAfterPopupContent = {
-	  components: {
-	    TextSm: ui_system_typography_vue.TextSm,
-	    Chip: ui_system_chip_vue.Chip,
-	    QuestionMark: tasks_v2_component_elements_questionMark.QuestionMark,
-	    Duration: tasks_v2_component_elements_duration.Duration
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    freeze: {
-	      type: Function,
-	      required: true
-	    },
-	    unfreeze: {
-	      type: Function,
-	      required: true
-	    }
-	  },
-	  emits: ['update', 'close'],
-	  setup() {
-	    return {
-	      ChipDesign: ui_system_chip_vue.ChipDesign
-	    };
-	  },
-	  data() {
-	    return {
-	      deadlineAfter: 0
-	    };
-	  },
-	  computed: {
-	    duration: {
-	      get() {
-	        return this.deadlineAfter;
-	      },
-	      set(deadlineAfter) {
-	        this.$emit('update', {
-	          id: null,
-	          duration: deadlineAfter
-	        });
-	      }
-	    },
-	    task() {
-	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
-	    },
-	    presets() {
-	      var _this$task;
-	      const dayDuration = (_this$task = this.task) != null && _this$task.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations.d;
-	      return [{
-	        ...Presets.DAY_1,
-	        duration: dayDuration * Presets.DAY_1.multiplier,
-	        title: new main_date.DurationFormat(unitDurations.d).format()
-	      }, {
-	        ...Presets.DAYS_3,
-	        duration: dayDuration * Presets.DAYS_3.multiplier,
-	        title: new main_date.DurationFormat(unitDurations.d * 3).format()
-	      }, {
-	        ...Presets.WEEK,
-	        duration: dayDuration * Presets.WEEK.multiplier,
-	        title: this.loc('TASKS_V2_DEADLINE_A_WEEK')
-	      }, {
-	        ...Presets.WEEKS_2,
-	        duration: dayDuration * Presets.WEEKS_2.multiplier,
-	        title: this.loc('TASKS_V2_DEADLINE_TWO_WEEKS')
-	      }];
-	    }
-	  },
-	  created() {
-	    var _this$task2;
-	    this.deadlineAfter = (_this$task2 = this.task) == null ? void 0 : _this$task2.deadlineAfter;
-	  },
-	  methods: {
-	    applyPreset(preset) {
-	      this.$emit('update', preset);
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
+		components: {
+			TextSm: ui_system_typography_vue.TextSm,
+			Chip: ui_system_chip_vue.Chip,
+			QuestionMark: tasks_v2_component_elements_questionMark.QuestionMark,
+			Duration: tasks_v2_component_elements_duration.Duration
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			freeze: {
+				type: Function,
+				required: true
+			},
+			unfreeze: {
+				type: Function,
+				required: true
+			}
+		},
+		emits: ['update', 'close'],
+		setup() {
+			return {
+				ChipDesign: ui_system_chip_vue.ChipDesign
+			};
+		},
+		data() {
+			return {
+				deadlineAfter: 0
+			};
+		},
+		computed: {
+			duration: {
+				get() {
+					return this.deadlineAfter;
+				},
+				set(deadlineAfter) {
+					this.$emit('update', {
+						id: null,
+						duration: deadlineAfter
+					});
+				}
+			},
+			task() {
+				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+			},
+			presets() {
+				const dayDuration = this.task?.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations$1.d;
+				return [{
+					...Presets.DAY_1,
+					duration: dayDuration * Presets.DAY_1.multiplier,
+					title: new main_date.DurationFormat(unitDurations$1.d).format()
+				}, {
+					...Presets.DAYS_3,
+					duration: dayDuration * Presets.DAYS_3.multiplier,
+					title: new main_date.DurationFormat(unitDurations$1.d * 3).format()
+				}, {
+					...Presets.WEEK,
+					duration: dayDuration * Presets.WEEK.multiplier,
+					title: this.loc('TASKS_V2_DEADLINE_A_WEEK')
+				}, {
+					...Presets.WEEKS_2,
+					duration: dayDuration * Presets.WEEKS_2.multiplier,
+					title: this.loc('TASKS_V2_DEADLINE_TWO_WEEKS')
+				}];
+			}
+		},
+		created() {
+			this.deadlineAfter = this.task?.deadlineAfter;
+		},
+		methods: {
+			applyPreset(preset) {
+				this.$emit('update', preset);
+				this.$emit('close');
+			}
+		},
+		template: `
 		<div class="tasks-field-deadline-after-header">
 			<TextSm>{{ loc('TASKS_V2_DEADLINE_AFTER_TEXT') }}</TextSm>
 			<QuestionMark :hintText="loc('TASKS_V2_DEADLINE_AFTER_HINT')"/>
@@ -895,48 +889,48 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const DeadlineAfterPopup = {
-	  components: {
-	    Popup: ui_vue3_components_popup.Popup,
-	    DeadlineAfterPopupContent
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    deadlineAfter: {
-	      type: [Number, null],
-	      required: true
-	    },
-	    presetId: {
-	      type: [String, null],
-	      default: null
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    }
-	  },
-	  emits: ['update:deadlineAfter', 'update:presetId', 'close'],
-	  computed: {
-	    options() {
-	      return {
-	        id: `tasks-field-deadline-after-popup-${this.taskId}`,
-	        bindElement: this.bindElement,
-	        width: 300,
-	        padding: 24,
-	        offsetTop: 5,
-	        targetContainer: document.body
-	      };
-	    }
-	  },
-	  methods: {
-	    handleUpdate(preset) {
-	      this.$emit('update:deadlineAfter', preset.duration);
-	      this.$emit('update:presetId', preset.id);
-	    }
-	  },
-	  template: `
+		components: {
+			Popup: ui_vue3_components_popup.Popup,
+			DeadlineAfterPopupContent
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			deadlineAfter: {
+				type: [Number, null],
+				required: true
+			},
+			presetId: {
+				type: [String, null],
+				default: null
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			}
+		},
+		emits: ['update:deadlineAfter', 'update:presetId', 'close'],
+		computed: {
+			options() {
+				return {
+					id: `tasks-field-deadline-after-popup-${this.taskId}`,
+					bindElement: this.bindElement,
+					width: 300,
+					padding: 24,
+					offsetTop: 5,
+					targetContainer: document.body
+				};
+			}
+		},
+		methods: {
+			handleUpdate(preset) {
+				this.$emit('update:deadlineAfter', preset.duration);
+				this.$emit('update:presetId', preset.id);
+			}
+		},
+		template: `
 		<Popup
 			v-slot="{ freeze, unfreeze }"
 			:options
@@ -948,343 +942,343 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	};
 
 	const deadlineMeta = Object.freeze({
-	  id: tasks_v2_const.TaskField.Deadline,
-	  title: main_core.Loc.getMessage('TASKS_V2_DEADLINE_TITLE')
+		id: tasks_v2_const.TaskField.Deadline,
+		title: main_core.Loc.getMessage('TASKS_V2_DEADLINE_TITLE')
 	});
 
-	const unitDurations$1 = main_date.DurationFormat.getUnitDurations();
+	const unitDurations = main_date.DurationFormat.getUnitDurations();
 
 	// @vue/component
 	const Deadline = {
-	  components: {
-	    TextMd: ui_system_typography_vue.TextMd,
-	    Text2Xs: ui_system_typography_vue.Text2Xs,
-	    Hint: tasks_v2_component_elements_hint.Hint,
-	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    DeadlinePopup,
-	    DeadlineAfterPopup,
-	    DeadlineChangeReasonPopup,
-	    SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel,
-	    TaskSettingsPopup: tasks_v2_component_taskSettingsPopup.TaskSettingsPopup,
-	    DeadlineDefaultView,
-	    DeadlineChipView
-	  },
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    isTemplate: {
-	      type: Boolean,
-	      default: false
-	    },
-	    isAutonomous: {
-	      type: Boolean,
-	      default: false
-	    },
-	    isHovered: {
-	      type: Boolean,
-	      default: false
-	    },
-	    compact: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['isSettingsPopupShown'],
-	  setup() {
-	    return {
-	      deadlineMeta,
-	      DeadlineState: tasks_v2_const.DeadlineState
-	    };
-	  },
-	  data() {
-	    return {
-	      nowTs: Date.now(),
-	      isFieldHovered: false,
-	      isPopupShown: false,
-	      isSettingsPopupShown: false,
-	      isExceededHintShown: false,
-	      isChangeReasonPopupShown: false,
-	      dateTs: null,
-	      externalBindElement: null,
-	      coordinates: null,
-	      saveCallback: null,
-	      changeReason: '',
-	      selectedPreset: null
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
-	    },
-	    taskStatus() {
-	      return this.task.status;
-	    },
-	    isEdit() {
-	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
-	    },
-	    taskDeadline() {
-	      return this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
-	    },
-	    deadlineTs() {
-	      var _this$dateTs;
-	      return (_this$dateTs = this.dateTs) != null ? _this$dateTs : this.taskDeadline;
-	    },
-	    expiredDuration() {
-	      const isCompleted = this.taskStatus === tasks_v2_const.TaskStatus.Completed || this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted;
-	      const cannotExpire = this.isTemplate || !this.deadlineTs || this.isFlowFilledOnAdd || isCompleted;
-	      return cannotExpire ? 0 : this.nowTs - this.deadlineTs;
-	    },
-	    isExpired() {
-	      return this.expiredDuration > 0;
-	    },
-	    deadlineFormatted() {
-	      if (this.isFlowFilledOnAdd) {
-	        return this.loc('TASKS_V2_DEADLINE_AUTO');
-	      }
-	      if (!this.deadlineTs) {
-	        return this.loc('TASKS_V2_DEADLINE_EMPTY');
-	      }
-	      if (this.isTemplate) {
-	        return tasks_v2_lib_calendar.calendar.formatDuration(this.deadlineTs, this.task.matchesWorkTime);
-	      }
-	      if (this.isExpired && this.compact) {
-	        return this.loc('TASKS_V2_TASK_LIST_DEADLINE_EXPIRED', {
-	          '#DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
-	        });
-	      }
-	      return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
-	    },
-	    deadlineFormattedForPrint() {
-	      if (this.isFlowFilledOnAdd) {
-	        return this.loc('TASKS_V2_DEADLINE_AUTO');
-	      }
-	      if (!this.deadlineTs) {
-	        return this.loc('TASKS_V2_DEADLINE_EMPTY');
-	      }
-	      if (this.isTemplate) {
-	        return tasks_v2_lib_calendar.calendar.formatDuration(this.deadlineTs, this.task.matchesWorkTime);
-	      }
-	      return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
-	    },
-	    bindElement() {
-	      var _this$externalBindEle;
-	      return (_this$externalBindEle = this.externalBindElement) != null ? _this$externalBindEle : this.$refs.container;
-	    },
-	    isFlowFilledOnAdd() {
-	      return !this.isEdit && this.task.flowId > 0;
-	    },
-	    readonly() {
-	      if (this.isCompactReadonly) {
-	        return true;
-	      }
-	      return !this.task.rights.deadline || this.exceededChangeCount || this.isFlowFilledOnAdd;
-	    },
-	    isCompactReadonly() {
-	      return this.compact && [tasks_v2_const.TaskStatus.Completed, tasks_v2_const.TaskStatus.SupposedlyCompleted, tasks_v2_const.TaskStatus.Deferred].includes(this.taskStatus);
-	    },
-	    canChangeDeadlineWithoutLimitation() {
-	      const isCreator = tasks_v2_core.Core.getParams().currentUser.id === this.task.creatorId;
-	      return !this.isEdit || isCreator || this.task.rights.edit || tasks_v2_core.Core.getParams().rights.user.admin;
-	    },
-	    requireChangeReason() {
-	      return this.task.requireDeadlineChangeReason && !this.canChangeDeadlineWithoutLimitation;
-	    },
-	    exceededChangeCount() {
-	      if (this.isTemplate || this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChanges) {
-	        return false;
-	      }
-	      return this.task.deadlineChangeCount >= this.task.maxDeadlineChanges;
-	    },
-	    canChangeTooltip() {
-	      if (this.isCompactReadonly) {
-	        return null;
-	      }
-	      if (!this.isEdit || !this.readonly || this.exceededChangeCount || this.task.allowsChangeDeadline) {
-	        return null;
-	      }
-	      return () => tasks_v2_component_elements_hint.tooltip({
-	        text: this.loc('TASKS_V2_DEADLINE_CAN_CHANGE_HINT'),
-	        popupOptions: {
-	          width: 280,
-	          offsetLeft: this.hintAngleOffset + 3
-	        }
-	      });
-	    },
-	    hintBindElement() {
-	      var _this$$refs$deadlineV, _this$$refs$deadlineV2;
-	      return (_this$$refs$deadlineV = (_this$$refs$deadlineV2 = this.$refs.deadlineView) == null ? void 0 : _this$$refs$deadlineV2.getHintBindElement == null ? void 0 : _this$$refs$deadlineV2.getHintBindElement()) != null ? _this$$refs$deadlineV : this.$refs.container;
-	    },
-	    hintAngleOffset() {
-	      return this.hintBindElement.offsetWidth / 2;
-	    }
-	  },
-	  watch: {
-	    async isSettingsPopupShown(value) {
-	      if (this.isTemplate && value === false) {
-	        await this.$nextTick();
-	        this.recalculateDeadlineAfterFromPresets();
-	      }
-	      this.$emit('isSettingsPopupShown', value);
-	    }
-	  },
-	  mounted() {
-	    tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
-	    this.nowTsInterval = setInterval(() => {
-	      this.nowTs = Date.now();
-	    }, 1000);
-	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
-	  },
-	  created() {
-	    this.showErrorDebounce = main_core.Runtime.debounce(this.showError, 300);
-	    if (this.isTemplate) {
-	      this.setCurrentPreset();
-	    }
-	  },
-	  updated() {
-	    tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
-	  },
-	  beforeUnmount() {
-	    clearInterval(this.nowTsInterval);
-	    main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
-	  },
-	  methods: {
-	    handleOpenDeadlinePickerEvent(event) {
-	      const {
-	        taskId,
-	        bindElement,
-	        coordinates
-	      } = event.getData();
-	      if (Number(taskId) === Number(this.taskId)) {
-	        this.showPopup(bindElement, coordinates);
-	      }
-	    },
-	    handleClick() {
-	      if (!this.readonly) {
-	        this.showPopup();
-	      }
-	    },
-	    handleApplyPreset(presetId) {
-	      var _Object$values$find;
-	      this.selectedPreset = (_Object$values$find = Object.values(Presets).find(preset => preset.id === presetId)) != null ? _Object$values$find : null;
-	    },
-	    showPopup(bindElement, coordinates) {
-	      this.dateTs = this.deadlineTs;
-	      this.externalBindElement = bindElement;
-	      this.coordinates = coordinates;
-	      this.isPopupShown = true;
-	    },
-	    handleCrossClick() {
-	      if (this.requireChangeReason) {
-	        this.isChangeReasonPopupShown = true;
-	        this.saveCallback = this.clearDeadline;
-	      } else {
-	        void this.clearDeadline();
-	      }
-	    },
-	    handleClose() {
-	      var _this$$refs;
-	      if (this.requireChangeReason && this.dateTs && this.dateTs !== this.taskDeadline) {
-	        this.isChangeReasonPopupShown = true;
-	        this.saveCallback = this.saveDeadline;
-	      } else {
-	        void this.saveDeadline();
-	      }
-	      this.isPopupShown = false;
-	      if ((_this$$refs = this.$refs) != null && _this$$refs.deadlineView) {
-	        this.$refs.deadlineView.focusDeadline();
-	      }
-	    },
-	    async handleChangeReasonPopupClose() {
-	      this.isChangeReasonPopupShown = false;
-	      await this.saveCallback();
-	      this.saveCallback = null;
-	    },
-	    handleKeydown(event) {
-	      if (event.key === 'Enter' && !(event.ctrlKey || event.metaKey)) {
-	        void this.handleClick();
-	      }
-	    },
-	    async saveDeadline() {
-	      if (this.requireChangeReason && this.changeReason === '') {
-	        return;
-	      }
-	      if (this.dateTs) {
-	        await this.setDeadline(this.dateTs);
-	      }
-	      if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges) {
-	        void tasks_v2_provider_service_deadlineService.deadlineService.updateDeadlineChangeCount(this.task.id);
-	      }
-	    },
-	    async clearDeadline() {
-	      if (this.requireChangeReason && this.changeReason === '') {
-	        return;
-	      }
-	      await this.setDeadline(0);
-	    },
-	    async setDeadline(dateTs) {
-	      if (this.isTemplate) {
-	        await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	          deadlineAfter: dateTs
-	        });
-	      } else {
-	        var _result$Endpoint$Task;
-	        tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
-	        const result = await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	          deadlineTs: dateTs,
-	          deadlineChangeReason: this.changeReason
-	        });
-	        tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
-	        if ((_result$Endpoint$Task = result[tasks_v2_const.Endpoint.TaskDeadlineUpdate]) != null && _result$Endpoint$Task.length) {
-	          const error = result[tasks_v2_const.Endpoint.TaskDeadlineUpdate][0];
-	          this.showErrorDebounce(error);
-	        }
-	      }
-	      this.dateTs = null;
-	    },
-	    recalculateDeadlineAfterFromPresets() {
-	      var _this$$refs$deadline, _this$$refs$deadline$;
-	      if (!this.selectedPreset) {
-	        return;
-	      }
-	      this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
-	      void this.saveDeadline();
-	      (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline$ = _this$$refs$deadline.$el) == null ? void 0 : _this$$refs$deadline$.focus();
-	    },
-	    calculateDayDuration() {
-	      var _this$task;
-	      return (_this$task = this.task) != null && _this$task.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations$1.d;
-	    },
-	    setCurrentPreset() {
-	      var _Object$values$find2;
-	      const dayDuration = this.calculateDayDuration();
-	      this.selectedPreset = (_Object$values$find2 = Object.values(Presets).find(preset => this.deadlineTs === dayDuration * preset.multiplier)) != null ? _Object$values$find2 : null;
-	    },
-	    showError(error) {
-	      ui_notificationManager.Notifier.notifyViaBrowserProvider({
-	        id: 'task-notify-deadline-update-error',
-	        text: error == null ? void 0 : error.message
-	      });
-	    },
-	    mouseover() {
-	      this.isFieldHovered = true;
-	      if (this.compact) {
-	        this.isExceededHintShown = true;
-	      }
-	    },
-	    mouseleave() {
-	      this.isFieldHovered = false;
-	      if (this.compact) {
-	        this.isExceededHintShown = false;
-	      }
-	    }
-	  },
-	  template: `
+		components: {
+			TextMd: ui_system_typography_vue.TextMd,
+			Text2Xs: ui_system_typography_vue.Text2Xs,
+			Hint: tasks_v2_component_elements_hint.Hint,
+			HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+			BIcon: ui_iconSet_api_vue.BIcon,
+			DeadlinePopup,
+			DeadlineAfterPopup,
+			DeadlineChangeReasonPopup,
+			SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel,
+			TaskSettingsPopup: tasks_v2_component_taskSettingsPopup.TaskSettingsPopup,
+			DeadlineDefaultView,
+			DeadlineChipView
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			isTemplate: {
+				type: Boolean,
+				default: false
+			},
+			isAutonomous: {
+				type: Boolean,
+				default: false
+			},
+			isHovered: {
+				type: Boolean,
+				default: false
+			},
+			compact: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['isSettingsPopupShown'],
+		setup() {
+			return {
+				deadlineMeta,
+				DeadlineState: tasks_v2_const.DeadlineState
+			};
+		},
+		data() {
+			return {
+				nowTs: Date.now(),
+				isFieldHovered: false,
+				isPopupShown: false,
+				isSettingsPopupShown: false,
+				isExceededHintShown: false,
+				isChangeReasonPopupShown: false,
+				isDeadlineDeniedHintShown: false,
+				dateTs: null,
+				externalBindElement: null,
+				coordinates: null,
+				saveCallback: null,
+				changeReason: '',
+				selectedPreset: null
+			};
+		},
+		computed: {
+			task() {
+				return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+			},
+			taskStatus() {
+				return this.task.status;
+			},
+			isEdit() {
+				return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
+			},
+			taskDeadline() {
+				return this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
+			},
+			deadlineTs() {
+				return this.dateTs ?? this.taskDeadline;
+			},
+			expiredDuration() {
+				const isCompleted = this.taskStatus === tasks_v2_const.TaskStatus.Completed || this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted;
+				const cannotExpire = this.isTemplate || !this.deadlineTs || this.isFlowFilledOnAdd || isCompleted;
+				return cannotExpire ? 0 : this.nowTs - this.deadlineTs;
+			},
+			isExpired() {
+				return this.expiredDuration > 0;
+			},
+			deadlineFormatted() {
+				if (this.isFlowFilledOnAdd) {
+					return this.loc('TASKS_V2_DEADLINE_AUTO');
+				}
+				if (!this.deadlineTs) {
+					return this.loc('TASKS_V2_DEADLINE_EMPTY');
+				}
+				if (this.isTemplate) {
+					return tasks_v2_lib_calendar.calendar.formatDuration(this.deadlineTs, this.task.matchesWorkTime);
+				}
+				if (this.isExpired && this.compact) {
+					return this.loc('TASKS_V2_TASK_LIST_DEADLINE_EXPIRED', {
+						'#DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
+					});
+				}
+				return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
+			},
+			deadlineFormattedForPrint() {
+				if (this.isFlowFilledOnAdd) {
+					return this.loc('TASKS_V2_DEADLINE_AUTO');
+				}
+				if (!this.deadlineTs) {
+					return this.loc('TASKS_V2_DEADLINE_EMPTY');
+				}
+				if (this.isTemplate) {
+					return tasks_v2_lib_calendar.calendar.formatDuration(this.deadlineTs, this.task.matchesWorkTime);
+				}
+				return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
+			},
+			bindElement() {
+				return this.externalBindElement ?? this.$refs.container;
+			},
+			isFlowFilledOnAdd() {
+				return !this.isEdit && this.task.flowId > 0;
+			},
+			readonly() {
+				if (this.isCompactReadonly) {
+					return true;
+				}
+				return !this.task.rights.deadline || this.exceededChangeCount || this.isFlowFilledOnAdd;
+			},
+			isCompactReadonly() {
+				return this.compact && [tasks_v2_const.TaskStatus.Completed, tasks_v2_const.TaskStatus.SupposedlyCompleted, tasks_v2_const.TaskStatus.Deferred].includes(this.taskStatus);
+			},
+			canChangeDeadlineWithoutLimitation() {
+				const isCreator = tasks_v2_core.Core.getParams().currentUser.id === this.task.creatorId;
+				return !this.isEdit || isCreator || this.task.rights.edit || tasks_v2_core.Core.getParams().rights.user.admin;
+			},
+			requireChangeReason() {
+				return this.task.requireDeadlineChangeReason && !this.canChangeDeadlineWithoutLimitation;
+			},
+			exceededChangeCount() {
+				if (this.isTemplate || this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChanges) {
+					return false;
+				}
+				return this.task.deadlineChangeCount >= this.task.maxDeadlineChanges;
+			},
+			canChangeTooltip() {
+				if (this.isCompactReadonly) {
+					return null;
+				}
+				if (!this.isEdit || !this.readonly || this.exceededChangeCount || this.task.allowsChangeDeadline || this.isDeadlineDeniedHintShown) {
+					return null;
+				}
+				return () => tasks_v2_component_elements_hint.tooltip({
+					text: this.loc('TASKS_V2_DEADLINE_CAN_CHANGE_HINT'),
+					popupOptions: {
+						width: 280,
+						offsetLeft: this.hintAngleOffset + 3
+					}
+				});
+			},
+			hintBindElement() {
+				return this.$refs.deadlineView?.getHintBindElement?.() ?? this.$refs.container;
+			},
+			hintAngleOffset() {
+				return this.hintBindElement.offsetWidth / 2;
+			}
+		},
+		watch: {
+			async isSettingsPopupShown(value) {
+				if (this.isTemplate && value === false) {
+					await this.$nextTick();
+					this.recalculateDeadlineAfterFromPresets();
+				}
+				this.$emit('isSettingsPopupShown', value);
+			}
+		},
+		mounted() {
+			tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
+			this.nowTsInterval = setInterval(() => {
+				this.nowTs = Date.now();
+			}, 1000);
+			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
+		},
+		created() {
+			this.showErrorDebounce = main_core.Runtime.debounce(this.showError, 300);
+			if (this.isTemplate) {
+				this.setCurrentPreset();
+			}
+		},
+		updated() {
+			tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
+		},
+		beforeUnmount() {
+			clearInterval(this.nowTsInterval);
+			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
+		},
+		methods: {
+			handleOpenDeadlinePickerEvent(event) {
+				const {
+					taskId
+				} = event.getData();
+				if (Number(taskId) === Number(this.taskId)) {
+					setTimeout(() => {
+						tasks_v2_lib_fieldHighlighter.fieldHighlighter.scrollToField(deadlineMeta.id);
+						if (!this.readonly) {
+							this.showPopup();
+						} else if (this.exceededChangeCount) {
+							this.isExceededHintShown = true;
+						} else {
+							this.isDeadlineDeniedHintShown = true;
+						}
+					}, 200);
+				}
+			},
+			handleClick() {
+				if (!this.readonly) {
+					this.showPopup();
+				}
+			},
+			handleApplyPreset(presetId) {
+				this.selectedPreset = Object.values(Presets).find(preset => preset.id === presetId) ?? null;
+			},
+			showPopup(bindElement, coordinates) {
+				this.dateTs = this.deadlineTs;
+				this.externalBindElement = bindElement;
+				this.coordinates = coordinates;
+				this.isPopupShown = true;
+			},
+			handleCrossClick() {
+				if (this.requireChangeReason) {
+					this.isChangeReasonPopupShown = true;
+					this.saveCallback = this.clearDeadline;
+				} else {
+					void this.clearDeadline();
+				}
+			},
+			handleClose() {
+				if (this.requireChangeReason && this.dateTs && this.dateTs !== this.taskDeadline) {
+					this.isChangeReasonPopupShown = true;
+					this.saveCallback = this.saveDeadline;
+				} else {
+					void this.saveDeadline();
+				}
+				this.isPopupShown = false;
+				if (this.$refs?.deadlineView) {
+					this.$refs.deadlineView.focusDeadline();
+				}
+			},
+			async handleChangeReasonPopupClose() {
+				this.isChangeReasonPopupShown = false;
+				await this.saveCallback();
+				this.saveCallback = null;
+			},
+			handleKeydown(event) {
+				if (event.key === 'Enter' && !(event.ctrlKey || event.metaKey)) {
+					void this.handleClick();
+				}
+			},
+			async saveDeadline() {
+				if (this.requireChangeReason && this.changeReason.trim() === '') {
+					this.dateTs = this.taskDeadline;
+					return;
+				}
+				if (this.dateTs) {
+					await this.setDeadline(this.dateTs);
+				}
+				if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges) {
+					void tasks_v2_provider_service_deadlineService.deadlineService.updateDeadlineChangeCount(this.task.id);
+				}
+			},
+			async clearDeadline() {
+				if (this.requireChangeReason && this.changeReason.trim() === '') {
+					return;
+				}
+				await this.setDeadline(0);
+			},
+			async setDeadline(dateTs) {
+				if (this.isTemplate) {
+					await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+						deadlineAfter: dateTs
+					});
+				} else {
+					tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
+					const result = await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+						deadlineTs: dateTs,
+						deadlineChangeReason: this.changeReason
+					});
+					tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
+					if (result[tasks_v2_const.Endpoint.TaskDeadlineUpdate]?.length) {
+						const error = result[tasks_v2_const.Endpoint.TaskDeadlineUpdate][0];
+						this.showErrorDebounce(error);
+					}
+				}
+				this.dateTs = null;
+			},
+			recalculateDeadlineAfterFromPresets() {
+				if (!this.selectedPreset) {
+					return;
+				}
+				this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
+				void this.saveDeadline();
+				this.$refs.deadline?.$el?.focus();
+			},
+			calculateDayDuration() {
+				return this.task?.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations.d;
+			},
+			setCurrentPreset() {
+				const dayDuration = this.calculateDayDuration();
+				this.selectedPreset = Object.values(Presets).find(preset => this.deadlineTs === dayDuration * preset.multiplier) ?? null;
+			},
+			showError(error) {
+				ui_notificationManager.Notifier.notifyViaBrowserProvider({
+					id: 'task-notify-deadline-update-error',
+					text: error?.message
+				});
+			},
+			mouseover() {
+				this.isFieldHovered = true;
+				if (this.compact) {
+					this.isExceededHintShown = true;
+				}
+			},
+			mouseleave() {
+				this.isFieldHovered = false;
+				if (this.compact) {
+					this.isExceededHintShown = false;
+				}
+			}
+		},
+		template: `
 		<div
 			class="tasks-field-deadline-wrapper"
 			:data-task-id="taskId"
@@ -1372,13 +1366,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<span>{{ loc('TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_2') }}</span>
 			</div>
 		</Hint>
+		<Hint
+			v-if="isDeadlineDeniedHintShown"
+			:bindElement="hintBindElement"
+			:options="{
+				width: 280,
+				offsetLeft: hintAngleOffset + 3,
+				closeIcon: false,
+			}"
+			@close="isDeadlineDeniedHintShown = false"
+		>
+			{{ loc('TASKS_V2_DEADLINE_CAN_CHANGE_HINT') }}
+		</Hint>
 	`
 	};
 
 	exports.Deadline = Deadline;
-	exports.DeadlinePopup = DeadlinePopup;
 	exports.DeadlineAfterPopup = DeadlineAfterPopup;
+	exports.DeadlinePopup = DeadlinePopup;
 	exports.deadlineMeta = deadlineMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Event,BX.UI.NotificationManager,BX.Vue3.Directives,BX.Tasks.V2.Component,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.UI.DatePicker,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.UI.System.Input.Vue,BX,BX.Vue3.Components,BX,BX.UI.Vue3.Components,BX.Main,BX.UI.System.Typography.Vue,BX.UI.System.Chip.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Main, BX.Event, BX.UI.NotificationManager, BX.Vue3.Directives, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.UI.System.Chip.Vue, BX.UI.Vue3.Components, BX.Vue3.Vuex, BX.UI.DatePicker, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.UI.System.Input.Vue, BX.Vue3.Components, BX, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements);
 //# sourceMappingURL=deadline.bundle.js.map

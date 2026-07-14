@@ -26,7 +26,6 @@ export const DescriptionField = {
 		DescriptionPreview,
 		DescriptionSheet,
 	},
-	expose: ['save'],
 	inject: {
 		task: {},
 		isEdit: {},
@@ -45,6 +44,7 @@ export const DescriptionField = {
 			required: true,
 		},
 	},
+	expose: ['save'],
 	// eslint-disable-next-line max-len
 	setup(props): { task: TaskModel, fileService: FileService, uploaderAdapter: VueUploaderAdapter, entityTextEditor: EntityTextEditor }
 	{
@@ -69,6 +69,10 @@ export const DescriptionField = {
 		{
 			return this.task.description ?? '';
 		},
+		taskFileIds(): Array
+		{
+			return this.task.fileIds ?? [];
+		},
 		taskDescriptionChecksum(): string
 		{
 			return this.task.descriptionChecksum ?? '';
@@ -77,15 +81,15 @@ export const DescriptionField = {
 		{
 			return !this.task.rights.edit;
 		},
-		filesCount(): number
+		taskFilesCount(): number
 		{
-			return this.files.length;
+			return this.taskFileIds.length;
 		},
 		shouldShowDescriptionField(): boolean
 		{
 			return !this.readonly
 				|| this.taskDescription.length > 0
-				|| (this.filesCount > 0 && !this.readonly)
+				|| (this.taskFilesCount > 0 && !this.readonly)
 			;
 		},
 		shouldShowMiniForm(): boolean
@@ -94,11 +98,14 @@ export const DescriptionField = {
 		},
 		shouldShowMiniFormButton(): boolean
 		{
-			return this.isEdit && this.filesCount === 0 && this.taskDescription.length === 0;
+			return this.isEdit && this.taskFilesCount === 0 && this.taskDescription.length === 0;
 		},
 		shouldShowDescriptionPreview(): boolean
 		{
-			return this.isEdit && (this.taskDescription.length > 0 || this.filesCount > 0);
+			return this.isEdit
+				&& !this.isSheetShown
+				&& (this.taskDescription.length > 0 || this.taskFilesCount > 0)
+			;
 		},
 		miniFormStyle(): Object | null
 		{
@@ -130,6 +137,14 @@ export const DescriptionField = {
 	{
 		this.entityTextEditor.setEditorText(this.taskDescription);
 		this.updateChecksum();
+
+		this.fileService.subscribe('onFileRemove', this.onFileRemove);
+		this.fileService.subscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
+	},
+	beforeUnmount(): void
+	{
+		this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
+		this.fileService.unsubscribe('onFilesDetachComplete', this.reloadTaskOnFileRemove);
 	},
 	methods: {
 		expandDescription(): void
@@ -144,17 +159,23 @@ export const DescriptionField = {
 			}
 
 			this.updateChecksum();
+			this.fileService.beginDraft();
 
 			this.setSheetShown(true);
 		},
 		async closeEditMode(): void
 		{
-			this.setSheetShown(false);
-
 			this.hasFilesChanges = false;
 			this.enableSaveButton = false;
 
+			if (this.fileService.isDraftActive())
+			{
+				await this.fileService.commitDraft();
+			}
+
 			await this.handleSave();
+
+			this.setSheetShown(false);
 		},
 		async addCheckListFromSheet(checklistString: string): void
 		{
@@ -293,6 +314,22 @@ export const DescriptionField = {
 		{
 			this.checksum = this.taskDescriptionChecksum;
 		},
+		reloadTaskOnFileRemove(): void
+		{
+			if (this.fileService.isDraftActive())
+			{
+				return;
+			}
+
+			void taskService.get(this.taskId);
+		},
+		onFileRemove(): void
+		{
+			if (!this.isEdit)
+			{
+				setTimeout(this.handleTextChanges, 500);
+			}
+		},
 	},
 	template: `
 		<div
@@ -303,7 +340,7 @@ export const DescriptionField = {
 		>
 			<MiniFormButton
 				v-if="shouldShowMiniFormButton"
-				:filesCount
+				:filesCount="taskFilesCount"
 				@click="openEditMode"
 			/>
 			<MiniForm

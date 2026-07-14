@@ -1,1 +1,500 @@
-this.BX=this.BX||{},function(e,t,s,i,n){"use strict";class r{constructor(e){this.scrumMeetings=null,this.scrumMethodology=null,this.init(e)}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.urls=t.Type.isPlainObject(e.urls)?e.urls:{};const s=document.getElementById("tasks-scrum-meetings-button");s&&s.addEventListener("click",this.showScrumMeetings.bind(this));const i=document.getElementById("tasks-scrum-methodology-button");i&&i.addEventListener("click",this.showScrumMethodology.bind(this))}showScrumMeetings(e){e.target.classList.add("ui-btn-wait"),t.Runtime.loadExtension("tasks.scrum.meetings").then(t=>{const{Meetings:s}=t;null===this.scrumMeetings&&(this.scrumMeetings=new s({groupId:this.groupId})),this.scrumMeetings.showMenu(e.target),e.target.classList.remove("ui-btn-wait")}),e.preventDefault()}showScrumMethodology(e){e.target.classList.add("ui-btn-wait"),t.Runtime.loadExtension("tasks.scrum.methodology").then(t=>{const{Methodology:s}=t;null===this.scrumMethodology&&(this.scrumMethodology=new s({groupId:this.groupId,teamSpeedPath:this.urls.ScrumTeamSpeed,burnDownPath:this.urls.ScrumBurnDown,pathToTask:this.urls.TasksTask})),this.scrumMethodology.showMenu(e.target),e.target.classList.remove("ui-btn-wait")}),e.preventDefault()}}class o{constructor(e){this.projectWidgetInstance=null,this.init(e)}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.avatarPath=t.Type.isStringFilled(e.avatarPath)?e.avatarPath:"",this.avatarType=t.Type.isStringFilled(e.avatarType)?e.avatarType:"",this.projectTypeCode=t.Type.isStringFilled(e.projectTypeCode)?e.projectTypeCode:"",this.canModify=!!t.Type.isBoolean(e.canModify)&&e.canModify,this.editFeaturesAllowed=!t.Type.isBoolean(e.editFeaturesAllowed)||e.editFeaturesAllowed,this.urls=t.Type.isPlainObject(e.urls)?e.urls:{};const s=document.getElementById("project-widget-button");s&&s.addEventListener("click",this.showProjectWidget.bind(this))}showProjectWidget(e){null===this.projectWidgetInstance&&(this.projectWidgetInstance=new s.WorkgroupWidget({groupId:this.groupId,avatarPath:this.avatarPath,avatarType:this.avatarType,projectTypeCode:this.projectTypeCode,perms:{canModify:this.canModify},urls:{card:this.urls.Card,members:this.urls.GroupUsers,features:this.urls.Features},editRolesAllowed:this.editFeaturesAllowed})),this.projectWidgetInstance.show(e.currentTarget),this.projectWidgetInstance.widget&&this.projectWidgetInstance.widget.getPopup()&&BX.UI.Hint.init(this.projectWidgetInstance.widget.getPopup().getContentContainer()),e.preventDefault()}}class u{constructor(e){this.init(e)}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.inIframe=!t.Type.isUndefined(e.inIframe)&&!!e.inIframe;const s=document.getElementById("group-menu-control-button-cont");s&&t.Runtime.loadExtension("intranet.control-button").then(e=>{const{ControlButton:t}=e;new t({container:s,entityType:"workgroup",entityId:this.groupId,airDesign:!0})})}}class a{constructor(e,s){this.moreButtonInstance=t.Type.isUndefined(s.moreButtonInstance)?null:s.moreButtonInstance,this.init(e)}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.urls=t.Type.isPlainObject(e.urls)?e.urls:{},i.EventEmitter.subscribe("SidePanel.Slider:onMessage",e=>{const[t]=e.getCompatData();"sonetGroupEvent"===t.getEventId()&&this.sonetGroupEventHandler(t.getData())}),i.EventEmitter.subscribe("sonetGroupEvent",e=>{const[t]=e.getCompatData();this.sonetGroupEventHandler(t)})}sonetGroupEventHandler(e){if(t.Type.isStringFilled(e.code))if(["afterJoinRequestSend","afterEdit"].includes(e.code)){const e=document.getElementById("bx-group-menu-join-cont");e&&(e.style.display="none"),s.Common.reload()}else if(["afterSetFavorites"].includes(e.code)){const e=null===s.GroupMenu||void 0===s.GroupMenu?void 0:s.GroupMenu.getInstance();if(e){const t=e.favoritesValue;e.setItemTitle(!t),e.favoritesValue=!t}}else["afterDelete","afterLeave"].includes(e.code)&&t.Type.isPlainObject(e.data)&&!t.Type.isUndefined(e.data.groupId)&&Number(e.data.groupId)===this.groupId?top.location.href=this.urls.GroupsList:["afterSetSubscribe"].includes(e.code)&&t.Type.isPlainObject(e.data)&&!t.Type.isUndefined(e.data.groupId)&&Number(e.data.groupId)===this.groupId&&this.moreButtonInstance&&this.moreButtonInstance.redrawMenu(e.data.value)}}class c{constructor(e){this.init(e)}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.urls=t.Type.isPlainObject(e.urls)?e.urls:{};const s=document.getElementById("bx-group-menu-join");s&&s.addEventListener("click",this.sendJoinRequest.bind(this))}sendJoinRequest(e){const n=e.currentTarget;s.Common.showButtonWait(n),t.ajax.runAction("socialnetwork.api.usertogroup.join",{data:{params:{groupId:this.groupId}}}).then(e=>{if(s.Common.hideButtonWait(n),e.data.success&&t.Type.isStringFilled(this.urls.view)){const e={code:"afterJoinRequestSend",data:{groupId:this.groupId}};i.EventEmitter.emit(window.top,"sonetGroupEvent",new i.BaseEvent({compatData:[e],data:[e]})),window.location.href=this.urls.view}},()=>{s.Common.hideButtonWait(n)})}}class d{constructor(e){this.init(e)}init(e){this.pageId=t.Type.isStringFilled(e.pageId)?e.pageId:"",this.currentUserId=t.Type.isUndefined(e.currentUserId)?0:Number(e.currentUserId),this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.isRoleControlDisabled=!t.Type.isUndefined(e.isRoleControlDisabled)&&Boolean(e.isRoleControlDisabled);i.EventEmitter.subscribe("onPullEvent-tasks",(e,t)=>{"user_counter"===e&&this.onUserCounter(t)},{compatMode:!0}),"group_tasks"===this.pageId&&(document.querySelectorAll(".tasks_role_link").forEach(e=>{e.addEventListener("click",this.onTaskMenuItemClick.bind(this))}),i.EventEmitter.subscribe("BX.Main.Filter:apply",e=>{const[t,s,i]=e.getCompatData();this.onFilterApply(t,s,i)}))}onTaskMenuItemClick(e){const t=e.currentTarget;e.preventDefault();const s="view_all"===t.dataset.id?"":t.dataset.id,n=t.dataset.url;i.EventEmitter.emit("Tasks.TopMenu:onItem",new i.BaseEvent({compatData:[s,n],data:[s,n]})),document.querySelectorAll(".tasks_role_link").forEach(e=>{e.classList.remove("main-buttons-item-active")}),t.classList.add("main-buttons-item-active")}onUserCounter(e){this.currentUserId===Number(e.userId)&&Object.prototype.hasOwnProperty.call(e,this.groupId)&&Object.keys(e[this.groupId]).forEach(t=>{const s=document.getElementById("group_panel_menu_".concat(this.groupId?this.groupId+"_":"").concat(t));s&&(s.querySelector(".main-buttons-item-counter").innerText=this.getCounterValue(e[this.groupId][t].total))})}getCounterValue(e){if(!e)return"";return e>99?"".concat(99,"+"):e}onFilterApply(e,s,i){if(this.isRoleControlDisabled)return;let n=i.getFilterFieldsValues().ROLEID;document.querySelectorAll(".tasks_role_link").forEach(e=>{e.classList.remove("main-buttons-item-active")}),!t.Type.isUndefined(n)&&n||(n="view_all");const r=document.getElementById("group_panel_menu_".concat(this.groupId,"_").concat(n));r&&r.classList.add("main-buttons-item-active")}}class l{constructor(e){return this.menu=null,this.class={activeItem:"menu-popup-item-sgm-accept-sm",inactiveItem:"menu-popup-item-sgm-empty-sm"},this.init(e),this}init(e){this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.bindingMenuItems=t.Type.isObject(e.bindingMenuItems)?Object.values(e.bindingMenuItems):[],this.userIsMember=!!t.Type.isBoolean(e.userIsMember)&&e.userIsMember,this.subscribedValue=!!t.Type.isBoolean(e.subscribedValue)&&e.subscribedValue;const s=document.getElementById("group-menu-more-button");s&&s.addEventListener("click",this.showMoreMenu.bind(this))}showMoreMenu(e){e.preventDefault();const s=[];this.bindingMenuItems.forEach(e=>{s.push(e)});const i=[];if(this.userIsMember&&(i.push({id:"subscribe",text:t.Loc.getMessage("SONET_SGM_T_MORE_MENU_SUBSCRIBE"),className:this.subscribedValue?this.class.activeItem:this.class.inactiveItem,onclick:()=>{this.setSubscription(!0)}}),i.push({id:"unsubscribe",text:t.Loc.getMessage("SONET_SGM_T_MORE_MENU_UNSUBSCRIBE"),className:this.subscribedValue?this.class.inactiveItem:this.class.activeItem,onclick:()=>{this.setSubscription(!1)}})),s.length>0&&(i.length>0&&i.push({delimiter:!0}),i.push({text:t.Loc.getMessage("SONET_SGM_T_MORE_MENU_BINDING"),items:s})),i.length<=0)return;const r=e.target;this.menu=n.MenuManager.create({id:"group-more-menu",offsetTop:5,offsetLeft:r.offsetWidth-18,angle:!0,items:i,events:{onPopupClose:()=>{"BUTTON"===r.tagName&&r.classList.remove("ui-btn-active")}},subMenuOptions:{}}),this.menu.popupWindow.setBindElement(r),this.menu.popupWindow.show()}setSubscription(e){this.redrawMenu(e),t.ajax.runAction("socialnetwork.api.workgroup.setSubscription",{data:{params:{groupId:this.groupId,value:e?"Y":"N"}}}).then(e=>{const t={code:"afterSetSubscribe",data:{groupId:this.groupId,value:"Y"===e.RESULT}};window.top.BX.SidePanel.Instance.postMessageAll(window,"sonetGroupEvent",t)}).catch(()=>{this.redrawMenu(!e)})}redrawMenu(e){if(!this.menu)return;const t=this.menu.getMenuItem(e?"subscribe":"unsubscribe"),s=this.menu.getMenuItem(e?"unsubscribe":"subscribe");t&&(t.layout.item.classList.remove(this.class.inactiveItem),t.layout.item.classList.add(this.class.activeItem)),s&&(s.layout.item.classList.remove(this.class.activeItem),s.layout.item.classList.add(this.class.inactiveItem))}}e.GroupMenu=class{constructor(e){this.initialized=!1,this.moreButtonInstance=null,this.init(e)}init(e){if(!0===this.initialized)return;this.initialized=!0,this.pageId=t.Type.isStringFilled(e.pageId)?e.pageId:"",this.currentUserId=t.Type.isUndefined(e.currentUserId)?0:Number(e.currentUserId),this.groupId=t.Type.isUndefined(e.groupId)?0:Number(e.groupId),this.groupType=t.Type.isStringFilled(e.groupType)?e.groupType:"",this.projectTypeCode=t.Type.isStringFilled(e.projectTypeCode)?e.projectTypeCode:"",this.userRole=t.Type.isStringFilled(e.userRole)?e.userRole:"",this.userIsMember=!!t.Type.isBoolean(e.userIsMember)&&e.userIsMember,this.userIsAutoMember=!!t.Type.isBoolean(e.userIsAutoMember)&&e.userIsAutoMember,this.userIsScrumMaster=!!t.Type.isBoolean(e.userIsScrumMaster)&&e.userIsScrumMaster,this.isProject=!!t.Type.isBoolean(e.isProject)&&e.isProject,this.isScrumProject=!!t.Type.isBoolean(e.isScrumProject)&&e.isScrumProject,this.isOpened=!!t.Type.isBoolean(e.isOpened)&&e.isOpened,this.favoritesValue=!!t.Type.isBoolean(e.favoritesValue)&&e.favoritesValue,this.canInitiate=!!t.Type.isBoolean(e.canInitiate)&&e.canInitiate,this.canModify=!!t.Type.isBoolean(e.canModify)&&e.canModify,this.canProcessRequestsIn=!!t.Type.isBoolean(e.canProcessRequestsIn)&&e.canProcessRequestsIn,this.canPickTheme=!!t.Type.isBoolean(e.canPickTheme)&&e.canPickTheme,this.avatarPath=t.Type.isStringFilled(e.avatarPath)?e.avatarPath:"",this.avatarType=t.Type.isStringFilled(e.avatarType)?e.avatarType:"",this.urls=t.Type.isPlainObject(e.urls)?e.urls:{},this.editFeaturesAllowed=!t.Type.isBoolean(e.editFeaturesAllowed)||e.editFeaturesAllowed,this.copyFeatureAllowed=!t.Type.isBoolean(e.copyFeatureAllowed)||e.copyFeatureAllowed,new c(e),new u(e),new r(e),new o(e),new d(e),this.moreButtonInstance=new l(e),new a(e,{moreButtonInstance:this.moreButtonInstance});const i=document.getElementById("bx-group-menu-settings");if(i){s.GroupMenu.getInstance().favoritesValue=this.favoritesValue,i.addEventListener("click",this.showMenu.bind(this))}}showMenu(e){s.Common.showGroupMenuPopup({bindElement:e.currentTarget,groupId:this.groupId,groupType:this.groupType,userRole:this.userRole,userIsMember:this.userIsMember,userIsAutoMember:this.userIsAutoMember,userIsScrumMaster:this.userIsScrumMaster,isProject:this.isProject,isScrumProject:this.isScrumProject,isOpened:this.isOpened,editFeaturesAllowed:this.editFeaturesAllowed,copyFeatureAllowed:this.copyFeatureAllowed,canPickTheme:this.canPickTheme,perms:{canInitiate:this.canInitiate,canProcessRequestsIn:this.canProcessRequestsIn,canModify:this.canModify},urls:{requestUser:t.Type.isStringFilled(this.urls.Invite)?this.urls.Invite:"".concat(this.urls.Edit).concat(this.urls.Edit.indexOf("?")>=0?"&":"?","tab=invite"),edit:"".concat(this.urls.Edit).concat(this.urls.Edit.indexOf("?")>=0?"&":"?","tab=edit"),delete:this.urls.Delete,features:this.urls.Features,members:this.urls.GroupUsers,requests:this.urls.GroupRequests,requestsOut:this.urls.GroupRequestsOut,userRequestGroup:this.urls.UserRequestGroup,userLeaveGroup:this.urls.UserLeaveGroup,copy:this.urls.Copy}}),e.preventDefault()}}}(this.BX.Intranet=this.BX.Intranet||{},BX,BX.Socialnetwork.UI,BX.Event,BX.Main);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, socialnetwork_common, main_core_events, main_popup) {
+	'use strict';
+
+	class Scrum {
+		constructor(params) {
+			this.scrumMeetings = null;
+			this.scrumMethodology = null;
+			this.init(params);
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
+			const scrumMeetingsButton = document.getElementById('tasks-scrum-meetings-button');
+			if (scrumMeetingsButton) {
+				scrumMeetingsButton.addEventListener('click', this.showScrumMeetings.bind(this));
+			}
+			const scrumMethodologyButton = document.getElementById('tasks-scrum-methodology-button');
+			if (scrumMethodologyButton) {
+				scrumMethodologyButton.addEventListener('click', this.showScrumMethodology.bind(this));
+			}
+		}
+		showScrumMeetings(event) {
+			event.target.classList.add('ui-btn-wait');
+			main_core.Runtime.loadExtension('tasks.scrum.meetings').then(exports => {
+				const {
+					Meetings
+				} = exports;
+				if (this.scrumMeetings === null) {
+					this.scrumMeetings = new Meetings({
+						groupId: this.groupId
+					});
+				}
+				this.scrumMeetings.showMenu(event.target);
+				event.target.classList.remove('ui-btn-wait');
+			});
+			event.preventDefault();
+		}
+		showScrumMethodology(event) {
+			event.target.classList.add('ui-btn-wait');
+			main_core.Runtime.loadExtension('tasks.scrum.methodology').then(exports => {
+				const {
+					Methodology
+				} = exports;
+				if (this.scrumMethodology === null) {
+					this.scrumMethodology = new Methodology({
+						groupId: this.groupId,
+						teamSpeedPath: this.urls.ScrumTeamSpeed,
+						burnDownPath: this.urls.ScrumBurnDown,
+						pathToTask: this.urls.TasksTask
+					});
+				}
+				this.scrumMethodology.showMenu(event.target);
+				event.target.classList.remove('ui-btn-wait');
+			});
+			event.preventDefault();
+		}
+	}
+
+	class Widget {
+		constructor(params) {
+			this.projectWidgetInstance = null;
+			this.init(params);
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.avatarPath = main_core.Type.isStringFilled(params.avatarPath) ? params.avatarPath : '';
+			this.avatarType = main_core.Type.isStringFilled(params.avatarType) ? params.avatarType : '';
+			this.projectTypeCode = main_core.Type.isStringFilled(params.projectTypeCode) ? params.projectTypeCode : '';
+			this.canModify = main_core.Type.isBoolean(params.canModify) ? params.canModify : false;
+			this.editFeaturesAllowed = main_core.Type.isBoolean(params.editFeaturesAllowed) ? params.editFeaturesAllowed : true;
+			this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
+			const projectWidgetButton = document.getElementById('project-widget-button');
+			if (projectWidgetButton) {
+				projectWidgetButton.addEventListener('click', this.showProjectWidget.bind(this));
+			}
+		}
+		showProjectWidget(event) {
+			if (this.projectWidgetInstance === null) {
+				this.projectWidgetInstance = new socialnetwork_common.WorkgroupWidget({
+					groupId: this.groupId,
+					avatarPath: this.avatarPath,
+					avatarType: this.avatarType,
+					projectTypeCode: this.projectTypeCode,
+					perms: {
+						canModify: this.canModify
+					},
+					urls: {
+						card: this.urls.Card,
+						members: this.urls.GroupUsers,
+						features: this.urls.Features
+					},
+					editRolesAllowed: this.editFeaturesAllowed
+				});
+			}
+			this.projectWidgetInstance.show(event.currentTarget);
+			if (this.projectWidgetInstance.widget && this.projectWidgetInstance.widget.getPopup()) {
+				BX.UI.Hint.init(this.projectWidgetInstance.widget.getPopup().getContentContainer());
+			}
+			event.preventDefault();
+		}
+	}
+
+	class ControlButton {
+		constructor(params) {
+			this.init(params);
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.inIframe = !main_core.Type.isUndefined(params.inIframe) ? !!params.inIframe : false;
+			const controlButtonContainer = document.getElementById('group-menu-control-button-cont');
+			if (controlButtonContainer) {
+				main_core.Runtime.loadExtension('intranet.control-button').then(exports => {
+					const {
+						ControlButton
+					} = exports;
+					new ControlButton({
+						container: controlButtonContainer,
+						entityType: 'workgroup',
+						entityId: this.groupId,
+						airDesign: true
+					});
+				});
+			}
+		}
+	}
+
+	class SonetGroupEvent {
+		constructor(params, additionalData) {
+			this.moreButtonInstance = !main_core.Type.isUndefined(additionalData.moreButtonInstance) ? additionalData.moreButtonInstance : null;
+			this.init(params);
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', event => {
+				const [sliderEvent] = event.getCompatData();
+				if (sliderEvent.getEventId() === 'sonetGroupEvent') {
+					this.sonetGroupEventHandler(sliderEvent.getData());
+				}
+			});
+			main_core_events.EventEmitter.subscribe('sonetGroupEvent', event => {
+				const [eventData] = event.getCompatData();
+				this.sonetGroupEventHandler(eventData);
+			});
+		}
+		sonetGroupEventHandler(eventData) {
+			if (!main_core.Type.isStringFilled(eventData.code)) {
+				return;
+			}
+			if (['afterJoinRequestSend', 'afterEdit'].includes(eventData.code)) {
+				const joinContainerNode = document.getElementById('bx-group-menu-join-cont');
+				if (joinContainerNode) {
+					joinContainerNode.style.display = 'none';
+				}
+				socialnetwork_common.Common.reload();
+			} else if (['afterSetFavorites'].includes(eventData.code)) {
+				const sonetGroupMenu = socialnetwork_common.GroupMenu?.getInstance();
+				if (sonetGroupMenu) {
+					const favoritesValue = sonetGroupMenu.favoritesValue;
+					sonetGroupMenu.setItemTitle(!favoritesValue);
+					sonetGroupMenu.favoritesValue = !favoritesValue;
+				}
+			} else if (['afterDelete', 'afterLeave'].includes(eventData.code) && main_core.Type.isPlainObject(eventData.data) && !main_core.Type.isUndefined(eventData.data.groupId) && Number(eventData.data.groupId) === this.groupId) {
+				top.location.href = this.urls.GroupsList;
+			} else if (['afterSetSubscribe'].includes(eventData.code) && main_core.Type.isPlainObject(eventData.data) && !main_core.Type.isUndefined(eventData.data.groupId) && Number(eventData.data.groupId) === this.groupId && this.moreButtonInstance) {
+				this.moreButtonInstance.redrawMenu(eventData.data.value);
+			}
+		}
+	}
+
+	class JoinButton {
+		constructor(params) {
+			this.init(params);
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
+			const joinButtonNode = document.getElementById('bx-group-menu-join');
+			if (joinButtonNode) {
+				joinButtonNode.addEventListener('click', this.sendJoinRequest.bind(this));
+			}
+		}
+		sendJoinRequest(event) {
+			const button = event.currentTarget;
+			socialnetwork_common.Common.showButtonWait(button);
+			main_core.ajax.runAction('socialnetwork.api.usertogroup.join', {
+				data: {
+					params: {
+						groupId: this.groupId
+					}
+				}
+			}).then(response => {
+				socialnetwork_common.Common.hideButtonWait(button);
+				if (response.data.success && main_core.Type.isStringFilled(this.urls.view)) {
+					const sonetGroupEventData = {
+						code: 'afterJoinRequestSend',
+						data: {
+							groupId: this.groupId
+						}
+					};
+					main_core_events.EventEmitter.emit(window.top, 'sonetGroupEvent', new main_core_events.BaseEvent({
+						compatData: [sonetGroupEventData],
+						data: [sonetGroupEventData]
+					}));
+					window.location.href = this.urls.view;
+				}
+			}, () => {
+				socialnetwork_common.Common.hideButtonWait(button);
+			});
+		}
+	}
+
+	class TaskEvent {
+		constructor(params) {
+			this.init(params);
+		}
+		init(params) {
+			this.pageId = main_core.Type.isStringFilled(params.pageId) ? params.pageId : '';
+			this.currentUserId = !main_core.Type.isUndefined(params.currentUserId) ? Number(params.currentUserId) : 0;
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.isRoleControlDisabled = !main_core.Type.isUndefined(params.isRoleControlDisabled) ? Boolean(params.isRoleControlDisabled) : false;
+			const compatMode = {
+				compatMode: true
+			};
+			main_core_events.EventEmitter.subscribe('onPullEvent-tasks', (command, params) => {
+				if (command === 'user_counter') {
+					this.onUserCounter(params);
+				}
+			}, compatMode);
+			if (this.pageId !== 'group_tasks') {
+				return;
+			}
+			document.querySelectorAll('.tasks_role_link').forEach(element => {
+				element.addEventListener('click', this.onTaskMenuItemClick.bind(this));
+			});
+			main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', event => {
+				const [filterId, data, ctx] = event.getCompatData();
+				this.onFilterApply(filterId, data, ctx);
+			});
+		}
+		onTaskMenuItemClick(event) {
+			const element = event.currentTarget;
+			event.preventDefault();
+			const roleId = element.dataset.id === 'view_all' ? '' : element.dataset.id;
+			const url = element.dataset.url;
+			main_core_events.EventEmitter.emit('Tasks.TopMenu:onItem', new main_core_events.BaseEvent({
+				compatData: [roleId, url],
+				data: [roleId, url]
+			}));
+			document.querySelectorAll('.tasks_role_link').forEach(element => {
+				element.classList.remove('main-buttons-item-active');
+			});
+			element.classList.add('main-buttons-item-active');
+		}
+		onUserCounter(data) {
+			if (this.currentUserId !== Number(data.userId) || !Object.prototype.hasOwnProperty.call(data, this.groupId)) {
+				return;
+			}
+			Object.keys(data[this.groupId]).forEach(role => {
+				const roleButton = document.getElementById(`group_panel_menu_${this.groupId ? this.groupId + '_' : ''}${role}`);
+				if (roleButton) {
+					roleButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data[this.groupId][role].total);
+				}
+			});
+		}
+		getCounterValue(value) {
+			if (!value) {
+				return '';
+			}
+			const maxValue = 99;
+			return value > maxValue ? `${maxValue}+` : value;
+		}
+		onFilterApply(filterId, data, ctx) {
+			if (this.isRoleControlDisabled) {
+				return;
+			}
+			let roleId = ctx.getFilterFieldsValues().ROLEID;
+			document.querySelectorAll('.tasks_role_link').forEach(element => {
+				element.classList.remove('main-buttons-item-active');
+			});
+			if (main_core.Type.isUndefined(roleId) || !roleId) {
+				roleId = 'view_all';
+			}
+			const panelMenuNode = document.getElementById(`group_panel_menu_${this.groupId}_${roleId}`);
+			if (panelMenuNode) {
+				panelMenuNode.classList.add('main-buttons-item-active');
+			}
+		}
+	}
+
+	class MoreButton {
+		constructor(params) {
+			this.menu = null;
+			this.class = {
+				activeItem: 'menu-popup-item-sgm-accept-sm',
+				inactiveItem: 'menu-popup-item-sgm-empty-sm'
+			};
+			this.init(params);
+			return this;
+		}
+		init(params) {
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.bindingMenuItems = main_core.Type.isObject(params.bindingMenuItems) ? Object.values(params.bindingMenuItems) : [];
+			this.userIsMember = main_core.Type.isBoolean(params.userIsMember) ? params.userIsMember : false;
+			this.subscribedValue = main_core.Type.isBoolean(params.subscribedValue) ? params.subscribedValue : false;
+			const moreButton = document.getElementById('group-menu-more-button');
+			if (!moreButton) {
+				return;
+			}
+			moreButton.addEventListener('click', this.showMoreMenu.bind(this));
+		}
+		showMoreMenu(event) {
+			event.preventDefault();
+			const bindingMenu = [];
+			this.bindingMenuItems.forEach(item => {
+				bindingMenu.push(item);
+			});
+			const menu = [];
+			if (this.userIsMember) {
+				menu.push({
+					id: 'subscribe',
+					text: main_core.Loc.getMessage('SONET_SGM_T_MORE_MENU_SUBSCRIBE'),
+					className: this.subscribedValue ? this.class.activeItem : this.class.inactiveItem,
+					onclick: () => {
+						this.setSubscription(true);
+					}
+				});
+				menu.push({
+					id: 'unsubscribe',
+					text: main_core.Loc.getMessage('SONET_SGM_T_MORE_MENU_UNSUBSCRIBE'),
+					className: !this.subscribedValue ? this.class.activeItem : this.class.inactiveItem,
+					onclick: () => {
+						this.setSubscription(false);
+					}
+				});
+			}
+			if (bindingMenu.length > 0) {
+				if (menu.length > 0) {
+					menu.push({
+						delimiter: true
+					});
+				}
+				menu.push({
+					text: main_core.Loc.getMessage('SONET_SGM_T_MORE_MENU_BINDING'),
+					items: bindingMenu
+				});
+			}
+			if (menu.length <= 0) {
+				return;
+			}
+			const bindElement = event.target;
+			this.menu = main_popup.MenuManager.create({
+				id: 'group-more-menu',
+				offsetTop: 5,
+				offsetLeft: bindElement.offsetWidth - 18,
+				angle: true,
+				items: menu,
+				events: {
+					onPopupClose: () => {
+						if (bindElement.tagName === 'BUTTON') {
+							bindElement.classList.remove('ui-btn-active');
+						}
+					}
+				},
+				subMenuOptions: {}
+			});
+			this.menu.popupWindow.setBindElement(bindElement);
+			this.menu.popupWindow.show();
+		}
+		setSubscription(value) {
+			this.redrawMenu(value);
+			main_core.ajax.runAction('socialnetwork.api.workgroup.setSubscription', {
+				data: {
+					params: {
+						groupId: this.groupId,
+						value: value ? 'Y' : 'N'
+					}
+				}
+			}).then(data => {
+				const eventData = {
+					code: 'afterSetSubscribe',
+					data: {
+						groupId: this.groupId,
+						value: data.RESULT === 'Y'
+					}
+				};
+				window.top.BX.SidePanel.Instance.postMessageAll(window, 'sonetGroupEvent', eventData);
+			}).catch(() => {
+				this.redrawMenu(!value);
+			});
+		}
+		redrawMenu(value) {
+			if (!this.menu) {
+				return;
+			}
+			const activeItem = this.menu.getMenuItem(value ? 'subscribe' : 'unsubscribe');
+			const inactiveItem = this.menu.getMenuItem(value ? 'unsubscribe' : 'subscribe');
+			if (activeItem) {
+				activeItem.layout.item.classList.remove(this.class.inactiveItem);
+				activeItem.layout.item.classList.add(this.class.activeItem);
+			}
+			if (inactiveItem) {
+				inactiveItem.layout.item.classList.remove(this.class.activeItem);
+				inactiveItem.layout.item.classList.add(this.class.inactiveItem);
+			}
+		}
+	}
+
+	class GroupMenu {
+		constructor(params) {
+			this.initialized = false;
+			this.moreButtonInstance = null;
+			this.init(params);
+		}
+		init(params) {
+			if (this.initialized === true) {
+				return;
+			}
+			this.initialized = true;
+			this.pageId = main_core.Type.isStringFilled(params.pageId) ? params.pageId : '';
+			this.currentUserId = !main_core.Type.isUndefined(params.currentUserId) ? Number(params.currentUserId) : 0;
+			this.groupId = !main_core.Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
+			this.groupType = main_core.Type.isStringFilled(params.groupType) ? params.groupType : '';
+			this.projectTypeCode = main_core.Type.isStringFilled(params.projectTypeCode) ? params.projectTypeCode : '';
+			this.userRole = main_core.Type.isStringFilled(params.userRole) ? params.userRole : '';
+			this.userIsMember = main_core.Type.isBoolean(params.userIsMember) ? params.userIsMember : false;
+			this.userIsAutoMember = main_core.Type.isBoolean(params.userIsAutoMember) ? params.userIsAutoMember : false;
+			this.userIsScrumMaster = main_core.Type.isBoolean(params.userIsScrumMaster) ? params.userIsScrumMaster : false;
+			this.isProject = main_core.Type.isBoolean(params.isProject) ? params.isProject : false;
+			this.isScrumProject = main_core.Type.isBoolean(params.isScrumProject) ? params.isScrumProject : false;
+			this.isOpened = main_core.Type.isBoolean(params.isOpened) ? params.isOpened : false;
+			this.favoritesValue = main_core.Type.isBoolean(params.favoritesValue) ? params.favoritesValue : false;
+			this.canInitiate = main_core.Type.isBoolean(params.canInitiate) ? params.canInitiate : false;
+			this.canModify = main_core.Type.isBoolean(params.canModify) ? params.canModify : false;
+			this.canProcessRequestsIn = main_core.Type.isBoolean(params.canProcessRequestsIn) ? params.canProcessRequestsIn : false;
+			this.canPickTheme = main_core.Type.isBoolean(params.canPickTheme) ? params.canPickTheme : false;
+			this.avatarPath = main_core.Type.isStringFilled(params.avatarPath) ? params.avatarPath : '';
+			this.avatarType = main_core.Type.isStringFilled(params.avatarType) ? params.avatarType : '';
+			this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
+			this.editFeaturesAllowed = main_core.Type.isBoolean(params.editFeaturesAllowed) ? params.editFeaturesAllowed : true;
+			this.copyFeatureAllowed = main_core.Type.isBoolean(params.copyFeatureAllowed) ? params.copyFeatureAllowed : true;
+			new JoinButton(params);
+			new ControlButton(params);
+			new Scrum(params);
+			new Widget(params);
+			new TaskEvent(params);
+			this.moreButtonInstance = new MoreButton(params);
+			new SonetGroupEvent(params, {
+				moreButtonInstance: this.moreButtonInstance
+			});
+			const settingsButtonNode = document.getElementById('bx-group-menu-settings');
+			if (settingsButtonNode) {
+				const sonetGroupMenu = socialnetwork_common.GroupMenu.getInstance();
+				sonetGroupMenu.favoritesValue = this.favoritesValue;
+				settingsButtonNode.addEventListener('click', this.showMenu.bind(this));
+			}
+		}
+		showMenu(event) {
+			socialnetwork_common.Common.showGroupMenuPopup({
+				bindElement: event.currentTarget,
+				groupId: this.groupId,
+				groupType: this.groupType,
+				userRole: this.userRole,
+				userIsMember: this.userIsMember,
+				userIsAutoMember: this.userIsAutoMember,
+				userIsScrumMaster: this.userIsScrumMaster,
+				isProject: this.isProject,
+				isScrumProject: this.isScrumProject,
+				isOpened: this.isOpened,
+				editFeaturesAllowed: this.editFeaturesAllowed,
+				copyFeatureAllowed: this.copyFeatureAllowed,
+				canPickTheme: this.canPickTheme,
+				perms: {
+					canInitiate: this.canInitiate,
+					canProcessRequestsIn: this.canProcessRequestsIn,
+					canModify: this.canModify
+				},
+				urls: {
+					requestUser: main_core.Type.isStringFilled(this.urls.Invite) ? this.urls.Invite : `${this.urls.Edit}${this.urls.Edit.indexOf('?') >= 0 ? '&' : '?'}tab=invite`,
+					edit: `${this.urls.Edit}${this.urls.Edit.indexOf('?') >= 0 ? '&' : '?'}tab=edit`,
+					delete: this.urls.Delete,
+					features: this.urls.Features,
+					members: this.urls.GroupUsers,
+					requests: this.urls.GroupRequests,
+					requestsOut: this.urls.GroupRequestsOut,
+					userRequestGroup: this.urls.UserRequestGroup,
+					userLeaveGroup: this.urls.UserLeaveGroup,
+					copy: this.urls.Copy
+				}
+			});
+			event.preventDefault();
+		}
+	}
+
+	exports.GroupMenu = GroupMenu;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Socialnetwork.UI, BX.Event, BX.Main);
+//# sourceMappingURL=script.js.map

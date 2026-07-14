@@ -60,6 +60,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender/src/forwarding-mess
 			const forwardUuid = Uuid.getV4();
 
 			this.state = {
+				id: forwardUuid,
 				chatId: this.chatId,
 				authorId: this.currentUserId,
 				text: modelMessage.text,
@@ -71,9 +72,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender/src/forwarding-mess
 					id: this.#buildContextId(),
 					userId: modelMessage?.forward?.userId ?? modelMessage.authorId,
 				},
-				files: modelMessage.files,
+				files: this.#getFiles(modelMessage),
 				params: this.#buildParams(modelMessage),
 				stickerParams: modelMessage.stickerParams,
+				block: modelMessage.block,
 			};
 		}
 
@@ -100,6 +102,29 @@ jn.define('im/messenger/controller/dialog/lib/message-sender/src/forwarding-mess
 			}
 
 			return params;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Array<number>}
+		 */
+		#getFiles(modelMessage)
+		{
+			if (Type.isArrayFilled(modelMessage.files))
+			{
+				return modelMessage.files;
+			}
+
+			const blockData = modelMessage.block;
+			if (Type.isPlainObject(blockData) && Type.isArrayFilled(blockData.elements))
+			{
+				return blockData.elements
+					.filter((element) => Type.isArrayFilled(element.fileIds))
+					.flatMap((element) => element.fileIds)
+				;
+			}
+
+			return [];
 		}
 
 		#buildContextId()

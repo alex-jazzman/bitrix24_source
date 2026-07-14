@@ -44,7 +44,6 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 
 		menuButtonTapHandler()
 		{
-			// TODO: wait BE implementation
 			if (this.#isActive)
 			{
 				void this.#deactivate();

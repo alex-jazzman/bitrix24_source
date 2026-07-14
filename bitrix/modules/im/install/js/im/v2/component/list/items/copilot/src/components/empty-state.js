@@ -1,18 +1,31 @@
-import '../css/empty-state.css';
+import { RecentType } from 'im.v2.const';
+import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
-	methods: {
-		loc(phraseCode: string): string
+	components: { RecentEmptyState },
+	computed: {
+		RecentType: () => RecentType,
+		subtitle()
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.loc('IM_LIST_COPILOT_EMPTY_SUBTITLE', {
+				'#COPILOT_NAME#': (new CopilotManager()).getName(),
+			});
+		},
+	},
+	methods: {
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
-		<div class="bx-im-list-copilot__empty">
-			<div class="bx-im-list-copilot__empty_icon"></div>
-			<div class="bx-im-list-copilot__empty_text">{{ loc('IM_LIST_COPILOT_EMPTY') }}</div>
-		</div>
+		<RecentEmptyState
+			:title="loc('IM_LIST_COPILOT_EMPTY_TITLE')"
+			:subtitle="subtitle"
+			:recentSection="RecentType.copilot"
+		/>
 	`,
 };

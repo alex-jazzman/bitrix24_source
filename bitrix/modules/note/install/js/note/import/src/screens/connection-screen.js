@@ -2,8 +2,10 @@ import { Event, Loc } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 import { BInput, InputDesign, InputSize } from 'ui.system.input.vue';
 import { Menu } from 'ui.system.menu';
+import { Alert } from 'ui.system.alert.vue';
+import { AlertDesign } from 'ui.system.alert';
 import { NoteThemeContext } from 'note.ui.theme-context';
-import { SOURCE_TYPES } from '../constants';
+import { SOURCE_TYPE_WIKI } from '../constants';
 import type { ConnectionFormState } from '../type';
 
 type ConnectionScreenHandlers = {
@@ -23,7 +25,10 @@ export type ConnectionScreenHandle = {
 	destroy: () => void,
 };
 
-export function createConnectionScreen(handlers: ConnectionScreenHandlers): ConnectionScreenHandle
+export function createConnectionScreen(
+	handlers: ConnectionScreenHandlers,
+	sources: Array<{ id: string, label: string, enabled: boolean }>,
+): ConnectionScreenHandle
 {
 	const element = document.createElement('div');
 	element.className = 'note-import-screen note-import-screen-connection';
@@ -31,7 +36,7 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 	let sourceMenu: Menu | null = null;
 	const ConnectionForm = {
 		name: 'NoteImportConnectionForm',
-		components: { BInput },
+		components: { BInput, Alert },
 		data(): Object
 		{
 			return {
@@ -42,6 +47,8 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 				sourceError: '',
 				urlError: '',
 				tokenError: '',
+				isWiki: false,
+				noticeDesign: AlertDesign.tintedWarning,
 				labels: {
 					source: Loc.getMessage('NOTE_IMPORT_SOURCE_LABEL'),
 					sourcePlaceholder: Loc.getMessage('NOTE_IMPORT_SOURCE_PLACEHOLDER'),
@@ -49,6 +56,7 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 					urlPlaceholder: Loc.getMessage('NOTE_IMPORT_CONNECTION_PLACEHOLDER'),
 					token: Loc.getMessage('NOTE_IMPORT_TOKEN_LABEL'),
 					tokenPlaceholder: Loc.getMessage('NOTE_IMPORT_TOKEN_PLACEHOLDER'),
+					wikiNotice: Loc.getMessage('NOTE_IMPORT_WIKI_LOSS_NOTICE'),
 				},
 				inputSize: InputSize.Lg,
 				inputDesign: InputDesign.Grey,
@@ -75,7 +83,7 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 			},
 			handleSourceClick(): void
 			{
-				const enabled = SOURCE_TYPES.filter((source) => source.enabled);
+				const enabled = sources.filter((source) => source.enabled);
 				if (enabled.length === 0)
 				{
 					return;
@@ -139,7 +147,11 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 					readonly
 					@click="handleSourceClick"
 				/>
+				<Alert v-if="isWiki" :design="noticeDesign">
+					{{ labels.wikiNotice }}
+				</Alert>
 				<BInput
+					v-if="!isWiki"
 					ref="urlInput"
 					:modelValue="url"
 					@update:modelValue="handleUrlUpdate"
@@ -154,6 +166,7 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 					@blur="handleUrlBlur"
 				/>
 				<BInput
+					v-if="!isWiki"
 					ref="tokenInput"
 					:modelValue="token"
 					@update:modelValue="handleTokenUpdate"
@@ -177,10 +190,11 @@ export function createConnectionScreen(handlers: ConnectionScreenHandlers): Conn
 	function applyState(state: ConnectionFormState): void
 	{
 		const sourceType = state.sourceType ?? '';
-		const source = SOURCE_TYPES.find((item) => item.id === sourceType);
+		const source = sources.find((item) => item.id === sourceType);
 
 		vm.sourceType = sourceType;
 		vm.sourceLabel = source ? source.label : '';
+		vm.isWiki = sourceType === SOURCE_TYPE_WIKI;
 
 		const nextUrl = String(state.url ?? '');
 		if (vm.url !== nextUrl)

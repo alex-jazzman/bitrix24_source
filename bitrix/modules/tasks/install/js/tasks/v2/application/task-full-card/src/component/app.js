@@ -10,7 +10,7 @@ import { analytics } from 'tasks.v2.lib.analytics';
 import { Core } from 'tasks.v2.core';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
-import { CardType, EventName, Model, TaskField, Option, GroupType, Analytics } from 'tasks.v2.const';
+import { CardType, ChatAction, EventName, Model, TaskField, Option, GroupType, Analytics } from 'tasks.v2.const';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
 import { ContentResizer } from 'tasks.v2.component.elements.content-resizer';
 import { DropZone } from 'tasks.v2.component.drop-zone';
@@ -50,12 +50,12 @@ import { templateService } from 'tasks.v2.provider.service.template-service';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { timeTrackingService } from 'tasks.v2.provider.service.time-tracking-service';
 import { viewersService } from 'tasks.v2.provider.service.viewers-service';
-import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
-import type { GroupModel } from 'tasks.v2.model.groups';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
-import type { SheetBindProps } from 'tasks.v2.component.elements.bottom-sheet';
-import type { AppField, AppChip } from 'tasks.v2.application.task-card';
-import type { UserFieldScheme } from 'tasks.v2.model.interface';
+import { type TaskModel, type TimerModel } from 'tasks.v2.model.tasks';
+import { type GroupModel } from 'tasks.v2.model.groups';
+import { type CheckListModel } from 'tasks.v2.model.check-list';
+import { type SheetBindProps } from 'tasks.v2.component.elements.bottom-sheet';
+import { type AppField, type AppChip } from 'tasks.v2.application.task-card';
+import { type UserFieldScheme } from 'tasks.v2.model.interface';
 
 import { TaskHeader } from './task-header/task-header';
 import { TaskSettingsHint } from './aha/task-settings-hint';
@@ -64,6 +64,8 @@ import { Chips } from './chips/chips';
 import { FooterCreate } from './footer-create/footer-create';
 import { FooterEdit } from './footer-edit/footer-edit';
 import { Placeholder } from './placeholder/placeholder';
+import iconUrl from '../images/marshmallow_sad_pink_with_orange_lock.png';
+import notFoundUrl from '../images/marshmallow_confused_pink_with_blue_magnifier.png';
 import './app.css';
 
 const UserOptions = Reflection.namespace('BX.userOptions');
@@ -106,6 +108,7 @@ export const App = {
 			settings: Core.getParams(),
 			analytics: this.analytics,
 			embedded: this.embedded,
+			onCloseEmbedded: this.onCloseEmbedded,
 			cardType: CardType.Full,
 			/** @type { TaskModel } */
 			task: computed((): TaskModel => taskService.getStoreTask(this.taskId)),
@@ -134,6 +137,10 @@ export const App = {
 		embedded: {
 			type: Boolean,
 			default: false,
+		},
+		onCloseEmbedded: {
+			type: Function,
+			default: null,
 		},
 	},
 	setup(): Object
@@ -592,13 +599,15 @@ export const App = {
 				[Creator, true],
 				[Responsible, true],
 				[Deadline, true],
-				[TimeTracking, (
-					this.task.allowsTimeTracking
-					|| (
-						this.task.rights.elapsedTime
-						&& this.task.numberOfElapsedTimes
-					)
-				)],
+				[
+					TimeTracking, (
+						this.task.allowsTimeTracking
+						|| (
+							this.task.rights.elapsedTime
+							&& this.task.numberOfElapsedTimes
+						)
+					),
+				],
 				[Status, this.isEdit],
 				[CreatedDate, this.isEdit],
 			]));
@@ -912,8 +921,8 @@ export const App = {
 		this.subscribeEvents();
 
 		this.renderSkeleton();
-		this.iconUrl = (await import('../images/marshmallow_sad_pink_with_orange_lock.png')).default;
-		this.notFoundUrl = (await import('../images/marshmallow_confused_pink_with_blue_magnifier.png')).default;
+		this.iconUrl = iconUrl;
+		this.notFoundUrl = notFoundUrl;
 	},
 	unmounted(): void
 	{
@@ -933,14 +942,53 @@ export const App = {
 		subscribeEvents(): void
 		{
 			EventEmitter.subscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+			EventEmitter.subscribe(EventName.CloseAllBottomSheets, this.closeAllSheets);
 			EventEmitter.subscribe('BX.Main.Popup:onShow', this.handlePopupShow);
 			Event.bind(document, 'keydown', this.handleKeyDown, { capture: true });
 		},
 		unsubscribeEvents(): void
 		{
 			EventEmitter.unsubscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+			EventEmitter.unsubscribe(EventName.CloseAllBottomSheets, this.closeAllSheets);
 			EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handlePopupShow);
 			Event.unbind(document, 'keydown', this.handleKeyDown, { capture: true });
+		},
+		closeAllSheets(event: BaseEvent): void
+		{
+			const { actionName } = event.getData();
+
+			const sheetsByAction = {
+				[ChatAction.OpenResult]: ['isResultListSheetShown', 'isResultEditorSheetShown', 'isResultChipSheetShown'],
+				[ChatAction.ShowCheckList]: ['isCheckListSheetShown'],
+				[ChatAction.ShowCheckListItems]: ['isCheckListSheetShown'],
+				[ChatAction.OpenTimeTracking]: ['isTimeTrackingSheetShown', 'isTimeTrackingChipSheetShown'],
+			};
+
+			const preserved = new Set(sheetsByAction[actionName] || []);
+
+			const allSheets = [
+				'isFilesSheetShown',
+				'isDescriptionSheetShown',
+				'isCheckListSheetShown',
+				'isDatePlanSheetShown',
+				'isTimeTrackingSheetShown',
+				'isTimeTrackingChipSheetShown',
+				'isResultListSheetShown',
+				'isResultEditorSheetShown',
+				'isResultChipSheetShown',
+				'isReminderSheetShown',
+				'isRemindersSheetShown',
+				'isReplicationSheetShown',
+				'isReplicationHistorySheetShown',
+			];
+
+			for (const sheet of allSheets)
+			{
+				if (!preserved.has(sheet))
+				{
+					this[sheet] = false;
+				}
+			}
 		},
 		handlePopupShow(event): void
 		{
@@ -1068,8 +1116,7 @@ export const App = {
 
 			await viewersService.count(this.taskId);
 
-			fileService.delete(this.id);
-			await fileService.get(this.taskId).list(this.task.fileIds);
+			fileService.delete(this.id, EntityTypes.Task, false);
 
 			entityTextEditor.replace(this.id, id);
 
@@ -1271,7 +1318,9 @@ export const App = {
 			const { accessRequest, error } = await taskService.requestAccess(this.taskId);
 
 			this.isAccessRequested = true;
-			this.accessRequestError = error?.message || Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED');
+			this.accessRequestError = error?.message || Loc.getMessage(
+				'TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED',
+			);
 
 			Notifier.notifyViaBrowserProvider({
 				id: 'tasks-request-accessed',

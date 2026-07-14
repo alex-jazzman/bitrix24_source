@@ -56,6 +56,7 @@ export class EventEditForm
 		this.emitter.setEventNamespace('BX.Calendar.EventEditForm');
 		this.BX = Util.getBX();
 		this.isCollabUser = options.calendarContext?.isCollabUser || false;
+		this.isNewProjectsOn = options.calendarContext?.isNewProjectsOn || false;
 		this.analyticsChatId = options.createChatId || null;
 		this.analyticsSubSection = options.analyticsSubSection || this.getFormAnalyticsContext();
 
@@ -1546,6 +1547,7 @@ export class EventEditForm
 				trackingUsersList: this.trackingUsersList,
 				isCollabUser: this.isCollabUser,
 				isCollabContext: this.isCollabContext(),
+				isNewProjectsOn: this.isNewProjectsOn,
 			}),
 			mode: 'full',
 			zIndex: this.zIndex,

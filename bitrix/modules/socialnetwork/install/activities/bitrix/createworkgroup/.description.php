@@ -3,11 +3,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Socialnetwork\V2\Feature;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
+$isNewProjectsOn = (CModule::IncludeModule("socialnetwork") && Feature::isNewProjectsOn());
+$messageSuffix = ($isNewProjectsOn ? '_V2' : '');
+
 $arActivityDescription = array(
-	"NAME" => GetMessage("BPCWG_DESCR_NAME2"),
-	"DESCRIPTION" => GetMessage("BPCWG_DESCR_DESCR2"),
+	"NAME" => GetMessage("BPCWG_DESCR_NAME2" . $messageSuffix),
+	"DESCRIPTION" => GetMessage("BPCWG_DESCR_DESCR2" . $messageSuffix),
 	"TYPE" => ["activity", "node"],
 	"CLASS" => "CreateWorkGroup",
 	"JSCLASS" => "BizProcActivity",
@@ -16,7 +20,7 @@ $arActivityDescription = array(
 	),
 	"RETURN" => array(
 		"GroupId" => array(
-			"NAME" => GetMessage("BPCWG_GROUP_ID"),
+			"NAME" => GetMessage("BPCWG_GROUP_ID" . $messageSuffix),
 			"TYPE" => "int",
 		),
 	),

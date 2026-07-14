@@ -5,7 +5,6 @@ import { Main } from './app';
 import './style.css';
 
 export type SystemAuthOtpParamsType = {
-	signedUserId: string,
 	containerNode: HTMLElement,
 	pushOtpConfig?: Object,
 	authUrl: string,
@@ -25,6 +24,7 @@ export type SystemAuthOtpParamsType = {
 	recoveryCodesHelpLink: string,
 	errorMessage?: HTMLElement,
 	canSendRequestRecoverAccess?: boolean,
+	userId?: number,
 }
 
 export class OtpAuth
@@ -42,7 +42,6 @@ export class OtpAuth
 		}
 
 		this.#application = BitrixVue.createApp(Main, {
-			signedUserId: params.signedUserId,
 			rootNode: this.#rootNode,
 			pushOtpConfig: params.pushOtpConfig,
 			authUrl: params.authUrl,
@@ -61,6 +60,7 @@ export class OtpAuth
 			recoveryCodesHelpLink: params.recoveryCodesHelpLink,
 			errorMessageText: params.errorMessage,
 			canSendRequestRecoverAccess: params.canSendRequestRecoverAccess,
+			userId: params.userId,
 		});
 
 		const pinia = createPinia();

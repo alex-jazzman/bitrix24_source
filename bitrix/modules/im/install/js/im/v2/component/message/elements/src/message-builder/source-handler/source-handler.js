@@ -51,6 +51,12 @@ export const SourceHandler = {
 				return;
 			}
 
+			const isUrl = Utils.text.checkUrl(source.url);
+			if (!isUrl)
+			{
+				return;
+			}
+
 			Utils.browser.openLink(source.url);
 		},
 		onMouseOver(event: MouseEvent)

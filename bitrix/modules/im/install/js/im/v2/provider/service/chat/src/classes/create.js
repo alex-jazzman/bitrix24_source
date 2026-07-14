@@ -9,7 +9,7 @@ import { runAction } from 'im.v2.lib.rest';
 import { Utils } from 'im.v2.lib.utils';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 
-import { type ChatCreateConfig, type CollabCreateConfig } from '../types/create-chat';
+import { type CollabCreateConfig, type ChatCreateConfig  } from '../types/create-chat';
 
 type CreateChatResult = { chatId: number };
 

@@ -9,6 +9,10 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 		UserTable,
 	} = require('im/messenger/db/table/user');
 	const { DateHelper, Url } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { Query } = require('im/messenger/db/query-builder/builder');
+	const { UserSchema } = require('im/messenger/db/table-schema');
+	const { getStartWordsSearchCondition } = require('im/messenger/db/helper/start-words');
 
 	/**
 	 * @class UserRepository
@@ -286,17 +290,29 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 		/**
 		 * @param {Partial<SearchOptions>} searchOptions
-		 * @returns {Promise<{items: *[]}>}
+		 * @returns {Promise<{items: Array<UsersModelState>}>}
 		 */
 		async searchByText(searchOptions = {})
 		{
 			const {
 				searchText = '',
-				order = 'desc',
 				limit = 25,
 			} = searchOptions;
 
-			return this.userTable.searchByText(searchText, order, limit);
+			if (!Feature.isLocalStorageEnabled || !Type.isStringFilled(searchText))
+			{
+				return { items: [] };
+			}
+
+			const items = await Query.select()
+				.from(UserSchema)
+				.where(
+					getStartWordsSearchCondition([UserSchema.name, UserSchema.workPosition], searchText),
+				)
+				.limit(limit)
+				.execute();
+
+			return { items };
 		}
 
 		/**

@@ -59,7 +59,7 @@ export const SourcePopup = {
 				return this.metaData.title;
 			}
 
-			return Utils.text.getHostFromUrl(this.metaData.url);
+			return Utils.text.getHostFromUrl(this.sourceItem.url);
 		},
 		description(): ?string
 		{

@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 	const { RecentDataProvider } = require('im/messenger/provider/data');
 	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat/update-manager');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager');
@@ -26,6 +27,14 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			super({ logger: getLoggerWithContext('pull-handler--recent-v2', RecentPullHandler) });
 
 			this.shareDialogCache = new ShareDialogCache();
+		}
+
+		/**
+		 * @return {RecentRepository}
+		 */
+		get recentRepository()
+		{
+			return serviceLocator.get('core').getRepository().recent;
 		}
 
 		/**
@@ -74,6 +83,9 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 			this.logger.info('handleMessageDeleteV2:', params, extra);
 
+			this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections)
+				.catch((error) => this.logger.error('handleMessageDeleteV2: setSections error', error));
+
 			const hasNewLastMessage = Boolean(params.newLastMessage);
 			if (hasNewLastMessage)
 			{
@@ -103,6 +115,84 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 					unread: params.active,
 				},
 			]);
+
+			const markedId = params.active ? Number(params.markedId ?? 0) : 0;
+			await this.store.dispatch('dialoguesModel/update', {
+				dialogId: params.dialogId,
+				fields: { markedId },
+			});
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleReadMessage(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleReadMessageChat(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleUnreadMessage(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleUnreadMessageChat(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleChatMuteNotify(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			await this.recentRepository.setSections(params.dialogId, params.recentConfig?.sections);
 		}
 
 		/**
@@ -150,6 +240,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 				return;
 			}
 
+			await this.recentRepository.removeSections(params.dialogId, params.recentConfigToHide?.sections);
 			await this.store.dispatch('recentModel/delete', { id: params.dialogId });
 			this.#saveShareDialogCache();
 		}
@@ -414,12 +505,21 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			const manager = new ChatRecentUpdateManager(params);
 			manager.setLastMessageInfo();
 
-			const recentItem = manager.getPreparedRecentItem();
+			const sections = params.recentConfig?.sections;
+			const isMetaOnly = Type.isNull(params.lastActivityDate);
+			const shouldUpdateRecentModel = !isMetaOnly || Boolean(this.getRecent(params.dialogId));
 
-			await this.store.dispatch('recentModel/setChat', {
-				itemList: [recentItem],
-				parentChatId: manager.getParentChatId(),
-			});
+			if (shouldUpdateRecentModel && Type.isArrayFilled(sections))
+			{
+				const recentItem = manager.getPreparedRecentItem();
+				await this.store.dispatch('recentModel/setByRecentConfigTabs', {
+					sections,
+					itemList: recentItem,
+					parentChatId: manager.getParentChatId(),
+				});
+			}
+
+			await this.recentRepository.setSections(params.dialogId, sections);
 		}
 
 		/**
@@ -456,51 +556,51 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockAppendParams} params
+		 * @param {MessagePullHandlerBlockAppendParams} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockAppend(params, extra)
+		async handleMessageBlockElementAppend(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockAppend:', params);
+			this.logger.info('handleMessageBlockElementAppend:', params);
 
-			await this.#updateRecentBuilderText(params);
+			await this.#updateRecentBlockText(params);
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockUpdateParams} params
+		 * @param {MessagePullHandlerBlockUpdateParams} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockUpdate(params, extra)
+		async handleMessageBlockElementUpdate(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockUpdate:', params);
+			this.logger.info('handleMessageBlockElementUpdate:', params);
 
-			await this.#updateRecentBuilderText(params);
+			await this.#updateRecentBlockText(params);
 		}
 
 		/**
-		 * @param {MessagePullHandlerBuilderBlockDeleteParams} params
+		 * @param {MessagePullHandlerBlockDeleteParams} params
 		 * @param {PullExtraParams} extra
 		 */
-		async handleBuilderBlockDelete(params, extra)
+		async handleMessageBlockElementDelete(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info('handleBuilderBlockDelete:', params);
+			this.logger.info('handleMessageBlockElementDelete:', params);
 
-			await this.#updateRecentBuilderText(params);
+			await this.#updateRecentBlockText(params);
 		}
 
 		/**
@@ -547,6 +647,9 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 				itemList: recentItem,
 				parentChatId: messageManager.getParentChatId(),
 			});
+
+			const dialogId = String(recentItem.id);
+			await this.recentRepository.setSections(dialogId, sections);
 		}
 
 		/**
@@ -663,7 +766,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 		/**
 		 * @param {{ messageId: number, text: string }} params
 		 */
-		async #updateRecentBuilderText(params)
+		async #updateRecentBlockText(params)
 		{
 			const { messageId, text } = params;
 

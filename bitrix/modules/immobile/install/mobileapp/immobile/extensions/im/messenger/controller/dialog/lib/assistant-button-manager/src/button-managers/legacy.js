@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		MCPButton,
 	} = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
 	const { AssistantButtonType, AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/type');
+	const { MarketManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/market');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Reasoning } = require('im/messenger/lib/reasoning');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
@@ -32,6 +33,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {number|null} */
 		#mcpSelectedAuthId = null;
 
+		/** @type {MarketManager} */
+		#marketManager;
+
 		/**
 		 * @param {DialogLocator} dialogLocator
 		 */
@@ -46,6 +50,8 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			this.state = {
 				isReasoningActive: false,
 			};
+
+			this.#marketManager = new MarketManager({ dialogLocator });
 		}
 
 		get isReasoningActive()
@@ -105,6 +111,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 					break;
 				case MCPButton.id:
 					void this.#mcpButtonTapHandler();
+					break;
+				case AssistantButtonType.market:
+					this.#marketManager.menuButtonTapHandler();
 					break;
 				default:
 			}

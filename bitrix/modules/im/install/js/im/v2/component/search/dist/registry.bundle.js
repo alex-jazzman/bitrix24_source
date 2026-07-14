@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, ui_designTokens, ui_fonts_opensans, im_v2_component_elements_loader, im_v2_component_elements_scrollWithGradient, im_v2_const, im_v2_lib_analytics, im_v2_lib_utils, im_v2_lib_search, im_v2_application_core, main_core, im_v2_lib_menu, im_v2_provider_service_chat, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_dateFormatter, im_v2_lib_textHighlighter, im_v2_provider_service_search, im_v2_component_elements_searchInput) {
+(function (exports, ui_designTokens, ui_fonts_opensans, im_v2_component_elements_loader, im_v2_component_elements_scrollWithGradient, im_v2_const, im_v2_lib_analytics, im_v2_lib_utils, im_v2_lib_search, im_v2_application_core, main_core, im_v2_lib_menu, im_v2_provider_service_chat, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_dateFormatter, im_v2_lib_textHighlighter, im_v2_lib_collab, im_v2_provider_service_search, im_v2_component_elements_searchInput) {
 	'use strict';
 
 	const getFirstItemFromSearchResults = ({
@@ -73,8 +73,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!this.isGuestRole()) {
 				return null;
 			}
+			let title = main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT');
+			if (this.isChannel()) {
+				title = main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL');
+			}
 			return {
-				title: this.isOpenChat() ? main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT') : main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL'),
+				title,
 				onClick: () => {
 					this.chatService.joinChat(dialogId);
 					this.menuInstance.close();
@@ -251,12 +255,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const ItemTextByChatType = {
-		[im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
-		[im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
-		[im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
-		[im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_SEARCH_ITEM_COLLAB_TYPE'),
-		[im_v2_const.ChatType.taskComments]: main_core.Loc.getMessage('IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'),
-		default: main_core.Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2')
+		[im_v2_const.ChatType.openChannel]: () => main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+		[im_v2_const.ChatType.generalChannel]: () => main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+		[im_v2_const.ChatType.channel]: () => main_core.Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
+		[im_v2_const.ChatType.collab]: () => im_v2_lib_collab.CollabManager.getSearchItemSubtitleText(),
+		[im_v2_const.ChatType.taskComments]: () => main_core.Loc.getMessage('IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'),
+		default: () => main_core.Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2')
 	};
 
 	// @vue/component
@@ -339,7 +343,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.position), this.query);
 			},
 			chatItemText() {
-				return ItemTextByChatType[this.dialog.type] ?? ItemTextByChatType.default;
+				const handler = ItemTextByChatType[this.dialog.type] ?? ItemTextByChatType.default;
+				return handler();
 			},
 			itemText() {
 				if (this.needToReplaceSelfChat) {
@@ -626,6 +631,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			recentSectionType: {
 				type: String,
 				default: im_v2_const.RecentType.default
+			},
+			parentChatId: {
+				type: Number || null,
+				default: 0
 			}
 		},
 		emits: ['loading', 'openItem', 'closeSearch'],
@@ -666,9 +675,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		created() {
-			this.searchService = new im_v2_provider_service_search.SearchService({
-				searchRecentSection: this.recentSectionType
-			});
+			const searchParams = {
+				searchRecentSection: this.recentSectionType,
+				parentId: this.parentChatId
+			};
+			this.searchService = new im_v2_provider_service_search.SearchService(searchParams);
 			this.runServerSearch = main_core.Runtime.debounce(this.searchOnServer, SEARCH_DEBOUNCE_MS, this);
 			this.initContextMenu();
 			void this.loadLatestSearchResults();
@@ -1225,5 +1236,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.RecentSearch = RecentSearch;
 	exports.RecentSearchView = RecentSearchView;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

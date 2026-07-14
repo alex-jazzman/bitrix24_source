@@ -2,6 +2,7 @@
  * @module im/messenger/provider/services/chat/get
  */
 jn.define('im/messenger/provider/services/chat/get', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
@@ -50,8 +51,14 @@ jn.define('im/messenger/provider/services/chat/get', (require, exports, module) 
 
 			const extractor = new ChatDataExtractor(actionResult);
 			const dialogFromServer = extractor.getMainChat();
+			const parentChat = extractor.getParentChat();
 
 			await this.store.dispatch('dialoguesModel/set', dialogFromServer);
+
+			if (Type.isPlainObject(parentChat))
+			{
+				await this.store.dispatch('dialoguesModel/setShortFormat', [parentChat]);
+			}
 
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 

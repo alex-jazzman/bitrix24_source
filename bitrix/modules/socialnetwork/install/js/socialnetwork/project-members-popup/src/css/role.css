@@ -1,0 +1,35 @@
+.ui-label.sonet-ui-grid-request,
+.ui-label.sonet-ui-grid-role {
+	background-color: #ffffff;
+}
+
+.ui-label.sonet-ui-grid-role.--role-green {
+	border-color: rgba(157,207,0,.36) !important;
+}
+
+.ui-label.sonet-ui-grid-join .ui-label-inner,
+.ui-label.sonet-ui-grid-role .ui-label-inner {
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)) !important;
+	font-weight: var(--ui-font-weight-semi-bold, 600) !important;
+	overflow: visible !important;
+}
+
+.ui-label.sonet-ui-grid-role.--role-green .ui-label-inner {
+	color: #5F7C06;
+}
+
+.ui-label.sonet-ui-grid-role.--role-blue {
+	border-color: rgba(47,198,246,.32) !important;
+}
+
+.ui-label.sonet-ui-grid-role.--role-blue .ui-label-inner {
+	color: #056D8E;
+}
+
+.ui-label.sonet-ui-grid-role.--role-yellow {
+	border-color: rgba(247,204,0,.63) !important;
+}
+
+.ui-label.sonet-ui-grid-role.--role-yellow .ui-label-inner {
+	color: #A4720E;
+}

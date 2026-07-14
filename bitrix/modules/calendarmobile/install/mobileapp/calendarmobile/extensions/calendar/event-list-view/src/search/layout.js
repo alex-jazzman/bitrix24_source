@@ -76,7 +76,7 @@ jn.define('calendar/event-list-view/search/layout', (require, exports, module) =
 			this.createSearchLayoutView();
 
 			this.search.text = searchText;
-			this.search.show(this.searchLayoutView, 46);
+			this.search.show(this.searchLayoutView, 56);
 		};
 
 		createSearchLayoutView()

@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 	const { Type } = require('type');
 	const { uniqBy } = require('utils/array');
 
-	const { MessengerInitRestMethod, DialogType, NavigationTabId } = require('im/messenger/const');
+	const { MessengerInitRestMethod, DialogType, NavigationTabId, RecentFilterId } = require('im/messenger/const');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentRest } = require('im/messenger/provider/rest');
@@ -55,11 +55,12 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @param {ServerLoadRequestContext} [context]
 		 * @return {object}
 		 */
-		getInitRequestOptions(mode)
+		getInitRequestOptions(mode, { currentFilterId } = {})
 		{
-			return {};
+			return currentFilterId === RecentFilterId.unread ? { unreadOnly: 'Y' } : {};
 		}
 
 		/**
@@ -242,6 +243,11 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 						parentChatId: this.recentLocator.get('parentChatId'),
 					},
 				);
+
+				const section = this.recentLocator.get('recentSection');
+				const dialogIds = modelData.recent.map((item) => String(item.id));
+				await serviceLocator.get('core').getRepository().recent
+					.ensureSectionForDialogIds(dialogIds, section);
 
 				this.#saveShareDialogCache();
 				this.showLoaderByRestResult(recentData);

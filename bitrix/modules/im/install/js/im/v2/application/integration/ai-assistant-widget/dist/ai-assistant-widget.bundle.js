@@ -2,51 +2,104 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_application_core, im_v2_css_classes, im_v2_lib_feature, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_logger, im_v2_provider_service_chat, im_v2_provider_service_copilot, main_core_events, im_v2_component_animation, im_v2_component_content_chat, im_v2_lib_theme, ui_iconSet_api_vue, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_items_copilot, im_v2_component_elements_loader, im_v2_lib_messageNotifier) {
+(function (exports, main_core, im_v2_application_core, im_v2_lib_utils, main_core_events, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_logger, im_v2_lib_messageNotifier, im_v2_provider_service_chat, im_v2_provider_service_copilot, im_v2_lib_feature, im_v2_css_classes, im_v2_component_animation, im_v2_component_content_chat, im_v2_component_dialog_chat, im_v2_lib_theme, ui_iconSet_api_vue, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_container_aiAssistant, im_v2_component_list_items_copilot) {
 	'use strict';
 
-	class WidgetChatManager {
+	class WidgetChatManager extends main_core_events.EventEmitter {
 		static #instance;
+		static events = {
+			onDialogIdChange: 'onDialogIdChange'
+		};
 		#store;
 		#chatService;
 		#copilotChatService;
 		#copilotRecentService;
+		#currentDialogId = null;
+		#isBitrixGptMode;
 		static getInstance() {
 			if (!this.#instance) {
 				this.#instance = new this();
 			}
 			return this.#instance;
 		}
+		get isBitrixGptMode() {
+			return this.#isBitrixGptMode;
+		}
 		constructor() {
+			super();
+			this.setEventNamespace('BX.Im.AiAssistantWidget.WidgetChatManager');
 			this.#store = im_v2_application_core.Core.getStore();
 			this.#chatService = new im_v2_provider_service_chat.ChatService();
 			this.#copilotChatService = new im_v2_provider_service_copilot.CopilotChatService();
 			this.#copilotRecentService = new im_v2_provider_service_copilot.CopilotRecentService();
+			this.#isBitrixGptMode = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
 		}
-		async resolveInitialChat() {
+		async changeDialog(dialogId) {
+			if (!this.#isBitrixGptMode) {
+				im_v2_lib_logger.Logger.warn(`WidgetChatManager: changeDialog(${dialogId}) ignored: not in bitrixGpt mode`);
+				return false;
+			}
+			if (!(await this.#isCandidateBitrixGptChat(dialogId))) {
+				im_v2_lib_logger.Logger.warn(`WidgetChatManager: ${dialogId} is not a bitrixGpt chat, changeDialog aborted`);
+				return false;
+			}
+			return this.loadChat(dialogId);
+		}
+		#setCurrentDialogId(dialogId) {
+			if (this.#currentDialogId === dialogId) {
+				return;
+			}
+			this.#currentDialogId = dialogId;
+			this.emit(WidgetChatManager.events.onDialogIdChange, {
+				dialogId
+			});
+		}
+		async resolveInitialChat(candidateDialogId = null) {
+			if (this.#currentDialogId) {
+				return this.#currentDialogId;
+			}
+			if (candidateDialogId && (await this.#isCandidateBitrixGptChat(candidateDialogId)) && (await this.loadChat(candidateDialogId))) {
+				return candidateDialogId;
+			}
 			const savedDialogId = this.#getSavedDialogId();
 			if (savedDialogId && (await this.loadChat(savedDialogId))) {
 				return savedDialogId;
 			}
 			return this.#openFallbackChat();
 		}
+		async #isCandidateBitrixGptChat(dialogId) {
+			let chat = this.#store.getters['chats/get'](dialogId);
+			if (!chat) {
+				try {
+					await this.#chatService.loadChat(dialogId);
+				} catch {
+					return false;
+				}
+				chat = this.#store.getters['chats/get'](dialogId);
+			}
+			return this.#isBitrixGptChat(chat);
+		}
+		#isBitrixGptChat(chat) {
+			return chat?.type === im_v2_const.ChatType.copilot;
+		}
 		async loadChat(dialogId) {
-			this.#saveDialogId(dialogId);
 			const existingDialog = this.#store.getters['chats/get'](dialogId);
 			if (existingDialog?.inited) {
 				im_v2_lib_logger.Logger.warn(`WidgetChatManager: chat ${existingDialog.chatId} is already loaded`);
-				return true;
+			} else {
+				im_v2_lib_logger.Logger.warn(`WidgetChatManager: loading chat ${dialogId}`);
+				try {
+					await this.#chatService.loadChatWithMessages(dialogId);
+					im_v2_lib_logger.Logger.warn(`WidgetChatManager: chat ${dialogId} is loaded`);
+				} catch (error) {
+					im_v2_lib_logger.Logger.warn(`WidgetChatManager: error loading chat ${dialogId}`, error);
+					return false;
+				}
+				this.#sendOpenChatAnalytics(dialogId);
 			}
-			im_v2_lib_logger.Logger.warn(`WidgetChatManager: loading chat ${dialogId}`);
-			try {
-				await this.#chatService.loadChatWithMessages(dialogId);
-				im_v2_lib_logger.Logger.warn(`WidgetChatManager: chat ${dialogId} is loaded`);
-			} catch (error) {
-				im_v2_lib_logger.Logger.warn(`WidgetChatManager: error loading chat ${dialogId}`, error);
-				this.#removeSavedDialogId();
-				return false;
-			}
-			this.#sendOpenChatAnalytics(dialogId);
+			this.#setCurrentDialogId(dialogId);
+			this.#saveDialogId(dialogId);
+			void this.#store.dispatch('copilot/setWidgetDialogId', dialogId);
 			return true;
 		}
 		async selectAndOpenChat(dialogId, previousDialogId) {
@@ -58,7 +111,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		async createNewChat() {
 			const newDialogId = await this.#copilotChatService.createDefaultChat();
+			this.#setCurrentDialogId(newDialogId);
 			this.#saveDialogId(newDialogId);
+			void this.#store.dispatch('copilot/setWidgetDialogId', newDialogId);
 			return newDialogId;
 		}
 		async #openFallbackChat() {
@@ -82,7 +137,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			sessionStorage.removeItem(this.#buildStorageKey());
 		}
 		#buildStorageKey() {
-			return `im-v2-copilot-widget-${im_v2_const.LocalStorageKey.copilotWidgetLastDialogId}`;
+			const storageKeyPrefix = this.#isBitrixGptMode ? 'im-ai-assistant' : 'im-ai-marta';
+			return `${storageKeyPrefix}-widget-${im_v2_const.LocalStorageKey.copilotWidgetLastDialogId}`;
 		}
 		async #getFirstRecentDialogId() {
 			await this.#copilotRecentService.loadFirstPage();
@@ -94,12 +150,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return recentItems[0].dialogId;
 		}
+		subscribeNotifier() {
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.#onBeforeNotificationShow);
+		}
+		unsubscribeNotifier() {
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.#onBeforeNotificationShow);
+		}
+		clearWidgetState() {
+			this.#setCurrentDialogId(null);
+			void this.#store.dispatch('copilot/setWidgetDialogId', '');
+		}
 		setRecentDraftText(dialogId) {
 			if (!dialogId) {
 				return;
 			}
 			im_v2_lib_draft.DraftManager.getInstance().setRecentDraftText(dialogId);
 		}
+		#onBeforeNotificationShow = event => {
+			const eventData = event.getData();
+			const currentDialogId = this.#currentDialogId;
+			if (eventData.dialogId !== currentDialogId) {
+				return im_v2_lib_messageNotifier.NotifierShowMessageAction.show;
+			}
+			return im_v2_lib_messageNotifier.NotifierShowMessageAction.skip;
+		};
 		#sendOpenChatAnalytics(dialogId) {
 			const dialog = this.#store.getters['chats/get'](dialogId);
 			if (!dialog) {
@@ -118,7 +192,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-			EditableChatTitle: im_v2_component_elements_chatTitle.EditableChatTitle
+			EditableChatTitle: im_v2_component_elements_chatTitle.EditableChatTitle,
+			AiAssistantCreateChatButton: im_v2_component_list_container_aiAssistant.AiAssistantCreateChatButton
 		},
 		props: {
 			dialogId: {
@@ -128,9 +203,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			withListToggle: {
 				type: Boolean,
 				default: false
+			},
+			isCreating: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['toggleList'],
+		emits: ['toggleList', 'createChat'],
 		computed: {
 			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
@@ -140,7 +219,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			isInited() {
 				return this.dialog.inited;
 			},
+			isCopilot2026Styles() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			},
+			closeIcon() {
+				return this.isCopilot2026Styles ? ui_iconSet_api_vue.Outline.CHEVRON_RIGHT_L : ui_iconSet_api_vue.Outline.CROSS_L;
+			},
 			subtitle() {
+				const isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+				const agentName = this.$store.getters['copilot/getAgentName'];
+				if (isBitrixGptV2Available && agentName) {
+					return agentName;
+				}
 				return this.loc('IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE');
 			}
 		},
@@ -154,19 +244,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onMinimize() {
 				main_core_events.EventEmitter.emit(MINIMIZE_EVENT_NAME$1);
 			},
-			loc(phrase) {
-				return this.$Bitrix.Loc.getMessage(phrase);
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<div class="bx-im-ai-assistant-chat-header__container">
+		<div :class="['bx-im-ai-assistant-chat-header__container', {'--legacy': !isCopilot2026Styles}]">
 			<BIcon
 				v-if="withListToggle"
 				:name="OutlineIcons.RECENT_ITEMS"
 				:hoverable="true"
 				class="bx-im-ai-assistant-chat-header__back"
 				@click="$emit('toggleList')"
-			/>
+			/> 
 			<div class="bx-im-ai-assistant-chat-header__avatar">
 				<ChatAvatar
 					:avatarDialogId="dialogId"
@@ -180,9 +270,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					{{ subtitle }}
 				</div>
 			</div>
+			<div v-if="isInited && isCopilot2026Styles" class="bx-im-ai-assistant-chat-header__create-chat">
+				<AiAssistantCreateChatButton
+					:isCreating="isCreating"
+					@newChat="$emit('createChat')"
+				/>
+			</div>
 			<BIcon
 				v-if="isInited"
-				:name="OutlineIcons.CROSS_L"
+				:name="closeIcon"
 				:hoverable="true"
 				:title="loc('IM_AI_ASSISTANT_WIDGET_MINIMIZE')"
 				class="bx-im-ai-assistant-chat-header__icon"
@@ -197,6 +293,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		name: 'CopilotWidgetChatContent',
 		components: {
 			CopilotContent: im_v2_component_content_chat.CopilotContent,
+			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
 			AiAssistantWidgetChatHeader
 		},
 		props: {
@@ -207,9 +304,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			withSidebar: {
 				type: Boolean,
 				default: true
+			},
+			isCreatingChat: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['toggleList'],
+		emits: ['toggleList', 'createChat'],
 		computed: {
 			SpecialBackground: () => im_v2_lib_theme.SpecialBackground
 		},
@@ -217,14 +318,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<CopilotContent
 			:dialogId="dialogId"
 			:withSidebar="withSidebar"
-			:themeId="SpecialBackground.transparent"
+			:backgroundId="SpecialBackground.transparent"
 		>
 			<template #header>
 				<AiAssistantWidgetChatHeader
 					:dialogId="dialogId"
 					:withListToggle="true"
+					:isCreating="isCreatingChat"
 					@toggleList="$emit('toggleList')"
+					@createChat="$emit('createChat')"
 				/>
+			</template>
+			<template #dialog>
+				<div class="bx-im-ai-assistant-widget-dialog-context --ui-context-content-light">
+					<ChatDialog :dialogId="dialogId" :key="dialogId"/>
+				</div>
 			</template>
 		</CopilotContent>
 	`
@@ -235,7 +343,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		name: 'CopilotWidgetListHeader',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
-			Spinner: im_v2_component_elements_loader.Spinner
+			AiAssistantCreateChatButton: im_v2_component_list_container_aiAssistant.AiAssistantCreateChatButton
 		},
 		props: {
 			isCreating: {
@@ -243,11 +351,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: false
 			}
 		},
-		emits: ['newChat', 'close'],
+		emits: ['createChat', 'close'],
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
-			SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
-			SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
 			copilotName() {
 				return this.$store.getters['copilot/getName'];
 			}
@@ -263,25 +369,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				{{ copilotName }}
 			</div>
 			<div class="bx-im-copilot-widget-header__actions">
-				<div
-					class="bx-im-copilot-widget-header__create-chat"
-					:title="loc('IM_AI_ASSISTANT_WIDGET_HEADER_NEW_CHAT')"
-				>
-					<div class="bx-im-copilot-widget-header__create-chat">
-						<Spinner 
-							v-if="isCreating" 
-							:size="SpinnerSize.XS"
-							:color="SpinnerColor.copilot"
-						/>
-						<BIcon
-							v-else
-							class="bx-im-copilot-widget-header__create-chat_icon"
-							:name="OutlineIcons.PLUS_L"
-							:hoverable="true"
-							@click="$emit('newChat')"
-						/>
-					</div>
-				</div>
+				<AiAssistantCreateChatButton
+					:isCreating="isCreating"
+					@newChat="$emit('createChat')"
+				/>
 				<div
 					class="bx-im-copilot-widget-header__close"
 					:title="loc('IM_AI_ASSISTANT_WIDGET_HEADER_CLOSE')"
@@ -313,19 +404,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			withSidebar: {
 				type: Boolean,
 				default: true
-			},
-			isCreating: {
-				type: Boolean,
-				default: false
 			}
 		},
-		emits: ['newChat', 'close', 'chatSelect'],
+		emits: ['close', 'chatSelect', 'createChat'],
 		template: `
 		<div class="bx-im-ai-assistant-chat-recent-list">
 			<CopilotWidgetListHeader
-				:isCreating="isCreating"
-				@newChat="$emit('newChat')"
 				@close="$emit('close')"
+				@createChat="$emit('createChat')"
 			/>
 			<CopilotList @selectChat="$emit('chatSelect', $event)"/>
 		</div>
@@ -342,7 +428,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			CopilotWidgetRecentList,
 			CopilotWidgetChatContent
 		},
-		emits: ['select', 'createChat', 'recentVisibilityChanged'],
 		props: {
 			dialogId: {
 				type: String,
@@ -353,6 +438,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: false
 			}
 		},
+		emits: ['select', 'createChat', 'recentVisibilityChanged'],
 		data() {
 			return {
 				isPanelOpen: false
@@ -389,17 +475,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					v-if="dialogId"
 					:dialogId="dialogId"
 					:withSidebar="false"
+					:isCreatingChat="isCreatingChat"
 					@toggleList="togglePanel"
+					@createChat="onCreateChat"
 				/>
 			</main>
 
 			<SlideAnimation>
-				<aside class="bx-im-ai-assistant-widget-layout__panel-container" v-if="isPanelOpen">
+				<aside class="bx-im-ai-assistant-widget-layout__panel-container --ui-context-content-light" v-if="isPanelOpen">
 					<CopilotWidgetRecentList
-						:isCreating="isCreatingChat"
 						@chatSelect="selectDialog"
+						@createChat="onCreateChat"
 						@close="onHeaderClose"
-						@newChat="onCreateChat"
 					/>
 				</aside>
 			</SlideAnimation>
@@ -424,21 +511,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: true
 			}
 		},
-		created() {
-			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
-		},
-		beforeUnmount() {
-			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
-		},
-		methods: {
-			onBeforeNotificationShow(event) {
-				const eventData = event.getData();
-				if (eventData.dialogId !== this.dialogId) {
-					return im_v2_lib_messageNotifier.NotifierShowMessageAction.show;
-				}
-				return im_v2_lib_messageNotifier.NotifierShowMessageAction.skip;
-			}
-		},
 		template: `
 		<AiAssistantBotContent :dialogId="dialogId" :withSidebar="withSidebar">
 			<template #header>
@@ -456,7 +528,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			MartaWidgetChatContent
 		},
 		props: {
-			botDialogId: {
+			initialDialogId: {
 				type: String,
 				required: true
 			}
@@ -468,20 +540,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		},
 		computed: {
-			isCopilotMode() {
-				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+			isBitrixGptMode() {
+				return WidgetChatManager.getInstance().isBitrixGptMode;
 			}
 		},
 		created() {
-			if (this.isCopilotMode) {
+			this.manager = WidgetChatManager.getInstance();
+			this.manager.subscribeNotifier();
+			this.manager.subscribe(WidgetChatManager.events.onDialogIdChange, this.onManagerDialogIdChange);
+			if (this.isBitrixGptMode) {
 				void this.resolveInitialChat();
 			} else {
-				void WidgetChatManager.getInstance().loadChat(this.botDialogId);
+				void this.manager.loadChat(this.initialDialogId);
 			}
 		},
+		beforeUnmount() {
+			this.manager.unsubscribeNotifier();
+			this.manager.unsubscribe(WidgetChatManager.events.onDialogIdChange, this.onManagerDialogIdChange);
+			this.manager.clearWidgetState();
+		},
 		methods: {
+			onManagerDialogIdChange(event) {
+				const {
+					dialogId
+				} = event.getData();
+				this.selectedDialogId = dialogId ?? '';
+			},
 			async resolveInitialChat() {
-				const dialogId = await WidgetChatManager.getInstance().resolveInitialChat();
+				const dialogId = await WidgetChatManager.getInstance().resolveInitialChat(this.initialDialogId);
 				if (dialogId) {
 					this.selectedDialogId = dialogId;
 				}
@@ -511,9 +597,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container --ui-context-content-light">
+		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container">
 			<CopilotWidgetLayout
-				v-if="isCopilotMode"
+				v-if="isBitrixGptMode"
 				:dialogId="selectedDialogId"
 				:isCreatingChat="isCreatingChat"
 				@select="onChangeDialogId"
@@ -522,7 +608,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			/>
 			<MartaWidgetChatContent
 				v-else
-				:dialogId="botDialogId"
+				:dialogId="initialDialogId"
 				:withSidebar="false"
 			/>
 		</div>
@@ -548,7 +634,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!rootContainer) {
 				return Promise.reject(new Error('Provide node or selector for root container'));
 			}
-			const dialogId = aiAssistantBotId.toString();
+			const dialogId = WidgetChatManager.getInstance().isBitrixGptMode ? this.#resolveDialogId(payload) ?? '' : aiAssistantBotId?.toString() ?? '';
 			return im_v2_application_core.Core.createVue(this, {
 				name: APP_NAME,
 				el: rootContainer,
@@ -556,8 +642,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				components: {
 					AiAssistantWidgetChatOpener
 				},
-				template: `<AiAssistantWidgetChatOpener botDialogId="${dialogId}" />`
+				template: `<AiAssistantWidgetChatOpener initialDialogId="${dialogId}" />`
 			});
+		}
+		async changeDialog(targetChat) {
+			await this.ready();
+			if (!WidgetChatManager.getInstance().isBitrixGptMode) {
+				return false;
+			}
+			const dialogId = this.#resolveDialogId(targetChat);
+			if (!dialogId) {
+				return false;
+			}
+			return WidgetChatManager.getInstance().changeDialog(dialogId);
+		}
+		#resolveDialogId(targetChat) {
+			if (main_core.Type.isStringFilled(targetChat?.dialogId)) {
+				return targetChat.dialogId;
+			}
+			if (main_core.Type.isNumber(targetChat?.chatId)) {
+				return im_v2_lib_utils.Utils.dialog.buildChatDialogId(targetChat.chatId);
+			}
+			return null;
 		}
 		async #init() {
 			await im_v2_application_core.Core.ready();
@@ -567,5 +673,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.AiAssistantWidgetApplication = AiAssistantWidgetApplication;
 
-})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Event, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Css, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=ai-assistant-widget.bundle.js.map

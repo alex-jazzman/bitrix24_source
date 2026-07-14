@@ -3,10 +3,12 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_iconSet_api_vue, im_v2_application_core, im_v2_const, ui_vue3, im_v2_lib_textHighlighter, im_v2_lib_copilot, im_v2_lib_escManager, im_v2_lib_permission) {
+(function (exports, main_core, ui_iconSet_api_vue, im_v2_application_core, im_v2_const, im_v2_lib_feature, ui_vue3, im_v2_lib_textHighlighter, im_v2_lib_copilot, im_v2_lib_escManager, im_v2_lib_permission) {
 	'use strict';
 
 	const DialogSpecialType = {
+		copilot: 'copilot',
+		// TODO: change naming to aiAssistant after marta remove
 		extranet: 'extranet',
 		network: 'network',
 		collaber: 'collaber',
@@ -137,6 +139,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.isSelfChat) {
 					return '';
 				}
+				if (this.isAiAssistantBot) {
+					return DialogSpecialType.copilot;
+				}
 				if (this.isBot) {
 					return this.botType;
 				}
@@ -196,6 +201,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				return this.dialog.extranet;
 			},
+			isAiAssistantBot() {
+				if (!this.isBot) {
+					return false;
+				}
+				const bot = this.$store.getters['users/bots/getByUserId'](this.dialogId);
+				return bot?.code === im_v2_const.BotCode.copilot;
+			},
 			isCollaberChatOrUser() {
 				if (this.isUser) {
 					return this.user.type === im_v2_const.UserType.collaber;
@@ -228,6 +240,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			showBirthdays() {
 				return this.$store.getters['application/settings/get'](im_v2_const.Settings.recent.showBirthday);
+			},
+			isCopilot2026Styles() {
+				return this.isAiAssistantBot && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
 			}
 		},
 		methods: {
@@ -240,7 +255,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<span class="bx-im-chat-title__content">
 				<span v-if="leftIcon" :class="'--' + leftIcon" class="bx-im-chat-title__icon"></span>
 				<span
-					:class="[specialColor ? '--' + specialColor : '']"
+					:class="[specialColor ? '--' + specialColor : '', {'--copilot2026': isCopilot2026Styles}]"
 					:style="{color: color}"
 					:title="tooltipText"
 					class="bx-im-chat-title__text"
@@ -444,7 +459,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@click="onTitleClick"
 			@mouseover="showEditIcon = true"
 			@mouseleave="showEditIcon = false"
-			class="bx-im-elements-editable-chat-title__wrap"
+			class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__wrap"
 			:class="{'--can-rename': canBeRenamed}"
 		>
 			<div class="bx-im-elements-editable-chat-title__container">
@@ -454,7 +469,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div v-if="showEditIcon && canBeRenamed" class="bx-im-elements-editable-chat-title__edit-icon"></div>
 			</div>
 		</div>
-		<div v-else class="bx-im-elements-editable-chat-title__input_container">
+		<div v-else class="bx-im-elements-editable-chat-title__scope bx-im-elements-editable-chat-title__input_container">
 			<input
 				v-model="chatTitle"
 				:style="inputStyle"
@@ -475,5 +490,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.EditableChatTitle = EditableChatTitle;
 	exports.MessageAuthorTitle = MessageAuthorTitle;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Vue3, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

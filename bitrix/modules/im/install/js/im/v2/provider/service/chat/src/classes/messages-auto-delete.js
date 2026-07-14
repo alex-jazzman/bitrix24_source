@@ -1,13 +1,12 @@
 import { Runtime } from 'main.core';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { RestMethod, AutoDeleteDelay } from 'im.v2.const';
 import { runAction } from 'im.v2.lib.rest';
-import { FeatureManager } from 'im.v2.lib.feature';
-
-import type { Store } from 'ui.vue3.vuex';
-import type { RawMessagesAutoDeleteConfig } from 'im.v2.provider.service.types';
+import { TariffManager } from 'im.v2.lib.feature';
+import { type RawMessagesAutoDeleteConfig } from 'im.v2.provider.service.types';
 
 type SetDelayRequestResult = {
 	messagesAutoDeleteConfigs: Array<RawMessagesAutoDeleteConfig>;
@@ -70,7 +69,7 @@ export class MessagesAutoDeleteService
 		// if we set some delay and server returns 0 delay, then auto delete is disabled by admin
 		if (delay !== config.delay && config.delay === AutoDeleteDelay.Off)
 		{
-			FeatureManager.messagesAutoDelete.openFeatureSlider();
+			TariffManager.messagesAutoDelete.openFeatureSlider();
 		}
 
 		void this.#store.dispatch('chats/autoDelete/set', {

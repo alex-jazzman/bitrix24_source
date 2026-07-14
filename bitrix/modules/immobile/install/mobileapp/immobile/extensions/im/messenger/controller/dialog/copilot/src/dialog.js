@@ -5,11 +5,9 @@
  */
 jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, module) => {
 	const { Uuid } = require('utils/uuid');
-	const { Loc } = require('im/messenger/loc');
 
 	const {
 		BotCode,
-		DialogType,
 		DialogWidgetType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
@@ -32,6 +30,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		MCPButton,
 		SearchModeButton,
 		AgentButton,
+		MarketButton,
 		AssistantButtonDesign,
 	} = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { Reasoning } = require('im/messenger/lib/reasoning');
@@ -43,7 +42,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	 */
 	class CopilotDialog extends Dialog
 	{
-		getDialogType()
+		getDialogWidgetType()
 		{
 			return DialogWidgetType.copilot;
 		}
@@ -134,7 +133,8 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		initMentionManager()
 		{
 			const dialogModelState = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (dialogModelState && dialogModelState.userCounter > 2)
+			const hasMoreThanTwoUsers = dialogModelState?.userCounter > 2;
+			if (hasMoreThanTwoUsers || Feature.isBitrixGptV2Available)
 			{
 				this.mentionManager = new CopilotMentionManager({
 					view: this.view,
@@ -217,6 +217,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			return ChatTitle.createOptimisticCopilotTitleParams();
 		}
 
+
 		/**
 		 * @return {Array<AssistantButton>}
 		 */
@@ -244,6 +245,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			if (Feature.isAgentButtonAvailable)
 			{
 				buttons.push({ ...AgentButton });
+			}
+
+			if (Feature.isAssistantMarketButtonAvailable)
+			{
+				buttons.push({ ...MarketButton });
 			}
 
 			return buttons;
@@ -309,8 +315,12 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			}
 			else
 			{
-				this.mentionManager?.unsubscribeEvents();
-				this.mentionManager = null;
+				if (!Feature.isBitrixGptV2Available)
+				{
+					this.mentionManager?.unsubscribeEvents();
+					this.mentionManager = null;
+				}
+
 				this.view.setKeyboardOverContent(false);
 			}
 		}

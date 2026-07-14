@@ -2,6 +2,11 @@ import { TaskCard } from 'tasks.v2.application.task-card';
 
 import '../css/task-comments.css';
 
+type FullCardParams = {
+	taskId: number,
+	onCloseEmbedded: () => void,
+};
+
 // @vue/component
 export const TaskCommentsCard = {
 	name: 'TaskCommentsCard',
@@ -15,6 +20,7 @@ export const TaskCommentsCard = {
 			required: true,
 		},
 	},
+	emits: ['close'],
 	watch: {
 		dialogId(newValue: string, oldValue: string)
 		{
@@ -38,7 +44,12 @@ export const TaskCommentsCard = {
 	methods: {
 		async openTaskCard()
 		{
-			this.taskCardInstance = await TaskCard.embedFullCard({ taskId: this.taskId });
+			const params: FullCardParams = {
+				taskId: this.taskId,
+				onCloseEmbedded: () => this.$emit('close'),
+			};
+
+			this.taskCardInstance = await TaskCard.embedFullCard(params);
 			this.taskCardInstance.mount(this.$refs['task-card-container']);
 		},
 		destroyTaskCard()

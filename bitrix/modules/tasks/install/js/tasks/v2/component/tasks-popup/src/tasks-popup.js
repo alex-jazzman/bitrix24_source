@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Type, Event } from 'main.core';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
 
 import './tasks-popup.css';
@@ -9,15 +9,19 @@ type TasksPopupOptions = {
 	isWithOverlay: boolean,
 	isDarkMode: boolean,
 	isEscBlocked: boolean,
-	isFlippingBlocked: boolean,
+	isFlippingBlockedHorizontal: boolean,
+	isFlippingBlockedVertical: boolean,
 	isFrozen: boolean,
 	id: string,
 	className: string,
 	classNameOverlay: string,
 	positioning: {
-		elementAnchor: any,
-		isOpenedUp: boolean,
+		isAutoAdjust: boolean,
+		isCenteredHorizontally: boolean,
 		isOpenedLeft: boolean,
+		isOpenedUp: boolean,
+		elementAnchor: any,
+		elementScrollContainer: any,
 		offsetVertical: number,
 		offsetHorizontal: number,
 	},
@@ -51,6 +55,7 @@ export const TasksPopup = {
 			right: null,
 			top: null,
 			bottom: null,
+			isListeningToCoordsChange: false,
 			isFlippedNoSpaceHorizontally: false,
 			isFlippedNoSpaceHorizontallyBack: false,
 			isFlippedNoSpaceVertically: false,
@@ -65,6 +70,10 @@ export const TasksPopup = {
 		elementAnchor(): any
 		{
 			return this.positioning.elementAnchor;
+		},
+		elementScrollContainer(): any
+		{
+			return this.positioning.elementScrollContainer;
 		},
 		offsetVertical(): any
 		{
@@ -103,26 +112,6 @@ export const TasksPopup = {
 		{
 			let classNamePopupNew = 'tasks-popup';
 
-			if (!this.elementAnchor)
-			{
-				classNamePopupNew += ' tasks-popup_unbound';
-			}
-
-			if (this.classNamePopupCustom)
-			{
-				classNamePopupNew += ` ${this.classNamePopupCustom}`;
-			}
-
-			if (this.positioning.isOpenedUp)
-			{
-				classNamePopupNew += ' tasks-popup_opened-up';
-			}
-
-			if (this.positioning.isOpenedLeft)
-			{
-				classNamePopupNew += ' tasks-popup_opened-left';
-			}
-
 			if (this.options?.isWithBG)
 			{
 				classNamePopupNew += ' tasks-popup_with-bg';
@@ -131,6 +120,35 @@ export const TasksPopup = {
 			if (this.options?.isWithPointer)
 			{
 				classNamePopupNew += ' tasks-popup_with-pointer';
+			}
+
+			if (!this.elementAnchor)
+			{
+				classNamePopupNew += ' tasks-popup_unbound';
+			}
+
+			if (this.positioning.isCenteredHorizontally)
+			{
+				classNamePopupNew += ' tasks-popup_centered-horizontally';
+			}
+			else if (this.positioning.isOpenedLeft)
+			{
+				classNamePopupNew += ' tasks-popup_opened-left';
+			}
+
+			if (this.positioning.isOpenedUp)
+			{
+				classNamePopupNew += ' tasks-popup_opened-up';
+			}
+
+			if (this.isListeningToCoordsChange)
+			{
+				classNamePopupNew += ' tasks-popup_listening-coords';
+			}
+
+			if (this.classNamePopupCustom)
+			{
+				classNamePopupNew += ` ${this.classNamePopupCustom}`;
 			}
 
 			return classNamePopupNew;
@@ -181,16 +199,38 @@ export const TasksPopup = {
 		if (this.elementAnchor)
 		{
 			this.setCoordsForPopup();
+
+			if (this.positioning.isAutoAdjust)
+			{
+				this.startListeningToCoordsChange();
+			}
+			else if (this.elementScrollContainer)
+			{
+				Event.bind(this.elementScrollContainer, 'scroll', this.handleScrollContainer);
+			}
 		}
 
-		document.addEventListener('click', this.handleClickDocument);
-		document.addEventListener('keydown', this.handleKeyDownDocument);
+		Event.bind(document, 'click', this.handleClickDocument);
+		Event.bind(document, 'keydown', this.handleKeyDownDocument);
 	},
 	async beforeUnmount(): void
 	{
 		this.unregisterZIndexComponent();
-		document.removeEventListener('click', this.handleClickDocument);
-		document.removeEventListener('keydown', this.handleKeyDownDocument);
+
+		if (this.elementAnchor)
+		{
+			if (this.positioning.isAutoAdjust)
+			{
+				this.stopListeningToCoordsChange();
+			}
+			else if (this.elementScrollContainer)
+			{
+				Event.unbind(this.elementScrollContainer, 'scroll', this.handleScrollContainer);
+			}
+		}
+
+		Event.unbind(document, 'click', this.handleClickDocument);
+		Event.unbind(document, 'keydown', this.handleKeyDownDocument);
 	},
 	methods: {
 		registerZIndexComponent(): ZIndexComponent
@@ -235,6 +275,17 @@ export const TasksPopup = {
 
 			return zIndexHighest;
 		},
+		getZIndexForPopup(): number
+		{
+			let zIndexNew = 20;
+			const getZIndexHighest = this.getZIndexHighest();
+			if (getZIndexHighest)
+			{
+				zIndexNew = getZIndexHighest + 1;
+			}
+
+			return zIndexNew;
+		},
 		getIsThisPopupLast(): any
 		{
 			const sort = this.zIndexComponent.getSort();
@@ -276,11 +327,32 @@ export const TasksPopup = {
 				widthSelf,
 			} = sizes;
 
-			if (this.positioning.isOpenedLeft)
+			if (this.positioning.isCenteredHorizontally)
+			{
+				const leftNew = rectAnchor.left - (widthSelf / 2) + (this.positioning.offsetHorizontal || 0);
+				const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
+
+				if (leftNew < 0)
+				{
+					this.left = 0;
+					this.right = null;
+				}
+				else if (rightBasedOnLeftResult < 0)
+				{
+					this.left = null;
+					this.right = 0;
+				}
+				else
+				{
+					this.left = leftNew;
+					this.right = null;
+				}
+			}
+			else if (this.positioning.isOpenedLeft)
 			{
 				const leftNew = rectAnchor.right - widthSelf - (this.positioning.offsetHorizontal || 0);
 
-				if (leftNew < 0)
+				if ((leftNew < 0) && !this.positioning.isFlippingBlockedHorizontal)
 				{
 					if (!this.isFlippedNoSpaceHorizontally)
 					{
@@ -311,7 +383,7 @@ export const TasksPopup = {
 				const leftNew = rectAnchor.left + (this.positioning.offsetHorizontal || 0);
 				const rightBasedOnLeftResult = widthParent - (leftNew + widthSelf);
 
-				if (rightBasedOnLeftResult < 0)
+				if ((rightBasedOnLeftResult < 0) && !this.positioning.isFlippingBlockedHorizontal)
 				{
 					if (!this.isFlippedNoSpaceHorizontally)
 					{
@@ -350,7 +422,7 @@ export const TasksPopup = {
 			{
 				const topNew = rectAnchor.top - heightSelf - (this.offsetVertical || 0);
 
-				if (topNew < 0)
+				if ((topNew < 0) && !this.positioning.isFlippingBlockedVertical)
 				{
 					if (!this.isFlippedNoSpaceVertically)
 					{
@@ -381,7 +453,7 @@ export const TasksPopup = {
 				const topNew = rectAnchor.bottom + (this.offsetVertical || 0);
 				const bottomBasedOnTopResult = heightParent - (topNew + heightSelf);
 
-				if (bottomBasedOnTopResult < 0)
+				if ((bottomBasedOnTopResult < 0) && !this.positioning.isFlippingBlockedVertical)
 				{
 					if (!this.isFlippedNoSpaceVertically)
 					{
@@ -436,6 +508,16 @@ export const TasksPopup = {
 			this.setCoordsForPopupHorizontal(sizes);
 			this.setCoordsForPopupVertical(sizes);
 		},
+		startListeningToCoordsChange(): void
+		{
+			this.isListeningToCoordsChange = true;
+			this.intervalRefreshCoords = setInterval(this.setCoordsForPopup, 50);
+		},
+		stopListeningToCoordsChange(): void
+		{
+			this.isListeningToCoordsChange = false;
+			clearInterval(this.intervalRefreshCoords);
+		},
 		closeThisPopup(): void
 		{
 			this.$emit('close');
@@ -481,6 +563,10 @@ export const TasksPopup = {
 			}
 
 			this.tryToCloseThisPopup();
+		},
+		handleScrollContainer(): void
+		{
+			this.setCoordsForPopup();
 		},
 		handleMouseEnterPopupOverlay(): void
 		{

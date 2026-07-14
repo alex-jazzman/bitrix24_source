@@ -9,6 +9,7 @@ jn.define('im/messenger/core/embedded', (require, exports, module) => {
 	const { dialoguesModel } = require('im/messenger/model/dialogues');
 
 	const { CoreApplication } = require('im/messenger/core/base');
+	const { MessengerParamsReader } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -39,6 +40,9 @@ jn.define('im/messenger/core/embedded', (require, exports, module) => {
 	 */
 	async function buildApplication({ exports: embeddedExports, appConfig })
 	{
+		MessengerParamsReader.subscribeForUpdates();
+		await MessengerParamsReader.hydrate();
+
 		const core = new EmbeddedChatApplication(appConfig);
 
 		await core.init();

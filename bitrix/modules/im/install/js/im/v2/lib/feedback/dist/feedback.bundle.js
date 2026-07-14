@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core) {
+(function (exports, main_core, im_v2_application_core, im_v2_lib_feature) {
 	'use strict';
 
 	const AI_ASSISTANT_FORM_ID = 'im.ai-assistant.feedback';
@@ -16,7 +16,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 	const FormConfigAiAssistant = {
 		id: AI_ASSISTANT_FORM_ID,
+		forms: getAiAssistantForms()
+	};
+	const FormConfigCopilot = {
+		id: COPILOT_FORM_ID,
+		forms: getCopilotForms()
+	};
+	const FormConfigGeneral = {
+		id: GENERAL_FORM_ID,
 		forms: [{
+			zones: ['ru'],
+			id: 550,
+			sec: '50my2x',
+			lang: 'ru'
+		}, {
+			zones: ['en'],
+			id: 560,
+			sec: '621lbr',
+			lang: 'en'
+		}]
+	};
+	function getAiAssistantForms() {
+		if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+			return [{
+				zones: ['en'],
+				id: 834,
+				lang: 'en',
+				sec: 'qnauno'
+			}, {
+				zones: ['ru', 'by', 'kz', 'uz'],
+				id: 2982,
+				lang: 'ru',
+				sec: 'vqmcxn'
+			}];
+		}
+		return [{
 			zones: ['es'],
 			id: 838,
 			lang: 'es',
@@ -41,11 +75,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			id: 2982,
 			lang: 'ru',
 			sec: 'vqmcxn'
-		}]
-	};
-	const FormConfigCopilot = {
-		id: COPILOT_FORM_ID,
-		forms: [{
+		}];
+	}
+	function getCopilotForms() {
+		if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+			return [{
+				zones: ['en'],
+				id: 834,
+				lang: 'en',
+				sec: 'qnauno'
+			}, {
+				zones: ['ru', 'by', 'kz', 'uz'],
+				id: 2982,
+				lang: 'ru',
+				sec: 'vqmcxn'
+			}];
+		}
+		return [{
 			zones: ['es'],
 			id: 684,
 			lang: 'es',
@@ -70,22 +116,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			id: 692,
 			lang: 'ru',
 			sec: 'jbujn0'
-		}]
-	};
-	const FormConfigGeneral = {
-		id: GENERAL_FORM_ID,
-		forms: [{
-			zones: ['ru'],
-			id: 550,
-			sec: '50my2x',
-			lang: 'ru'
-		}, {
-			zones: ['en'],
-			id: 560,
-			sec: '621lbr',
-			lang: 'en'
-		}]
-	};
+		}];
+	}
 
 	const FEEDBACK_EXTENSION = 'ui.feedback.form';
 	class FeedbackManager {
@@ -149,5 +181,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.FeedbackManager = FeedbackManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib);
 //# sourceMappingURL=feedback.bundle.js.map

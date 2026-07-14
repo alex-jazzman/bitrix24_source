@@ -2,6 +2,7 @@
  * @module im/messenger/controller/dialog/lib/background/manager
  */
 jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 
 	const { DialogBackgroundId } = require('im/messenger/const');
@@ -60,30 +61,73 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 				return {};
 			}
 
-			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
-			if (dialogHelper?.isAiAssistant)
+			const id = this.resolveBackgroundId();
+
+			return Type.isStringFilled(id) ? this.getBackgroundById(id) : {};
+		}
+
+		/**
+		 * @return {string|null}
+		 */
+		resolveBackgroundId()
+		{
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (helper?.isAiAssistant)
 			{
-				return BackgroundConfiguration[this.getThemeId()][DialogBackgroundId.aiAssistant];
+				return DialogBackgroundId.aiAssistant;
 			}
 
-			if (dialogHelper?.isCopilot)
+			if (helper?.isCopilot)
 			{
-				return BackgroundConfiguration[this.getThemeId()][DialogBackgroundId.copilot];
+				return DialogBackgroundId.copilot;
 			}
 
+			if (helper?.isCollab)
+			{
+				return helper.hasCollaber
+					? DialogBackgroundId.collab
+					: DialogBackgroundId.collabWithoutCollaber;
+			}
+
+			return this.getValidStoreBackgroundId();
+		}
+
+		/**
+		 * @return {string|null}
+		 */
+		getValidStoreBackgroundId()
+		{
 			const dialogBackgroundId = this.store.getters['dialoguesModel/getBackgroundId'](this.dialogId);
-			if (BackgroundConfiguration[this.getThemeId()][dialogBackgroundId])
+			if (this.hasBackground(dialogBackgroundId))
 			{
-				return BackgroundConfiguration[this.getThemeId()][dialogBackgroundId];
+				return dialogBackgroundId;
 			}
 
 			const userBackgroundId = this.store.getters['usersModel/getBotBackgroundId'](this.dialogId);
-			if (BackgroundConfiguration[this.getThemeId()][userBackgroundId])
+			if (this.hasBackground(userBackgroundId))
 			{
-				return BackgroundConfiguration[this.getThemeId()][userBackgroundId];
+				return userBackgroundId;
 			}
 
-			return {};
+			return null;
+		}
+
+		/**
+		 * @param {string} id
+		 * @return {boolean}
+		 */
+		hasBackground(id)
+		{
+			return Boolean(BackgroundConfiguration[this.themeId][id]);
+		}
+
+		/**
+		 * @param {string} id
+		 * @return {BackgroundConfiguration}
+		 */
+		getBackgroundById(id)
+		{
+			return BackgroundConfiguration[this.themeId][id] ?? {};
 		}
 
 		/**
@@ -99,18 +143,15 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 
 			if (Feature.isBitrixGptV2Available)
 			{
-				return !dialogHelper.isCollab;
+				return true;
 			}
 
-			return !(dialogHelper.isCollab || dialogHelper.isCopilot);
-		}
+			if (!Feature.isNestedChatAvailable && dialogHelper.isCollab)
+			{
+				return false;
+			}
 
-		/**
-		 * @return {string}
-		 */
-		getThemeId()
-		{
-			return this.themeId;
+			return !dialogHelper.isCopilot;
 		}
 
 		/**

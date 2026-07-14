@@ -3,154 +3,157 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_lib_showLimit,ui_vue3_components_popup,ui_vue3_components_richLoc,tasks_v2_core,tasks_v2_component_elements_fieldHoverButton,tasks_v2_component_elements_fieldAdd,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,tasks_v2_lib_userSelectorDialog,main_core_events,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userLabel,tasks_v2_provider_service_userService) {
+(function (exports, ui_vue3_components_popup, ui_vue3_components_richLoc, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_component_elements_hoverPill, tasks_v2_component_elements_fieldHoverButton, tasks_v2_component_elements_fieldAdd, tasks_v2_component_elements_hint, tasks_v2_component_elements_userLabel, tasks_v2_lib_showLimit, tasks_v2_lib_idUtils, tasks_v2_lib_userSelectorDialog, tasks_v2_component_absencePopup, tasks_v2_provider_service_userService, main_core_events, ui_system_menu_vue) {
 	'use strict';
 
 	// @vue/component
 	const User = {
-	  components: {
-	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
-	    UserLabel: tasks_v2_component_elements_userLabel.UserLabel,
-	    BMenu: ui_system_menu_vue.BMenu
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    userId: {
-	      type: Number,
-	      required: true
-	    },
-	    canAdd: {
-	      type: Boolean,
-	      required: true
-	    },
-	    withClear: {
-	      type: Boolean,
-	      required: true
-	    },
-	    withMenu: {
-	      type: Boolean,
-	      required: true
-	    },
-	    forceEdit: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['edit', 'remove'],
-	  data() {
-	    return {
-	      isMenuShown: false
-	    };
-	  },
-	  computed: {
-	    user() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.userId);
-	    },
-	    menuOptions() {
-	      return {
-	        id: 'tasks-field-users-menu',
-	        bindElement: this.$refs.user.$el,
-	        offsetTop: 8,
-	        targetContainer: document.body,
-	        items: [{
-	          title: this.loc('TASKS_V2_USERS_VIEW'),
-	          icon: ui_iconSet_api_vue.Outline.PERSON,
-	          onClick: this.openProfile
-	        }, ...this.additionalItems]
-	      };
-	    },
-	    additionalItems() {
-	      return main_core_events.EventEmitter.emit(tasks_v2_const.EventName.UserMenuExternalItems, {
-	        taskId: this.taskId,
-	        userId: this.userId
-	      }).filter(value => Boolean(value)).flat();
-	    }
-	  },
-	  methods: {
-	    handleClick() {
-	      if (this.withMenu && this.additionalItems.length > 0) {
-	        this.isMenuShown = true;
-	        return;
-	      }
-	      if (this.canAdd || this.forceEdit) {
-	        this.$emit('edit');
-	        return;
-	      }
-	      this.openProfile();
-	    },
-	    openProfile() {
-	      BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.userId));
-	    }
-	  },
-	  template: `
+		name: 'TaskUser',
+		components: {
+			HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+			UserLabel: tasks_v2_component_elements_userLabel.UserLabel,
+			BMenu: ui_system_menu_vue.BMenu
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			userId: {
+				type: Number,
+				required: true
+			},
+			canAdd: {
+				type: Boolean,
+				required: true
+			},
+			withClear: {
+				type: Boolean,
+				required: true
+			},
+			withMenu: {
+				type: Boolean,
+				required: true
+			},
+			forceEdit: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['edit', 'remove'],
+		data() {
+			return {
+				isMenuShown: false
+			};
+		},
+		computed: {
+			user() {
+				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.userId);
+			},
+			menuOptions() {
+				return {
+					id: 'tasks-field-users-menu',
+					bindElement: this.$refs.user.$el,
+					offsetTop: 8,
+					targetContainer: document.body,
+					items: [{
+						title: this.loc('TASKS_V2_USERS_VIEW'),
+						icon: ui_iconSet_api_vue.Outline.PERSON,
+						onClick: this.openProfile
+					}, ...this.additionalItems]
+				};
+			},
+			additionalItems() {
+				return main_core_events.EventEmitter.emit(tasks_v2_const.EventName.UserMenuExternalItems, {
+					taskId: this.taskId,
+					userId: this.userId
+				}).filter(value => Boolean(value)).flat();
+			}
+		},
+		methods: {
+			handleClick() {
+				if (this.withMenu && this.additionalItems.length > 0) {
+					this.isMenuShown = true;
+					return;
+				}
+				if (this.canAdd || this.forceEdit) {
+					this.$emit('edit');
+					return;
+				}
+				this.openProfile();
+			},
+			openProfile() {
+				BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.userId));
+			}
+		},
+		template: `
 		<HoverPill ref="user" :withClear @clear="$emit('remove')" @click="handleClick">
 			<UserLabel :user/>
 		</HoverPill>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<slot :getUserEl="() => $refs.user?.$el" :user="user"/>
 	`
 	};
 
 	// @vue/component
 	const Users = {
-	  components: {
-	    User
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    isEdit: {
-	      type: Boolean,
-	      default: false
-	    },
-	    userIds: {
-	      type: Array,
-	      required: true
-	    },
-	    canAdd: {
-	      type: Boolean,
-	      default: false
-	    },
-	    canRemove: {
-	      type: Boolean,
-	      default: false
-	    },
-	    removableUserId: {
-	      type: Number,
-	      default: 0
-	    },
-	    single: {
-	      type: Boolean,
-	      default: false
-	    },
-	    inline: {
-	      type: Boolean,
-	      default: false
-	    },
-	    showMenu: {
-	      type: Boolean,
-	      default: true
-	    },
-	    forceEdit: {
-	      type: Boolean,
-	      default: false
-	    },
-	    fromPopup: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['edit', 'remove'],
-	  computed: {
-	    isSafari() {
-	      return BX.browser.IsSafari();
-	    }
-	  },
-	  template: `
+		name: 'TaskUsers',
+		components: {
+			User
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			isEdit: {
+				type: Boolean,
+				default: false
+			},
+			userIds: {
+				type: Array,
+				required: true
+			},
+			canAdd: {
+				type: Boolean,
+				default: false
+			},
+			canRemove: {
+				type: Boolean,
+				default: false
+			},
+			removableUserId: {
+				type: Number,
+				default: 0
+			},
+			single: {
+				type: Boolean,
+				default: false
+			},
+			inline: {
+				type: Boolean,
+				default: false
+			},
+			showMenu: {
+				type: Boolean,
+				default: true
+			},
+			forceEdit: {
+				type: Boolean,
+				default: false
+			},
+			fromPopup: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['edit', 'remove'],
+		computed: {
+			isSafari() {
+				return BX.browser.IsSafari();
+			}
+		},
+		template: `
 		<div
 			class="tasks-field-users"
 			:class="{
@@ -158,7 +161,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				'--overflow': fromPopup,
 			}"
 		>
-			<template v-for="userId in userIds">
+			<template v-for="(userId, index) in userIds" :key="userId">
 				<User
 					:taskId
 					:userId
@@ -168,7 +171,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
-				/>
+				>
+					<template v-slot="slotProps">
+						<slot name="user" :userId="userId" :index="index" v-bind="slotProps"/>
+					</template>
+				</User>
 			</template>
 		</div>
 	`
@@ -176,29 +183,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const More = {
-	  props: {
-	    count: {
-	      type: Number,
-	      required: true
-	    },
-	    withRemove: {
-	      type: Boolean,
-	      default: false
-	    },
-	    inline: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['showMore', 'removeAll'],
-	  computed: {
-	    moreFormatted() {
-	      return this.loc('TASKS_V2_USERS_MORE_COUNT', {
-	        '#COUNT#': this.count
-	      });
-	    }
-	  },
-	  template: `
+		props: {
+			count: {
+				type: Number,
+				required: true
+			},
+			withRemove: {
+				type: Boolean,
+				default: false
+			},
+			inline: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['showMore', 'removeAll'],
+		computed: {
+			moreFormatted() {
+				return this.loc('TASKS_V2_USERS_MORE_COUNT', {
+					'#COUNT#': this.count
+				});
+			}
+		},
+		template: `
 		<div v-if="count || withRemove" :class="['tasks-field-users-footer', { '--inline': inline }]">
 			<div v-if="count" class="tasks-field-users-more" @click="$emit('showMore')">
 				{{ moreFormatted }}
@@ -214,225 +221,261 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const Participants = {
-	  components: {
-	    RichLoc: ui_vue3_components_richLoc.RichLoc,
-	    Popup: ui_vue3_components_popup.Popup,
-	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
-	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
-	    FieldHoverButton: tasks_v2_component_elements_fieldHoverButton.FieldHoverButton,
-	    Hint: tasks_v2_component_elements_hint.Hint,
-	    UserLabel: tasks_v2_component_elements_userLabel.UserLabel,
-	    Users,
-	    More
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    context: {
-	      type: String,
-	      required: true
-	    },
-	    userIds: {
-	      type: Array,
-	      required: true
-	    },
-	    canAdd: {
-	      type: Boolean,
-	      default: true
-	    },
-	    canRemove: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withHint: {
-	      type: Boolean,
-	      default: false
-	    },
-	    hintText: {
-	      type: String,
-	      default: ''
-	    },
-	    useRemoveAll: {
-	      type: Boolean,
-	      default: false
-	    },
-	    single: {
-	      type: Boolean,
-	      default: false
-	    },
-	    multipleOnPlus: {
-	      type: Boolean,
-	      default: false
-	    },
-	    inline: {
-	      type: Boolean,
-	      default: false
-	    },
-	    avatarOnly: {
-	      type: Boolean,
-	      default: false
-	    },
-	    dataset: {
-	      type: Object,
-	      required: true
-	    },
-	    isLocked: {
-	      type: Boolean,
-	      default: false
-	    },
-	    featureId: {
-	      type: String,
-	      default: ''
-	    },
-	    showMenu: {
-	      type: Boolean,
-	      default: true
-	    },
-	    forceEdit: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['update', 'hintClick'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      isDialogShown: false,
-	      isMoreShown: false,
-	      isHintShown: false,
-	      isHovered: false
-	    };
-	  },
-	  computed: {
-	    isEdit() {
-	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
-	    },
-	    removableUserId() {
-	      if (this.multipleOnPlus) {
-	        return 0;
-	      }
-	      return this.canAdd ? tasks_v2_core.Core.getParams().currentUser.id : 0;
-	    },
-	    userCount() {
-	      return this.userIds.length;
-	    },
-	    popupOptions() {
-	      return () => ({
-	        id: 'tasks-field-users-more-popup',
-	        bindElement: this.$refs.anchor,
-	        padding: 18,
-	        maxWidth: 300,
-	        maxHeight: 300,
-	        offsetTop: 8,
-	        targetContainer: document.body
-	      });
-	    },
-	    bodyUserIds() {
-	      return this.userIds.slice(0, maxUsers);
-	    },
-	    moreUserIds() {
-	      return this.userIds.slice(maxUsers);
-	    },
-	    popupUserIds() {
-	      return this.inline && !this.canAdd ? this.userIds : this.moreUserIds;
-	    },
-	    withRemove() {
-	      if (!this.canRemove) {
-	        return false;
-	      }
-	      if (!this.useRemoveAll || this.userCount <= maxUsers) {
-	        return false;
-	      }
-	      return this.isDialogShown || this.isHovered;
-	    }
-	  },
-	  watch: {
-	    userCount() {
-	      if (this.popupUserIds.length === 0) {
-	        this.isMoreShown = false;
-	      }
-	    }
-	  },
-	  mounted() {
-	    void tasks_v2_provider_service_userService.userService.list(this.userIds);
-	  },
-	  methods: {
-	    getUser(userId) {
-	      return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](userId);
-	    },
-	    handleClick() {
-	      if (this.canAdd) {
-	        void this.showDialog();
-	        return;
-	      }
-	      if (this.userIds.length === 1) {
-	        BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.userIds[0]));
-	        return;
-	      }
-	      this.isMoreShown = true;
-	    },
-	    handleMore() {
-	      if ((!this.isEdit || this.inline) && this.canAdd) {
-	        void this.showDialog();
-	        return;
-	      }
-	      this.isMoreShown = true;
-	    },
-	    async showDialog(plus = false) {
-	      if (this.isLocked) {
-	        void tasks_v2_lib_showLimit.showLimit({
-	          featureId: this.featureId,
-	          bindElement: this.$refs.anchor
-	        });
-	        return;
-	      }
-	      if (this.withHint) {
-	        this.isHintShown = true;
-	        this.hintPromise = new Resolvable();
-	        if ((await this.hintPromise) === false) {
-	          return;
-	        }
-	      }
-	      this.isDialogShown = true;
-	      void tasks_v2_lib_userSelectorDialog.usersDialog.show({
-	        targetNode: this.$refs.anchor,
-	        ids: this.userIds,
-	        selectableIds: this.canRemove ? null : new Set([this.removableUserId]),
-	        onClose: this.handleDialogClose,
-	        isMultiple: !this.single && (!this.multipleOnPlus || plus)
-	      });
-	    },
-	    handleDialogClose(userIds) {
-	      this.isDialogShown = false;
-	      if (tasks_v2_lib_userSelectorDialog.usersDialog.getDialog().isLoaded()) {
-	        this.updateUsers(userIds);
-	      }
-	    },
-	    removeUser(userId) {
-	      this.updateUsers(this.userIds.filter(id => id !== userId));
-	    },
-	    updateUsers(userIds) {
-	      this.$emit('update', userIds);
-	    },
-	    handleHintClick() {
-	      this.$emit('hintClick');
-	      this.hintPromise.resolve(true);
-	      this.isHintShown = false;
-	    },
-	    closeHint() {
-	      this.hintPromise.resolve(false);
-	      this.isHintShown = false;
-	    }
-	  },
-	  template: `
+		name: 'TaskParticipants',
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc,
+			Popup: ui_vue3_components_popup.Popup,
+			HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+			FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
+			FieldHoverButton: tasks_v2_component_elements_fieldHoverButton.FieldHoverButton,
+			Hint: tasks_v2_component_elements_hint.Hint,
+			UserLabel: tasks_v2_component_elements_userLabel.UserLabel,
+			Users,
+			More
+		},
+		props: {
+			taskId: {
+				type: [Number, String],
+				required: true
+			},
+			context: {
+				type: String,
+				required: true
+			},
+			userIds: {
+				type: Array,
+				required: true
+			},
+			canAdd: {
+				type: Boolean,
+				default: true
+			},
+			canRemove: {
+				type: Boolean,
+				default: true
+			},
+			withHint: {
+				type: Boolean,
+				default: false
+			},
+			hintText: {
+				type: String,
+				default: ''
+			},
+			useRemoveAll: {
+				type: Boolean,
+				default: false
+			},
+			single: {
+				type: Boolean,
+				default: false
+			},
+			multipleOnPlus: {
+				type: Boolean,
+				default: false
+			},
+			inline: {
+				type: Boolean,
+				default: false
+			},
+			avatarOnly: {
+				type: Boolean,
+				default: false
+			},
+			dataset: {
+				type: Object,
+				required: true
+			},
+			isLocked: {
+				type: Boolean,
+				default: false
+			},
+			featureId: {
+				type: String,
+				default: ''
+			},
+			showMenu: {
+				type: Boolean,
+				default: true
+			},
+			forceEdit: {
+				type: Boolean,
+				default: false
+			},
+			warnAboutAbsence: {
+				type: [Boolean, String],
+				default: false
+			}
+		},
+		emits: ['update', 'hintClick', 'absenceLoaded'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				isDialogShown: false,
+				isMoreShown: false,
+				isHintShown: false,
+				isHovered: false
+			};
+		},
+		computed: {
+			isEdit() {
+				return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
+			},
+			removableUserId() {
+				if (this.multipleOnPlus) {
+					return 0;
+				}
+				return this.canAdd ? tasks_v2_core.Core.getParams().currentUser.id : 0;
+			},
+			userCount() {
+				return this.userIds.length;
+			},
+			popupOptions() {
+				return () => ({
+					id: 'tasks-field-users-more-popup',
+					bindElement: this.$refs.anchor,
+					padding: 18,
+					maxWidth: 300,
+					maxHeight: 300,
+					offsetTop: 8,
+					targetContainer: document.body
+				});
+			},
+			bodyUserIds() {
+				return this.userIds.slice(0, maxUsers);
+			},
+			moreUserIds() {
+				return this.userIds.slice(maxUsers);
+			},
+			popupUserIds() {
+				return this.inline && !this.canAdd ? this.userIds : this.moreUserIds;
+			},
+			withRemove() {
+				if (!this.canRemove) {
+					return false;
+				}
+				if (!this.useRemoveAll || this.userCount <= maxUsers) {
+					return false;
+				}
+				return this.isDialogShown || this.isHovered;
+			}
+		},
+		watch: {
+			userCount() {
+				if (this.popupUserIds.length === 0) {
+					this.isMoreShown = false;
+				}
+			}
+		},
+		mounted() {
+			void tasks_v2_provider_service_userService.userService.list(this.userIds);
+		},
+		methods: {
+			getUser(userId) {
+				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](userId);
+			},
+			handleClick() {
+				if (this.canAdd) {
+					void this.showDialog();
+					return;
+				}
+				if (this.userIds.length === 1) {
+					BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.userIds[0]));
+					return;
+				}
+				this.isMoreShown = true;
+			},
+			handleMore() {
+				if ((!this.isEdit || this.inline) && this.canAdd) {
+					void this.showDialog();
+					return;
+				}
+				this.isMoreShown = true;
+			},
+			async showDialog(plus = false) {
+				if (this.isLocked) {
+					void tasks_v2_lib_showLimit.showLimit({
+						featureId: this.featureId,
+						bindElement: this.$refs.anchor
+					});
+					return;
+				}
+				if (this.withHint) {
+					this.isHintShown = true;
+					this.hintPromise = new Resolvable();
+					if ((await this.hintPromise) === false) {
+						return;
+					}
+				}
+				this.isDialogShown = true;
+				void tasks_v2_lib_userSelectorDialog.usersDialog.show({
+					targetNode: this.$refs.anchor,
+					ids: this.userIds,
+					selectableIds: this.canRemove ? null : new Set([this.removableUserId]),
+					onClose: this.handleDialogClose,
+					isMultiple: !this.single && (!this.multipleOnPlus || plus)
+				});
+			},
+			handleDialogClose(userIds, items) {
+				this.isDialogShown = false;
+				if (tasks_v2_lib_userSelectorDialog.usersDialog.getDialog().isLoaded()) {
+					this.updateUsers(this.getUserIds(items));
+					if (this.warnAboutAbsence) {
+						void this.loadUsersAbsenceInfo(items);
+					}
+				}
+			},
+			getUserIds(items) {
+				if (!Array.isArray(items)) {
+					return [];
+				}
+				const itemsNew = [...items];
+				const itemsSorted = itemsNew.sort((a, b) => {
+					const getIsOnVacation = item => {
+						return item.customData?.get?.('isOnVacation') === true;
+					};
+					const isOnVacationA = getIsOnVacation(a);
+					const isOnVacationB = getIsOnVacation(b);
+					if (isOnVacationA === isOnVacationB) {
+						return 0;
+					}
+					return isOnVacationA ? 1 : -1;
+				});
+				const ids = itemsSorted.map(({
+					id
+				}) => id);
+				const idsFiltered = ids.filter(id => typeof id === 'number');
+				return idsFiltered;
+			},
+			removeUser(userId) {
+				this.updateUsers(this.userIds.filter(id => id !== userId));
+			},
+			updateUsers(userIds) {
+				this.$emit('update', userIds);
+			},
+			handleHintClick() {
+				this.$emit('hintClick');
+				this.hintPromise.resolve(true);
+				this.isHintShown = false;
+			},
+			closeHint() {
+				this.hintPromise.resolve(false);
+				this.isHintShown = false;
+			},
+			async loadUsersAbsenceInfo(items = []) {
+				const loadedUserIds = await tasks_v2_component_absencePopup.loadUsersAbsenceInfo(items);
+				if (loadedUserIds.length > 0) {
+					this.$emit('absenceLoaded', loadedUserIds);
+				}
+			}
+		},
+		template: `
 		<div v-bind="dataset" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
-			<FieldAdd 
+			<FieldAdd
 				v-if="userCount === 0"
 				:icon="Outline.PERSON"
 				:isLocked
@@ -440,7 +483,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			/>
 			<div v-else-if="inline && userCount > 1 || avatarOnly" class="tasks-field-users-inline">
 				<HoverPill compact @click="handleClick">
-					<template v-for="userId in bodyUserIds">
+					<template v-for="userId in bodyUserIds" :key="userId">
 						<UserLabel class="tasks-field-user --inline" :user="getUser(userId)" avatarOnly/>
 					</template>
 				</HoverPill>
@@ -473,7 +516,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:forceEdit
 					@edit="showDialog"
 					@remove="removeUser"
-				/>
+				>
+					<template #user="slotProps">
+						<slot name="user" v-bind="slotProps"/>
+					</template>
+				</Users>
 				<More
 					:count="moreUserIds.length"
 					:withRemove
@@ -497,7 +544,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
-			/>
+			>
+				<template #user="slotProps">
+					<slot name="user" v-bind="slotProps"/>
+				</template>
+			</Users>
 		</Popup>
 		<Hint v-if="isHintShown" :bindElement="$refs.anchor" @close="closeHint">
 			<RichLoc class="tasks-field-users-hint" :text="hintText" placeholder="[action]">
@@ -509,14 +560,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 	function Resolvable() {
-	  const promise = new Promise(resolve => {
-	    this.resolve = resolve;
-	  });
-	  promise.resolve = this.resolve;
-	  return promise;
+		const promise = new Promise(resolve => {
+			this.resolve = resolve;
+		});
+		promise.resolve = this.resolve;
+		return promise;
 	}
 
 	exports.Participants = Participants;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Event,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service));
+})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX.UI.Vue3.Components, BX.UI.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component, BX.Tasks.V2.Provider.Service, BX.Event, BX.UI.System.Menu);
 //# sourceMappingURL=participants.bundle.js.map

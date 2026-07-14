@@ -51,6 +51,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.connectionType = 0;
 
 			this.userId = parseInt(env.userId, 10);
+			this.usersAfterReconnect = null;
 
 			this.initiatorId = params.initiatorId || '';
 			Object.defineProperty(this, 'users', {
@@ -101,6 +102,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.lastPingReceivedTimeout = null;
 			this.waitForAnswerTimeout = null;
+			this.iceConnectionStateTimer = null;
+			this.isSwitchingConnectionType = false;
 
 			this.created = new Date();
 
@@ -141,6 +144,21 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		setConnectionData(connectionData)
 		{
 			this.connectionData = connectionData
+		}
+
+		switchToSfuConnection()
+		{
+			this.connectionType = 1;
+			this.isSwitchingConnectionType = true;
+			for (const userId in this.peers)
+			{
+				if (this.peers.hasOwnProperty(userId) && this.peers[userId])
+				{
+					this.peers[userId]._destroyPeerConnection();
+					this.peers[userId].updateCalculatedState();
+				}
+			}
+			this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
 		}
 
 		setReceiveMedia(value)
@@ -1038,12 +1056,31 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			{
 				peer.sendMedia();
 			}
+
+			clearTimeout(this.iceConnectionStateTimer);
+			this.iceConnectionStateTimer = setTimeout(() => {
+				if (this.connectionType !== 0)
+				{
+					return;
+				}
+				const state = peer.peerConnection?.iceConnectionState;
+				if (state === 'new')
+				{
+					this.switchToSfuConnection();
+				}
+			}, 4000);
 		}
 
 		_onPullEventAnswerSelf(params)
 		{
 			if (params.callInstanceId === this.instanceId)
 			{
+				return;
+			}
+
+			if (this.ready)
+			{
+				// Received remote self-answer in ready state, ignoring
 				return;
 			}
 
@@ -1060,6 +1097,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			{
 				if (this.instanceId != params.callInstanceId)
 				{
+					if (this.ready)
+					{
+						return;
+					}
+
 					// self hangup elsewhere
 					this.joinStatus = BX.Call.JoinStatus.None;
 					this.eventEmitter.emit(BX.Call.Event.onHangup);
@@ -1274,11 +1316,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		__onLocalVideoStreamReceived(stream)
 		{
 			this.log('__onLocalVideoStreamReceived');
+			if (this.isSwitchingConnectionType)
+			{
+				this.isSwitchingConnectionType = false;
+			}
 			this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [stream]);
 		}
 
 		__onLocalVideoStreamRemoved()
 		{
+			if (this.isSwitchingConnectionType)
+			{
+				return;
+			}
 			this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
 		}
 
@@ -1379,7 +1429,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		__onCallReconnected()
 		{
 			this._reconnectionEventCount = 0;
-			this.eventEmitter.emit(BX.Call.Event.onReconnected);
+			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{ reconnectedUsers: this.usersAfterReconnect }]);
 		}
 
 		__onSwitchCallType()
@@ -1406,13 +1456,18 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				}
 				if (data?.joinResponse)
 				{
+					if (data.joinResponse.otherParticipants)
+					{
+						this.usersAfterReconnect = [Object.values(data.joinResponse.otherParticipants)];
+					}
+
 					if (data?.joinResponse?.oneToOneType === 1)
 					{
 						if (this.connectionType === 0)
 						{
 							setTimeout(() => {
-								this.connectionType = 1;
-								this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
+								clearTimeout(this.iceConnectionStateTimer);
+								this.switchToSfuConnection();
 							}, 1000)
 						}
 					}
@@ -1433,8 +1488,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					const message = CallUtil.deepParseJSON(data?.newMessage.message);
 					if (message?.onActionSent?.switchConnectionType && this.connectionType === 0)
 					{
-						this.connectionType = 1;
-						this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
+						clearTimeout(this.iceConnectionStateTimer);
+						this.switchToSfuConnection();
 					}
 				}
 			}
@@ -1792,6 +1847,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			// remove all event listeners
 			window.removeEventListener("unload", this._onUnloadHandler);
 
+			clearTimeout(this.iceConnectionStateTimer);
 			clearInterval(this.statsInterval);
 			clearInterval(this.microphoneLevelInterval);
 		};
@@ -1832,6 +1888,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			clearTimeout(this.reinviteTimeout);
 			clearTimeout(this.lastPingReceivedTimeout);
+			clearTimeout(this.iceConnectionStateTimer);
 
 			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callUuid: this.uuid }]);
 			this.eventEmitter = null;
@@ -2112,12 +2169,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		calculateState()
 		{
-			// ?? if (this.endpoint)
-			// ?? {
-			// ?? 	return BX.Call.UserState.Connected;
-			// ?? }
-
-			if (this.peerConnection)
+			if (this.call.connectionType === 1 && this.endpoint)
+			{
+				return BX.Call.UserState.Connected;
+			}
+			else if (this.peerConnection)
 			{
 				if (this.peerConnection.iceConnectionState === "connected" || this.peerConnection.iceConnectionState === "completed")
 				{
@@ -2164,7 +2220,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		isParticipating()
 		{
-			if (this.calling)
+			if (this.calling || this.calculatedState === BX.Call.UserState.Connected)
 			{
 				return true;
 			}
@@ -2233,7 +2289,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		sendMedia(skipOffer)
 		{
-			if (!this.peerConnection)
+			if (!this.peerConnection && this.call.connectionType === 0)
 			{
 				if (!this.isInitiator())
 				{
@@ -2248,7 +2304,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.updateOutgoingTracks();
 
-			if (!skipOffer)
+			if (!skipOffer && this.call.connectionType === 0)
 			{
 				this.offersStack++;
 				this.createAndSendOffer();
@@ -2292,7 +2348,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			}
 			if (!this.videoSender && videoTrack)
 			{
-				this.videoSender = this.peerConnection.addTrack(videoTrack, this.call.localStream);
+				try
+				{
+					this.videoSender = this.peerConnection.addTrack(videoTrack, this.call.localStream);
+				}
+				catch (error)
+				{
+					// Native  throw // java.lang.illegalStateException: C++ addTrack failed
+					// decided to skip
+					console.log('peerConnection.addTrack error', error);
+				}
 			}
 			if (this.videoSender && !videoTrack)
 			{
@@ -2668,6 +2733,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		reconnect()
 		{
+			if (this.call.connectionType === 1)
+			{
+				return;
+			}
+
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
 			this.connectionAttempt++;
 			if (!this.call)
@@ -2704,6 +2774,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		_createPeerConnection(id)
 		{
+			if (this.call.connectionType === 1)
+			{
+				return;
+			}
+
 			const turnServer = BX.componentParameters.get("turnServer", "");
 			const turnServerLogin = BX.componentParameters.get("turnServerLogin", "");
 			const turnServerPassword = BX.componentParameters.get("turnServerPassword", "");

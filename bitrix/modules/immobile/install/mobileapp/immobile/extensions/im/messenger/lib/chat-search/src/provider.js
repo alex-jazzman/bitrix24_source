@@ -3,54 +3,26 @@
  */
 jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module) => {
 	const { Type } = require('type');
-	const { ChatSearchConfig } = require('im/messenger/lib/chat-search/src/config');
-	const { LocalSearchService } = require('im/messenger/lib/chat-search/src/service/local-search-service');
-	const { ChatServerSearchService } = require('im/messenger/lib/chat-search/src/service/server-search-service');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
-	const { DialogType, RecentTab } = require('im/messenger/const');
+	const { DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { debounce } = require('utils/function');
 	const { getWordsFromText } = require('im/messenger/lib/chat-search/src/helper/get-words-from-text');
 
 	const nothing = () => {};
-	// TODO: FolderSupport, refact it after implementation folers
-	/** @type {Record<string, DialoguesFilter>} */
-	const RECENT_TAB_TO_FILTER = {
-		[RecentTab.chat]: {
-			exceptDialogTypes: [
-				DialogType.copilot,
-				DialogType.lines,
-				DialogType.comment,
-				DialogType.tasksTask,
-			],
-		},
-		[RecentTab.tasksTask]: {
-			dialogTypes: [DialogType.tasksTask],
-		},
-		[RecentTab.copilot]: {
-			dialogTypes: [DialogType.copilot],
-		},
-		[RecentTab.openChannel]: {
-			dialogTypes: [DialogType.copilot],
-		},
-		[RecentTab.collab]: {
-			dialogTypes: [DialogType.collab],
-		},
-	};
 
 	class ChatSearchProvider
 	{
 		/**
 		 * @param {object} params
-		 * @param {function(): void} params.loadLatestSearchProcessed
-		 * @param {function(Array<string>): void} params.loadLatestSearchComplete return dialog ids latest elements
-		 * @param {function(Array<string>, boolean): void} params.loadSearchProcessed return dialogId ids local elements
-		 * and flag that load from server is started
-		 * @param {function(Array<string>, string): void} params.loadSearchComplete return resulted dialog ids
-		 * @param {DialoguesFilter} [params.filter]
-		 * @param {string} [params.recentTab]
+		 * @param {LocalSearchStrategy} params.localStrategy
+		 * @param {ServerSearchStrategy} params.serverStrategy
+		 * @param {function(): void} [params.loadLatestSearchProcessed]
+		 * @param {function(Array<string>): void} [params.loadLatestSearchComplete]
+		 * @param {function(Array<string>, boolean): void} [params.loadSearchProcessed]
+		 * @param {function(Array<string>, string): void} [params.loadSearchComplete]
 		 */
 		constructor(params)
 		{
@@ -61,38 +33,17 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 			 * @type {MessengerCoreStore}
 			 */
 			this.store = serviceLocator.get('core').getStore();
-			/**
-			 * @private
-			 * @type {MessengerCoreStoreManager}
-			 */
-			this.messengerStore = serviceLocator.get('core').getMessengerStore();
+
 			/**
 			 * @protected
-			 * @type {ChatSearchConfig}
+			 * @type {LocalSearchStrategy}
 			 */
-			this.config = null;
+			this.localStrategy = params.localStrategy;
 			/**
 			 * @protected
-			 * @type {string}
-			 * @desc Used for a request to the server
+			 * @type {ServerSearchStrategy}
 			 */
-			this.recentTab = params.recentTab;
-			/**
-			 * @protected
-			 * @type {DialoguesFilter}
-			 * @desc Used for a request to the local DB
-			 */
-			this.filter = params.filter ?? RECENT_TAB_TO_FILTER[params.recentTab];
-			/**
-			 * @protected
-			 * @type {ChatServerSearchService}
-			 */
-			this.serverService = null;
-			/**
-			 * @protected
-			 * @type {LocalSearchService}
-			 */
-			this.localService = null;
+			this.serverStrategy = params.serverStrategy;
 
 			/**
 			 * @protected
@@ -109,22 +60,24 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 			 * @protected
 			 * @type {function(): void}
 			 */
-			this.loadLatestSearchProcessedCallback = params.loadLatestSearchProcessed ?? nothing;
+			this.loadLatestSearchProcessedCallback = nothing;
 			/**
 			 * @protected
 			 * @type {function(Array<string>): void}
 			 */
-			this.loadLatestSearchCompleteCallback = params.loadLatestSearchComplete ?? nothing;
+			this.loadLatestSearchCompleteCallback = nothing;
 			/**
 			 * @protected
 			 * @type {function(Array<string>, boolean): void}
 			 */
-			this.loadSearchProcessedCallback = params.loadSearchProcessed ?? nothing;
+			this.loadSearchProcessedCallback = nothing;
 			/**
 			 * @protected
 			 * @type {function(Array<string>, string): void}
 			 */
-			this.loadSearchCompleteCallBack = params.loadSearchComplete ?? nothing;
+			this.loadSearchCompleteCallBack = nothing;
+
+			this.setCallbacks(params);
 
 			/**
 			 * @protected
@@ -132,10 +85,34 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 			 */
 			this.searchDateCache = new Map();
 
-			this.initConfig(params);
-			this.initServices();
-
 			window.messengerDebug.localSearchDebugInfo = {};
+		}
+
+		/**
+		 * @param {object} callbacks
+		 * @param {function(): void} [callbacks.loadLatestSearchProcessed]
+		 * @param {function(Array<string>): void} [callbacks.loadLatestSearchComplete]
+		 * @param {function(Array<string>, boolean): void} [callbacks.loadSearchProcessed]
+		 * @param {function(Array<string>, string): void} [callbacks.loadSearchComplete]
+		 */
+		setCallbacks(callbacks = {})
+		{
+			if (Type.isFunction(callbacks.loadLatestSearchProcessed))
+			{
+				this.loadLatestSearchProcessedCallback = callbacks.loadLatestSearchProcessed;
+			}
+			if (Type.isFunction(callbacks.loadLatestSearchComplete))
+			{
+				this.loadLatestSearchCompleteCallback = callbacks.loadLatestSearchComplete;
+			}
+			if (Type.isFunction(callbacks.loadSearchProcessed))
+			{
+				this.loadSearchProcessedCallback = callbacks.loadSearchProcessed;
+			}
+			if (Type.isFunction(callbacks.loadSearchComplete))
+			{
+				this.loadSearchCompleteCallBack = callbacks.loadSearchComplete;
+			}
 		}
 
 		/**
@@ -177,15 +154,14 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 			let localSearchResult = [];
 			try
 			{
-				const searchParams = {
+				localSearchResult = await this.localStrategy.search({
 					searchText: wordsFromText.join(' '),
-				};
-				localSearchResult = await this.localService.search(searchParams, this.filter);
+				});
 			}
 			catch (error)
 			{
 				// TODO: remove after solving local search error
-				const errorText = `localService.search(${text}) error 🚨: ${error.name}: ${error.message}`;
+				const errorText = `localStrategy.search(${text}) error 🚨: ${error.name}: ${error.message}`;
 				this.logger.error(errorText);
 
 				window.messengerDebug.localSearchDebugInfo.localSearchErrorText = errorText;
@@ -206,12 +182,12 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 		}
 
 		/**
-		 * @return {Promise<Array<string>>}
+		 * @return {Promise<void>}
 		 */
 		async loadLatestSearch()
 		{
 			this.loadLatestSearchProcessedCallback();
-			this.serverService.loadRecent(this.recentTab)
+			this.serverStrategy.loadRecent()
 				.then((recentIds) => {
 					this.loadLatestSearchCompleteCallback(recentIds);
 				})
@@ -251,36 +227,7 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 
 		async saveItemToRecent(dialogId)
 		{
-			return this.serverService.saveItemToRecent(dialogId);
-		}
-
-		/**
-		 * @protected
-		 */
-		initServices()
-		{
-			/**
-			 * @protected
-			 * @type {ChatServerSearchService}
-			 */
-			this.serverService = new ChatServerSearchService(this.config);
-			/**
-			 * @protected
-			 * @type {LocalSearchService}
-			 */
-			this.localService = new LocalSearchService();
-		}
-
-		/**
-		 * @protected
-		 */
-		initConfig()
-		{
-			/**
-			 * @protected
-			 * @type {ChatSearchConfig}
-			 */
-			this.config = new ChatSearchConfig();
+			return this.serverStrategy.saveItemToRecent(dialogId);
 		}
 
 		/**
@@ -289,12 +236,12 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 		 * @param {string} originalQuery
 		 * @param {Array<string>} localSearchingIds
 		 */
-
 		searchOnServer(searchingWords, originalQuery, localSearchingIds)
 		{
-			void this.serverService.search(searchingWords, originalQuery, this.recentTab)
+			void this.serverStrategy.search(searchingWords, originalQuery)
 				.then((response) => {
 					const { items } = response.dialog;
+					this.logger.warn('searchOnServer response', items);
 
 					this.fillSearchDateCache(items);
 
@@ -314,7 +261,7 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 
 		/**
 		 * @protected
-		 * @param {Array<{ id: string, customData: { dateMessage: Date }}>} items
+		 * @param {Array<RecentProviderItem>} items
 		 */
 		fillSearchDateCache(items)
 		{

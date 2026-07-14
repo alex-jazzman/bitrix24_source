@@ -55,7 +55,7 @@ if ($connection->getType() === 'mysql' || $connection->getType() === 'pgsql')
 			];
 		}
 
-		if ($cacheType == 'memcache' || $cacheType == 'memcached')
+		if ($cacheType === 'memcache' || $cacheType === 'memcached')
 		{
 			$arGroupItems[] = [
 				'text' => Loc::getMessage('CLU_MENU_MEMCACHE_ITEM'),
@@ -96,7 +96,7 @@ if ($connection->getType() === 'mysql' || $connection->getType() === 'pgsql')
 }
 else
 {
-	if ($cacheType == 'memcache' || $cacheType == 'memcached')
+	if ($cacheType === 'memcache' || $cacheType === 'memcached')
 	{
 		$arMenu['items'][] = [
 			'text' => Loc::getMessage('CLU_MENU_MEMCACHE_ITEM'),

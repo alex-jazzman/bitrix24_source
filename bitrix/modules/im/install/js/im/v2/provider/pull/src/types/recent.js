@@ -8,6 +8,8 @@ type RecentChat = RawChat & { dialogId: string };
 
 export type RecentUpdateParams = {
 	dialogId: string,
+	chatId: number,
+	parentChatId: number,
 	additionalMessages: RawMessage[],
 	chat: RecentChat,
 	counter: number,

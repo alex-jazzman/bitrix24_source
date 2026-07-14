@@ -61,8 +61,10 @@ export const ImageAttachmentNodeViewComponent = {
 	},
 	// language=Vue
 	template: `
-		<div class="note-editor-image-attachment-inner">
-			<div class="note-editor-image-attachment-preview">
+		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
+			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
+			<div v-else class="note-editor-image-attachment-preview">
 				<a
 					class="note-editor-attachment-tile-link note-editor-image-attachment-link"
 					v-bind="imageViewerAttrs"

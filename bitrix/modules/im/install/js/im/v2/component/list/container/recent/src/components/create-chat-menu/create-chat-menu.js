@@ -9,7 +9,7 @@ import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-
 import { PromoId, ChatType, ActionByUserType, SliderCode, type ChatTypeItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CopilotChatService } from 'im.v2.provider.service.copilot';
@@ -33,10 +33,10 @@ export const CreateChatMenu = {
 		MenuItem,
 		CreateChatHelp,
 		CreateChatPromo,
-		DescriptionBanner,
 		CopilotRoleSelectionButton,
 		CopilotRolesDialog,
 		InvitePromo,
+		DescriptionBanner,
 	},
 	data(): JsonObject
 	{
@@ -44,9 +44,9 @@ export const CreateChatMenu = {
 			showMenu: false,
 			chatTypeToCreate: '',
 			showCreateChatPromo: false,
-			showCollabPromo: false,
 			showInvitePromo: false,
 			showCopilotRolesDialog: false,
+			showCollabPromo: false,
 			isLoading: false,
 		};
 	},
@@ -63,6 +63,27 @@ export const CreateChatMenu = {
 				offsetTop: 4,
 				padding: 0,
 			};
+		},
+		isCollabV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+		},
+		isBitrixGptV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
+		copilotIcon(): $Values<typeof MenuItemIcon>
+		{
+			if (this.isBitrixGptV2Available)
+			{
+				return MenuItemIcon.aiAssistant;
+			}
+
+			return MenuItemIcon.copilot;
+		},
+		isCollabV2AvailableByTariff(): boolean
+		{
+			return TariffManager.collabV2.isAvailable();
 		},
 		collabAvailable(): boolean
 		{
@@ -149,6 +170,17 @@ export const CreateChatMenu = {
 			this.startChatCreation();
 			this.showMenu = false;
 		},
+		onCollabV2CreateClick()
+		{
+			if (!this.isCollabV2AvailableByTariff)
+			{
+				TariffManager.collabV2.openFeatureSlider();
+
+				return;
+			}
+
+			this.onChatCreateClick(ChatType.collab);
+		},
 		showCopilotPromoter()
 		{
 			const promoter = new FeaturePromoter({ code: SliderCode.copilotDisabled });
@@ -188,6 +220,11 @@ export const CreateChatMenu = {
 				this.isLoading = false;
 			}
 		},
+		onCollabDescriptionClose(): void
+		{
+			void PromoManager.getInstance().markAsWatched(PromoId.createCollabDescription);
+			this.showCollabPromo = false;
+		},
 		onCopilotRoleSelectClick()
 		{
 			if (!this.checkCopilotActive())
@@ -225,11 +262,6 @@ export const CreateChatMenu = {
 			this.showCreateChatPromo = false;
 			this.showMenu = false;
 			this.chatTypeToCreate = '';
-		},
-		onCollabDescriptionClose(): void
-		{
-			void PromoManager.getInstance().markAsWatched(PromoId.createCollabDescription);
-			this.showCollabPromo = false;
 		},
 		startChatCreation()
 		{
@@ -285,7 +317,7 @@ export const CreateChatMenu = {
 			/>
 			<MenuItem
 				v-if="isCopilotAvailableAndCreatable"
-				:icon="MenuItemIcon.copilot"
+				:icon="copilotIcon"
 				:title="createCopilotTitle"
 				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1')"
 				@click.stop="onDefaultCopilotCreateClick"
@@ -301,17 +333,27 @@ export const CreateChatMenu = {
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1')"
 				@click="onChatCreateClick(ChatType.channel)"
 			/>
-			<MenuItem
-				v-if="collabAvailable"
-				:icon="MenuItemIcon.collab"
-				:title="loc('IM_RECENT_CREATE_COLLAB_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
-				@click="onChatCreateClick(ChatType.collab)"
-			>
-				<template #below-content>
-					<DescriptionBanner v-if="showCollabPromo" @close="onCollabDescriptionClose" />
-				</template>
-			</MenuItem>
+			<template v-if="collabAvailable">
+				<MenuItem
+					v-if="isCollabV2Available"
+					:disabled="!isCollabV2AvailableByTariff"
+					:icon="MenuItemIcon.collabV2"
+					:title="loc('IM_RECENT_CREATE_COLLAB_V2_TITLE')"
+					:subtitle="loc('IM_RECENT_CREATE_COLLAB_V2_SUBTITLE')"
+					@click="onCollabV2CreateClick"
+				/>
+				<MenuItem
+					v-else
+					:icon="MenuItemIcon.collab"
+					:title="loc('IM_RECENT_CREATE_COLLAB_TITLE')"
+					:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
+					@click="onChatCreateClick(ChatType.collab)"
+				>
+					<template #below-content>
+						<DescriptionBanner v-if="showCollabPromo" @close="onCollabDescriptionClose"/>
+					</template>
+				</MenuItem>
+			</template>
 			<MenuItem
 				v-if="canCreateConference"
 				:icon="MenuItemIcon.conference"

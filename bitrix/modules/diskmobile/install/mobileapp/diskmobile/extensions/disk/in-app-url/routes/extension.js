@@ -72,6 +72,10 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 			.addRoute('/sheet/:uniqueCode(?=\\?|$|/)')
 			.addRoute('/pres/:uniqueCode(?=\\?|$|/)')
 			.addRoute('/doc/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/picture/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/media/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/file/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/audio/:uniqueCode(?=\\?|$|/)')
 			.handler(({ uniqueCode }, { context = {}, url, queryParams }) => {
 				void unifiedOpener({ uniqueCode, url, queryParams, ...context }).catch(console.error);
 			})

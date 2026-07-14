@@ -431,7 +431,10 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			const messageListToAdd = [];
 
 			messageList.forEach((message) => {
-				const messageToAdd = this.messageTable.validate(message);
+				const messageToAdd = this.messageTable.validate({
+					...message,
+					builder: message.block,
+				});
 
 				messageListToAdd.push(messageToAdd);
 			});

@@ -12,9 +12,9 @@ return [
 	'js' => '/bitrix/js/documentgenerator/selector/dist/selector.bundle.js',
 	'rel' => [
 		'documentgenerator.preview',
+		'main.core',
 		'main.loader',
 		'main.popup',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

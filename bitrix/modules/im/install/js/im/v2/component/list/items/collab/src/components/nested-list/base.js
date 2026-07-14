@@ -10,12 +10,12 @@ import { TaskRecentService, CalendarRecentService, type BaseRecentService } from
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Notifier } from 'im.v2.lib.notifier';
 
-import { CollabRecentMenu } from '../../classes/context-menu-manager';
+import { CollabNestedRecentMenu } from './classes/context-menu';
 import { CollabDefaultService } from '../../classes/services/collab-default';
 import { CollabChatService } from '../../classes/services/collab-chat';
-import { EmptyState } from '../../components/empty-state';
+import { CollabNestedEmptyState } from './components/empty-state.js';
 
-const ServiceByRecentType = {
+export const ServiceByRecentType = {
 	[RecentType.collabDefault]: CollabDefaultService,
 	[RecentType.taskComments]: TaskRecentService,
 	[RecentType.collabChat]: CollabChatService,
@@ -25,7 +25,7 @@ const ServiceByRecentType = {
 // @vue/component
 export const BaseCollabNestedList = {
 	name: 'BaseCollabNestedList',
-	components: { EmptyState, BaseRecentList, CreateChatStatus },
+	components: { CollabNestedEmptyState, BaseRecentList, CreateChatStatus },
 	props: {
 		parentChatId: {
 			type: Number,
@@ -39,8 +39,12 @@ export const BaseCollabNestedList = {
 			type: String,
 			default: '',
 		},
+		withEmptyState: {
+			type: Boolean,
+			default: true,
+		},
 	},
-	emits: ['selectChat', 'loadComplete', 'loadError'],
+	emits: ['selectChat', 'loadError'],
 	data(): JsonObject
 	{
 		return {
@@ -67,10 +71,9 @@ export const BaseCollabNestedList = {
 	{
 		this.initCreateChatManager();
 
-		this.contextMenuManager = new CollabRecentMenu({ emitter: this.getEmitter() });
+		this.contextMenuManager = new CollabNestedRecentMenu({ emitter: this.getEmitter() });
 
 		await this.loadInitialItems();
-
 		void DraftManager.getInstance().initDraftHistory();
 	},
 	beforeUnmount()
@@ -94,7 +97,6 @@ export const BaseCollabNestedList = {
 				});
 			this.firstPageLoaded = true;
 			this.isLoading = false;
-			this.$emit('loadComplete');
 		},
 		async onLoadNextPage()
 		{
@@ -183,10 +185,11 @@ export const BaseCollabNestedList = {
 			@loadNextPage="onLoadNextPage"
 		>
 			<template #before-list>
+				<slot name="fixed-chats"></slot>
 				<CreateChatStatus v-if="showCreationStatus" :allowedTypes="[creatableChatType]" />
 			</template>
 			<template #empty-state>
-				<EmptyState />
+				<CollabNestedEmptyState v-if="withEmptyState" :type="type" />
 			</template>
 		</BaseRecentList>
 	`,

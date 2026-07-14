@@ -16,8 +16,7 @@ export type AccessRightsFormResult = {
 export const RightsSection = {
 	name: 'RightsSection',
 	components: { CreateChatExternalSection },
-	props:
-	{
+	props: {
 		collabId: {
 			type: Number,
 			default: 0,
@@ -30,8 +29,7 @@ export const RightsSection = {
 			formResult: null,
 		};
 	},
-	methods:
-	{
+	methods: {
 		async onClick()
 		{
 			const sliderParams = {};

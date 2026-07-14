@@ -1,5 +1,5 @@
 import { Dom, Loc, Type, Tag, Text } from 'main.core';
-import { UI } from 'ui.notification';
+import 'ui.notification';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 import { Outline, BIcon } from 'ui.icon-set.api.vue';
 import { mapState } from 'ui.vue3.pinia';
@@ -18,6 +18,11 @@ import {
 	ALLOWED_CONNECTION_ERROR_TYPES,
 } from '../../../utils/const/connection-error';
 import './connection-status.css';
+
+function getNotificationCenter()
+{
+	return globalThis.BX?.UI?.Notification?.Center ?? null;
+}
 
 // @vue/component
 export const ConnectionStatus = {
@@ -560,7 +565,7 @@ export const ConnectionStatus = {
 			this.isCancelled = true;
 			this.isFinished = true;
 
-			UI.Notification.Center.notify({
+			getNotificationCenter()?.notify({
 				id: 'mail_massconnect_connection_cancelled',
 				content: this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_CANCELLED_MESSAGE'),
 			});

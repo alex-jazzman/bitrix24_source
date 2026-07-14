@@ -1,6 +1,13 @@
 jn.define('call/calls/controller', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, DialogType, EventType, ConnectionType } = require('call/const');
+	const {
+		Analytics,
+		DialogType,
+		EventType,
+		ConnectionType,
+		CallError,
+		CallStatus,
+	} = require('call/const');
 	const { CallLayout } = require('call/calls/layout');
 	const { PlainCall } = require('call/calls/plain');
 	const { PlainCallJwt } = require('call/calls/plain-jwt');
@@ -13,12 +20,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { Tourist } = require('tourist');
-	const { Toast } = require('native/notify');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 	const DEFAULT_DEVICE = 'speaker';
 
 	const CAMERA_BUTTON_CLICK_THROTTLE_DELAY = 500;
+	const ANSWER_CONNECTION_TIMEOUT_MS = 8000;
 
 	class CallController
 	{
@@ -41,6 +48,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					if (this._currentCall != call)
 					{
 						BX.postComponentEvent('CallEvents::hasActiveCall', [!!call], 'communication');
+						window.callEngine?.setHasActiveCall?.(!!call);
+
 						this._currentCall = call;
 					}
 				},
@@ -54,6 +63,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			this.callInviteTime = null;
 			this.callDeclineTimeout = 35000;
+			this.answerConnectionTimeout = null;
+			this.poorConnectionWarningShown = false;
 
 			this.ignoreJoinAnalyticsEvent = false;
 			this.ignoreLeaveAnalyticsEvent = false;
@@ -412,7 +423,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (!dialogId)
 			{
 				CallUtil.error('Can not start call. No userId or dialogId in event');
-				navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E001'));
+				this.__createErrorControlToast(
+					BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E001'),
+				);
 
 				return;
 			}
@@ -437,7 +450,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					userCounter: chatData.userCounter
 			};
 
-			this.startCall(dialogId, e.video, dialogData, userData);
+			this.startCall(dialogId, e.video, dialogData, userData, { invitePeriod: e.invitePeriod });
 		}
 
 		maybeShowLocalVideo(show)
@@ -489,7 +502,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
-		startCall(dialogId, isVideoEnabled, associatedDialogData = {}, userData = {})
+		startCall(dialogId, isVideoEnabled, associatedDialogData = {}, userData = {}, options = {})
 		{
 			console.log('CallController.startCall', dialogId, isVideoEnabled, associatedDialogData);
 			if (!CallUtil.isDeviceSupported())
@@ -564,7 +577,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (!isLegacyCall && !CallUtil.isJwtCallsSupported())
 			{
 				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
-				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'), true);
 				this.clearEverything();
 
 				return;
@@ -578,12 +591,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.maybeShowLocalVideo(isVideoEnabled);
 
 					return this.openCallView({
-						status: 'outgoing',
+						status: CallStatus.outgoing,
 						isGroupCall: isGroupChat,
 						associatedEntityName: associatedDialogData.name,
 						associatedEntityAvatar: associatedDialogData.avatar,
 						associatedEntityAvatarColor: associatedDialogData.avatarColor,
 						cameraState: isVideoEnabled,
+						isVideoCall: isVideoEnabled,
 						chatCounter: this.chatCounter,
 						copilotAvailable: CallUtil.isAIServiceEnabled(associatedDialogData.type === 'videoconf'),
 						copilotEnabled: false, // will be changed after the backend's response
@@ -608,6 +622,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						videoEnabled: Boolean(isVideoEnabled),
 						joinExisting: isGroupChat,
 						chatInfo: associatedDialogData,
+						invitePeriod: options.invitePeriod,
 					};
 
 					return isLegacyCall
@@ -678,7 +693,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							this.ignoreJoinAnalyticsEvent = true;
 
 							this.callView.setState({
-								status: 'call',
+								status: CallStatus.call,
 							});
 
 							this.currentCall.setVideoEnabled(this.localVideoRequired);
@@ -700,16 +715,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						}
 						else if (error instanceof CallJoinedElseWhereError)
 						{
-							navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+							this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
 							errorCode = error.name;
 						}
-						else if ('code' in error && error.code === 'ALREADY_FINISHED')
+						else if ('code' in error && error.code === CallError.alreadyFinished)
 						{
-							navigator.notification.alert('MOBILE_CALL_ALREADY_FINISHED');
+							this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 						}
 						else
 						{
-							navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
+							this.__createErrorControlToast(
+								BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+								true,
+							);
 						}
 
 						this.sendStartCallErrorAnalytics(errorCode);
@@ -726,12 +744,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.maybeShowLocalVideo(isVideoEnabled);
 
 				return this.openCallView({
-					status: 'outgoing',
+					status: CallStatus.outgoing,
 					isGroupCall: isGroupChat,
 					associatedEntityName: associatedDialogData.name,
 					associatedEntityAvatar: associatedDialogData.avatar,
 					associatedEntityAvatarColor: associatedDialogData.avatarColor,
 					cameraState: isVideoEnabled,
+					isVideoCall: isVideoEnabled,
 					chatCounter: this.chatCounter,
 					copilotAvailable: CallUtil.isAIServiceEnabled(false),
 					copilotEnabled: false,
@@ -752,6 +771,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					videoEnabled: Boolean(isVideoEnabled),
 					joinExisting: isGroupChat,
 					chatInfo: associatedDialogData,
+					invitePeriod: options.invitePeriod,
 				};
 
 				return isLegacyCall
@@ -811,7 +831,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						);
 
 						this.callView.setState({
-							status: 'call',
+							status: CallStatus.call,
 						});
 
 						this.currentCall.answer({
@@ -830,12 +850,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					}
 					else if (error instanceof CallJoinedElseWhereError)
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+						this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
 						errorCode = error.name;
 					}
-					else if ('code' in error && error.code === 'ALREADY_FINISHED')
+					else if ('code' in error && error.code === CallError.alreadyFinished)
 					{
-						navigator.notification.alert('MOBILE_CALL_ALREADY_FINISHED');
+						this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 					}
 					else if (errorCode === 'user_is_busy')
 					{
@@ -843,7 +863,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					}
 					else
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
+						this.__createErrorControlToast(
+							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+							true,
+						);
 					}
 
 					if (errorCode !== 'user_is_busy')
@@ -888,9 +911,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 
 			isLegacyCall = CallUtil.isLegacyCall(provider, call?.scheme);
-			if (!isLegacyCall && !CallUtil.isJwtCallsSupported()) {
+			if (!isLegacyCall && !CallUtil.isJwtCallsSupported())
+			{
 				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
-				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'), true);
 				this.clearEverything();
 
 				return;
@@ -931,7 +955,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return this.openCallView({
 					status,
 					chatCounter: this.chatCounter,
-					isGroupCall: true, // it's impossible to join any other call but the group one
+					isGroupCall: isGroupChat,
 					associatedEntityName: this.currentCall.associatedEntity.name,
 					associatedEntityAvatar: this.currentCall.associatedEntity.avatar ? CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar) : '',
 					associatedEntityAvatarColor: this.currentCall.associatedEntity.avatarColor,
@@ -939,47 +963,72 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					copilotEnabled: this.currentCall.isCopilotActive,
 				});
 			}).then(() => {
-				// call could have been finished by this moment
-				if (!this.currentCall)
-				{
-					this.clearEverything();
+				this.#runWithCurrentCallGuard(() => {
+					this.bindViewEvents();
+					this.callView.setUserStates(this.currentCall.getUsersStates());
 
-					return;
-				}
+					if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount())
+					{
+						//this.currentCall.setMuted(true);
+						//this.callView.setMuted(true);
+						this.muteMicDevice(true);
+					}
 
-				this.bindViewEvents();
-				this.callView.setUserStates(this.currentCall.getUsersStates());
+					if (isLegacyCall)
+					{
+						CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
+							(userData) => this.callView.setUserData(userData),
+						);
+					}
+					this.callView.updateTotalUsersCount(callInfo.associatedEntity.userCounter);
+					this.bindCallEvents();
 
-				if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount())
-				{
-					//this.currentCall.setMuted(true);
-					//this.callView.setMuted(true);
-					this.muteMicDevice(true);
-				}
-
-				if (isLegacyCall)
-				{
-					CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
-						(userData) => this.callView.setUserData(userData),
-					);
-				}
-				this.callView.updateTotalUsersCount(callInfo.associatedEntity.userCounter);
-				this.bindCallEvents();
-
-				this.currentCall.answer({
-					useVideo: isVideoEnabled,
+					this.currentCall.answer({
+						useVideo: isVideoEnabled,
+					});
 				});
 			})
 				.catch((error) => {
 					CallUtil.error(error);
 					let errorCode = error?.code;
-					if (errorCode && (errorCode === 'ALREADY_FINISHED') || error?.errorCode === 1)
+					if (
+						(errorCode && errorCode === CallError.alreadyFinished)
+						|| error?.errorCode === BX.Call.ErrorPreventingReconnection.CanNotCreateRoom
+						|| error?.errorCode === BX.Call.ErrorPreventingReconnection.RoomNotFound
+					)
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_FINISHED'));
+						// Stuck call: the media room is gone. Finish it on the PHP side
+						// with silent=Y (no chat spam) and drop the recent card locally.
+						const finishData = { silent: 'Y' };
+						if (callInfo.callId)
+						{
+							finishData.callId = callInfo.callId;
+						}
+						if (callInfo.callUuid)
+						{
+							finishData.callUuid = callInfo.callUuid;
+						}
+						if (finishData.callId || finishData.callUuid)
+						{
+							callEngine.getRestClient()
+								.callMethod('call.CallManager.finish', finishData)
+								.catch((e) => CallUtil.error('call.CallManager.finish failed', e));
+
+							const callFields = {
+								id: callInfo.callId,
+								uuid: callInfo.callUuid,
+								provider,
+								associatedEntity: callInfo.associatedEntity,
+							};
+							BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.recent');
+							BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.messenger');
+						}
+
+						this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'));
 					}
 					else if (error instanceof CallJoinedElseWhereError)
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+						this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'));
 						errorCode = error.name;
 					}
 					else if (error instanceof DeviceAccessError)
@@ -989,7 +1038,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					}
 					else
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
+						this.__createErrorControlToast(
+							BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+						);
 					}
 
 					const analyticsCallId = isLegacyCall
@@ -1008,6 +1059,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (!this.canCallBeAnswered(newCall, e.ignoreCallTimeout))
 			{
+				return;
+			}
+
+			if (e.isAlreadyInCall && !e.isActiveCallPlatformIsMobile)
+			{
+				CallUtil.warn('User alredy in call at another device');
 				return;
 			}
 
@@ -1176,6 +1233,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				isGroupCall: provider !== BX.Call.Provider.Plain,
 			}).then(() => {
 				CallUtil.warn('showIncomingCall success');
+
+				const call = this.currentCall;
+				if (this.hasIncomingCallHider(call))
+				{
+					call.scheduleIncomingCallHiding().then(() => {
+						if (this.currentCall?.uuid === call.uuid)
+						{
+							this.declineCall();
+						}
+					});
+				}
+
 				if (this.currentCall && e.autoAnswer)
 				{
 					CallUtil.warn('auto-answer A');
@@ -1215,28 +1284,47 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			const needToRequestToken = !isLegacyCall && !tokenManager.getTokenCached(this.currentCall.associatedEntity.chatId);
 			const callTokenPromise = needToRequestToken ? tokenManager.getToken(this.currentCall.associatedEntity.chatId) : Promise.resolve();
 
+			const call = this.currentCall;
+			if (this.hasIncomingCallHider(call))
+			{
+				this.currentCall.cancelIncomingCallHiding();
+			}
+
+			this.startAnswerConnectionTimeout();
+
 			callTokenPromise.then(() => {
+				if (!this.currentCall)
+				{
+					throw { code: CallError.alreadyFinished };
+				}
+
 				return isLegacyCall ? Promise.resolve() : CallUtil.getCallConnectionDataById(this.currentCall.uuid);
 			}).then((response) => {
-				if (!isLegacyCall)
-				{
-					this.currentCall.setConnectionData({
-						mediaServerUrl: response.result.mediaServerUrl,
-						roomData: response.result.roomData,
-					});
-				}
+				this.#runWithCurrentCallGuard(() => {
+					if (!isLegacyCall)
+					{
+						this.currentCall.setConnectionData({
+							mediaServerUrl: response.result.mediaServerUrl,
+							roomData: response.result.roomData,
+						});
+					}
+				});
+
 				return this.requestDeviceAccess(useVideo);
 			}).then(() => {
-				if (!useVideo)
-				{
-					this.onCallLocalMediaStopped();
-					this.stopLocalVideoStream(false);
-				}
-				this.currentCall.answer({
-					useVideo,
-				});
-				this.callView.setState({
-					status: 'connecting',
+				this.#runWithCurrentCallGuard(() => {
+					if (!useVideo)
+					{
+						this.onCallLocalMediaStopped();
+						this.stopLocalVideoStream(false);
+					}
+
+					this.currentCall.answer({
+						useVideo,
+					});
+					this.callView.setState({
+						status: CallStatus.connecting,
+					});
 				});
 			}).catch((error) => {
 				CallUtil.error(error);
@@ -1254,11 +1342,53 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				}
 				else if (error instanceof CallJoinedElseWhereError)
 				{
-					navigator.notification.alert(BX.message('MOBILE_CALL_ALREADY_JOINED'));
+					this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
+				}
+				else if (
+					error?.errorCode === BX.Call.ErrorPreventingReconnection.CanNotCreateRoom
+					|| error?.errorCode === BX.Call.ErrorPreventingReconnection.RoomNotFound
+					|| error?.code === CallError.alreadyFinished
+				)
+				{
+					// Stuck call: media room is gone. Finish on PHP with silent=Y and
+					// drop the recent card locally. `call` may be a CallStub (only
+					// callId) or a PlainCallJwt (id + uuid) — pass whichever exists.
+					const callId = call?.id ?? call?.callId ?? null;
+					const callUuid = call?.uuid ?? null;
+					if (callId || callUuid)
+					{
+						const finishData = { silent: 'Y' };
+						if (callId)
+						{
+							finishData.callId = callId;
+						}
+						if (callUuid)
+						{
+							finishData.callUuid = callUuid;
+						}
+						callEngine.getRestClient()
+							.callMethod('call.CallManager.finish', finishData)
+							.catch((e) => CallUtil.error('call.CallManager.finish failed', e));
+
+						const callFields = {
+							id: callId,
+							uuid: callUuid,
+							provider: call?.provider,
+							associatedEntity: call?.associatedEntity,
+						};
+						BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.recent');
+						BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.messenger');
+					}
+
+					this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 				}
 				else
 				{
-					navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
+					console.log('errorss');
+					this.__createErrorControlToast(
+						BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', String(error.code)),
+						true,
+					);
 				}
 				this.clearEverything();
 			});
@@ -1328,7 +1458,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.maybeShowLocalVideo(params.video);
 
 				return this.openCallView({
-					status: params.viewStatus || 'incoming',
+					status: params.viewStatus || CallStatus.incoming,
 					isGroupCall: params.isGroupCall,
 					associatedEntityName: this.currentCall.associatedEntity.name,
 					associatedEntityAvatar: this.currentCall.associatedEntity.avatar ? CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar) : '',
@@ -1345,9 +1475,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.localVideoPromise = null;
 				if (!this.currentCall)
 				{
-					return Promise.reject(new Error('ALREADY_FINISHED'));
+					return Promise.reject(new Error(CallError.alreadyFinished));
 				}
-				if (params.viewStatus == 'incoming')
+				if (params.viewStatus == CallStatus.incoming)
 				{
 					media.audioPlayer().playSound('call_incoming', 10);
 				}
@@ -1380,9 +1510,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					CallUtil.showDeviceAccessConfirm(params.video, () => Application.openSettings());
 				}
-				else if (error.code && error.code == 'ALREADY_FINISHED')
+				else if (error.code && error.code == CallError.alreadyFinished)
 				{
-					return reject('ALREADY_FINISHED');
+					return reject(CallError.alreadyFinished);
 				}
 			});
 
@@ -1397,7 +1527,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (!CallUtil.isDeviceSupported())
 			{
-				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
 
 				return;
 			}
@@ -1686,6 +1816,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 								[env.userId]: localUserData,
 							});
 						}
+						else
+						{
+							CallUtil.getUser(this.currentCall?.id, env.userId).then((userData) => {
+								this.callView.setUserData({
+									[env.userId]: userData,
+								});
+							});
+						}
 
 						if (showLocalVideo && this.localVideoStream)
 						{
@@ -1694,7 +1832,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 						if (CallUtil.getSdkAudioManager().currentDevice !== 'bluetooth')
 						{
-							this.selectedAudioDeviceOnIncoming = viewProps.isVideoCall ? DEFAULT_DEVICE : 'receiver';
+							this.selectedAudioDeviceOnIncoming = viewProps.isVideoCall !== false
+								? DEFAULT_DEVICE
+								: 'receiver';
 							CallUtil.getSdkAudioManager().selectAudioDevice(this.selectedAudioDeviceOnIncoming);
 							this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 						}
@@ -1946,16 +2086,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		showActiveVpnNotification()
 		{
-			const activeVpnToast = new Toast(
+			Notification.showToastWithParams(
 				{
 					message: Loc.getMessage('CALLMOBILE_MESSAGE_VPN_IS_ACTIVE'),
 					time: 10,
 					position: 'top',
 					offset: 15,
 					backgroundColor: '#e79b2b',
-				}, this.rootWidget);
-
-			activeVpnToast.show();
+				},
+				this.rootWidget,
+			);
 		}
 
 		isVpnACtive()
@@ -1981,6 +2121,120 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				this.showActiveVpnNotification();
 			}
+		}
+
+		startConnectionQualityCheck()
+		{
+			try
+			{
+				if (
+					this.connectionQualityCheckTimeout
+					|| typeof DeviceMetricsCollector === 'undefined'
+				)
+				{
+					return;
+				}
+
+				this.connectionQualityStatsCollector = new DeviceMetricsCollector();
+				this.connectionQualityStatsCollector.startCollection({
+					disconnectsTimeIntervalsInSeconds: [60, 300],
+				});
+				this.connectionQualityCheckTimeout = setTimeout(() => {
+					try
+					{
+						const stats = this.connectionQualityStatsCollector.getStats();
+						if (CallUtil.isConnectionStatsPoor(stats))
+						{
+							this.showPoorConnectionToast();
+						}
+					}
+					catch (e)
+					{
+						CallUtil.error('connectionQualityCheck error', e);
+					}
+					finally
+					{
+						this.stopConnectionQualityCheck();
+					}
+				}, 500);
+			}
+			catch (e)
+			{
+				CallUtil.error('startConnectionQualityCheck error', e);
+			}
+		}
+
+		stopConnectionQualityCheck()
+		{
+			if (this.connectionQualityCheckTimeout)
+			{
+				clearTimeout(this.connectionQualityCheckTimeout);
+				this.connectionQualityCheckTimeout = null;
+			}
+
+			if (
+				this.connectionQualityStatsCollector
+				&& typeof this.connectionQualityStatsCollector.stopCollection === 'function'
+			)
+			{
+				this.connectionQualityStatsCollector.stopCollection();
+			}
+
+			this.connectionQualityStatsCollector = null;
+		}
+
+		startAnswerConnectionTimeout()
+		{
+			if (this.poorConnectionWarningShown)
+			{
+				return;
+			}
+
+			this.stopAnswerConnectionTimeout();
+
+			this.answerConnectionTimeout = setTimeout(() => {
+				this.answerConnectionTimeout = null;
+				this.showPoorConnectionToast();
+			}, ANSWER_CONNECTION_TIMEOUT_MS);
+		}
+
+		stopAnswerConnectionTimeout()
+		{
+			if (!this.answerConnectionTimeout)
+			{
+				return;
+			}
+
+			clearTimeout(this.answerConnectionTimeout);
+			this.answerConnectionTimeout = null;
+		}
+
+		showPoorConnectionToast()
+		{
+			if (this.poorConnectionWarningShown)
+			{
+				return;
+			}
+
+			this.poorConnectionWarningShown = true;
+			this.stopAnswerConnectionTimeout();
+
+			const toastParams = {
+				message: Loc.getMessage('CALLMOBILE_MESSAGE_POOR_CONNECTION_HINT'),
+				time: 10,
+				position: 'top',
+				offset: 15,
+				backgroundColor: '#e79b2b',
+			};
+
+			if (this.rootWidget)
+			{
+				Notification.showToastWithParams(toastParams, this.rootWidget);
+
+				return;
+			}
+
+			Notification.showToastWithParams(toastParams);
 		}
 
 		onActiveCallNotificationSwitchMicrophoneStatusPress()
@@ -2147,11 +2401,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (this.callWithLegacyMobile)
 			{
-				navigator.notification.alert(
-					BX.message('MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP'),
-					() => {},
-					BX.message('MOBILE_CALL_ERROR'),
-				);
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP'));
 
 				return;
 			}
@@ -2256,6 +2506,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onAnswerButtonClick(useVideo)
 		{
+			console.log('CallController.onAnswerButtonClick');
 			CallUtil.log('onAnswerButtonClick');
 
 			this.sendJoinCallAnalytics(
@@ -2280,6 +2531,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onHangupButtonClick()
 		{
+			this.stopAnswerConnectionTimeout();
+
 			if (this.currentCall)
 			{
 				const analytics = new AnalyticsEvent()
@@ -2312,6 +2565,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onDeclineButtonClick()
 		{
+			this.stopAnswerConnectionTimeout();
+
 			this.sendJoinCallAnalytics(Analytics.AnalyticsStatus.decline);
 
 			this.declineCall();
@@ -2423,8 +2678,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.callView.setUserStates({ [e.userId]: BX.Call.UserState.Idle });
 				this.onCallUserStateChanged(e.userId, BX.Call.UserState.Connected);
 
-				const currentUsers = this.getCallUsers(true).length;
-				this.callView.updateTotalUsersCount(currentUsers);
+				this.callView.updateTotalUsersCount(this.currentCall?.associatedEntity?.userCounter);
 			}
 		}
 
@@ -2452,8 +2706,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.callView.updateDisplayedUsers();
 			}
 
-			const currentUsers = this.getCallUsers(true).length;
-			this.callView.updateTotalUsersCount(currentUsers);
+			this.callView.updateTotalUsersCount(this.currentCall?.associatedEntity?.userCounter);
 		}
 
 		onCallUserStateChanged(userId, state, prevState, isLegacyMobile, canChangeUI)
@@ -2470,6 +2723,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (state === BX.Call.UserState.Connected && !this.callStartTime)
 			{
+				this.stopAnswerConnectionTimeout();
 				this.callStartTime = Date.now();
 				callInterface.indicator().setMode('active');
 				this.startCallTimer();
@@ -2513,7 +2767,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onCallUsersLimitExceeded()
 		{
-			navigator.notification.alert(BX.message('MOBILE_CALL_USERS_LIMIT_EXCEEDED'));
+			this.__createErrorControlToast(BX.message('MOBILE_CALL_USERS_LIMIT_EXCEEDED'));
 		}
 
 		onCallUserVoiceStarted(userId)
@@ -2578,7 +2832,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			CallUtil.error('onCallFailure');
 			this.clearEverything();
-			navigator.notification.alert(errorMessage);
+			this.__createErrorControlToast(errorMessage, true);
 		}
 
 		onCallStreamReceived(userId, stream, showChangesInUI = true)
@@ -2813,7 +3067,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.callView.checkScreenshareAfterReconnect();
 				this.callView.setState({ isReconnecting: false });
 
-				e.reconnectedUsers?.forEach((user) => {
+				e?.reconnectedUsers?.forEach((user) => {
 					this.callView.setUserState(user.userId, user.state, false);
 				});
 
@@ -2877,17 +3131,31 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			try
 			{
 				await MediaDevices.requestCameraAccess();
+			}
+			catch (err)
+			{
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA'));
+				throw err;
+			}
+
+			try
+			{
 				await this.currentCall?.setVideoEnabled(state);
 				this.callView?.setCameraState(state);
 				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, state);
 			}
 			catch (err)
 			{
-				navigator.notification.alert(
-					BX.message('MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA'),
-					() => {},
-					BX.message('MOBILE_CALL_MICROPHONE_ACCESS_DENIED'),
-				);
+				const message = err instanceof Error
+					? `${err.name}: ${err.message}`
+					: (typeof err === 'string' ? err : JSON.stringify(err)) || 'Unknown error';
+
+				console.log('switchCameraDeviceState -> error message', message);
+				if (!message.includes('C++ addTrack failed'))
+				{
+					this.__createErrorControlToast(message);
+				}
+
 				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, false);
 				throw err;
 			}
@@ -2898,29 +3166,71 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			//const avatar = params.avatarUrl ? CallUtil.makeAbsolute(params.avatarUrl) : '';
 			//Avatar not added yet because currently Toast can't support more than one color image
 
-			const callControlToast = new Toast(
+			Notification.showToastWithParams(
 				{
 					message: params.message,
 					time: 5,
 					position: 'top',
 					offset: 10,
 					backgroundColor: '#085DC1',
-				}, this.rootWidget);
-
-			callControlToast.show();
+				},
+				this.rootWidget,
+			);
 		}
 
 		__createHintControlToast(params)
 		{
-			const hintControlToast = new Toast(
-			{
-				message: params.message,
-				time: 5,
-				offset: 10,
-				position: 'top',
-			}, this.rootWidget);
+			Notification.showToastWithParams(
+				{
+					message: params.message,
+					time: 5,
+					position: 'top',
+					offset: 10,
+				},
+				this.rootWidget,
+			);
+		}
 
-			hintControlToast.show();
+		__createErrorControlToast(message, global = false)
+		{
+			if (!message)
+			{
+				return;
+			}
+
+			const toastParams = {
+				message,
+				position: 'top',
+				offset: 10,
+				time: 5,
+			};
+
+			if (global || !this.rootWidget)
+			{
+				Notification.showErrorToast(toastParams);
+
+				return;
+			}
+
+			Notification.showErrorToast(toastParams, this.rootWidget);
+		}
+
+		#runWithCurrentCallGuard(callback)
+		{
+			try
+			{
+				callback.call(this);
+			}
+			catch (error)
+			{
+				// if we're here, it's probably because of call is finished elsewhere
+				if (!this.currentCall)
+				{
+					this.clearEverything();
+				}
+
+				throw { code: CallError.alreadyFinished };
+			}
 		}
 
 		onAllParticipantsAudioMuted(params){
@@ -3138,6 +3448,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onCallConnected()
 		{
+			this.stopAnswerConnectionTimeout();
+
 			if (!(this.currentCall instanceof PlainCall) && !(this.currentCall instanceof PlainCallJwt))
 			{
 				const cameraEnabled = this.currentCall.isVideoEnabled();
@@ -3146,7 +3458,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				if (!CallUtil.havePermissionToBroadcast('cam') && cameraEnabled)
 				{
 					this.switchCameraDeviceState(false);
-					this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
+					this.__createHintControlToast({
+						message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
 							'#NAME#': this.lastCalledChangeSettingsUserName,
 						}),
 					});
@@ -3155,7 +3468,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				if (!CallUtil.havePermissionToBroadcast('mic') && !microphoneMuted)
 				{
 					this.muteMicDevice(true);
-					this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
+					this.__createHintControlToast({
+						message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
 							'#NAME#': this.lastCalledChangeSettingsUserName,
 						}),
 					});
@@ -3181,7 +3495,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			if (CallUtil.getSdkAudioManager().currentDevice === 'bluetooth')
 			{
-				this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
+				this.callView?.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 				return;
 			}
 			if (this.selectedAudioDeviceOnIncoming)
@@ -3193,7 +3507,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				CallUtil.getSdkAudioManager().selectAudioDevice(DEFAULT_DEVICE);
 			}
 
-			this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
+			this.callView?.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 		}
 
 		onRecorderStatusChanged({ status, error })
@@ -3213,6 +3527,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			if (this.currentCall?.associatedEntity.id === chatInfo.dialogId)
 			{
+				// TODO: create updater fields in plain, plain-jwt, bitrix-jwt, etc
+				this.currentCall.associatedEntity.userCounter = chatInfo.userCount;
 				this.callView.updateTotalUsersCount(chatInfo.userCount);
 			}
 		}
@@ -3256,6 +3572,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (this.nativeCall && this.nativeCall.connected)
 			{
 				this.onHangupButtonClick();
+			}
+			else if (this.currentCall?.joinStatus === BX.Call.JoinStatus.Remote)
+			{
+				// Call was answered on another device, just clean up without declining
+				this.clearEverything();
 			}
 			else
 			{
@@ -3334,6 +3655,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (this.nativeCall)
 			{
+				this.nativeCall
+					.off('answered', this.onNativeCallAnsweredHandler)
+					.off('ended', this.onNativeCallEndedHandler)
+					.off('muted', this.onNativeCallMutedHandler)
+					.off('videointent', this.onNativeCallVideoIntentHandler);
 				this.nativeCall.finish();
 				this.nativeCall = null;
 			}
@@ -3364,6 +3690,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.callStartTime = null;
 			this.callViewPromise = null;
 			this.callAnswered = false;
+			this.poorConnectionWarningShown = false;
+			this.stopAnswerConnectionTimeout();
+			this.stopConnectionQualityCheck();
 			this.stopCallTimer();
 			media.audioPlayer().stopPlayingSound();
 			device.setIdleTimerDisabled(false);
@@ -3506,6 +3835,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		checkOutputDevice()
 		{
+			const setDevice = this.callView?.state?.soundOutputDevice;
+			if (device.platform === 'iOS'
+				&& CallUtil.getSdkAudioManager().currentDevice === 'bluetooth'
+				&& (setDevice === 'receiver' || setDevice === 'wired')
+			)
+			{
+				this.__createHintControlToast({ message: BX.message('CALLMOBILE_MESSAGE_SWITCH_BP_DEVICE') });
+			}
+
 			if (this.callView && this.callView.state.soundOutputDevice !== CallUtil.getSdkAudioManager().currentDevice)
 			{
 				this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
@@ -3607,6 +3945,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			callInterface.indicator().setMode('active');
 			callInterface.indicator().imageUrl = `${pathToExtension}img/blank.png`;
 			callInterface.indicator().show();
+		}
+
+		hasIncomingCallHider(call)
+		{
+			if (!call)
+			{
+				return false;
+			}
+			const isLegacyCall = CallUtil.isLegacyCall(call.provider, call?.scheme);
+
+			return !isLegacyCall
+				&& call.provider === BX.Call.Provider.Bitrix
+				&& call.cancelIncomingCallHiding
+				&& call.scheduleIncomingCallHiding;
 		}
 	}
 

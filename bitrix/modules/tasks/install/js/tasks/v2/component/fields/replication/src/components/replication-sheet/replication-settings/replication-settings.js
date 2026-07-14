@@ -122,6 +122,7 @@ export const ReplicationSettings = {
 				>
 					<template v-slot="{ activeTab }">
 						<component
+							v-if="activeTab"
 							:is="activeTab.component"
 							@update="$emit('update', $event)"
 						/>

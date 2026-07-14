@@ -60,7 +60,7 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 			},
 
 			/**
-			 * @function dialoguesModel/copilotModel/getMainRoleByDialogId
+			 * @function dialoguesModel/copilotModel/getDefaultRoleByDialogId
 			 * @return {?object}
 			 */
 			getDefaultRoleByDialogId: (state) => (dialogId) => {
@@ -205,6 +205,35 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 				return true;
 			},
 
+			/**
+			 * @function dialoguesModel/copilotModel/updateTitleIsCustom
+			 * @param store
+			 * @param {{dialogId: DialogId, titleIsCustom: boolean}} payload
+			 */
+			updateTitleIsCustom: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const titleIsCustom = Boolean(payload.titleIsCustom);
+				const updatedChats = (existingItem.chats || []).map((chat) => ({
+					...chat,
+					titleIsCustom,
+				}));
+
+				store.commit('update', {
+					actionName: 'updateTitleIsCustom',
+					data: {
+						dialogId: payload.dialogId,
+						fields: { chats: updatedChats },
+					},
+				});
+
+				return true;
+			},
+
 			/** @function dialoguesModel/copilotModel/updateRole */
 			updateRole: (store, payload) => {
 				const existingItem = store.state.collection[payload.dialogId];
@@ -213,15 +242,27 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 					return false;
 				}
 
-				const newRoleData = { ...existingItem.roles, ...payload.fields.roles };
-				const data = {
-					dialogId: payload.dialogId,
-					fields: { chats: payload.fields.chats, roles: newRoleData },
-				};
+				const existingChats = existingItem.chats || [];
+				const incomingChats = payload.fields.chats;
+
+				const chatsByDialogId = new Map(existingChats.map((chat) => [chat.dialogId, chat]));
+				if (Type.isArrayFilled(incomingChats))
+				{
+					incomingChats.forEach((incoming) => {
+						const existing = chatsByDialogId.get(incoming.dialogId);
+						chatsByDialogId.set(incoming.dialogId, { ...existing, ...incoming });
+					});
+				}
+
+				const mergedChats = [...chatsByDialogId.values()];
+				const mergedRoles = { ...existingItem.roles, ...payload.fields.roles };
 
 				store.commit('update', {
 					actionName: 'updateRole',
-					data,
+					data: {
+						dialogId: payload.dialogId,
+						fields: { chats: mergedChats, roles: mergedRoles },
+					},
 				});
 
 				return true;

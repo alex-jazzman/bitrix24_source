@@ -10,7 +10,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 
 	const { BottomSheet } = require('bottom-sheet');
 	const { Color, Indent } = require('tokens');
-	const { Loc } = require('loc');
+	const { Loc } = require('loc/ai');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Entry } = require('tasks/entry');
 	const { UserProfile } = require('user-profile');
@@ -25,7 +25,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 		{
 			void new BottomSheet({
 				titleParams: {
-					text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE'),
+					text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE_MSGVER_1'),
 					type: 'dialog',
 				},
 				component: (layout) => new FlowAiAdvice({ flow, parentWidget: layout }),
@@ -97,7 +97,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 							backgroundColor: Color.copilotBgContent1.toHex(),
 							borderRadius: 14,
 						},
-						icon: Icon.COPILOT,
+						icon: Icon.BITRIX_GPT,
 						size: 28,
 						color: Color.copilotAccentLess2,
 					}),
@@ -109,7 +109,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 							},
 						},
 						H4({
-							text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE'),
+							text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE_MSGVER_1'),
 						}),
 						BBCodeText({
 							style: {
@@ -280,7 +280,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 									},
 								},
 								IconView({
-									icon: Icon.COPILOT,
+									icon: Icon.BITRIX_GPT,
 									color: Color.copilotAccentPrimary,
 									size: 20,
 								}),
@@ -379,7 +379,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 				},
 				Text7({
 					color: Color.base5,
-					text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE'),
+					text: Loc.getMessage('TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE_MSGVER_1'),
 					testId: `${this.testId}-footnote-field`,
 				}),
 				Link6({

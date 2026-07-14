@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 if (!CModule::IncludeModule('intranet'))
@@ -33,8 +33,6 @@ $arResult['FILTER_PARAMS'] = array(
 	$arParams['FILTER_NAME'].'_FIO',
 	$arParams['FILTER_NAME'].'_EMAIL',
 	$arParams['FILTER_NAME'].'_PHONE',
-/*	$arParams['FILTER_NAME'].'_BIRTHDATE_FROM',
-	$arParams['FILTER_NAME'].'_BIRTHDATE_TO',*/
 	$arParams['FILTER_NAME'].'_KEYWORDS',
 	$arParams['FILTER_NAME'].'_IS_ONLINE',
 );
@@ -57,11 +55,8 @@ else
 	{
 		$arResult['FILTER_VALUES'][$var] = htmlspecialcharsex($GLOBALS[$var]);
 	}
-
-	//$GLOBALS['UF_DEPARTMENT'] = $GLOBALS[$arParams['FILTER_NAME'].'_UF_DEPARTMENT'] = $arResult['FILTER_VALUES']['UF_DEPARTMENT'];
 }
 
 $this->IncludeComponentTemplate();
 
 return $arResult['FILTER_VALUES'];
-?>

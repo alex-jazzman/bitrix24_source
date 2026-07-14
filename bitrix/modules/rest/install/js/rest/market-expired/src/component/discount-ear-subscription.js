@@ -64,3 +64,4 @@ export class DiscountEarSubscription extends DiscountEar
 		return '';
 	}
 }
+

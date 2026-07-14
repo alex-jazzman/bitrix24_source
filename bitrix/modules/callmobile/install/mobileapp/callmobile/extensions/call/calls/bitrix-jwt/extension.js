@@ -3,6 +3,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 	const { CallLogger } = require('call/calls/logger');
 	const { ActiveCallNotification } = require('call/calls/active-call-notification');
+	const { IncomingCallHider } = require('call/calls/incoming-call-hider');
 
 	BX.DoNothing = function() {};
 
@@ -111,6 +112,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.someoneWasConnected = false;
 
 			this.client = null;
+
+			this.incomingCallHiderService = new IncomingCallHider();
 
 			this.eventEmitter = new JNEventEmitter();
 			if (typeof (params.events) === 'object')
@@ -615,6 +618,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		decline(code)
 		{
+			this.cancelIncomingCallHiding();
+
 			this.ready = false;
 			const data = {
 				callUuid: this.uuid,
@@ -1034,6 +1039,12 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				return;
 			}
 
+			if (this.ready)
+			{
+				// Received remote self-answer in ready state, ignoring
+				return;
+			}
+
 			// call was answered elsewhere
 			this.joinStatus = BX.Call.JoinStatus.Remote;
 		}
@@ -1044,6 +1055,11 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 			if (this.userId == senderId && this.instanceId != params.callInstanceId)
 			{
+				if (this.ready)
+				{
+					return;
+				}
+
 				// Call declined by the same user elsewhere
 				this.joinStatus = BX.Call.JoinStatus.None;
 				this.eventEmitter.emit(BX.Call.Event.onHangup);
@@ -1812,6 +1828,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		destroy()
 		{
+			this.cancelIncomingCallHiding();
+
 			this.ready = false;
 			this._joinStatus = BX.Call.JoinStatus.None;
 			this.destroyActiveCallNotification();
@@ -1848,6 +1866,16 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				this.signaling.call = null;
 				this.signaling = null;
 			}
+		}
+
+		scheduleIncomingCallHiding()
+		{
+			return this.incomingCallHiderService.schedule();
+		}
+
+		cancelIncomingCallHiding()
+		{
+			this.incomingCallHiderService.cancel();
 		}
 	}
 

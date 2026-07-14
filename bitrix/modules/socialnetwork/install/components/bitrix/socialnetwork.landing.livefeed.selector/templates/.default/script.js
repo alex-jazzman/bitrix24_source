@@ -19,7 +19,44 @@
 
 	BX.SocialnetworkLandingLivefeedSelector.createWorkgroup = function()
 	{
-		BX.SidePanel.Instance.open(this.urlToGroupCreate);
+		if (this.isNewProjectsOn)
+		{
+			const action = BX.Socialnetwork.V2.Model.TYPES_PROJECT_WIZARD_ACTION.CREATE;
+
+			const wizard = new BX.Socialnetwork.V2.Application.ProjectWizard({
+				action,
+				publication: true,
+				onSave: ({ id, name }) => {
+					BX.SocialnetworkLandingLivefeedSelector.updateSourceList.call(
+						this,
+						id,
+						name,
+					);
+				},
+			});
+
+			void wizard.show({
+				customLeftBoundary: 100,
+			});
+		}
+		else
+		{
+			BX.SidePanel.Instance.open(this.urlToGroupCreate);
+		}
+	};
+
+	BX.SocialnetworkLandingLivefeedSelector.updateSourceList = function(id, name)
+	{
+		const filterInstance = BX.Main.filterManager.getById(this.id);
+		if (filterInstance instanceof BX.Main.Filter)
+		{
+			const filterApi = filterInstance.getApi();
+			filterApi.setFields({
+				GROUP_ID: `SG${parseInt(id, 10)}`,
+				GROUP_ID_label: name,
+			});
+			filterApi.apply();
+		}
 	};
 
 	BX.SocialnetworkLandingLivefeedSelector.prototype = {
@@ -47,6 +84,7 @@
 			}
 
 			this.isProjectFeatureEnabled = settings.isProjectFeatureEnabled === true;
+			this.isNewProjectsOn = settings.isNewProjectsOn === true;
 
 			BX.addCustomEvent("BX.Main.Filter:beforeApply", function(eventFilterId, values, ob, filterPromise) {
 				if (eventFilterId != this.id)
@@ -132,16 +170,11 @@
 						&& eventData.code == 'afterCreate'
 					)
 					{
-						var filterInstance = BX.Main.filterManager.getById(this.id);
-						if (!!filterInstance && (filterInstance instanceof BX.Main.Filter))
-						{
-							var filterApi = filterInstance.getApi();
-							filterApi.setFields({
-								GROUP_ID: 'SG' + parseInt(eventData.data.group.ID),
-								GROUP_ID_label: eventData.data.group.FIELDS.NAME
-							});
-							filterApi.apply();
-						}
+						BX.SocialnetworkLandingLivefeedSelector.updateSourceList.call(
+							this,
+							eventData.data.group.ID,
+							eventData.data.group.FIELDS.NAME,
+						);
 					}
 				}
 			}.bind(this));
@@ -152,7 +185,7 @@
 				BX.bind(BX('slls_group_create'), 'click', function() {
 					if (this.isProjectFeatureEnabled)
 					{
-						BX.SidePanel.Instance.open(this.urlToGroupCreate);
+						BX.SocialnetworkLandingLivefeedSelector.createWorkgroup.call(this);
 					}
 					else
 					{

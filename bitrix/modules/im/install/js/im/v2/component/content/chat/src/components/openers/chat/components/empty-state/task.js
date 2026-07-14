@@ -4,6 +4,7 @@ import {
 	EmptyStateListItemName,
 	type EmptyStateListItem,
 } from 'im.v2.component.content.elements';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 // @vue/component
 export const TaskEmptyState = {
@@ -11,12 +12,34 @@ export const TaskEmptyState = {
 	components: { BaseEmptyState },
 	computed: {
 		IconClass: () => IconClass,
+		isCopilotAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+		},
+		copilotTitle(): string
+		{
+			if (!this.isCopilotAvailable)
+			{
+				return this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_UNAVAILABLE_COPILOT_TITLE_1');
+			}
+
+			return this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_TITLE_1');
+		},
+		copilotSubtitle(): string
+		{
+			if (!this.isCopilotAvailable)
+			{
+				return this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_UNAVAILABLE_COPILOT_SUBTITLE_1');
+			}
+
+			return this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_SUBTITLE_1');
+		},
 		emptyStateListItems(): EmptyStateListItem[]
 		{
 			return [
 				{
-					title: this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_TITLE_1'),
-					subtitle: this.loc('IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_SUBTITLE_1'),
+					title: this.copilotTitle,
+					subtitle: this.copilotSubtitle,
 					name: EmptyStateListItemName.audio,
 				},
 				{

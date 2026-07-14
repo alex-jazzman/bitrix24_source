@@ -8,13 +8,13 @@ return [
 	'js' => 'dist/related-tasks.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.icon-set.api.vue',
-		'ui.icon-set.actions',
-		'tasks.v2.const',
-		'tasks.v2.provider.service.relation-service',
 		'tasks.v2.component.fields.relation-tasks',
+		'tasks.v2.const',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.lib.relation-tasks-dialog',
+		'tasks.v2.provider.service.relation-service',
+		'ui.icon-set.actions',
+		'ui.icon-set.api.vue',
 	],
 	'skip_core' => false,
 ];

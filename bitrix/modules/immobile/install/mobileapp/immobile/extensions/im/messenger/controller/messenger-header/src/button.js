@@ -96,15 +96,25 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 		type: ButtonType.search,
 		shouldShow: () => true,
 		callback: () => {
-			Notification.showComingSoon();
+			serviceLocator.get('recent-manager').getActiveRecent().openSearch();
 		},
 	});
 
 	const nestedFilterButton = Button.create({
 		id: HeaderButtonId.nestedFilter,
 		type: ButtonType.filter,
+		isAccent: () => serviceLocator.get('recent-manager').getActiveNestedRecent()?.hasSelectedFilter() ?? false,
 		shouldShow: () => NestedRecentActionsMenu.hasVisibleItems(),
 		callback: async () => {
+			const recent = serviceLocator.get('recent-manager').getActiveNestedRecent();
+
+			if (recent?.hasSelectedFilter())
+			{
+				await recent.resetFilter();
+
+				return;
+			}
+
 			const menu = new NestedRecentActionsMenu({
 				sections: [RecentMenuSection.filter, RecentMenuSection.general],
 				cacheId: 'im-messenger-nested-recent-actions-menu:filter',

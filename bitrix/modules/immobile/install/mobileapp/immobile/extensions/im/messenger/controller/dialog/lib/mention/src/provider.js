@@ -3,7 +3,13 @@
  */
 jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, exports, module) => {
 	const { Type } = require('type');
-	const { ChatSearchProvider, getWordsFromText } = require('im/messenger/lib/chat-search');
+	const {
+		ChatSearchProvider,
+		DialogLocalSearchStrategy,
+		DefaultServerSearchStrategy,
+		getWordsFromText,
+	} = require('im/messenger/lib/chat-search');
+	const { MentionConfig } = require('im/messenger/controller/dialog/lib/mention/config');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UserType, DialogType } = require('im/messenger/const');
@@ -11,6 +17,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const LIMIT_LOCAL_SEARCH_USERS = 100;
+
+	const DEFAULT_EXCEPT_DIALOG_TYPES = [
+		DialogType.copilot,
+		DialogType.lines,
+		DialogType.comment,
+		DialogType.tasksTask,
+	];
 
 	class MentionProvider extends ChatSearchProvider
 	{
@@ -23,7 +36,25 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 
 		constructor(params)
 		{
-			super(params);
+			const config = new MentionConfig();
+			const filter = params.filter ?? {};
+			const dialogTypes = filter.dialogTypes ?? [];
+			const exceptDialogTypes = Type.isArrayFilled(dialogTypes)
+				? []
+				: filter.exceptDialogTypes ?? DEFAULT_EXCEPT_DIALOG_TYPES;
+
+			super({
+				localStrategy: new DialogLocalSearchStrategy({ dialogTypes, exceptDialogTypes }),
+				serverStrategy: new DefaultServerSearchStrategy({ config }),
+			});
+			this.setCallbacks(params);
+
+			/**
+			 * @protected
+			 * @type {MentionConfig}
+			 */
+			this.config = config;
+
 			this.dialogId = params.dialogId;
 			this.chatParticipants = [];
 			this.isChatParticipantsLoaded = false;
@@ -63,7 +94,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		 * @param {number} chatId
 		 */
 		initConfig({ chatId } = {}) {
-			super.initConfig();
 			if (chatId)
 			{
 				this.setOptionConfig(chatId);
@@ -153,7 +183,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 				return;
 			}
 
-			await this.serverService.storeUpdater.setUsersToModel(users);
+			await this.serverStrategy.storeUpdater.setUsersToModel(users);
 
 			users.forEach((user) => {
 				const userId = user.id;
@@ -179,15 +209,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 				return [];
 			}
 
-			/** @type {DialoguesFilter} */
-			const filter = {
-				dialogTypes: [
-					DialogType.private,
-					DialogType.user,
-				],
-			};
+			const localUsers = await this.localStrategy.preload({
+				types: [DialogType.private, DialogType.user],
+				limit: LIMIT_LOCAL_SEARCH_USERS,
+			});
 
-			const localUsers = await this.localService.search({ searchText: '', limit: LIMIT_LOCAL_SEARCH_USERS }, filter);
 			for (const userId of localUsers)
 			{
 				this.#membershipMap[userId] = false;
@@ -234,7 +260,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		 */
 		searchOnServer(searchingWords, originalQuery, localSearchingIds)
 		{
-			void this.serverService.search(searchingWords, originalQuery, this.recentTab)
+			void this.serverStrategy.search(searchingWords, originalQuery)
 				.then((response) => {
 					const { items } = response.dialog;
 
@@ -303,15 +329,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		{
 			try
 			{
-				const searchParams = {
+				return await this.localStrategy.search({
 					searchText: wordsFromText.join(' '),
-				};
-
-				return await this.localService.search(searchParams, this.filter);
+				});
 			}
 			catch (error)
 			{
-				this.logger.error(`${this.constructor.name}.#localSearchResult error:`, error);
+				this.logger.error(`${this.constructor.name}.#localSearch error:`, error);
 
 				return [];
 			}
@@ -324,6 +348,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		 */
 		async #loadMembershipDataFromServer(users, dialogHelper)
 		{
+			if (!Type.isArrayFilled(users))
+			{
+				this.#isMembershipMapLoaded = true;
+
+				return [];
+			}
+
 			const notParticipantsIds = new Set(users);
 
 			try

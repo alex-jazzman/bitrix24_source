@@ -9,7 +9,6 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 	const {
 		RestMethod,
 		RefreshMode,
-		RecentFilterId,
 	} = require('im/messenger/const');
 	const { isOnline } = require('device/connection');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
@@ -168,14 +167,14 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		}
 
 		/**
-		 * @parsm {string} filterId
+		 * @param {string} filterId
 		 * @returns {Promise<void>}
 		 */
 		async applyFilter(filterId)
 		{
 			if (this.isSupportedFilter())
 			{
-				this.locator.get('filter').applyFilter(filterId);
+				await this.locator.get('filter').applyFilter(filterId);
 
 				if (isOnline())
 				{
@@ -353,17 +352,8 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		#getRequestOptions(mode)
 		{
 			const currentFilterId = this.locator.get('filter')?.getCurrentFilterId();
-			const currentServerLoadOptions = this.locator.get('server-load').getInitRequestOptions(mode);
-			const options = {
-				...currentServerLoadOptions,
-			};
 
-			if (currentFilterId === RecentFilterId.unread)
-			{
-				options.unreadOnly = 'Y';
-			}
-
-			return options;
+			return this.locator.get('server-load').getInitRequestOptions(mode, { currentFilterId });
 		}
 	}
 

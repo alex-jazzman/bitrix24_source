@@ -40,8 +40,8 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showDeleteCollabAlert({ deleteCallback, cancelCallback })
 	{
 		confirmDestructiveAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_TITLE'),
-			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_DESCRIPTION'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_PROJECT_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_PROJECT_DESCRIPTION'),
 			actionButtonText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_CONFIRM_YES'),
 			onDestruct: deleteCallback,
 			onCancel: cancelCallback,
@@ -72,7 +72,7 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showClearHistoryCollabAlert({ deleteCallback, cancelCallback, forAll = true })
 	{
 		confirmDestructiveAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_COLLAB_TITLE'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_PROJECT_TITLE'),
 			description: clearHistoryDescription(forAll),
 			destructionText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_CHAT_CONFIRM_YES'),
 			onDestruct: deleteCallback,
@@ -87,8 +87,8 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showLeaveCollabAlert({ leaveCallback, cancelCallback })
 	{
 		confirmDefaultAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_COLLAB_TITLE'),
-			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_CHAT_FOR_ALL_DESCRIPTION'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_PROJECT_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_PROJECT_DESCRIPTION'),
 			actionButtonText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_COLLAB_CONFIRM_YES'),
 			onAction: leaveCallback,
 			onCancel: cancelCallback,
@@ -130,10 +130,25 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	function showRemoveParticipantCollabAlert({ removeCallback, cancelCallback })
 	{
 		confirmDefaultAction({
-			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_TITLE'),
-			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_DESCRIPTION'),
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_DESCRIPTION'),
 			actionButtonText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_CONFIRM_YES'),
 			onAction: removeCallback,
+			onCancel: cancelCallback,
+		});
+	}
+
+	/**
+	 * @param {function} addCallback
+	 * @param {function} cancelCallback
+	 */
+	function showAddParticipantsToProjectAlert({ addCallback, cancelCallback })
+	{
+		confirmDefaultAction({
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_DESCRIPTION'),
+			actionButtonText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_CONFIRM_YES'),
+			onAction: addCallback,
 			onCancel: cancelCallback,
 		});
 	}
@@ -209,6 +224,7 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 		showDeleteChannelPostsAlert,
 		showDeleteMessagesAlert,
 		showRemoveParticipantCollabAlert,
+		showAddParticipantsToProjectAlert,
 		showDeleteCollabAlert,
 		showLeaveCollabAlert,
 		showLeaveChatAlert,

@@ -36,6 +36,11 @@ jn.define('im/messenger/lib/element/dialog/message/call/const/configuration', (r
 			iconColors: (modelMessage) => getIconColors(modelMessage, CallMessageType.MISSED),
 			iconFallbackUrl: currentDomain + Icon.PHONE_UP.getPath(),
 		},
+		[CallMessageType.CANCELLED]: {
+			iconName: Icon.PHONE_UP.getIconName(),
+			iconColors: (modelMessage) => getIconColors(modelMessage, CallMessageType.CANCELLED),
+			iconFallbackUrl: currentDomain + Icon.PHONE_UP.getPath(),
+		},
 	};
 
 	/**
@@ -76,6 +81,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/const/configuration', (r
 			case CallMessageType.BUSY:
 			case CallMessageType.DECLINED:
 			case CallMessageType.MISSED:
+			case CallMessageType.CANCELLED:
 				if (isYourMessage)
 				{
 					iconColor = Theme.colors.chatMyChannelAlert;

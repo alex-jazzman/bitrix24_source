@@ -1,6 +1,7 @@
 <?php
 
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'] = 'Без названия';
+$MESS['NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE'] = 'Файл недоступен';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE'] = 'Файл';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE'] = 'Изображение';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'] = 'Видео';
@@ -74,6 +75,12 @@ $MESS['NOTE_EDITOR_DOCUMENT_MENU_PERMISSIONS'] = 'Доступ к докумен
 $MESS['NOTE_EDITOR_DOCUMENT_MENU_DELETE'] = 'Удалить';
 $MESS['NOTE_EDITOR_DOCUMENT_MENU_RESTORE_FROM_TRASH'] = 'Восстановить';
 $MESS['NOTE_EDITOR_DOCUMENT_MENU_HARD_DELETE'] = 'Удалить навсегда';
+$MESS['NOTE_EDITOR_DOC_ARCHIVED_REMOTE'] = 'Документ архивирован другим участником';
+$MESS['NOTE_EDITOR_DOC_TRASHED_REMOTE'] = 'Документ перемещён в корзину другим участником';
+$MESS['NOTE_EDITOR_DOC_RESTORED_REMOTE'] = 'Документ восстановлен другим участником';
+$MESS['NOTE_EDITOR_DOC_HARD_DELETED_REMOTE'] = 'Документ удалён навсегда другим участником';
+$MESS['NOTE_EDITOR_DOC_ACCESS_REVOKED_REMOTE'] = 'Ваш доступ к документу был отозван';
+$MESS['NOTE_EDITOR_DOC_EDIT_REVOKED_REMOTE'] = 'Право на редактирование документа было отозвано';
 
 $MESS['NOTE_EDITOR_COLLAB_STATUS_CONNECTING'] = 'Подключение...';
 $MESS['NOTE_EDITOR_COLLAB_STATUS_CONNECTED'] = 'Онлайн';
@@ -97,3 +104,8 @@ $MESS['NOTE_EDITOR_TOOLBAR_LIST_ORDERED'] = 'Нумерованный списо
 $MESS['NOTE_EDITOR_TOOLBAR_LIST_TASK'] = 'Список задач';
 
 $MESS['NOTE_EDITOR_CHILDREN_HEADER'] = 'Документы';
+
+$MESS['NOTE_EDITOR_CONTENT_OVERWRITTEN'] = 'Пока вы работали с документом, он был изменён другим пользователем. Сейчас отображается актуальная версия документа';
+$MESS['NOTE_EDITOR_HEADING_COPY_ANCHOR'] = 'Скопировать ссылку на заголовок';
+$MESS['NOTE_EDITOR_HEADING_ANCHOR_COPIED'] = 'Ссылка на заголовок скопирована';
+$MESS['NOTE_EDITOR_HEADING_TOGGLE_COLLAPSE'] = 'Свернуть или развернуть раздел';

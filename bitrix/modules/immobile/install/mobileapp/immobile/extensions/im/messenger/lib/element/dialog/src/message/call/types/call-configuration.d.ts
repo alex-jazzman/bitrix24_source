@@ -4,6 +4,7 @@ declare const CallMessageType: {
 	readonly BUSY: 'BUSY',
 	readonly DECLINED: 'DECLINED',
 	readonly MISSED: 'MISSED',
+	readonly CANCELLED: 'CANCELLED',
 }
 
 type CallMetaDataValue = {

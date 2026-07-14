@@ -8,7 +8,11 @@ export type TariffRestrictions = {
 	fullChatHistory: {
 		isAvailable: boolean,
 		limitDays: number | null,
-	}
+	},
+	collabV2: {
+		isAvailable: boolean,
+		isCopyAvailable: boolean
+	},
 };
 
 /* eslint-disable no-param-reassign */
@@ -20,6 +24,10 @@ export class TariffRestrictionsModel extends BuilderModel
 			fullChatHistory: {
 				isAvailable: true,
 				limitDays: null,
+			},
+			collabV2: {
+				isAvailable: true,
+				isCopyAvailable: true,
 			},
 		};
 	}
@@ -34,6 +42,14 @@ export class TariffRestrictionsModel extends BuilderModel
 			/** @function application/tariffRestrictions/isHistoryAvailable */
 			isHistoryAvailable: (state: TariffRestrictions): boolean => {
 				return state.fullChatHistory?.isAvailable ?? false;
+			},
+			/** @function application/tariffRestrictions/isCollabV2Available */
+			isCollabV2Available: (state: TariffRestrictions): boolean => {
+				return state.collabV2.isAvailable;
+			},
+			/** @function application/tariffRestrictions/isCollabV2CopyAvailable */
+			isCollabV2CopyAvailable: (state: TariffRestrictions): boolean => {
+				return state.collabV2.isCopyAvailable;
 			},
 		};
 	}

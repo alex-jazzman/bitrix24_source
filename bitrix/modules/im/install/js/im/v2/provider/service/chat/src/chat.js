@@ -111,14 +111,14 @@ export class ChatService
 		return this.#updateService.changeAvatar(chatId, avatarFile);
 	}
 
-	updateChat(chatId: number, chatConfig: ChatUpdateConfig): Promise<boolean>
-	{
-		return this.#updateService.updateChat(chatId, chatConfig);
-	}
-
 	updateCollab(dialogId: string, collabConfig): Promise<boolean>
 	{
 		return this.#updateService.updateCollab(dialogId, collabConfig);
+	}
+
+	updateChat(chatId: number, chatConfig: ChatUpdateConfig): Promise<boolean>
+	{
+		return this.#updateService.updateChat(chatId, chatConfig);
 	}
 
 	getMemberEntities(chatId: number): Promise<GetMemberEntitiesConfig>

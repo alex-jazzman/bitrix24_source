@@ -7,6 +7,7 @@ $MESS["WIKI_DEFAULT_PAGE_TEXT"] ="У Базы знаний (Wiki) нет еще 
 wikipedia.org - самый популярный пример Wiki-энциклопедии, создаваемой «всем миром».<br>
 Подробнее о Wiki: [http://ru.wikipedia.org/wiki/Wiki ru.wikipedia.org/wiki/Wiki]";
 $MESS["WIKI_DEFAULT_PAGE_NAME"] = "Главная страница";
+$MESS["WIKI_NOTE_ACCESS_DENIED_TITLE"] = "Недостаточно прав для доступа к базе знаний";
 $MESS["WIKI_SOCNET_INITIALIZING_FAILED"] = "Ошибка инициализации Соц.Сети";
 $MESS["WIKI_MODULE_NOT_INSTALLED"] = "Модуль wiki не установлен.";
 $MESS["IBLOCK_MODULE_NOT_INSTALLED"] = "Модуль iblock не установлен.";

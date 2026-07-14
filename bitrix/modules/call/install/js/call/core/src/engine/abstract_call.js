@@ -1,7 +1,7 @@
 import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
 import {Logger} from './logger'
-import {CallType, CallEvent, CallState, CallEngine, Provider} from './engine'
+import { CallType, CallEvent, CallState, CallEngine, RoomType } from './engine';
 import {Hardware} from '../call_hardware';
 import Util from '../util'
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
@@ -39,6 +39,7 @@ export class AbstractCall
 		this.direction = params.direction;
 		this.scheme = params.scheme;
 		this.type = BX.prop.getInteger(params, "type", CallType.Instant); // @see {BX.Call.Type}
+		this.roomType = BX.prop.getInteger(params, 'roomType', RoomType.Small);
 		this.state = BX.prop.getString(params, "state", CallState.Idle);
 
 		this.ready = false;

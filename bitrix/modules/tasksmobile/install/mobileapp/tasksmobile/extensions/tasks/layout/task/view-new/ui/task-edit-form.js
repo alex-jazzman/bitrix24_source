@@ -140,6 +140,11 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			c_element: 'create_button',
 		};
 
+		const currentUserId = Number(env.userId);
+		const canUpdateAuditors = Boolean(actions[TaskFieldActionAccess[Field.AUDITORS]]);
+		const isSelfAuditor = task.auditors.includes(currentUserId);
+		const auditorsInteractive = canUpdateAuditors || isSelfAuditor;
+
 		return new Form({
 			ref,
 			testId,
@@ -497,7 +502,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					props: {
 						id: Field.AUDITORS,
 						value: task.auditors,
-						readOnly: !actions[TaskFieldActionAccess[Field.AUDITORS]],
+						readOnly: !auditorsInteractive,
 						required: false,
 						multiple: true,
 						title: Loc.getMessage('M_TASK_FORM_FIELD_AUDITORS_TITLE'),
@@ -506,10 +511,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						onContentClick: onFieldContentClick,
 						config: makeAuditorsFieldConfig({
 							items: auditors.filter(Boolean),
-							readOnly: !actions[TaskFieldActionAccess[Field.AUDITORS]],
-							undeselectableIds: actions.update
+							readOnly: !auditorsInteractive,
+							undeselectableIds: canUpdateAuditors
 								? []
-								: task.auditors.filter((id) => id !== userId),
+								: task.auditors.filter((id) => id !== currentUserId),
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),

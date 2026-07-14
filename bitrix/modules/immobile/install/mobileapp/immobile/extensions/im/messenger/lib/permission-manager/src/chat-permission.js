@@ -85,7 +85,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData.permissions)
 			{
-				return this.iaCanAddBySettingChat() && this.canAddByTypeChat();
+				return this.iaCanAddBySettingChat() && this.canAddByChatType();
 			}
 
 			return this.isOwner();
@@ -106,7 +106,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Check is can add participant by role type chat
 		 * @return {boolean}
 		 */
-		canAddByTypeChat()
+		canAddByChatType()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.extend];
@@ -162,10 +162,120 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData.permissions)
 			{
-				return this.canRemoveBySettingChat() && this.canRemoveByTypeChat();
+				return this.canRemoveBySettingChat() && this.canRemoveByChatType();
 			}
 
 			return this.isOwner();
+		}
+
+		/**
+		 * @desc Universal permission check by action. Mirrors web `PermissionManager.canPerformActionByRole`.
+		 * Three layers AND-ed: static minimal role + per-chat-type default + per-chat actionGroup override.
+		 * Use this for new permission checks; existing named methods are migrated to thin aliases.
+		 * @param {string} action — DialogActionType value
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canPerformActionByRole(action, dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			return this.#canByRole(action)
+				&& this.#canByChatType(action)
+				&& this.#canByChatSettings(action);
+		}
+
+		/**
+		 * @param {string} action
+		 * @return {boolean}
+		 */
+		#canByRole(action)
+		{
+			const minimalRole = MinimalRoleForAction[action];
+			if (Type.isUndefined(minimalRole))
+			{
+				return true;
+			}
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		/**
+		 * @param {string} action
+		 * @return {boolean}
+		 */
+		#canByChatType(action)
+		{
+			const effectiveAction = this.#remapKickAndLeaveAction(action);
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const minimalRole = rolesByChatType?.[effectiveAction];
+			if (Type.isUndefined(minimalRole))
+			{
+				return true;
+			}
+
+			return this.getRightByLowRole(minimalRole);
+		}
+
+		/**
+		 * @param {string} action
+		 * @return {boolean}
+		 */
+		#canByChatSettings(action)
+		{
+			if (this.dialogData.type === DialogType.user)
+			{
+				return true;
+			}
+
+			const groupName = this.#getGroupByAction(action);
+			if (!groupName)
+			{
+				return true;
+			}
+
+			const minimalRole = this.dialogData.permissions?.[groupName] || UserRole.member;
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		/**
+		 * @param {string} action
+		 * @return {?string} actionGroup key (camelCase) or null if action is not in any group
+		 */
+		#getGroupByAction(action)
+		{
+			const actionGroups = this.getChatPermissions()?.actionGroups;
+			if (!actionGroups)
+			{
+				return null;
+			}
+
+			const entry = Object.entries(actionGroups).find(([, actions]) => actions.includes(action));
+
+			return entry ? entry[0] : null;
+		}
+
+		/**
+		 * @param {string} action
+		 * @return {string} effective action after kick → leave / leave → leaveOwner remap
+		 */
+		#remapKickAndLeaveAction(action)
+		{
+			if (action === DialogActionType.kick)
+			{
+				return DialogActionType.leave;
+			}
+
+			if (action === DialogActionType.leave && this.isOwner())
+			{
+				return DialogActionType.leaveOwner;
+			}
+
+			return action;
 		}
 
 		/**
@@ -175,17 +285,17 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		canChangeOwner(dialogData)
 		{
-			if (!this.setDialogData(dialogData))
-			{
-				return false;
-			}
+			return this.canPerformActionByRole(DialogActionType.changeOwner, dialogData);
+		}
 
-			if (this.dialogData.permissions)
-			{
-				return this.canChangeOwnerByTypeChat();
-			}
-
-			return false;
+		/**
+		 * @desc Check is can change managers (admins) for chat
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canChangeManagers(dialogData)
+		{
+			return this.canPerformActionByRole(DialogActionType.changeManagers, dialogData);
 		}
 
 		/**
@@ -203,22 +313,10 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Check is can remove participant by role type chat
 		 * @return {boolean}
 		 */
-		canRemoveByTypeChat()
+		canRemoveByChatType()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.kick];
-
-			return this.getRightByLowRole(installedMinimalRole);
-		}
-
-		/**
-		 * @desc Check is can change owner by role type chat
-		 * @return {boolean}
-		 */
-		canChangeOwnerByTypeChat()
-		{
-			const rolesByChatType = this.getDefaultRolesByChatType();
-			const installedMinimalRole = rolesByChatType[DialogActionType.changeOwner];
 
 			return this.getRightByLowRole(installedMinimalRole);
 		}
@@ -296,7 +394,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData)
 			{
-				return this.canLeaveByTypeChat();
+				return this.canLeaveByChatType();
 			}
 
 			return false;
@@ -307,7 +405,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @return {boolean}
 		 * @private
 		 */
-		canLeaveByTypeChat()
+		canLeaveByChatType()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			let actionType = DialogActionType.leave;

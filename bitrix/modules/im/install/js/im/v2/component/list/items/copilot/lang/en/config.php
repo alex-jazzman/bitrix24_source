@@ -1,2 +1,3 @@
 <?php
-$MESS["IM_LIST_COPILOT_EMPTY"] = "There are no chats.";
+$MESS["IM_LIST_COPILOT_EMPTY_SUBTITLE"] = "Start chatting with #COPILOT_NAME#.";
+$MESS["IM_LIST_COPILOT_EMPTY_TITLE"] = "No chats here yet";

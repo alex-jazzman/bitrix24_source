@@ -25,6 +25,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	} = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { CollabEntity } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Icon } = require('assets/icons');
 	const { Haptics } = require('haptics');
 
@@ -103,7 +104,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 
 		getWidgetTitle()
 		{
-			return Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_TITLE');
+			return Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_TITLE');
 		}
 
 		// region context menu
@@ -135,8 +136,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 			onDeleteChat(this.dialogId, {
 				onError: (errors) => {
 					const message = Array.isArray(errors) && errors.some((error) => error.code === 'TASKS_NOT_EMPTY')
-						? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_NOT_EMPTY')
-						: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_DEFAULT');
+						? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_DELETE_ERROR_NOT_EMPTY')
+						: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_PROJECT_DELETE_ERROR_DEFAULT');
 
 					Notification.showErrorToast({
 						message,
@@ -176,7 +177,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 					onUpdate: () => {
 						this.analyticsService.sendDialogEditButtonDoneDialogInfoClick(this.dialogId);
 					},
-				});
+				}, this.widget);
 				this.analyticsService.sendDialogEditHeaderMenuClick(this.dialogId);
 			}
 			catch (error)
@@ -249,6 +250,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 				return;
 			}
 
+			if (Feature.isNestedChatAvailable)
+			{
+				return this.#openProjectDisk();
+			}
+
 			try
 			{
 				const { openCollabFiles } = await requireLazy('disk:opener/collab-files');
@@ -282,8 +288,14 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 				return;
 			}
 
+
+
 			try
 			{
+				if (Feature.isNestedChatAvailable)
+				{
+					return this.#openProjectCalendar();
+				}
 				const { Entry } = await requireLazy('calendar:entry');
 
 				this.analyticsService.sendCollabEntityOpened({
@@ -314,6 +326,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 				Haptics.notifyWarning();
 
 				return;
+			}
+
+			if (Feature.isNestedChatAvailable)
+			{
+				return this.#openProjectTasks();
 			}
 
 			try
@@ -352,6 +369,54 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 		}
 
 		// endregion
+
+		async #openProjectDisk()
+		{
+			try
+			{
+				const { ProjectOpener } = await requireLazy('project/opener');
+
+				await ProjectOpener.openDisk({ projectId: this.collabId });
+			}
+			catch (error)
+			{
+				this.logger.error('openProjectFiles error:', error);
+
+				Notification.showErrorToast();
+			}
+		}
+
+		async #openProjectTasks()
+		{
+			try
+			{
+				const { ProjectOpener } = await requireLazy('project/opener');
+
+				await ProjectOpener.openTasks({ projectId: this.collabId });
+			}
+			catch (error)
+			{
+				this.logger.error('openProjectFiles error:', error);
+
+				Notification.showErrorToast();
+			}
+		}
+
+		async #openProjectCalendar()
+		{
+			try
+			{
+				const { ProjectOpener } = await requireLazy('project/opener');
+
+				await ProjectOpener.openCalendar({ projectId: this.collabId });
+			}
+			catch (error)
+			{
+				this.logger.error('openProjectFiles error:', error);
+
+				Notification.showErrorToast();
+			}
+		}
 	}
 
 	module.exports = {

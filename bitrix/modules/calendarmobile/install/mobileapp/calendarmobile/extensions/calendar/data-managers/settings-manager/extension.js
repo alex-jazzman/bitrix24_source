@@ -36,6 +36,7 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 			this.setYearHolidays(settings.yearHolidays);
 			this.setUserTimezoneName(settings.userTimezoneName);
 			this.setIsCollabCalendar(settings.isCollabCalendar);
+			this.setIsNewProjects(settings.isNewProjectsOn);
 		}
 
 		setFirstWeekday(firstWeekday)
@@ -76,14 +77,14 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 		setWorkTimeStart(workTimeStart)
 		{
 			this.workTimeStart = Math.round(
-				(Math.floor(workTimeStart) + 5 * (workTimeStart - Math.floor(workTimeStart)) / 3) * 1000
+				(Math.floor(workTimeStart) + 5 * (workTimeStart - Math.floor(workTimeStart)) / 3) * 1000,
 			) / 1000;
 		}
 
 		setWorkTimeEnd(workTimeEnd)
 		{
 			this.workTimeEnd = Math.round(
-				(Math.floor(workTimeEnd) + 5 * (workTimeEnd - Math.floor(workTimeEnd)) / 3) * 1000
+				(Math.floor(workTimeEnd) + 5 * (workTimeEnd - Math.floor(workTimeEnd)) / 3) * 1000,
 			) / 1000;
 		}
 
@@ -100,6 +101,11 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 		setIsCollabCalendar(isCollabCalendar)
 		{
 			this.isCollabCalendar = isCollabCalendar;
+		}
+
+		setIsNewProjects(isNewProjects)
+		{
+			this.isNewProjects = isNewProjects;
 		}
 
 		getFirstWeekday()
@@ -160,6 +166,11 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 		isCollabCalendarContext()
 		{
 			return this.isCollabCalendar;
+		}
+
+		isNewProjectsOn()
+		{
+			return this.isNewProjects;
 		}
 
 		/**

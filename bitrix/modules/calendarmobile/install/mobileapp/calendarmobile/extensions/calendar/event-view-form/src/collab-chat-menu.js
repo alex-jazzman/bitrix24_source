@@ -7,6 +7,7 @@ jn.define('calendar/event-view-form/collab-chat-menu', (require, exports, module
 	const { Icon } = require('ui-system/blocks/icon');
 
 	const { BaseMenu, baseSectionType } = require('calendar/base-menu');
+	const { SettingsManager } = require('calendar/data-managers/settings-manager');
 
 	/**
 	 * @class CollabChatMenu
@@ -23,11 +24,16 @@ jn.define('calendar/event-view-form/collab-chat-menu', (require, exports, module
 
 		getCollabChatItem()
 		{
+			const titleMessageCode = SettingsManager.isNewProjectsOn()
+				? 'M_CALENDAR_EVENT_VIEW_FORM_OPEN_PROJECT_CHAT'
+				: 'M_CALENDAR_EVENT_VIEW_FORM_OPEN_COLLAB_CHAT'
+			;
+
 			return {
 				id: collabChatItemTypes.collabChat,
 				testId: 'calendar-event-view-form-collab-chat-menu-item',
 				sectionCode: baseSectionType,
-				title: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_OPEN_COLLAB_CHAT'),
+				title: Loc.getMessage(titleMessageCode),
 				iconName: Icon.COLLAB.getIconName(),
 				styles: itemStyles,
 			};

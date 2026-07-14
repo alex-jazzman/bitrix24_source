@@ -1,45 +1,14 @@
-import { Utils } from 'im.v2.lib.utils';
+import { type Store } from 'ui.vue3.vuex';
+
+import { OpenLinesManager } from 'imopenlines.v2.lib.openlines';
+
 import { Core } from 'im.v2.application.core';
 import { MessageComponent } from 'im.v2.const';
 import { SmileManager } from 'im.v2.lib.smile-manager';
-import { OpenLinesManager } from 'imopenlines.v2.lib.openlines';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelMessage } from 'im.v2.model';
 
-import type { Store } from 'ui.vue3.vuex';
-import type { ImModelMessage } from 'im.v2.model';
-
-const serverComponentList = new Set([
-	MessageComponent.unsupported,
-	MessageComponent.error,
-	MessageComponent.chatCreation,
-	MessageComponent.ownChatCreation,
-	MessageComponent.conferenceCreation,
-	MessageComponent.callInvite,
-	MessageComponent.copilotCreation,
-	MessageComponent.copilotMessage,
-	MessageComponent.aiAssistantMessage,
-	MessageComponent.supportVote,
-	MessageComponent.supportSessionNumber,
-	MessageComponent.supportChatCreation,
-	MessageComponent.zoomInvite,
-	MessageComponent.copilotAddedUsers,
-	MessageComponent.supervisorUpdateFeature,
-	MessageComponent.supervisorEnableFeature,
-	MessageComponent.sign,
-	MessageComponent.admin,
-	MessageComponent.checkIn,
-	MessageComponent.generalChatCreationMessage,
-	MessageComponent.generalChannelCreationMessage,
-	MessageComponent.channelCreationMessage,
-	MessageComponent.callMessage,
-	MessageComponent.voteMessage,
-	MessageComponent.convertToCollabMessage,
-	MessageComponent.sticker,
-	MessageComponent.aiBizprocMessage,
-]);
-
-const demoComponentList = new Set([
-	MessageComponent.taskChatCreationMessage,
-]);
+import { serverComponentList, demoComponentList } from './const/message-components-lists';
 
 export class MessageComponentManager
 {
@@ -54,11 +23,9 @@ export class MessageComponentManager
 
 	getName(): $Values<typeof MessageComponent>
 	{
-		const openLinesMessageName = OpenLinesManager?.getMessageName(this.#message);
-
-		if (openLinesMessageName)
+		if (this.#isOpenLinesComponent())
 		{
-			return openLinesMessageName;
+			return this.#getOpenLinesComponent();
 		}
 
 		if (this.#isDeletedMessage())
@@ -86,12 +53,17 @@ export class MessageComponentManager
 			return MessageComponent.sticker;
 		}
 
-		if (this.#hasBuilderBlocks())
-		{
-			return MessageComponent.builderMessage;
-		}
-
 		return MessageComponent.default;
+	}
+
+	#isOpenLinesComponent(): boolean
+	{
+		return Boolean(OpenLinesManager?.getMessageName(this.#message));
+	}
+
+	#getOpenLinesComponent(): string
+	{
+		return OpenLinesManager.getMessageName(this.#message);
 	}
 
 	#isServerComponent(): boolean

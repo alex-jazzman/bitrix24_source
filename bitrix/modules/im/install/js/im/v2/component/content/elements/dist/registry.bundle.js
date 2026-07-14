@@ -3,8 +3,56 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_elements_loader, im_v2_component_elements_avatar, im_v2_provider_service_chat, im_v2_const, im_v2_lib_permission, im_v2_component_animation, call_component_callButton, main_core, im_v2_component_elements_chatTitle, ui_iconSet_api_vue, im_v2_lib_utils, im_v2_component_entitySelector, im_v2_lib_analytics, main_core_events, ui_vue3, im_v2_component_dialog_chat, im_v2_component_sidebar, im_v2_component_textarea, im_v2_lib_textarea, im_v2_lib_theme, ui_vue3_directives_hint, im_v2_application_core, im_v2_component_elements_button, im_v2_lib_confirm, im_v2_provider_service_message, ui_uploader_core, im_v2_provider_service_uploading) {
+(function (exports, im_v2_component_animation, im_v2_component_elements_avatar, im_v2_component_elements_loader, im_v2_const, im_v2_lib_permission, im_v2_provider_service_chat, im_v2_component_entitySelector, im_v2_lib_analytics, call_component_callButton, main_core, im_v2_lib_utils, im_v2_component_elements_chatTitle, ui_iconSet_api_vue, main_core_events, ui_vue3, im_v2_component_dialog_chat, im_v2_component_sidebar, im_v2_component_textarea, im_v2_lib_textarea, im_v2_lib_theme, ui_vue3_directives_hint, im_v2_application_core, im_v2_component_elements_button, im_v2_lib_confirm, im_v2_provider_service_message, ui_vue3_components_richLoc, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_helpdesk, ui_uploader_core, im_v2_provider_service_uploading) {
 	'use strict';
+
+	// @vue/component
+	const AddToChatButton = {
+		name: 'AddToChatButton',
+		components: {
+			AddToChat: im_v2_component_entitySelector.AddToChat
+		},
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			}
+		},
+		data() {
+			return {
+				showInviteButton: false,
+				showAddToChatPopup: false
+			};
+		},
+		methods: {
+			openAddToChatPopup() {
+				im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatHeaderClick(this.dialogId);
+				this.showAddToChatPopup = true;
+			},
+			closeAddToChatPopup() {
+				this.showAddToChatPopup = false;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
+			:class="{'--active': showAddToChatPopup}"
+			class="bx-im-chat-header__icon --add-people"
+			@click="openAddToChatPopup"
+			ref="add-members"
+		></div>
+		<AddToChat
+			v-if="showAddToChatPopup"
+			:bindElement="$refs['add-members'] ?? {}"
+			:dialogId="dialogId"
+			:popupConfig="{ offsetTop: 15, offsetLeft: -300 }"
+			@close="closeAddToChatPopup"
+		/>
+	`
+	};
 
 	const {
 		callInstalled
@@ -36,6 +84,182 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<component v-if="componentToRender" :is="componentToRender" :dialog="dialog" :compactMode="compactMode" />
+	`
+	};
+
+	// @vue/component
+	const HeaderAvatar = {
+		name: 'HeaderAvatar',
+		components: {
+			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['avatarClick'],
+		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			isUser() {
+				return this.dialog.type === im_v2_const.ChatType.user;
+			},
+			canChangeAvatar() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.avatar, this.dialogId);
+			},
+			isSelfChat() {
+				return this.$store.getters['chats/isSelfChat'](this.dialogId);
+			},
+			userLink() {
+				return im_v2_lib_utils.Utils.user.getProfileLink(this.dialogId);
+			},
+			avatarType() {
+				return this.isSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
+			},
+			needProfileLink() {
+				return this.isUser && !this.isSelfChat;
+			}
+		},
+		methods: {
+			onAvatarClick() {
+				if (this.isUser || !this.canChangeAvatar) {
+					return;
+				}
+				this.$refs.avatarInput.click();
+			},
+			async onAvatarSelect(event) {
+				const input = event.target;
+				const file = input.files[0];
+				if (!file) {
+					return;
+				}
+				const preparedAvatar = await this.getChatService().prepareAvatar(file);
+				if (!preparedAvatar) {
+					return;
+				}
+				void this.getChatService().changeAvatar(this.dialog.chatId, preparedAvatar);
+			},
+			getChatService() {
+				if (!this.chatService) {
+					this.chatService = new im_v2_provider_service_chat.ChatService();
+				}
+				return this.chatService;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="bx-im-chat-header__avatar" :class="{'--can-change': canChangeAvatar}" @click="onAvatarClick">
+			<a v-if="needProfileLink" :href="userLink" target="_blank">
+				<ChatAvatar
+					:avatarDialogId="dialogId"
+					:contextDialogId="dialogId"
+					:size="AvatarSize.L"
+				/>
+			</a>
+			<ChatAvatar v-else :avatarDialogId="dialogId" :contextDialogId="dialogId" :size="AvatarSize.L" :customType="avatarType" />
+		</div>
+		<input
+			type="file"
+			accept="image/*"
+			class="bx-im-chat-header__avatar_input"
+			ref="avatarInput"
+			@change="onAvatarSelect"
+		>
+	`
+	};
+
+	// @vue/component
+	const SearchButton = {
+		name: 'SearchButton',
+		inject: ['currentSidebarPanel'],
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			isMessageSearchActive() {
+				return this.currentSidebarPanel === im_v2_const.SidebarDetailBlock.messageSearch;
+			}
+		},
+		methods: {
+			toggleSearchPanel() {
+				if (this.isMessageSearchActive) {
+					this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
+						panel: im_v2_const.SidebarDetailBlock.messageSearch
+					});
+					return;
+				}
+				this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
+					panel: im_v2_const.SidebarDetailBlock.messageSearch,
+					dialogId: this.dialogId
+				});
+				im_v2_lib_analytics.Analytics.getInstance().messageSearch.onOpenSearchPanel(this.dialogId);
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SEARCH')"
+			:class="{'--active': isMessageSearchActive}"
+			class="bx-im-chat-header__icon --search"
+			@click="toggleSearchPanel"
+		></div>
+	`
+	};
+
+	// @vue/component
+	const SidebarButton = {
+		name: 'SidebarButton',
+		inject: ['currentSidebarPanel'],
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			isSidebarOpened() {
+				return main_core.Type.isStringFilled(this.currentSidebarPanel);
+			}
+		},
+		methods: {
+			toggleRightPanel() {
+				if (this.isSidebarOpened) {
+					this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
+						panel: ''
+					});
+					return;
+				}
+				this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
+					panel: im_v2_const.SidebarDetailBlock.main,
+					dialogId: this.dialogId
+				});
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			class="bx-im-chat-header__icon --panel"
+			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
+			:class="{'--active': isSidebarOpened}"
+			@click="toggleRightPanel"
+		></div>
 	`
 	};
 
@@ -337,230 +561,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	// @vue/component
-	const HeaderAvatar = {
-		name: 'HeaderAvatar',
-		components: {
-			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
-		},
-		props: {
-			dialogId: {
-				type: String,
-				required: true
-			}
-		},
-		emits: ['avatarClick'],
-		computed: {
-			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-			dialog() {
-				return this.$store.getters['chats/get'](this.dialogId, true);
-			},
-			isUser() {
-				return this.dialog.type === im_v2_const.ChatType.user;
-			},
-			canChangeAvatar() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.avatar, this.dialogId);
-			},
-			isSelfChat() {
-				return this.$store.getters['chats/isSelfChat'](this.dialogId);
-			},
-			userLink() {
-				return im_v2_lib_utils.Utils.user.getProfileLink(this.dialogId);
-			},
-			avatarType() {
-				return this.isSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
-			},
-			needProfileLink() {
-				return this.isUser && !this.isSelfChat;
-			}
-		},
-		methods: {
-			onAvatarClick() {
-				if (this.isUser || !this.canChangeAvatar) {
-					return;
-				}
-				this.$refs.avatarInput.click();
-			},
-			async onAvatarSelect(event) {
-				const input = event.target;
-				const file = input.files[0];
-				if (!file) {
-					return;
-				}
-				const preparedAvatar = await this.getChatService().prepareAvatar(file);
-				if (!preparedAvatar) {
-					return;
-				}
-				void this.getChatService().changeAvatar(this.dialog.chatId, preparedAvatar);
-			},
-			getChatService() {
-				if (!this.chatService) {
-					this.chatService = new im_v2_provider_service_chat.ChatService();
-				}
-				return this.chatService;
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="bx-im-chat-header__avatar" :class="{'--can-change': canChangeAvatar}" @click="onAvatarClick">
-			<a v-if="needProfileLink" :href="userLink" target="_blank">
-				<ChatAvatar
-					:avatarDialogId="dialogId"
-					:contextDialogId="dialogId"
-					:size="AvatarSize.L"
-				/>
-			</a>
-			<ChatAvatar v-else :avatarDialogId="dialogId" :contextDialogId="dialogId" :size="AvatarSize.L" :customType="avatarType" />
-		</div>
-		<input
-			type="file"
-			accept="image/*"
-			class="bx-im-chat-header__avatar_input"
-			ref="avatarInput"
-			@change="onAvatarSelect"
-		>
-	`
-	};
-
-	// @vue/component
-	const AddToChatButton = {
-		name: 'AddToChatButton',
-		components: {
-			AddToChat: im_v2_component_entitySelector.AddToChat
-		},
-		props: {
-			dialogId: {
-				type: String,
-				default: ''
-			}
-		},
-		data() {
-			return {
-				showInviteButton: false,
-				showAddToChatPopup: false
-			};
-		},
-		methods: {
-			openAddToChatPopup() {
-				im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatHeaderClick(this.dialogId);
-				this.showAddToChatPopup = true;
-			},
-			closeAddToChatPopup() {
-				this.showAddToChatPopup = false;
-			},
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<div
-			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
-			:class="{'--active': showAddToChatPopup}"
-			class="bx-im-chat-header__icon --add-people"
-			@click="openAddToChatPopup"
-			ref="add-members"
-		></div>
-		<AddToChat
-			v-if="showAddToChatPopup"
-			:bindElement="$refs['add-members'] ?? {}"
-			:dialogId="dialogId"
-			:popupConfig="{ offsetTop: 15, offsetLeft: -300 }"
-			@close="closeAddToChatPopup"
-		/>
-	`
-	};
-
-	// @vue/component
-	const SearchButton = {
-		name: 'SearchButton',
-		inject: ['currentSidebarPanel'],
-		props: {
-			dialogId: {
-				type: String,
-				default: ''
-			}
-		},
-		computed: {
-			isMessageSearchActive() {
-				return this.currentSidebarPanel === im_v2_const.SidebarDetailBlock.messageSearch;
-			}
-		},
-		methods: {
-			toggleSearchPanel() {
-				if (this.isMessageSearchActive) {
-					this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
-						panel: im_v2_const.SidebarDetailBlock.messageSearch
-					});
-					return;
-				}
-				this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
-					panel: im_v2_const.SidebarDetailBlock.messageSearch,
-					dialogId: this.dialogId
-				});
-				im_v2_lib_analytics.Analytics.getInstance().messageSearch.onOpenSearchPanel(this.dialogId);
-			},
-			getEmitter() {
-				return this.$Bitrix.eventEmitter;
-			},
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<div
-			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SEARCH')"
-			:class="{'--active': isMessageSearchActive}"
-			class="bx-im-chat-header__icon --search"
-			@click="toggleSearchPanel"
-		></div>
-	`
-	};
-
-	// @vue/component
-	const SidebarButton = {
-		name: 'SidebarButton',
-		inject: ['currentSidebarPanel'],
-		props: {
-			dialogId: {
-				type: String,
-				default: ''
-			}
-		},
-		computed: {
-			isSidebarOpened() {
-				return main_core.Type.isStringFilled(this.currentSidebarPanel);
-			}
-		},
-		methods: {
-			toggleRightPanel() {
-				if (this.isSidebarOpened) {
-					this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
-						panel: ''
-					});
-					return;
-				}
-				this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
-					panel: im_v2_const.SidebarDetailBlock.main,
-					dialogId: this.dialogId
-				});
-			},
-			getEmitter() {
-				return this.$Bitrix.eventEmitter;
-			},
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<div
-			class="bx-im-chat-header__icon --panel"
-			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
-			:class="{'--active': isSidebarOpened}"
-			@click="toggleRightPanel"
-		></div>
-	`
-	};
-
 	const HEADER_WIDTH_BREAKPOINT = 700;
 
 	// @vue/component
@@ -636,11 +636,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.isBot || !this.withAddToChatButton) {
 					return false;
 				}
-				const hasCreateChatAccess = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
+				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+				const hasCreateChatAccess = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
 				if (this.isUser && !hasCreateChatAccess) {
 					return false;
 				}
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+				return canPerformActionByRole && canPerformActionByUserType;
 			},
 			showSearchButton() {
 				return this.withSearchButton;
@@ -907,6 +910,50 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@close="closeForwardPopup"
 				/>
 			</div>
+		</div>
+	`
+	};
+
+	const ARTICLE_CODE = '20412666';
+
+	// @vue/component
+	const ChatContentDisclaimer = {
+		name: 'ChatContentDisclaimer',
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		computed: {
+			warningText() {
+				return main_core.Loc.getMessage('IM_CONTENT_COPILOT_DISCLAIMER_MSGVER_1', {
+					'#COPILOT_NAME#': this.copilotManager.getName()
+				});
+			},
+			shouldShowDisclaimer() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
+			}
+		},
+		created() {
+			this.copilotManager = new im_v2_lib_copilot.CopilotManager();
+		},
+		methods: {
+			onLinkClick() {
+				im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
+			}
+		},
+		template: `
+		<div v-if="shouldShowDisclaimer" class="bx-im-chat-content-disclaimer__container --ui-context-content-dark">
+			<RichLoc
+				:text="warningText"
+				placeholder="[link]"
+				tag="span"
+				class="bx-im-chat-content-disclaimer__text --ellipsis"
+			>
+				<template #link="{ text }">
+					<span class="bx-im-chat-content-disclaimer__link" @click="onLinkClick">
+						{{ text }}
+					</span>
+				</template>
+			</RichLoc>
 		</div>
 	`
 	};
@@ -1182,6 +1229,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
 			ChatTextarea: im_v2_component_textarea.ChatTextarea,
 			ChatSidebar: im_v2_component_sidebar.ChatSidebar,
+			ChatContentDisclaimer,
 			DropArea,
 			MutePanel,
 			JoinPanel,
@@ -1211,6 +1259,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				default: true
 			},
 			withDropArea: {
+				type: Boolean,
+				default: true
+			},
+			withChatContentDisclaimer: {
 				type: Boolean,
 				default: true
 			},
@@ -1371,7 +1423,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							/>
 						</slot>
 						<div class="bx-im-content-chat__after-textarea_container">
-							<slot name="after-textarea"></slot>
+							<slot name="after-textarea">
+								<ChatContentDisclaimer v-if="withChatContentDisclaimer"/>
+							</slot>
 						</div>
 					</div>
 					<slot v-else-if="isGuest" name="join-panel">
@@ -1441,7 +1495,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		chat: 'chat',
 		collaboration: 'collaboration',
 		business: 'business',
-		result: 'result'
+		result: 'result',
+		copilot: 'copilot',
+		list: 'list'
 	};
 	// @vue/component
 	const BaseEmptyState = {
@@ -1546,5 +1602,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.IconClass = IconClass;
 	exports.UserCounter = UserCounter;
 
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Call?.Component??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Event??{}, BX?.Vue3??{}, BX?.Messenger?.v2?.Component?.Dialog??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Service??{});
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Call?.Component??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.IconSet??{}, BX?.Event??{}, BX?.Vue3??{}, BX?.Messenger?.v2?.Component?.Dialog??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Service??{});
 //# sourceMappingURL=registry.bundle.js.map

@@ -31,6 +31,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 			const firstGroupItems = [this.getDefaultModeItem(), this.getUnreadModeItem()];
 			const secondGroupItems = [this.getReadAllItem()];
+			if (this.context.parentChatId > 0) {
+				return this.groupItems(firstGroupItems, MenuSectionCode.first);
+			}
 			return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(secondGroupItems, MenuSectionCode.second)];
 		}
 		getMenuGroups() {
@@ -72,10 +75,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				onClick: () => this.onReadAllClick()
 			};
 		}
-		onReadAllClick() {
-			// you should implement this method for child class
-		}
 		onSelectUnreadMode() {
+			this.emit(BaseRecentHeaderMenu.events.onToggleUnreadMode);
+		}
+		onReadAllClick() {
 			// you should implement this method for child class
 		}
 		getUnreadCounter() {
@@ -90,7 +93,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 		onReadAllClick() {
 			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllChats();
-			im_v2_lib_unreadMode.UnreadModeManager.clearClosedChats(im_v2_const.RecentType.default);
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(im_v2_const.RecentType.default);
 			new im_v2_provider_service_chat.ChatService().readAll();
 		}
 		getUnreadCounter() {
@@ -105,17 +108,57 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 		onReadAllClick() {
 			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllTaskChats();
-			im_v2_lib_unreadMode.UnreadModeManager.clearClosedChats(im_v2_const.RecentType.taskComments);
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(im_v2_const.RecentType.taskComments);
 			new im_v2_provider_service_chat.ChatService().readAllByType(im_v2_const.ChatType.taskComments);
 		}
 		getUnreadCounter() {
+			const parentChatId = this.context.parentChatId;
+			if (parentChatId > 0) {
+				return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](parentChatId, im_v2_const.RecentType.taskComments);
+			}
 			return im_v2_application_core.Core.getStore().getters['counters/getTotalTaskCounter'];
+		}
+	}
+
+	class CollabHeaderMenu extends BaseRecentHeaderMenu {
+		getMenuItems() {
+			return [this.getDefaultModeItem(), this.getUnreadModeItem()];
+		}
+		onReadAllClick() {
+			new im_v2_provider_service_chat.ChatService().readAllByType(im_v2_const.ChatType.collab);
+		}
+		getUnreadCounter() {
+			return im_v2_application_core.Core.getStore().getters['counters/getTotalCollabCounter'];
+		}
+	}
+
+	class CollabDefaultHeaderMenu extends BaseRecentHeaderMenu {
+		getUnreadCounter() {
+			const childrenCounter = im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.collabDefault);
+			const parentCounter = im_v2_application_core.Core.getStore().getters['counters/getTotalCounterByIds']([this.context.parentChatId]);
+			return parentCounter + childrenCounter;
+		}
+	}
+
+	class CollabChatHeaderMenu extends BaseRecentHeaderMenu {
+		getUnreadCounter() {
+			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.collabChat);
+		}
+	}
+
+	class CollabCalendarHeaderMenu extends BaseRecentHeaderMenu {
+		getUnreadCounter() {
+			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.calendar);
 		}
 	}
 
 	const MenuClass = {
 		[im_v2_const.RecentType.taskComments]: TaskHeaderMenu,
-		[im_v2_const.RecentType.default]: RecentHeaderMenu
+		[im_v2_const.RecentType.collab]: CollabHeaderMenu,
+		[im_v2_const.RecentType.default]: RecentHeaderMenu,
+		[im_v2_const.RecentType.collabDefault]: CollabDefaultHeaderMenu,
+		[im_v2_const.RecentType.collabChat]: CollabChatHeaderMenu,
+		[im_v2_const.RecentType.calendar]: CollabCalendarHeaderMenu
 	};
 
 	// @vue/component
@@ -132,6 +175,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			recentSection: {
 				type: String,
 				required: true
+			},
+			parentChatId: {
+				type: Number,
+				default: 0
 			}
 		},
 		emits: ['toggleUnreadMode'],
@@ -156,9 +203,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.$emit('toggleUnreadMode');
 			},
 			openMenu(event) {
-				this.contextMenuManager.openMenu({
-					unreadMode: this.unreadMode
-				}, event.currentTarget);
+				const context = {
+					unreadMode: this.unreadMode,
+					parentChatId: this.parentChatId
+				};
+				this.contextMenuManager.openMenu(context, event.currentTarget);
 				this.showMenu = true;
 			},
 			closeMenu() {

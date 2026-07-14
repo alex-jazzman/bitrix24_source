@@ -9,6 +9,7 @@ import { ChatService } from 'im.v2.provider.service.chat';
 import { Notifier } from 'im.v2.lib.notifier';
 import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
+import { ChatAccessManager } from 'im.v2.lib.access';
 import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
 import { Messenger } from 'im.public';
 
@@ -92,6 +93,12 @@ export class AddToChatDropdownMenu extends BaseMenu
 		{
 			await this.#createChatFromUser();
 
+			return;
+		}
+
+		const canAdd = await ChatAccessManager.canAddUsers(this.context.dialogId, [this.context.userId]);
+		if (!canAdd)
+		{
 			return;
 		}
 

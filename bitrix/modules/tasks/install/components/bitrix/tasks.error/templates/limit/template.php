@@ -11,7 +11,7 @@ global $APPLICATION;
 $componentParameters = [
 	'LIMIT_CODE' => $arResult['LIMIT_CODE'],
 	'MODULE' => 'tasks',
-	'SOURCE' => $arResult['SOURCE'],
+	'SOURCE' => $arResult['SOURCE'] ?? null,
 ];
 
 $APPLICATION->IncludeComponent(

@@ -97,6 +97,9 @@ GRANT EXECUTE ON FUNCTION pg_wal_replay_resume() to ' . htmlspecialcharsbx($sqlH
 		}
 		catch (\Bitrix\Main\DB\SqlQueryException $_)
 		{
+			$size = [
+				'size' => '30',
+			];
 			$isOk = false;
 			$this->content .= GetMessage('CLUWIZ_FUNCTION_ERROR') . '<br />';
 			$this->content .= $this->ShowRadioField('create', 'by_wizard', [
@@ -110,21 +113,15 @@ GRANT EXECUTE ON FUNCTION pg_wal_replay_resume() to ' . htmlspecialcharsbx($sqlH
 			</tr>
 			<tr>
 				<td nowrap align="right" valign="top">' . GetMessage('CLUWIZ_ROOT_USER') . '</td>
-				<td valign="top">' . $this->ShowInputField('text', 'root_user', [
-					'size' => '30',
-				]) . '</td>
+				<td valign="top">' . $this->ShowInputField('text', 'root_user', $size) . '</td>
 			</tr>
 			<tr>
 				<td nowrap align="right" valign="top">' . GetMessage('CLUWIZ_ROOT_PASSWORD') . '</td>
-				<td valign="top">' . $this->ShowInputField('password', 'root_password', [
-					'size' => '30',
-				]) . '</td>
+				<td valign="top">' . $this->ShowInputField('password', 'root_password', $size) . '</td>
 			</tr>
 			</table>
 			';
-			$this->content .= '<br>' . $this->ShowRadioField('create', 'by_user', [
-				'id' => 'create_by_user',
-			]) . '<label for="create_by_user">' . GetMessage('CLUWIZ_CREATE_BY_USER') . '</label>';
+			$this->content .= '<br>' . $this->ShowRadioField('create', 'by_user', ['id' => 'create_by_user']) . '<label for="create_by_user">' . GetMessage('CLUWIZ_CREATE_BY_USER') . '</label>';
 			$this->content .= '<pre>\c ' . htmlspecialcharsbx($sqlHelper->quote($connection->getDatabase())) . '
 CREATE FUNCTION bx_cluster_stat_replication() RETURNS SETOF pg_stat_replication as
 $$ select * from pg_stat_replication; $$

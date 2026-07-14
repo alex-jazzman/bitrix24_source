@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
-import { BuilderEntityModel, BuilderModel, Store } from 'ui.vue3.vuex';
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderEntityModel } from 'ui.vue3.vuex';
+import type { ActionTree, GetterTree, MutationTree, BuilderModel, Store } from 'ui.vue3.vuex';
 
 import { Model, TaskField } from 'tasks.v2.const';
 import type { DeadlineUserOption, StateFlags } from 'tasks.v2.model.interface';
@@ -17,6 +17,31 @@ const aliasFields = {
 	[TaskField.Reminders]: new Set(['numberOfReminders']),
 	[TaskField.Replication]: new Set(['replicate']),
 };
+
+function getAliasField(fieldName: string): ?string
+{
+	return Object.entries(aliasFields).find(([, alias]) => alias.has(fieldName))?.[0];
+}
+
+function setFieldsFilled(state: TasksModelState, id: number | string): void
+{
+	const task = state.collection[id];
+	const canEdit = task?.rights?.edit;
+
+	task.filledFields ??= {};
+	Object.entries(task).forEach(([fieldName: string, value: any]) => {
+		const isFilled = Boolean(value) && (!Array.isArray(value) || value.length > 0);
+		if (isFilled)
+		{
+			task.filledFields[getAliasField(fieldName) ?? fieldName] = true;
+		}
+
+		if (!isFilled && !canEdit)
+		{
+			task.filledFields[fieldName] = false;
+		}
+	});
+}
 
 export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 {
@@ -177,12 +202,12 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			upsert: (state: TasksModelState, task: ?TaskModel): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).upsert(state, task);
 
-				this.#setFieldsFilled(state, task.id);
+				setFieldsFilled(state, task.id);
 			},
 			update: (state: TasksModelState, { id, fields }: { id: number | string, fields: TaskModel }): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).update(state, { id, fields });
 
-				this.#setFieldsFilled(state, fields.id ?? id);
+				setFieldsFilled(state, fields.id ?? id);
 			},
 			setTitle: (state: TasksModelState, { id, title }: TaskModel): void => {
 				state.titles[id] = title;
@@ -198,7 +223,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 
 				state.collection[id].filledFields = {};
 
-				this.#setFieldsFilled(state, id);
+				setFieldsFilled(state, id);
 			},
 			addPartiallyLoaded: (state: TasksModelState, id: number | string): void => {
 				state.partiallyLoadedIds.add(id);
@@ -207,30 +232,5 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 				state.partiallyLoadedIds.delete(id);
 			},
 		};
-	}
-
-	#setFieldsFilled(state: TasksModelState, id: number | string): void
-	{
-		const task = state.collection[id];
-		const canEdit = task?.rights?.edit;
-
-		task.filledFields ??= {};
-		Object.entries(task).forEach(([fieldName: string, value: any]) => {
-			const isFilled = Boolean(value) && (!Array.isArray(value) || value.length > 0);
-			if (isFilled)
-			{
-				task.filledFields[this.#getAliasField(fieldName) ?? fieldName] = true;
-			}
-
-			if (!isFilled && !canEdit)
-			{
-				task.filledFields[fieldName] = false;
-			}
-		});
-	}
-
-	#getAliasField(fieldName: string): string
-	{
-		return Object.entries(aliasFields).find(([, alias]) => alias.has(fieldName))?.[0];
 	}
 }

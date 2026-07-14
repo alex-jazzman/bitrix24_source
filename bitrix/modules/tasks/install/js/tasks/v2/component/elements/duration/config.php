@@ -10,10 +10,10 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'main.date',
-		'ui.system.input.vue',
-		'ui.system.menu.vue',
 		'tasks.v2.const',
 		'tasks.v2.lib.calendar',
+		'ui.system.input.vue',
+		'ui.system.menu.vue',
 	],
 	'skip_core' => true,
 ];

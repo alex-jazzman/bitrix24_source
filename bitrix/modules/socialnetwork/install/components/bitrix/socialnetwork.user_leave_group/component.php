@@ -16,6 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -52,6 +53,14 @@ if ($arParams["PATH_TO_GROUP"] == '')
 }
 
 $arResult['PageTitle'] = '';
+
+$projectProvider = new ProjectProvider();
+if ($projectProvider->isProject($arParams["GROUP_ID"]))
+{
+	ShowError(GetMessage("SONET_P_USER_NO_GROUP"));
+
+	return;
+}
 
 if (!$USER->IsAuthorized())
 {

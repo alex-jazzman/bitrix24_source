@@ -65,6 +65,7 @@ jn.define('im/messenger/controller/recent/config/src/global/chats', (require, ex
 				extension: 'im/messenger/controller/recent/service/search/common',
 				props: {
 					recentTab: RecentTab.chat,
+					searchUsers: true,
 				},
 			},
 			[RecentServiceName.filter]: {

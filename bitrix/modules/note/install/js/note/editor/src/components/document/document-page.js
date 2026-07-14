@@ -7,42 +7,7 @@ import { DocumentChildrenComponent } from './document-children';
 import { Type } from 'main.core';
 import 'ui.notification';
 import { markRaw } from 'ui.vue3';
-
-async function copyTextToClipboard(text: string): Promise<boolean>
-{
-	try
-	{
-		if (navigator?.clipboard?.writeText)
-		{
-			await navigator.clipboard.writeText(text);
-
-			return true;
-		}
-	}
-	catch
-	{
-		// fall through to legacy fallback
-	}
-
-	try
-	{
-		const textarea = document.createElement('textarea');
-		textarea.value = text;
-		textarea.setAttribute('readonly', '');
-		textarea.style.position = 'absolute';
-		textarea.style.left = '-9999px';
-		document.body.appendChild(textarea);
-		textarea.select();
-		document.execCommand('copy');
-		document.body.removeChild(textarea);
-
-		return true;
-	}
-	catch
-	{
-		return false;
-	}
-}
+import { copyTextToClipboard } from '../../utils/clipboard';
 
 export const NoteDocumentPageComponent = {
 	name: 'NoteDocumentPage',
@@ -96,6 +61,8 @@ export const NoteDocumentPageComponent = {
 			getDocumentId: () => this.documentId,
 			nextTick: () => this.$nextTick(),
 			onOpenInternalLink: (payload) => this.handleOpenInternalLink(payload),
+			onHardDelete: ({ mode }) => this.handleRemoteHardDelete(mode),
+			onAccessRevoked: () => this.handleAccessRevoked(),
 		});
 		this.actionMenuService = markRaw(new DocumentActionMenuService(this.feature?.messages ?? {}));
 	},
@@ -196,14 +163,28 @@ export const NoteDocumentPageComponent = {
 	},
 	watch: {
 		routeContextSyncKey: {
-			handler()
+			async handler()
 			{
-				if (this.feature)
+				if (!this.feature)
 				{
-					void this.feature.applyRouteDocumentContext(this.routeDocumentContext);
+					return;
+				}
+
+				await this.feature.applyRouteDocumentContext(this.routeDocumentContext);
+
+				if (String(this.routeDocumentContext?.status || '') === 'ready' && this.$route?.hash)
+				{
+					void this.feature.scrollToAnchor(this.$route.hash);
 				}
 			},
 			immediate: true,
+		},
+		'$route.hash'(nextHash)
+		{
+			if (this.feature && !this.state.isLoading && Type.isStringFilled(nextHash))
+			{
+				void this.feature.scrollToAnchor(nextHash);
+			}
 		},
 	},
 	beforeUnmount()
@@ -260,9 +241,46 @@ export const NoteDocumentPageComponent = {
 
 			this.$router.push({ name: routeName });
 		},
+		handleRemoteHardDelete(mode: string): void
+		{
+			const allowedModes = ['recyclebin', 'archive', 'home'];
+			const target = allowedModes.includes(mode) ? mode : 'home';
+			this.$router.replace({ name: target });
+		},
+		handleAccessRevoked(): void
+		{
+			this.$router.replace({ name: 'home' });
+		},
 		handleOpenInternalLink(payload: Object): void
 		{
-			if (!payload || payload.type !== 'document')
+			if (!payload)
+			{
+				return;
+			}
+
+			if (payload.type === 'anchor')
+			{
+				const anchorHash = String(payload.hash || '').trim();
+				if (anchorHash === '')
+				{
+					return;
+				}
+
+				// When the hash actually changes, the `$route.hash` watcher runs
+				// scrollToAnchor — calling it here too would double every jump
+				// (two DOM passes, two pinning sessions). Scroll directly only
+				// when the hash is unchanged and the watcher won't fire.
+				const nextHash = `#${anchorHash}`;
+				this.$router.replace({ hash: nextHash }).catch(() => {});
+				if (this.$route.hash === nextHash)
+				{
+					void this.feature?.scrollToAnchor(anchorHash);
+				}
+
+				return;
+			}
+
+			if (payload.type !== 'document')
 			{
 				return;
 			}
@@ -273,12 +291,30 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
+			const hash = String(payload.hash || '').trim();
+
 			if (Number(this.documentId) === id)
 			{
+				if (hash !== '')
+				{
+					const nextHash = `#${hash}`;
+					this.$router.replace({ hash: nextHash }).catch(() => {});
+					if (this.$route.hash === nextHash)
+					{
+						void this.feature?.scrollToAnchor(hash);
+					}
+				}
+
 				return;
 			}
 
-			this.$router.push({ name: 'document', params: { id } });
+			const target = { name: 'document', params: { id } };
+			if (hash !== '')
+			{
+				target.hash = `#${hash}`;
+			}
+
+			this.$router.push(target);
 		},
 		buildDocumentLink(): string
 		{
@@ -350,8 +386,21 @@ export const NoteDocumentPageComponent = {
 				onArchive: typeof actions.archive === 'function' ? () => actions.archive(this.documentId) : null,
 				onRestore: typeof actions.restore === 'function' ? () => actions.restore(this.documentId) : null,
 				onDelete: typeof actions.delete === 'function' ? () => actions.delete(this.documentId) : null,
-				onRestoreFromTrash: typeof actions.restoreFromTrash === 'function' ? () => actions.restoreFromTrash(this.documentId) : null,
-				onHardDelete: typeof actions.hardDelete === 'function' ? () => actions.hardDelete(this.documentId) : null,
+				// Editor owns the freshest recycleBinId/isOrphan (synced via getMyAccess after
+				// a push-driven mode flip). The app-level handler doesn't share state with the
+				// editor, so we hand the values over at click time instead of having it read
+				// from a stale routeDocumentContext.document.
+				onRestoreFromTrash: typeof actions.restoreFromTrash === 'function'
+					? () => actions.restoreFromTrash(this.documentId, {
+						recycleBinId: Number(this.state.recycleBinId) || 0,
+						isOrphan: this.isOrphan,
+					})
+					: null,
+				onHardDelete: typeof actions.hardDelete === 'function'
+					? () => actions.hardDelete(this.documentId, {
+						recycleBinId: Number(this.state.recycleBinId) || 0,
+					})
+					: null,
 			});
 		},
 	},

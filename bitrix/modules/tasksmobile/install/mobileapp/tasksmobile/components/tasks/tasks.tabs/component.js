@@ -388,7 +388,9 @@
 					this.updateFlowsCounter(flowsCounter);
 					flowListStorage.set({ counterValue: flowsCounter });
 
-					const projectCounter = counters.sonetTotalExpired + counters.sonetTotalComments;
+					const projectCounter = Number(counters.projectsTotal)
+						? counters.projectsTotal
+						: counters.sonetTotalExpired + counters.sonetTotalComments;
 					this.updateProjectsCounter(projectCounter);
 					projectListStorage.set({ counterValue: projectCounter });
 

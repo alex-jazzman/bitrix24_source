@@ -25,6 +25,7 @@ type FeatureParams = {
 type Params = {
 	flowId?: number,
 	flowName?: string,
+	groupId?: number,
 	demoFlow?: 'Y' | 'N',
 	guideFlow?: 'Y' | 'N',
 
@@ -62,6 +63,8 @@ const HELPDESK_ARTICLE = 21272066;
 
 export class EditForm extends EventEmitter
 {
+	static #isOpen: boolean = false;
+
 	#params: Params;
 
 	#layout: {};
@@ -114,17 +117,42 @@ export class EditForm extends EventEmitter
 			initFlowData.name = this.#params.flowName;
 		}
 
+		if (Type.isNumber(this.#params.groupId) && this.#params.groupId > 0)
+		{
+			initFlowData.groupId = this.#params.groupId;
+		}
+
 		this.#flow = this.#getFlow(initFlowData);
 	}
 
-	static async createInstance(params: Params = {}): EditForm
+	static isActive(): boolean
 	{
-		const { EditForm } = await top.BX.Runtime.loadExtension('tasks.flow.edit-form');
+		return EditForm.#isOpen;
+	}
 
-		const instance = new EditForm(params);
-		instance.openInSlider();
+	static async createInstance(params: Params = {}): Promise<?EditForm>
+	{
+		if (EditForm.#isOpen)
+		{
+			return null;
+		}
 
-		return instance;
+		EditForm.#isOpen = true;
+
+		try
+		{
+			const extension = await top.BX.Runtime.loadExtension('tasks.flow.edit-form');
+			const instance = new extension.EditForm(params);
+
+			instance.openInSlider();
+
+			return instance;
+		}
+		catch (error)
+		{
+			EditForm.#isOpen = false;
+			throw error;
+		}
 	}
 
 	openInSlider()
@@ -178,7 +206,14 @@ export class EditForm extends EventEmitter
 						this.#wizard.initHints();
 					});
 				},
-				onClose: (event) => this.#onCloseHandler(event),
+				onClose: (event) => {
+					this.#onCloseHandler(event);
+
+					if (event.isActionAllowed())
+					{
+						EditForm.#isOpen = false;
+					}
+				},
 			},
 		});
 	}

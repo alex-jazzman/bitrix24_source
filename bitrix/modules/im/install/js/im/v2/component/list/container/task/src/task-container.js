@@ -3,7 +3,7 @@ import { Event, type JsonObject } from 'main.core';
 import { TaskList, TaskUnreadList } from 'im.v2.component.list.items.task';
 import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
 import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
-import { Layout, RecentType, type LayoutType } from 'im.v2.const';
+import { Layout, RecentType, type LayoutType, ParentChatScope } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { Logger } from 'im.v2.lib.logger';
@@ -28,6 +28,7 @@ export const TaskListContainer = {
 	},
 	computed: {
 		RecentType: () => RecentType,
+		ParentChatScope: () => ParentChatScope,
 		layout(): ImModelLayout
 		{
 			return this.$store.getters['application/getLayout'];
@@ -102,7 +103,6 @@ export const TaskListContainer = {
 		},
 		onToggleUnreadMode()
 		{
-			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.taskComments });
 			this.unreadMode = !this.unreadMode;
 		},
 		loc(phraseCode: string): string
@@ -136,14 +136,15 @@ export const TaskListContainer = {
 						v-show="searchMode"
 						:searchMode="searchMode"
 						:query="searchQuery"
+						:parentChatId="ParentChatScope.all"
 						:showUsersCarousel="false"
 						:recentSectionType="RecentType.taskComments"
 						@loading="onLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<TaskList v-if="!unreadMode" @selectChat="onSelectChat" />
-					<TaskUnreadList v-else @selectChat="onSelectChat" />
+					<TaskList v-show="!searchMode && !unreadMode" @selectChat="onSelectChat" />
+					<TaskUnreadList v-if="unreadMode" @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

@@ -35,7 +35,7 @@ return [
 		'./src/playground',
 		'./src/dialog/dialog-snippets',
 		'./src/dialog/send-message',
-		'./src/dialog/builder-message',
+		'./src/dialog/block-message',
 		'./src/recent-snippets',
 	],
 ];

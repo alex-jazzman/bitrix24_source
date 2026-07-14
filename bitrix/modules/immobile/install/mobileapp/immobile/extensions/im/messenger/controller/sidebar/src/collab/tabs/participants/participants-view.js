@@ -95,7 +95,7 @@ jn.define('im/messenger/controller/sidebar/collab/tabs/participants/participants
 			{
 				actionsItems.push({
 					id: SidebarActionType.removeFromCollab,
-					title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_REMOVE_FROM_COLLAB'),
+					title: Loc.getMessage('IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_REMOVE_FROM_PROJECT'),
 					callback: this.onRemoveParticipantHandle.bind(this, userId),
 					icon: Icon.BAN,
 					testId: 'SIDEBAR_USER_CONTEXT_MENU_REMOVE_FROM_COLLAB',

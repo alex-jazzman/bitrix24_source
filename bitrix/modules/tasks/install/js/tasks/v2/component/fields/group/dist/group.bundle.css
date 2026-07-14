@@ -1,5 +1,4 @@
 .tasks-field-group-group {
-	max-width: -webkit-max-content;
 	max-width: max-content;
 }
 
@@ -27,13 +26,67 @@
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
+.tasks-field-group-popup-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-field-group-popup-image {
+	width: 48px;
+	min-width: 48px;
+	min-height: 48px;
+	border-radius: 50%;
+}
+
+.tasks-field-group-popup-title {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	font-size: calc(var(--ui-font-size-xl) + 1px);
+	font-weight: var(--ui-font-weight-semi-bold);
+	word-break: break-word;
+}
+
+.tasks-field-group-popup-subtitle {
+	margin-top: 3px;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-xs);
+}
+
+.tasks-field-group-popup-button {
+	padding-bottom: 18px;
+	margin: 18px 0;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-less);
+}
+
+.tasks-field-group-popup-info {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.tasks-field-group-popup-field-title {
+	margin-bottom: 5px;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-field-group-popup-field-value {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+}
+
 .tasks-field-group-stage {
 	--stage-color: #0075FF;
 	--stage-background: #E6F4FF;
 
 	position: relative;
 	display: flex;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 	font-weight: var(--ui-font-weight-medium);
 	font-size: var(--ui-font-size-xs);
@@ -68,7 +121,7 @@
 	margin-left: -1px;
 	min-width: 34px;
 	min-height: 27px;
-	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 29 26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h16.233a8 8 0 016.612 3.497l4.675 6.866a4 4 0 01.072 4.393l-4.772 7.528A8 8 0 0116.063 26H0V0z' fill='%23E6F4FF'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 29 26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H16.2325C18.8794 0 21.355 1.30926 22.8449 3.49709L27.5202 10.3627C28.4184 11.6817 28.4467 13.4083 27.5923 14.756L22.8196 22.2837C21.3525 24.5978 18.8031 26 16.0631 26H0V0Z' fill='%23E6F4FF'/%3E%3C/svg%3E%0A");
 	-webkit-mask-repeat: no-repeat;
 	background: var(--stage-background);
 }
@@ -101,7 +154,6 @@
 	margin-right: 10px;
 	display: flex;
 	align-items: center;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 	padding: 3px 3px 3px 10px;
 	border-radius: var(--ui-border-radius-xs);
@@ -173,59 +225,4 @@
 	display: flex;
 	align-items: center;
 	height: 26px;
-}
-
-.tasks-field-group-popup-header {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.tasks-field-group-popup-image {
-	width: 48px;
-	min-width: 48px;
-	min-height: 48px;
-	border-radius: 50%;
-}
-
-.tasks-field-group-popup-title {
-	overflow: hidden;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	font-size: calc(var(--ui-font-size-xl) + 1px);
-	font-weight: var(--ui-font-weight-semi-bold);
-	word-break: break-word;
-}
-
-.tasks-field-group-popup-subtitle {
-	margin-top: 3px;
-	color: var(--ui-color-base-2);
-	font-size: var(--ui-font-size-xs);
-}
-
-.tasks-field-group-popup-button {
-	padding-bottom: 18px;
-	margin: 18px 0;
-	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-less);
-}
-
-.tasks-field-group-popup-info {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.tasks-field-group-popup-field-title {
-	margin-bottom: 5px;
-	color: var(--ui-color-base-4);
-	font-size: var(--ui-font-size-sm);
-}
-
-.tasks-field-group-popup-field-value {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	color: var(--ui-color-base-2);
-	font-size: var(--ui-font-size-md);
 }

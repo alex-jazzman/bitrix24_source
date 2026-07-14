@@ -22,8 +22,13 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 		createDialogByModel,
 	} = require('im/messenger/application/lib/dialog-manager/src/resolver');
 	const { NestedNavigationStrategy } = require('im/messenger/application/lib/dialog-manager/src/nested-strategy/nested-navigation');
+	const { DialogOpenContext } = require('im/messenger/application/lib/dialog-manager/src/open-context');
+	const {
+		ProjectsTariffRestrictionFilter,
+	} = require('im/messenger/application/lib/dialog-manager/src/open-filter/projects-tariff-restriction');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { openPlanLimitsWidgetByError } = require('im/messenger/lib/plan-limit');
 
 	/**
 	 * @class DialogManager
@@ -38,6 +43,10 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 		/** @type {BaseNestedStrategy[]} */
 		#nestedStrategies = [
 			new NestedNavigationStrategy(),
+		];
+		/** @type {BaseOpenDialogFilter[]} */
+		#openFilters = [
+			new ProjectsTariffRestrictionFilter(),
 		];
 
 		constructor()
@@ -103,9 +112,21 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 			const { dialog, dialogModel } = resolveResult;
 			normalizedOptions = resolveResult.options;
 
+			const context = new DialogOpenContext({
+				dialogModel,
+				options: normalizedOptions,
+				parentWidget,
+				loadDialogModel: (id) => this.#loadDialogModel(id),
+			});
+
+			if (!await this.#applyOpenFilters(context))
+			{
+				return false;
+			}
+
 			const dialogHelper = dialogModel ? DialogHelper.createByModel(dialogModel) : null;
 
-			if (await this.#shouldApplyNestedStrategy(normalizedOptions, dialogModel))
+			if (await this.#shouldApplyNestedStrategy(normalizedOptions, context))
 			{
 				await this.#applyNestedStrategy(dialogHelper);
 			}
@@ -187,10 +208,10 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 
 		/**
 		 * @param {DialogOpenOptions} normalizedOptions
-		 * @param {DialoguesModelState|null} dialogModel
+		 * @param {DialogOpenContext} context
 		 * @return {Promise<boolean>}
 		 */
-		async #shouldApplyNestedStrategy(normalizedOptions, dialogModel)
+		async #shouldApplyNestedStrategy(normalizedOptions, context)
 		{
 			if (normalizedOptions.skipNestedStrategy)
 			{
@@ -202,25 +223,40 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 				return false;
 			}
 
-			if (!dialogModel)
+			return context.isProjectOrChildOfProject();
+		}
+
+		/**
+		 * @param {DialogOpenContext} context
+		 * @return {Promise<boolean>}
+		 */
+		async #applyOpenFilters(context)
+		{
+			// Sequential with early exit. Filters enforce business policy and may have
+			// side effects, so subsequent filters never run after a block or a failure.
+			// A filter that throws is treated as a block: state is unknown, policy could
+			// be bypassed otherwise. Surface a generic error toast.
+			for (const filter of this.#openFilters)
 			{
-				return false;
+				try
+				{
+					// eslint-disable-next-line no-await-in-loop
+					const allowed = await filter.allow(context);
+					if (!allowed)
+					{
+						return false;
+					}
+				}
+				catch (error)
+				{
+					this.logger.error('applyOpenFilters: filter threw, blocking open', error);
+					Notification.showErrorToast();
+
+					return false;
+				}
 			}
 
-			if (dialogModel.type === DialogType.collab)
-			{
-				return true;
-			}
-
-			if (!dialogModel.parentChatId)
-			{
-				return false;
-			}
-
-			const parentDialogId = `chat${dialogModel.parentChatId}`;
-			const parentModel = await this.#loadDialogModel(parentDialogId);
-
-			return parentModel?.type === DialogType.collab;
+			return true;
 		}
 
 		/**
@@ -237,6 +273,7 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 			{
 				DialogManager.showToastByOpenDialogError(error);
 				this.logger.error('loadDialogModel: failed to load dialog', dialogId, error);
+				await openPlanLimitsWidgetByError(error?.[0] ?? error ?? {});
 
 				return null;
 			}

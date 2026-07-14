@@ -703,8 +703,19 @@
 
 		shouldEntryLookLikeCollab: function(entry)
 		{
-			return entry.isCollabEvent()
-				|| (this.util.config.type !== 'group' && entry.isSharingCollabEvent());
+			// Sharing-collab events are never highlighted inside the source
+			// group's own calendar — the viewer is already in collab context.
+			// In every other case we trust the backend: COLLAB_ID is assigned
+			// only when the owning project's HAS_COLLABERS='Y' at fetch time,
+			// so no client-side re-validation is needed (and the local
+			// CollabManager wouldn't be authoritative anyway — it only carries
+			// the current user's own collabs).
+			if (this.util.config.type === 'group' && entry.isSharingCollabEvent())
+			{
+				return false;
+			}
+
+			return Boolean(entry.getCollabId());
 		},
 
 		shouldEntryLookLineBooking: function(entry)

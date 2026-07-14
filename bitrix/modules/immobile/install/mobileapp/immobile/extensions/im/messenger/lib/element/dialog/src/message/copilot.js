@@ -3,15 +3,17 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
-	const { Feature } = require('im/messenger/lib/feature');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		MessageType,
 		CopilotButtonType,
-		Color,
 	} = require('im/messenger/const');
+	const { Color } = require('im/messenger/const');
+	const { Color: ColorTokens } = require('tokens');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
+	const { ActionButtons } = require('im/messenger/lib/element/dialog/message/element/actions/action-buttons');
 
 	class CopilotMessage extends TextMessage
 	{
@@ -30,6 +32,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 			this
 				.setButtons()
+				.setActions()
 				.setFootNote()
 				.setCanBeQuoted(canBeQuoted)
 				.setCanBeChecked(true)
@@ -43,6 +46,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 		{
 			return {
 				...super.toDialogWidgetItem(),
+				actions: this.actions,
 				copilot: this.copilot,
 			};
 		}
@@ -54,6 +58,11 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 		setButtons()
 		{
+			if (Feature.isMessageActionsSupported && Feature.isBitrixGptV2Available)
+			{
+				return this;
+			}
+
 			this.copilot.buttons = [
 				{
 					id: CopilotButtonType.copy,
@@ -62,6 +71,16 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 					leftIcon: `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/copy.svg`,
 				},
 			];
+
+			return this;
+		}
+
+
+		setActions()
+		{
+			this.actions = ActionButtons.create({
+				tint: ColorTokens.chatOtherCopilot2.toHex(),
+			}).toMessageFormat();
 
 			return this;
 		}

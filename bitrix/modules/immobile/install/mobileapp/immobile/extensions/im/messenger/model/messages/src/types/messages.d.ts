@@ -4,8 +4,8 @@ import {ReactionsModelState, MessageId} from '../reactions/types';
 import {KeyboardButtonConfig} from './keyboard';
 import {AttachConfig} from './attach';
 import {VoteModelState} from '../vote/types';
-import {FullStickerData, StickerPackId, StickerPackType} from "../../../sticker-pack/src/types";
-import {BuilderConfig} from "./builder";
+import {StickerPackId, StickerPackType} from "../../../sticker-pack/src/types";
+import {BlockConfig} from "./block";
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -60,7 +60,7 @@ export type MessagesModelState = {
 		aiTaskStatus?: string | null,
 		type?: string | null,
 	},
-	builder: BuilderConfig | null,
+	block: BlockConfig | null,
 }
 
 declare type MessageParams = {

@@ -8,7 +8,8 @@ export type AvatarDetail = {
 	type: 'hexagon' | 'circle' | 'square',
 	polygonAngle?: number, // only IOS
 	radius: number,
-	accentType: 'blue' | 'green' | 'orange',
+	accentType?: 'blue' | 'green' | 'orange',
+	accentColor?: string,
 	accentColorGradient?: { // only IOS
 		start: string,
 		middle: string,

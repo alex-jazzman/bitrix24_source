@@ -8,5 +8,8 @@ return [
 		'./src/log-type',
 		'./src/connection-type',
 		'./src/record-status',
+		'./src/call-error',
+		'./src/call-status',
+		'./src/call-presence',
 	],
 ];

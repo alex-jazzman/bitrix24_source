@@ -4,4 +4,6 @@ export const ChatAction = Object.freeze({
 	OpenResult: 'openResult',
 	ShowCheckList: 'showCheckList',
 	ShowCheckListItems: 'showCheckListItems',
+	OpenGroup: 'openGroup',
+	OpenTimeTracking: 'openTimeTracking',
 });

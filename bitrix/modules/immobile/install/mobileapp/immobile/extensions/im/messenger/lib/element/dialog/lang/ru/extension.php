@@ -156,9 +156,11 @@ $MESS["IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_SIGNED_EMPLOYEE_BUTTON_TEXT"] = "Отк
 
 $MESS["IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE"] = "Документ отправлен на подпись";
 $MESS["IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION"] = "Документ #DOCUMENT_NAME# отправлен на подпись. Когда документ подпишут все стороны, он появится в файлах коллабы";
+$MESS["IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION_V2"] = "Документ #DOCUMENT_NAME# отправлен на подпись. Когда документ подпишут все стороны, он появится в файлах проекта";
 
 $MESS["IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_TITLE"] = "Документ подписан";
 $MESS["IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан всеми сторонами. Посмотреть и скачать документ можно в чате или файлах коллабы";
+$MESS["IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_DESCRIPTION_V2"] = "Документ #DOCUMENT_NAME# подписан всеми сторонами. Посмотреть и скачать документ можно в чате или файлах проекта";
 
 $MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_ASSIGNEE_TITLE"] = "Документ подписан";
 $MESS["IMMOBILE_MESSAGE_SIGN_DONE_FROM_ASSIGNEE_DESCRIPTION"] = "Документ #DOCUMENT_NAME# подписан и отправлен на подпись остальным участникам";

@@ -1,24 +1,21 @@
 import { Type, type JsonObject } from 'main.core';
 import { BuilderModel, type Store, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
+import { MessageBuilderBackgroundPlainToken } from 'im.v2.const';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
 import { builderFieldsConfig, blocksBuilderFieldsConfig } from './field-config';
 
 type RawBuilderMessage = {
 	id: number,
-	builder: {
-		blocks: Block[]
+	block: {
+		config: BlocksBuilderParams,
+		elements: Block[],
 	},
 };
 
 type BlocksBuilderParams = {
-	// here can be some params for builder, for example, background color, side line color etc.
-};
-
-type RawBlocksBuilder = {
-	messageId: number,
-	blocks: Block,
+	background: MessageBuilderBackgroundPlainToken | null,
 };
 
 type Block = {
@@ -32,7 +29,6 @@ type BuilderState = {
 	blockCollection: Map<number, Block[]>,
 };
 
-/* eslint-disable no-param-reassign */
 export class MessageBuilderModel extends BuilderModel
 {
 	getName(): string
@@ -50,7 +46,9 @@ export class MessageBuilderModel extends BuilderModel
 
 	getBuilderElementState(): BlocksBuilderParams
 	{
-		return {};
+		return {
+			background: null,
+		};
 	}
 
 	getBlockElementState(): Block
@@ -73,6 +71,16 @@ export class MessageBuilderModel extends BuilderModel
 			getBlocks: (state: BuilderState) => (messageId: number): Block[] => {
 				return state.blockCollection.get(messageId) ?? [];
 			},
+			/** @function messages/builder/getParams */
+			getParams: (state: BuilderState) => (messageId: number): BlocksBuilderParams => {
+				return state.builderCollection.get(messageId) ?? { background: null };
+			},
+			/** @function messages/builder/forceBackground */
+			forceBackground: (state: BuilderState) => (messageId: number): boolean => {
+				const params = state.builderCollection.get(messageId);
+
+				return params?.background === MessageBuilderBackgroundPlainToken;
+			},
 		};
 	}
 
@@ -82,21 +90,20 @@ export class MessageBuilderModel extends BuilderModel
 			/** @function messages/builder/set */
 			set: (store: Store, rawMessages: RawBuilderMessage | RawBuilderMessage[]) => {
 				const messages = Type.isArray(rawMessages) ? rawMessages : [rawMessages];
-				const builderMessages = messages.filter((message) => message.builder);
+				const builderMessages = messages.filter((message) => message.block);
 
 				builderMessages.forEach((builderMessage) => {
-					const { id: messageId, builder } = builderMessage;
-					const preparedBuilder = this.#formatFields(builder);
-					const { blocks } = preparedBuilder;
-					delete preparedBuilder.blocks;
+					const { id: messageId, block } = builderMessage;
+					const preparedBuilder = this.#formatFields(block);
+					const { elements, config } = preparedBuilder;
 
 					store.commit('addBuilder', {
 						messageId,
-						params: { ...this.getBuilderElementState(), ...preparedBuilder },
+						params: { ...this.getBuilderElementState(), ...config },
 					});
 
-					const preparedBlocks = blocks.map((block) => {
-						return { ...this.getBlockElementState(), ...block };
+					const preparedBlocks = elements.map((element) => {
+						return { ...this.getBlockElementState(), ...element };
 					});
 
 					store.commit('addBlocks', { messageId, blocks: preparedBlocks });
@@ -118,6 +125,16 @@ export class MessageBuilderModel extends BuilderModel
 			deleteBlock: (store: Store, payload: { messageId: number, blockId: Block['id'] }) => {
 				const { messageId, blockId } = payload;
 				store.commit('deleteBlock', { messageId, blockId });
+			},
+			/** @function messages/builder/updateWithId */
+			updateWithId: (store: Store, payload: { oldId: number | string, newId: number | string }) => {
+				const { oldId, newId } = payload;
+				if (!store.state.blockCollection.has(oldId) && !store.state.builderCollection.has(oldId))
+				{
+					return;
+				}
+
+				store.commit('updateWithId', { oldId, newId });
 			},
 		};
 	}
@@ -165,6 +182,21 @@ export class MessageBuilderModel extends BuilderModel
 
 				const filtered = blocks.filter((item) => item.id !== blockId);
 				state.blockCollection.set(messageId, filtered);
+			},
+			updateWithId: (state: BuilderState, payload: { oldId: number | string, newId: number | string }) => {
+				const { oldId, newId } = payload;
+
+				if (state.blockCollection.has(oldId))
+				{
+					state.blockCollection.set(newId, state.blockCollection.get(oldId));
+					state.blockCollection.delete(oldId);
+				}
+
+				if (state.builderCollection.has(oldId))
+				{
+					state.builderCollection.set(newId, state.builderCollection.get(oldId));
+					state.builderCollection.delete(oldId);
+				}
 			},
 		};
 	}

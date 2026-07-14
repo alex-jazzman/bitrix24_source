@@ -89,6 +89,7 @@ export const SidebarFooter = {
 				}
 
 				const dialog = new ImportDialog({
+					wikiImportEnabled: Boolean(this.state?.permissions?.canImportWiki),
 					onComplete: async () => {
 						if (Type.isFunction(this.actions?.refreshCollections))
 						{

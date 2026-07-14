@@ -1,34 +1,33 @@
-import { LayoutManager } from 'im.v2.lib.layout';
+import { type Store } from 'ui.vue3.vuex';
+import { EventEmitter } from 'main.core.events';
+
 import { Messenger } from 'im.public';
-import { ChatType, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
-import { UserManager } from 'im.v2.lib.user';
+import { ChatType, UserRole, type Relation, EventType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
-import { getChatRoleForUser } from 'im.v2.lib.role-manager';
-import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
+import { getChatRoleForUser } from 'im.v2.lib.role-manager';
+import { UserManager } from 'im.v2.lib.user';
+import { type ImModelChat } from 'im.v2.model';
 
-import type { Store } from 'ui.vue3.vuex';
-
-import type {
-	ChatOwnerParams,
-	ChatManagersParams,
-	ChatUserAddParams,
-	ChatUserLeaveParams,
-	InputActionNotifyParams,
-	ChatUnreadParams,
-	ChatMuteNotifyParams,
-	ChatRenameParams,
-	ChatAvatarParams,
-	ChatConvertParams,
-	ChatDeleteParams,
-	MessagesAutoDeleteDelayParams,
+import {
+	type ChatOwnerParams,
+	type ChatManagersParams,
+	type ChatUserAddParams,
+	type ChatUserLeaveParams,
+	type InputActionNotifyParams,
+	type ChatUnreadParams,
+	type ChatMuteNotifyParams,
+	type ChatRenameParams,
+	type ChatAvatarParams,
+	type ChatConvertParams,
+	type ChatDeleteParams,
+	type MessagesAutoDeleteDelayParams,
 } from '../../types/chat';
-import type { RawUser, RawChat } from '../../types/common';
-import type { ImModelChat } from 'im.v2.model';
-import type { Relation } from 'im.v2.const';
+import { type RawUser, type RawChat } from '../../types/common';
 
 export class ChatPullHandler
 {
@@ -126,18 +125,7 @@ export class ChatPullHandler
 		void this.#store.dispatch('messages/clearChatCollection', { chatId });
 		void this.#store.dispatch('counters/clearByParentId', { parentChatId: chatId });
 
-		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-		if (chatIsOpened)
-		{
-			void Messenger.openChat();
-		}
-
-		CallManager.getInstance().deleteRecentCall(dialogId);
-		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === dialogId;
-		if (chatHasCall)
-		{
-			CallManager.getInstance().leaveCurrentCall();
-		}
+		this.#onChatAccessLost(dialogId);
 	}
 
 	handleInputActionNotify(params: InputActionNotifyParams)
@@ -280,20 +268,13 @@ export class ChatPullHandler
 		void this.#store.dispatch('recent/delete', { dialogId });
 		void this.#store.dispatch('messages/clearChatCollection', { chatId });
 
-		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-		if (chatIsOpened)
+		if (this.#isChatOpen(dialogId))
 		{
 			Analytics.getInstance().chatDelete.onChatDeletedNotification(dialogId);
 			Notifier.chat.onNotFoundError();
-			void LayoutManager.getInstance().clearCurrentLayoutEntityId();
-			void LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
 		}
 
-		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === dialogId;
-		if (chatHasCall)
-		{
-			CallManager.getInstance().leaveCurrentCall();
-		}
+		this.#onChatAccessLost(dialogId);
 	}
 
 	handleMessagesAutoDeleteDelayChanged(params: MessagesAutoDeleteDelayParams)
@@ -306,6 +287,28 @@ export class ChatPullHandler
 			chatId,
 			delay,
 		});
+	}
+
+	#isChatOpen(dialogId: string): boolean
+	{
+		return this.#store.getters['application/isChatOpen'](dialogId);
+	}
+
+	#onChatAccessLost(dialogId: string)
+	{
+		if (this.#isChatOpen(dialogId))
+		{
+			void Messenger.openChat();
+		}
+
+		EventEmitter.emit(EventType.recent.closeNestedList, { dialogId });
+
+		CallManager.getInstance().deleteRecentCall(dialogId);
+		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === dialogId;
+		if (chatHasCall)
+		{
+			CallManager.getInstance().leaveCurrentCall();
+		}
 	}
 
 	#updateChatUsers(params: {

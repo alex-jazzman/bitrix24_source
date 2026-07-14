@@ -33,12 +33,24 @@ export const KeyboardButton = {
 		{
 			return this.config;
 		},
+		isAiAssistant(): boolean
+		{
+			return this.button.bgColorToken === ColorToken.aiAssistant;
+		},
 		commonAttributes(): { class: string[], style: ButtonStyle }
 		{
-			return {
+			const attrs = {
 				class: ['bx-im-keyboard-button__container', this.buttonClasses],
 				style: this.buttonStyles,
 			};
+
+			if (this.isAiAssistant)
+			{
+				attrs['data-text'] = this.button.text;
+				attrs.title = this.button.text;
+			}
+
+			return attrs;
 		},
 		buttonClasses(): string[]
 		{

@@ -163,6 +163,7 @@ export class TaskFullCard
 			link,
 			closeCompleteUrl,
 			embedded,
+			onCloseEmbedded,
 			...initialTask
 		} = this.#params;
 
@@ -171,6 +172,7 @@ export class TaskFullCard
 			initialTask: Object.fromEntries(Object.entries(initialTask).filter(([, value]) => !Type.isNil(value))),
 			analytics,
 			embedded,
+			onCloseEmbedded,
 		});
 
 		application.mixin(locMixin);

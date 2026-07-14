@@ -21,6 +21,11 @@ type CopilotRoleCollection = {
 	roles: { [string]: CopilotRole },
 }
 
+export type AiAssistantTitleParams = {
+	chatId: number,
+	dialogId: string,
+};
+
 type CopilotChatData = {
 	dialogId: string,
 	role: string,

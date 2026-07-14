@@ -595,7 +595,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			const {
 				id: chatId,
-				parent_chat_Id: parentChatId = 0,
+				parent_chat_id: parentChatId = 0,
 				mute_list: muteList,
 			} = chat;
 

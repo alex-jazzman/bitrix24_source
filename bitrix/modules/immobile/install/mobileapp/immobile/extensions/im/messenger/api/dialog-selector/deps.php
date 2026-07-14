@@ -5,6 +5,7 @@ return [
 		'im:lib/theme',
 		'im:messenger/const',
 		'im:messenger/core/embedded',
+		'im:messenger/loc',
 		'im:messenger/lib/chat-search',
 		'im:messenger/lib/converter/ui/layout',
 		'im:messenger/lib/logger',

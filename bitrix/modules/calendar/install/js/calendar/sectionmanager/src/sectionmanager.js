@@ -73,6 +73,8 @@ export class SectionManager
 		this.showTasks = config.showTasks;
 		this.customizationData = config.sectionCustomization || {};
 		this.meetSectionId = parseInt(config.meetSectionId, 10);
+
+		this.isNewProjectsOn = config.isNewProjectsOn || false;
 	}
 
 	addTaskSection()
@@ -84,8 +86,9 @@ export class SectionManager
 				{
 					type: this.calendarType,
 					userId: this.userId,
-					ownerId: this.ownerId
-				}
+					ownerId: this.ownerId,
+					isNewProjectsOn: this.isNewProjectsOn,
+				},
 			);
 			this.sections.push(taskSection);
 			this.sectionIndex[taskSection.id] = this.sections.length - 1;
@@ -440,8 +443,13 @@ export class SectionManager
 		}
 		else if (type === 'group')
 		{
+			const collabKey = (
+				options.isNewProjectsOn
+					? 'EC_SEC_SLIDER_PROJECT_CALENDARS_LIST'
+					: 'EC_SEC_SLIDER_COLLAB_CALENDARS_LIST'
+			);
 			const groupTitleMessage = isCollabUser || isCollabContext
-				? 'EC_SEC_SLIDER_COLLAB_CALENDARS_LIST'
+				? collabKey
 				: 'EC_SEC_SLIDER_GROUP_CALENDARS_LIST';
 			title = Loc.getMessage(groupTitleMessage);
 		}
@@ -503,9 +511,14 @@ export class SectionManager
 			type: 'group'
 		});
 		// 4.1 Collabs calendars
+		const collabTitle = (
+			options.isNewProjectsOn
+				? BX.message('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT')
+				: BX.message('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB')
+		);
 		sectionGroups.push({
-			title: BX.message('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB'),
-			type: 'collab'
+			title: collabTitle,
+			type: 'collab',
 		});
 
 		// 5. Resources calendars

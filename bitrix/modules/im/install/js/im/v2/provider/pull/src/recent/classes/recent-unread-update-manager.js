@@ -6,12 +6,13 @@ import { RecentUpdateManager } from './recent-update-manager';
 
 export class RecentUnreadUpdateManager extends RecentUpdateManager
 {
-	applyRecentUpdateActions(sections: RecentTypeItem[], recentItem: ImModelRecentItem)
+	addItemToCollection(sections: RecentTypeItem[], recentItem: ImModelRecentItem, parentChatId: number)
 	{
 		sections.forEach((recentSection) => {
 			void Core.getStore().dispatch('recent/setUnreadCollection', {
 				type: recentSection,
 				items: [recentItem],
+				parentChatId,
 			});
 		});
 	}

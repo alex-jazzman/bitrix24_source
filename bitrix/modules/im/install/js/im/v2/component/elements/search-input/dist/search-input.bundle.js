@@ -116,6 +116,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			closeByEsc() {
 				this.query = '';
 				this.hasFocus = false;
+				// move focus away from input to prevent auto-focus after pressing Esc
+				this.$refs.searchContainer.focus();
 				this.$emit('queryChange', this.query);
 				this.$emit('closeByEsc');
 			},
@@ -132,7 +134,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-im-search-input__scope bx-im-search-input__container" :class="{'--has-focus': hasFocus}">
+		<div 
+			class="bx-im-search-input__scope bx-im-search-input__container" 
+			ref="searchContainer"
+			tabindex="-1"
+			:class="{'--has-focus': hasFocus}"
+		>
 			<div v-if="!isLoading" class="bx-im-search-input__search-icon"></div>
 			<Spinner 
 				v-if="withLoader && isLoading" 

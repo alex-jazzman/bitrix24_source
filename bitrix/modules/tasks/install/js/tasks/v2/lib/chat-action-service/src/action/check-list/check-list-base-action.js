@@ -7,7 +7,7 @@ export class CheckListBaseAction extends BaseAction
 	showCheckListRemovedHint(bindElement: HTMLElement, coordinates: Object): void
 	{
 		void chatHint.show(
-			Loc.getMessage('TASKS_V2_CHAT_ACTION_CHECK_LIST_REMOVED_HINT'),
+			Loc.getMessage('TASKS_V2_CHAT_ACTION_CHECK_LIST_REMOVED_HINT_MSGVER_1'),
 			{ bindElement, coordinates },
 		);
 	}
@@ -15,7 +15,7 @@ export class CheckListBaseAction extends BaseAction
 	showCheckListItemsRemovedHint(bindElement: HTMLElement, coordinates: Object): void
 	{
 		void chatHint.show(
-			Loc.getMessage('TASKS_V2_CHAT_ACTION_CHECK_LIST_ITEMS_REMOVED_HINT'),
+			Loc.getMessage('TASKS_V2_CHAT_ACTION_CHECK_LIST_ITEMS_REMOVED_HINT_MSGVER_1'),
 			{ bindElement, coordinates },
 		);
 	}

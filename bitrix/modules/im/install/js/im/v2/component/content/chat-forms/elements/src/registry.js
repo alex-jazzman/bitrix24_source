@@ -15,3 +15,6 @@ export { RightsSection } from './sections/rights/rights-section';
 export { PrivacySection } from './sections/privacy/privacy-section';
 export { ConferenceSection } from './sections/conference/conference-section';
 export { AppearanceSection } from './sections/appearance/appearance-section';
+
+export { ChatMemberDiffManager } from './classes/chat-member-diff-manager.js';
+export { checkParentAccess } from './helpers/check-parent-access';

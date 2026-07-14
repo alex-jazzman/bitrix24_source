@@ -1222,7 +1222,15 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 
 		__onCallReconnected()
 		{
-			this.eventEmitter.emit(BX.Call.Event.onReconnected);
+			const reconnectedUsers = Object.keys(this.peers)
+				.filter(userId => this.peers[userId] && (this.peers[userId].endpoint || this.peers[userId].ready))
+				.map(userId => ({
+					userId: Number(userId),
+				}));
+
+			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{
+				reconnectedUsers: [reconnectedUsers],
+			}]);
 		}
 
 		onFatalError(error)

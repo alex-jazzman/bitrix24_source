@@ -49,6 +49,10 @@ export const MentionPopupContent = {
 			type: Boolean,
 			default: true,
 		},
+		withCopilot: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['close', 'adjustPosition'],
 	data(): JsonObject
@@ -155,6 +159,11 @@ export const MentionPopupContent = {
 		},
 		needToShowFixedCopilot(): boolean
 		{
+			if (!this.withCopilot)
+			{
+				return false;
+			}
+
 			const isChannel = ChannelManager.isChannel(this.dialogId);
 			const isCopilotChat = (new CopilotManager()).isCopilotChat(this.dialogId);
 

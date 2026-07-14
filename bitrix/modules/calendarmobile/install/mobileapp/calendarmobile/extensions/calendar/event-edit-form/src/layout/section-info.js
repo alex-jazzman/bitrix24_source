@@ -205,8 +205,15 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 			const sectionsByType = {
 				personal: this.getSectionsWithCategory(defaultSections, this.personalCategoryFilterFunc, categoryId.personal),
 				company: this.getSectionsWithCategory(defaultSections, this.companyCategoryFilterFunc, categoryId.company),
-				group: this.getSectionsWithCategory(defaultSections, this.groupCategoryFilterFunc, categoryId.group),
-				collab: this.getSectionsWithCategory(defaultSections, this.collabCategoryFilterFunc, categoryId.collab),
+				...(SettingsManager.isNewProjectsOn()
+					? {
+						project: this.getSectionsWithCategory(defaultSections, this.projectCategoryFilterFunc, categoryId.project),
+					}
+					: {
+						group: this.getSectionsWithCategory(defaultSections, this.groupCategoryFilterFunc, categoryId.group),
+						collab: this.getSectionsWithCategory(defaultSections, this.collabCategoryFilterFunc, categoryId.collab),
+					}
+				),
 			};
 
 			let hasAdditionalSections = false;
@@ -262,6 +269,11 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 			if (State.calType === CalendarType.COMPANY_CALENDAR)
 			{
 				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_CATEGORY_COMPANY');
+			}
+
+			if (SettingsManager.isNewProjectsOn())
+			{
+				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_CATEGORY_THIS_PROJECT');
 			}
 
 			return SettingsManager.isCollabCalendarContext()
@@ -371,6 +383,10 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 
 		collabCategoryFilterFunc = (section) => {
 			return !this.belongsToView(section) && section.isGroupCalendar() && section.isCollab();
+		};
+
+		projectCategoryFilterFunc = (section) => {
+			return !this.belongsToView(section) && section.isGroupCalendar();
 		};
 
 		userCategoryFilterFunc = (section, userId) => {
@@ -487,6 +503,7 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 		company: 3,
 		group: 4,
 		collab: 5,
+		project: 6,
 	};
 
 	const mapStateToProps = (state) => ({

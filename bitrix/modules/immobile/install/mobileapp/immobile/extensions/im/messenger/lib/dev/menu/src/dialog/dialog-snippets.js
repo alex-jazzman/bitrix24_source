@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/dev/menu/dialog/dialog-snippets', (require, exports,
 	const AppTheme = require('apptheme');
 	const { BannerButton } = require('layout/ui/banners/banner-button');
 	const { SendMessage } = require('im/messenger/lib/dev/menu/dialog/send-message');
-	const { BuilderMessage } = require('im/messenger/lib/dev/menu/dialog/builder-message');
+	const { BlockMessage } = require('im/messenger/lib/dev/menu/dialog/block-message');
 
 	class DialogSnippets extends LayoutComponent
 	{
@@ -25,9 +25,9 @@ jn.define('im/messenger/lib/dev/menu/dialog/dialog-snippets', (require, exports,
 						ComponentClass: SendMessage,
 					}),
 					this.renderBanner({
-						title: 'Builder Message',
-						description: 'Message builder',
-						ComponentClass: BuilderMessage,
+						title: 'Block Message',
+						description: 'Message block',
+						ComponentClass: BlockMessage,
 					}),
 				]),
 			);

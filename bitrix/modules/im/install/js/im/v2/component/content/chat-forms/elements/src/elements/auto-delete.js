@@ -1,12 +1,12 @@
+import { type JsonObject } from 'main.core';
+
 import { AutoDeleteDelay } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
 import { ChatHint } from 'im.v2.component.elements.hint';
 import { AutoDeleteDropdown, AutoDeletePopup } from 'im.v2.component.elements.auto-delete';
 
 import './css/auto-delete.css';
-
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const AutoDelete = {
@@ -55,7 +55,7 @@ export const AutoDelete = {
 		{
 			if (!this.isFeatureEnabled)
 			{
-				FeatureManager.messagesAutoDelete.openFeatureSlider();
+				TariffManager.messagesAutoDelete.openFeatureSlider();
 
 				return;
 			}

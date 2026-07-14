@@ -1,4 +1,4 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 export class Page
 {

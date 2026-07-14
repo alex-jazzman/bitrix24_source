@@ -82,6 +82,7 @@ export class SidebarHydrationActions
 		this.#state.globalPermissions.canEditCollections = normalized.canEditCollections;
 		this.#state.globalPermissions.canEditGlobalPermissions = normalized.canEditGlobalPermissions;
 		this.#state.globalPermissions.canImport = normalized.canImport;
+		this.#state.globalPermissions.canImportWiki = normalized.canImportWiki;
 		this.#state.globalPermissions.hasManageableCollection = normalized.hasManageableCollection;
 	}
 
@@ -242,6 +243,7 @@ export class SidebarHydrationActions
 				canEditCollections: false,
 				canEditGlobalPermissions: false,
 				canImport: false,
+				canImportWiki: false,
 				hasManageableCollection: false,
 			};
 		}
@@ -250,6 +252,7 @@ export class SidebarHydrationActions
 			canEditCollections: Boolean(rawPermissions.canEditCollections),
 			canEditGlobalPermissions: Boolean(rawPermissions.canEditGlobalPermissions),
 			canImport: Boolean(rawPermissions.canImport),
+			canImportWiki: Boolean(rawPermissions.canImportWiki),
 			hasManageableCollection: Boolean(rawPermissions.hasManageableCollection),
 		};
 	}

@@ -10,7 +10,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 		Failure,
 		ImageName,
 	} = require('im/messenger/lib/element/dialog/message/banner/banners/sign/type');
-	const { ButtonDesignType } = require('im/messenger/lib/element/dialog/message/banner/const/type');
+	const { ButtonDesignType } = require('im/messenger/const');
 	const { ButtonSize } = require('ui-system/form/buttons/button');
 	const { inAppUrl } = require('in-app-url');
 
@@ -254,7 +254,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE'),
 				imageName: ImageName.docSuccessSign,
-				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION'),
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION_V2'),
 				button: null,
 			},
 		},
@@ -334,7 +334,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_TITLE'),
 				imageName: ImageName.docSuccessSign,
-				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_DESCRIPTION'),
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_B2B_DOCUMENT_SIGNING_DESCRIPTION_V2'),
 				button: null,
 			},
 		},

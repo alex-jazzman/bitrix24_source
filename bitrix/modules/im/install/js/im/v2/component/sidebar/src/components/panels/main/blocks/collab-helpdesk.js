@@ -1,12 +1,12 @@
+import { type JsonObject } from 'main.core';
 import { Manual } from 'ui.manual';
 
-import { PromoId, UserType } from 'im.v2.const';
+import { PromoId } from 'im.v2.const';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { PromoManager } from 'im.v2.lib.promo';
-import { Core } from 'im.v2.application.core';
+import { CollabManager } from 'im.v2.lib.collab';
 
 import '../css/collab-helpdesk.css';
-
-import type { JsonObject } from 'main.core';
 
 const INTRANET_MANUAL_CODE = 'collab';
 const COLLABER_MANUAL_CODE = 'collab_guest';
@@ -24,20 +24,22 @@ export const CollabHelpdeskPreview = {
 	data(): JsonObject
 	{
 		return {
-			needToShow: PromoManager.getInstance().needToShow(PromoId.collabHelpdeskSidebar),
+			needToShow: false,
 		};
 	},
-	computed:
+	created()
 	{
-		isCurrentUserCollaber(): boolean
-		{
-			const currentUser = this.$store.getters['users/get'](Core.getUserId(), true);
-
-			return currentUser.type === UserType.collaber;
-		},
+		this.needToShow = this.initShowStatus();
 	},
 	methods:
 	{
+		initShowStatus(): boolean
+		{
+			const isPromoActive = PromoManager.getInstance().needToShow(PromoId.collabHelpdeskSidebar);
+			const isCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+
+			return isPromoActive && !isCollabV2Available;
+		},
 		close()
 		{
 			this.needToShow = false;
@@ -45,7 +47,7 @@ export const CollabHelpdeskPreview = {
 		},
 		openHelpdesk()
 		{
-			const manualCode = this.isCurrentUserCollaber ? COLLABER_MANUAL_CODE : INTRANET_MANUAL_CODE;
+			const manualCode = CollabManager.isCurrentUserGuest() ? COLLABER_MANUAL_CODE : INTRANET_MANUAL_CODE;
 
 			const urlParams = {
 				utm_source: 'portal',

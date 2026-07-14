@@ -410,6 +410,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		deviceOffHint: {
 			flexDirection: 'row',
 			minHeight: 32,
+			maxWidth: '100%',
 			backgroundColor: Color.baseBlackFixed.toHex(0.5),
 			paddingLeft: Indent.S.toNumber(),
 			paddingRight: Indent.XL.toNumber(),
@@ -418,6 +419,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			alignItems: 'center',
 		},
 		deviceOffHintText: {
+			flexShrink: 1,
 			marginLeft: 2,
 			fontSize: 15,
 			fontWeight: 400,
@@ -520,6 +522,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			display: 'flex',
 			flexDirection: 'row',
 			alignItems: 'center',
+		},
+		getHeaderLandscapeStyles() {
+			return {
+				paddingLeft: getSafeArea().left / 4,
+				paddingRight: getSafeArea().right / 4,
+				paddingTop: getSafeArea().top + 14,
+				paddingBottom: 14,
+			};
 		},
 	};
 
@@ -701,6 +711,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					id: userId,
 					name: this.userData[userId] ? this.userData[userId].name : '',
 					avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
+					gender: this.userData[userId] ? this.userData[userId].gender : 'M',
 					state: userState || BX.Call.UserState.Idle,
 					order: this.getNextPosition(),
 				}));
@@ -928,6 +939,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					id: userId,
 					name: this.userData[userId] ? this.userData[userId].name : '',
 					avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
+					gender: this.userData[userId] ? this.userData[userId].gender : 'M',
 					state: BX.Call.UserState.Idle,
 					order: this.getNextPosition(),
 				}));
@@ -1013,7 +1025,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setState({
 				centralUserId: userId,
 				centralUserVideoPaused: userModel.videoPaused,
-				remoteStream: this.videoStreams.hasOwnProperty(userId) ? this.videoStreams[userId] : null,
+				remoteStream: this.videoStreams.hasOwnProperty(userId)
+					? this.videoStreams[userId]
+					: (this.screenshareStreams.has(userId) || this.screenshareStreams.has(String(userId))
+						? this.screenshareStreams.get(userId) || this.screenshareStreams.get(String(userId))
+						: null),
 				localStream: this.videoStreams.hasOwnProperty(this.userId) ? this.videoStreams[this.userId] : null,
 			});
 			this.emit(EventName.SetCentralUser, [userId]);
@@ -1545,7 +1561,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		toggleSubscriptionRemoteVideoGrid()
 		{
-			const ids = this.state.displayedUsers.map(user => user.id)
+			const actualDisplayedUsers = this.getDisplayedUsers();
+			const ids = actualDisplayedUsers.map(user => user.id)
 
 			if (ids.length === 0)
 			{
@@ -1625,7 +1642,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 				if (hasScreenshare || isPinMode)
 				{
-					if (this.screenshareStreams.has(id))
+					if (this.screenshareStreams.has(String(id)) || this.screenshareStreams.has(id))
 					{
 						toggleList.push({
 							id,
@@ -1921,7 +1938,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const rendererParams = {};
 			if (this.screenshareStreams.size !== 0)
 			{
-				rendererParams.source = this.screenshareStreams.values().next().value;
+				const firstKey = this.screenshareStreams.keys().next().value;
+				rendererParams.source = this.screenshareStreams.get(firstKey);
 			}
 			else
 			{
@@ -2035,22 +2053,21 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				},
 				!userModel.microphoneState && this.renderDeviceOffHint(
-					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
+					userModel.name,
 					userModel.gender,
 					'microphone',
 					hasBoth,
 				),
 				!userModel.cameraState && this.renderDeviceOffHint(
-					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
+					userModel.name,
 					userModel.gender,
 					'camera',
-					false
+					false,
 				),
-
 			);
 		}
 
-		renderDeviceOffHint(firstName, gender, device, addBottomMargin = false)
+		renderDeviceOffHint(name, gender, device, addBottomMargin = false)
 		{
 			const normalizedGender = gender === 'F' ? 'F' : 'M';
 			const normalizedDevice = device === 'camera' ? 'camera' : 'microphone';
@@ -2071,7 +2088,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}),
 				Text({
 					style: styles.deviceOffHintText,
-					text: BX.message(phrase).replace('#FIRST_NAME#', firstName),
+					text: BX.message(phrase).replace('#FIRST_NAME#', name),
 				}),
 			);
 		}
@@ -2559,24 +2576,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const id = item.data.id;
 			const isThisUser = id === Number(this.userId);
 
-			const switchCamera = View(
-				{
-					style: {
-						position: 'absolute',
-						top: 8,
-						right: 8,
-						zIndex: 20,
-					},
-					onClick: () => {
-						this.emit(EventName.ReplaceCamera);
-					},
-				},
-				Image({
-					style: { width: 24, height: 24 },
-					svg: { content: Icons.rotateIcon },
-				}),
-			);
-
 			const connectingBadge = View(
 				{
 					style: {
@@ -2644,7 +2643,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				item.data.state === 'Connecting' && connectingBadge,
 				item.data.floorRequestState && this.renderFloorRequestBadge(),
 				(isCameraOff || (this.state.isReconnecting && !isThisUser)) ? avatar : video,
-				isThisUser && !isCameraOff && switchCamera,
+				isThisUser && !isCameraOff && this.renderCameraSwitcher(),
 			);
 		}
 
@@ -2898,10 +2897,30 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			})
 		}
 
+		renderCameraSwitcher()
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						top: 8,
+						right: 8,
+						zIndex: 20,
+					},
+					onClick: () => {
+						this.emit(EventName.ReplaceCamera);
+					},
+				},
+				Image({
+					style: { width: 24, height: 24 },
+					svg: { content: Icons.rotateIcon },
+				}),
+			);
+		}
+
 		renderScrollItem(item)
 		{
 			const isThisUser = item.data.id === Number(this.userId);
-
 			return !item.data.cameraState
 				? View(
 					{
@@ -2928,6 +2947,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						clickable: false,
 					},
 					this.videoStreams.hasOwnProperty(item.data.id) && this.getStream(item.data.id, isThisUser),
+					isThisUser && this.renderCameraSwitcher(),
 				);
 		}
 
@@ -3702,6 +3722,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				&& this.state.status === 'call'
 				&& (this.state.isGroupCall || this.state.isNativeSwitchingTypeSupported);
 
+			const isLandscape = this.getIsLandscapeOrientation();
+
 			return isVisible && View(
 				{
 					style: {
@@ -3711,6 +3733,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						paddingTop: device.screen.safeArea.top + 4,
 						display: 'flex',
 						...props.styles,
+						...(isLandscape && this.getIsIos() && styles.getHeaderLandscapeStyles()),
 					},
 				},
 				View(
@@ -3833,6 +3856,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		renderGridTop(props)
 		{
 			const isVisible = this.state.panelVisible;
+			const isLandscape = this.getIsLandscapeOrientation();
 			const avatar = View(
 				{
 					style: {
@@ -3862,6 +3886,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						paddingTop: device.screen.safeArea.top + 4,
 						display: 'flex',
 						...props.styles,
+						...(isLandscape && this.getIsIos() && styles.getHeaderLandscapeStyles()),
 					},
 				},
 				View(
@@ -3897,9 +3922,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						),
 						View(
 							{
-								style: { flexDirection: 'row', width: '100%' },
+								style: { flexDirection: 'row', width: '100%', marginRight: 10 },
 							},
-							View(
+							(this.state.isGroupCall || !this.state.recordState) && View(
 								{
 									style: { flexDirection: 'row' },
 									onClick: props.onClick,
@@ -3917,7 +3942,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							),
 							this.state.recordState && View(
 								{
-									style: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
+									style: { flexDirection: 'row', alignItems: 'center' },
 								},
 								Image({
 									style: { width: 13, height: 13 },
@@ -3925,6 +3950,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 								}),
 								Text({
 									style: { fontSize: 12, fontWeight: 400, marginLeft: 4, color: Color.baseWhiteFixed.toHex() },
+									ellipsize: 'end',
 									text: BX.message('MOBILE_CALL_RECORD'),
 								}),
 							),

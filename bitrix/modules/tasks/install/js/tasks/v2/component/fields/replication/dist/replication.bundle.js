@@ -20,157 +20,123 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		return '_F';
 	}
 
-	function _classPrivateFieldInitSpec$4(e, t, a) { _checkPrivateRedeclaration$4(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$4(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$4(s, a) { return s.get(_assertClassBrand$4(s, a)); }
-	function _classPrivateFieldSet$4(s, a, r) { return s.set(_assertClassBrand$4(s, a), r), r; }
-	function _assertClassBrand$4(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _replicateParams$4 = /*#__PURE__*/new WeakMap();
 	class PeriodRuleDailyGenerator {
+		#replicateParams;
 		constructor(replicateParams) {
-			_classPrivateFieldInitSpec$4(this, _replicateParams$4, void 0);
-			_classPrivateFieldSet$4(_replicateParams$4, this, replicateParams);
+			this.#replicateParams = replicateParams;
 		}
 		generate() {
-			const dailyMonthInterval = _classPrivateFieldGet$4(_replicateParams$4, this).dailyMonthInterval;
-			const everyDay = _classPrivateFieldGet$4(_replicateParams$4, this).everyDay || 1;
+			const dailyMonthInterval = this.#replicateParams.dailyMonthInterval;
+			const everyDay = this.#replicateParams.everyDay || 1;
 			if (dailyMonthInterval > 0) {
 				return main_core.Loc.getMessage('TASKS_V2_REPLICATION_MONTHLY_2', {
 					'#DAY_NUMBER#': main_date.DateTimeFormat.format('ddiff', 0, everyDay * 60 * 60 * 24, true),
 					'#WEEKDAY_NAME#': '',
-					'#NUMBER#': " ".concat(dailyMonthInterval + 1)
+					'#NUMBER#': ` ${dailyMonthInterval + 1}`
 				});
 			}
 			return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_DAILY', everyDay, {
-				'#NUMBER#': everyDay > 1 ? " ".concat(everyDay) : ''
+				'#NUMBER#': everyDay > 1 ? ` ${everyDay}` : ''
 			});
 		}
 	}
 
-	function _classPrivateMethodInitSpec$3(e, a) { _checkPrivateRedeclaration$3(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec$3(e, t, a) { _checkPrivateRedeclaration$3(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$3(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateGetter(s, r, a) { return a(_assertClassBrand$3(s, r)); }
-	function _classPrivateFieldGet$3(s, a) { return s.get(_assertClassBrand$3(s, a)); }
-	function _classPrivateFieldSet$3(s, a, r) { return s.set(_assertClassBrand$3(s, a), r), r; }
-	function _assertClassBrand$3(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _replicateParams$3 = /*#__PURE__*/new WeakMap();
-	var _PeriodRuleWeeklyGenerator_brand = /*#__PURE__*/new WeakSet();
 	class PeriodRuleWeeklyGenerator {
+		#replicateParams;
 		constructor(replicateParams) {
-			_classPrivateMethodInitSpec$3(this, _PeriodRuleWeeklyGenerator_brand);
-			_classPrivateFieldInitSpec$3(this, _replicateParams$3, void 0);
-			_classPrivateFieldSet$3(_replicateParams$3, this, replicateParams);
+			this.#replicateParams = replicateParams;
 		}
 		generate() {
-			const everyWeek = _classPrivateFieldGet$3(_replicateParams$3, this).everyWeek || 1;
-			const weekDaysLabel = _classPrivateGetter(_PeriodRuleWeeklyGenerator_brand, this, _get_weekDays).length === 7 ? main_core.Loc.getMessage('TASKS_V2_REPLICATION_WEEKLY_EVERYDAY') : _classPrivateGetter(_PeriodRuleWeeklyGenerator_brand, this, _get_weekDays).map(wd => main_core.Loc.getMessage("TASKS_V2_REPLICATION_WD_".concat(wd))).join(', ');
+			const everyWeek = this.#replicateParams.everyWeek || 1;
+			const weekDaysLabel = this.#weekDays.length === 7 ? main_core.Loc.getMessage('TASKS_V2_REPLICATION_WEEKLY_EVERYDAY') : this.#weekDays.map(wd => main_core.Loc.getMessage(`TASKS_V2_REPLICATION_WD_${wd}`)).join(', ');
 			return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_WEEKLY', everyWeek, {
-				'#NUMBER#': everyWeek > 1 ? " ".concat(everyWeek) : '',
-				'#WEEKDAYS#': " (".concat(weekDaysLabel, ")")
+				'#NUMBER#': everyWeek > 1 ? ` ${everyWeek}` : '',
+				'#WEEKDAYS#': ` (${weekDaysLabel})`
 			});
 		}
-	}
-	function _get_weekDays(_this) {
-		const weekDays = _classPrivateFieldGet$3(_replicateParams$3, _this).weekDays;
-		return [...((weekDays === null || weekDays === void 0 ? void 0 : weekDays.length) > 0 ? weekDays : [1])].sort();
+		get #weekDays() {
+			const weekDays = this.#replicateParams.weekDays;
+			return [...(weekDays?.length > 0 ? weekDays : [1])].sort();
+		}
 	}
 
-	function _classPrivateMethodInitSpec$2(e, a) { _checkPrivateRedeclaration$2(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec$2(e, t, a) { _checkPrivateRedeclaration$2(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$2(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$2(s, a) { return s.get(_assertClassBrand$2(s, a)); }
-	function _classPrivateFieldSet$2(s, a, r) { return s.set(_assertClassBrand$2(s, a), r), r; }
-	function _assertClassBrand$2(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _replicateParams$2 = /*#__PURE__*/new WeakMap();
-	var _PeriodRuleMonthlyGenerator_brand = /*#__PURE__*/new WeakSet();
 	class PeriodRuleMonthlyGenerator {
+		#replicateParams;
 		constructor(replicateParams) {
-			_classPrivateMethodInitSpec$2(this, _PeriodRuleMonthlyGenerator_brand);
-			_classPrivateFieldInitSpec$2(this, _replicateParams$2, void 0);
-			_classPrivateFieldSet$2(_replicateParams$2, this, replicateParams);
+			this.#replicateParams = replicateParams;
 		}
 		generate() {
-			return _classPrivateFieldGet$2(_replicateParams$2, this).monthlyType === tasks_v2_const.ReplicationMonthlyType.Absolute ? _assertClassBrand$2(_PeriodRuleMonthlyGenerator_brand, this, _generateAbsolute$1).call(this) : _assertClassBrand$2(_PeriodRuleMonthlyGenerator_brand, this, _generateRelative$1).call(this);
+			return this.#replicateParams.monthlyType === tasks_v2_const.ReplicationMonthlyType.Absolute ? this.#generateAbsolute() : this.#generateRelative();
 		}
-	}
-	function _generateAbsolute$1() {
-		const monthlyMonthNum = _classPrivateFieldGet$2(_replicateParams$2, this).monthlyMonthNum1 || 1;
-		return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_MONTHLY_1', monthlyMonthNum, {
-			'#NUMBER#': monthlyMonthNum > 1 ? " ".concat(monthlyMonthNum) : '',
-			'#DAY_NUMBER#': _classPrivateFieldGet$2(_replicateParams$2, this).monthlyDayNum
-		});
-	}
-	function _generateRelative$1() {
-		const monthlyWeekDay = _classPrivateFieldGet$2(_replicateParams$2, this).monthlyWeekDay;
-		const weekDayNum = _classPrivateFieldGet$2(_replicateParams$2, this).monthlyWeekDayNum;
-		const localePostfix = getWeekDayGender(monthlyWeekDay);
-		const dayNumber = main_core.Loc.getMessage("TASKS_V2_REPLICATION_NUMBER_".concat(weekDayNum).concat(localePostfix));
-		const weekDay = main_core.Loc.getMessage("TASKS_V2_REPLICATION_WD_ALT_".concat(monthlyWeekDay + 1));
-		const monthlyMonthNum = _classPrivateFieldGet$2(_replicateParams$2, this).monthlyMonthNum2 || 1;
-		return main_core.Loc.getMessage("TASKS_V2_REPLICATION_MONTHLY_2".concat(_assertClassBrand$2(_PeriodRuleMonthlyGenerator_brand, this, _getLocaleMonthlyOfDayType2Alt).call(this)), {
-			'#DAY_NUMBER#': dayNumber,
-			'#WEEKDAY_NAME#': weekDay,
-			'#NUMBER#': monthlyMonthNum > 1 ? " ".concat(monthlyMonthNum) : ''
-		});
-	}
-	function _getLocaleMonthlyOfDayType2Alt() {
-		const weekDay = _classPrivateFieldGet$2(_replicateParams$2, this).monthlyWeekDay;
-		if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Sunday) {
-			return '_ALT_1';
+		#generateAbsolute() {
+			const monthlyMonthNum = this.#replicateParams.monthlyMonthNum1 || 1;
+			return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_MONTHLY_1', monthlyMonthNum, {
+				'#NUMBER#': monthlyMonthNum > 1 ? ` ${monthlyMonthNum}` : '',
+				'#DAY_NUMBER#': this.#replicateParams.monthlyDayNum
+			});
 		}
-		if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Wednesday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Friday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Saturday) {
-			return '_ALT_0';
+		#generateRelative() {
+			const monthlyWeekDay = this.#replicateParams.monthlyWeekDay;
+			const weekDayNum = this.#replicateParams.monthlyWeekDayNum;
+			const localePostfix = getWeekDayGender(monthlyWeekDay);
+			const dayNumber = main_core.Loc.getMessage(`TASKS_V2_REPLICATION_NUMBER_${weekDayNum}${localePostfix}`);
+			const weekDay = main_core.Loc.getMessage(`TASKS_V2_REPLICATION_WD_ALT_${monthlyWeekDay + 1}`);
+			const monthlyMonthNum = this.#replicateParams.monthlyMonthNum2 || 1;
+			return main_core.Loc.getMessage(`TASKS_V2_REPLICATION_MONTHLY_2${this.#getLocaleMonthlyOfDayType2Alt()}`, {
+				'#DAY_NUMBER#': dayNumber,
+				'#WEEKDAY_NAME#': weekDay,
+				'#NUMBER#': monthlyMonthNum > 1 ? ` ${monthlyMonthNum}` : ''
+			});
 		}
-		return '';
+		#getLocaleMonthlyOfDayType2Alt() {
+			const weekDay = this.#replicateParams.monthlyWeekDay;
+			if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Sunday) {
+				return '_ALT_1';
+			}
+			if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Wednesday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Friday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Saturday) {
+				return '_ALT_0';
+			}
+			return '';
+		}
 	}
 
-	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$1(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$1(s, a)); }
-	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
-	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _replicateParams$1 = /*#__PURE__*/new WeakMap();
-	var _PeriodRuleYearlyGenerator_brand = /*#__PURE__*/new WeakSet();
 	class PeriodRuleYearlyGenerator {
+		#replicateParams;
 		constructor(replicateParams) {
-			_classPrivateMethodInitSpec$1(this, _PeriodRuleYearlyGenerator_brand);
-			_classPrivateFieldInitSpec$1(this, _replicateParams$1, void 0);
-			_classPrivateFieldSet$1(_replicateParams$1, this, replicateParams);
+			this.#replicateParams = replicateParams;
 		}
 		generate() {
-			return _classPrivateFieldGet$1(_replicateParams$1, this).yearlyType === tasks_v2_const.ReplicationYearlyType.Absolute ? _assertClassBrand$1(_PeriodRuleYearlyGenerator_brand, this, _generateAbsolute).call(this) : _assertClassBrand$1(_PeriodRuleYearlyGenerator_brand, this, _generateRelative).call(this);
+			return this.#replicateParams.yearlyType === tasks_v2_const.ReplicationYearlyType.Absolute ? this.#generateAbsolute() : this.#generateRelative();
 		}
-	}
-	function _generateAbsolute() {
-		const yearlyDayNum = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyDayNum || 1;
-		const yearlyMonth = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyMonth1 || 1;
-		return main_core.Loc.getMessage('TASKS_V2_REPLICATION_YEARLY_1', {
-			'#NUMBER#': " ".concat(yearlyDayNum),
-			'#MONTH#': main_date.DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000)
-		});
-	}
-	function _generateRelative() {
-		const yearlyWeekDayNum = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyWeekDayNum || 0;
-		const yearlyWeekDay = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyWeekDay || 0;
-		const yearlyMonth = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyMonth2 || 1;
-		const dayNumberLabel = main_core.Loc.getMessage("TASKS_V2_REPLICATION_NUMBER_".concat(yearlyWeekDayNum).concat(getWeekDayGender(yearlyWeekDay - 1)));
-		return main_core.Loc.getMessage("TASKS_V2_REPLICATION_YEARLY_2".concat(_assertClassBrand$1(_PeriodRuleYearlyGenerator_brand, this, _getLocaleType2Alt).call(this)), {
-			'#DAY_NUMBER#': dayNumberLabel,
-			'#WEEK_DAY#': main_core.Loc.getMessage("TASKS_V2_REPLICATION_WD_ALT_".concat(yearlyWeekDay)),
-			'#MONTH#': main_date.DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000)
-		});
-	}
-	function _getLocaleType2Alt() {
-		const weekDay = _classPrivateFieldGet$1(_replicateParams$1, this).yearlyWeekDay;
-		if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Sunday) {
-			return '_ALT_1';
+		#generateAbsolute() {
+			const yearlyDayNum = this.#replicateParams.yearlyDayNum || 1;
+			const yearlyMonth = this.#replicateParams.yearlyMonth1 || 1;
+			return main_core.Loc.getMessage('TASKS_V2_REPLICATION_YEARLY_1', {
+				'#NUMBER#': ` ${yearlyDayNum}`,
+				'#MONTH#': main_date.DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000)
+			});
 		}
-		if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Wednesday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Saturday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Friday) {
-			return '_ALT_0';
+		#generateRelative() {
+			const yearlyWeekDayNum = this.#replicateParams.yearlyWeekDayNum || 0;
+			const yearlyWeekDay = this.#replicateParams.yearlyWeekDay || 0;
+			const yearlyMonth = this.#replicateParams.yearlyMonth2 || 1;
+			const dayNumberLabel = main_core.Loc.getMessage(`TASKS_V2_REPLICATION_NUMBER_${yearlyWeekDayNum}${getWeekDayGender(yearlyWeekDay - 1)}`);
+			return main_core.Loc.getMessage(`TASKS_V2_REPLICATION_YEARLY_2${this.#getLocaleType2Alt()}`, {
+				'#DAY_NUMBER#': dayNumberLabel,
+				'#WEEK_DAY#': main_core.Loc.getMessage(`TASKS_V2_REPLICATION_WD_ALT_${yearlyWeekDay}`),
+				'#MONTH#': main_date.DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000)
+			});
 		}
-		return '';
+		#getLocaleType2Alt() {
+			const weekDay = this.#replicateParams.yearlyWeekDay;
+			if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Sunday) {
+				return '_ALT_1';
+			}
+			if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Wednesday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Saturday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Friday) {
+				return '_ALT_0';
+			}
+			return '';
+		}
 	}
 
 	class TimeStringConverter {
@@ -181,10 +147,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			return main_core.Type.isStringFilled(serverTimeString) ? serverTimeString : tasks_v2_lib_calendar.calendar.dayStartTime;
 		}
 		static applyTimeToDate(date, timeString) {
-			const _timeString$split = timeString.split(':'),
-				_timeString$split2 = babelHelpers.slicedToArray(_timeString$split, 2),
-				hours = _timeString$split2[0],
-				minutes = _timeString$split2[1];
+			const [hours, minutes] = timeString.split(':');
 			date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
 			return date;
 		}
@@ -194,70 +157,60 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		}
 	}
 
-	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
-	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
-	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _replicateParams = /*#__PURE__*/new WeakMap();
-	var _periodRuleGenerator = /*#__PURE__*/new WeakMap();
-	var _ReplicateRuleGenerator_brand = /*#__PURE__*/new WeakSet();
 	class ReplicateRuleGenerator {
+		#replicateParams;
+		#periodRuleGenerator;
 		constructor(replicateParams) {
-			_classPrivateMethodInitSpec(this, _ReplicateRuleGenerator_brand);
-			_classPrivateFieldInitSpec(this, _replicateParams, void 0);
-			_classPrivateFieldInitSpec(this, _periodRuleGenerator, void 0);
-			_classPrivateFieldSet(_replicateParams, this, replicateParams);
-			_assertClassBrand(_ReplicateRuleGenerator_brand, this, _setPeriodRuleGenerator).call(this, replicateParams.period);
+			this.#replicateParams = replicateParams;
+			this.#setPeriodRuleGenerator(replicateParams.period);
+		}
+		#setPeriodRuleGenerator(period) {
+			switch (period) {
+				case tasks_v2_const.ReplicationPeriod.Weekly:
+					{
+						this.#periodRuleGenerator = new PeriodRuleWeeklyGenerator(this.#replicateParams);
+						break;
+					}
+				case tasks_v2_const.ReplicationPeriod.Monthly:
+					{
+						this.#periodRuleGenerator = new PeriodRuleMonthlyGenerator(this.#replicateParams);
+						break;
+					}
+				case tasks_v2_const.ReplicationPeriod.Yearly:
+					{
+						this.#periodRuleGenerator = new PeriodRuleYearlyGenerator(this.#replicateParams);
+						break;
+					}
+				default:
+					{
+						this.#periodRuleGenerator = new PeriodRuleDailyGenerator(this.#replicateParams);
+					}
+			}
 		}
 		generate() {
-			return [_classPrivateFieldGet(_periodRuleGenerator, this).generate(), _assertClassBrand(_ReplicateRuleGenerator_brand, this, _getStartTimeRule).call(this), _assertClassBrand(_ReplicateRuleGenerator_brand, this, _getEndRule).call(this)].join(' ');
+			return [this.#periodRuleGenerator.generate(), this.#getStartTimeRule(), this.#getEndRule()].join(' ');
 		}
-	}
-	function _setPeriodRuleGenerator(period) {
-		switch (period) {
-			case tasks_v2_const.ReplicationPeriod.Weekly:
-				{
-					_classPrivateFieldSet(_periodRuleGenerator, this, new PeriodRuleWeeklyGenerator(_classPrivateFieldGet(_replicateParams, this)));
-					break;
-				}
-			case tasks_v2_const.ReplicationPeriod.Monthly:
-				{
-					_classPrivateFieldSet(_periodRuleGenerator, this, new PeriodRuleMonthlyGenerator(_classPrivateFieldGet(_replicateParams, this)));
-					break;
-				}
-			case tasks_v2_const.ReplicationPeriod.Yearly:
-				{
-					_classPrivateFieldSet(_periodRuleGenerator, this, new PeriodRuleYearlyGenerator(_classPrivateFieldGet(_replicateParams, this)));
-					break;
-				}
-			default:
-				{
-					_classPrivateFieldSet(_periodRuleGenerator, this, new PeriodRuleDailyGenerator(_classPrivateFieldGet(_replicateParams, this)));
-				}
-		}
-	}
-	function _getStartTimeRule() {
-		const timeTs = _classPrivateFieldGet(_replicateParams, this).startTs;
-		return main_core.Loc.getMessage('TASKS_V2_REPLICATION_START_TIME', {
-			'#TIME#': TimeStringConverter.format(timeTs)
-		});
-	}
-	function _getEndRule() {
-		const repeatTill = _classPrivateFieldGet(_replicateParams, this).repeatTill;
-		if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Times) {
-			const times = _classPrivateFieldGet(_replicateParams, this).times;
-			return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_END_AFTER_REPETITIONS', times, {
-				'#COUNT#': times
+		#getStartTimeRule() {
+			const timeTs = this.#replicateParams.startTs;
+			return main_core.Loc.getMessage('TASKS_V2_REPLICATION_START_TIME', {
+				'#TIME#': TimeStringConverter.format(timeTs)
 			});
 		}
-		if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Date && _classPrivateFieldGet(_replicateParams, this).endTs) {
-			return main_core.Loc.getMessage('TASKS_V2_REPLICATION_END_DATE', {
-				'#DATE#': main_date.DateTimeFormat.format('d.m.Y', new Date(_classPrivateFieldGet(_replicateParams, this).endTs))
-			});
+		#getEndRule() {
+			const repeatTill = this.#replicateParams.repeatTill;
+			if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Times) {
+				const times = this.#replicateParams.times;
+				return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_END_AFTER_REPETITIONS', times, {
+					'#COUNT#': times
+				});
+			}
+			if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Date && this.#replicateParams.endTs) {
+				return main_core.Loc.getMessage('TASKS_V2_REPLICATION_END_DATE', {
+					'#DATE#': main_date.DateTimeFormat.format('d.m.Y', new Date(this.#replicateParams.endTs))
+				});
+			}
+			return '';
 		}
-		return '';
 	}
 
 	// @vue/component
@@ -289,7 +242,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			}
 		},
-		template: "\n\t\t<HoverPill :readonly withClear textOnly noOffset style=\"width: auto\" @clear=\"dontReplicate\">\n\t\t\t<TextMd>{{ ruleFormatted }}</TextMd>\n\t\t</HoverPill>\n\t"
+		template: `
+		<HoverPill :readonly withClear textOnly noOffset style="width: auto" @clear="dontReplicate">
+			<TextMd>{{ ruleFormatted }}</TextMd>
+		</HoverPill>
+	`
 	};
 
 	// @vue/component
@@ -331,7 +288,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-wrapper\">\n\t\t\t<div class=\"tasks-field-replication-title\">\n\t\t\t\t<TextSm style=\"color: var(--ui-color-base-3)\">{{ loc('TASKS_V2_REPLICATION_TITLE') }}</TextSm>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-field-replication-content\">\n\t\t\t\t<ReplicationContentState v-if=\"task.replicate\"/>\n\t\t\t\t<FieldAdd v-else v-hint=\"tooltip\" :icon=\"Outline.REPEAT\" :disabled ref=\"add\"/>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-wrapper">
+			<div class="tasks-field-replication-title">
+				<TextSm style="color: var(--ui-color-base-3)">{{ loc('TASKS_V2_REPLICATION_TITLE') }}</TextSm>
+			</div>
+			<div class="tasks-field-replication-content">
+				<ReplicationContentState v-if="task.replicate"/>
+				<FieldAdd v-else v-hint="tooltip" :icon="Outline.REPEAT" :disabled ref="add"/>
+			</div>
+		</div>
+	`
 	};
 
 	const ReplicationIntervalControlType = Object.freeze({
@@ -401,13 +368,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			intervalValue: {
 				get() {
-					var _this$interval;
-					return ((_this$interval = this.interval) === null || _this$interval === void 0 ? void 0 : _this$interval.toString()) || '';
+					return this.interval?.toString() || '';
 				},
-				set() {
-					var _parseInt;
-					let value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-					let interval = (_parseInt = parseInt(value.replaceAll(/\D/g, ''), 10)) !== null && _parseInt !== void 0 ? _parseInt : 0;
+				set(value = '') {
+					let interval = parseInt(value.replaceAll(/\D/g, ''), 10) ?? 0;
 					if (!main_core.Type.isInteger(interval) || interval < 1) {
 						interval = this.prevInterval;
 					}
@@ -448,7 +412,51 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-replication-sheet-action-row\"\n\t\t\t:class=\"{\n\t\t\t\t'--active': useInterval,\n\t\t\t\t'--selectable': isRadio,\n\t\t\t}\"\n\t\t\t@click.self=\"isRadio && selectRadio()\"\n\t\t>\n\t\t\t\t<UiCheckbox\n\t\t\t\t\tv-if=\"isCheckbox\"\n\t\t\t\t\t:checked=\"useIntervalValue\"\n\t\t\t\t\t@click=\"toggleCheckbox\"\n\t\t\t\t/>\n\t\t\t\t<UiRadio\n\t\t\t\t\tv-else-if=\"isRadio\"\n\t\t\t\t\ttag=\"label\"\n\t\t\t\t\t:modelValue=\"radioValue\"\n\t\t\t\t\tvalue=\"selected\"\n\t\t\t\t:inputName\n\t\t\t\t@update:modelValue=\"selectRadio\"\n\t\t\t/>\n\t\t\t<RichLoc\n\t\t\t\tclass=\"tasks-field-replication-row --text\"\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_SETTINGS_INTERVAL')\"\n\t\t\t\tplaceholder=\"[interval/]\"\n\t\t\t>\n\t\t\t\t<template #interval>\n\t\t\t\t\t<RichLoc class=\"tasks-field-replication-row\" :text=\"intervalPeriod\" placeholder=\"[value/]\">\n\t\t\t\t\t\t<template #value>\n\t\t\t\t\t\t\t<BInput\n\t\t\t\t\t\t\t\tv-model=\"intervalValue\"\n\t\t\t\t\t\t\t\t:size=\"InputSize.Sm\"\n\t\t\t\t\t\t\t\t:design=\"useInterval ? InputDesign.Grey : InputDesign.Disabled\"\n\t\t\t\t\t\t\t\t:disabled=\"!useInterval\"\n\t\t\t\t\t\t\t\tstyle=\"width: 5em; padding-bottom: 0;\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</RichLoc>\n\t\t\t\t</template>\n\t\t\t</RichLoc>\n\t\t\t<div class=\"tasks-field-replication-row-grow\"></div>\n\t\t\t<slot name=\"hint\"/>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-replication-sheet-action-row"
+			:class="{
+				'--active': useInterval,
+				'--selectable': isRadio,
+			}"
+			@click.self="isRadio && selectRadio()"
+		>
+				<UiCheckbox
+					v-if="isCheckbox"
+					:checked="useIntervalValue"
+					@click="toggleCheckbox"
+				/>
+				<UiRadio
+					v-else-if="isRadio"
+					tag="label"
+					:modelValue="radioValue"
+					value="selected"
+				:inputName
+				@update:modelValue="selectRadio"
+			/>
+			<RichLoc
+				class="tasks-field-replication-row --text"
+				:text="loc('TASKS_V2_REPLICATION_SETTINGS_INTERVAL')"
+				placeholder="[interval/]"
+			>
+				<template #interval>
+					<RichLoc class="tasks-field-replication-row" :text="intervalPeriod" placeholder="[value/]">
+						<template #value>
+							<BInput
+								v-model="intervalValue"
+								:size="InputSize.Sm"
+								:design="useInterval ? InputDesign.Grey : InputDesign.Disabled"
+								:disabled="!useInterval"
+								style="width: 5em; padding-bottom: 0;"
+							/>
+						</template>
+					</RichLoc>
+				</template>
+			</RichLoc>
+			<div class="tasks-field-replication-row-grow"></div>
+			<slot name="hint"/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -523,7 +531,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-replication-sheet-replication-settings-day tasks-field-replication-sheet__stack\">\n\t\t\t<ReplicationInterval\n\t\t\t\tv-model:useInterval=\"useInterval\"\n\t\t\t\tv-model:interval=\"interval\"\n\t\t\t\t:period\n\t\t\t\tcontrolType=\"radio\"\n\t\t\t\tinputName=\"tasks-replication-sheet-daily-interval-type\"\n\t\t\t>\n\t\t\t\t<template #hint>\n\t\t\t\t\t<QuestionMark\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row__hint\"\n\t\t\t\t\t\t:hintText\n\t\t\t\t\t\t:hintMaxWidth=\"260\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</ReplicationInterval>\n\t\t\t<ReplicationInterval\n\t\t\t\tv-model:useInterval=\"useMonthInterval\"\n\t\t\t\tv-model:interval=\"monthInterval\"\n\t\t\t\t:period=\"monthPeriod\"\n\t\t\t>\n\t\t\t\t<template #hint>\n\t\t\t\t\t<QuestionMark\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row__hint\"\n\t\t\t\t\t\t:hintText=\"monthHintText\"\n\t\t\t\t\t\t:hintMaxWidth=\"260\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</ReplicationInterval>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-replication-sheet-replication-settings-day tasks-field-replication-sheet__stack">
+			<ReplicationInterval
+				v-model:useInterval="useInterval"
+				v-model:interval="interval"
+				:period
+				controlType="radio"
+				inputName="tasks-replication-sheet-daily-interval-type"
+			>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
+			<ReplicationInterval
+				v-model:useInterval="useMonthInterval"
+				v-model:interval="monthInterval"
+				:period="monthPeriod"
+			>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText="monthHintText"
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
+		</div>
+	`
 	};
 
 	const week$1 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -589,7 +628,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-replication-sheet-action-row --weekdays\">\n\t\t\t<label\n\t\t\t\tv-for=\"day in dayLabelMap\"\n\t\t\t\t:key=\"day.value\"\n\t\t\t\tclass=\"tasks-field-replication-weekday\"\n\t\t\t\t:data-id=\"'tasks-replication-week-day-' + day.value\"\n\t\t\t>\n\t\t\t\t<UiCheckbox tag=\"span\" :checked=\"selectedDays.includes(day.value)\" @click=\"changeDay(day.value)\"/>\n\t\t\t\t<TextXs :className=\"['tasks-field-replication-weekday-text', {\n\t\t\t\t\t'--checked': selectedDays.includes(day.value),\n\t\t\t\t}]\">\n\t\t\t\t\t{{ day.label }}\n\t\t\t\t</TextXs>\n\t\t\t</label>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-replication-sheet-action-row --weekdays">
+			<label
+				v-for="day in dayLabelMap"
+				:key="day.value"
+				class="tasks-field-replication-weekday"
+				:data-id="'tasks-replication-week-day-' + day.value"
+			>
+				<UiCheckbox tag="span" :checked="selectedDays.includes(day.value)" @click="changeDay(day.value)"/>
+				<TextXs :className="['tasks-field-replication-weekday-text', {
+					'--checked': selectedDays.includes(day.value),
+				}]">
+					{{ day.label }}
+				</TextXs>
+			</label>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -655,7 +710,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-replication-sheet-replication-settings-week tasks-field-replication-sheet__stack\">\n\t\t\t<ReplicationSettingsWeekDaysList v-model:selectedDays=\"weekDays\"/>\n\t\t\t\t<ReplicationInterval\n\t\t\t\t\tv-model:useInterval=\"useInterval\"\n\t\t\t\t\tv-model:interval=\"interval\"\n\t\t\t\t\t:period\n\t\t\t\t\tcontrolType=\"radio\"\n\t\t\t\t\tinputName=\"tasks-replication-sheet-weekly-interval-type\"\n\t\t\t\t>\n\t\t\t\t<template #hint>\n\t\t\t\t\t<QuestionMark\n\t\t\t\t\t\t:hintText\n\t\t\t\t\t\t:hintMaxWidth=\"260\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</ReplicationInterval>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-replication-sheet-replication-settings-week tasks-field-replication-sheet__stack">
+			<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
+				<ReplicationInterval
+					v-model:useInterval="useInterval"
+					v-model:interval="interval"
+					:period
+					controlType="radio"
+					inputName="tasks-replication-sheet-weekly-interval-type"
+				>
+				<template #hint>
+					<QuestionMark
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -699,10 +772,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.prevDayNumber = this.dayNumber;
 		},
 		methods: {
-			updateDayNumber() {
-				var _parseInt;
-				let dayNumber = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-				let days = (_parseInt = parseInt(dayNumber.replaceAll(/\D/g, ''), 10)) !== null && _parseInt !== void 0 ? _parseInt : 0;
+			updateDayNumber(dayNumber = '') {
+				let days = parseInt(dayNumber.replaceAll(/\D/g, ''), 10) ?? 0;
 				if (!Number.isInteger(days) || days < 1 || days > 31) {
 					days = this.prevDayNumber;
 				}
@@ -710,7 +781,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update:dayNumber', days);
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t@click.self=\"$emit('update:monthlyType', ReplicationMonthlyType.Absolute)\"\n\t\t>\n\t\t\t<UiRadio\n\t\t\t\t:modelValue=\"monthlyType\"\n\t\t\t\t:value=\"ReplicationMonthlyType.Absolute\"\n\t\t\t\tinputName=\"tasks-replication-sheet-monthly-type\"\n\t\t\t\t@update:modelValue=\"$emit('update:monthlyType', $event)\"\n\t\t\t/>\n\t\t\t<RichLoc class=\"tasks-field-replication-row\" :text=\"loc('TASKS_V2_REPLICATION_NTH_DAY')\" placeholder=\"[day/]\">\n\t\t\t\t<template #day>\n\t\t\t\t\t<BInput\n\t\t\t\t\t\t:modelValue=\"String(dayNumber)\"\n\t\t\t\t\t\t:size=\"InputSize.Sm\"\n\t\t\t\t\t\t:design=\"!disabled ? InputDesign.Grey : InputDesign.Disabled\"\n\t\t\t\t\t\t:disabled\n\t\t\t\t\t\tstretched\n\t\t\t\t\t\tstyle=\"max-width: 4em; padding-bottom: 0;\"\n\t\t\t\t\t\t@update:modelValue=\"updateDayNumber\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</RichLoc>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-replication-sheet-action-row --selectable"
+			@click.self="$emit('update:monthlyType', ReplicationMonthlyType.Absolute)"
+		>
+			<UiRadio
+				:modelValue="monthlyType"
+				:value="ReplicationMonthlyType.Absolute"
+				inputName="tasks-replication-sheet-monthly-type"
+				@update:modelValue="$emit('update:monthlyType', $event)"
+			/>
+			<RichLoc class="tasks-field-replication-row" :text="loc('TASKS_V2_REPLICATION_NTH_DAY')" placeholder="[day/]">
+				<template #day>
+					<BInput
+						:modelValue="String(dayNumber)"
+						:size="InputSize.Sm"
+						:design="!disabled ? InputDesign.Grey : InputDesign.Disabled"
+						:disabled
+						stretched
+						style="max-width: 4em; padding-bottom: 0;"
+						@update:modelValue="updateDayNumber"
+					/>
+				</template>
+			</RichLoc>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -747,29 +843,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			items() {
 				return [{
 					id: 0,
-					title: this.loc("TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_FIRST".concat(this.itemLocaleAlt))
+					title: this.loc(`TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_FIRST${this.itemLocaleAlt}`)
 				}, {
 					id: 1,
-					title: this.loc("TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_SECOND".concat(this.itemLocaleAlt))
+					title: this.loc(`TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_SECOND${this.itemLocaleAlt}`)
 				}, {
 					id: 2,
-					title: this.loc("TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_THIRD".concat(this.itemLocaleAlt))
+					title: this.loc(`TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_THIRD${this.itemLocaleAlt}`)
 				}, {
 					id: 3,
-					title: this.loc("TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_FOURTH".concat(this.itemLocaleAlt))
+					title: this.loc(`TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_FOURTH${this.itemLocaleAlt}`)
 				}, {
 					id: 4,
-					title: this.loc("TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_LAST".concat(this.itemLocaleAlt))
+					title: this.loc(`TASKS_V2_REPLICATION_SETTINGS_WEEK_DAY_NUMBER_LAST${this.itemLocaleAlt}`)
 				}];
 			},
 			item() {
-				return this.items.find(_ref => {
-					let id = _ref.id;
-					return id === this.modelValue;
-				});
+				return this.items.find(({
+					id
+				}) => id === this.modelValue);
 			}
 		},
-		template: "\n\t\t<UiSelect\n\t\t\t:item\n\t\t\t:items\n\t\t\t:disabled\n\t\t\t@update:item=\"$emit('update:modelValue', $event.id)\"\n\t\t/>\n\t"
+		template: `
+		<UiSelect
+			:item
+			:items
+			:disabled
+			@update:item="$emit('update:modelValue', $event.id)"
+		/>
+	`
 	};
 
 	const week = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -826,13 +928,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				});
 			},
 			item() {
-				return this.items.find(_ref => {
-					let id = _ref.id;
-					return id === this.modelValue;
-				});
+				return this.items.find(({
+					id
+				}) => id === this.modelValue);
 			}
 		},
-		template: "\n\t\t<UiSelect\n\t\t\t:item\n\t\t\t:items\n\t\t\t:disabled\n\t\t\t@update:item=\"$emit('update:modelValue', $event.id)\"\n\t\t/>\n\t"
+		template: `
+		<UiSelect
+			:item
+			:items
+			:disabled
+			@update:item="$emit('update:modelValue', $event.id)"
+		/>
+	`
 	};
 
 	// @vue/component
@@ -869,7 +977,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return this.monthlyType !== tasks_v2_const.ReplicationMonthlyType.Relative;
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t@click.self=\"$emit('update:monthlyType', ReplicationMonthlyType.Relative)\"\n\t\t>\n\t\t\t<UiRadio\n\t\t\t\t:modelValue=\"monthlyType\"\n\t\t\t\t:value=\"ReplicationMonthlyType.Relative\"\n\t\t\t\tinputName=\"tasks-replication-sheet-monthly-type\"\n\t\t\t\t@update:modelValue=\"$emit('update:monthlyType', $event)\"\n\t\t\t/>\n\t\t\t<SerialNumberSelect\n\t\t\t\t:modelValue=\"weekDayNumber\"\n\t\t\t\t:weekDay\n\t\t\t\t:disabled\n\t\t\t\t@update:modelValue=\"$emit('update:weekDayNumber', $event)\"\n\t\t\t/>\n\t\t\t<WeekDaySelect\n\t\t\t\t:modelValue=\"weekDay\"\n\t\t\t\t:disabled\n\t\t\t\t@update:modelValue=\"$emit('update:weekDay', $event)\"\n\t\t\t/>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-replication-sheet-action-row --selectable"
+			@click.self="$emit('update:monthlyType', ReplicationMonthlyType.Relative)"
+		>
+			<UiRadio
+				:modelValue="monthlyType"
+				:value="ReplicationMonthlyType.Relative"
+				inputName="tasks-replication-sheet-monthly-type"
+				@update:modelValue="$emit('update:monthlyType', $event)"
+			/>
+			<SerialNumberSelect
+				:modelValue="weekDayNumber"
+				:weekDay
+				:disabled
+				@update:modelValue="$emit('update:weekDayNumber', $event)"
+			/>
+			<WeekDaySelect
+				:modelValue="weekDay"
+				:disabled
+				@update:modelValue="$emit('update:weekDay', $event)"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -951,8 +1082,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			monthlyWeekDay: {
 				get() {
-					var _this$replicateParams;
-					return (_this$replicateParams = this.replicateParams.monthlyWeekDay) !== null && _this$replicateParams !== void 0 ? _this$replicateParams : tasks_v2_const.ReplicationWeekDayIndex.Monday;
+					return this.replicateParams.monthlyWeekDay ?? tasks_v2_const.ReplicationWeekDayIndex.Monday;
 				},
 				set(value) {
 					this.update({
@@ -962,8 +1092,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			monthlyWeekDayNum: {
 				get() {
-					var _this$replicateParams2;
-					return (_this$replicateParams2 = this.replicateParams.monthlyWeekDayNum) !== null && _this$replicateParams2 !== void 0 ? _this$replicateParams2 : 0;
+					return this.replicateParams.monthlyWeekDayNum ?? 0;
 				},
 				set(value) {
 					this.update({
@@ -1009,7 +1138,33 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.update(patch);
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet__stack\">\n\t\t\t<ReplicationSettingsMonthlyByDayOfMonth\n\t\t\t\tv-model:monthlyType=\"monthlyType\"\n\t\t\t\tv-model:dayNumber=\"monthlyDayNum\"\n\t\t\t/>\n\t\t\t<ReplicationSettingsMonthlyByDayOfWeek\n\t\t\t\tv-model:monthlyType=\"monthlyType\"\n\t\t\t\tv-model:weekDay=\"monthlyWeekDay\"\n\t\t\t\tv-model:weekDayNumber=\"monthlyWeekDayNum\"\n\t\t\t/>\n\t\t\t\t<ReplicationInterval\n\t\t\t\t\tv-model:useInterval=\"useInterval\"\n\t\t\t\t\tv-model:interval=\"interval\"\n\t\t\t\t\t:period\n\t\t\t\t\tcontrolType=\"none\"\n\t\t\t\t>\n\t\t\t\t<template #hint>\n\t\t\t\t\t<QuestionMark\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row__hint\"\n\t\t\t\t\t\t:hintText\n\t\t\t\t\t\t:hintMaxWidth=\"260\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</ReplicationInterval>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet__stack">
+			<ReplicationSettingsMonthlyByDayOfMonth
+				v-model:monthlyType="monthlyType"
+				v-model:dayNumber="monthlyDayNum"
+			/>
+			<ReplicationSettingsMonthlyByDayOfWeek
+				v-model:monthlyType="monthlyType"
+				v-model:weekDay="monthlyWeekDay"
+				v-model:weekDayNumber="monthlyWeekDayNum"
+			/>
+				<ReplicationInterval
+					v-model:useInterval="useInterval"
+					v-model:interval="interval"
+					:period
+					controlType="none"
+				>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1041,10 +1196,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}));
 			},
 			item() {
-				return this.items.find(_ref => {
-					let id = _ref.id;
-					return id === this.modelValue;
-				});
+				return this.items.find(({
+					id
+				}) => id === this.modelValue);
 			},
 			menuOptions() {
 				return {
@@ -1052,7 +1206,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				};
 			}
 		},
-		template: "\n\t\t<UiSelect\n\t\t\t:item\n\t\t\t:items\n\t\t\t:disabled\n\t\t\t:menuOptions\n\t\t\t@update:item=\"$emit('update:modelValue', $event.id)\"\n\t\t/>\n\t"
+		template: `
+		<UiSelect
+			:item
+			:items
+			:disabled
+			:menuOptions
+			@update:item="$emit('update:modelValue', $event.id)"
+		/>
+	`
 	};
 
 	// @vue/component
@@ -1115,17 +1277,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.prevDayNumber = this.dayNumber;
 		},
 		methods: {
-			updateDayNumber() {
-				var _parseInt;
-				let value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-				let day = (_parseInt = parseInt(value.replaceAll(/\D/g, ''), 10)) !== null && _parseInt !== void 0 ? _parseInt : 0;
+			updateDayNumber(value = '') {
+				let day = parseInt(value.replaceAll(/\D/g, ''), 10) ?? 0;
 				if (!main_core.Type.isInteger(day) || day < 1 || day > 31) {
 					day = this.prevDayNumber;
 				}
 				this.dayNumber = day;
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t@click.self=\"$emit('update:yearlyType', ReplicationYearlyType.Absolute)\"\n\t\t>\n\t\t\t<UiRadio\n\t\t\t\ttag=\"label\"\n\t\t\t\t:modelValue=\"yearlyType\"\n\t\t\t\t:value=\"ReplicationYearlyType.Absolute\"\n\t\t\t\tinputName=\"tasks-replication-sheet-yearly-type\"\n\t\t\t\t@update:modelValue=\"$emit('update:yearlyType', $event)\"\n\t\t\t/>\n\t\t\t<BInput\n\t\t\t\t:modelValue=\"dayNumber.toString()\"\n\t\t\t\t:size=\"InputSize.Sm\"\n\t\t\t\t:design=\"disabled ? InputDesign.Disabled : InputDesign.Grey\"\n\t\t\t\t:disabled\n\t\t\t\tstretched\n\t\t\t\tstyle=\"max-width: 4em;\"\n\t\t\t\t@update:modelValue=\"updateDayNumber\"\n\t\t\t/>\n\t\t\t<MonthSelect v-model=\"month\" :disabled/>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-replication-sheet-action-row --selectable"
+			@click.self="$emit('update:yearlyType', ReplicationYearlyType.Absolute)"
+		>
+			<UiRadio
+				tag="label"
+				:modelValue="yearlyType"
+				:value="ReplicationYearlyType.Absolute"
+				inputName="tasks-replication-sheet-yearly-type"
+				@update:modelValue="$emit('update:yearlyType', $event)"
+			/>
+			<BInput
+				:modelValue="dayNumber.toString()"
+				:size="InputSize.Sm"
+				:design="disabled ? InputDesign.Disabled : InputDesign.Grey"
+				:disabled
+				stretched
+				style="max-width: 4em;"
+				@update:modelValue="updateDayNumber"
+			/>
+			<MonthSelect v-model="month" :disabled/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1190,7 +1373,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t@click.self=\"$emit('update:yearlyType', ReplicationYearlyType.Relative)\"\n\t\t>\n\t\t\t<UiRadio\n\t\t\t\ttag=\"label\"\n\t\t\t\t:modelValue=\"yearlyType\"\n\t\t\t\t:value=\"ReplicationYearlyType.Relative\"\n\t\t\t\tinputName=\"tasks-replication-sheet-yearly-type\"\n\t\t\t\t@update:modelValue=\"$emit('update:yearlyType', $event)\"\n\t\t\t/>\n\t\t\t<SerialNumberSelect\n\t\t\t\tv-model=\"weekDayNum\"\n\t\t\t\t:weekDay\n\t\t\t\t:disabled\n\t\t\t\tstyle=\"max-width: 9em\"\n\t\t\t/>\n\t\t\t<WeekDaySelect v-model=\"weekDay\" :disabled style=\"max-width: 11em\"/>\n\t\t\t<MonthSelect v-model=\"month\" :disabled style=\"max-width: 11em\"/>\n\t\t</div>\n\t"
+		template: `
+		<div
+			class="tasks-replication-sheet-action-row --selectable"
+			@click.self="$emit('update:yearlyType', ReplicationYearlyType.Relative)"
+		>
+			<UiRadio
+				tag="label"
+				:modelValue="yearlyType"
+				:value="ReplicationYearlyType.Relative"
+				inputName="tasks-replication-sheet-yearly-type"
+				@update:modelValue="$emit('update:yearlyType', $event)"
+			/>
+			<SerialNumberSelect
+				v-model="weekDayNum"
+				:weekDay
+				:disabled
+				style="max-width: 9em"
+			/>
+			<WeekDaySelect v-model="weekDay" :disabled style="max-width: 11em"/>
+			<MonthSelect v-model="month" :disabled style="max-width: 11em"/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1254,7 +1458,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet__stack\">\n\t\t\t<ReplicationSettingsYearAbsoluteDate\n\t\t\t\tv-model:yearlyType=\"yearlyType\"\n\t\t\t\t:yearlyDayNumber=\"replicateParams.yearlyDayNum || 1\"\n\t\t\t\t:yearlyMonth=\"replicateParams.yearlyMonth1 || 1\"\n\t\t\t\t@update:yearlyDayNumber=\"update({ yearlyDayNum: $event })\"\n\t\t\t\t@update:yearlyMonth=\"update({ yearlyMonth1: $event })\"\n\t\t\t/>\n\t\t\t<ReplicationSettingsYearRelativeDate\n\t\t\t\tv-model:yearlyType=\"yearlyType\"\n\t\t\t\tv-model:yearlyWeekDay=\"yearlyWeekDay\"\n\t\t\t\t:yearlyWeekDayNum=\"replicateParams.yearlyWeekDayNum || 0\"\n\t\t\t\t:yearlyMonth=\"replicateParams.yearlyMonth2 || 1\"\n\t\t\t\t@update:yearlyWeekDayNum=\"update({ yearlyWeekDayNum: $event })\"\n\t\t\t\t@update:yearlyMonth=\"update({ yearlyMonth2: $event })\"\n\t\t\t/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet__stack">
+			<ReplicationSettingsYearAbsoluteDate
+				v-model:yearlyType="yearlyType"
+				:yearlyDayNumber="replicateParams.yearlyDayNum || 1"
+				:yearlyMonth="replicateParams.yearlyMonth1 || 1"
+				@update:yearlyDayNumber="update({ yearlyDayNum: $event })"
+				@update:yearlyMonth="update({ yearlyMonth1: $event })"
+			/>
+			<ReplicationSettingsYearRelativeDate
+				v-model:yearlyType="yearlyType"
+				v-model:yearlyWeekDay="yearlyWeekDay"
+				:yearlyWeekDayNum="replicateParams.yearlyWeekDayNum || 0"
+				:yearlyMonth="replicateParams.yearlyMonth2 || 1"
+				@update:yearlyWeekDayNum="update({ yearlyWeekDayNum: $event })"
+				@update:yearlyMonth="update({ yearlyMonth2: $event })"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1338,7 +1560,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-section\">\n\t\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-row\">\n\t\t\t\t<span class=\"tasks-field-replication-secondary\">{{ title }}</span>\n\t\t\t</TextMd>\n\t\t\t<div class=\"tasks-field-replication-sheet-replication-settings-content\">\n\t\t\t\t<UiTabs\n\t\t\t\t\tv-model=\"period\"\n\t\t\t\t\t:tabs\n\t\t\t\t>\n\t\t\t\t\t<template v-slot=\"{ activeTab }\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"activeTab.component\"\n\t\t\t\t\t\t\t@update=\"$emit('update', $event)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</template>\n\t\t\t\t</UiTabs>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-section">
+			<TextMd tag="div" className="tasks-field-replication-row">
+				<span class="tasks-field-replication-secondary">{{ title }}</span>
+			</TextMd>
+			<div class="tasks-field-replication-sheet-replication-settings-content">
+				<UiTabs
+					v-model="period"
+					:tabs
+				>
+					<template v-slot="{ activeTab }">
+						<component
+							v-if="activeTab"
+							:is="activeTab.component"
+							@update="$emit('update', $event)"
+						/>
+					</template>
+				</UiTabs>
+			</div>
+		</div>
+	`
 	};
 
 	class DateStringConverter {
@@ -1360,8 +1602,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			date.setHours(0, 0, 0, 0);
 			return date;
 		}
-		static convertServerDateToTs(serverDate) {
-			let serverTime = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+		static convertServerDateToTs(serverDate, serverTime = null) {
 			if (main_core.Type.isStringFilled(serverTime)) {
 				tasks_v2_component_fields_replication.TimeStringConverter.applyTimeToDate(serverDate, serverTime);
 			}
@@ -1410,15 +1651,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			this.datePicker.show();
 		},
 		unmounted() {
-			var _this$datePicker;
-			(_this$datePicker = this.datePicker) === null || _this$datePicker === void 0 || _this$datePicker.destroy();
+			this.datePicker?.destroy();
 		},
 		methods: {
 			createDatePicker() {
 				const offset = tasks_v2_lib_timezone.timezone.getOffset(this.dateTs);
 				const picker = new ui_datePicker.DatePicker({
 					popupOptions: {
-						id: "tasks-replication-date-picker-".concat(this.taskId, "-").concat(main_core.Text.getRandom()),
+						id: `tasks-replication-date-picker-${this.taskId}-${main_core.Text.getRandom()}`,
 						bindElement: this.bindElement,
 						offsetTop: 5,
 						offsetLeft: -40,
@@ -1430,18 +1670,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					selectedDates: [this.dateTs + offset],
 					events: {
 						[ui_datePicker.DatePickerEvent.SELECT]: event => {
-							const _event$getData = event.getData(),
-								date = _event$getData.date;
+							const {
+								date
+							} = event.getData();
 							const dateTsModel = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
 							this.$emit('update:dateTs', dateTsModel - tasks_v2_lib_timezone.timezone.getOffset(dateTsModel));
 						}
 					}
 				});
 				picker.getPicker('day').subscribe('onSelect', event => {
-					const _event$getData2 = event.getData(),
-						year = _event$getData2.year,
-						month = _event$getData2.month,
-						day = _event$getData2.day;
+					const {
+						year,
+						month,
+						day
+					} = event.getData();
 					const dateTsModel = new Date(year, month, day).getTime();
 					this.$emit('close');
 					this.dateTsModel = dateTsModel;
@@ -1499,7 +1741,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.startTs = serverTs - tasks_v2_lib_timezone.timezone.getOffset(serverTs);
 			}
 		},
-		template: "\n\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-section\">\n\t\t\t<RichLoc\n\t\t\t\tclass=\"tasks-field-replication-row tasks-field-replication-secondary\"\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_START')\"\n\t\t\t\tplaceholder=\"[date/]\"\n\t\t\t>\n\t\t\t\t<template #date>\n\t\t\t\t\t<HoverPill textOnly noOffset ref=\"datepickerStartOpener\">\n\t\t\t\t\t\t<span class=\"tasks-field-replication-link\" @click=\"isDatepickerOpened = true\">\n\t\t\t\t\t\t\t{{ startLabel }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</HoverPill>\n\t\t\t\t\t<ReplicationDatepicker\n\t\t\t\t\t\tv-if=\"isDatepickerOpened\"\n\t\t\t\t\t\tv-model:dateTs=\"startTs\"\n\t\t\t\t\t\t:bindElement=\"$refs.datepickerStartOpener.$el\"\n\t\t\t\t\t\t@close=\"isDatepickerOpened = false\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</RichLoc>\n\t\t</TextMd>\n\t"
+		template: `
+		<TextMd tag="div" className="tasks-field-replication-section">
+			<RichLoc
+				class="tasks-field-replication-row tasks-field-replication-secondary"
+				:text="loc('TASKS_V2_REPLICATION_START')"
+				placeholder="[date/]"
+			>
+				<template #date>
+					<HoverPill textOnly noOffset ref="datepickerStartOpener">
+						<span class="tasks-field-replication-link" @click="isDatepickerOpened = true">
+							{{ startLabel }}
+						</span>
+					</HoverPill>
+					<ReplicationDatepicker
+						v-if="isDatepickerOpened"
+						v-model:dateTs="startTs"
+						:bindElement="$refs.datepickerStartOpener.$el"
+						@close="isDatepickerOpened = false"
+					/>
+				</template>
+			</RichLoc>
+		</TextMd>
+	`
 	};
 
 	// @vue/component
@@ -1562,8 +1826,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update', params);
 			},
 			updateTimes(value) {
-				var _parseInt;
-				let times = (_parseInt = parseInt(value.replaceAll(/\D/g, ''), 10)) !== null && _parseInt !== void 0 ? _parseInt : 0;
+				let times = parseInt(value.replaceAll(/\D/g, ''), 10) ?? 0;
 				if (!main_core.Type.isInteger(times) || times < 1) {
 					times = this.prevTimes;
 				}
@@ -1615,7 +1878,93 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-section\">\n\t\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-row\">\n\t\t\t\t<span class=\"tasks-field-replication-secondary\">\n\t\t\t\t\t{{ loc('TASKS_V2_REPLICATION_FINISH') }}\n\t\t\t\t</span>\n\t\t\t</TextMd>\n\t\t\t<div>\n\t\t\t\t<div class=\"tasks-field-replication-sheet__stack\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t\t\t\t:class=\"{'--active': isRowActive(ReplicationRepeatTill.Endless)}\"\n\t\t\t\t\t\t@click.self=\"repeatTill = ReplicationRepeatTill.Endless\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<UiRadio\n\t\t\t\t\t\t\ttag=\"label\"\n\t\t\t\t\t\t\tv-model=\"repeatTill\"\n\t\t\t\t\t\t\t:value=\"ReplicationRepeatTill.Endless\"\n\t\t\t\t\t\t\tinputName=\"tasks-replication-sheet-finish-type\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<TextXs className=\"tasks-replication-sheet-action-row__text\">\n\t\t\t\t\t\t\t{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}\n\t\t\t\t\t\t</TextXs>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t\t\t\t:class=\"{'--active': isRowActive(ReplicationRepeatTill.Times)}\"\n\t\t\t\t\t\t@click.self=\"repeatTill = ReplicationRepeatTill.Times\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<UiRadio\n\t\t\t\t\t\t\ttag=\"label\"\n\t\t\t\t\t\t\tv-model=\"repeatTill\"\n\t\t\t\t\t\t\t:value=\"ReplicationRepeatTill.Times\"\n\t\t\t\t\t\t\tinputName=\"tasks-replication-sheet-finish-type\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<RichLoc\n\t\t\t\t\t\t\tclass=\"tasks-field-replication-row\"\n\t\t\t\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')\"\n\t\t\t\t\t\t\tplaceholder=\"[count/]\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template #count>\n\t\t\t\t\t\t\t\t<BInput\n\t\t\t\t\t\t\t\t\t:modelValue=\"String(replicateParams.times ?? '')\"\n\t\t\t\t\t\t\t\t\t:size=\"InputSize.Sm\"\n\t\t\t\t\t\t\t\t\t:design=\"isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled\"\n\t\t\t\t\t\t\t\t\t:disabled=\"!isRowActive(ReplicationRepeatTill.Times)\"\n\t\t\t\t\t\t\t\t\tstyle=\"max-width: 4em; padding-bottom: 0;\"\n\t\t\t\t\t\t\t\t\t@blur=\"updateTimes($event.target.value)\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</RichLoc>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-replication-sheet-action-row --selectable\"\n\t\t\t\t\t\t:class=\"{'--active': isRowActive(ReplicationRepeatTill.Date)}\"\n\t\t\t\t\t\t@click.self=\"repeatTill = ReplicationRepeatTill.Date\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<UiRadio\n\t\t\t\t\t\t\ttag=\"label\"\n\t\t\t\t\t\t\tv-model=\"repeatTill\"\n\t\t\t\t\t\t\t:value=\"ReplicationRepeatTill.Date\"\n\t\t\t\t\t\t\tinputName=\"tasks-replication-sheet-finish-type\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<TextXs className=\"tasks-replication-sheet-action-row__text\">\n\t\t\t\t\t\t\t{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}\n\t\t\t\t\t\t</TextXs>\n\t\t\t\t\t\t<HoverPill\n\t\t\t\t\t\t\t:readonly=\"!isRowActive(ReplicationRepeatTill.Date)\"\n\t\t\t\t\t\t\ttextOnly\n\t\t\t\t\t\t\tnoOffset\n\t\t\t\t\t\t\tref=\"datepickerFinishOpener\"\n\t\t\t\t\t\t\t@click=\"handleClickDatepickerFinishOpener\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<span class=\"tasks-field-replication-link\">{{ endDateLabel }}</span>\n\t\t\t\t\t\t</HoverPill>\n\t\t\t\t\t\t<ReplicationDatepicker\n\t\t\t\t\t\t\tv-if=\"isDatepickerOpened\"\n\t\t\t\t\t\t\t:dateTs=\"endDateTs\"\n\t\t\t\t\t\t\t:bindElement=\"$refs.datepickerFinishOpener.$el\"\n\t\t\t\t\t\t\t@update:dateTs=\"updateEndDate\"\n\t\t\t\t\t\t\t@close=\"isDatepickerOpened = false\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-section">
+			<TextMd tag="div" className="tasks-field-replication-row">
+				<span class="tasks-field-replication-secondary">
+					{{ loc('TASKS_V2_REPLICATION_FINISH') }}
+				</span>
+			</TextMd>
+			<div>
+				<div class="tasks-field-replication-sheet__stack">
+					<div
+						class="tasks-replication-sheet-action-row --selectable"
+						:class="{'--active': isRowActive(ReplicationRepeatTill.Endless)}"
+						@click.self="repeatTill = ReplicationRepeatTill.Endless"
+					>
+						<UiRadio
+							tag="label"
+							v-model="repeatTill"
+							:value="ReplicationRepeatTill.Endless"
+							inputName="tasks-replication-sheet-finish-type"
+						/>
+						<TextXs className="tasks-replication-sheet-action-row__text">
+							{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}
+						</TextXs>
+					</div>
+					<div
+						class="tasks-replication-sheet-action-row --selectable"
+						:class="{'--active': isRowActive(ReplicationRepeatTill.Times)}"
+						@click.self="repeatTill = ReplicationRepeatTill.Times"
+					>
+						<UiRadio
+							tag="label"
+							v-model="repeatTill"
+							:value="ReplicationRepeatTill.Times"
+							inputName="tasks-replication-sheet-finish-type"
+						/>
+						<RichLoc
+							class="tasks-field-replication-row"
+							:text="loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')"
+							placeholder="[count/]"
+						>
+							<template #count>
+								<BInput
+									:modelValue="String(replicateParams.times ?? '')"
+									:size="InputSize.Sm"
+									:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
+									:disabled="!isRowActive(ReplicationRepeatTill.Times)"
+									style="max-width: 4em; padding-bottom: 0;"
+									@blur="updateTimes($event.target.value)"
+								/>
+							</template>
+						</RichLoc>
+					</div>
+					<div
+						class="tasks-replication-sheet-action-row --selectable"
+						:class="{'--active': isRowActive(ReplicationRepeatTill.Date)}"
+						@click.self="repeatTill = ReplicationRepeatTill.Date"
+					>
+						<UiRadio
+							tag="label"
+							v-model="repeatTill"
+							:value="ReplicationRepeatTill.Date"
+							inputName="tasks-replication-sheet-finish-type"
+						/>
+						<TextXs className="tasks-replication-sheet-action-row__text">
+							{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}
+						</TextXs>
+						<HoverPill
+							:readonly="!isRowActive(ReplicationRepeatTill.Date)"
+							textOnly
+							noOffset
+							ref="datepickerFinishOpener"
+							@click="handleClickDatepickerFinishOpener"
+						>
+							<span class="tasks-field-replication-link">{{ endDateLabel }}</span>
+						</HoverPill>
+						<ReplicationDatepicker
+							v-if="isDatepickerOpened"
+							:dateTs="endDateTs"
+							:bindElement="$refs.datepickerFinishOpener.$el"
+							@update:dateTs="updateEndDate"
+							@close="isDatepickerOpened = false"
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1647,14 +1996,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			showPicker() {
-				var _this$datePicker;
-				(_this$datePicker = this.datePicker) !== null && _this$datePicker !== void 0 ? _this$datePicker : this.datePicker = new ui_datePicker.DatePicker({
+				this.datePicker ??= new ui_datePicker.DatePicker({
 					selectedDates: [this.startTs + tasks_v2_lib_timezone.timezone.getOffset(this.startTs)],
 					type: 'time',
 					events: {
 						[ui_datePicker.DatePickerEvent.SELECT]: event => {
-							const _event$getData = event.getData(),
-								date = _event$getData.date;
+							const {
+								date
+							} = event.getData();
 							const dateTs = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
 							this.startTs = dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs);
 						}
@@ -1667,7 +2016,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.datePicker.show();
 			}
 		},
-		template: "\n\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-section\">\n\t\t\t<RichLoc\n\t\t\t\tclass=\"tasks-field-replication-row tasks-field-replication-secondary\"\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_CREATE_AT')\"\n\t\t\t\tplaceholder=\"[time/]\"\n\t\t\t>\n\t\t\t\t<template #time>\n\t\t\t\t\t<HoverPill textOnly noOffset ref=\"time\" @click=\"showPicker\">\n\t\t\t\t\t\t<span class=\"tasks-field-replication-link\">{{ startTimeFormatted }}</span>\n\t\t\t\t\t</HoverPill>\n\t\t\t\t</template>\n\t\t\t</RichLoc>\n\t\t</TextMd>\n\t"
+		template: `
+		<TextMd tag="div" className="tasks-field-replication-section">
+			<RichLoc
+				class="tasks-field-replication-row tasks-field-replication-secondary"
+				:text="loc('TASKS_V2_REPLICATION_CREATE_AT')"
+				placeholder="[time/]"
+			>
+				<template #time>
+					<HoverPill textOnly noOffset ref="time" @click="showPicker">
+						<span class="tasks-field-replication-link">{{ startTimeFormatted }}</span>
+					</HoverPill>
+				</template>
+			</RichLoc>
+		</TextMd>
+	`
 	};
 
 	// @vue/component
@@ -1745,7 +2108,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return durationTs % weekTs === 0;
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-section\">\n\t\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-row\">\n\t\t\t\t<span class=\"tasks-field-replication-secondary\">\n\t\t\t\t\t{{ loc('TASKS_V2_REPLICATION_DEADLINE') }}\n\t\t\t\t</span>\n\t\t\t\t<HoverPill textOnly noOffset ref=\"deadline\">\n\t\t\t\t\t<span class=\"tasks-field-replication-link\" @click=\"isDeadlinePopupShown = true\">\n\t\t\t\t\t\t{{ deadlineLabel }}\n\t\t\t\t\t</span>\n\t\t\t\t</HoverPill>\n\t\t\t\t<DeadlineAfterPopup\n\t\t\t\t\tv-if=\"isDeadlinePopupShown\"\n\t\t\t\t\t:deadlineAfter=\"replicateParams.deadlineAfter\"\n\t\t\t\t\t:taskId\n\t\t\t\t\t:bindElement=\"$refs.deadline.$el\"\n\t\t\t\t\t@update:deadlineAfter=\"updateDeadlineAfter\"\n\t\t\t\t\t@close=\"isDeadlinePopupShown = false\"\n\t\t\t\t/>\n\t\t\t</TextMd>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-section">
+			<TextMd tag="div" className="tasks-field-replication-row">
+				<span class="tasks-field-replication-secondary">
+					{{ loc('TASKS_V2_REPLICATION_DEADLINE') }}
+				</span>
+				<HoverPill textOnly noOffset ref="deadline">
+					<span class="tasks-field-replication-link" @click="isDeadlinePopupShown = true">
+						{{ deadlineLabel }}
+					</span>
+				</HoverPill>
+				<DeadlineAfterPopup
+					v-if="isDeadlinePopupShown"
+					:deadlineAfter="replicateParams.deadlineAfter"
+					:taskId
+					:bindElement="$refs.deadline.$el"
+					@update:deadlineAfter="updateDeadlineAfter"
+					@close="isDeadlinePopupShown = false"
+				/>
+			</TextMd>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1813,14 +2197,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		methods: {
-			update(_ref) {
-				let workdayOnly = _ref.workdayOnly;
+			update({
+				workdayOnly
+			}) {
 				this.$emit('update', {
 					workdayOnly
 				});
 			}
 		},
-		template: "\n\t\t<TextMd tag=\"div\" className=\"tasks-field-replication-section\">\n\t\t\t<RichLoc\n\t\t\t\tclass=\"tasks-field-replication-row tasks-field-replication-secondary\"\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_ON_WEEKEND_DO')\"\n\t\t\t\tplaceholder=\"[do/]\"\n\t\t\t>\n\t\t\t\t<template #do>\n\t\t\t\t\t<HoverPill textOnly noOffset ref=\"skipWeekends\" @click=\"isMenuShown = true\">\n\t\t\t\t\t\t<span class=\"tasks-field-replication-link\">{{ item?.title || '' }}</span>\n\t\t\t\t\t</HoverPill>\n\t\t\t\t\t<BMenu v-if=\"isMenuShown\" :options @close=\"isMenuShown = false\"/>\n\t\t\t\t</template>\n\t\t\t</RichLoc>\n\t\t</TextMd>\n\t"
+		template: `
+		<TextMd tag="div" className="tasks-field-replication-section">
+			<RichLoc
+				class="tasks-field-replication-row tasks-field-replication-secondary"
+				:text="loc('TASKS_V2_REPLICATION_ON_WEEKEND_DO')"
+				placeholder="[do/]"
+			>
+				<template #do>
+					<HoverPill textOnly noOffset ref="skipWeekends" @click="isMenuShown = true">
+						<span class="tasks-field-replication-link">{{ item?.title || '' }}</span>
+					</HoverPill>
+					<BMenu v-if="isMenuShown" :options @close="isMenuShown = false"/>
+				</template>
+			</RichLoc>
+		</TextMd>
+	`
 	};
 
 	// @vue/component
@@ -1869,7 +2269,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.UpdateReplicateParams);
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet-footer\">\n\t\t\t<UiButton\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_CANCEL')\"\n\t\t\t\t:size=\"ButtonSize.MEDIUM\"\n\t\t\t\t:color=\"ButtonColor.LIGHT\"\n\t\t\t\t:style=\"AirButtonStyle.PLAIN\"\n\t\t\t\t@click=\"$emit('close')\"\n\t\t\t/>\n\t\t\t<UiButton\n\t\t\t\t:text=\"loc('TASKS_V2_REPLICATION_SAVE')\"\n\t\t\t\t:size=\"ButtonSize.MEDIUM\"\n\t\t\t\t:color=\"ButtonColor.PRIMARY\"\n\t\t\t\t@click=\"save\"\n\t\t\t/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet-footer">
+			<UiButton
+				:text="loc('TASKS_V2_REPLICATION_CANCEL')"
+				:size="ButtonSize.MEDIUM"
+				:color="ButtonColor.LIGHT"
+				:style="AirButtonStyle.PLAIN"
+				@click="$emit('close')"
+			/>
+			<UiButton
+				:text="loc('TASKS_V2_REPLICATION_SAVE')"
+				:size="ButtonSize.MEDIUM"
+				:color="ButtonColor.PRIMARY"
+				@click="save"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1921,8 +2337,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			initReplicateParams() {
-				var _this$task;
-				if (!main_core.Type.isObject(((_this$task = this.task) === null || _this$task === void 0 ? void 0 : _this$task.replicateParams) || null)) {
+				if (!main_core.Type.isObject(this.task?.replicateParams || null)) {
 					return;
 				}
 				this.replicateParams = {
@@ -1931,8 +2346,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					weekDays: [...(this.task.replicateParams.weekDays || [])]
 				};
 			},
-			updateReplicateParams() {
-				let params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+			updateReplicateParams(params = {}) {
 				this.replicateParams = {
 					...this.replicateParams,
 					...params
@@ -1945,7 +2359,37 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('close');
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet\">\n\t\t\t<div class=\"tasks-field-replication-sheet-header\">\n\t\t\t\t<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_TITLE_SHEET') }}</HeadlineMd>\n\t\t\t\t<BIcon\n\t\t\t\t\tclass=\"tasks-field-replication-sheet-close\"\n\t\t\t\t\t:name=\"Outline.CROSS_L\"\n\t\t\t\t\thoverable\n\t\t\t\t\t@click=\"close\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-field-replication-sheet-body\">\n\t\t\t\t<div v-if=\"!isTemplate\" class=\"tasks-field-replication-sheet-description\">\n\t\t\t\t\t<span class=\"tasks-field-replication-sheet-description-text\">\n\t\t\t\t\t\t<RichLoc :text=\"loc('TASKS_V2_REPLICATION_SHEET_DESCRIPTION')\" placeholder=\"[helpdesk]\">\n\t\t\t\t\t\t\t<template #helpdesk=\"{ text }\">\n\t\t\t\t\t\t\t\t<a class=\"tasks-field-replication-helpdesk\" @click=\"showHelpDesk\">{{ text }}</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</RichLoc>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<ReplicationSettings @update=\"updateReplicateParams\"/>\n\t\t\t\t<ReplicationStart @update=\"updateReplicateParams\"/>\n\t\t\t\t<ReplicationFinish @update=\"updateReplicateParams\"/>\n\t\t\t\t<ReplicationStartTime @update=\"updateReplicateParams\"/>\n\t\t\t\t<ReplicationDeadline v-if=\"!isTemplate\" @update=\"updateReplicateParams\"/>\n\t\t\t\t<ReplicationWeekend v-if=\"isDailyPeriod\" @update=\"updateReplicateParams\"/>\n\t\t\t</div>\n\t\t\t<ReplicationSheetFooter :replicateParams @close=\"close\"/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet">
+			<div class="tasks-field-replication-sheet-header">
+				<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_TITLE_SHEET') }}</HeadlineMd>
+				<BIcon
+					class="tasks-field-replication-sheet-close"
+					:name="Outline.CROSS_L"
+					hoverable
+					@click="close"
+				/>
+			</div>
+			<div class="tasks-field-replication-sheet-body">
+				<div v-if="!isTemplate" class="tasks-field-replication-sheet-description">
+					<span class="tasks-field-replication-sheet-description-text">
+						<RichLoc :text="loc('TASKS_V2_REPLICATION_SHEET_DESCRIPTION')" placeholder="[helpdesk]">
+							<template #helpdesk="{ text }">
+								<a class="tasks-field-replication-helpdesk" @click="showHelpDesk">{{ text }}</a>
+							</template>
+						</RichLoc>
+					</span>
+				</div>
+				<ReplicationSettings @update="updateReplicateParams"/>
+				<ReplicationStart @update="updateReplicateParams"/>
+				<ReplicationFinish @update="updateReplicateParams"/>
+				<ReplicationStartTime @update="updateReplicateParams"/>
+				<ReplicationDeadline v-if="!isTemplate" @update="updateReplicateParams"/>
+				<ReplicationWeekend v-if="isDailyPeriod" @update="updateReplicateParams"/>
+			</div>
+			<ReplicationSheetFooter :replicateParams @close="close"/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -1971,7 +2415,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
-		template: "\n\t\t<BottomSheet\n\t\t\t:sheetBindProps\n\t\t\tcustomClass=\"tasks-bottom-sheet-replicate-content\"\n\t\t\t@close=\"$emit('close')\"\n\t\t>\n\t\t\t<ReplicationSheetContent @close=\"$emit('close')\"/>\n\t\t</BottomSheet>\n\t"
+		template: `
+		<BottomSheet
+			:sheetBindProps
+			customClass="tasks-bottom-sheet-replicate-content"
+			@close="$emit('close')"
+		>
+			<ReplicationSheetContent @close="$emit('close')"/>
+		</BottomSheet>
+	`
 	};
 
 	// @vue/component
@@ -1987,7 +2439,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet-header\">\n\t\t\t<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_HISTORY_SHEET') }}</HeadlineMd>\n\t\t\t<BIcon\n\t\t\t\tclass=\"tasks-field-replication-sheet-close\"\n\t\t\t\t:name=\"Outline.CROSS_L\"\n\t\t\t\thoverable\n\t\t\t\t@click=\"$emit('close')\"\n\t\t\t/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet-header">
+			<HeadlineMd>{{ loc('TASKS_V2_REPLICATION_HISTORY_SHEET') }}</HeadlineMd>
+			<BIcon
+				class="tasks-field-replication-sheet-close"
+				:name="Outline.CROSS_L"
+				hoverable
+				@click="$emit('close')"
+			/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -2029,12 +2491,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), offsetTimestamp);
 			},
 			setRef(element, rowId) {
-				var _this$systemLogTimeRe;
-				(_this$systemLogTimeRe = this.systemLogTimeRef) !== null && _this$systemLogTimeRe !== void 0 ? _this$systemLogTimeRe : this.systemLogTimeRef = {};
+				this.systemLogTimeRef ??= {};
 				this.systemLogTimeRef[rowId] = element;
 			}
 		},
-		template: "\n\t\t<template v-for=\"(time, id) in systemLogTime\" :key=\"id\">\n\t\t\t<div :ref=\"(el) => setRef(el, time.rowId)\">{{ time.offsetTimestamp }}</div>\n\t\t</template>\n\t"
+		template: `
+		<template v-for="(time, id) in systemLogTime" :key="id">
+			<div :ref="(el) => setRef(el, time.rowId)">{{ time.offsetTimestamp }}</div>
+		</template>
+	`
 	};
 
 	// @vue/component
@@ -2049,7 +2514,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				default: null
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-hint\">\n\t\t\t<div>{{ errorMessage.replace('#LINK#', '') }}</div>\n\t\t\t<a v-if=\"errorLink\" :href=\"errorLink\">\n\t\t\t\t{{ loc('TASKS_V2_REPLICATION_NO_ACCESS_MORE') }}\n\t\t\t</a>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-hint">
+			<div>{{ errorMessage.replace('#LINK#', '') }}</div>
+			<a v-if="errorLink" :href="errorLink">
+				{{ loc('TASKS_V2_REPLICATION_NO_ACCESS_MORE') }}
+			</a>
+		</div>
+	`
 	};
 
 	const pattern = /\(#(\d+)\)(?![\S\s]*\(#\d+\))/;
@@ -2085,12 +2557,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		computed: {
 			formattedMessage() {
-				var _this$message$message;
-				return (_this$message$message = this.message.message) === null || _this$message$message === void 0 ? void 0 : _this$message$message.replace(pattern, '').trim();
+				return this.message.message?.replace(pattern, '').trim();
 			},
 			linkText() {
-				var _this$message$message2, _this$message$message3;
-				return (_this$message$message2 = (_this$message$message3 = this.message.message) === null || _this$message$message3 === void 0 ? void 0 : _this$message$message3.match(pattern)[0]) !== null && _this$message$message2 !== void 0 ? _this$message$message2 : null;
+				return this.message.message?.match(pattern)[0] ?? null;
 			},
 			errorMessage() {
 				return this.message.errors[0].MESSAGE;
@@ -2123,7 +2593,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-message\">\n\t\t\t<div v-if=\"message.link\">{{ formattedMessage }} <a :href=\"message.link\">{{ linkText }}</a></div>\n\t\t\t<span v-else>{{ message.message }}</span>\n\t\t\t<BIcon\n\t\t\t\tv-if=\"message.errors?.length > 0\"\n\t\t\t\tclass=\"tasks-field-replication-error-icon\"\n\t\t\t\t:name=\"Outline.ALERT\"\n\t\t\t\tref=\"error\"\n\t\t\t\t@mouseenter=\"openHint\"\n\t\t\t/>\n\t\t\t<Hint v-if=\"showHint\" :bindElement=\"$refs.error.$el\" :options=\"popupOptions\" @close=\"closeHint\">\n\t\t\t\t<ErrorHint :errorMessage :errorLink/>\n\t\t\t</Hint>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-message">
+			<div v-if="message.link">{{ formattedMessage }} <a :href="message.link">{{ linkText }}</a></div>
+			<span v-else>{{ message.message }}</span>
+			<BIcon
+				v-if="message.errors?.length > 0"
+				class="tasks-field-replication-error-icon"
+				:name="Outline.ALERT"
+				ref="error"
+				@mouseenter="openHint"
+			/>
+			<Hint v-if="showHint" :bindElement="$refs.error.$el" :options="popupOptions" @close="closeHint">
+				<ErrorHint :errorMessage :errorLink/>
+			</Hint>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -2167,8 +2652,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				};
 			},
 			setRef(element, rowId) {
-				var _this$systemLogMessag;
-				(_this$systemLogMessag = this.systemLogMessageRef) !== null && _this$systemLogMessag !== void 0 ? _this$systemLogMessag : this.systemLogMessageRef = {};
+				this.systemLogMessageRef ??= {};
 				this.systemLogMessageRef[rowId] = element;
 			},
 			onHintOpen(rowId) {
@@ -2180,12 +2664,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			}
 		},
-		template: "\n\t\t<template v-for=\"(message, id) in systemLogMessage\" :key=\"id\">\n\t\t\t<MessageField\n\t\t\t\t:ref=\"(el) => setRef(el?.$el, message.rowId)\"\n\t\t\t\t:message=\"message\"\n\t\t\t\t:activeHintRowId\n\t\t\t\t@hintOpen=\"onHintOpen\"\n\t\t\t\t@hintClose=\"onHintClose\"\n\t\t\t/>\n\t\t</template>\n\t"
+		template: `
+		<template v-for="(message, id) in systemLogMessage" :key="id">
+			<MessageField
+				:ref="(el) => setRef(el?.$el, message.rowId)"
+				:message="message"
+				:activeHintRowId
+				@hintOpen="onHintOpen"
+				@hintClose="onHintClose"
+			/>
+		</template>
+	`
 	};
 
 	// @vue/component
 	const GridLoader = {
-		template: "\n\t\t<div class=\"tasks-template-history-grid-loader-spinner-container\">\n\t\t\t<div class=\"tasks-template-history-grid-loader-spinner\"/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-template-history-grid-loader-spinner-container">
+			<div class="tasks-template-history-grid-loader-spinner"/>
+		</div>
+	`
 	};
 
 	const gridId = 'tasks-template-history-grid';
@@ -2212,30 +2710,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			void this.getData();
 		},
 		beforeUnmount() {
-			var _BX$Main, _PopupManager$getPopu;
 			main_core_events.EventEmitter.unsubscribe('Grid::beforeRequest', this.handleBeforeGridRequest);
 			main_core_events.EventEmitter.unsubscribe('Grid::updated', this.update);
-			(_BX$Main = BX.Main) === null || _BX$Main === void 0 || (_BX$Main = _BX$Main.gridManager) === null || _BX$Main === void 0 || _BX$Main.destroy(gridId);
-			(_PopupManager$getPopu = main_popup.PopupManager.getPopupById("".concat(gridId, "-grid-settings-window"))) === null || _PopupManager$getPopu === void 0 || _PopupManager$getPopu.destroy();
+			BX.Main?.gridManager?.destroy(gridId);
+			main_popup.PopupManager.getPopupById(`${gridId}-grid-settings-window`)?.destroy();
 		},
 		methods: {
 			async getData() {
-				const _await$apiClient$post = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateHistoryGetGrid, {
-						templateId: this.templateId
-					}),
-					html = _await$apiClient$post.html;
+				const {
+					html
+				} = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateHistoryGetGrid, {
+					templateId: this.templateId
+				});
 				await main_core.Runtime.html(this.$refs.grid, html);
 				this.update();
 			},
 			handleBeforeGridRequest(event) {
-				const _event$getData = event.getData(),
-					_event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
-					eventArgs = _event$getData2[1];
+				const [, eventArgs] = event.getData();
 				if (eventArgs.url) {
-					var _eventArgs$url;
-					this.nav = new main_core.Uri((_eventArgs$url = eventArgs.url) !== null && _eventArgs$url !== void 0 ? _eventArgs$url : '').getQueryParams().nav;
+					this.nav = new main_core.Uri(eventArgs.url ?? '').getQueryParams().nav;
 				}
-				eventArgs.url = "/bitrix/services/main/ajax.php?action=tasks.V2.Template.History.getGridData&nav=".concat(this.nav);
+				eventArgs.url = `/bitrix/services/main/ajax.php?action=tasks.V2.Template.History.getGridData&nav=${this.nav}`;
 				eventArgs.method = 'POST';
 				eventArgs.data = {
 					templateId: this.templateId
@@ -2246,7 +2741,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void this.$refs.messageFields.update();
 			}
 		},
-		template: "\n\t\t<div class=\"tasks-field-replication-sheet__history-grid-container\">\n\t\t\t<div ref=\"grid\" class=\"tasks-field-replication-sheet__history-grid-main-content\"><GridLoader/></div>\n\t\t\t<TimeFields ref=\"timeFields\" :getGrid=\"() => this.$refs.grid\"/>\n\t\t\t<MessageFields ref=\"messageFields\" :getGrid=\"() => this.$refs.grid\"/>\n\t\t</div>\n\t"
+		template: `
+		<div class="tasks-field-replication-sheet__history-grid-container">
+			<div ref="grid" class="tasks-field-replication-sheet__history-grid-main-content"><GridLoader/></div>
+			<TimeFields ref="timeFields" :getGrid="() => this.$refs.grid"/>
+			<MessageFields ref="messageFields" :getGrid="() => this.$refs.grid"/>
+		</div>
+	`
 	};
 
 	// @vue/component
@@ -2269,7 +2770,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update', params);
 			}
 		},
-		template: "\n\t\t<BottomSheet :sheetBindProps @close=\"$emit('close')\">\n\t\t\t<div class=\"tasks-field-replication-sheet\">\n\t\t\t\t<ReplicationSheetHeader\n\t\t\t\t\t:head=\"loc('TASKS_V2_REPLICATION_HISTORY_SHEET')\"\n\t\t\t\t\t@close=\"$emit('close')\"\n\t\t\t\t/>\n\t\t\t\t<ReplicationHistorySheetContent/>\n\t\t\t</div>\n\t\t</BottomSheet>\n\t"
+		template: `
+		<BottomSheet :sheetBindProps @close="$emit('close')">
+			<div class="tasks-field-replication-sheet">
+				<ReplicationSheetHeader
+					:head="loc('TASKS_V2_REPLICATION_HISTORY_SHEET')"
+					@close="$emit('close')"
+				/>
+				<ReplicationHistorySheetContent/>
+			</div>
+		</BottomSheet>
+	`
 	};
 
 	// @vue/component
@@ -2343,11 +2854,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				this.isLoading = true;
 				const templateId = tasks_v2_lib_idUtils.idUtils.unbox(this.taskId);
-				const _await$apiClient$post = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateHistoryGetCount, {
-						templateId
-					}),
-					count = _await$apiClient$post.count;
-				this.logCount = count !== null && count !== void 0 ? count : 0;
+				const {
+					count
+				} = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateHistoryGetCount, {
+					templateId
+				});
+				this.logCount = count ?? 0;
 				this.isLoading = false;
 			},
 			handleClick() {
@@ -2362,7 +2874,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update:isHistorySheetShown', isShown);
 			}
 		},
-		template: "\n\t\t<div\n\t\t\tclass=\"tasks-full-card-field-container tasks-field-replication\"\n\t\t\t:data-task-id=\"task.id\"\n\t\t\t:data-task-field-id=\"replicationMeta.id\"\n\t\t\tdata-field-container\n\t\t\t@click=\"handleClick\"\n\t\t>\n\t\t\t<ReplicationContent/>\n\t\t</div>\n\t\t<template v-if=\"isEdit && isTemplate && task.replicate\">\n\t\t\t<div v-if=\"isLoading\" class=\"tasks-field-replication-history\">\n\t\t\t\t<BLine :width=\"120\"/>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-else-if=\"logCount > 0\"\n\t\t\t\tclass=\"tasks-field-replication-history\"\n\t\t\t\t@click=\"setHistorySheetShown(true)\"\n\t\t\t>\n\t\t\t\t<TextXs className=\"tasks-field-replication-history-title\">{{ historyTitle }}</TextXs>\n\t\t\t\t<BIcon :name=\"Outline.CHEVRON_RIGHT_M\" color=\"var(--ui-color-base-4)\"/>\n\t\t\t</div>\n\t\t</template>\n\t\t<ReplicationSheet v-if=\"isSheetShown\" :sheetBindProps @close=\"setSheetShown(false)\"/>\n\t\t<ReplicationHistorySheets v-if=\"isHistorySheetShown\" :sheetBindProps @close=\"setHistorySheetShown(false)\"/>\n\t"
+		template: `
+		<div
+			class="tasks-full-card-field-container tasks-field-replication"
+			:data-task-id="task.id"
+			:data-task-field-id="replicationMeta.id"
+			data-field-container
+			@click="handleClick"
+		>
+			<ReplicationContent/>
+		</div>
+		<template v-if="isEdit && isTemplate && task.replicate">
+			<div v-if="isLoading" class="tasks-field-replication-history">
+				<BLine :width="120"/>
+			</div>
+			<div
+				v-else-if="logCount > 0"
+				class="tasks-field-replication-history"
+				@click="setHistorySheetShown(true)"
+			>
+				<TextXs className="tasks-field-replication-history-title">{{ historyTitle }}</TextXs>
+				<BIcon :name="Outline.CHEVRON_RIGHT_M" color="var(--ui-color-base-4)"/>
+			</div>
+		</template>
+		<ReplicationSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
+		<ReplicationHistorySheets v-if="isHistorySheetShown" :sheetBindProps @close="setHistorySheetShown(false)"/>
+	`
 	};
 
 	// @vue/component
@@ -2453,7 +2990,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.$emit('update:isSheetShown', isShown);
 			}
 		},
-		template: "\n\t\t<Chip\n\t\t\tv-hint=\"tooltip\"\n\t\t\t:design\n\t\t\t:icon=\"Outline.REPEAT\"\n\t\t\t:text=\"loc('TASKS_V2_REPLICATION_TITLE_CHIP')\"\n\t\t\t:lock=\"isLocked\"\n\t\t\t:data-task-id=\"taskId\"\n\t\t\t:data-task-chip-id=\"replicationMeta.id\"\n\t\t\tref=\"chip\"\n\t\t\t@click=\"handleClick\"\n\t\t/>\n\t\t<ReplicationSheet\n\t\t\tv-if=\"isSheetShown\"\n\t\t\t:sheetBindProps\n\t\t\t@close=\"setSheetShown(false)\"\n\t\t/>\n\t"
+		template: `
+		<Chip
+			v-hint="tooltip"
+			:design
+			:icon="Outline.REPEAT"
+			:text="loc('TASKS_V2_REPLICATION_TITLE_CHIP')"
+			:lock="isLocked"
+			:data-task-id="taskId"
+			:data-task-chip-id="replicationMeta.id"
+			ref="chip"
+			@click="handleClick"
+		/>
+		<ReplicationSheet
+			v-if="isSheetShown"
+			:sheetBindProps
+			@close="setSheetShown(false)"
+		/>
+	`
 	};
 
 	exports.DateStringConverter = DateStringConverter;
@@ -2463,5 +3017,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.TimeStringConverter = TimeStringConverter;
 	exports.replicationMeta = replicationMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Event, BX.UI.System.Typography.Vue, BX.UI.System.Skeleton.Vue, BX.UI.IconSet, BX, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Vue3.Directives, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX, BX.Main, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Vue3, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.System.Input.Vue, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Vue3.Components, BX.Tasks.V2.Component.Fields, BX.UI.Vue3.Components, BX.UI.DatePicker, BX.Tasks.V2.Component.Fields, BX.UI.System.Menu, BX.Tasks.V2.Lib, BX.Main, BX.UI.System.Chip.Vue, BX.Tasks.V2, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX.Event, BX.UI.System.Typography.Vue, BX.UI.System.Skeleton.Vue, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Vue3.Directives, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX, BX.Main, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Vue3, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.System.Input.Vue, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Vue3.Components, BX.Tasks.V2.Component.Fields, BX.UI.Vue3.Components, BX.UI.DatePicker, BX.Tasks.V2.Component.Fields, BX.UI.System.Menu, BX.Tasks.V2.Lib, BX.Main, BX.UI.System.Chip.Vue, BX.Tasks.V2, BX.Tasks.V2.Lib);
 //# sourceMappingURL=replication.bundle.js.map

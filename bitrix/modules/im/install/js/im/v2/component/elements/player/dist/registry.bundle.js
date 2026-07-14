@@ -277,23 +277,35 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const Direction = {
+		asc: 'asc',
+		desc: 'desc'
+	};
+	const ScopeDirection = {
+		[im_v2_const.PlaylistScope.chat]: Direction.asc,
+		[im_v2_const.PlaylistScope.sidebar]: Direction.desc
+	};
 	class Playlist {
-		static #instance;
+		static #instances = new Map();
+		#scope;
 		#files = {};
-		static getInstance() {
-			if (!this.#instance) {
-				this.#instance = new this();
+		constructor(scope) {
+			this.#scope = scope;
+		}
+		static getInstance(scope) {
+			if (!this.#instances.has(scope)) {
+				this.#instances.set(scope, new this(scope));
 			}
-			return this.#instance;
+			return this.#instances.get(scope);
 		}
 		register(file) {
 			if (!this.#files[file.chatId]) {
-				this.#files[file.chatId] = new Set();
+				this.#files[file.chatId] = new Map();
 			}
-			this.#files[file.chatId].add(file);
+			this.#files[file.chatId].set(file.id, file);
 		}
 		unregister(file) {
-			this.#files[file.chatId].delete(file);
+			this.#files[file.chatId]?.delete(file.id);
 		}
 		onFileEnded(payload) {
 			const {
@@ -306,14 +318,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			if (!nextFile) {
 				return;
 			}
-			emitter.emit(im_v2_const.EventType.roundVideoPlayer.playNext, {
-				fileId: nextFile.id
+			emitter.emit(im_v2_const.EventType.player.playNext, {
+				fileId: nextFile.id,
+				scope: this.#scope
 			});
 		}
 		#getNextFile(file) {
-			const chatFiles = [...this.#files[file.chatId]];
-			chatFiles.sort((a, b) => a.date - b.date);
-			const currentIndex = chatFiles.indexOf(file);
+			const chat = this.#files[file.chatId];
+			if (!chat) {
+				return null;
+			}
+			const direction = ScopeDirection[this.#scope];
+			if (!direction) {
+				return null;
+			}
+			const sortCallback = direction === Direction.desc ? (a, b) => b.date - a.date : (a, b) => a.date - b.date;
+			const chatFiles = [...chat.values()].sort(sortCallback);
+			const currentIndex = chatFiles.findIndex(chatFile => chatFile.id === file.id);
+			if (currentIndex === -1) {
+				return null;
+			}
 			return chatFiles[currentIndex + 1];
 		}
 	}
@@ -557,11 +581,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
-			Playlist.getInstance().register(this.file);
+			Playlist.getInstance(im_v2_const.PlaylistScope.chat).register(this.file);
 		},
 		mounted() {
 			this.getObserver().observe(this.$refs.body);
-			this.getEmitter().subscribe(im_v2_const.EventType.roundVideoPlayer.playNext, this.handlePlayNextRequest);
+			this.getEmitter().subscribe(im_v2_const.EventType.player.playNext, this.handlePlayNextRequest);
 			this.getEmitter().subscribe(im_v2_const.EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
 			if (this.startWithSound) {
 				this.switchToManualMode();
@@ -570,8 +594,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		beforeUnmount() {
 			this.stopProgressAnimation();
 			this.getObserver().unobserve(this.$refs.body);
-			Playlist.getInstance().unregister(this.file);
-			this.getEmitter().unsubscribe(im_v2_const.EventType.roundVideoPlayer.playNext, this.handlePlayNextRequest);
+			Playlist.getInstance(im_v2_const.PlaylistScope.chat).unregister(this.file);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.player.playNext, this.handlePlayNextRequest);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.roundVideoPlayer.onClickPlay, this.handleOtherVideoStarted);
 		},
 		methods: {
@@ -617,7 +641,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			handleEnded() {
 				this.switchToAutoplayMode();
-				Playlist.getInstance().onFileEnded({
+				Playlist.getInstance(im_v2_const.PlaylistScope.chat).onFileEnded({
 					file: this.file,
 					context: {
 						emitter: this.getEmitter()
@@ -635,9 +659,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			handlePlayNextRequest(event) {
 				const {
-					fileId
+					fileId,
+					scope
 				} = event.getData();
-				if (fileId !== this.file.id) {
+				if (fileId !== this.file.id || scope !== im_v2_const.PlaylistScope.chat) {
 					return;
 				}
 				this.$refs.body.scrollIntoView({
@@ -978,8 +1003,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const ID_KEY = 'im:audioplayer:id';
-
 	// @vue/component
 	const AudioPlayer = {
 		name: 'AudioPlayer',
@@ -990,10 +1013,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			TranscriptionText
 		},
 		props: {
-			id: {
-				type: Number,
-				default: 0
-			},
 			src: {
 				type: String,
 				default: ''
@@ -1025,6 +1044,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withTranscription: {
 				type: Boolean,
 				default: true
+			},
+			playlistScope: {
+				type: String,
+				default: im_v2_const.PlaylistScope.chat
 			}
 		},
 		data() {
@@ -1061,9 +1084,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			fileSize() {
 				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
 			},
-			getAudioPlayerIds() {
-				return this.$Bitrix.Data.get(ID_KEY, []);
-			},
 			currentRateLabel() {
 				return `${this.currentRate}x`;
 			},
@@ -1074,37 +1094,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.withTranscription && this.file.isTranscribable && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiFileTranscriptionAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
 			}
 		},
-		watch: {
-			id(value) {
-				this.registerPlayer(value);
-			},
-			timeCurrent(value) {
-				const progress = Math.round(100 / this.timeTotal * value);
-				if (progress > 70) {
-					this.preloadNext();
-				}
-			}
-		},
 		created() {
 			this.localStorageInst = im_v2_lib_localStorage.LocalStorageManager.getInstance();
 			this.currentRate = this.getRateFromLS();
-			this.preloadRequestSent = false;
-			this.registeredId = 0;
-			this.registerPlayer(this.id);
-			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.play, this.onPlay);
-			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.stop, this.onStop);
+			Playlist.getInstance(this.playlistScope).register(this.file);
 			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
-			this.getEmitter().subscribe(im_v2_const.EventType.audioPlayer.preload, this.onPreload);
+			this.getEmitter().subscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
 		},
 		mounted() {
 			this.getObserver().observe(this.$refs.body);
 		},
 		beforeUnmount() {
-			this.unregisterPlayer();
-			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.play, this.onPlay);
-			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.stop, this.onStop);
+			Playlist.getInstance(this.playlistScope).unregister(this.file);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.pause, this.onPause);
-			this.getEmitter().unsubscribe(im_v2_const.EventType.audioPlayer.preload, this.onPreload);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.player.playNext, this.onPlayNext);
 			this.getObserver().unobserve(this.$refs.body);
 		},
 		methods: {
@@ -1172,76 +1175,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.currentRate = newRate;
 				this.source().playbackRate = newRate;
 			},
-			registerPlayer(id) {
-				if (id <= 0) {
-					return;
-				}
-				this.unregisterPlayer();
-				const audioIdArray = [...new Set([...this.getAudioPlayerIds, id])];
-				this.$Bitrix.Data.set(ID_KEY, audioIdArray.sort((a, b) => a - b));
-				this.registeredId = id;
-			},
-			unregisterPlayer() {
-				if (!this.registeredId) {
-					return;
-				}
-				this.$Bitrix.Data.get(ID_KEY, this.getAudioPlayerIds.filter(id => id !== this.registeredId));
-				this.registeredId = 0;
-			},
-			playNext() {
-				if (!this.registeredId) {
-					return;
-				}
-				const nextId = this.getAudioPlayerIds.filter(id => id > this.registeredId).slice(0, 1)[0];
-				if (nextId) {
-					this.getEmitter().emit(im_v2_const.EventType.audioPlayer.play, {
-						id: nextId,
-						start: true
-					});
-				}
-			},
-			preloadNext() {
-				if (this.preloadRequestSent || !this.registeredId) {
-					return;
-				}
-				this.preloadRequestSent = true;
-				const nextId = this.getAudioPlayerIds.filter(id => id > this.registeredId).slice(0, 1)[0];
-				if (nextId) {
-					this.getEmitter().emit(im_v2_const.EventType.audioPlayer.preload, {
-						id: nextId
-					});
-				}
-			},
-			onPlay(event) {
-				const data = event.getData();
-				if (data.id !== this.id) {
-					return;
-				}
-				if (data.start) {
-					this.stop();
-				}
-				this.play();
-			},
-			onStop(event) {
-				const data = event.getData();
-				if (data.initiator === this.id) {
-					return;
-				}
-				this.stop();
-			},
 			onPause(event) {
 				const data = event.getData();
-				if (data.initiator === this.id) {
+				if (data.initiator === this.file.id) {
 					return;
 				}
 				this.pause();
 			},
-			onPreload(event) {
+			onPlayNext(event) {
 				const data = event.getData();
-				if (data.id !== this.id) {
+				if (data.fileId !== this.file.id || data.scope !== this.playlistScope) {
 					return;
 				}
-				this.loadFile();
+				this.$refs.body?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center'
+				});
+				this.play();
 			},
 			source() {
 				return this.$refs.source;
@@ -1259,7 +1209,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						break;
 					case 'abort':
 					case 'error':
-						console.error('BxAudioPlayer: load failed', this.id, event);
+						console.error('BxAudioPlayer: load failed', this.file.id, event);
 						this.loading = false;
 						this.state = im_v2_const.AudioPlaybackState.none;
 						this.timeTotal = 0;
@@ -1274,9 +1224,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							return;
 						}
 						this.timeCurrent = this.source().currentTime;
-						if (this.isPlaying && this.timeCurrent >= this.timeTotal) {
-							this.playNext();
-						}
+						break;
+					case 'ended':
+						this.timeCurrent = 0;
+						this.source().currentTime = 0;
+						this.state = im_v2_const.AudioPlaybackState.stop;
+						Playlist.getInstance(this.playlistScope).onFileEnded({
+							file: this.file,
+							context: {
+								emitter: this.getEmitter()
+							}
+						});
 						break;
 					case 'pause':
 						im_v2_lib_analytics.Analytics.getInstance().player.onPause(this.file.id);
@@ -1287,14 +1245,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					case 'play':
 						im_v2_lib_analytics.Analytics.getInstance().player.onPlay(this.file.id);
 						this.state = im_v2_const.AudioPlaybackState.play;
-						if (this.state === im_v2_const.AudioPlaybackState.stop) {
-							this.timeCurrent = 0;
-						}
-						if (this.id > 0) {
-							this.getEmitter().emit(im_v2_const.EventType.audioPlayer.pause, {
-								initiator: this.id
-							});
-						}
+						this.getEmitter().emit(im_v2_const.EventType.audioPlayer.pause, {
+							initiator: this.file.id
+						});
 						break;
 					// No default
 				}
@@ -1325,8 +1278,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-audio-player__scope">
-			<div 
-				class="bx-im-audio-player__container" 
+			<div
+				class="bx-im-audio-player__container"
 				ref="body"
 				@mouseover="showContextButton = true"
 				@mouseleave="showContextButton = false"
@@ -1345,13 +1298,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<MessageAvatar
 							:messageId="messageId"
 							:authorId="authorId"
-							:size="AvatarSize.XS" 
+							:size="AvatarSize.XS"
 						/>
 					</div>
 				</div>
 				<div class="bx-im-audio-player__content-container">
 					<div class="bx-im-audio-player__timeline-container">
-						<Timeline 
+						<Timeline
 							:loaded="loaded"
 							:timeCurrent="timeCurrent"
 							:timeTotal="timeTotal"
@@ -1386,11 +1339,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						@click="$emit('contextMenuClick', $event)"
 					></button>
 				</div>
-				<audio 
-					v-if="src" 
-					:src="src" 
-					class="bx-im-audio-player__audio-source" 
-					ref="source" 
+				<audio
+					v-if="src"
+					:src="src"
+					class="bx-im-audio-player__audio-source"
+					ref="source"
 					:preload="preload"
 					@abort="audioEventRouter('abort', $event)"
 					@error="audioEventRouter('error', $event)"
@@ -1404,6 +1357,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@play="audioEventRouter('play', $event)"
 					@playing="audioEventRouter('playing', $event)"
 					@pause="audioEventRouter('pause', $event)"
+					@ended="audioEventRouter('ended', $event)"
 				></audio>
 			</div>
 			<TranscriptionText

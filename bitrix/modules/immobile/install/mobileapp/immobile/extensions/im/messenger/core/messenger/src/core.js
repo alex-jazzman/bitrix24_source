@@ -10,6 +10,7 @@ jn.define('im/messenger/core/messenger/core', (require, exports, module) => {
 	const { recentModel } = require('im/messenger/model');
 
 	const { Feature } = require('im/messenger/lib/feature');
+	const { MessengerParamsWriter } = require('im/messenger/lib/params');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('core');
 
@@ -18,6 +19,12 @@ jn.define('im/messenger/core/messenger/core', (require, exports, module) => {
 	 */
 	class MessengerCore extends CoreApplication
 	{
+		async init()
+		{
+			await MessengerParamsWriter.dump();
+			await super.init();
+		}
+
 		async initDatabase()
 		{
 			if (!this.config.localStorage.enable)

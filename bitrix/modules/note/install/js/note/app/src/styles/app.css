@@ -3,6 +3,7 @@
 }
 
 html {
+	/* @chef-ignore */
 	overscroll-behavior: none;
 }
 
@@ -114,6 +115,7 @@ body {
 	scrollbar-gutter: stable;
 	min-height: 0;
 	background: var(--ui-color-bg-content-primary);
+	/* @chef-ignore */
 	overscroll-behavior: contain;
 }
 

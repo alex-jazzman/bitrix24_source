@@ -1,0 +1,42 @@
+.sonet--project-wizard--privacy-type-field-content {
+	--sonet-project-wizard-privacy-item-title: var(--ui-color-base-2);
+
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inline-sm2) var(--ui-space-inline-md2);
+}
+
+.sonet--project-wizard--privacy-type {
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	cursor: pointer;
+}
+
+.sonet--project-wizard--privacy-type.--selected {
+	--sonet-project-wizard-privacy-item-title: var(--ui-color-accent-main-primary);
+}
+
+.sonet--project-wizard--privacy-type-content {
+	display: flex;
+	flex-direction: column;
+}
+
+.sonet--project-wizard--privacy-type-radio {
+	padding: 3px 0;
+}
+
+.sonet--project-wizard--privacy-type-title-text {
+	color: var(--sonet-project-wizard-privacy-item-title);
+}
+
+.sonet--project-wizard--privacy-type-title-text.--selected {
+	color: var(--sonet-project-wizard-privacy-item-title);
+}
+
+.sonet--project-wizard--privacy-type-description-text {
+	color: var(--ui-color-base-3);
+}

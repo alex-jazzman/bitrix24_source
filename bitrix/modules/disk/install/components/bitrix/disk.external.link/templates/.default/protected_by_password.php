@@ -11,6 +11,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CDiskExternalLinkComponent $component */
+
+use Bitrix\Disk\Driver;
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
@@ -23,9 +25,14 @@ else
 {
 	$helloMessage = $component->getMessage('DISK_EXT_LINK_PROTECT_BY_PASSWORD');
 }
+
+$formAction = Driver::getInstance()->getUrlManager()->getUrlExternalLink([
+	'hash' => $arResult['HASH'],
+	'action' => 'default',
+]);
 ?>
 <div class="bx-shared-body">
-	<form id="form-pass" action="" method="POST">
+	<form id="form-pass" action="<?= htmlspecialcharsbx($formAction) ?>" method="POST">
 		<div class="bx-disk-pass-popup-wrap">
 			<div class="bx-disk-popup-content">
 				<div class="bx-disk-popup-content-inner">

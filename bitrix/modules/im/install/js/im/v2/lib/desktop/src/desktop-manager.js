@@ -248,6 +248,14 @@ export class DesktopManager
 		return Promise.resolve();
 	}
 
+	redirectToChatUpdate(dialogId: string): Promise
+	{
+		Logger.warn('Desktop: redirectToChatEdit', dialogId);
+		this.openBxLink(`bx://${DesktopBxLink.chatUpdate}/dialogId/${dialogId}`);
+
+		return Promise.resolve();
+	}
+
 	redirectToVideoCall(dialogId: string = '', withVideo: boolean = true): Promise
 	{
 		Logger.warn('Desktop: redirectToVideoCall', dialogId, withVideo);

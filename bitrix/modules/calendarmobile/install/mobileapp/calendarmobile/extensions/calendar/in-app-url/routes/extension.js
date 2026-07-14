@@ -2,6 +2,7 @@
  * @module calendar/in-app-url/routes
  */
 jn.define('calendar/in-app-url/routes', (require, exports, module) => {
+	const { requireLazy } = require('require-lazy');
 
 	/**
 	 * @param {InAppUrl} inAppUrl

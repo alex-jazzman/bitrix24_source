@@ -7,8 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Tasks\Integration\SocialNetwork\Url\WorkgroupUriProvider;
 use Bitrix\Tasks\Util\View;
-use Bitrix\Main\Application;
+use Bitrix\Tasks\V2\Internal\Entity\GroupTypes;
 
 if (!function_exists('renderNameColumn'))
 {
@@ -41,23 +42,35 @@ if (!function_exists('renderNameColumn'))
 
 		if (!$data['hidden'])
 		{
-			$uri = new Uri(
-				CComponentEngine::makePathFromTemplate(
-					$arResult['pathToGroupTasks'], ['group_id' => $data['groupId']]
-				)
+			$urlProvider = new WorkgroupUriProvider(
+				pathToGroup: $arResult['pathToGroupTasks'],
+				pathToGroupTasks: $arResult['pathToGroupTasks'],
 			);
 
-			$uri->addParams([View::STATE_PARAMETER => $data['view']]);
+			$uri = $urlProvider->getUri($data['groupId'], $data['groupType']);
 
-			$uri = $uri->getUri();
+			$isCollab = $data['groupType'] === GroupTypes::Collab->value;
+
+			if (!$isCollab && $uri !== '')
+			{
+				$uri = (new Uri($uri))
+					->addParams([View::STATE_PARAMETER => $data['view']])
+					->getUri()
+				;
+			}
+
+			$linkAttrs = $isCollab
+				? 'href="' . HtmlFilter::encode($uri) . '"'
+				: 'onclick="BX.SidePanel.Instance.open(\'' . \CUtil::JSEscape($uri) . '\')"'
+			;
 
 			$groupBlock = <<<HTML
 				<div class="tasks-flow__list-name_info --link">
 					<span class="tasks-flow__list-name_info-title">$groupLabel</span>
-					<a 
-						class="tasks-flow__list-name_info-link" 
-						title="$groupName" 
-						onclick="BX.SidePanel.Instance.open('$uri')"
+					<a
+						class="tasks-flow__list-name_info-link"
+						title="$groupName"
+						$linkAttrs
 						data-id="tasks-flow-list-name-group-$flowId"
 					>
 						$groupName

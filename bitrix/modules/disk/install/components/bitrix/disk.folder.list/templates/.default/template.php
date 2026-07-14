@@ -74,6 +74,7 @@ CJSCore::Init(array(
 	'ui.hint',
 	'ui.tour',
 	'main.core',
+	'disk.url-cleaner',
 ));
 
 Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
@@ -604,6 +605,7 @@ BX(function () {
 		isCollaberTourOnAddButtonViewed: <?= $arResult['IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED']? 'true' : 'false' ?>,
 		readonlyCollabFolderStateCookieName: '<?= CUtil::JSEscape($arResult['READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME']) ?>',
 		analytics: <?= Bitrix\Main\Web\Json::encode($arResult['ANALYTICS'] ?? null) ?>,
+		showFile: <?= Bitrix\Main\Web\Json::encode($arResult['SHOW_FILE'] ?? null) ?>,
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
@@ -852,3 +854,30 @@ $APPLICATION->includeComponent("bitrix:spotlight", "", array(
 	)
 ));
 ?>
+
+<?php
+$showFile = $arResult['SHOW_FILE'] ?? null;
+$showFileUrl = $showFile['url'] ?? null;
+$showFileDownloadUrl = $showFile['downloadUrl'] ?? null;
+$showFileType = $showFile['type'] ?? null;
+$showFileName = $showFile['name'] ?? null;
+
+if (is_string($showFileUrl) && is_string($showFileDownloadUrl) && is_string($showFileType))
+{?>
+	<span
+		id="showFile"
+		data-unified-link="<?= htmlspecialcharsbx($showFileUrl) ?>"
+		data-viewer=""
+		data-src="<?= htmlspecialcharsbx($showFileDownloadUrl) ?>"
+		data-viewer-type="<?= htmlspecialcharsbx($showFileType) ?>"
+		data-title="<?= htmlspecialcharsbx($showFileName) ?>"
+	></span>
+<?php
+}
+?>
+
+<script>
+	BX.Disk.UrlCleaner.cleanUrl(window.location, window.history, [
+		/^show_file_code$/,
+	]);
+</script>

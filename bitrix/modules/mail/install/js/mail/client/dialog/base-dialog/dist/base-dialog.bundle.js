@@ -2,234 +2,214 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Client = this.BX.Mail.Client || {};
-(function (exports,main_core,main_popup,ui_buttons) {
+(function (exports, main_core, main_loader, main_popup, ui_buttons) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5;
-	const ActionPosition = {
-	  center: 'center',
-	  left: 'left'
-	};
-	const ContentPosition = {
-	  center: 'center',
-	  left: 'left'
-	};
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _bodyElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bodyElement");
-	var _headerElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("headerElement");
-	var _titleElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleElement");
-	var _contentContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentContainer");
-	var _actionsContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionsContainer");
-	var _buttons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _createPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPopup");
+	exports.ActionPosition = void 0;
+	(function (ActionPosition) {
+		ActionPosition["center"] = "center";
+		ActionPosition["left"] = "left";
+	})(exports.ActionPosition || (exports.ActionPosition = {}));
+	exports.ContentPosition = void 0;
+	(function (ContentPosition) {
+		ContentPosition["center"] = "center";
+		ContentPosition["left"] = "left";
+	})(exports.ContentPosition || (exports.ContentPosition = {}));
 	class BaseDialog {
-	  constructor(options = {}) {
-	    var _options$id, _options$title, _options$width, _options$cacheable;
-	    Object.defineProperty(this, _createPopup, {
-	      value: _createPopup2
-	    });
-	    Object.defineProperty(this, _popup, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _bodyElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _headerElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _contentContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _actionsContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttons, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _options, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = {
-	      id: (_options$id = options.id) != null ? _options$id : 'mail-client-dialog',
-	      title: (_options$title = options.title) != null ? _options$title : '',
-	      width: (_options$width = options.width) != null ? _options$width : 490,
-	      cacheable: (_options$cacheable = options.cacheable) != null ? _options$cacheable : false
-	    };
-	  }
-	  show() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].destroy();
-	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = babelHelpers.classPrivateFieldLooseBase(this, _createPopup)[_createPopup]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
-	  }
-	  close() {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
-	  }
-	  getPopup() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
-	  }
-	  setContent(node) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]) {
-	      var _babelHelpers$classPr2;
-	      main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]);
-	      main_core.Dom.append(node, babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]);
-	      (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.adjustPosition();
-	    }
-	  }
-	  setContentAlign(align) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]) {
-	      return;
-	    }
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], 'mail__client_dialog_base-dialog_content--center');
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], 'mail__client_dialog_base-dialog_content--left');
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], `mail__client_dialog_base-dialog_content--${align}`);
-	  }
-	  setActions(configuration) {
-	    var _configuration$positi;
-	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].clear();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer].parentNode) {
-	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer], babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement]);
-	    }
-	    this.setActionsAlign((_configuration$positi = configuration.position) != null ? _configuration$positi : ActionPosition.left);
-	    configuration.actions.forEach(action => {
-	      const button = new ui_buttons.Button({
-	        text: action.text,
-	        style: action.style,
-	        size: ui_buttons.ButtonSize.LARGE,
-	        useAirDesign: true,
-	        onclick: action.onclick
-	      });
-	      if (action.id) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].set(action.id, button);
-	      }
-	      main_core.Dom.append(button.render(), babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer]);
-	    });
-	  }
-	  setActionsAlign(align) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer].className = 'mail__client_dialog_base-dialog_actions';
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer], `mail__client_dialog_base-dialog_actions--${align}`);
-	  }
-	  hideActions() {
-	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].clear();
-	  }
-	  setTitle(title) {
-	    if ((title == null ? void 0 : title.length) > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _titleElement)[_titleElement].textContent = title;
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _headerElement)[_headerElement].parentNode) {
-	        main_core.Dom.prepend(babelHelpers.classPrivateFieldLooseBase(this, _headerElement)[_headerElement], babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement]);
-	      }
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _titleElement)[_titleElement].textContent = '';
-	      main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _headerElement)[_headerElement]);
-	    }
-	  }
-	  setBodyPadding(padding) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement]) {
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement], 'padding', padding);
-	    }
-	  }
-	  setWidth(width) {
-	    var _babelHelpers$classPr3;
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.setWidth(width);
-	  }
-	  showCloseIcon() {
-	    var _babelHelpers$classPr4;
-	    if ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) != null && _babelHelpers$classPr4.closeIcon) {
-	      main_core.Dom.show(babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].closeIcon);
-	    }
-	  }
-	  hideCloseIcon() {
-	    var _babelHelpers$classPr5;
-	    if ((_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) != null && _babelHelpers$classPr5.closeIcon) {
-	      main_core.Dom.hide(babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].closeIcon);
-	    }
-	  }
-	  getButton(id) {
-	    var _babelHelpers$classPr6;
-	    return (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].get(id)) != null ? _babelHelpers$classPr6 : null;
-	  }
-	  onClose() {
-	    // override in subclass
-	  }
-	}
-	function _createPopup2() {
-	  var _popup$overlay;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleElement)[_titleElement] = main_core.Tag.render(_t || (_t = _`
+		#popup = null;
+		#bodyElement;
+		#headerElement;
+		#titleElement;
+		#contentContainer;
+		#actionsContainer;
+		#buttons = new Map();
+		#options;
+		#loader = null;
+		constructor(options = {}) {
+			this.#options = {
+				id: options.id ?? 'mail-client-dialog',
+				title: options.title ?? '',
+				width: options.width ?? 490,
+				cacheable: options.cacheable ?? false
+			};
+		}
+		show() {
+			if (this.#popup) {
+				this.#popup.destroy();
+				this.#popup = null;
+			}
+			this.#popup = this.#createPopup();
+			this.#popup.show();
+		}
+		close() {
+			this.#popup?.close();
+		}
+		getPopup() {
+			return this.#popup;
+		}
+		setContent(node) {
+			if (this.#contentContainer) {
+				main_core.Dom.clean(this.#contentContainer);
+				main_core.Dom.append(node, this.#contentContainer);
+				this.#popup?.adjustPosition();
+			}
+		}
+		setContentAlign(align) {
+			if (!this.#contentContainer) {
+				return;
+			}
+			main_core.Dom.removeClass(this.#contentContainer, 'mail__client_dialog_base-dialog_content--center');
+			main_core.Dom.removeClass(this.#contentContainer, 'mail__client_dialog_base-dialog_content--left');
+			main_core.Dom.addClass(this.#contentContainer, `mail__client_dialog_base-dialog_content--${align}`);
+		}
+		setActions(configuration) {
+			main_core.Dom.clean(this.#actionsContainer);
+			this.#buttons.clear();
+			if (!this.#actionsContainer.parentNode) {
+				main_core.Dom.append(this.#actionsContainer, this.#bodyElement);
+			}
+			this.setActionsAlign(configuration.position ?? exports.ActionPosition.left);
+			configuration.actions.forEach(action => {
+				const button = new ui_buttons.Button({
+					text: action.text,
+					style: action.style,
+					size: ui_buttons.ButtonSize.LARGE,
+					useAirDesign: true,
+					onclick: action.onclick
+				});
+				if (action.id) {
+					this.#buttons.set(action.id, button);
+				}
+				main_core.Dom.append(button.render(), this.#actionsContainer);
+			});
+		}
+		setActionsAlign(align) {
+			this.#actionsContainer.className = 'mail__client_dialog_base-dialog_actions';
+			main_core.Dom.addClass(this.#actionsContainer, `mail__client_dialog_base-dialog_actions--${align}`);
+		}
+		hideActions() {
+			main_core.Dom.remove(this.#actionsContainer);
+			this.#buttons.clear();
+		}
+		setTitle(title) {
+			if (title?.length > 0) {
+				this.#titleElement.textContent = title;
+				if (!this.#headerElement.parentNode) {
+					main_core.Dom.prepend(this.#headerElement, this.#bodyElement);
+				}
+			} else {
+				this.#titleElement.textContent = '';
+				main_core.Dom.remove(this.#headerElement);
+			}
+		}
+		setBodyPadding(padding) {
+			if (this.#bodyElement) {
+				main_core.Dom.style(this.#bodyElement, 'padding', padding);
+			}
+		}
+		setWidth(width) {
+			this.#popup?.setWidth(width);
+		}
+		showCloseIcon() {
+			if (this.#popup?.closeIcon) {
+				main_core.Dom.show(this.#popup.closeIcon);
+			}
+		}
+		hideCloseIcon() {
+			if (this.#popup?.closeIcon) {
+				main_core.Dom.hide(this.#popup.closeIcon);
+			}
+		}
+		getButton(id) {
+			return this.#buttons.get(id) ?? null;
+		}
+		showLoader() {
+			const loaderTarget = main_core.Tag.render`
+			<div class="mail__client_dialog_base-dialog_loader"></div>
+		`;
+			this.setTitle('');
+			this.setContent(loaderTarget);
+			this.hideActions();
+			this.#loader = new main_loader.Loader({
+				size: 60,
+				mode: 'inline'
+			});
+			this.#loader.show(loaderTarget);
+		}
+		hideLoader() {
+			this.#loader?.destroy();
+			this.#loader = null;
+			this.setTitle(this.#options.title);
+		}
+		async doBeforeShowContent(options) {
+			const useLoader = options.showLoader ?? false;
+			if (useLoader) {
+				this.showLoader();
+			}
+			try {
+				return await options.action();
+			} finally {
+				if (useLoader) {
+					this.hideLoader();
+				}
+			}
+		}
+		#createPopup() {
+			this.#titleElement = main_core.Tag.render`
 			<span class="mail__client_dialog_base-dialog_title">
-				${0}
+				${this.#options.title}
 			</span>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].title);
-	  babelHelpers.classPrivateFieldLooseBase(this, _headerElement)[_headerElement] = main_core.Tag.render(_t2 || (_t2 = _`
+		`;
+			this.#headerElement = main_core.Tag.render`
 			<div class="mail__client_dialog_base-dialog_header">
-				${0}
+				${this.#titleElement}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _titleElement)[_titleElement]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer] = main_core.Tag.render(_t3 || (_t3 = _`
+		`;
+			this.#contentContainer = main_core.Tag.render`
 			<div class="mail__client_dialog_base-dialog_content"></div>
-		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer] = main_core.Tag.render(_t4 || (_t4 = _`
+		`;
+			this.#actionsContainer = main_core.Tag.render`
 			<div class="mail__client_dialog_base-dialog_actions"></div>
-		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement] = main_core.Tag.render(_t5 || (_t5 = _`
+		`;
+			this.#bodyElement = main_core.Tag.render`
 			<div class="mail__client_dialog_base-dialog_body">
-				${0}
-				${0}
-				${0}
+				${this.#headerElement}
+				${this.#contentContainer}
+				${this.#actionsContainer}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _headerElement)[_headerElement], babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], babelHelpers.classPrivateFieldLooseBase(this, _actionsContainer)[_actionsContainer]);
-	  const popup = main_popup.PopupManager.create({
-	    id: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].id,
-	    className: 'mail__client_dialog_base-dialog --ui-context-content-light',
-	    content: babelHelpers.classPrivateFieldLooseBase(this, _bodyElement)[_bodyElement],
-	    closeIcon: true,
-	    closeIconSize: main_popup.CloseIconSize.LARGE,
-	    closeByEsc: true,
-	    overlay: true,
-	    cacheable: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].cacheable,
-	    width: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].width,
-	    borderRadius: 18,
-	    contentPadding: 0,
-	    padding: 0,
-	    events: {
-	      onClose: () => {
-	        var _babelHelpers$classPr7;
-	        (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr7.destroy();
-	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
-	        this.onClose();
-	      }
-	    }
-	  });
-	  if ((_popup$overlay = popup.overlay) != null && _popup$overlay.element) {
-	    main_core.Event.bind(popup.overlay.element, 'click', () => this.close());
-	  }
-	  return popup;
+		`;
+			const popup = main_popup.PopupManager.create({
+				id: this.#options.id,
+				className: 'mail__client_dialog_base-dialog --ui-context-content-light',
+				content: this.#bodyElement,
+				closeIcon: true,
+				closeIconSize: main_popup.CloseIconSize.LARGE,
+				closeByEsc: true,
+				overlay: true,
+				cacheable: this.#options.cacheable,
+				width: this.#options.width,
+				borderRadius: '18px',
+				contentPadding: 0,
+				padding: 0,
+				events: {
+					onClose: () => {
+						this.#popup?.destroy();
+						this.#popup = null;
+						this.hideLoader();
+						this.onClose();
+					}
+				}
+			});
+			if (popup.overlay?.element) {
+				main_core.Event.bind(popup.overlay.element, 'click', () => this.close());
+			}
+			return popup;
+		}
+		onClose() {
+		}
 	}
 
-	exports.ActionPosition = ActionPosition;
-	exports.ContentPosition = ContentPosition;
 	exports.BaseDialog = BaseDialog;
 
-}((this.BX.Mail.Client.Dialog = this.BX.Mail.Client.Dialog || {}),BX,BX.Main,BX.UI));
+})(this.BX.Mail.Client.Dialog = this.BX.Mail.Client.Dialog || {}, BX, BX, BX.Main, BX.UI);
 //# sourceMappingURL=base-dialog.bundle.js.map

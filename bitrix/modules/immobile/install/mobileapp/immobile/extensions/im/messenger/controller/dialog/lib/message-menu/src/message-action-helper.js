@@ -245,7 +245,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 				&& !this.#isVideoNote()
 				&& !this.#isSticker()
 				&& !this.#isDeletedSticker()
-				&& !this.#isBuilder()
+				&& !this.#isBlock()
 			;
 		}
 
@@ -446,9 +446,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 			return this.#messageHelper.isDeletedSticker;
 		}
 
-		#isBuilder()
+		#isBlock()
 		{
-			return this.#messageHelper.isBuilder;
+			return this.#messageHelper.isBlock;
 		}
 
 		isDialogCopilot()

@@ -120,7 +120,7 @@ export const TaskLineGroup = {
 		openSubTaskGrid(taskId): void
 		{
 			const isLocked = this.isTemplate
-				? this.settings.restrictions.templatesSubtasks.available
+				? !this.settings.restrictions.templatesSubtasks.available
 				: false
 			;
 

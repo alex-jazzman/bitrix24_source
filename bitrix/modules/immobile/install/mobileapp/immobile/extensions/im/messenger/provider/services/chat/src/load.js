@@ -238,6 +238,12 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
+			const parentChat = extractor.getParentChat();
+			if (Type.isPlainObject(parentChat))
+			{
+				await this.store.dispatch('dialoguesModel/setShortFormat', [parentChat]);
+			}
+
 			const collabPromise = this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
 
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());

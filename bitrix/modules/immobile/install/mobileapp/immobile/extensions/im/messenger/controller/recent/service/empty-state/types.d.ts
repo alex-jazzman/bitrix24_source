@@ -8,6 +8,14 @@ export interface IEmptyStateService extends IBaseRecentService
     hide: () => Promise<void>;
 }
 
+declare interface IWelcomeScreen
+{
+    toChatRecentWidgetItem(): object;
+    isLayoutComponentSupported(): boolean;
+    toLayoutComponent(): LayoutComponent<any, any> | null;
+}
+
 declare type CommonEmptyStateServiceProps = {
     welcomeScreenExtension: string,
+	welcomeScreenProps?: object,
 };

@@ -13,8 +13,9 @@ $MESS['IM_LIST_RECENT_CHAT_TYPE_TASK_COMMENTS'] = "Чат задачи";
 $MESS['IM_LIST_RECENT_EMPTY'] = "Нет чатов";
 $MESS['IM_LIST_RECENT_CHAT_SELF'] = "это вы";
 $MESS['IM_LIST_RECENT_CHAT_SELF_SUBTITLE'] = "Видны только вам";
-$MESS['IM_LIST_RECENT_EMPTY_STATE_TITLE'] = "Чатов пока нет";
-$MESS['IM_LIST_RECENT_EMPTY_STATE_SUBTITLE'] = "Сотрудники, которых вы добавите в Битрикс24, появятся в списке чатов";
+$MESS['IM_LIST_RECENT_EMPTY_STATE_TITLE_MSGVER_1'] = "Здесь будут все ваши чаты";
+$MESS['IM_LIST_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1'] = "Ещё нет ни одного чата. Пригласите коллег, чтобы начать общение";
 $MESS['IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS'] = "Пригласить коллег";
 
-$MESS['IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE'] = "Непрочитанных нет";
+$MESS['IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE_MSGVER_1'] = "Непрочитанных сообщений нет";
+$MESS['IM_LIST_UNREAD_RECENT_EMPTY_STATE_SUBTITLE'] = "Все непрочитанные сообщения будут отображаться здесь";

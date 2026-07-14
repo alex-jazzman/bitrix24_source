@@ -97,7 +97,6 @@ export const RecentList = {
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
-				compactMode: false,
 			};
 
 			this.contextMenuManager.openMenu(context, {
@@ -111,7 +110,7 @@ export const RecentList = {
 		},
 		onCallClick({ item })
 		{
-			this.onClick(item);
+			this.onSelectChat(item.dialogId);
 		},
 		initLikeManager()
 		{
@@ -173,8 +172,10 @@ export const RecentList = {
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 		>
-			<template #before-list>
+			<template #before-scroll>
 				<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick" />
+			</template>
+			<template #before-list>
 				<CreateChatStatus v-if="isCreatingChat" />
 			</template>
 			<template #empty-state>

@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/action', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 	const AppTheme = require('apptheme');
 	const { Icon } = require('assets/icons');
 	const { Color } = require('tokens');
@@ -280,7 +281,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/action', (require
 		testId: 'MESSAGE_MENU_ACTION_ASK_COPILOT',
 		type: ActionViewType.base,
 		title: Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_ASK_COPILOT_MSGVER_1'),
-		iconName: Icon.COPILOT.getIconName(),
+		iconName: Feature.isBitrixGptV2Available ? Icon.BITRIX_GPT.getIconName() : Icon.COPILOT.getIconName(),
 		iconUrl: Url.createFromPath(Icon.COPILOT.getPath()).href,
 		iconSvg: Icon.COPILOT.getSvg(),
 		styles: {

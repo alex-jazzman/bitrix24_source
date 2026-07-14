@@ -2,7 +2,7 @@
 import { Headline } from 'ui.system.typography.vue';
 import { AirButtonStyle, Button as UIButton, ButtonSize, ButtonState } from 'ui.vue3.components.button';
 import { Outline } from 'ui.icon-set.api.core';
-import { sendData } from 'ui.analytics';
+import { sendOtpAnalytics } from '../analytics';
 import { useRecoverAccessStore } from '../store/recover-access-store';
 import { Ajax } from '../api/ajax';
 
@@ -24,10 +24,6 @@ export const RecoverAccess = {
 		};
 	},
 	props: {
-		signedUserId: {
-			type: String,
-			default: '',
-		},
 		isAlternativeMethodsAvailable: {
 			type: Boolean,
 			default: false,
@@ -49,9 +45,7 @@ export const RecoverAccess = {
 	},
 	mounted()
 	{
-		sendData({
-			tool: 'security',
-			category: 'fa_auth_form',
+		sendOtpAnalytics({
 			event: 'restore_access_show',
 		});
 	},
@@ -70,24 +64,20 @@ export const RecoverAccess = {
 		requestAccess(): void
 		{
 			this.store.setRequesting(true);
-			Ajax.sendRequestRecoverAccess(this.signedUserId).then(() => {
+			Ajax.sendRequestRecoverAccess().then(() => {
 				this.store.setRequestSent();
 				this.store.setRequesting(false);
 			}).catch(() => {
 				this.store.setRequesting(false);
 			});
-			sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'click_admin_restore_access',
 			});
 		},
 		resetSessionAndReload(): void
 		{
 			this.store.setRequesting(true);
-			sendData({
-				tool: 'security',
-				category: 'fa_auth_form',
+			sendOtpAnalytics({
 				event: 'click_reload_after_restore_access',
 			});
 			Ajax.resetOtpSession().then(() => {

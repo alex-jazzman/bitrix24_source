@@ -1,4 +1,4 @@
-import type { JsonObject } from 'main.core';
+import { type JsonObject } from 'main.core';
 
 export type FormConfigType = {
 	id: string;
@@ -6,7 +6,7 @@ export type FormConfigType = {
 	presets: JsonObject;
 };
 
-type FormEntryType = {
+export type FormEntryType = {
 	zones: string[],
 	id: number,
 	sec: string,

@@ -92,7 +92,7 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 		renderList()
 		{
 			const selectedSlot = this.props.selectedSlot;
-			const lastSlot = this.slots.at(-1);
+			const lastSlot = this.slots[this.slots.length - 1];
 
 			return UIScrollView(
 				{

@@ -16,9 +16,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Integration\Intranet\Settings;
 use Bitrix\Socialnetwork\Item\Workgroup\Type;
+use Bitrix\Socialnetwork\Promotion\ProjectAi;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -1229,9 +1231,22 @@ if(\Bitrix\Main\ModuleManager::isModuleInstalled('tasks') && $route)
 }
 
 CUtil::InitJSCore([ 'window', 'ajax' ]);
-\Bitrix\Main\UI\Extension::load('socialnetwork.slider');
+Extension::load('socialnetwork.slider');
 
 $arResult['componentPage'] = $componentPage;
+
+$groupId = (int)($arResult["VARIABLES"]["group_id"] ?? null);
+if ($groupId && \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn())
+{
+	$convertService = new \Bitrix\Socialnetwork\V2\Public\Service\Project\Convert();
+	$convertService->ensureProjectExists($groupId, $USER->GetID());
+}
+
+$userId = (int)$USER->GetID();
+if ($userId > 0 && (new ProjectAi())->shouldShow($userId))
+{
+	Extension::load('socialnetwork.v2.components.popup.new-projects-popup');
+}
 
 $this->IncludeComponentTemplate($componentPage, array_key_exists($componentPage, $arCustomPagesPath) ? $arCustomPagesPath[$componentPage] : '');
 

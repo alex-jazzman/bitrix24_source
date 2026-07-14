@@ -1,17 +1,17 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType, RestMethod, type RecentTypeItem } from 'im.v2.const';
+import { RecentType, RestMethod, type RecentTypeItem, ParentChatScope } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 import { UserManager } from 'im.v2.lib.user';
 import { type RawChat, type RawMessage, type RawRecentItem } from 'im.v2.provider.service.types';
 
-import { type BaseRecentQueryParams, type BaseRecentFilterParams, type RecentRestResult } from './types/base-recent-types';
-
-export const ParentChatScope = {
-	all: null,
-	topLevel: 0,
-};
+import {
+	type BaseRecentQueryParams,
+	type BaseRecentFilterParams,
+	type RecentRestResult,
+	type RecentFirstPageRestResult,
+} from './types/base-recent-types';
 
 export class BaseRecentService
 {
@@ -60,8 +60,13 @@ export class BaseRecentService
 		return this.#itemsPerPage;
 	}
 
-	getRestMethodName(): string
+	getRestMethodName(firstPage: boolean): string
 	{
+		if (firstPage)
+		{
+			return RestMethod.imV2RecentLoad;
+		}
+
 		return RestMethod.imV2RecentTail;
 	}
 
@@ -70,20 +75,38 @@ export class BaseRecentService
 		return RecentType.default;
 	}
 
-	saveRecentItems(recentItems: RawRecentItem[]): Promise
+	getUnreadMode(): boolean
 	{
+		return this.#unreadMode;
+	}
+
+	getParentChatId(): ?number
+	{
+		return this.#parentChatId;
+	}
+
+	saveRecentItems(restResult: RecentRestResult): Promise
+	{
+		const { recentItems } = restResult;
+
 		const setPayload = {
 			type: this.getRecentType(),
 			items: recentItems,
-			unread: this.#unreadMode,
+			unread: this.getUnreadMode(),
 		};
 
-		if (this.#parentChatId !== null)
+		if (this.getParentChatId() !== null)
 		{
-			setPayload.parentChatId = this.#parentChatId;
+			setPayload.parentChatId = this.getParentChatId();
 		}
 
 		return Core.getStore().dispatch('recent/setCollection', setPayload);
+	}
+
+	saveFirstPageData(restResult: RecentFirstPageRestResult): Promise
+	{
+		// The base class does nothing here
+		return Promise.resolve();
 	}
 
 	getQueryParams(firstPage: boolean = false): BaseRecentQueryParams
@@ -99,17 +122,17 @@ export class BaseRecentService
 		return {
 			lastMessageDate: firstPage ? null : this.#lastMessageDate,
 			recentSection: this.getRecentType(),
-			parentId: this.#parentChatId,
-			unread: this.#unreadMode,
+			parentId: this.getParentChatId(),
+			unread: this.getUnreadMode(),
 		};
 	}
 
-	handlePaginationField(result: RecentRestResult): void
+	handlePaginationField(result: RecentRestResult)
 	{
 		this.#lastMessageDate = this.#getLastMessageDate(result);
 	}
 
-	onAfterRequest(firstPage: boolean): void
+	onAfterRequest(firstPage: boolean)
 	{
 		// The base class does nothing here
 	}
@@ -120,7 +143,7 @@ export class BaseRecentService
 			data: this.getQueryParams(firstPage),
 		};
 
-		const result: RecentRestResult = await runAction(this.getRestMethodName(), queryParams)
+		const result: RecentRestResult = await runAction(this.getRestMethodName(firstPage), queryParams)
 			.catch(([error]) => {
 				console.error('BaseRecentList: page request error', error);
 				throw error;
@@ -136,7 +159,12 @@ export class BaseRecentService
 
 		this.onAfterRequest(firstPage);
 
-		return this.#updateModels(result);
+		if (firstPage)
+		{
+			await this.saveFirstPageData(result);
+		}
+
+		return this.#updateModels(result, firstPage);
 	}
 
 	#updateModels(restResult: RecentRestResult): Promise
@@ -150,7 +178,7 @@ export class BaseRecentService
 		const autoDeletePromise = Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
-		const recentPromise = this.saveRecentItems(recentItems);
+		const recentPromise = this.saveRecentItems(restResult);
 
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleRecentListResponse(copilot);
@@ -207,7 +235,8 @@ export class BaseRecentService
 
 	#filterPinnedItemsMessages(restResult: RecentRestResult): RawMessage[]
 	{
-		const { messages, recentItems } = restResult;
+		const { messages, recentItems, sectionMeta } = restResult;
+		const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
 
 		return messages.filter((message) => {
 			const chatId = message.chat_id;
@@ -215,7 +244,10 @@ export class BaseRecentService
 				return item.chatId === chatId;
 			});
 
-			return recentItem.pinned === false;
+			const isPinnedItem = recentItem.pinned === true;
+			const isFixedItem = fixedChatIds.includes(chatId);
+
+			return !isPinnedItem && !isFixedItem;
 		});
 	}
 }

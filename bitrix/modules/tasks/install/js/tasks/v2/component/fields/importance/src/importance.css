@@ -1,26 +1,33 @@
+/* normalize */
 .tasks-field-importance {
-	display: flex;
-	align-items: center;
-	height: 29px;
-	margin-left: 6px;
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
 	cursor: pointer;
 }
+/* normalize end */
 
+.tasks-field-importance {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	margin: var(--margin-button);
+	padding: var(--padding-button);
+	line-height: 0;
+}
 .tasks-field-importance.--readonly {
 	cursor: default;
 }
 
-.tasks-field-importance:not(.--active):not(:hover) {
+.tasks-field-importance__icon {
+	--ui-icon-set__icon-color: var(--color-icon);
+	--ui-icon-set__icon-size: var(--size-icon);
+}
+.tasks-field-importance.--active .tasks-field-importance__icon {
+	background: radial-gradient(circle at bottom, #FAA72C 0%, #FF5752 67%);
+}
+.tasks-field-importance.--active:hover .tasks-field-importance__icon {
 	opacity: 0.8;
-}
-
-.tasks-field-importance .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-base-5);
-	--ui-icon-set__icon-size: 26px;
-	transition: opacity 180ms;
-}
-
-.tasks-field-importance.--active .ui-icon-set {
-	animation: tasks-field-importance 300ms forwards;
-	--ui-icon-set__icon-color: radial-gradient(circle at bottom, #FAA72C 0%, #FF5752 67%);
 }

@@ -1,0 +1,98 @@
+.sonet--new-project-banner {
+	container-type: inline-size;
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	gap: var(--ui-space-inline-2xs, 4px);
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	border-radius: var(--ui-border-radius-md, 10px);
+	overflow: hidden;
+	padding: var(--ui-space-inline-xs);
+	background: linear-gradient(
+		97.6deg,
+		var(--ui-color-blue-15, #f0f7ff) 65%,
+		var(--ui-color-blue-30, #c6e6ff) 75%,
+		var(--ui-color-blue-25, #deedff) 90%
+	);
+}
+
+.sonet--new-project-banner::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 240px;
+	height: 169px;
+	background: url(./images/new-project-banner.png) top right no-repeat;
+	background-size: 240px 169px;
+	pointer-events: none;
+}
+
+.sonet--new-project-banner--content {
+	flex: 1;
+	min-width: 0;
+	padding: var(--ui-space-inline-xs2);
+	padding-right: 232px;
+	position: relative;
+}
+
+@container (max-width: 599px) {
+	.sonet--new-project-banner::before {
+		display: none;
+	}
+
+	.sonet--new-project-banner--content {
+		padding-right: var(--ui-space-inline-xs2);
+	}
+}
+
+.sonet--new-project-banner--title {
+	font-weight: 500;
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-1);
+	margin-block: unset;
+}
+
+.sonet--new-project-banner--description {
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2);
+	max-width: 492px;
+}
+
+.sonet--new-project-banner--description > p {
+	margin-block: 0;
+}
+
+.sonet--new-project-banner--link {
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.sonet--new-project-banner--close {
+	flex-shrink: 0;
+	align-self: flex-start;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.5;
+	transition: opacity 200ms;
+}
+
+.sonet--new-project-banner--close-btn {
+	background: transparent;
+	border: 0;
+	color: inherit;
+	padding: 0;
+}
+
+.sonet--new-project-banner--close-btn > div {
+	cursor: pointer;
+}
+
+.sonet--new-project-banner--close:hover {
+	opacity: 1;
+}

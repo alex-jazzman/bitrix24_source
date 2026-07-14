@@ -1,0 +1,38 @@
+.bx-im-collab-create-chat-promo-popup__container {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bx-im-collab-create-chat-promo-popup__container .popup-window-content {
+	display: flex;
+}
+
+.bx-im-collab-create-chat-promo-popup__container .popup-window-angly--arrow {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bx-im-collab-create-chat-promo-popup__container .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.bx-im-collab-create-chat-promo-popup__cover {
+	flex-shrink: 0;
+	width: 98px;
+	height: 121px;
+	background-image: url('./images/create-chat-promo.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.bx-im-collab-create-chat-promo-popup__info {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0 18px 0 12px;
+}
+
+.bx-im-collab-create-chat-promo-popup__title {
+	font: 17px/23px var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-0);
+	white-space: pre-line;
+}

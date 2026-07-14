@@ -37,6 +37,14 @@ export const TimeTrackingList = {
 			type: Object,
 			required: true,
 		},
+		highlightElapsedId: {
+			type: [Number, null],
+			default: null,
+		},
+		highlightRequestKey: {
+			type: Number,
+			default: 0,
+		},
 	},
 	setup(): { task: TaskModel } {},
 	data(): Object
@@ -142,6 +150,8 @@ export const TimeTrackingList = {
 					<TimeTrackingListItem
 						:elapsedId
 						:editMode="editingElapsedId === elapsedId"
+						:isHighlighted="highlightElapsedId === elapsedId"
+						:highlightRequestKey
 						@edit="handleEdit"
 						@cancel="cancelEditing"
 						@save="cancelEditing"

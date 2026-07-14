@@ -20,6 +20,10 @@ export const ForwardPopup = {
 			type: String,
 			required: true,
 		},
+		directForward: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['close'],
 	computed:
@@ -63,7 +67,8 @@ export const ForwardPopup = {
 		>
 			<ForwardContent
 				:dialogId="dialogId"
-				:messagesIds="messagesIds" 
+				:messagesIds="messagesIds"
+				:directForward="directForward"
 				@close="$emit('close')"
 			/>
 		</MessengerPopup>

@@ -33,6 +33,14 @@ export const TimeTrackingListItem = {
 			type: Boolean,
 			default: false,
 		},
+		isHighlighted: {
+			type: Boolean,
+			default: false,
+		},
+		highlightRequestKey: {
+			type: Number,
+			default: 0,
+		},
 	},
 	emits: ['save', 'edit', 'cancel'],
 	setup(): { task: TaskModel } {},
@@ -66,6 +74,20 @@ export const TimeTrackingListItem = {
 		{
 			this.localEditMode = value;
 		},
+		highlightRequestKey(): void
+		{
+			if (this.isHighlighted)
+			{
+				this.highlightItem();
+			}
+		},
+	},
+	mounted(): void
+	{
+		if (this.isHighlighted)
+		{
+			this.highlightItem();
+		}
 	},
 	methods: {
 		async handleSave(localElapsedTime: ElapsedTimeModel): Promise<void>
@@ -76,7 +98,7 @@ export const TimeTrackingListItem = {
 
 			if (this.isEdit)
 			{
-				void highlighter.highlight(this.$refs.item);
+				this.highlightItem();
 
 				await timeTrackingService.update(this.taskId, {
 					...this.elapsedTime,
@@ -126,6 +148,11 @@ export const TimeTrackingListItem = {
 				buttons: MessageBoxButtons.OK_CANCEL,
 			});
 			messageBox.show();
+		},
+		highlightItem(): void
+		{
+			this.$refs.item?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			void highlighter.highlight(this.$refs.item);
 		},
 	},
 	template: `

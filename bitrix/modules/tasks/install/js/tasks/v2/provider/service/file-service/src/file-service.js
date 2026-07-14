@@ -47,6 +47,7 @@ export class FileService extends EventEmitter
 	#browseElement: HTMLElement;
 	#saveAttachedFilesDebounced: Function;
 	#saveDetachedFilesDebounced: Function;
+	#isDraftActive: boolean = false;
 
 	constructor(entityId: number | string, entityType: EntityType = EntityTypes.Task)
 	{
@@ -244,12 +245,12 @@ export class FileService extends EventEmitter
 		this.#fileBrowserClosed = false;
 	}
 
-	destroy(): void
+	destroy(removeFilesFromServer: boolean = true): void
 	{
 		this.#adapter.unsubscribeAll('Item:onAdd');
 		this.#adapter.unsubscribeAll('Item:onComplete');
 		this.#adapter.unsubscribeAll('Item:onRemove');
-		this.#adapter.getUploader().destroy();
+		this.#adapter.getUploader().destroy({ removeFilesFromServer });
 
 		this.#unbindEvents();
 	}
@@ -289,6 +290,9 @@ export class FileService extends EventEmitter
 		}
 		catch (error)
 		{
+			this.#removeLoadedIds(unloadedIds);
+			promise.resolve();
+
 			console.error(Endpoint.FileListObjects, error);
 
 			return [];
@@ -329,6 +333,38 @@ export class FileService extends EventEmitter
 		return this.#filesToAttach.length > 0 || this.#filesToDetach.length > 0;
 	}
 
+	beginDraft(): void
+	{
+		if (
+			this.#entityType !== EntityTypes.Task
+			|| idUtils.isTemplate(this.#entityId)
+			|| this.isDraftActive()
+		)
+		{
+			return;
+		}
+
+		this.#isDraftActive = true;
+	}
+
+	isDraftActive(): boolean
+	{
+		return this.#isDraftActive;
+	}
+
+	async commitDraft(): Promise<void>
+	{
+		if (!this.isDraftActive())
+		{
+			return;
+		}
+
+		await this.#saveAttachedFilesDebounced();
+		await this.#saveDetachedFilesDebounced();
+
+		this.#endDraft();
+	}
+
 	#handleLoadedFiles(data: FileDto[]): void
 	{
 		const files = data.map((fileDto: FileDto) => mapDtoToModel(fileDto));
@@ -356,6 +392,13 @@ export class FileService extends EventEmitter
 		ids.forEach((id: FileId) => {
 			delete this.#objectsIds[id];
 		});
+
+		this.#removeLoadedIds(ids);
+	}
+
+	#removeLoadedIds(ids: FileId[]): void
+	{
+		ids.forEach((id: FileId): void => this.#loadedIds.delete(id));
 	}
 
 	#getIdsByObjectId(objectIdToFind: number): FileId[]
@@ -384,7 +427,11 @@ export class FileService extends EventEmitter
 				if (idUtils.isReal(id) && this.#isObjectId(attachedFile.serverFileId))
 				{
 					this.#filesToAttach.push(attachedFile);
-					this.#saveAttachedFilesDebounced();
+
+					if (!this.isDraftActive())
+					{
+						this.#saveAttachedFilesDebounced();
+					}
 				}
 
 				break;
@@ -420,21 +467,16 @@ export class FileService extends EventEmitter
 			{
 				const id = this.#entityId;
 
-				void taskService.updateStoreTask(id, { fileIds });
+				taskService.updateStoreTask(id, { fileIds });
 
 				if (idUtils.isReal(id))
 				{
-					const detachedId = detachedFile.serverFileId;
-					const attachedIndex = this.#filesToAttach.findIndex((file) => file.serverFileId === detachedId);
-					if (attachedIndex === -1)
-					{
-						this.#filesToDetach.push(detachedFile);
-						this.#saveDetachedFilesDebounced();
-					}
-					else
-					{
-						this.#filesToAttach.splice(attachedIndex, 1);
-					}
+					this.#moveDetachedFileToQueue(
+						detachedFile,
+						this.#filesToAttach,
+						this.#filesToDetach,
+						this.isDraftActive() ? undefined : this.#saveDetachedFilesDebounced,
+					);
 				}
 
 				break;
@@ -546,6 +588,8 @@ export class FileService extends EventEmitter
 			{
 				await apiClient.post(Endpoint.FileDetach, { task: { id }, ids });
 			}
+
+			this.emit('onFilesDetachComplete', { ids });
 		}
 		catch (error)
 		{
@@ -567,6 +611,33 @@ export class FileService extends EventEmitter
 			id: `file-service-error-${Text.getRandom()}`,
 			text,
 		});
+	}
+
+	#endDraft(): void
+	{
+		this.#isDraftActive = false;
+	}
+
+	#moveDetachedFileToQueue(
+		detachedFile: UploaderFileInfo,
+		filesToAttach: UploaderFileInfo[],
+		filesToDetach: UploaderFileInfo[],
+		onDetached?: Function,
+	): void
+	{
+		const attachedIndex = filesToAttach.findIndex((file: UploaderFileInfo) => {
+			return file.serverFileId === detachedFile.serverFileId;
+		});
+
+		if (attachedIndex === -1)
+		{
+			filesToDetach.push(detachedFile);
+			onDetached?.();
+
+			return;
+		}
+
+		filesToAttach.splice(attachedIndex, 1);
 	}
 
 	get #entityFileIds(): []
@@ -612,11 +683,11 @@ export const fileService = {
 
 		delete services[oldKey];
 	},
-	delete(entityId: number, entityType: EntityType = EntityTypes.Task): void
+	delete(entityId: number, entityType: EntityType = EntityTypes.Task, removeFilesFromServer: boolean = true): void
 	{
 		const key = getKey(entityId, entityType);
 
-		services[key]?.destroy();
+		services[key]?.destroy(removeFilesFromServer);
 
 		delete services[key];
 	},

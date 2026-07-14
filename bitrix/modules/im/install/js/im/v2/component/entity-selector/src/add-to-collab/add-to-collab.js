@@ -1,16 +1,17 @@
-import { Loc, type JsonObject } from 'main.core';
+import { type JsonObject } from 'main.core';
 import { type PopupOptions } from 'main.popup';
 import { FeaturePromoter } from 'ui.info-helper';
 import { InvitationInput } from 'intranet.invitation-input';
 
-import { SliderCode, UserType, TabId, ActionByRole } from 'im.v2.const';
+import { SliderCode, TabId, ActionByRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Notifier } from 'im.v2.lib.notifier';
 import { Utils } from 'im.v2.lib.utils';
+import { CollabManager } from 'im.v2.lib.collab';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
-import { type ImModelChat, type ImModelCollabInfo, type ImModelUser } from 'im.v2.model';
+import { type ImModelChat, type ImModelCollabInfo } from 'im.v2.model';
 import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
 
 import { TabsWrapper } from '../elements/tabs-wrapper/tabs-wrapper';
@@ -21,7 +22,6 @@ import { AddEmployeesTab } from './components/add-employees-tab';
 import './css/add-to-collab.css';
 
 const POPUP_ID = 'im-add-to-collab-popup';
-const ARTICLE_CODE = '22706836';
 
 // @vue/component
 export const AddToCollab = {
@@ -55,11 +55,10 @@ export const AddToCollab = {
 	},
 	computed: {
 		POPUP_ID: () => POPUP_ID,
-		ARTICLE_CODE: () => ARTICLE_CODE,
 		config(): PopupOptions
 		{
 			return {
-				titleBar: Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE'),
+				titleBar: CollabManager.getInviteHeaderText(),
 				closeIcon: true,
 				bindElement: this.bindElement,
 				offsetTop: this.popupConfig.offsetTop,
@@ -82,6 +81,10 @@ export const AddToCollab = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.enabledCollabersInvitation);
 		},
+		isCollabV2Available(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+		},
 		chatId(): number
 		{
 			const chat: ImModelChat = this.$store.getters['chats/get'](this.dialogId, true);
@@ -94,51 +97,49 @@ export const AddToCollab = {
 
 			return collab.collabId;
 		},
-		isCurrentUserCollaber(): boolean
-		{
-			const currentUser: ImModelUser = this.$store.getters['users/get'](Core.getUserId(), true);
-
-			return currentUser.type === UserType.collaber;
-		},
 		guestDescription(): string
 		{
-			if (this.isCurrentUserCollaber)
-			{
-				return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TEXT_GUEST');
-			}
-
-			return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST');
+			return CollabManager.getInviteDescriptionText();
 		},
 		guestDescriptionTitle(): string
 		{
-			if (this.isCurrentUserCollaber)
-			{
-				return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TITLE_GUEST');
-			}
-
-			return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TITLE_EMPLOYEE');
+			return CollabManager.getInviteTitleText();
+		},
+		helpdeskArticleCode(): string
+		{
+			return CollabManager.getInviteArticleCode();
 		},
 		canUpdateLink(): boolean
 		{
 			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.updateInviteLink, this.dialogId);
 		},
 	},
+	watch: {
+		activeTabId()
+		{
+			this.initInvitationInput();
+		},
+	},
 	created()
 	{
-		this.initInvitationInput();
-		this.activeTabId = this.isEnabledCollabersInvitation ? TabId.guests : TabId.employees;
+		this.setInitialActiveTab();
 	},
 	mounted()
 	{
-		this.invitationGuests.renderTo(this.$refs['collab-invitation-input']);
-		this.invitationLangCode = this.defaultLanguageCode;
+		this.initInvitationInput();
 	},
 	beforeUnmount()
 	{
-		this.invitationGuests.unsubscribe('onReadySave', this.onReadySaveInputHandler);
-		this.invitationGuests.unsubscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+		this.destroyInvitationInput();
 	},
 	methods: {
+		setInitialActiveTab()
+		{
+			if (this.isEnabledCollabersInvitation && !this.isCollabV2Available)
+			{
+				this.activeTabId = TabId.guests;
+			}
+		},
 		onTabSwitch(tabId: string)
 		{
 			this.activeTabId = tabId;
@@ -214,9 +215,32 @@ export const AddToCollab = {
 		},
 		initInvitationInput()
 		{
+			if (this.invitationGuests || this.activeTabId !== TabId.guests)
+			{
+				return;
+			}
+
 			this.invitationGuests = new InvitationInput();
 			this.invitationGuests.subscribe('onReadySave', this.onReadySaveInputHandler);
 			this.invitationGuests.subscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+
+			void this.renderInvitationInput();
+		},
+		destroyInvitationInput()
+		{
+			if (!this.invitationGuests)
+			{
+				return;
+			}
+
+			this.invitationGuests.unsubscribe('onReadySave', this.onReadySaveInputHandler);
+			this.invitationGuests.unsubscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+		},
+		async renderInvitationInput()
+		{
+			await this.$nextTick();
+			this.invitationGuests.renderTo(this.$refs['collab-invitation-input']);
+			this.invitationLangCode = this.defaultLanguageCode;
 		},
 		async addGuest()
 		{
@@ -245,7 +269,7 @@ export const AddToCollab = {
 				<AddGuestContent
 					v-if="isGuestTab"
 					:chatId="chatId"
-					:articleCode="ARTICLE_CODE"
+					:articleCode="helpdeskArticleCode"
 					:guestTitle="guestDescriptionTitle"
 					:guestDescription="guestDescription"
 					:isAddButtonDisabled="isAddButtonDisabled"

@@ -3,7 +3,7 @@
 */
 jn.define('call/calls/engine', (require, exports, module) => {
 	const { EntityReady } = require('entity-ready');
-	const { EventType } = require('call/const');
+	const { EventType, CallPresence } = require('call/const');
 	const { CallSettingsManager } = require('call/settings-manager');
 	const { BitrixCallJwt } = require('call/calls/bitrix-jwt');
 	const { BitrixCallDev } = require('call/calls/bitrix-dev');
@@ -179,6 +179,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 	class CallEngine
 	{
+		#callPresence = CallPresence.Unknown;
+		#needsActiveCallsUpdate = false;
+		#isAppPaused = false;
+		#wasAppPaused = false;
+
 		constructor()
 		{
 			this.legacyCalls = {};
@@ -204,10 +209,23 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			BX.addCustomEvent('onPullEvent-call', this._onPullEventHandler);
 			BX.addCustomEvent('onAppActive', this.onAppActive.bind(this));
 			BX.addCustomEvent(EventType.imMobile.updateCallToken, this._onCallTokenUpdate.bind(this, true));
-			
+
 			BX.addCustomEvent('onPullStatus', this._onPullStatusEventHandler);
 
-			BX.addCustomEvent(EventType.imMobile.activeCallsReceived, this.onActiveCallsReceived.bind(this));
+			BX.addCustomEvent(EventType.imMobile.activeCallsReceived, (activeCalls) => {
+				if (this.#needsActiveCallsUpdate)
+				{
+					this.#needsActiveCallsUpdate = false;
+					this.#isAppPaused = false;
+					this.#wasAppPaused = false;
+					this.#callPresence = CallPresence.Unknown;
+				}
+				this.onActiveCallsReceived(activeCalls);
+			});
+
+			BX.addCustomEvent('onAppPaused', () => {
+				this.#reevaluateNeedsActiveCallsUpdate({ appPausedJustFired: true });
+			});
 
 			this._onCallJoinHandler = this._onCallJoin.bind(this);
 			this._onCallLeaveHandler = this._onCallLeave.bind(this);
@@ -359,25 +377,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				}
 			});
 
-			Object.keys(this.legacyCalls)
-				.forEach((key) => {
-					const call = this.legacyCalls[key];
-
-					if (call)
-					{
-						this._onCallActive({ callId: call.id, callUuid: call.uuid });
-					}
-				});
-
-			Object.keys(this.jwtCalls)
-				.forEach((key) => {
-					const call = this.jwtCalls[key];
-
-					if (call)
-					{
-						this._onCallActive({ callUuid: call.uuid });
-					}
-				});
+			this.fillRecentList();
 		}
 
 		_onMessengerReady()
@@ -429,6 +429,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			const timeAgo = Date.now() / 1000 - timestamp;
 			const provider = callFields.PROVIDER || callFields.provider;
 			const scheme = callFields.SCHEME || callFields.scheme;
+			const isAlreadyInCall = pushParams.PARAMS.isAlreadyInCall === true;
+			const isActiveCallPlatformIsMobile = pushParams.PARAMS.activeCallPlatform !== 'web';
 
 			this.callsInitializedFromPush.add(callUuid);
 
@@ -443,6 +445,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 							video: isVideo,
 							autoAnswer: true,
 							ignoreCallTimeout: true,
+							isAlreadyInCall,
+							isActiveCallPlatformIsMobile,
 							provider,
 						}], 'calls');
 					}
@@ -518,12 +522,15 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			{
 				return;
 			}
+
 			const isVideo = nativeCall.params.video;
 			const callId = nativeCall.params.call.ID;
 			const callUuid = nativeCall.params.call.uuid;
 			const timestamp = nativeCall.params.ts;
 			const timeAgo = Date.now() / 1000 - timestamp;
-			const provider = nativeCall.params.call.PROVIDER || nativeCall.params.call.provider
+			const provider = nativeCall.params.call.PROVIDER || nativeCall.params.call.provider;
+			const isAlreadyInCall = nativeCall.params.isAlreadyInCall === true;
+			const isActiveCallPlatformIsMobile = nativeCall.params.activeCallPlatform !== 'web';
 
 			if (timeAgo > 15)
 			{
@@ -540,13 +547,34 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 			 */
 
+			const callParams = nativeCall.params.call;
+			const isPrivateCall = callParams.associatedEntity?.advanced?.chatType === 'private';
+			const callFields = (nativeCall.params.callerName && isPrivateCall)
+				? {
+					...callParams,
+					associatedEntity: {
+						...callParams.associatedEntity,
+						name: nativeCall.params.callerName,
+						avatar: nativeCall.params.callerAvatar || callParams.associatedEntity?.avatar,
+					},
+				}
+				: callParams;
+
 			this.callsInitializedFromPush.add(callUuid);
-			this._instantiateCall(nativeCall.params.call, nativeCall.params.connectionData, nativeCall.params.users, nativeCall.params.logToken, nativeCall.params.userData);
+			this._instantiateCall(
+				callFields,
+				nativeCall.params.connectionData,
+				nativeCall.params.users,
+				nativeCall.params.logToken,
+				nativeCall.params.userData,
+			);
 			BX.postComponentEvent('CallEvents::incomingCall', [{
 				callId,
 				callUuid,
 				video: isVideo,
 				ignoreCallTimeout: true,
+				isAlreadyInCall,
+				isActiveCallPlatformIsMobile,
 				provider,
 			}], 'calls');
 		}
@@ -1097,22 +1125,29 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 		}
 
-
-
-		clearRecentList()
+		fillRecentList()
 		{
 			Object.keys(this.legacyCalls)
 				.forEach((key) => {
 					const call = this.legacyCalls[key];
-					this._onCallInactive({ callId: call.id });
+
+					if (call)
+					{
+						this._onCallActive({ callId: call.id, callUuid: call.uuid });
+					}
 				});
 
 			Object.keys(this.jwtCalls)
 				.forEach((key) => {
 					const call = this.jwtCalls[key];
-					this._onCallInactive({ callUuid: call.uuid });
+
+					if (call)
+					{
+						this._onCallActive({ callUuid: call.uuid });
+					}
 				});
 		}
+
 		_onPullStatusEvent(e)
 		{
 			if (this.pullStatus === e.status)
@@ -1125,17 +1160,14 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			switch (this.pullStatus)
 			{
 				case 'online':
-
-					break;
 				case 'offline':
-					this.clearRecentList();
-					break;
 				case 'connect':
+					this.#reevaluateNeedsActiveCallsUpdate({ pullStatusJustFired: true });
 
 					break;
 			}
 
-			console.log(`[${CallUtil.getTimeForLog()}]: pull status: ${this.pullStatus}`);
+			console.log(`[${CallUtil.getTimeForLog()}]: pull status: ${this.pullStatus}`, e.additional);
 		}
 
 		_onPullClientEvent(command, params, extra)
@@ -1192,6 +1224,21 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 		#onChatUserChange(params)
 		{
+			for (const call of Object.values(this.jwtCalls))
+			{
+				if (call?.associatedEntity?.id == params.dialogId)
+				{
+					call.associatedEntity.userCounter = params.userCount;
+				}
+			}
+			for (const call of Object.values(this.legacyCalls))
+			{
+				if (call?.associatedEntity?.id == params.dialogId)
+				{
+					call.associatedEntity.userCounter = params.userCount;
+				}
+			}
+
 			BX.postComponentEvent(EventType.callMobile.chatUserChanged, [{
 				dialogId: params.dialogId,
 				userCount: params.userCount,
@@ -1220,6 +1267,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			const callScheme = callFields.SCHEME || callFields.scheme;
 			const isLegacyCall = CallUtil.isLegacyCall(provider, callScheme);
 			const isCallInitializedFromPush = this.callsInitializedFromPush.has(callUuid);
+			const isAlreadyInCall = params.isAlreadyInCall === true;
+			const isActiveCallPlatformIsMobile = params.activeCallPlatform !== 'web';
 
 			if (call)
 			{
@@ -1319,6 +1368,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					userData: params.userData || null,
 					autoAnswer: this.shouldCallBeAutoAnswered(call.uuid), // need to check data from push
 					ignoreCallTimeout: false,
+					isAlreadyInCall: isAlreadyInCall,
+					isActiveCallPlatformIsMobile: isActiveCallPlatformIsMobile,
 					provider: provider,
 				}], 'calls');
 				call.log(`Incoming call ${call.uuid}`);
@@ -1381,6 +1432,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			let scheme = callFields.SCHEME || callFields.scheme;
 			const callFactory = this._getCallFactory(provider, scheme);
 			const isLegacy = CallUtil.isLegacyCall(provider, scheme);
+			const isIncoming = Number(initiatorId) !== Number(env.userId);
 			call = callFactory.createCall({
 				users,
 				logToken,
@@ -1390,7 +1442,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				initiatorId: parseInt(initiatorId, 10),
 				parentId: callFields.PARENT_ID || callFields.parentId,
 				parentUuid: callFields.PARENT_UUID || callFields.parentUuid,
-				direction: initiatorId == env.userId ? BX.Call.Direction.Outgoing : BX.Call.Direction.Incoming,
+				direction: isIncoming ? BX.Call.Direction.Incoming : BX.Call.Direction.Outgoing,
 				userData: CallUtil.getCurrentUserName(),
 				associatedEntity: {
 					userCounter: users?.length || 0,
@@ -1431,7 +1483,36 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				uuid: call.uuid,
 				provider: call.provider,
 				associatedEntity: call.associatedEntity,
+				// Hide the button when app is a background or when there is no internet connection, and also if:
+				// — there is no active call;
+				// — there is an active call, but it has been completed.
+				noButton: this.#needsActiveCallsUpdate
+					&& (call.joinStatus !== 'local' || this.#callPresence === CallPresence.Inactive),
 			};
+		}
+
+		setHasActiveCall(hasActiveCall)
+		{
+			this.#callPresence = hasActiveCall ? CallPresence.Active : CallPresence.Inactive;
+			this.#reevaluateNeedsActiveCallsUpdate();
+		}
+
+		#reevaluateNeedsActiveCallsUpdate({ appPausedJustFired = false, pullStatusJustFired = false } = {})
+		{
+			if (!pullStatusJustFired)
+			{
+				this.#wasAppPaused = appPausedJustFired;
+				this.#isAppPaused = !appPausedJustFired && Application.isBackground();
+			}
+
+			const isOffline = this.pullStatus !== 'online';
+			const shouldFlag = this.#wasAppPaused || this.#isAppPaused || isOffline;
+
+			this.#needsActiveCallsUpdate = shouldFlag;
+			if (shouldFlag || pullStatusJustFired)
+			{
+				this.fillRecentList();
+			}
 		}
 
 		_getValidConnectionData(connectionData, isLegacy)
@@ -2732,6 +2813,110 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 
 			return value;
+		}
+
+		isConnectionStatsPoor(stats)
+		{
+			if (!stats)
+			{
+				return false;
+			}
+
+			const networkTypes = {
+				wifi: 'wifi',
+				cellular: 'cellular',
+				ethernet: 'ethernet',
+				loopback: 'loopback',
+				other: 'other',
+				unknown: 'unknown',
+			};
+
+			const cellularTypes = {
+				twoG: '2G',
+				threeG: '3G',
+				fourG: '4G',
+				fiveG: '5G',
+			};
+
+			const networkQualities = {
+				minimal: 'minimal',
+				moderate: 'moderate',
+				good: 'good',
+				unknown: 'unknown',
+			};
+
+			const disconnectsTimeIntervalsInSeconds = {
+				minute: 60,
+				fiveMinutes: 300,
+			};
+
+			const defaultThresholds = {
+				disconnectsInLastMinute: 1,
+				disconnectsInLast5Minutes: 2,
+				signalStrengthDbm: -60,
+				upstreamBandwidthKbps: 4400,
+				downstreamBandwidthKbps: 4400,
+			};
+
+			const thresholdsByNetworkType = {
+				[networkTypes.wifi]: {
+					signalStrengthDbm: -60,
+					upstreamBandwidthKbps: 4400,
+					downstreamBandwidthKbps: 4400,
+				},
+				[networkTypes.cellular]: {
+					signalStrengthDbm: -75,
+					upstreamBandwidthKbps: 3000,
+					downstreamBandwidthKbps: 3000,
+				},
+			};
+
+			const networkThresholds = thresholdsByNetworkType[stats.networkType] || defaultThresholds;
+			const disconnectsCount = BX.type.isPlainObject(stats.disconnectsCount) ? stats.disconnectsCount : {};
+			const disconnectsInLastMinute = Number(
+				disconnectsCount[disconnectsTimeIntervalsInSeconds.minute]
+				?? stats.disconnectsInLastMinute
+				?? 0,
+			);
+			const disconnectsInLast5Minutes = Number(
+				disconnectsCount[disconnectsTimeIntervalsInSeconds.fiveMinutes]
+				?? stats.disconnectsInLast5Minutes
+				?? 0,
+			);
+			const signalStrength = Number(stats.signalStrength);
+			const upstreamBandwidthKbps = Number(stats.upstreamBandwidthKbps);
+			const downstreamBandwidthKbps = Number(stats.downstreamBandwidthKbps);
+
+			const connectionChecks = [
+				(currentStats) => currentStats.hasInternetConnection === false,
+				() => (
+					disconnectsInLastMinute >= defaultThresholds.disconnectsInLastMinute
+					|| disconnectsInLast5Minutes >= defaultThresholds.disconnectsInLast5Minutes
+				),
+				() => (
+					Number.isFinite(signalStrength)
+					&& signalStrength < networkThresholds.signalStrengthDbm
+				),
+				() => (
+					(
+						Number.isFinite(upstreamBandwidthKbps)
+						&& upstreamBandwidthKbps > 0
+						&& upstreamBandwidthKbps < networkThresholds.upstreamBandwidthKbps
+					)
+					|| (
+						Number.isFinite(downstreamBandwidthKbps)
+						&& downstreamBandwidthKbps > 0
+						&& downstreamBandwidthKbps < networkThresholds.downstreamBandwidthKbps
+					)
+				),
+				(currentStats) => currentStats.networkQuality === networkQualities.minimal,
+				(currentStats) => (
+					currentStats.networkType === networkTypes.cellular
+					&& currentStats.cellularType === cellularTypes.twoG
+				),
+			];
+
+			return connectionChecks.some((check) => check(stats));
 		}
 
 		isIos()

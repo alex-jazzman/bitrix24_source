@@ -1,1 +1,52 @@
-.tasks-history-grid-container{padding:var(--ui-space-inset-lg2)}.tasks-history-grid-header{margin-bottom:var(--ui-space-stack-xl2)}.tasks-history-grid-main-content{display:flex;align-items:center;justify-content:center}.tasks-history-grid-author-column-element.--collaber{color:var(--ui-color-collab-accent-primary)}.tasks-history-grid-comment-link{cursor:pointer;color:var(--ui-color-link-primary-base)}.tasks-history-grid-comment-link:hover{text-decoration:underline}.tasks-history-grid-loader-spinner{width:var(--ui-size-8xl);height:var(--ui-size-8xl);border:3px solid var(--ui-color-base-5);border-bottom:3px solid transparent;border-radius:50%;display:inline-block;box-sizing:border-box;animation:history-grid-spinner-loader-animation 1s linear infinite}@keyframes history-grid-spinner-loader-animation{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}.tasks-history-grid-checklist-element.--checked{text-decoration:line-through}.tasks-history-grid-user-element.--collaber{color:var(--ui-color-collab-accent-primary)}
+.tasks-history-grid-container {
+	padding: var(--ui-space-inset-lg2);
+}
+
+.tasks-history-grid-header {
+	margin-bottom: var(--ui-space-stack-xl2);
+}
+
+.tasks-history-grid-main-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tasks-history-grid-author-column-element.--collaber {
+	color: var(--ui-color-collab-accent-primary);
+}
+.tasks-history-grid-comment-link {
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+}
+
+.tasks-history-grid-comment-link:hover {
+	text-decoration: underline;
+}
+.tasks-history-grid-user-element.--collaber {
+	color: var(--ui-color-collab-accent-primary);
+}
+.tasks-history-grid-checklist-element.--checked {
+	text-decoration: line-through;
+}
+.tasks-history-grid-loader-spinner {
+	width: var(--ui-size-8xl);
+	height: var(--ui-size-8xl);
+	border: 3px solid var(--ui-color-base-5);
+	border-bottom-color: transparent;
+	border-radius: 50%;
+	display: inline-block;
+	box-sizing: border-box;
+	animation: history-grid-spinner-loader-animation 1s linear infinite;
+}
+
+@keyframes history-grid-spinner-loader-animation {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9XTWRIdDkiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL1dNZEh0OSIsInNvdXJjZXNDb250ZW50IjpbIi50YXNrcy1oaXN0b3J5LWdyaWQtY29udGFpbmVyIHtcblx0cGFkZGluZzogdmFyKC0tdWktc3BhY2UtaW5zZXQtbGcyKTtcbn1cblxuLnRhc2tzLWhpc3RvcnktZ3JpZC1oZWFkZXIge1xuXHRtYXJnaW4tYm90dG9tOiB2YXIoLS11aS1zcGFjZS1zdGFjay14bDIpO1xufVxuXG4udGFza3MtaGlzdG9yeS1ncmlkLW1haW4tY29udGVudCB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGp1c3RpZnktY29udGVudDogY2VudGVyO1xufVxuXG4udGFza3MtaGlzdG9yeS1ncmlkLWF1dGhvci1jb2x1bW4tZWxlbWVudC4tLWNvbGxhYmVyIHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWNvbGxhYi1hY2NlbnQtcHJpbWFyeSk7XG59XG4udGFza3MtaGlzdG9yeS1ncmlkLWNvbW1lbnQtbGluayB7XG5cdGN1cnNvcjogcG9pbnRlcjtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWxpbmstcHJpbWFyeS1iYXNlKTtcbn1cblxuLnRhc2tzLWhpc3RvcnktZ3JpZC1jb21tZW50LWxpbms6aG92ZXIge1xuXHR0ZXh0LWRlY29yYXRpb246IHVuZGVybGluZTtcbn1cbi50YXNrcy1oaXN0b3J5LWdyaWQtdXNlci1lbGVtZW50Li0tY29sbGFiZXIge1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3ItY29sbGFiLWFjY2VudC1wcmltYXJ5KTtcbn1cbi50YXNrcy1oaXN0b3J5LWdyaWQtY2hlY2tsaXN0LWVsZW1lbnQuLS1jaGVja2VkIHtcblx0dGV4dC1kZWNvcmF0aW9uOiBsaW5lLXRocm91Z2g7XG59XG4udGFza3MtaGlzdG9yeS1ncmlkLWxvYWRlci1zcGlubmVyIHtcblx0d2lkdGg6IHZhcigtLXVpLXNpemUtOHhsKTtcblx0aGVpZ2h0OiB2YXIoLS11aS1zaXplLTh4bCk7XG5cdGJvcmRlcjogM3B4IHNvbGlkIHZhcigtLXVpLWNvbG9yLWJhc2UtNSk7XG5cdGJvcmRlci1ib3R0b20tY29sb3I6IHRyYW5zcGFyZW50O1xuXHRib3JkZXItcmFkaXVzOiA1MCU7XG5cdGRpc3BsYXk6IGlubGluZS1ibG9jaztcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0YW5pbWF0aW9uOiBoaXN0b3J5LWdyaWQtc3Bpbm5lci1sb2FkZXItYW5pbWF0aW9uIDFzIGxpbmVhciBpbmZpbml0ZTtcbn1cblxuQGtleWZyYW1lcyBoaXN0b3J5LWdyaWQtc3Bpbm5lci1sb2FkZXItYW5pbWF0aW9uIHtcblx0MCUge1xuXHRcdHRyYW5zZm9ybTogcm90YXRlKDBkZWcpO1xuXHR9XG5cdDEwMCUge1xuXHRcdHRyYW5zZm9ybTogcm90YXRlKDM2MGRlZyk7XG5cdH1cbn1cbiJdfQ== */

@@ -52,3 +52,11 @@
 .mail__client_dialog_base-dialog_actions--center {
 	justify-content: center;
 }
+
+.mail__client_dialog_base-dialog_loader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	width: 100%;
+}
