@@ -1,25 +1,25 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Calendar = this.BX.Calendar || {};
-(function (exports,main_core,ui_vue3) {
+(function (exports, main_core, ui_vue3) {
 	'use strict';
 
 	const Application = {
-	  props: {
-	    link: {
-	      type: Object,
-	      default: null
-	    }
-	  },
-	  name: 'Application',
-	  data() {
-	    return {
-	      type: 'calendar'
-	    };
-	  },
-	  created() {},
-	  methods: {},
-	  template: `
+		props: {
+			link: {
+				type: Object,
+				default: null
+			}
+		},
+		name: 'Application',
+		data() {
+			return {
+				type: 'calendar'
+			};
+		},
+		created() {},
+		methods: {},
+		template: `
 		<div class="calendar-sharing-alert-container">
 			<div class="calendar-sharing-alert-info">
 				<div class="calendar-sharing-alert-info-empty --icon-cross">
@@ -36,21 +36,21 @@ this.BX.Calendar = this.BX.Calendar || {};
 	};
 
 	class Alert {
-	  constructor(options = {}) {
-	    this.link = options.link;
-	    this.rootNode = BX('calendar-sharing-alert');
-	    if (main_core.Type.isDomNode(this.rootNode)) {
-	      this.buildView();
-	    }
-	  }
-	  buildView() {
-	    this.application = ui_vue3.BitrixVue.createApp(Application, {
-	      link: this.link
-	    }).mount(this.rootNode);
-	  }
+		constructor(options = {}) {
+			this.link = options.link;
+			this.rootNode = BX('calendar-sharing-alert');
+			if (main_core.Type.isDomNode(this.rootNode)) {
+				this.buildView();
+			}
+		}
+		buildView() {
+			this.application = ui_vue3.BitrixVue.createApp(Application, {
+				link: this.link
+			}).mount(this.rootNode);
+		}
 	}
 
 	exports.Alert = Alert;
 
-}((this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}),BX,BX.Vue3));
+})(this.BX.Calendar.Sharing = this.BX.Calendar.Sharing || {}, BX, BX.Vue3);
 //# sourceMappingURL=alert.bundle.js.map

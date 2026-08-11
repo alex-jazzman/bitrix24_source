@@ -356,7 +356,7 @@ if
 )
 {
 	$arMenu[] = [
-		(new CopilotService())->getName(),
+		CopilotService::getName(),
 		'/online/?IM_COPILOT',
 		[
 			'/desktop_app/?IM_COPILOT',

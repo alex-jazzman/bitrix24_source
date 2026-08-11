@@ -1,3 +1,4 @@
+import { type JsonObject } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
 
 import { Core } from 'im.v2.application.core';
@@ -14,12 +15,11 @@ import { PromoManager } from 'im.v2.lib.promo';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { UpdateStateManager } from 'im.v2.lib.update-state.manager';
 import { Router } from 'im.v2.lib.router';
+import { GuestManager } from 'im.v2.lib.guest';
 
 import { BindingsManager } from './classes/bindings';
 import { PreloadedEntity } from './const/const';
 import { BindingsCondition } from './const/bindings';
-
-import type { JsonObject } from 'main.core';
 
 type AnchorLink = {
 	anchor: HTMLElement,
@@ -61,6 +61,7 @@ export class InitManager
 		this.#initCopilot();
 		this.#initPreloadedEntities();
 		this.#initCurrentUserAdminStatus();
+		this.#initGuestState();
 		this.#initBindings();
 
 		CounterManager.init();
@@ -134,6 +135,7 @@ export class InitManager
 		const { copilot } = Core.getApplicationData();
 		void Core.getStore().dispatch('copilot/setName', copilot.botName);
 		void Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
+		void Core.getStore().dispatch('copilot/setSuggests', copilot.suggests ?? []);
 
 		if (!copilot.availableEngines)
 		{
@@ -167,6 +169,13 @@ export class InitManager
 	{
 		const { isCurrentUserAdmin } = Core.getApplicationData();
 		void Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
+	}
+
+	#initGuestState()
+	{
+		const { isGuestWelcome, videoCallsTermsUrl } = Core.getApplicationData();
+		GuestManager.getInstance().setGuestNamePopupState(isGuestWelcome);
+		GuestManager.getInstance().setTermsOfServiceUrl(videoCallsTermsUrl);
 	}
 
 	#initBindings(): void

@@ -5,6 +5,7 @@
  * do not write complex logic in them and do not store state.
  */
 jn.define('im/messenger/controller/messenger-header/src/button', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 
 	const { Notification } = require('im/messenger/lib/ui/notification');
@@ -14,11 +15,16 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
 	const { RecentActionsMenu, NestedRecentActionsMenu } = require('im/messenger/lib/popup-menu/recent-actions');
 	const { Button } = require('im/messenger/lib/widget/header-button');
+	const {
+		onClick: onVibecodeClick,
+		isIndicatorVisible: isVibecodeIndicatorVisible,
+	} = require('im/messenger/lib/integration/mobile/vibecode');
 
 	const HeaderButtonId = Object.freeze({
 		search: 'search',
 		notification: 'notification',
 		more: 'more',
+		vibecode: 'vibecode',
 		nestedSearch: 'nested-search',
 		nestedFilter: 'nested-filter',
 		nestedMore: 'nested-more',
@@ -30,20 +36,13 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 		developerReload: 'developer-reload',
 	});
 
-	const ButtonType = Object.freeze({
-		search: 'search',
-		notification: 'notification',
-		more: 'more',
-		filter: 'filter_funnel',
-	});
-
 	const ButtonBadgeCode = Object.freeze({
 		notifications: 'notifications',
 	});
 
 	const searchButton = Button.create({
 		id: HeaderButtonId.search,
-		type: ButtonType.search,
+		iconName: Icon.SEARCH.getIconName(),
 		callback: async () => {
 			serviceLocator.get('recent-manager').getActiveRecent().openSearch();
 		},
@@ -52,7 +51,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 	const notificationButton = Button.create({
 		id: HeaderButtonId.notification,
 		testId: 'notification_badge',
-		type: ButtonType.notification,
+		iconName: Icon.NOTIFICATION.getIconName(),
 		badgeCode: ButtonBadgeCode.notifications,
 		callback: async () => showNotificationList(),
 	});
@@ -93,7 +92,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 
 	const nestedSearchButton = Button.create({
 		id: HeaderButtonId.nestedSearch,
-		type: ButtonType.search,
+		iconName: Icon.SEARCH.getIconName(),
 		shouldShow: () => true,
 		callback: () => {
 			serviceLocator.get('recent-manager').getActiveRecent().openSearch();
@@ -102,7 +101,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 
 	const nestedFilterButton = Button.create({
 		id: HeaderButtonId.nestedFilter,
-		type: ButtonType.filter,
+		iconName: Icon.FILTER_FUNNEL.getIconName(),
 		isAccent: () => serviceLocator.get('recent-manager').getActiveNestedRecent()?.hasSelectedFilter() ?? false,
 		shouldShow: () => NestedRecentActionsMenu.hasVisibleItems(),
 		callback: async () => {
@@ -126,7 +125,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 
 	const nestedMoreButton = Button.create({
 		id: HeaderButtonId.nestedMore,
-		type: ButtonType.more,
+		iconName: Icon.MORE.getIconName(),
 		shouldShow: async () => {
 			if (NestedRecentActionsMenu.hasVisibleItems())
 			{
@@ -153,7 +152,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 
 	const moreButton = Button.create({
 		id: HeaderButtonId.more,
-		type: ButtonType.filter,
+		iconName: Icon.FILTER_FUNNEL.getIconName(),
 		isAccent: () => serviceLocator.get('recent-manager').getActiveRecent()?.hasSelectedFilter() ?? false,
 		shouldShow: async () => {
 			const recent = serviceLocator.get('recent-manager').getActiveRecent();
@@ -196,10 +195,25 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 		},
 	});
 
+	const vibecodeButton = Button.create({
+		id: HeaderButtonId.vibecode,
+		iconName: Icon.VIBECODE_CATALOG.getIconName(),
+		isDot: () => Type.isFunction(isVibecodeIndicatorVisible) ? isVibecodeIndicatorVisible() : false,
+		isAccent: () => true,
+		shouldShow: async () => Feature.isVibecodeButtonAvailable,
+		callback: async () => {
+			if (Type.isFunction(onVibecodeClick))
+			{
+				await onVibecodeClick();
+			}
+		},
+	});
+
 	module.exports = {
 		searchButton,
 		notificationButton,
 		moreButton,
+		vibecodeButton,
 		nestedSearchButton,
 		nestedFilterButton,
 		nestedMoreButton,

@@ -1,4 +1,5 @@
 import { NoteSharedPageComponent } from 'note.shared';
+import { NoteAnalytics } from 'note.analytics';
 import { ROUTE_NAME_DOCUMENT } from '../router/route-names';
 
 export const SharedPage = {
@@ -15,6 +16,7 @@ export const SharedPage = {
 				return;
 			}
 
+			NoteAnalytics.documentViewed('docs_list');
 			this.$router.push({
 				name: ROUTE_NAME_DOCUMENT,
 				params: { id: documentId },

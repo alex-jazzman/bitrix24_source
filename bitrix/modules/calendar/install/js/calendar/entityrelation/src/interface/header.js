@@ -2,7 +2,7 @@ import { Tag, Loc, Event } from 'main.core';
 import { Icon, Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.main';
 
-const HELP_DESK_CODE = 26_423_530;
+const HELP_DESK_CODE = 25_570_792;
 
 export class EntityRelationsHeader
 {
@@ -43,11 +43,13 @@ export class EntityRelationsHeader
 		const params = {
 			redirect: 'detail',
 			code: HELP_DESK_CODE,
+			anchor: 'comm',
 		};
 
 		const queryString = Object.entries(params)
 			.map(([key, value]) => `${key}=${value}`)
-			.join('&');
+			.join('&')
+		;
 
 		top.BX.Helper.show(queryString);
 	}

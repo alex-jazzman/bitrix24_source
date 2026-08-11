@@ -9,6 +9,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Service\DependencyManager;
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 
+if (\Bitrix\Main\Loader::includeModule('stafftrack'))
+{
+	\Bitrix\Main\UI\Extension::load(['stafftrack.checkin-onboarding-banner']);
+}
+
 $urlManager = DependencyManager::getInstance()->getUrlManager();
 if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24')
 {

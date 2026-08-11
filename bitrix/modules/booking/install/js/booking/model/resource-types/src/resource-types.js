@@ -49,6 +49,10 @@ export class ResourceTypes extends BuilderModel
 			upsertMany: (store: Store, resourceTypes: ResourceTypeModel[]): void => {
 				resourceTypes.forEach((resourceType: ResourceTypeModel) => store.commit('upsert', resourceType));
 			},
+			/** @function resourceTypes/setSenderCodeForAll */
+			setSenderCodeForAll: (store: Store, senderCode: string): void => {
+				store.commit('setSenderCodeForAll', senderCode);
+			},
 		};
 	}
 
@@ -58,6 +62,12 @@ export class ResourceTypes extends BuilderModel
 			upsert: (state: ResourceTypesState, resourceType: ResourceTypeModel): void => {
 				state.collection[resourceType.id] ??= resourceType;
 				Object.assign(state.collection[resourceType.id], resourceType);
+			},
+			setSenderCodeForAll: (state: ResourceTypesState, senderCode: string): void => {
+				for (const resourceType of Object.values(state.collection))
+				{
+					resourceType.senderCode = senderCode;
+				}
 			},
 		};
 	}

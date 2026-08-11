@@ -21,7 +21,6 @@ use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -46,7 +45,6 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
-		'crm.template.editor',
 		'crm.entity-list.binder',
 	]
 );
@@ -698,16 +696,6 @@ $filterLazyLoadParams = [
 $uri = new Uri($filterLazyLoadUrl);
 
 $isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
-
-if ($isDefaultCategory)
-{
-	$analytics = [
-		'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
-		'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
-	];
-
-	print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();
-}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',

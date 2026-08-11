@@ -22,9 +22,9 @@ export class GridBase
 		return this.calculateHeight(...args);
 	}
 
-	calculateWidth(width: number): number
+	calculateWidth(...args)
 	{
-		return width;
+		throw new Error('Method calculateWidth must be implemented');
 	}
 
 	getUnitDurations()

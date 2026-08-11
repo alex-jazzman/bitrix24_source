@@ -1,0 +1,2 @@
+<?php
+$MESS["MESSAGESERVICE_UI_PROVIDER_VIA"] = "using #CHANNEL#";

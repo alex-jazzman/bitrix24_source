@@ -152,6 +152,7 @@ class AhaMoments
 			[AhaMoment.CyclePopup]: this.#shouldShowCyclePopup(),
 			[AhaMoment.SearchNavigation]: this.#shouldShowSearchNavigation(),
 			[AhaMoment.IntegrationMapsYa]: this.#shouldShowIntegrationMapsYa(),
+			[AhaMoment.WeekView]: this.#shouldShowWeekView(),
 		}[ahaMoment];
 	}
 
@@ -243,6 +244,14 @@ class AhaMoments
 		return this.#wasNotShown(AhaMoment.IntegrationMapsYa);
 	}
 
+	#shouldShowWeekView(): boolean
+	{
+		const wasNotShown = this.#wasNotShown(AhaMoment.WeekView);
+		const isLoaded = Core.getStore().getters[`${Model.Interface}/isLoaded`];
+
+		return wasNotShown && isLoaded && !PopupManager.isAnyPopupShown();
+	}
+
 	#wasNotShown(ahaMoment: $Values<typeof AhaMoment>): boolean
 	{
 		return !this.#wasShown(ahaMoment);
@@ -270,6 +279,7 @@ class AhaMoments
 			[AhaMoment.CyclePopup]: Option.AhaCyclePopup,
 			[AhaMoment.SearchNavigation]: Option.AhaSearchNavigation,
 			[AhaMoment.IntegrationMapsYa]: Option.AhaIntegrationMapsYa,
+			[AhaMoment.WeekView]: Option.AhaWeekView,
 		}[ahaMoment];
 	}
 }

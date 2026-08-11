@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
-import { ActionByRole, ChatType } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
+import { GuestManager } from 'im.v2.lib.guest';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
@@ -25,5 +26,13 @@ export function isSharedLinkCopyAllowed(dialogId: string): boolean
 
 	const permissionManager = PermissionManager.getInstance();
 
-	return permissionManager.canPerformActionByRole(ActionByRole.extend, dialogId);
+	const canPerformActionByRole = permissionManager.canPerformActionByRole(ActionByRole.extend, dialogId);
+	const canPerformActionByUserType = permissionManager.canPerformActionByUserType(ActionByUserType.extend);
+
+	return canPerformActionByRole && canPerformActionByUserType;
+}
+
+export function isGuestLinkCopyAllowed(dialogId: string): boolean
+{
+	return GuestManager.getInstance().isGuestLinkAvailable(dialogId);
 }

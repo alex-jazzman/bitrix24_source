@@ -1,0 +1,20 @@
+.node-settings-rules-toggle-inspector-button {
+	display: flex;
+	flex-direction: row;
+	gap: 4px;
+	align-items: center;
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	user-select: none;
+}
+
+.node-settings-rules-toggle-inspector-button__icon {
+	width: 24px;
+	height: 24px;
+}
+
+.node-settings-rules-toggle-inspector-button__text {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+}

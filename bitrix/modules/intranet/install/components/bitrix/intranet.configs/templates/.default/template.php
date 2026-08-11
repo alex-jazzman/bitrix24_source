@@ -256,7 +256,7 @@ use Bitrix\Location;
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY')?></td>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY_MSGVER_1')?></td>
 			<td class="content-edit-form-field-input">
 				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>

@@ -9,7 +9,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Color } = require('tokens');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus, BotCode, DialogType, ErrorCode } = require('im/messenger/const');
+	const { OwnMessageStatus, BotCode, BotType, DialogType, ErrorCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
@@ -278,6 +278,16 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				this.title.color = Color.accentMainWarning.toHex();
 			}
 
+			const botStyle = this.getTitleBotStyle(user);
+			if (botStyle)
+			{
+				this.title.color = botStyle.color;
+				this.title.leftIcon = botStyle.icon;
+				this.title.leftIconColor = botStyle.color;
+
+				return this;
+			}
+
 			const hasVacation = serviceLocator.get('core').getStore().getters['usersModel/hasVacation'](authorId);
 			if (hasVacation)
 			{
@@ -297,6 +307,44 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			}
 
 			return this;
+		}
+
+		/**
+		 * @param {UsersModelState} user
+		 * @return {?{icon: string, color: string}}
+		 */
+		getTitleBotStyle(user)
+		{
+			if (!user?.bot)
+			{
+				return null;
+			}
+
+			if ([BotCode.copilot, BotCode.aiAssistant].includes(user.botData?.code))
+			{
+				return null;
+			}
+
+			if (user.network === true)
+			{
+				return {
+					icon: Icon.SMALL_EARTH.getIconName(),
+					color: Color.accentSoftElementGreen.toHex(),
+				};
+			}
+
+			if (user.botData?.type === BotType.support24)
+			{
+				return {
+					icon: Icon.SMALL_DIGITS_24.getIconName(),
+					color: Color.accentMainLink.toHex(),
+				};
+			}
+
+			return {
+				icon: Icon.SMALL_ROBOT.getIconName(),
+				color: Color.accentSoftElementViolet.toHex(),
+			};
 		}
 
 		/**

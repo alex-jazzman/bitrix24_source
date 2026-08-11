@@ -1,8 +1,14 @@
 import { AttachmentNodeViewBaseComponent } from './attachment-base';
-import { Text, Type } from 'main.core';
+import { ResizableMediaMixin } from './resizable-media-mixin';
+import { MediaResizeControls } from './media-resize-controls';
+import { Loc, Text, Type } from 'main.core';
 
 export const ImageAttachmentNodeViewComponent = {
 	extends: AttachmentNodeViewBaseComponent,
+	mixins: [ResizableMediaMixin],
+	components: {
+		MediaResizeControls,
+	},
 	props: {
 		defaultTypeMessage: {
 			type: String,
@@ -17,6 +23,15 @@ export const ImageAttachmentNodeViewComponent = {
 		hasImage(): boolean
 		{
 			return Type.isStringFilled(this.imageUrl);
+		},
+		// Required by ResizableMediaMixin to gate handles/overlay.
+		hasMedia(): boolean
+		{
+			return this.hasImage;
+		},
+		replaceTitle(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_IMAGE_REPLACE');
 		},
 		imageViewerAttrs(): Object
 		{
@@ -64,7 +79,7 @@ export const ImageAttachmentNodeViewComponent = {
 		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
 			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
 			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
-			<div v-else class="note-editor-image-attachment-preview">
+			<div v-else class="note-editor-image-attachment-preview" :class="{ 'note-editor-image-attachment-preview--resizing': dragging }">
 				<a
 					class="note-editor-attachment-tile-link note-editor-image-attachment-link"
 					v-bind="imageViewerAttrs"
@@ -73,6 +88,7 @@ export const ImageAttachmentNodeViewComponent = {
 				>
 					<img
 						v-if="hasImage"
+						ref="image"
 						class="note-editor-image-attachment-image"
 						:src="imageUrl"
 						:alt="fileName"
@@ -81,6 +97,17 @@ export const ImageAttachmentNodeViewComponent = {
 					/>
 					<span v-else class="note-editor-image-attachment-empty">{{ fileName }}</span>
 				</a>
+				<MediaResizeControls
+					:show-handles="showHandles"
+					:show-overlay="showOverlay"
+					:overlay-style="overlayStyle"
+					:align="align"
+					:align-titles="alignTitles"
+					:on-start-resize="startResize"
+					:on-set-align="setAlign"
+					:on-replace="onReplace"
+					:replace-title="replaceTitle"
+				/>
 			</div>
 		</div>
 	`,

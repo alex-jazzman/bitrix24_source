@@ -9,6 +9,10 @@ use Bitrix\Main\UI\Extension;
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
 Extension::load("ui.hint");
+if (\Bitrix\Main\Loader::includeModule('stafftrack'))
+{
+	\Bitrix\Main\UI\Extension::load(['stafftrack.checkin-onboarding-banner']);
+}
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 if (isset($arResult['SCHEDULE']['NAME']) && $arResult['SCHEDULE']['NAME'])
 {

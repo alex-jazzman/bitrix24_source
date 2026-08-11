@@ -1,12 +1,14 @@
-import type { ActivityData, PortId } from '../../../shared/types';
+import { type ActivityData, type PortId, type Block } from '../../../shared/types';
 import {
-	CONSTRUCTION_OPERATORS, CONSTRUCTION_TYPES, GENERAL_CONSTRUCTION_TYPES, CONSTRUCTION_LABELS,
+	CONSTRUCTION_OPERATORS,
+	CONSTRUCTION_TYPES,
+	CONSTRUCTION_LABELS,
 	FIELD_OBJECT_TYPES,
 } from '../constants';
 
 export type Construction = {
 	id: string;
-	type: $Values<typeof CONSTRUCTION_TYPES>;
+	type: $Values<typeof CONSTRUCTION_TYPES> | $Values<typeof CONSTRUCTION_TYPES['CONDITION']>;
 	expression: {
 		title: string;
 		value: string;
@@ -28,6 +30,8 @@ export type ConditionExpressionField = {
 	fieldId: string,
 	type: string | null,
 	multiple: number | null,
+	options?: Object | null,
+	settings?: Object | null,
 }
 
 export type FieldObjectType = $Values<typeof FIELD_OBJECT_TYPES> | string;
@@ -81,10 +85,14 @@ export type NodeSettings = {
 	fields: Map<string, Field>;
 	actions: Map<ActionDictEntry['id'], ActionDictEntry>;
 	fixedDocumentType: Array | null;
+	filterSupported: boolean;
 };
 
-export type GeneralConstructionTypes = {
-	+[key: $Keys<typeof GENERAL_CONSTRUCTION_TYPES>]: $Values<typeof GENERAL_CONSTRUCTION_TYPES>,
+export type ConnectedBlocksContext = {
+	syntheticSourceBlock: Block | null,
+	siblingBlocks: Block[],
+	ancestorBlocks: Block[],
+	allBlocks: Block[],
 };
 
 export type ConstructionOperators = {

@@ -4,6 +4,7 @@ export type Session = {
 	id: number,
 	chatId: number,
 	operatorId: number,
+	operatorIsBot: boolean,
 	status: StatusGroupName,
 	queueId: number,
 	pinned: boolean,

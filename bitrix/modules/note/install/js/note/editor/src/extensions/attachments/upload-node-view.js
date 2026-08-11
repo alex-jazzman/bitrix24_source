@@ -288,7 +288,13 @@ export class VueUploadAssetNodeView
 		}
 
 		const newNode = schemaNodeType.create(attrs);
-		const tr = this.editor.state.tr.replaceWith(pos, pos + this.node.nodeSize, newNode);
+		// uploadAsset is a block node; an inline result (image) must be wrapped in a paragraph
+		// so it stays legal at the document root after the replace.
+		const paragraphType = this.editor?.state?.schema?.nodes?.paragraph;
+		const nodeToInsert = (newNode.isInline && paragraphType)
+			? paragraphType.create(null, newNode)
+			: newNode;
+		const tr = this.editor.state.tr.replaceWith(pos, pos + this.node.nodeSize, nodeToInsert);
 		this.editor.view.dispatch(tr);
 	}
 

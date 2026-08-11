@@ -1,4 +1,5 @@
 import { NoteRecycleBinPageComponent } from 'note.recyclebin';
+import { NoteAnalytics } from 'note.analytics';
 import { ROUTE_NAME_DOCUMENT } from '../router/route-names';
 
 export const RecycleBinPage = {
@@ -15,6 +16,7 @@ export const RecycleBinPage = {
 				return;
 			}
 
+			NoteAnalytics.documentViewed('docs_list');
 			this.$router.push({
 				name: ROUTE_NAME_DOCUMENT,
 				params: { id: documentId },

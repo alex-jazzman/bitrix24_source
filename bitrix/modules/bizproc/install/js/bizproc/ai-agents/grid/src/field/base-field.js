@@ -1,5 +1,5 @@
 import { Dom } from 'main.core';
-import { GridManager } from 'bizproc.ai-agents.grid';
+import { GridManager } from '../grid-manager';
 
 export class BaseField
 {

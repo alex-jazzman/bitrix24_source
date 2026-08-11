@@ -1,5 +1,5 @@
-import type { Block, BlockId } from '../../../shared/types';
-import { deepEqual } from '../../../shared/utils';
+import { type Block, type BlockId } from '../../../shared/types';
+import { deepEqual } from '../../../shared/utils/object';
 import { BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME } from '../constants';
 
 export function isBlockPropertiesDifferent(currentBlock: Block, newBlock: Block): boolean

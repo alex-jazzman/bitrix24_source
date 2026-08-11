@@ -1,0 +1,30 @@
+.biconnector-settings-card__action-row {
+	display: flex;
+	align-items: center;
+}
+
+.biconnector-settings-card__option-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.biconnector-settings-card__option-label {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-1);
+}
+
+.biconnector-settings-card__switcher-control {
+	flex-shrink: 0;
+}
+
+@keyframes biconnector-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.biconnector-settings-card__icon--spinning {
+	animation: biconnector-spin 0.8s linear infinite;
+}

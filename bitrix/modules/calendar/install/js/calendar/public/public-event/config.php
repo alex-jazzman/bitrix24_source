@@ -9,9 +9,9 @@ return [
 	'css' => 'dist/public-event.bundle.css',
 	'js' => 'dist/public-event.bundle.js',
 	'rel' => [
-		'main.core',
 		'calendar.sharing.public-v2',
 		'calendar.util',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

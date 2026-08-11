@@ -6,6 +6,7 @@ export type GroupDto = {
 	image: string,
 	type: GroupType,
 	stages: StageDto[],
+	isRestrictedView: ?boolean,
 };
 
 export function createGroupDto(raw: Object): GroupDto
@@ -15,6 +16,7 @@ export function createGroupDto(raw: Object): GroupDto
 		name: raw.name ?? '',
 		image: raw.image ?? null,
 		type: raw.type ?? null,
+		isRestrictedView: raw.isRestrictedView ?? null,
 		stages: Type.isArray(raw.stages) ? raw.stages.map((stage) => createStageDto(stage)) : [],
 	};
 }

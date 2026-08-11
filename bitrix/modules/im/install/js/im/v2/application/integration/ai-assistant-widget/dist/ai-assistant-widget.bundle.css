@@ -10,6 +10,11 @@
 	padding-bottom: 0;
 }
 
+.bx-im-ai-assistant-widget-empty-state {
+	display: flex;
+	height: 100%;
+}
+
 .bx-im-ai-assistant-widget-layout__container{
 	display: flex;
 	position: relative;
@@ -149,6 +154,17 @@
 .--legacy .bx-im-ai-assistant-chat-header__icon {
 	--ui-icon-set__icon-color: var(--ui-color-text-subtle);
 	opacity: 1;
+}
+
+.bx-im-ai-assistant-widget-empty-state {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	padding: 16px 16px 36px;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__scope {
+	--bx-im-ai-assistant-empty-state-view-gap: 20px;
 }
 
 .bx-im-ai-assistant-chat-recent-list {

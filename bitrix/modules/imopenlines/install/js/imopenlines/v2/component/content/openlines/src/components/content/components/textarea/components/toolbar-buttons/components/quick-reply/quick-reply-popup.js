@@ -110,6 +110,7 @@ export const QuickReplyPopup = {
 				overlay: false,
 				closeIcon: false,
 				autoHide: true,
+				focusTrap: { restoreFocus: false },
 				borderRadius: '20px',
 				bindOptions: { position: 'top' },
 				angle: {

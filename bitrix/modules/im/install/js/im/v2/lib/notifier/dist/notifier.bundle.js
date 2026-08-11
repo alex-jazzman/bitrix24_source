@@ -223,6 +223,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_INVITE_CANCEL_COMPLETE'), {
 				autoHideDelay: 2000
 			});
+		},
+		onPartialError() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_INVITE_PARTIAL_ERROR'));
 		}
 	};
 

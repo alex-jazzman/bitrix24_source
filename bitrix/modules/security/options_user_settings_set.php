@@ -1,11 +1,13 @@
-<?
+<?php
 /**
  * @global int $ID - Edited user id
- * @global \CUser $USER
+ * @global CUser $USER
  * @global CMain $APPLICATION
- * @global string $security_SYNC1 - First code
- * @global string $security_SYNC2  - Second code
  */
+
+use Bitrix\Security\Mfa\Otp;
+use Bitrix\Security\Mfa\OtpException;
+use Bitrix\Main\Localization\Loc;
 
 $securityWarningTmp = "";
 $security_res = true;
@@ -14,18 +16,33 @@ if(
 	&& CModule::IncludeModule("security")
 	&& check_bitrix_sessid()
 	&& $USER->CanDoOperation('security_edit_user_otp')
-	&& $security_SYNC1
-):
+	&& (!empty($_POST['security_SYNC1']) || isset($_POST['security_EMAIL']))
+)
+{
+	if (!empty($_POST['security_EMAIL']) && !check_email($_POST['security_EMAIL'], true))
+	{
+		$APPLICATION->ThrowException(Loc::getMessage('security_user_edit_incorrect_email'));
+		$security_res = false;
+
+		return;
+	}
+
 	try
 	{
-		$otp = \Bitrix\Security\Mfa\Otp::getByUser($ID);
-		$otp->syncParameters($security_SYNC1, $security_SYNC2);
+		$otp = Otp::getByUser($ID);
+		if (!empty($_POST['security_SYNC1']))
+		{
+			$otp->syncParameters($_POST['security_SYNC1'], $_POST['security_SYNC2']);
+		}
+		if (isset($_POST['security_EMAIL']))
+		{
+			$otp->setEmail($_POST['security_EMAIL'] ?: null);
+		}
 		$otp->save();
 	}
-	catch (\Bitrix\Security\Mfa\OtpException $e)
+	catch (OtpException $e)
 	{
 		$APPLICATION->ThrowException($e->getMessage());
 		$security_res = false;
 	}
-
-endif;
+}

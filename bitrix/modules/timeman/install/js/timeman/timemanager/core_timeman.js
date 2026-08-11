@@ -2493,6 +2493,29 @@ BX.CTimeManWindow.prototype.ShowClock = function(error_string, start_time)
 
 	this.POPUP?.setAutoHide(false);
 
+	const hostPopupNode = this.MAIN_BUTTON?.closest?.('.popup-window');
+	const hostPopup = hostPopupNode ? BX.Main.PopupManager.getPopupById(hostPopupNode.id) : null;
+	if (hostPopup)
+	{
+		const count = (hostPopup._tmAutoHideSuspendCount ?? 0) + 1;
+		hostPopup._tmAutoHideSuspendCount = count;
+		if (count === 1)
+		{
+			hostPopup.setAutoHide(false);
+		}
+		const clockWnd = this.CLOCKWND.WND;
+		const restoreHostAutoHide = () => {
+			const next = Math.max(0, (hostPopup._tmAutoHideSuspendCount ?? 0) - 1);
+			hostPopup._tmAutoHideSuspendCount = next;
+			if (next === 0)
+			{
+				hostPopup.setAutoHide(true);
+			}
+			BX.removeCustomEvent(clockWnd, 'onPopupClose', restoreHostAutoHide);
+		};
+		BX.addCustomEvent(clockWnd, 'onPopupClose', restoreHostAutoHide);
+	}
+
 	this.CLOCKWND.Show();
 }
 
@@ -2533,6 +2556,29 @@ BX.CTimeManWindow.prototype.ShowEditVue = function(element)
 	{
 		this.EDITWND.setNode(element);
 		this.EDITWND.setData(this.PARENT.DATA);
+	}
+
+	const hostPopupNode = element.closest('.popup-window');
+	const hostPopup = hostPopupNode ? BX.Main.PopupManager.getPopupById(hostPopupNode.id) : null;
+	if (hostPopup)
+	{
+		const count = (hostPopup._tmAutoHideSuspendCount ?? 0) + 1;
+		hostPopup._tmAutoHideSuspendCount = count;
+		if (count === 1)
+		{
+			hostPopup.setAutoHide(false);
+		}
+		const editWnd = this.EDITWND.WND;
+		const restoreHostAutoHide = () => {
+			const next = Math.max(0, (hostPopup._tmAutoHideSuspendCount ?? 0) - 1);
+			hostPopup._tmAutoHideSuspendCount = next;
+			if (next === 0)
+			{
+				hostPopup.setAutoHide(true);
+			}
+			BX.removeCustomEvent(editWnd, 'onPopupClose', restoreHostAutoHide);
+		};
+		BX.addCustomEvent(editWnd, 'onPopupClose', restoreHostAutoHide);
 	}
 
 	this.EDITWND.Show();
@@ -6424,7 +6470,7 @@ BX.CTimeManReportForm.prototype.GetContentReportRow = function(report_value)
 			this.data.REPORT.length > 0
 				? BX.create('DIV', {
 					props: {className: 'tm-report-popup-desc'},
-					html: '<div class="tm-popup-section-title"><div class="tm-popup-section-title-text">' + BX.message('JS_CORE_TMR_REPORT') + '</div><div class="tm-popup-section-title-line"></div></div><div class="tm-report-popup-desc-text">' + this.data.REPORT + '</div>'
+					html: '<div class="tm-popup-section-title"><div class="tm-popup-section-title-text">' + BX.message('JS_CORE_TMR_REPORT') + '</div><div class="tm-popup-section-title-line"></div></div><div class="tm-report-popup-desc-text">' + (this.data.REPORT_HTML || this.data.REPORT) + '</div>'
 				})
 				: null
 		);

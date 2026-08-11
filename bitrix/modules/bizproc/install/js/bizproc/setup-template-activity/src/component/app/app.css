@@ -1,9 +1,5 @@
 .bizproc-setuptemplateactivity-app {
-	
-}
 
-.bizproc-setuptemplateactivity-app__overlay {
-	background: linear-gradient(rgba(0, 32, 78, 0.52) 0%, rgb(0, 32, 78) 100%);
 }
 
 .bizproc-setuptemplateactivity-app__blocks {
@@ -13,19 +9,7 @@
 	gap: 18px;
 }
 
-.bizproc-setuptemplateactivity-app__popup {
-	width: 100%;
-	height: 100%;
-	background-color: white;
-}
-
-.bizproc-setuptemplateactivity-app__popup-content {
-	height: 100%;
-}
-
-#bizproc-setuptemplateactivity-app .ui-ctl-element,
-#bizproc-setuptemplateactivity-app .ui-ctl-element,
-#bizproc-setuptemplateactivity-popup-content .ui-ctl-element {
+#bizproc-setuptemplateactivity-app .ui-ctl-element {
 	background-color: var(--ui-color-palette-white-base) !important;
 	background-image: none !important;
 	border-radius: var(--ui-border-radius-md) !important;
@@ -35,6 +19,14 @@
 	font-size: var(--ui-font-size-sm);
 	letter-spacing: var(--ui-letter-spacing-l);
 	color: var(--ui-color-base-3);
+}
+
+#bizproc-setuptemplateactivity-app .ui-ctl-element.--error {
+	border-color: var(--ui-field-color-danger) !important;
+}
+
+#bizproc-setuptemplateactivity-app .ui-ctl-label-text-error {
+	color: var(--ui-color-text-alert) !important;
 }
 
 .node-settings-panel #bizproc-setuptemplateactivity-app .ui-ctl:not(:first-child) {

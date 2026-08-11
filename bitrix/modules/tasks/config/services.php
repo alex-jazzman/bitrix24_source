@@ -114,6 +114,8 @@ use Bitrix\Tasks\V2\Internal\Repository\TaskMemberRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskParameterRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskReadRepository;
 use Bitrix\Tasks\V2\Internal\Repository\TaskReadRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\Template\InMemoryTemplateReplicateParamsRepository;
+use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateReplicateParamsRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskResultRepository;
 use Bitrix\Tasks\V2\Internal\Repository\TaskResultRepositoryInterface;
@@ -323,6 +325,9 @@ return [
 		],
 		ReminderReadRepositoryInterface::class => [
 			'className' => ReminderReadRepository::class,
+		],
+		TemplateReplicateParamsRepositoryInterface::class => [
+			'className' => InMemoryTemplateReplicateParamsRepository::class,
 		],
 		ChatNotificationInterface::class => [
 			'className' => ChatNotification::class,

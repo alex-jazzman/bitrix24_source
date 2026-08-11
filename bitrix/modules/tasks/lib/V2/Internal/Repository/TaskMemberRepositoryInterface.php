@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Bitrix\Tasks\V2\Internal\Repository;
+
+use Bitrix\Tasks\V2\Internal\Entity;
+
+interface TaskMemberRepositoryInterface
+{
+	public function get(int $taskId): Entity\UserCollection;
+
+	public function getByTaskIds(array $taskIds): Entity\TaskMemberCollection;
+
+	public function getCreator(int $taskId): ?Entity\User;
+
+	public function getResponsible(int $taskId): ?Entity\User;
+
+	public function getAccomplices(int $taskId): Entity\UserCollection;
+
+	public function getAuditors(int $taskId): Entity\UserCollection;
+
+	/**
+	 * @param int[] $taskIds
+	 * @return array<int, string[]>
+	 */
+	public function getMembershipForUserIdAndTaskIds(int $userId, array $taskIds): array;
+
+	public function deleteAllInTask(int $taskId): void;
+
+	public function saveMulti(int $taskId, Entity\UserCollection $userCollection): void;
+}

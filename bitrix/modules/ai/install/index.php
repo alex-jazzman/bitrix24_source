@@ -232,6 +232,7 @@ class AI extends \CModule
 			['CLASS' => 'Bitrix\AI\Engine\Cloud\Dalle', 'CATEGORY' => 'image'],
 			['CLASS' => 'Bitrix\AI\Engine\Cloud\AudioCall', 'CATEGORY' => 'call'],
 			['CLASS' => 'Bitrix\AI\Engine\Cloud\BitrixAudioCall', 'CATEGORY' => 'call'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\Bitrix24VL', 'CATEGORY' => 'vision'],
 		];
 
 		if (!in_array(Facade\Portal::getRegion(), ['ru', 'by'], true))

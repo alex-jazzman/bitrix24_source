@@ -1,18 +1,12 @@
+import type { BaseEvent } from 'main.core.events';
+import type { EditorOptions as MessageServiceEditorOptions } from 'messageservice.template.editor';
 import type { DialogOptions } from 'ui.entity-selector';
-import type { OnSelectParams } from './types';
 
-export type EditorOptions = {
-	id?: string,
-	target: HTMLElement,
+export type EditorOptions = MessageServiceEditorOptions & {
 	entityTypeId: number,
 	entityId: number,
 	categoryId?: number,
-	onSelect: (OnSelectParams) => void,
-	onDeselect?: () => {},
+	events?: { [eventName: string]: (BaseEvent) => any },
 	dialogOptions?: DialogOptions,
 	usePlaceholderProvider?: boolean,
-	canUseFieldsDialog?: boolean,
-	canUseFieldValueInput?: boolean,
-	canUsePreview: boolean,
-	isReadOnly?: boolean,
 };

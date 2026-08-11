@@ -60,9 +60,7 @@ $addButton->addAttribute('data-test-id', 'bizproc-ai-agents-header-add-button');
 
 Toolbar\Facade\Toolbar::setTitle(htmlspecialcharsbx(Loc::getMessage('BIZPROC_AI_AGENTS_PAGE_TITLE')));
 
-$user = new CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
-$isUserAdmin = $user->isAdmin();
-if ($isUserAdmin)
+if (!empty($arResult['IS_BP_EDITOR_OPEN']))
 {
 	Toolbar\Facade\Toolbar::addButton($addButton, Toolbar\ButtonLocation::AFTER_TITLE);
 }

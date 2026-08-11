@@ -1,74 +1,74 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,call_component_elements,call_component_userListPopup) {
+(function (exports, call_component_elements, call_component_userListPopup) {
 	'use strict';
 
 	// @vue/component
 	const UserList = {
-	  name: 'UserList',
-	  components: {
-	    CallLoader: call_component_elements.CallLoader,
-	    UserListPopup: call_component_userListPopup.UserListPopup
-	  },
-	  props: {
-	    usersData: {
-	      type: Array,
-	      required: true
-	    },
-	    loading: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    },
-	    withBorder: {
-	      type: Boolean,
-	      required: false,
-	      default: true
-	    },
-	    withIcon: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    }
-	  },
-	  data() {
-	    return {
-	      hasError: false,
-	      isLoadingUsers: false,
-	      showPopup: false
-	    };
-	  },
-	  computed: {
-	    isLoading() {
-	      return this.loading || this.isLoadingUsers;
-	    },
-	    displayedUsers() {
-	      const maxDisplayCount = 5;
-	      const usersToShow = this.usersData.slice(0, maxDisplayCount);
-	      const remainingCount = this.usersData.length - maxDisplayCount;
-	      if (remainingCount > 0) {
-	        usersToShow.push({
-	          remainingCount
-	        });
-	      }
-	      return usersToShow;
-	    }
-	  },
-	  methods: {
-	    backgroundStyle(user) {
-	      return {
-	        backgroundColor: user.color
-	      };
-	    },
-	    showUsersPopup() {
-	      this.showPopup = true;
-	    },
-	    onClosePopup() {
-	      this.showPopup = false;
-	    }
-	  },
-	  template: `
+		name: 'UserList',
+		components: {
+			CallLoader: call_component_elements.CallLoader,
+			UserListPopup: call_component_userListPopup.UserListPopup
+		},
+		props: {
+			usersData: {
+				type: Array,
+				required: true
+			},
+			loading: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			withBorder: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			withIcon: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				hasError: false,
+				isLoadingUsers: false,
+				showPopup: false
+			};
+		},
+		computed: {
+			isLoading() {
+				return this.loading || this.isLoadingUsers;
+			},
+			displayedUsers() {
+				const maxDisplayCount = 5;
+				const usersToShow = this.usersData.slice(0, maxDisplayCount);
+				const remainingCount = this.usersData.length - maxDisplayCount;
+				if (remainingCount > 0) {
+					usersToShow.push({
+						remainingCount
+					});
+				}
+				return usersToShow;
+			}
+		},
+		methods: {
+			backgroundStyle(user) {
+				return {
+					backgroundColor: user.color
+				};
+			},
+			showUsersPopup() {
+				this.showPopup = true;
+			},
+			onClosePopup() {
+				this.showPopup = false;
+			}
+		},
+		template: `
 		<div
 			class="bx-call-user-list-component bx-call-user-list-component-scope"
 			:class="{ '--border': this.withBorder }"
@@ -108,5 +108,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.UserList = UserList;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Call.Component.Elements,BX.Call.Component));
+})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Call.Component.Elements, BX.Call.Component);
 //# sourceMappingURL=user-list.bundle.js.map

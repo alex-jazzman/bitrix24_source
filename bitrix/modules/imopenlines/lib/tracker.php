@@ -311,18 +311,26 @@ class Tracker
 	}
 
 	/**
+	 * Returns true when CRM changes were registered successfully and it is safe
+	 * for the caller to publish CRM system messages to the chat.
+	 *
 	 * @param string $trackId
 	 * @param Chat $chat
-	 * @return void
+	 * @param array|false|null $expectation Pre-fetched expectation row, false if explicitly not found,
+	 *                                       null to perform internal lookup (default).
+	 * @return bool
 	 */
-	public function bindExpectationToChat(string $trackId, Chat $chat): void
+	public function bindExpectationToChat(string $trackId, Chat $chat, $expectation = null): bool
 	{
 		if (!Loader::includeModule('crm'))
 		{
-			return;
+			return false;
 		}
 
-		$expectation = $this->findExpectationByTrackId($trackId);
+		if ($expectation === null)
+		{
+			$expectation = $this->findExpectationByTrackId($trackId);
+		}
 		if ($expectation)
 		{
 			$crmManager = $this->getSession()->getCrmManager();
@@ -388,8 +396,6 @@ class Tracker
 				$registerActivityResult = $crmManager->registrationChanges();
 				if ($registerActivityResult->isSuccess())
 				{
-					$crmManager->sendCrmImMessages();
-
 					$updateSession['CRM_ACTIVITY_ID'] = $registerActivityResult->getResult();
 					$this->getSession()->updateCrmFlags($updateSession);
 
@@ -397,9 +403,13 @@ class Tracker
 					$chat->setCrmFlag($crmFields);
 
 					$crmManager->updateUserConnector();
+
+					return true;
 				}
 			}
 		}
+
+		return false;
 	}
 
 	//region OLD

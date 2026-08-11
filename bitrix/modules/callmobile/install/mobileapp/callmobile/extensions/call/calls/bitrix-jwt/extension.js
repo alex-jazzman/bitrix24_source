@@ -4,6 +4,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 	const { CallLogger } = require('call/calls/logger');
 	const { ActiveCallNotification } = require('call/calls/active-call-notification');
 	const { IncomingCallHider } = require('call/calls/incoming-call-hider');
+	const { SignalsBehavior, MediaStreamKind } = require('call/const');
 
 	BX.DoNothing = function() {};
 
@@ -44,7 +45,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 	};
 
 	const connectionRestoreTime = 15000;
-	const invitePeriod = 30000;
+	const PING_TIMEOUT_MULTIPLIER = 2.5;
 
 	class BitrixCallJwt
 	{
@@ -66,6 +67,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.userId = env.userId;
 			this.userData = params.userData;
 			this.usersAfterReconnect = null;
+			this.autoSubscribe = params.connectionData?.roomType === BX.Call.RoomType.Large ? 0 : 1;
 
 			this.initiatorId = params.initiatorId || '';
 
@@ -94,6 +96,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			});
 
 			this.peers = {};
+			this.audioTracks = new Map();
 			this._joinStatus = BX.Call.JoinStatus.None;
 			Object.defineProperty(this, 'joinStatus', {
 				get: this.getJoinStatus.bind(this),
@@ -149,6 +152,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
 				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
 			});
+
+			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()
@@ -163,7 +168,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		setConnectionData(connectionData)
 		{
-			this.connectionData = connectionData
+			this.connectionData = connectionData;
+			this.autoSubscribe = connectionData?.roomType === BX.Call.RoomType.Large ? 0 : 1;
 		}
 
 		addLogToken(logToken)
@@ -430,6 +436,14 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			}
 		}
 
+		toggleSubscriptionRemoteAudio(toggleList)
+		{
+			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteAudio)
+			{
+				this.bitrixCallDev.toggleSubscriptionRemoteAudio(toggleList);
+			}
+		}
+
 		onCentralUserSwitch(userId)
 		{
 			if (this.bitrixCallDev && this.bitrixCallDev.onCentralUserSwitch)
@@ -578,7 +592,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				this.waitForAnswerTimeout = setTimeout(() =>
 				{
 					this.__onNoAnswer();
-				}, invitePeriod);
+				}, this.invitePeriod);
 				this.joinStatus = BX.Call.JoinStatus.Local;
 				for (const user of users)
 				{
@@ -725,18 +739,21 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 							reject({ code: BX.Call.CallError.EmptySignalingUrl });
 						}
 
-						const signalingUrl = this.getSignalingUrl(this.connectionData.mediaServerUrl, this.connectionData.roomData);
+						const signalingUrl = this.getSignalingUrl(this.connectionData.mediaServerUrl, this.connectionData.roomData, this.autoSubscribe);
 
 						const callOptions = {
 							signalingUrl: signalingUrl,
 							callId: `${this.uuid}`,
 							roomType: this.getRoomType(),
+							autoSubscribe: this.autoSubscribe,
 							sendVideo: this.isTransitioningToGroupCall ? false : this.videoEnabled,
 							receiveVideo: true,
 							enableSimulcast: true,
 							userName: this.userData,
 							callBetaIosEnabled: callEngine.isCallBetaIosEnabled(),
 							isAddingMultipleUsersSupported: true,
+							pingTimeoutMultiplier: PING_TIMEOUT_MULTIPLIER,
+							noSignalsTimeoutBehavior: SignalsBehavior.allSignals,
 						};
 
 						this.bitrixCallDev = client.startCall(callOptions);
@@ -815,9 +832,9 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.eventEmitter.emit(BX.Call.Event.onChatUsersCountUpdate, [users]);
 		}
 
-		getSignalingUrl(baseUrl, roomData)
+		getSignalingUrl(baseUrl, roomData, autoSubscribe)
 		{
-			return baseUrl + "?auto_subscribe=1&sdk=js&version=1.6.7&protocol=8&roomData=" + roomData
+			return `${baseUrl}?auto_subscribe=${autoSubscribe}&sdk=js&version=1.6.7&protocol=8&roomData=${roomData}`
 		}
 
 		bindCallEvents()
@@ -1185,7 +1202,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				.then((response) => {
 					if (this.ready && this.bitrixCallDev)
 					{
-						const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData);
+						const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData, this.autoSubscribe);
 						this.bitrixCallDev.updateSignalingUrl(signalingUrl);
 					}
 					else
@@ -1217,6 +1234,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		__onCallReconnected()
 		{
 			this._reconnectionEventCount = 0;
+			this.signaling.sendCameraState(this.videoEnabled);
 			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{ reconnectedUsers: this.usersAfterReconnect }]);
 		}
 
@@ -1385,6 +1403,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		{
 			clearTimeout(this.waitForAnswerTimeout);
 			const eventData = [];
+
+			// Pass 1: build eventData and create peers (must complete BEFORE emit).
 			endpoints.endpoints.forEach(endpoint =>
 			{
 				if (!this.users.includes(endpoint.endpointId))
@@ -1406,6 +1426,9 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 			this.eventEmitter.emit(BX.Call.Event.onUsersJoined, [eventData]);
 
+			// Pass 2: attach endpoint to peer, register InfoUpdated listener, mark canChangeUI.
+			// Must run AFTER emit so subscribers observe pre-attach endpoint state — preserves
+			// the legacy three-forEach ordering invariant in a two-pass form.
 			endpoints.endpoints.forEach(endpoint =>
 			{
 				const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
@@ -1439,10 +1462,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 					this.log(`Unknown endpoint ${userName}`);
 				}
-			})
 
-			endpoints.endpoints.forEach(endpoint =>
-			{
 				endpoint.canChangeUI = true;
 			})
 		}
@@ -1533,6 +1553,16 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 					this.eventEmitter.emit(BX.Call.Event.onUserScreenState, [
 						message.senderId,
 						message.screenState === 'Y',
+					]);
+
+					break;
+				}
+
+				case clientEvents.cameraState:
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserCameraState, [
+						message.senderId,
+						message.cameraState === 'Y',
 					]);
 
 					break;
@@ -1630,41 +1660,115 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 					return;
 				}
 
-				if (data?.joinResponse)
+				// Large rooms wrap every signaling sub-event in an { event, mediaServerId } envelope
+				// (web canon: call_api.js socketOnMessageHandler). Unwrap once here so every branch
+				// dispatches flat. Flat Small/group payloads have no `event` and are left untouched.
+				// Previously only joinResponse and onActionSent were unwrapped, so trackCreated/
+				// trackMuted/videoRecorderStatus/participantReconnecting/participantReconnected were
+				// silently dropped in large rooms.
+				if (data?.event)
 				{
-					if (data.joinResponse.otherParticipants)
+					data = data.event;
+				}
+
+				const joinResponse = data?.joinResponse;
+
+				if (joinResponse)
+				{
+					if (joinResponse.otherParticipants)
 					{
-						this.usersAfterReconnect = [Object.values(data.joinResponse.otherParticipants)];
+						this.usersAfterReconnect = [Object.values(joinResponse.otherParticipants)];
+
+						const toggleList = [];
+
+						Object.values(joinResponse.otherParticipants).forEach((participant) => {
+							const userId = Number(participant.userId);
+
+							if (!participant.participantTracks)
+							{
+								return;
+							}
+
+							Object.values(participant.participantTracks).forEach((track) => {
+								if (track.source === MediaStreamKind.Microphone)
+								{
+									this.audioTracks.set(track.sid, {
+										source: track.source,
+										publisher: userId,
+										muted: track.muted,
+									});
+
+									if (!track.muted)
+									{
+										toggleList.push({ id: userId, subscribe: true });
+									}
+								}
+							});
+						});
+
+						if (toggleList.length > 0)
+						{
+							this.toggleSubscriptionRemoteAudio(toggleList);
+						}
 					}
 
-					if (data.joinResponse.role)
+					if (joinResponse.role)
 					{
-						CallUtil.setCurrentUserRole(data.joinResponse.role);
+						CallUtil.setCurrentUserRole(joinResponse.role);
 					}
 
-					if(data.joinResponse.permissions && !this._reconnectionEventCount)
+					if(joinResponse.permissions && !this._reconnectionEventCount)
 					{
-						this.__setUserPermissions(data.joinResponse.permissions);
+						this.__setUserPermissions(joinResponse.permissions);
 					}
 
-					if(data.joinResponse.roomState && !this._reconnectionEventCount)
+					if(joinResponse.roomState && !this._reconnectionEventCount)
 					{
-						CallUtil.setRoomPermissions(data.joinResponse.roomState);
-						CallUtil.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
+						CallUtil.setRoomPermissions(joinResponse.roomState);
+						CallUtil.setUserPermissionsByRoomPermissions(joinResponse.roomState);
 					}
 				}
 
 				if (data?.trackCreated)
 				{
+					const track = data.trackCreated.track;
+					const trackId = track?.sid;
+
+					if (trackId && track.source === MediaStreamKind.Microphone)
+					{
+						this.audioTracks.set(trackId, {
+							source: track.source,
+							publisher: track.publisher,
+							muted: data.trackCreated.muted,
+						});
+					}
+
 					this.eventEmitter.emit(BX.Call.Event.onRemoteTrackAdded);
 				}
 
 				if (data?.trackMuted)
 				{
-					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
-						Number(data.trackMuted.track?.publisher),
-						!data.trackMuted.muted,
-					]);
+					const trackId = data.trackMuted.track?.shortId;
+					const publisherId = Number(data.trackMuted.track?.publisher);
+					const isMuted = data.trackMuted.muted;
+
+					const audioTrack = this.audioTracks.get(trackId);
+					const isAudioTrack = audioTrack?.source === MediaStreamKind.Microphone;
+
+					if (isAudioTrack)
+					{
+						this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
+							publisherId,
+							!isMuted,
+						]);
+
+						audioTrack.muted = isMuted;
+
+						if (publisherId && !isMuted)
+						{
+							this.toggleSubscriptionRemoteAudio([{ id: publisherId, subscribe: true }]);
+						}
+					}
 				}
 
 				if (data?.videoRecorderStatus)
@@ -1676,6 +1780,27 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 							RecordStatus[data.videoRecorderStatus.code]
 						]);
 					}
+				}
+
+				if (data?.participantReconnecting)
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserStateChanged, [
+						data?.participantReconnecting?.userId,
+						BX.Call.UserState.Connecting,
+					]);
+				}
+
+				if (data?.participantReconnected)
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserStateChanged, [
+						data?.participantReconnected?.userId,
+						BX.Call.UserState.Connected,
+					]);
+				}
+
+				if (this.connectionData?.roomType === BX.Call.RoomType.Large && data?.onActionSent)
+				{
+					this.__onActionSentHandler(data.onActionSent);
 				}
 			}
 		}
@@ -2483,7 +2608,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			{
 				clearTimeout(this.callingTimeout);
 			}
-			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), invitePeriod);
+			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 			this.updateCalculatedState();
 		}
 

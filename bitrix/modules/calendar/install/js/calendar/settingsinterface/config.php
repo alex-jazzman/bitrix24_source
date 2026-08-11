@@ -13,11 +13,11 @@ return [
 	],
 	'js' => 'dist/settingsinterface.bundle.js',
 	'rel' => [
-		'calendar.util',
 		'calendar.controls',
+		'calendar.util',
 		'main.core',
-		'ui.entity-selector',
 		'main.core.events',
+		'ui.entity-selector',
 		'ui.info-helper',
 		'ui.messagecard',
 	],

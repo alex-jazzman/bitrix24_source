@@ -22,6 +22,12 @@
 	display: flex;
 }
 
+.disk-popup-limits__content_main a {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: none;
+	transition: border-bottom-color 0.2s linear;
+}
+
 .disk-popup-limits__content_icon-box {
 	position: relative;
 	top: -8px;
@@ -30,7 +36,7 @@
 .disk-popup-limits__content_icon {
 	width: 150px;
 	height: 140px;
-	background: url(images/images/disk-popup-limits-icon.png) center no-repeat;
+	background: url("images/disk-popup-limits-icon.png") center no-repeat;
 	background-size: cover;
 }
 
@@ -38,4 +44,12 @@
 	font-size: var(--ui-font-size-xl);
 	color: var(--ui-color-base-90);
 	line-height: 21px;
+}
+
+.disk-popup-limits__content_footer
+{
+	padding-top: 24px;
+}
+.disk-popup-limits__content_footer button:first-child {
+	margin-right: 12px;
 }

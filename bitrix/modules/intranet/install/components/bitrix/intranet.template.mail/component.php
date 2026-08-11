@@ -9,9 +9,12 @@ if (!CModule::IncludeModule("intranet"))
 
 use Bitrix\Intranet\Internal\Integration\Socialnetwork\FeatureProvider;
 use Bitrix\Main\Application;
+use Bitrix\Main\License\UrlProvider;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Config\Option;
+
+$urlProvider = new UrlProvider();
 
 if (!function_exists('getComponentMailFooterLink'))
 {
@@ -25,7 +28,7 @@ if (!function_exists('getComponentMailFooterLink'))
 			$result['TASKS'] = 'https://www.bitrix24.' . $region . '/features/tasks.php';
 			$result['CRM'] = 'https://www.bitrix24.' . $region . '/features/crm/';
 			$result['WF'] = 'https://www.bitrix24.' . $region . '/features/copilot';
-			$result['LAST_PHRASE'] = 'INTRANET_INVITATION_COLLAB_LINK_COPILOT_NAME';
+			$result['LAST_PHRASE'] = 'INTRANET_INVITATION_COLLAB_LINK_COPILOT_NAME_MSGVER_1';
 		}
 		else
 		{
@@ -47,6 +50,7 @@ if (!function_exists('getMailCompanyLogo'))
 		$result = [
 			'white' => '/images/logo-en.png',
 			'black' => '/images/logo-dark-en.png',
+			'blue' => '/images/logo-blue-en.png',
 		];
 
 		if ($userLang === 'ru')
@@ -58,6 +62,7 @@ if (!function_exists('getMailCompanyLogo'))
 				$result = [
 					'white' => '/images/logo-by.png',
 					'black' => '/images/logo-dark-by.png',
+					'blue' => '/images/logo-blue-by.png',
 				];
 			}
 			else
@@ -65,6 +70,7 @@ if (!function_exists('getMailCompanyLogo'))
 				$result = [
 					'white' => '/images/logo-ru.png',
 					'black' => '/images/logo-dark-ru.png',
+					'blue' => '/images/logo-blue-ru.png',
 				];
 			}
 		}
@@ -93,6 +99,7 @@ if (!function_exists('getSiteHostName'))
 }
 
 $arResult['USER_LANG'] = LANGUAGE_ID;
+$arResult['PERSONAL_DATA_POLICY_URL'] = $urlProvider->getPrivacyPolicyUrl();
 
 $arResult['isNewProjectsAvailable'] = (new FeatureProvider())->isNewProjectsAvailable();
 
@@ -268,7 +275,7 @@ if (Loader::includeModule("bitrix24"))
 }
 $this->arResult["HOST_NAME"] = getSiteHostName();
 
-$this->arResult['PRIVACY_POLICY_URL'] = (new \Bitrix\Main\License\UrlProvider())->getPrivacyPolicyUrl();
+$this->arResult['PRIVACY_POLICY_URL'] = (new UrlProvider())->getPrivacyPolicyUrl();
 
 if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
 {
@@ -277,6 +284,16 @@ if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
 elseif($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
 	$this->IncludeComponentTemplate("collab");
+}
+elseif($arParams["TEMPLATE_TYPE"] == "USER_OTP_EMAIL_CONFIRM")
+{
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG'], 'blue');
+	$this->IncludeComponentTemplate("otp_confirm");
+}
+elseif($arParams["TEMPLATE_TYPE"] == "USER_OTP_AUTH_CODE")
+{
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG'], 'blue');
+	$this->IncludeComponentTemplate("otp_auth");
 }
 elseif (
 	$arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN"

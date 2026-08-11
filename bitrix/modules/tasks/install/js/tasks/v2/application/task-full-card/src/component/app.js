@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Loc, Event } from 'main.core';
+import { Reflection, Runtime, Loc, Event, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Notifier } from 'ui.notification-manager';
 import { renderSkeleton } from 'ui.system.skeleton';
@@ -519,6 +519,23 @@ export const App = {
 					},
 					printIgnore: !this.task.relatedTaskIds || this.task.relatedTaskIds.length === 0,
 				},
+				{
+					chip: {
+						component: ReplicationChip,
+						props: {
+							isSheetShown: this.isReplicationSheetShown,
+							sheetBindProps: this.sheetBindProps,
+						},
+						isEnabled: this.wasFilled(TaskField.Replication)
+							|| this.task.rights.saveAsTemplate
+							|| Core.getParams().rights.templates.create,
+						events: {
+							'update:isSheetShown': (isShown: boolean): void => {
+								this.isReplicationSheetShown = isShown;
+							},
+						},
+					},
+				},
 				!this.isTemplate && {
 					chip: {
 						component: GanttChip,
@@ -539,21 +556,6 @@ export const App = {
 						events: {
 							'update:isSheetShown': (isShown: boolean): void => {
 								this.isDatePlanSheetShown = isShown;
-							},
-						},
-					},
-				},
-				this.isTemplate && {
-					chip: {
-						component: ReplicationChip,
-						props: {
-							isSheetShown: this.isReplicationSheetShown,
-							sheetBindProps: this.sheetBindProps,
-						},
-						isEnabled: this.wasFilled(TaskField.Replication) || this.task.rights.edit,
-						events: {
-							'update:isSheetShown': (isShown: boolean): void => {
-								this.isReplicationSheetShown = isShown;
 							},
 						},
 					},
@@ -638,7 +640,7 @@ export const App = {
 				[Tags, this.wasFilled(TaskField.Tags)],
 			]));
 		},
-		emailFields(): Object[]
+		emailFields(): AppField[]
 		{
 			return this.getFields(new WeakMap([
 				[Email, this.wasFilled(TaskField.Email)],
@@ -812,11 +814,13 @@ export const App = {
 				initialTemplate.allowsChangeDeadline = false;
 			}
 
+			const responsibleIds = this.initialTask.responsibleIds;
+
 			await taskService.insertStoreTask({
 				...this.initialTask,
 				id: this.taskId,
 				creatorId: Core.getParams().currentUser.id,
-				responsibleIds: [Core.getParams().currentUser.id],
+				responsibleIds: responsibleIds?.length > 0 ? responsibleIds : [Core.getParams().currentUser.id],
 				deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
 				needsControl: flags.needsControl ?? null,
 				matchesWorkTime: flags.matchesWorkTime ?? null,
@@ -1483,6 +1487,17 @@ export const App = {
 									<RelatedTasks/>
 								</div>
 								<div
+									v-if="wasFilled(TaskField.Replication)"
+									class="tasks-full-card-field-container --custom print-ignore"
+									data-field-container
+								>
+									<Replication
+										v-model:isSheetShown="isReplicationSheetShown"
+										v-model:isHistorySheetShown="isReplicationHistorySheetShown"
+										:sheetBindProps
+									/>
+								</div>
+								<div
 									v-if="!isTemplate && wasFilled(TaskField.Gantt)"
 									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
 									:class="{ 'print-ignore': shouldIgnoreGanttPrint }"
@@ -1497,17 +1512,6 @@ export const App = {
 									data-field-container
 								>
 									<DatePlan v-model:isSheetShown="isDatePlanSheetShown" :sheetBindProps/>
-								</div>
-								<div
-									v-if="isTemplate && wasFilled(TaskField.Replication)"
-									class="tasks-full-card-field-container print-before-divider-accent --custom tasks-full-card-field-container-replication"
-									data-field-container
-								>
-									<Replication
-										v-model:isSheetShown="isReplicationSheetShown"
-										v-model:isHistorySheetShown="isReplicationHistorySheetShown"
-										:sheetBindProps
-									/>
 								</div>
 								<div
 									v-if="shouldShowUserFields"

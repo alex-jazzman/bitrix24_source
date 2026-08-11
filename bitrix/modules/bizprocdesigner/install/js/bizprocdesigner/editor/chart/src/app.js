@@ -1,19 +1,19 @@
-import './design-tokens.css';
-import { markRaw, ref } from 'ui.vue3';
 import {
 	ZoomBar,
 	HistoryBar,
 	useHistory,
 	useAnimationQueue,
 } from 'ui.block-diagram';
+import 'ui.design-tokens';
+import 'ui.icon-set.outline';
+import { markRaw, ref } from 'ui.vue3';
 import { mapWritableState } from 'ui.vue3.pinia';
+
 import { FeatureCode } from 'bizprocdesigner.feature';
+
 import { initAiUpdatePull } from './entities/ai-assistant/api/pull';
 import { makeAnimationQueue } from './entities/ai-assistant/util/animation';
-import { useFeature } from './shared/composables';
-import { SHARED_TOAST_TYPES } from './shared/constants';
-import { ToastWarning } from './entities/toast';
-import { NodeSettings as ComplexNodeSettings, NodeSettingsRules, NodeSettingsRelations } from './widgets/node-settings';
+import { AppSkeleton } from './entities/app';
 import {
 	diagramStore,
 	BLOCK_SLOT_NAMES,
@@ -21,14 +21,16 @@ import {
 	CONNECTION_SLOT_NAMES,
 	ConnectionAux,
 	ICON_BG_COLORS,
+	type BlockId,
 } from './entities/blocks';
 import { useCatalogStore, DRAG_ITEM_SLOT_NAMES } from './entities/catalog';
-import { SearchBar } from './shared/ui/search-bar/search-bar';
+import { ToastWarning } from './entities/toast';
+import { useFeature } from './shared/composables';
+import { SHARED_TOAST_TYPES } from './shared/constants';
 import { DebugButton } from './shared/ui/debug-button';
-import { DebugBar } from './widgets/debug-bar';
-
-import type { BlockId } from './entities/blocks';
-
+import { SearchBar } from './shared/ui/search-bar/search-bar';
+import { updateIdUrl, handleResponseError } from './shared/utils';
+import { AppLayout, AppHeader } from './widgets/app';
 import {
 	BlockDiagram,
 	BlockSimple,
@@ -44,23 +46,22 @@ import {
 	PublishDropdownButton,
 	ToastErrorBlockNavigationButton,
 } from './widgets/blocks';
-import {
-	CommonNodeSettings,
-} from './widgets/common-node-settings';
 import { Catalog } from './widgets/catalog';
+import { DebugBar } from './widgets/debug-bar';
+import { CommonNodeSettings } from './widgets/common-node-settings';
+import { NodeDataInspector, ToggleInspectorControl } from './widgets/node-data-inspector';
+import { NodeSettings as ComplexNodeSettings } from './widgets/node-settings';
+import { NodeSettingsHeader } from './widgets/node-settings-header';
 import { ToastWidget } from './widgets/toast';
-import { AppLayout, AppHeader } from './widgets/app';
 
-import 'ui.icon-set.outline';
-import { updateIdUrl, handleResponseError } from './shared/utils';
-
-import 'ui.design-tokens';
+import './design-tokens.css';
 
 // @vue/component
 export const Chart = {
 	components: {
 		AppLayout,
 		AppHeader,
+		AppSkeleton,
 		BlockDiagram,
 		BlockSimple,
 		BlockTrigger,
@@ -77,8 +78,6 @@ export const Chart = {
 		DebugButton,
 		DebugBar,
 		ComplexNodeSettings,
-		NodeSettingsRules,
-		NodeSettingsRelations,
 		HistoryBar,
 		SearchBar,
 		Catalog,
@@ -87,6 +86,9 @@ export const Chart = {
 		ToastWidget,
 		ToastWarning,
 		ToastErrorBlockNavigationButton,
+		NodeDataInspector,
+		ToggleInspectorControl,
+		NodeSettingsHeader,
 	},
 	provide(): {onBlockClick: (event: Event) => void}
 	{
@@ -217,7 +219,7 @@ export const Chart = {
 			const { isFeatureAvailable } = useFeature();
 
 			return isFeatureAvailable('debugBar');
-		}
+		},
 	},
 	watch: {
 		templateId(value)
@@ -236,6 +238,12 @@ export const Chart = {
 	},
 	template: `
 		<AppLayout>
+			<template #skeleton>
+				<AppSkeleton
+					v-if="isDiagramDisabled"
+				/>
+			</template>
+
 			<template #header>
 				<AppHeader>
 					<template #templateName>
@@ -366,12 +374,35 @@ export const Chart = {
 			</template>
 
 			<template #settings>
-				<CommonNodeSettings/>
+				<CommonNodeSettings>
+					<template #header="{ block, moreMenuItems, onDeletedBlock }">
+						<NodeSettingsHeader
+							:block="block"
+							:moreMenuItems="moreMenuItems"
+							@deletedBlock="onDeletedBlock"
+						/>
+					</template>
+					<template #data-inspector-toggle>
+						<ToggleInspectorControl />
+					</template>
+				</CommonNodeSettings>
 
 				<ComplexNodeSettings>
-					<NodeSettingsRules />
-					<NodeSettingsRelations />
+					<template #header="{ block, moreMenuItems, onDeletedBlock }">
+						<NodeSettingsHeader
+							:block="block"
+							:moreMenuItems="moreMenuItems"
+							@deletedBlock="onDeletedBlock"
+						/>
+					</template>
+					<template #data-inspector-toggle>
+						<ToggleInspectorControl />
+					</template>
 				</ComplexNodeSettings>
+			</template>
+
+			<template #settings-data-inspector>
+				<NodeDataInspector />
 			</template>
 		</AppLayout>
 	`,

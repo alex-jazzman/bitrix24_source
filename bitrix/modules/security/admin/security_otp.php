@@ -41,7 +41,7 @@ $_GET["return_url"] = $_GET["return_url"] ?? "";
 $returnUrl = $_GET["return_url"]? "&return_url=".urlencode($_GET["return_url"]): "";
 
 if($_SERVER["REQUEST_METHOD"] == "POST"
-	&& (isset($_REQUEST["save"]) || isset($_REQUEST["apply"]) || isset($_REQUEST["otp_siteb"]))
+	&& (!empty($_POST["save"]) || !empty($_POST["apply"]) || !empty($_POST["otp_siteb"]))
 	&& $canWrite
 	&& check_bitrix_sessid())
 {
@@ -56,8 +56,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"
 
 	COption::SetOptionString("security", "otp_allow_remember", isset($_POST["otp_allow_remember"]) && $_POST["otp_allow_remember"]==="Y"? "Y": "N");
 	COption::SetOptionString("security", "otp_allow_recovery_codes", isset($_POST["otp_allow_recovery_codes"]) && $_POST["otp_allow_recovery_codes"]==="Y"? "Y": "N");
+	COption::SetOptionString("security", "otp_allow_sms", isset($_POST["otp_allow_sms"]) && $_POST["otp_allow_sms"]==="Y"? "Y": "N");
+	COption::SetOptionString("security", "otp_allow_email", isset($_POST["otp_allow_email"]) && $_POST["otp_allow_email"]==="Y"? "Y": "N");
 	COption::SetOptionString("security", "otp_allow_mobile_push", isset($_POST["otp_allow_mobile_push"]) && $_POST["otp_allow_mobile_push"] === "Y"? "Y": "N");
-	COption::SetOptionString("security", "otp_log", ($_POST["otp_log"] === "Y"? "Y": "N"));
+	COption::SetOptionString("security", "otp_log", (isset($_POST["otp_log"]) && $_POST["otp_log"] === "Y"? "Y": "N"));
+	COption::SetOptionString("security", "otp_log_sending", (isset($_POST["otp_log_sending"]) && $_POST["otp_log_sending"] === "Y"? "Y": "N"));
 
 	if (!empty($_POST['otp_default_type']) && ($defaultType = OtpType::tryFrom($_POST['otp_default_type'])))
 	{
@@ -72,7 +75,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"
 	if (isset($_POST['otp_mandatory_rights']) && is_array($_POST['otp_mandatory_rights']))
 		Otp::setMandatoryRights($_POST['otp_mandatory_rights']);
 
-	if(isset($_REQUEST["save"]) && $_GET["return_url"] != "")
+	if(!empty($_POST["save"]) && !empty($_GET["return_url"]))
 		LocalRedirect($_GET["return_url"]);
 	else
 		LocalRedirect("/bitrix/admin/security_otp.php?lang=".LANGUAGE_ID.$returnUrl."&".$tabControl->ActiveTabParam());
@@ -199,7 +202,7 @@ $tabControl->BeginNextTab();
 			<?=GetMessage("SEC_OTP_ALLOW_REMEMBER")?>:
 		</td>
 		<td>
-			<input type="checkbox" name="otp_allow_remember" id="otp_allow_remember" value="Y" <?if(COption::GetOptionString("security", "otp_allow_remember") == "Y") echo "checked";?>>
+			<input type="checkbox" name="otp_allow_remember" value="Y" <?if(COption::GetOptionString("security", "otp_allow_remember") == "Y") echo "checked";?>>
 		</td>
 	</tr>
 	<tr>
@@ -207,7 +210,23 @@ $tabControl->BeginNextTab();
 			<?=GetMessage("SEC_OTP_ALLOW_RECOVERY_CODES")?>:
 		</td>
 		<td>
-			<input type="checkbox" name="otp_allow_recovery_codes" id="otp_allow_recovery_codes" value="Y" <?if (Otp::isRecoveryCodesEnabled()) echo "checked";?>>
+			<input type="checkbox" name="otp_allow_recovery_codes" value="Y" <?if (Otp::isRecoveryCodesEnabled()) echo "checked";?>>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<?= GetMessage('SEC_OTP_ALLOW_SMS')?>
+		</td>
+		<td>
+			<input type="checkbox" name="otp_allow_sms" value="Y" <?if (Otp::isSmsEnabled()) echo "checked";?>>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<?= GetMessage('SEC_OTP_ALLOW_EMAIL')?>
+		</td>
+		<td>
+			<input type="checkbox" name="otp_allow_email" value="Y" <?if (Otp::isEmailEnabled()) echo "checked";?>>
 		</td>
 	</tr>
 	<tr class="heading">
@@ -258,6 +277,14 @@ $tabControl->BeginNextTab();
 		</td>
 		<td>
 			<input type="checkbox" name="otp_log" value="Y" <?=(COption::GetOptionString("security", "otp_log") <> "N")? "checked": "";?>>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<?= GetMessage('SEC_OTP_LOG_SENDING')?>
+		</td>
+		<td>
+			<input type="checkbox" name="otp_log_sending" value="Y" <?=(COption::GetOptionString("security", "otp_log_sending") <> "N")? "checked": "";?>>
 		</td>
 	</tr>
 <?

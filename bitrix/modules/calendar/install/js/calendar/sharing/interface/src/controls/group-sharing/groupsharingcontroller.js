@@ -1,3 +1,5 @@
+import { ajax } from 'main.core';
+
 import GroupSharing from './groupsharing';
 import { User } from '../../model';
 
@@ -23,12 +25,12 @@ export default class GroupSharingController
 	static #bindElement: number = null;
 	static #config = null;
 
-	static async getGroupSharing(groupId: number, bindElement: HTMLElement): Promise<GroupSharing>
+	static async getGroupSharing(groupId: number, bindElement: ?HTMLElement): Promise<GroupSharing>
 	{
 		if (
 			GroupSharingController.#groupSharing
 			&& GroupSharingController.#groupId === groupId
-			&& GroupSharingController.#bindElement === bindElement
+			&& (GroupSharingController.#bindElement === bindElement || !bindElement)
 		)
 		{
 			return GroupSharingController.#groupSharing;
@@ -68,9 +70,7 @@ export default class GroupSharingController
 			&& this.#config
 		)
 		{
-			return new Promise((resolve: Function): void => {
-				void resolve(this.#config);
-			});
+			return Promise.resolve(this.#config);
 		}
 
 		return this.#requestSharingConfig(groupId);
@@ -78,8 +78,10 @@ export default class GroupSharingController
 
 	static async #requestSharingConfig(groupId: number): Promise<GroupSharingConfig>
 	{
-		const action = 'calendar.api.sharinggroupajax.enableAndGetSharingConfig';
-		const response = await BX.ajax.runAction(action, { data: { groupId } });
+		const response = await ajax.runAction(
+			'calendar.api.sharinggroupajax.enableAndGetSharingConfig',
+			{ data: { groupId } },
+		);
 
 		return response.data;
 	}

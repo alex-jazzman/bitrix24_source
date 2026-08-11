@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Manager;
 use Bitrix\BIConnector\Services\ApacheSuperset;
-use Bitrix\Main\Config\Option;
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\BitrixGptChat;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -23,6 +23,7 @@ use Bitrix\BIConnector\Integration\Superset\Integrator\ServiceLocation;
 
 Loader::includeModule('biconnector');
 Loader::includeModule('ui');
+$isImModuleInstalled = Loader::includeModule('im');
 
 CJSCore::Init(['spotlight']);
 
@@ -80,6 +81,8 @@ Extension::load([
 	'main.core',
 	'ui.buttons',
 	'im.v2.lib.opener',
+	'im.v2.application.quick-access',
+	'aiassistant.marta',
 ]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
@@ -106,6 +109,9 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 		'SUPERSET_LIMIT' => 'Y',
 	]);
 }
+
+$isBitrixGptChatAvailable = BitrixGptChat::isAvailable();
+$bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 
 ?>
 
@@ -137,33 +143,46 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 			</div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit">
+			<button id="edit-btn" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT')) ?>">
 				<div class="ui-icon-set --edit-l"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?>
+				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></span>
 			</button>
-			<button id="info-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info">
+			<button id="info-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO')) ?>">
 				<div class="ui-icon-set --o-info-circle"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?>
+				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?></span>
 			</button>
-			<?php if (Option::get('biconnector', 'bitrixgpt_bi_constructor', 'N') === 'Y'): ?>
-				<button id="bitrixgpt-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-gpt">
-					<img src="<?= $templateFolder ?>/images/bitrixgpt.svg" class="dashboard-header-gpt-icon" alt="">
-					<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_BITRIXGPT_BUTTON') ?>
+			<button id="download-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD')) ?>">
+				<div class="ui-icon-set --o-download"></div>
+				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></span>
+			</button>
+			<button id="share-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK')) ?>">
+				<div class="ui-icon-set --o-share"></div>
+				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK') ?></span>
+			</button>
+			<?php if ($isBitrixGptChatAvailable): ?>
+				<button
+					type="button"
+					data-bitrixgpt-trigger
+					class="dashboard-header-buttons-gpt"
+					title="<?= htmlspecialcharsbx($bitrixGptName) ?>"
+					aria-label="<?= htmlspecialcharsbx($bitrixGptName) ?>"
+				>
+					<span class="aiassistant-marta__avatar-wrapper --bitrixgpt">
+						<span class="aiassistant-marta__avatar"></span>
+					</span>
 				</button>
 			<?php endif; ?>
-			<button id="download-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download">
-				<div class="ui-icon-set --o-download"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?>
-			</button>
-			<button id="share-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share">
-				<div class="ui-icon-set --o-share"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK') ?>
-			</button>
 			<div id="more-btn" class="ui-icon-set --more-l dashboard-header-buttons-more"></div>
 		</div>
 	</div>
 	<div class='dashboard-iframe'></div>
 </div>
+
+<?php if ($isImModuleInstalled): ?>
+<script>
+	<?= CIMMessenger::GetV2TemplateJS(['DESKTOP' => false]) ?>
+</script>
+<?php endif; ?>
 
 <script>
 	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);

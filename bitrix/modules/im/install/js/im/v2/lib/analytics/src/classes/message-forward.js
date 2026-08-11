@@ -1,14 +1,13 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { getUserType } from 'im.v2.lib.analytics';
+import { type ImModelChat } from 'im.v2.model';
 
 import { AnalyticsEvent, AnalyticsSection, AnalyticsSubSection, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
+import { getUserType } from '../helpers/get-user-type.js';
 import { isSelfChat } from '../helpers/is-self-chat';
-
-import type { ImModelChat } from 'im.v2.model';
 
 const SelectRecipientSource = Object.freeze({
 	recent: 'recent',

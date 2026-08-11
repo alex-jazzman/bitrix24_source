@@ -1,8 +1,11 @@
-import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
-import { ButtonManager, type Button } from 'ui.buttons';
+import { AhaMoment } from 'biconnector.aha-moment';
+import { AirButtonStyle, Button, ButtonManager, ButtonSize } from 'ui.buttons';
+import { Dialog } from 'ui.entity-selector';
+import { MenuManager, Popup } from 'main.popup';
 import {
 	TitleField,
 	DescriptionField,
@@ -37,6 +40,12 @@ type PeriodItem = {
 	suffixText?: string,
 };
 
+type AttachAhaMoment = {
+	canShow: boolean,
+	id?: string,
+	showDelaySeconds?: number,
+};
+
 type Props = {
 	nodeId: string,
 	componentName: string,
@@ -51,6 +60,7 @@ type Props = {
 	activeUrlParamsSelector: boolean,
 	isAllowedClearGroups: boolean,
 	isEditMode: boolean,
+	attachAhaMoment: ?AttachAhaMoment,
 };
 
 export class SupersetDashboardEditManager
@@ -59,6 +69,11 @@ export class SupersetDashboardEditManager
 	#node: HTMLElement;
 	#paramsSelector: ?DashboardParametersSelector;
 	#saveButton: ?Button;
+	#attachedExternalId: ?number = null;
+	#attachedPublished: ?boolean = null;
+	#snapshotTitle: ?string = null;
+	#attachedCardNode: ?HTMLElement = null;
+	#attachAhaMomentShown: boolean = false;
 	#titleField: TitleField;
 	#descriptionField: DescriptionField;
 	#groupsField: GroupsField;
@@ -149,10 +164,270 @@ export class SupersetDashboardEditManager
 		`;
 	}
 
+	onMoreButtonClick(): void
+	{
+		const button = document.querySelector('.dashboard-edit-more-btn');
+		if (!button)
+		{
+			return;
+		}
+
+		const menuId = 'dashboard-edit-more-menu';
+		const openedMenu = MenuManager.getMenuById(menuId);
+		if (openedMenu)
+		{
+			openedMenu.close();
+
+			return;
+		}
+
+		const angleOffset = Math.round((button.offsetWidth / 2) + Popup.getOption('angleMinTop'));
+
+		const menu = MenuManager.create({
+			id: menuId,
+			closeByEsc: true,
+			cacheable: false,
+			angle: { offset: angleOffset },
+			autoHide: true,
+			bindElement: button,
+			items: [
+				{
+					text: Loc.getMessage('DASHBOARD_EDIT_ATTACH_MENU_ITEM'),
+					onclick: () => {
+						menu.close();
+						this.#openAttachPopup();
+					},
+				},
+			],
+		});
+
+		menu.show();
+	}
+
+	#openAttachPopup(): void
+	{
+		let selectedItem = null;
+
+		const attachButton = new Button({
+			text: Loc.getMessage('DASHBOARD_EDIT_ATTACH_CONFIRM'),
+			useAirDesign: true,
+			style: AirButtonStyle.FILLED,
+			size: ButtonSize.LARGE,
+			onclick: () => this.#handleAttachConfirm(selectedItem, dialog),
+		});
+		attachButton.setDisabled(true);
+
+		const cancelButton = new Button({
+			text: Loc.getMessage('DASHBOARD_EDIT_ATTACH_CANCEL'),
+			useAirDesign: true,
+			style: AirButtonStyle.PLAIN,
+			size: ButtonSize.LARGE,
+			onclick: () => {
+				dialog.hide();
+				dialog.destroy();
+			},
+		});
+
+		const buttonsContainer = Tag.render`
+			<div class="dashboard-attach-popup-buttons"></div>
+		`;
+		Dom.append(attachButton.getContainer(), buttonsContainer);
+		Dom.append(cancelButton.getContainer(), buttonsContainer);
+
+		const closeButton = Tag.render`
+			<div class="ui-icon-set --cross-l dashboard-attach-popup-close"></div>
+		`;
+
+		const headerContent = Tag.render`
+			<div class="dashboard-attach-popup-header">
+				<div class="dashboard-attach-popup-header-text">
+					<div class="dashboard-attach-popup-header-title">
+						${Loc.getMessage('DASHBOARD_EDIT_ATTACH_DIALOG_TITLE')}
+					</div>
+					<div class="dashboard-attach-popup-header-subtitle">
+						${Loc.getMessage('DASHBOARD_EDIT_ATTACH_DIALOG_SUBTITLE')}
+					</div>
+				</div>
+				${closeButton}
+			</div>
+		`;
+
+		Event.bind(closeButton, 'click', () => {
+			dialog.hide();
+			dialog.destroy();
+		});
+
+		const dialog = new Dialog({
+			id: 'biconnector-attach-superset-dashboard',
+			multiple: false,
+			hideOnSelect: false,
+			hideOnDeselect: false,
+			enableSearch: true,
+			showAvatars: true,
+			compactView: false,
+			dynamicLoad: true,
+			width: 512,
+			height: 470,
+			entities: [
+				{
+					id: 'biconnector-superset-unlinked-dashboard',
+					dynamicLoad: true,
+				},
+			],
+			recentTabOptions: {
+				stub: true,
+				stubOptions: {
+					title: Loc.getMessage('DASHBOARD_EDIT_ATTACH_EMPTY_TITLE'),
+				},
+			},
+			header: headerContent,
+			headerOptions: {
+				containerClass: 'dashboard-attach-popup-header-container',
+			},
+			footer: buttonsContainer,
+			footerOptions: {
+				containerClass: 'dashboard-attach-popup-footer-container',
+			},
+			popupOptions: {
+				overlay: true,
+				closeIcon: true,
+				autoHide: false,
+				animation: 'fading-slide',
+				className: 'dashboard-attach-popup',
+			},
+			events: {
+				'Item:onSelect': (event) => {
+					selectedItem = event.getData().item;
+					attachButton.setDisabled(false);
+				},
+				'Item:onDeselect': () => {
+					selectedItem = null;
+					attachButton.setDisabled(true);
+				},
+			},
+		});
+
+		dialog.show();
+	}
+
+	#handleAttachConfirm(selectedItem: ?Object, dialog: Dialog): void
+	{
+		if (!selectedItem)
+		{
+			return;
+		}
+
+		const customData = selectedItem.getCustomData();
+		const externalId = Number(customData.get('externalId'));
+		const published = Boolean(customData.get('published'));
+		const title = String(customData.get('title') ?? '');
+
+		dialog.hide();
+		dialog.destroy();
+
+		if (this.#attachedExternalId === null)
+		{
+			this.#snapshotTitle = this.#titleField.getValue();
+		}
+
+		this.#attachedExternalId = externalId;
+		this.#attachedPublished = published;
+		this.#titleField.setValue(title);
+		this.#titleField.setHintVisible(true);
+		this.#renderAttachedCard(title);
+		this.#showAttachAhaMoment();
+	}
+
+	#renderAttachedCard(title: string): void
+	{
+		this.#removeAttachedCard();
+
+		const container = this.#node;
+		if (!Type.isDomNode(container))
+		{
+			return;
+		}
+
+		const detachButton = new Button({
+			text: Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_DETACH'),
+			useAirDesign: true,
+			style: AirButtonStyle.OUTLINE,
+			size: ButtonSize.MEDIUM,
+			onclick: () => this.#detachDashboard(),
+		});
+
+		this.#attachedCardNode = Tag.render`
+			<div class="dashboard-edit-attached-card">
+				<div class="dashboard-edit-attached-card-text">
+					<div class="dashboard-edit-attached-card-title">${Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_TITLE')}</div>
+					<div class="dashboard-edit-attached-card-subtitle">${Text.encode(title ?? '')}</div>
+				</div>
+			</div>
+		`;
+		Dom.append(detachButton.getContainer(), this.#attachedCardNode);
+		Dom.prepend(this.#attachedCardNode, container);
+	}
+
+	#removeAttachedCard(): void
+	{
+		if (this.#attachedCardNode)
+		{
+			Dom.remove(this.#attachedCardNode);
+			this.#attachedCardNode = null;
+		}
+	}
+
+	#showAttachAhaMoment(): void
+	{
+		if (this.#attachAhaMomentShown)
+		{
+			return;
+		}
+
+		const options = this.#props.attachAhaMoment;
+		if (!Type.isPlainObject(options) || options.canShow !== true)
+		{
+			return;
+		}
+
+		const bindElement = this.#attachedCardNode?.querySelector('.dashboard-edit-attached-card-subtitle');
+		if (!Type.isDomNode(bindElement))
+		{
+			return;
+		}
+
+		this.#attachAhaMomentShown = true;
+
+		const ahaMoment = new AhaMoment({
+			...options,
+			compact: true,
+			title: Loc.getMessage('DASHBOARD_EDIT_AHA_TITLE'),
+			description: Loc.getMessage('DASHBOARD_EDIT_AHA_TEXT'),
+			bindElement,
+			popupAlignment: 'start',
+		});
+
+		ahaMoment.show();
+	}
+
+	#detachDashboard(): void
+	{
+		if (this.#snapshotTitle !== null)
+		{
+			this.#titleField.setValue(this.#snapshotTitle);
+			this.#snapshotTitle = null;
+		}
+
+		this.#attachedExternalId = null;
+		this.#attachedPublished = null;
+		this.#titleField.setHintVisible(false);
+		this.#removeAttachedCard();
+	}
+
 	#getDescriptionSection(): HTMLElement
 	{
 		return Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-description-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-description-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -176,7 +451,7 @@ export class SupersetDashboardEditManager
 	#getMainSection(): HTMLElement
 	{
 		return Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-main-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-main-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -207,7 +482,7 @@ export class SupersetDashboardEditManager
 	#getGallerySection(): HTMLElement
 	{
 		return Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-gallery-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-gallery-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -295,6 +570,12 @@ export class SupersetDashboardEditManager
 			groups: currentGroups,
 			...this.#parametersField.getValue(selectorData),
 		};
+
+		if (this.#attachedExternalId !== null)
+		{
+			saveData.externalId = this.#attachedExternalId;
+			saveData.externalPublished = this.#attachedPublished;
+		}
 
 		this.#saveButton.setWaiting(true);
 

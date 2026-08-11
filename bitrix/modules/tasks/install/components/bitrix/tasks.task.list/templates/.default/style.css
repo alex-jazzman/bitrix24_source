@@ -474,6 +474,16 @@
 	right: 0;
 }
 
+.tasks-grid-tooltip-link {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	color: var(--ui-color-base-8);
+	font-weight: var(--ui-font-weight-normal);
+	--font-size: var(--ui-font-size-md);
+	--ui-icon-set__icon-color: var(--ui-color-base-8);
+}
+
 #EXPORT_EXCEL_PARAMS .bx-stepprocessing-dialog-process-option-multiple {
 	justify-content: flex-start;
 }

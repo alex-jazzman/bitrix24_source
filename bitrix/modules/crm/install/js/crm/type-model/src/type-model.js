@@ -1,5 +1,5 @@
-import { Model } from 'crm.model';
-import { Text, Type } from 'main.core';
+import {Model} from 'crm.model';
+import {Text, Type} from 'main.core';
 
 export type TypeModelData = {
 	id: ?number,
@@ -9,6 +9,7 @@ export type TypeModelData = {
 	isCategoriesEnabled?: boolean,
 	isStagesEnabled?: boolean,
 	isBeginCloseDatesEnabled?: boolean,
+	daysBeforeClose?: ?number,
 	isClientEnabled?: boolean,
 	isLinkWithProductsEnabled?: boolean,
 	isCrmTrackingEnabled?: boolean,
@@ -128,6 +129,23 @@ export class TypeModel extends Model
 	setIsBeginCloseDatesEnabled(isBeginCloseDatesEnabled: boolean)
 	{
 		this.data.isBeginCloseDatesEnabled = (isBeginCloseDatesEnabled === true);
+	}
+
+	getDaysBeforeClose(): ?number
+	{
+		return this.data.daysBeforeClose;
+	}
+
+	setDaysBeforeClose(daysBeforeClose: any)
+	{
+		if (Type.isNil(daysBeforeClose) || daysBeforeClose === '')
+		{
+			this.data.daysBeforeClose = null;
+
+			return;
+		}
+
+		this.data.daysBeforeClose = Number(daysBeforeClose);
 	}
 
 	getIsClientEnabled(): boolean

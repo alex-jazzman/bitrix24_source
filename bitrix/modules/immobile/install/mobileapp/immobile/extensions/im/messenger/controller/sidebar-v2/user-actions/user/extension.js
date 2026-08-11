@@ -15,10 +15,10 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, expo
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { backToRecentChats } = require('im/messenger/controller/sidebar-v2/user-actions/navigation');
 	const { resolveLeaveDialogConfirmFn } = require('im/messenger/controller/sidebar-v2/user-actions/alerts');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
+	const { ChatDeletionOrigin, ChatDeletionReason } = require('im/messenger/application/lib/chat-deletion-manager');
 
 	const logger = getLogger('SidebarV2.UserActions');
 
@@ -38,8 +38,26 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, expo
 
 	function onLeaveChatConfirmed(dialogId)
 	{
+		// Snapshot chat coordinates before leaving, while the dialog is still in store,
+		// so navigation can return to the nested navigation it was opened from.
+		const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+		const chatId = dialog?.chatId;
+		const parentChatId = dialog?.parentChatId;
+
 		(new ChatService()).leaveFromChat(dialogId)
-			.then(() => backToRecentChats())
+			.then(() => {
+				// Announce the chat is gone so its screen (and nested navigation, if it is a
+				// project) self-close immediately; the pull echo removes the data later.
+				serviceLocator.get('chat-deletion-manager').announceDeleted({
+					dialogId,
+					chatId,
+					parentChatId,
+					origin: ChatDeletionOrigin.local,
+					reason: ChatDeletionReason.leave,
+					shouldShowAlert: false,
+					shouldSendDeleteAnalytics: false,
+				});
+			})
 			.catch((error) => {
 				logger.error('Failed to leave from chat', error);
 

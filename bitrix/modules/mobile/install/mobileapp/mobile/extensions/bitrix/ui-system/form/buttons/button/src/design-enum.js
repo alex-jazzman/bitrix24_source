@@ -68,6 +68,23 @@ jn.define('ui-system/form/buttons/button/src/design-enum', (require, exports, mo
 			backgroundColor: Color.copilotAccentPrimary,
 		});
 
+		static FILLED_BITRIX_GPT = new ButtonDesign('FILLED_BITRIX_GPT', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.bgBitrixGptGradient3,
+			backgroundColorGradient: {
+				colors: [
+					Color.bgBitrixGptGradient6.toHex(),
+					Color.bgBitrixGptGradient5.toHex(),
+					Color.bgBitrixGptGradient4.toHex(),
+					Color.bgBitrixGptLineGradient3.toHex(),
+					Color.bgBitrixGptGradient2.toHex(),
+					Color.bgBitrixGptGradient1.toHex(),
+				],
+				positions: [0, 0.18, 0.38, 0.57, 0.74, 0.88, 1],
+				angle: 267,
+			},
+		});
+
 		getStyle()
 		{
 			return this.getValue();

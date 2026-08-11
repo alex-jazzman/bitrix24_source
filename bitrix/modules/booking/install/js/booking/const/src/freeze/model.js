@@ -1,5 +1,4 @@
 export const Model = Object.freeze({
-	AiAgent: 'ai-agent',
 	BookingInfo: 'booking-info',
 	Bookings: 'bookings',
 	Clients: 'clients',

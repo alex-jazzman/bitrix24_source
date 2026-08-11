@@ -3,6 +3,8 @@ import { EventEmitter } from 'main.core.events';
 import { SidePanel } from 'main.sidepanel';
 import { ConnectPopup } from './connect-popup';
 import { DeviceConnectedView } from './view/device-connected-view';
+import { EmailEnterCodeView } from './view/email-enter-code-view';
+import { EmailView } from './view/email-view';
 import { EnterCodeView } from './view/enter-code-view';
 import { QrView } from './view/qr-view';
 import { SendNumberView } from './view/send-number-view';
@@ -73,6 +75,24 @@ export class EnablePushOtpProvider
 		});
 	}
 
+	#createSendEmailView(): EmailView
+	{
+		return new EmailView({
+			id: 'email',
+			signedUserId: this.#options.signedUserId,
+			email: this.#options.email,
+		});
+	}
+
+	#createEmailEnterCodeView(): EmailEnterCodeView
+	{
+		return new EmailEnterCodeView({
+			id: 'emailCode',
+			signedUserId: this.#options.signedUserId,
+			email: this.#options.email,
+		});
+	}
+
 	#createSendNumberView(): SendNumberView
 	{
 		return new SendNumberView({
@@ -127,6 +147,8 @@ export class EnablePushOtpProvider
 		const viewList = [
 			this.#createQrView(),
 			this.#createConnectedView(),
+			this.#createSendEmailView(),
+			this.#createEmailEnterCodeView(),
 			this.#createSendNumberView(),
 			this.#createEnterCodeView(),
 			this.#createSuccessView(),
@@ -160,6 +182,21 @@ export class EnablePushOtpProvider
 		return popup;
 	}
 
+	onlyEmailOtpChange(): ConnectPopup
+	{
+		const sendEmailView = this.#createSendEmailView();
+		const enterCode = this.#createEmailEnterCodeView();
+		const viewList = [
+			sendEmailView,
+			enterCode,
+		];
+
+		const popup = this.#createConnectPopup(viewList);
+		sendEmailView.setForceChangeMode(true);
+
+		return popup;
+	}
+
 	onlyPushOtp(): ConnectPopup
 	{
 		const viewList = [
@@ -176,6 +213,11 @@ export class EnablePushOtpProvider
 			this.#createQrView(),
 			this.#createConnectedView(),
 		];
+
+		if (Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendEmail'))
+		{
+			viewList.push(this.#createSendEmailView(), this.#createEmailEnterCodeView());
+		}
 
 		if (Extension.getSettings('intranet.push-otp.connect-popup')?.get('canSendSms'))
 		{

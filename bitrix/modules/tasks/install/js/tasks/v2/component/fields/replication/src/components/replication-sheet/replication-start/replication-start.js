@@ -64,26 +64,28 @@ export const ReplicationStart = {
 		}
 	},
 	template: `
-		<TextMd tag="div" className="tasks-field-replication-section">
-			<RichLoc
-				class="tasks-field-replication-row tasks-field-replication-secondary"
-				:text="loc('TASKS_V2_REPLICATION_START')"
-				placeholder="[date/]"
-			>
-				<template #date>
-					<HoverPill textOnly noOffset ref="datepickerStartOpener">
-						<span class="tasks-field-replication-link" @click="isDatepickerOpened = true">
-							{{ startLabel }}
-						</span>
-					</HoverPill>
-					<ReplicationDatepicker
-						v-if="isDatepickerOpened"
-						v-model:dateTs="startTs"
-						:bindElement="$refs.datepickerStartOpener.$el"
-						@close="isDatepickerOpened = false"
-					/>
-				</template>
-			</RichLoc>
-		</TextMd>
+		<div class="tasks-field-replication-settings">
+			<TextMd tag="div" className="tasks-field-replication-section">
+				<RichLoc
+					class="tasks-field-replication-row tasks-field-replication-secondary"
+					:text="loc('TASKS_V2_REPLICATION_START_MSGVER_1')"
+					placeholder="[date/]"
+				>
+					<template #date>
+						<HoverPill textOnly noOffset ref="datepickerStartOpener">
+							<span class="tasks-field-replication-link" @click="isDatepickerOpened = true">
+								{{ startLabel }}
+							</span>
+						</HoverPill>
+						<ReplicationDatepicker
+							v-if="isDatepickerOpened"
+							v-model:dateTs="startTs"
+							:bindElement="$refs.datepickerStartOpener.$el"
+							@close="isDatepickerOpened = false"
+						/>
+					</template>
+				</RichLoc>
+			</TextMd>
+		</div>
 	`,
 };

@@ -38,6 +38,7 @@ $MESS['IM_NOTIFIER_FILES_DISK_SAVE_COMPLETE'] = "Файлы сохранены �
 $MESS["IM_NOTIFIER_FILE_COPY_COMPLETE"] = "Файл скопирован";
 $MESS["IM_NOTIFIER_INVITE_RESEND_COMPLETE"] = "Приглашение отправлено";
 $MESS['IM_NOTIFIER_INVITE_CANCEL_COMPLETE'] = "Приглашение отменено";
+$MESS['IM_NOTIFIER_INVITE_PARTIAL_ERROR'] = "Не удалось отправить часть приглашений, попробуйте ещё раз";
 $MESS["IM_NOTIFIER_CONFERENCE_LINK_COPY_COMPLETE"] = "Ссылка на видеоконференцию скопирована";
 $MESS["IM_NOTIFIER_CONFERENCE_PASSWORD_ERROR"] = "Введите корректный пароль";
 $MESS["IM_NOTIFIER_CONFERENCE_MODULE_NOT_INSTALLED_ERROR"] = "Чтобы создать видеоконференцию, установите модуль \"Видеозвонки\" или обратитесь к администратору вашего Битрикс24";

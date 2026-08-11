@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
 $MESS["INVOICE_ADD"] = "Create invoice";
@@ -44,5 +44,5 @@ $MESS["INVOICE_PAYMENT_PUBLIC_LINK_TITLE"] = "Invoice link";
 $MESS["INVOICE_SHOW"] = "View";
 $MESS["INVOICE_SHOW_TITLE"] = "View invoice";
 $MESS["INVOICE_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Export all invoice fields";
+$MESS["INVOICE_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Export details for each product item";
 $MESS["INVOICE_STEXPORT_SUMMARY"] = "This will create an invoice export file. Exporting a considerable amount of data may take some time.";
-?>

@@ -1,12 +1,12 @@
 import { Dom, Loc, Tag, Type } from 'main.core';
 import { Loader } from 'main.loader';
 import { EventEmitter } from 'main.core.events';
-import type { ListItemOptions } from 'landing.ui.component.listitem';
+import { type ListItemOptions } from 'landing.ui.component.listitem';
 
 import { CrmFormTemplatesWithSku } from 'booking.const';
 import { crmFormService } from 'booking.provider.service.crm-form-service';
-import type { ResourceModel } from 'booking.model.resources';
-import type { CatalogSkuEntityOptions } from 'booking.model.sku';
+import { type ResourceModel } from 'booking.model.resources';
+import { type CatalogSkuEntityOptions } from 'booking.model.sku';
 
 import { resourceStore } from './services/resource-store';
 import { BookingSettingsDataModel } from './model/booking-settings-data-model';
@@ -19,7 +19,7 @@ import {
 	SkusAndResourcesField,
 	ResourcesField,
 } from './components/fields';
-import type { BookingSettingsData, ManagerField } from './types';
+import { type BookingSettingsData, type ManagerField } from './types';
 
 import './booking-settings-popup.css';
 

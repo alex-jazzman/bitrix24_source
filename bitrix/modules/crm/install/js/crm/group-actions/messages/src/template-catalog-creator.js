@@ -1,6 +1,7 @@
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc } from 'main.core';
 import { EntityCatalog } from 'ui.entity-catalog';
+import { sendData } from 'ui.analytics';
 import { fetchTemplates, Templates } from './http';
 import { SmsEditorWrapper } from './components/sms-editor-wrapper';
 
@@ -146,6 +147,6 @@ export class TemplateCatalogCreator
 			.setElement(Dictionary.ELEMENT_WA_POPUP_CLOSE)
 			.buildData();
 
-		BX.UI.Analytics.sendData(analyticsData);
+		sendData(analyticsData);
 	}
 }

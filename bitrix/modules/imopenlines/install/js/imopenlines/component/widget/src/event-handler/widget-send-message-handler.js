@@ -247,6 +247,27 @@ export class WidgetSendMessageHandler extends SendMessageHandler
 		});
 	}
 
+	addMessageToModel({text, params, sending}): Promise
+	{
+		return this.store.dispatch('messages/add', {
+			chatId: this.getChatId(),
+			authorId: this.getUserId(),
+			text,
+			params,
+			sending,
+			id: this.generateUuidV4(),
+		});
+	}
+
+	generateUuidV4(): string
+	{
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+
+			return v.toString(16);
+		});
+	}
+
 	sendMessageToServer(message)
 	{
 		EventEmitter.emit(EventType.textarea.stopWriting);

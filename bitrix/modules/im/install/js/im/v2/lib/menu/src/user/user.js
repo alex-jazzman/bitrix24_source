@@ -46,7 +46,7 @@ export class UserMenu extends BaseMenu
 		return {
 			title: this.#getKickItemText(),
 			onClick: async () => {
-				const userChoice = await showKickUserConfirm(this.context.dialog.dialogId);
+				const userChoice = await showKickUserConfirm(this.context.dialog.dialogId, this.context.user.id);
 				if (userChoice !== true)
 				{
 					return;
@@ -89,7 +89,7 @@ export class UserMenu extends BaseMenu
 
 	getProfileItem(): ?MenuItemOptions
 	{
-		if (this.isBot())
+		if (this.isBot() || this.isGuest() || this.isCurrentUserGuest())
 		{
 			return null;
 		}
@@ -114,6 +114,16 @@ export class UserMenu extends BaseMenu
 	isBot(): boolean
 	{
 		return this.context.user.type === UserType.bot;
+	}
+
+	isGuest(): boolean
+	{
+		return this.store.getters['users/isGuest'](this.context.user.id);
+	}
+
+	isCurrentUserGuest(): boolean
+	{
+		return this.store.getters['users/isGuest'](this.getCurrentUserId());
 	}
 
 	#getKickItemText(): string

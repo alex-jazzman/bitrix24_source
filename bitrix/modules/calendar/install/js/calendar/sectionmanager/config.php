@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/sectionmanager.bundle.css',
 	'js' => 'dist/sectionmanager.bundle.js',
 	'rel' => [
-		'calendar.util',
 		'calendar.sectionmanager',
+		'calendar.util',
 		'main.core',
 		'main.core.events',
 	],

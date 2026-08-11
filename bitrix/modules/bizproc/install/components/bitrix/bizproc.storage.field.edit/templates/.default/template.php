@@ -65,42 +65,20 @@ $hasErrors = (!empty($arResult['errors']) && is_array($arResult['errors']));
 			<?php endif; ?>
 			<div class="ui-form-row">
 				<div class="ui-form-label">
-					<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['type']['label']) ?></div>
+					<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['name']['label']) ?></div>
 				</div>
 				<div class="ui-form-content">
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-						<select
+						<input
+							type="text"
 							class="ui-ctl-element"
-							name="type"
-							<?= ($arResult['field']['id'] > 0) ? 'disabled="disabled"' : '' ?>
+							name="name"
+							value="<?= htmlspecialcharsbx($arResult['field']['name']) ?>"
 						>
-							<?php foreach($arResult['types'] as $value => $type) :?>
-								<option
-									value="<?= htmlspecialcharsbx($value) ?>"
-									<?= ($arResult['field']['type'] === $value ? 'selected="selected"' : '') ?>
-								><?= htmlspecialcharsbx($type) ?></option>
-							<?php endforeach;?>
-						</select>
 					</div>
 				</div>
 			</div>
 			<div class="ui-form">
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['name']['label']) ?></div>
-					</div>
-					<div class="ui-form-content">
-						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-							<input
-								type="text"
-								class="ui-ctl-element"
-								name="name"
-								value="<?= htmlspecialcharsbx($arResult['field']['name']) ?>"
-							>
-						</div>
-					</div>
-				</div>
 				<div class="ui-form-row">
 					<div class="ui-form-label">
 						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['code']['label']) ?></div>
@@ -119,30 +97,23 @@ $hasErrors = (!empty($arResult['errors']) && is_array($arResult['errors']));
 				</div>
 				<div class="ui-form-row">
 					<div class="ui-form-label">
-						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['sort']['label']) ?></div>
+						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['type']['label']) ?></div>
 					</div>
 					<div class="ui-form-content">
 						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-							<input
-								type="text"
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+							<select
 								class="ui-ctl-element"
-								name="sort"
-								value="<?= htmlspecialcharsbx($arResult['field']['sort']) ?>"
+								name="type"
+								<?= ($arResult['field']['id'] > 0) ? 'disabled="disabled"' : '' ?>
 							>
-						</div>
-					</div>
-				</div>
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['description']['label']) ?></div>
-					</div>
-					<div class="ui-form-content">
-						<div class="ui-ctl ui-ctl-textarea ui-ctl-resize-y ui-ctl-w100">
-							<textarea
-								type="text"
-								class="ui-ctl-element"
-								name="description"
-							><?= htmlspecialcharsbx($arResult['field']['description']) ?></textarea>
+								<?php foreach($arResult['types'] as $value => $type) :?>
+									<option
+										value="<?= htmlspecialcharsbx($value) ?>"
+										<?= ($arResult['field']['type'] === $value ? 'selected="selected"' : '') ?>
+									><?= htmlspecialcharsbx($type) ?></option>
+								<?php endforeach;?>
+							</select>
 						</div>
 					</div>
 				</div>
@@ -173,6 +144,35 @@ $hasErrors = (!empty($arResult['errors']) && is_array($arResult['errors']));
 							>
 							<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['mandatory']['label']) ?></div>
 						</label>
+					</div>
+				</div>
+				<div class="ui-form-row">
+					<div class="ui-form-label">
+						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['sort']['label']) ?></div>
+					</div>
+					<div class="ui-form-content">
+						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+							<input
+								type="text"
+								class="ui-ctl-element"
+								name="sort"
+								value="<?= htmlspecialcharsbx($arResult['field']['sort']) ?>"
+							>
+						</div>
+					</div>
+				</div>
+				<div class="ui-form-row">
+					<div class="ui-form-label">
+						<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['description']['label']) ?></div>
+					</div>
+					<div class="ui-form-content">
+						<div class="ui-ctl ui-ctl-textarea ui-ctl-resize-y ui-ctl-w100">
+							<textarea
+								type="text"
+								class="ui-ctl-element"
+								name="description"
+							><?= htmlspecialcharsbx($arResult['field']['description']) ?></textarea>
+						</div>
 					</div>
 				</div>
 			</div>

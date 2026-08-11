@@ -9,9 +9,6 @@ import { CommentsOpener } from './components/openers/comments/comments';
 
 import './css/chat-content.css';
 
-export { AiAssistantBotContent } from './components/content/ai-assistant-bot/ai-assistant-bot';
-export { CopilotContent } from './components/content/copilot/copilot';
-
 // @vue/component
 export const ChatContent = {
 	name: 'ChatContent',

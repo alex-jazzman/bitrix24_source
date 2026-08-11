@@ -1,7 +1,7 @@
 /**
- * @module layout/socialnetwork/project/create/trial-feature-activation
+ * @module layout/socialnetwork/project/create/src/trial-feature-activation
  */
-jn.define('layout/socialnetwork/project/create/trial-feature-activation', (require, exports, module) => {
+jn.define('layout/socialnetwork/project/create/src/trial-feature-activation', (require, exports, module) => {
 	const { BottomSheet } = require('bottom-sheet');
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');

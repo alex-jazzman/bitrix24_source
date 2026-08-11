@@ -27,6 +27,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!this.#hasHistoryLimit()) {
 				blocksSet.delete(im_v2_const.SidebarMainPanelBlock.tariffLimit);
 			}
+			if (this.#isGuest()) {
+				blocksSet.delete(im_v2_const.SidebarMainPanelBlock.taskList);
+				blocksSet.delete(im_v2_const.SidebarMainPanelBlock.meetingList);
+			}
 			return [...blocksSet];
 		}
 		#isFileMigrationFinished() {
@@ -42,6 +46,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return false;
 			}
 			return im_v2_application_core.Core.getStore().getters['sidebar/hasHistoryLimit'](this.#chat.chatId);
+		}
+		#isGuest() {
+			return im_v2_application_core.Core.getStore().getters['users/isGuest'](im_v2_application_core.Core.getUserId());
 		}
 	}
 
@@ -123,14 +130,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const isChat = chatContext => chatContext.type === im_v2_const.ChatType.chat;
-	const chatPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
-	});
-
-	const isUser = chatContext => chatContext.type === im_v2_const.ChatType.user;
-	const userPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
+	const isAiAssistantBot = chatContext => im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](chatContext.dialogId);
+	const aiAssistantBotPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
+		areSharedChatsEnabled: () => false,
+		getCustomDescription: () => {
+			return main_core.Loc.getMessage('IM_SIDEBAR_AI_ASSISTANT_DESCRIPTION');
+		}
 	});
 
 	const isBot = chatContext => {
@@ -141,37 +147,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
-	const isSelfChat = chatContext => {
-		return im_v2_application_core.Core.getStore().getters['chats/isSelfChat'](chatContext.dialogId);
-	};
-	const selfChatPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.selfChat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
+	const isChannel = chatContext => im_v2_lib_channel.ChannelManager.isChannel(chatContext.dialogId);
+	const channelPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
+		getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE')
 	});
 
-	const isLines = chatContext => chatContext.type === im_v2_const.ChatType.lines;
-	const linesPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
-		isHeaderMenuEnabled: () => false
+	const isChat = chatContext => chatContext.type === im_v2_const.ChatType.chat;
+	const chatPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
 	const isCollab = chatContext => chatContext.type === im_v2_const.ChatType.collab;
 	const collabPreset = new SidebarPreset({
 		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.collabHelpdesk],
 		getHeaderTitle: () => im_v2_lib_collab.CollabManager.getSidebarHeaderText()
-	});
-
-	const isSupport = chatContext => im_v2_application_core.Core.getStore().getters['sidebar/multidialog/isSupport'](chatContext.dialogId);
-	const supportPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.support, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.multidialog, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList]
-	});
-
-	const isAiAssistantBot = chatContext => im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](chatContext.dialogId);
-	const aiAssistantBotPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
-		areSharedChatsEnabled: () => false,
-		getCustomDescription: () => {
-			return main_core.Loc.getMessage('IM_SIDEBAR_AI_ASSISTANT_DESCRIPTION');
-		}
 	});
 
 	const isComment = chatContext => chatContext.type === im_v2_const.ChatType.comment;
@@ -181,15 +171,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		isHeaderMenuEnabled: () => false
 	});
 
-	const isChannel = chatContext => im_v2_lib_channel.ChannelManager.isChannel(chatContext.dialogId);
-	const channelPreset = new SidebarPreset({
-		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
-		getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE')
-	});
-
 	const isCopilot = chatContext => chatContext.type === im_v2_const.ChatType.copilot;
 	const copilotPreset = new SidebarPreset({
 		blocks: [im_v2_const.SidebarMainPanelBlock.copilot, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.copilotInfo, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList]
+	});
+
+	const isLines = chatContext => chatContext.type === im_v2_const.ChatType.lines;
+	const linesPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
+		isHeaderMenuEnabled: () => false
+	});
+
+	const isSelfChat = chatContext => {
+		return im_v2_application_core.Core.getStore().getters['chats/isSelfChat'](chatContext.dialogId);
+	};
+	const selfChatPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.selfChat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
+	});
+
+	const isSupport = chatContext => im_v2_application_core.Core.getStore().getters['sidebar/multidialog/isSupport'](chatContext.dialogId);
+	const supportPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.support, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.multidialog, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList]
 	});
 
 	const isTaskComments = chatContext => chatContext.type === im_v2_const.ChatType.taskComments;
@@ -197,6 +199,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		blocks: [im_v2_const.SidebarMainPanelBlock.task, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.taskCommentsHistory],
 		isHeaderMenuEnabled: () => false,
 		getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_TASK_COMMENTS_HEADER_TITLE')
+	});
+
+	const isUser = chatContext => chatContext.type === im_v2_const.ChatType.user;
+	const userPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
+	});
+
+	const isGuest = chatContext => {
+		return im_v2_application_core.Core.getStore().getters['users/isGuest'](chatContext.dialogId);
+	};
+	const guestPreset = new SidebarPreset({
+		blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
 	});
 
 	class SidebarManager {
@@ -244,6 +258,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#defaultConfigMap.set(isSelfChat, selfChatPreset);
 			this.#defaultConfigMap.set(isLines, linesPreset);
 			this.#defaultConfigMap.set(isCollab, collabPreset);
+			this.#defaultConfigMap.set(isGuest, guestPreset);
 			this.#defaultConfigMap.set(isUser, userPreset);
 			this.#defaultConfigMap.set(isChat, chatPreset);
 		}

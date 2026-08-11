@@ -45,7 +45,6 @@ export class LaunchControlField extends BaseField
 
 	async #handleLaunchButtonClick(agentId: number, buttonInstance: Button, event): Promise<void>
 	{
-		event.stopPropagation();
 		buttonInstance.setWaiting(true);
 
 		const gridManager = this.getGridManager();

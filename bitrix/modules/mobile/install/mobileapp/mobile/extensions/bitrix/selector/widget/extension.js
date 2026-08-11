@@ -9,12 +9,26 @@ jn.define('selector/widget', (require, exports, module) => {
 	const { CommonSelectorProvider } = require('selector/providers/common');
 	const { showToast } = require('toast');
 	const { Type } = require('type');
+	const { feature } = require('native/feature') ?? {};
+
+	/**
+	 * @typedef {Object} EmptyStateConfig
+	 * @property {string} [image] URL of the illustration image.
+	 * @property {string} [title] Localized title text.
+	 * @property {string} [text] Localized description text.
+	 */
 
 	const SERVICE_SECTION_CODE = 'service';
 	const COMMON_SECTION_CODE = 'common';
 
 	const CREATE_BUTTON_CODE = 'create';
 	const DEFAULT_RETURN_KEY = 'done';
+
+	/**
+	 * Native feature flag indicating whether the underlying `selector` widget
+	 * implementation supports the `emptyState` / `setEmptyState` API.
+	 */
+	const NATIVE_EMPTY_STATE_FEATURE = 'selector_empty_state';
 
 	/**
 	 * @class EntitySelectorWidget
@@ -41,8 +55,19 @@ jn.define('selector/widget', (require, exports, module) => {
 			animation,
 			leftButtons,
 			integrateSelectorToParentLayout,
+			emptyState,
 		})
 		{
+			/**
+			 * Native empty state configuration applied when the underlying selector
+			 * receives an empty `setItems` result. Gated by NATIVE_EMPTY_STATE_FEATURE.
+			 *
+			 * @type {EmptyStateConfig | null}
+			 */
+			this.emptyState = emptyState ? { ...emptyState } : null;
+
+			/** @type {boolean} */
+			this.isNativeEmptyStateEnabled = feature?.isFeatureEnabled?.(NATIVE_EMPTY_STATE_FEATURE) ?? false;
 			this.integrateSelectorToParentLayout = integrateSelectorToParentLayout ?? false;
 			this.returnKey = returnKey || DEFAULT_RETURN_KEY;
 			this.queryText = '';
@@ -52,6 +77,16 @@ jn.define('selector/widget', (require, exports, module) => {
 			this.currentItems = [];
 			this.currentSections = [];
 			this.currentSelectedItems = [];
+
+			/**
+			 * Tracks whether the underlying native widget has received its first
+			 * `setItems` call after the most recent open. Native won't activate
+			 * the configured `emptyState` until at least one `setItems` is
+			 * dispatched, even if the items array matches the current cache.
+			 *
+			 * @type {boolean}
+			 */
+			this.initialItemsApplied = false;
 
 			this.searchOptions = searchOptions || {};
 			this.createOptions = createOptions || {};
@@ -87,6 +122,41 @@ jn.define('selector/widget', (require, exports, module) => {
 		getWidget()
 		{
 			return this.widget;
+		}
+
+		/**
+		 * Whether the underlying native selector supports the `emptyState` API.
+		 * @returns {boolean}
+		 */
+		isNativeEmptyStateSupported()
+		{
+			return this.isNativeEmptyStateEnabled;
+		}
+
+		/**
+		 * Updates the empty state configuration.
+		 * When the underlying widget exists, the change is forwarded to native immediately.
+		 *
+		 * @param {EmptyStateConfig | null} config Pass `null` to clear.
+		 */
+		setEmptyState(config)
+		{
+			this.emptyState = config ? { ...config } : null;
+
+			if (this.widget && this.isNativeEmptyStateSupported())
+			{
+				this.widget.setEmptyState?.(this.emptyState);
+			}
+		}
+
+		/**
+		 * Whether the JS wrapper should delegate empty rendering to native (true)
+		 * or fall back to the legacy fake item-button placeholder (false).
+		 * @returns {boolean}
+		 */
+		shouldDelegateEmptyStateToNative()
+		{
+			return Boolean(this.emptyState) && this.isNativeEmptyStateSupported();
 		}
 
 		getProvider()
@@ -202,6 +272,11 @@ jn.define('selector/widget', (require, exports, module) => {
 				airWidgetParams.titleParams.text = widgetParams.title;
 			}
 
+			if (this.emptyState && this.isNativeEmptyStateSupported())
+			{
+				airWidgetParams.emptyState = this.emptyState;
+			}
+
 			return new Promise((resolve, reject) => {
 				if (this.widget)
 				{
@@ -232,6 +307,12 @@ jn.define('selector/widget', (require, exports, module) => {
 					}
 
 					this.widget.allowMultipleSelection(this.allowMultipleSelection);
+
+					if (this.isNativeEmptyStateSupported() && this.emptyState)
+					{
+						this.widget.setEmptyState?.(this.emptyState);
+					}
+
 					this.provider.loadRecent?.();
 
 					this.widget.on('send', () => this.close());
@@ -298,9 +379,10 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		onListFillListener({ text, scope })
 		{
-			this.queryText = text.trim();
+			const safeText = typeof text === 'string' ? text : '';
+			this.queryText = safeText.trim();
 
-			if (text === '')
+			if (safeText === '')
 			{
 				if (typeof this.searchOptions.onSearchCancelled === 'function')
 				{
@@ -316,11 +398,11 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			if (typeof this.searchOptions.onSearch === 'function')
 			{
-				this.searchOptions.onSearch({ text, scope });
+				this.searchOptions.onSearch({ text: safeText, scope });
 			}
 			else
 			{
-				this.provider.doSearch(text);
+				this.provider.doSearch(safeText);
 			}
 		}
 
@@ -541,7 +623,7 @@ jn.define('selector/widget', (require, exports, module) => {
 				processedItems.push(addItem);
 			}
 
-			if (!hasContentItems)
+			if (!hasContentItems && !this.shouldDelegateEmptyStateToNative())
 			{
 				processedItems.push(this.getEmptyResultItem(isRecent));
 			}
@@ -705,30 +787,35 @@ jn.define('selector/widget', (require, exports, module) => {
 				sections.push({ id: SERVICE_SECTION_CODE });
 			}
 
-			items
-				.filter((item) => !item.sectionCode || item.sectionCode === COMMON_SECTION_CODE)
-				.forEach((item, index) => {
-					item.hideBottomLine = index === items.length - 1;
-					item.sectionCode = COMMON_SECTION_CODE;
+			const commonItems = items.filter((item) => !item.sectionCode || item.sectionCode === COMMON_SECTION_CODE);
+			commonItems.forEach((item, index) => {
+				item.hideBottomLine = index === items.length - 1;
+				item.sectionCode = COMMON_SECTION_CODE;
 
-					return item;
-				});
-
-			const recentTitle = this.sectionTitles.recent ?? Loc.getMessage('PROVIDER_SEARCH_RECENT_SECTION_TITLE');
-			const searchTitle = this.sectionTitles.search ?? Loc.getMessage('PROVIDER_SEARCH_SECTION_TITLE');
-
-			const title = isRecent ? recentTitle : searchTitle;
-
-			const buttonText = this.getCommonSectionButtonText();
-			const styles = this.getCommonSectionStyles();
-
-			sections.push({
-				id: COMMON_SECTION_CODE,
-				title,
-				buttonText,
-				styles,
-				backgroundColor: Color.bgContentPrimary.toHex(),
+				return item;
 			});
+
+			const isCommonEmpty = commonItems.length === 0;
+			const shouldSkipCommonSection = isCommonEmpty && this.shouldDelegateEmptyStateToNative();
+
+			if (!shouldSkipCommonSection)
+			{
+				const recentTitle = this.sectionTitles.recent ?? Loc.getMessage('PROVIDER_SEARCH_RECENT_SECTION_TITLE');
+				const searchTitle = this.sectionTitles.search ?? Loc.getMessage('PROVIDER_SEARCH_SECTION_TITLE');
+
+				const title = isRecent ? recentTitle : searchTitle;
+
+				const buttonText = this.getCommonSectionButtonText();
+				const styles = this.getCommonSectionStyles();
+
+				sections.push({
+					id: COMMON_SECTION_CODE,
+					title,
+					buttonText,
+					styles,
+					backgroundColor: Color.bgContentPrimary.toHex(),
+				});
+			}
 
 			if (!isEqual(this.currentSections, sections))
 			{
@@ -740,8 +827,9 @@ jn.define('selector/widget', (require, exports, module) => {
 				item.undeselectable = this.undeselectableIds.some(([entityId, id]) => item.id === `${entityId}/${id}`);
 			});
 
-			if (!isEqual(this.currentItems, items))
+			if (!this.initialItemsApplied || !isEqual(this.currentItems, items))
 			{
+				this.initialItemsApplied = true;
 				this.currentItems = items;
 
 				this.widget.setItems(this.currentItems, this.currentSections, { animate: animation });
@@ -912,6 +1000,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		onViewHidden()
 		{
+			this.initialItemsApplied = false;
 			if (this.widget !== null)
 			{
 				this.hiddenWidget = this.widget;
@@ -930,6 +1019,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		onViewRemoved()
 		{
+			this.initialItemsApplied = false;
 			this.widget = null;
 			this.handleOnEventsCallback('onViewRemoved');
 		}
@@ -963,6 +1053,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		onWidgetClosed()
 		{
+			this.initialItemsApplied = false;
 			this.widget = null;
 			this.handleOnEventsCallback('onWidgetClosed', this.getEntityItems());
 		}

@@ -164,6 +164,7 @@ export const ToolbarMoreGroupComponent = {
 								:editor-tick="editorTick"
 								:link-value="linkValue"
 								:link-is-active="linkIsActive"
+								:show-apply="false"
 								@update:link-value="setLinkValue"
 								@apply="onApplyLink?.()"
 								@unset="onUnsetLink?.()"

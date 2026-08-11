@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, planner, ui_designTokens, ui_fontawesome4, ui_fonts_opensans, im_integration_viewer, im_v2_component_list_navigator, im_v2_component_content_openlines, im_v2_const, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_bulkActions, im_v2_lib_counter, im_v2_lib_desktop, im_v2_lib_escManager, im_v2_lib_init, im_v2_lib_layout, im_v2_lib_logger, im_v2_lib_theme, im_v2_component_desktop_modeSelectionBanner, im_v2_lib_analytics, im_v2_lib_desktopApi, im_v2_lib_promo, im_v2_component_content_chat, im_v2_component_content_chatForms_forms, im_v2_component_content_market, im_v2_component_content_notification, im_v2_component_content_openlinesV2, im_v2_component_content_settings, im_v2_component_list_container_channel, im_v2_component_list_container_collab, im_v2_component_list_container_aiAssistant, im_v2_component_list_container_openline, im_v2_component_list_container_recent, im_v2_component_list_container_task) {
+(function (exports, planner, ui_designTokens, ui_fontawesome4, ui_fonts_opensans, im_integration_viewer, im_v2_component_list_navigator, im_v2_component_content_openlines, im_v2_const, im_v2_css_classes, im_v2_css_icons, im_v2_css_tokens, im_v2_lib_bulkActions, im_v2_lib_counter, im_v2_lib_desktop, im_v2_lib_escManager, im_v2_lib_init, im_v2_lib_layout, im_v2_lib_logger, im_v2_lib_pageContext, im_v2_lib_theme, im_v2_component_desktop_modeSelectionBanner, im_v2_lib_analytics, im_v2_lib_desktopApi, im_v2_lib_promo, im_v2_component_content_chat, im_v2_component_content_chatForms_forms, im_v2_component_content_market, im_v2_component_content_notification, im_v2_component_content_openlinesV2, im_v2_component_content_settings, im_v2_component_list_container_channel, im_v2_component_list_container_collab, im_v2_component_list_container_aiAssistant, im_v2_component_list_container_openline, im_v2_component_list_container_recent, im_v2_component_list_container_task) {
 	'use strict';
 
 	// @vue/component
@@ -159,6 +159,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			im_v2_lib_bulkActions.BulkActionsManager.getInstance().bindEvents({
 				emitter: this.getEmitter()
 			});
+			im_v2_lib_pageContext.ChatPageContextManager.init();
 			im_v2_lib_logger.Logger.warn('MessengerRoot created');
 			void this.getLayoutManager().prepareInitialLayout();
 		},
@@ -213,5 +214,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Messenger = Messenger;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX, BX, BX, BX, BX.Messenger.Integration.Viewer, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Const, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Desktop, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List);
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX, BX, BX, BX, BX.Messenger.Integration.Viewer, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Const, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Desktop, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=messenger.bundle.js.map

@@ -1,16 +1,16 @@
 import { Type, Extension } from 'main.core';
-import { CallEngine, Provider, RoomType } from './engine/engine';
-import { CallEngineLegacy } from './engine/engine_legacy';
 import { lpad, getDateForLog, getTimeForLog, getLogMessage, logToString, isConsoleLogsEnabled, setConsoleLogsEnabled } from './log-helpers';
+import { CallScheme, Provider, RoomType } from './engine/types';
 import {
 	ClientPlatform,
 	ClientVersion,
 	MediaStreamsKinds,
 	JoinRequestFailedCodes,
-	JoinResponseError,
-} from './call_api';
+} from './sdk/const';
+import { JoinResponseError } from './sdk/errors';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
+import { stuckCallFinishTracker } from 'call.lib.stuck-call-finish-tracker';
 
 import { Event } from 'main.core';
 
@@ -289,6 +289,7 @@ function setUserData(users)
 	//setCurrentUserRole(userData[CallEngine.getCurrentUserId()].role);
 }
 
+
 function getUser(callId, userId)
 {
 	return new Promise((resolve, reject) =>
@@ -419,6 +420,11 @@ function getCustomMessage(message, userData)
 	else
 	{
 		messageText = BX.message(message);
+	}
+
+	if (!messageText)
+	{
+		return '';
 	}
 
 	userData = convertKeysToUpper(userData);
@@ -596,6 +602,7 @@ const getCallFeatures = () => {
 	return BX.message('call_features')
 }
 
+
 const getUuidv4 = () =>
 {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) =>
@@ -724,23 +731,28 @@ const getRoomType = (provider: string, chatId?: number): RoomType => {
 	return RoomType.Small;
 };
 
+const _engines = [];
+let _primaryEngine = null;
+
+function registerEngine(engine, isPrimary = false)
+{
+	_engines.push(engine);
+	if (isPrimary)
+	{
+		_primaryEngine = engine;
+	}
+}
+
 function getCurrentBitrixCall()
 {
-	for (let callId in CallEngine.calls)
+	for (const engine of _engines)
 	{
-		if(CallEngine.calls[callId].BitrixCall)
+		for (const callId in engine.calls)
 		{
-			return CallEngine.calls[callId];
-			break;
-		}
-	}
-
-	for (let callId in CallEngineLegacy.calls)
-	{
-		if(CallEngineLegacy.calls[callId].BitrixCall)
-		{
-			return CallEngineLegacy.calls[callId];
-			break;
+			if (engine.calls[callId].BitrixCall)
+			{
+				return engine.calls[callId];
+			}
 		}
 	}
 
@@ -1057,7 +1069,12 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 				...callOptions,
 			});
 
-			let responseInfo = null;
+			let responseInfo = { chatId };
+
+			const getResponseInfoString = (ignoreKeys = []) => Object.entries(responseInfo)
+				.filter(([key]) => !ignoreKeys.includes(key))
+				.map(([key, value]) => `${key}: ${value}`).join(', ');
+
 			fetch(url, {
 				method: 'POST',
 				body: data,
@@ -1073,10 +1090,49 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 						throw error;
 					}
 				})
-				.then((response) => {
-					responseInfo = { status: response?.status, ok: response?.ok };
+				.then(async (response) => {
+					responseInfo = { ...responseInfo, status: response?.status, ok: response?.ok };
 
-					return response.json();
+					// Non-OK responses may carry non-JSON bodies
+					if (!response.ok)
+					{
+						let text;
+						try
+						{
+							text = await response.text();
+						}
+						catch (error)
+						{
+							if (error?.name === 'AbortError')
+							{
+								throw error;
+							}
+							throw new JoinResponseError(error, JoinRequestFailedCodes.BodyReadError);
+						}
+						try
+						{
+							return text
+								? JSON.parse(text)
+								: '';
+						}
+						catch
+						{
+							return text.replaceAll(/<[^>]*>/g, ' ').replaceAll(/\s+/g, ' ').trim();
+						}
+					}
+
+					try
+					{
+						return await response.json();
+					}
+					catch (error)
+					{
+						if (error instanceof SyntaxError || error?.name === 'AbortError')
+						{
+							throw error;
+						}
+						throw new JoinResponseError(error, JoinRequestFailedCodes.BodyReadError);
+					}
 				})
 				.catch((error) => {
 					if (Type.isObject(error) && error.name === 'AbortError')
@@ -1100,6 +1156,11 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 							// Stuck call on join (mustCreate=false): the media room is gone,
 							// finish the DB record silently so it disappears from recent.
 							// On mustCreate=true the same codes mean "can not create" — skip.
+							// Debounce via stuckCallFinishTracker: delay the REST by
+							// DEBOUNCE_MS so a concurrent Pull `Call::finish` (the usual
+							// path when the backend already closed the call) can cancel
+							// it before it hits the server. Engine pull handlers call
+							// stuckCallFinishTracker.cancelPending(id, uuid) on arrival.
 							const errorCode = response.error?.code;
 							if (
 								mustCreate === false
@@ -1110,24 +1171,36 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 								)
 							)
 							{
-								BX.ajax.runAction('call.CallManager.finish', {
+								stuckCallFinishTracker.scheduleFinish(null, callOptions.callUuid, () => BX.ajax.runAction('call.CallManager.finish', {
 									data: {
 										callUuid: callOptions.callUuid,
 										silent: true,
 									},
-								});
+								}));
 							}
 
 							throw new JoinResponseError(response?.error?.message, response?.error?.code);
 						}
 						else
 						{
-							throw new JoinResponseError(`Response status: ${responseInfo.status}`, JoinRequestFailedCodes.UnexpectedResponse);
+							const payload = Type.isString(response) ? response : JSON.stringify(response);
+							throw new JoinResponseError(payload, JoinRequestFailedCodes.UnexpectedResponse);
 						}
 					}
 					resolve(response);
 				})
-				.catch((error) => {
+				.catch((rawError) => {
+					const error = rawError;
+					if (error?.message)
+					{
+						error.message = `${getResponseInfoString([
+							'ok',
+							...error?.code === JoinRequestFailedCodes.JsonParsingError
+								? ['status']
+								: [],
+						])}, ${error.message}`;
+					}
+
 					try
 					{
 						if (error?.xhr?.responseText)
@@ -1160,7 +1233,7 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 const getCallConnectionDataById = async (callUuid) => {
 	try
 	{
-		const call = await CallEngine.getCallWithId(callUuid);
+		const call = await _primaryEngine.getCallWithId(callUuid);
 		const chatId = call.call.associatedEntity.chatId;
 		const roomType = getRoomType(call.call.provider, chatId);
 
@@ -1270,6 +1343,7 @@ const isKibanaLogsEnabled = () =>
 	return Extension.getSettings('call.core')?.isKibanaLogsEnabled;
 }
 
+
 const isChatMountInPage = () =>
 {
 	return Extension.getSettings('call.core')?.isAirDesignEnabled && Extension.getSettings('call.core')?.shouldHideQuickAccess;
@@ -1336,6 +1410,101 @@ function deepParseJSON(value)
 }
 
 
+function isLegacyCall(provider, scheme = null)
+{
+	if (scheme)
+	{
+		return scheme === CallScheme.classic;
+	}
+
+	const isLegacyPlainCall = provider === 'Plain' && !CallSettingsManager.isJwtInPlainCallsEnabled();
+	const isLegacyBitrixCall = provider === 'Bitrix' && !CallSettingsManager.jwtCallsEnabled;
+
+	return isLegacyPlainCall || isLegacyBitrixCall;
+}
+
+function getCallIdentifier(call)
+{
+	if (!call)
+	{
+		return null;
+	}
+
+	return isLegacyCall(call.provider, call.scheme) ? call.id : call.uuid;
+}
+
+function getClickLinkInterceptor()
+{
+	const handleClick = (event) => {
+		const link = event.target.closest('a');
+
+		if (!link)
+		{
+			return;
+		}
+		const href = link.getAttribute('href');
+
+		if (!href)
+		{
+			return;
+		}
+
+		if (event.defaultPrevented)
+		{
+			return;
+		}
+
+		window.open(href, '_blank');
+		event.preventDefault();
+	};
+
+	const startIntercepting = () => {
+		document.addEventListener('click', handleClick, { capture: true });
+	};
+
+	const stopIntercepting = () => {
+		document.removeEventListener('click', handleClick, { capture: true });
+	};
+
+	return {
+		startIntercepting,
+		stopIntercepting,
+	};
+}
+
+function getDisconnectedUsers(currentCall)
+{
+	const result = [];
+	if (!currentCall)
+	{
+		return result;
+	}
+
+	const userStates = currentCall.getUsers();
+
+	for (let userId in userStates)
+	{
+		if (userStates[userId] !== BX.Call.UserState.Connected)
+		{
+			const userData = getUserCached(userId)
+			if (userData)
+			{
+				result.push(userData);
+			}
+		}
+	}
+
+	return result;
+}
+
+const isVueEnabled = () => {
+	return Extension.getSettings('call.core')?.isVueEnabled || false;
+};
+
+const getCallInvitePeriod = () => {
+	return Extension.getSettings('call.core')?.call?.callInvitePeriod ?? 30000;
+};
+
 export default {
 	MediaKind,
 	updateUserData,
@@ -1380,6 +1549,7 @@ export default {
 	getConferenceProvider,
 	getRoomType,
 	getCurrentBitrixCall,
+	registerEngine,
 	setCodecToReport,
 	saveReportWithoutCodecs,
 	processReportsWithoutCodecs,
@@ -1440,4 +1610,10 @@ export default {
 	isCloudRecordLogEnabled,
 	getCallConnectionErrorCode,
 	getCallConnectionErrorMessage,
+	isLegacyCall,
+	getCallIdentifier,
+	getClickLinkInterceptor,
+	getDisconnectedUsers,
+	isVueEnabled,
+	getCallInvitePeriod,
 };

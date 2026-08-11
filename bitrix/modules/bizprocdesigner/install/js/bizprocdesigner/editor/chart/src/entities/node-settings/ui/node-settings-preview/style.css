@@ -6,11 +6,15 @@
 	font-size: 14px;
 	line-height: 20px;
 	cursor: pointer;
-	margin-top: 8px;
+	margin-left: 2px;
 }
 
 .editor-chart-node-settings-preview:hover {
 	border-color: var(--ui-color-blue-57);
+}
+
+.editor-chart-node-settings-preview + .editor-chart-node-settings-preview {
+	margin-top: 10px;
 }
 
 .editor-chart-node-settings-preview__edit-icon {

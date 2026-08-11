@@ -370,7 +370,7 @@ class CBPCallGetFollowUpActivity extends BaseActivity implements IBPConfigurable
 		return $result;
 	}
 
-	public static function validateProperties($testProperties = [], \CBPWorkflowTemplateUser $user = null): array
+	public static function validateProperties($testProperties = [], ?\CBPWorkflowTemplateUser $user = null): array
 	{
 		$errors = [];
 		$limit = $testProperties[self::PARAM_LIMIT] ?? 0;

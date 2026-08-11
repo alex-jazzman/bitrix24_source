@@ -1,0 +1,22 @@
+.bx-im-list-copilot__empty {
+	--im-list-copilot__font-color_empty-title: var(--im-color-palette-gray-50);
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	margin-top: 43px;
+}
+
+.bx-im-list-copilot__empty_icon {
+	width: 24px;
+	height: 24px;
+	margin-right: 8px;
+	background-image: url('./images/empty.svg');
+}
+
+.bx-im-list-copilot__empty_text {
+	font: var(--im-font-size-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--im-list-copilot__font-color_empty-title);
+}

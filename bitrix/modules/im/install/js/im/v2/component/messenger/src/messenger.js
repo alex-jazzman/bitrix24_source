@@ -20,6 +20,7 @@ import { EscManager } from 'im.v2.lib.esc-manager';
 import { InitManager } from 'im.v2.lib.init';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
+import { ChatPageContextManager } from 'im.v2.lib.page-context';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { type ImModelLayout } from 'im.v2.model';
 
@@ -101,6 +102,7 @@ export const Messenger = {
 
 		LayoutManager.getInstance().bindEvents({ emitter: this.getEmitter() });
 		BulkActionsManager.getInstance().bindEvents({ emitter: this.getEmitter() });
+		ChatPageContextManager.init();
 
 		Logger.warn('MessengerRoot created');
 

@@ -161,6 +161,7 @@ export const BaseCollabNestedUnreadList = {
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
+			data-test-id="im_container-recent__unread-list"
 		>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>

@@ -6,6 +6,7 @@
 
 	BX.Call.AI.Tabs = {
 		callId: null,
+		callUuid: null,
 		tabsList: [],
 		tabTitle: [],
 		tabContents: [],
@@ -26,6 +27,7 @@
 		{
 			this.tabsList = document.getElementsByClassName('bx-call-component-call-ai__tab-content');
 			this.callId = document.getElementsByClassName('bx-call-component-call-ai')[0]?.dataset.callId;
+			this.callUuid = document.getElementsByClassName('bx-call-component-call-ai')[0]?.dataset.callUuid;
 			this.hideAllTabs();
 			this.initEvents();
 			this.initAudioPlayer();
@@ -37,7 +39,7 @@
 			this.initScrollEventForInsights();
 
 			Analytics.getInstance().copilot.onOpenFollowUpSlider({
-				callId: this.callId,
+				callId: this.callUuid,
 			});
 		},
 		onTabClick: function(e)
@@ -62,7 +64,7 @@
 		},
 		onCreateTaskClick: function(e)
 		{
-			Analytics.getInstance().copilot.onFollowUpCreateTaskClick({ callId: this.callId });
+			Analytics.getInstance().copilot.onFollowUpCreateTaskClick({ callId: this.callUuid });
 
 			const { userId, description, auditors } = e.target.dataset;
 			const taskUrl = `/company/personal/user/${userId}/tasks/task/edit/0/`;
@@ -79,7 +81,7 @@
 		},
 		onCreateMeetingClick: function(e)
 		{
-			Analytics.getInstance().copilot.onFollowUpCreateEventClick({ callId: this.callId });
+			Analytics.getInstance().copilot.onFollowUpCreateEventClick({ callId: this.callUuid });
 
 			const { meetingDescription, meetingId, meetingIdType } = e.target.dataset;
 			new (window.top.BX || window.BX).Calendar.SliderLoader(0, {
@@ -156,7 +158,7 @@
 				return;
 			}
 
-			const callId = this.callId;
+			const callUuid = this.callUuid;
 
 			for (let i = 0; i < audioRecordContainer.length; i++) {
 				const { audioSrc, audioId } = audioRecordContainer[i].dataset;
@@ -174,7 +176,7 @@
 						return {
 							audioSrc,
 							analyticsCallback: () => {
-								Analytics.getInstance().copilot.onAIPlayRecord({ callId });
+								Analytics.getInstance().copilot.onAIPlayRecord({ callId: callUuid });
 							},
 						};
 					},
@@ -256,7 +258,7 @@
 					}
 
 					this.playbackMarks[i].addEventListener('click', () => {
-						Analytics.getInstance().copilot.onAIRecordTimeCodeClick({ callId: this.callId });
+						Analytics.getInstance().copilot.onAIRecordTimeCodeClick({ callId: this.callUuid });
 						this.audioPlayerInstance[key].$refs.AudioPlayerRef.choosePlaybackTime(this.getTimeInSeconds(i));
 					});
 				}
@@ -375,7 +377,7 @@
 		sendOpenFollowUpTabAnalytics: function(tabName)
 		{
 			Analytics.getInstance().copilot.onOpenFollowUpTab({
-				callId: this.callId,
+				callId: this.callUuid,
 				tabName: tabName,
 			});
 		},

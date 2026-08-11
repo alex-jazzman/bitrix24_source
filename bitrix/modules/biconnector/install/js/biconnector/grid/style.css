@@ -9,8 +9,8 @@
 
 .biconnector-empty__icon {
 	position: relative;
-	width: 218px;
-	height: 217px;
+	width: 193px;
+	height: 193px;
 	margin-bottom: 15px;
 	background: url(image/biconnector-empty-bg.svg) center no-repeat;
 }
@@ -18,10 +18,10 @@
 .biconnector-empty__icon:before {
 	content: '';
 	position: absolute;
-	top: 25px;
-	left: 23px;
-	width: 173px;
-	height: 173px;
+	top: 20px;
+	left: 20px;
+	width: 158px;
+	height: 158px;
 	background: center no-repeat;
 }
 

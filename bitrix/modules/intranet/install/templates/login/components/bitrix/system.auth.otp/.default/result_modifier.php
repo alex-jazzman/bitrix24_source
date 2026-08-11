@@ -5,8 +5,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Intranet\Entity\Type\Email;
 use Bitrix\Intranet\Entity\Type\Phone;
 use Bitrix\Intranet\Internal\Integration\Main\OtpSigner;
+use Bitrix\Intranet\Internal\Integration\Main\VerifyEmailService;
 use Bitrix\Intranet\Internal\Integration\Security\PersonalOtp;
 use Bitrix\Intranet\Internal\Service\Otp\MobilePush;
 use Bitrix\Intranet\Repository\UserRepository;
@@ -16,12 +18,33 @@ use Bitrix\Main\Loader;
 use Bitrix\Intranet\Internal\Integration\Main\VerifyPhoneService;
 use Bitrix\Intranet\Internal\Integration\Security\OtpSettings;
 use Bitrix\Intranet\Internal\Service\Otp\PersonalMobilePush;
+use Bitrix\Intranet\Internal\Repository\BackupEmailConfirmationRepository;
 
 $arResult['AUTH_OTP_HELP_LINK'] = $APPLICATION->GetCurPageParam('help=Y');
 $arResult['AUTH_OTP_LINK'] = $APPLICATION->GetCurPageParam('', ['help']);
 $arResult['CAN_LOGIN_BY_SMS'] = false;
+$arResult['CAN_LOGIN_BY_EMAIL'] = false;
 $arResult['IS_RECOVERY_CODES_ENABLED'] = false;
 $arResult['USER_MASKED_AUTH_PHONE_NUMBER'] = null;
+$arResult['USER_MASKED_AUTH_EMAIL'] = null;
+$arResult['HELP_BUTTON_CONFIG_BY_STEP'] = [
+	'sms' => [
+		'articleId' => 27901964,
+		'anchor' => 'sms',
+	],
+	'email' => [
+		'articleId' => 27901964,
+		'anchor' => 'email',
+	],
+	'recoveryCodes' => [
+		'articleId' => 27901964,
+		'anchor' => 'rezerv',
+	],
+	'applicationOfflineCode' => [
+		'articleId' => 27901964,
+		'anchor' => 'application',
+	],
+];
 $mobilePush = MobilePush::createByDefault();
 $arResult['IS_DEFAULT_PUSH_OTP'] = false;
 if ($mobilePush->isDefault())
@@ -46,12 +69,20 @@ if (Loader::includeModule('intranet'))
 	{
 		if ($user)
 		{
+			$personalOtp = new PersonalOtp($user);
 			$arResult['CAN_LOGIN_BY_SMS'] = (new VerifyPhoneService($user))->canLoginBySms();
+			$arResult['CAN_LOGIN_BY_EMAIL'] = (new VerifyEmailService($user))->canLoginByEmail();
 			$userAuthPhoneNumber = $user->getAuthPhoneNumber();
+			$userBackupEmail = $personalOtp->getBackupEmail();
 
 			if ($arResult['CAN_LOGIN_BY_SMS'] && $userAuthPhoneNumber)
 			{
 				$arResult['USER_MASKED_AUTH_PHONE_NUMBER'] = (new Phone($userAuthPhoneNumber))->getMaskedNumber();
+			}
+
+			if ($arResult['CAN_LOGIN_BY_EMAIL'] && $userBackupEmail)
+			{
+				$arResult['USER_MASKED_AUTH_EMAIL'] = (new Email($userBackupEmail))->getMaskedEmail();
 			}
 
 			$mobilePush = PersonalMobilePush::createByUser($user);
@@ -61,7 +92,7 @@ if (Loader::includeModule('intranet'))
 				'model' => $deviceInfo['displayModel'] ?? '',
 			];
 			$arResult['SIGNED_USER_ID'] = (new OtpSigner())->signUserId($user->getId());
-			$arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] = (new PersonalOtp($user))->canSendRequestRecoverAccess();
+			$arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] = $personalOtp->canSendRequestRecoverAccess();
 		}
 
 		$arResult['IS_RECOVERY_CODES_ENABLED'] = (new OtpSettings())->isRecoveredCodesEnabled();
@@ -70,7 +101,7 @@ if (Loader::includeModule('intranet'))
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$currentStep = $request->getPost('CURRENT_STEP');
 
-		if (in_array($currentStep, ['push', 'sms', 'recoveryCodes', 'applicationOfflineCode']))
+		if (in_array($currentStep, ['push', 'sms', 'email', 'recoveryCodes', 'applicationOfflineCode']))
 		{
 			$arResult['CURRENT_STEP'] = $currentStep;
 		}

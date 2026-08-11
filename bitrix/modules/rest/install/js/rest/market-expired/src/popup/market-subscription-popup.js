@@ -41,7 +41,7 @@ export class MarketSubscriptionPopup extends MarketExpiredPopup
 
 	#getDescription(): string
 	{
-		const replacements = { ...this.getCopilotReplacements(), '#DATE#': this.expireDate };
+		const replacements = { ...this.getCopilotReplacements(), '#DATE#': this.expireDate, '[br]': '<br>' };
 
 		if (this.type === PopupType.FINAL)
 		{

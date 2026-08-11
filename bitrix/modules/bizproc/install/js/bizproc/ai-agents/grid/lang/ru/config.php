@@ -12,6 +12,7 @@ $MESS['BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_BUTTON_CANCEL'] = 'Отмена';
 
 $MESS['BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_CONFIRM_MESSAGE'] = 'Агент и все его настройки удалятся, их нельзя будет восстановить';
 $MESS['BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_CONFIRM_TITLE'] = 'Удалить AI-агента?';
+$MESS['BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_DELETE_CHATBOTS_LABEL'] = 'Удалить чат-ботов, созданных этим агентом';
 $MESS['BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE'] = 'Агент перезапущен';
 $MESS['BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR'] = 'Не удалось выполнить действие';
 

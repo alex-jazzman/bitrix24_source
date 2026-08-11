@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_sidepanel, im_v2_application_core, im_v2_lib_call, im_v2_lib_phone, im_v2_lib_smileManager, im_v2_lib_user, im_v2_lib_counter, im_v2_lib_logger, im_v2_lib_messageNotifier, im_v2_lib_market, im_v2_lib_desktop, im_v2_lib_promo, im_v2_lib_permission, im_v2_lib_updateState_manager, im_v2_lib_router, im_v2_const, im_public) {
+(function (exports, main_sidepanel, im_v2_application_core, im_v2_lib_call, im_v2_lib_phone, im_v2_lib_smileManager, im_v2_lib_user, im_v2_lib_counter, im_v2_lib_logger, im_v2_lib_messageNotifier, im_v2_lib_market, im_v2_lib_desktop, im_v2_lib_promo, im_v2_lib_permission, im_v2_lib_updateState_manager, im_v2_lib_router, im_v2_lib_guest, im_v2_const, im_public) {
 	'use strict';
 
 	const BindingsCondition = {
@@ -154,6 +154,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#initCopilot();
 			this.#initPreloadedEntities();
 			this.#initCurrentUserAdminStatus();
+			this.#initGuestState();
 			this.#initBindings();
 			im_v2_lib_counter.CounterManager.init();
 			im_v2_lib_permission.PermissionManager.init();
@@ -219,6 +220,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} = im_v2_application_core.Core.getApplicationData();
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setName', copilot.botName);
 			void im_v2_application_core.Core.getStore().dispatch('copilot/setAgentName', copilot.agentName);
+			void im_v2_application_core.Core.getStore().dispatch('copilot/setSuggests', copilot.suggests ?? []);
 			if (!copilot.availableEngines) {
 				return;
 			}
@@ -246,6 +248,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} = im_v2_application_core.Core.getApplicationData();
 			void im_v2_application_core.Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
 		}
+		#initGuestState() {
+			const {
+				isGuestWelcome,
+				videoCallsTermsUrl
+			} = im_v2_application_core.Core.getApplicationData();
+			im_v2_lib_guest.GuestManager.getInstance().setGuestNamePopupState(isGuestWelcome);
+			im_v2_lib_guest.GuestManager.getInstance().setTermsOfServiceUrl(videoCallsTermsUrl);
+		}
 		#initBindings() {
 			main_sidepanel.SidePanel.Instance.bindAnchors({
 				rules: [{
@@ -261,5 +271,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.InitManager = InitManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.SidePanel, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.SidePanel, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
 //# sourceMappingURL=init.bundle.js.map

@@ -37,6 +37,7 @@ export class EditorMount
 		title = '',
 		onRenameTitle = null,
 		onOpenInternalLink = null,
+		onMentionClick = null,
 	}: {
 		provider?: Object | null,
 		currentUser?: Object,
@@ -44,6 +45,7 @@ export class EditorMount
 		title?: string,
 		onRenameTitle?: Function | null,
 		onOpenInternalLink?: Function | null,
+		onMentionClick?: Function | null,
 	} = {}): Promise<boolean>
 	{
 		const target = document.getElementById(this.#state.editorMountId);
@@ -67,6 +69,7 @@ export class EditorMount
 				title,
 				onRenameTitle,
 				onOpenInternalLink,
+				onMentionClick,
 			});
 			this.#editorVm = this.#editorApp.mount(`#${this.#state.editorMountId}`);
 

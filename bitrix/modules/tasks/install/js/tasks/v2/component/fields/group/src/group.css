@@ -2,7 +2,7 @@
 	max-width: max-content;
 }
 
-.tasks-field-group-group:not(.--secret) {
+.tasks-field-group-group:not(.--secret):not(.--restricted) {
 	cursor: pointer;
 }
 

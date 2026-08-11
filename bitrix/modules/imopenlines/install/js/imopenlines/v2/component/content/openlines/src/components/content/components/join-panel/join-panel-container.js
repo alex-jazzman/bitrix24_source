@@ -1,14 +1,14 @@
 import { Core } from 'im.v2.application.core';
 import { ChatButton as OpenLinesButton } from 'im.v2.component.elements.button';
+import { type ImModelChat } from 'im.v2.model';
+
 import { StatusGroup } from 'imopenlines.v2.const';
+import { type ImolModelSession } from 'imopenlines.v2.model';
 
 import { ChatControlPanel } from './components/chat-control-panel';
 import { JoinPanel } from './components/join-panel';
 
 import './css/join-panel.css';
-
-import type { ImModelChat } from 'im.v2.model';
-import type { ImolModelSession } from 'imopenlines.v2.model';
 
 // @vue/component
 export const JoinPanelContainer = {
@@ -57,8 +57,18 @@ export const JoinPanelContainer = {
 	},
 	template: `
 		<div class="bx-imol-textarea_join-panel-container">
-			<ChatControlPanel v-if="(isNewSession && isOperator) || isQueueTypeAll" :dialogId="dialogId" :isQueueTypeAll="isQueueTypeAll"/>
-			<JoinPanel v-else :dialogId="dialogId" :isClosed="isClosed" :isNewSession="isNewSession"/>
+			<ChatControlPanel
+				v-if="(isNewSession && isOperator) || isQueueTypeAll"
+				:dialogId="dialogId"
+				:isQueueTypeAll="isQueueTypeAll"
+			/>
+			<JoinPanel
+				v-else
+				:dialogId="dialogId"
+				:isClosed="isClosed"
+				:isNewSession="isNewSession"
+				:hasSession="Boolean(session)"
+			/>
 		</div>
 	`,
 };

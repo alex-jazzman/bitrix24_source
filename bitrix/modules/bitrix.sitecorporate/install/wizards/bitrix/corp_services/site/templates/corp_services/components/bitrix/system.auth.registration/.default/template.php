@@ -25,6 +25,7 @@ if ($arResult["BACKURL"] <> '')
 ?>
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="REGISTRATION" />
+	<?= bitrix_sessid_post(); ?>
 		<div class="field">
 			<label class="field-title"><?=GetMessage("AUTH_NAME")?></label>
 			<div class="form-input"><input type="text" name="USER_NAME" maxlength="50" value="<?=$arResult["USER_NAME"]?>" /></div>

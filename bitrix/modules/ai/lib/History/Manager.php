@@ -1,0 +1,388 @@
+<?php
+
+namespace Bitrix\AI\History;
+
+use Bitrix\AI\Config;
+use Bitrix\AI\Context;
+use Bitrix\AI\Engine;
+use Bitrix\AI\Engine\Enum\Category;
+use Bitrix\AI\Engine\IContext;
+use Bitrix\AI\Engine\IEngine;
+use Bitrix\AI\Facade\User;
+use Bitrix\AI\Payload\IPayload;
+use Bitrix\AI\Result;
+use Bitrix\AI\Model\HistoryTable;
+use Bitrix\Main\Type\DateTime;
+
+class Manager
+{
+	public function __construct(
+		private IEngine $engine,
+	) {}
+
+	/**
+	 * Finally removes all records for the user.
+	 *
+	 * @param int $userId User id.
+	 * @return void
+	 */
+	public static function deleteForUser(int $userId): void
+	{
+		HistoryTable::deleteByFilter(['=CREATED_BY_ID' => $userId]);
+	}
+
+	public static function writeDiagnosticHistory(array $data): void
+	{
+		try
+		{
+			HistoryTable::add(array_merge([
+				'CONTEXT_MODULE' => 'ai',
+				'CONTEXT_ID' => '-',
+				'ENGINE_CLASS' => '-',
+				'ENGINE_CODE' => '',
+				'PAYLOAD_CLASS' => '-',
+				'PAYLOAD' => '-',
+				'PARAMETERS' => [],
+				'GROUP_ID' => -1,
+				'RESULT_TEXT' => '-',
+				'CACHED' => false,
+				'CREATED_BY_ID' => 0,
+			], $data));
+		}
+		catch (\Throwable)
+		{
+			// Best effort
+		}
+	}
+
+	/**
+	 * Returns true, if in module settings enabled corresponding option.
+	 *
+	 * @return bool
+	 */
+	public static function shouldAlwaysWrite(): bool
+	{
+		return Config::getValue('write_history_always') === 'Y';
+	}
+
+	/**
+	 * Returns true if history will not be saved for current user.
+	 *
+	 * @return bool
+	 */
+	public static function shouldDisableHistoryForUser(int $userId): bool
+	{
+		if (empty($userId))
+		{
+			return false;
+		}
+
+		$codes = Config::getValue('disable_history_for_users');
+		if (empty($codes))
+		{
+			return false;
+		}
+
+		if (($GLOBALS['USER'] instanceof \CUser) && (int)$GLOBALS['USER']->getId() === $userId)
+		{
+			$userAccessCodes = [];
+			$user = User::getInstance();
+			if (!empty($user))
+			{
+				$userAccessCodes = $user->getAccessCodes();
+			}
+		}
+		else
+		{
+			$userAccessCodes = \CAccess::GetUserCodesArray($userId);
+		}
+
+		$diffCodes = array_intersect(explode(',', $codes), $userAccessCodes);
+
+		return !empty($diffCodes);
+	}
+
+	/**
+	 * Returns capacity of history per user-context.
+	 *
+	 * @return int
+	 */
+	public static function getCapacity(): int
+	{
+		return (int)Config::getValue('max_history_per_user');
+	}
+
+	/**
+	 * Returns last history item for current context.
+	 *
+	 * @param Context $context Context instance.
+	 * @return array|null
+	 */
+	public static function getLastItem(Context $context): ?array
+	{
+		return self::readHistory($context, 1)->toArray()[0] ?? null;
+	}
+
+	/**
+	 * Returns fake History Item (use when history doesn't exist for current user).
+	 *
+	 * @param string|null $data Data.
+	 * @param IEngine|Engine $engine Engine instance.
+	 * @return Item
+	 */
+	public static function getFakeItem(?string $data, IEngine|Engine $engine): Item
+	{
+		return new Item(
+			null,
+			new DateTime(),
+			$data,
+			$engine->getCode(),
+			$engine->getPayload()->getRawData(),
+		);
+	}
+
+	/**
+	 * Returns collection of history Items.
+	 *
+	 * @param Context $context History context.
+	 * @param int|null $limit Limit of records.
+	 * @return Collection
+	 */
+	public static function readHistory(Context $context, ?int $limit = 0): Collection
+	{
+		if ($limit === null)
+		{
+			$limit = self::getCapacity();
+		}
+
+		$res = HistoryTable::query()
+			->setSelect(['ID', 'DATE_CREATE', 'RESULT_TEXT', 'GROUP_ID', 'PAYLOAD', 'PAYLOAD_CLASS', 'ENGINE_CODE'])
+			->where('CONTEXT_MODULE', $context->getModuleId())
+			->where('CONTEXT_ID', $context->getContextId())
+			->where('CREATED_BY_ID', $context->getUserId())
+			->whereIn('GROUP_ID', [-1, 0])
+			->setOrder(['ID' => 'DESC'])
+			->setLimit($limit)
+			->exec();
+
+		$collection = [];
+		$groupIds = [];
+		while ($item = $res->fetch())
+		{
+			if ($item['GROUP_ID'] !== -1)
+			{
+				$groupIds[] = $item['ID'];
+			}
+
+			/** @var IPayload $payloadClass */
+			$payloadClass = $item['PAYLOAD_CLASS'];
+			$payload = $payloadClass::unpack($item['PAYLOAD']);
+
+			// todo: how add group item
+			$collection[$item['ID']] = new Item(
+				$item['ID'],
+				$item['DATE_CREATE'],
+				$item['RESULT_TEXT'],
+				$item['ENGINE_CODE'],
+				$payload?->getRawData(),
+			);
+		}
+
+		if (!empty($groupIds))
+		{
+			$groupRes = HistoryTable::query()
+				->setSelect(['ID', 'RESULT_TEXT', 'GROUP_ID'])
+				->where('CONTEXT_MODULE', $context->getModuleId())
+				->where('CONTEXT_ID', $context->getContextId())
+				->where('CREATED_BY_ID', $context->getUserId())
+				->whereIn('GROUP_ID', $groupIds)
+				->setOrder(['ID' => 'ASC'])
+				->exec();
+
+			while($groupItem = $groupRes->fetch())
+			{
+				if ($collection[$groupItem['GROUP_ID']])
+				{
+					$collection[$groupItem['GROUP_ID']]->addGroupData($groupItem['RESULT_TEXT']);
+				}
+			}
+		}
+
+		return new Collection(array_values($collection));
+	}
+
+	/**
+	 * Writes history for Engine's work result.
+	 *
+	 * @param Result $result Result data.
+	 * @return bool
+	 */
+	public function writeHistory(Result $result): bool
+	{
+		$context = $this->engine->getContext();
+		$this->truncateForUser($context);
+
+		$data = $this->prepareHistoryData($result, $context);
+		$res = HistoryTable::add($data);
+
+		if (!$res->isSuccess())
+		{
+			$this->writeDiagnosticRecord(
+				$context,
+				implode('; ', $res->getErrorMessages()),
+				mb_strlen((string)$result->getPrettifiedData())
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private function prepareHistoryData(Result $result, Context $context): array
+	{
+		$requestText = null;
+		$contextText = null;
+
+		if (Config::getValue('write_history_request') === 'Y')
+		{
+			$requestText = $this->engine->getPayload()->getData();
+			if (is_array($requestText))
+			{
+				$requestText = serialize($requestText);
+			}
+
+			if ($this->engine instanceof IContext)
+			{
+				$contextText = array_map(fn($it) => $it->toArray(), $this->engine->getMessages());
+
+				$roleText = $this->engine->getPayload()->getRole()?->getInstruction();
+				if (!empty($roleText))
+				{
+					array_unshift($contextText, ['role_instruction' => $roleText]);
+				}
+
+				$contextText = json_encode($contextText);
+			}
+		}
+
+		$parameters = $this->engine->getParameters();
+		if ($this->engine->getCategory() === Category::VISION->value)
+		{
+			$imageDiagnostics = $this->engine->getImageDiagnostics();
+			if (!empty($imageDiagnostics))
+			{
+				$parameters['_images'] = $imageDiagnostics;
+			}
+		}
+
+		return [
+			'CONTEXT_MODULE' => $context->getModuleId(),
+			'CONTEXT_ID' => $context->getContextId(),
+			'ENGINE_CLASS' => $this->engine::class,
+			'ENGINE_CODE' => $this->engine->getCode(),
+			'PAYLOAD_CLASS' => $this->engine->getPayload()::class,
+			'PAYLOAD' => $this->engine->getPayload()->pack(),
+			'PARAMETERS' => $parameters,
+			'GROUP_ID' => $this->engine->getHistoryGroupId(),
+			'REQUEST_TEXT' => $requestText,
+			'RESULT_TEXT' => $result->getPrettifiedData(),
+			'CONTEXT' => $contextText,
+			'CACHED' => $result->isCached(),
+			'CREATED_BY_ID' => $context->getUserId(),
+		];
+	}
+
+	private function writeDiagnosticRecord(Context $context, string $errorSummary, int $resultLength): void
+	{
+		try
+		{
+			HistoryTable::add([
+				'CONTEXT_MODULE' => $context->getModuleId(),
+				'CONTEXT_ID' => $context->getContextId(),
+				'ENGINE_CLASS' => $this->engine::class,
+				'ENGINE_CODE' => $this->engine->getCode(),
+				'PAYLOAD_CLASS' => $this->engine->getPayload()::class,
+				'PAYLOAD' => '-',
+				'PARAMETERS' => $this->engine->getParameters(),
+				'GROUP_ID' => $this->engine->getHistoryGroupId(),
+				'RESULT_TEXT' => '[HISTORY_WRITE_ERROR] ' . $errorSummary . ' | resultLength=' . $resultLength,
+				'CACHED' => false,
+				'CREATED_BY_ID' => $context->getUserId(),
+			]);
+		}
+		catch (\Throwable)
+		{
+			// Best effort
+		}
+	}
+
+	/**
+	 * Truncates records for user, keeps only specified count.
+	 *
+	 * @param Context $context Context.
+	 * @return void
+	 */
+	private function truncateForUser(Context $context): void
+	{
+		$keepCount = self::getCapacity();
+		$keepCount--;
+
+		$res = HistoryTable::query()
+			->setSelect(['ID', 'GROUP_ID'])
+			->where('CREATED_BY_ID', $context->getUserId())
+			->whereIn('GROUP_ID', [-1, 0])
+			->setOrder(['ID' => 'DESC'])
+			->setLimit(1100)
+			->exec();
+
+		$itemsForDelete = [];
+		$groupsForDel = [];
+		$offset = 0;
+		while ($item = $res->fetch())
+		{
+			if (++$offset <= $keepCount)
+			{
+				continue;
+			}
+			if ($item['GROUP_ID'] !== -1)
+			{
+				$groupsForDel[] = $item['ID'];
+			}
+			$itemsForDelete[] = $item['ID'];
+		}
+
+		if (count($itemsForDelete) > 0)
+		{
+			HistoryTable::deleteByFilter(['ID' => $itemsForDelete]);
+		}
+
+		if (count($groupsForDel) > 0)
+		{
+			HistoryTable::deleteByFilter([
+				'GROUP_ID' => $groupsForDel,
+				'=CONTEXT_MODULE' => $context->getModuleId(),
+				'=CONTEXT_ID' => $context->getContextId(),
+				'=CREATED_BY_ID' => $context->getUserId(),
+			]);
+		}
+	}
+
+	/**
+	 * Removes all History by Context.
+	 *
+	 * @param array|string $context Specified context.
+	 * @return void
+	 */
+	public static function clearHistoryByContext(array|string $context): void
+	{
+		$res = HistoryTable::query()
+			->setSelect(['ID'])
+			->whereIn('CONTEXT_ID', (array)$context)
+		;
+		while ($row = $res->fetch())
+		{
+			HistoryTable::delete($row['ID'])->isSuccess();
+		}
+	}
+}

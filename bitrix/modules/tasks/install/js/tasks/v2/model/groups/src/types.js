@@ -9,6 +9,7 @@ export type GroupModel = {
 	url: string,
 	type: GroupType,
 	stagesIds: number[],
+	isRestrictedView: boolean,
 };
 
 type GroupType = 'group' | 'project' | 'scrum' | 'collab';

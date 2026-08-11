@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports, main_core, tasks_v2_core, tasks_v2_const, tasks_v2_lib_idUtils, tasks_v2_provider_service_checkListService, tasks_v2_provider_service_remindersService, tasks_v2_provider_service_templateService, tasks_v2_component_fields_replication, main_core_events, tasks_v2_lib_analytics, tasks_v2_lib_apiClient, tasks_v2_provider_service_fileService, tasks_v2_provider_service_relationService, tasks_v2_provider_service_resultService, tasks_v2_component_fields_userFields, tasks_v2_provider_service_groupService, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService) {
+(function (exports, main_core, tasks_v2_core, tasks_v2_const, tasks_v2_lib_idUtils, tasks_v2_provider_service_checkListService, tasks_v2_provider_service_remindersService, tasks_v2_provider_service_templateService, tasks_v2_component_fields_replication, main_core_events, tasks_v2_lib_analytics, tasks_v2_lib_calendar, tasks_v2_lib_apiClient, tasks_v2_provider_service_replicationService, tasks_v2_provider_service_fileService, tasks_v2_provider_service_relationService, tasks_v2_provider_service_resultService, tasks_v2_component_fields_userFields, tasks_taskModel, tasks_v2_provider_service_groupService, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService) {
 	'use strict';
 
 	function mapModelToDto(task) {
@@ -171,7 +171,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			permissions: mapValue(taskDto.permissions, taskDto.permissions?.map(it => tasks_v2_provider_service_templateService.TemplateMappers.mapPermissionDtoToModel(it))),
 			replicate: taskDto.replicate,
 			mark: taskDto.mark,
-			replicateParams: mapReplicateParamsToModel(taskDto)
+			replicateParams: mapReplicateParamsToModel(taskDto),
+			replicateTemplate: taskDto.replicateTemplate,
+			forkedByTemplate: taskDto.forkedByTemplate
 		};
 		return Object.fromEntries(Object.entries(task).filter(([key, value]) => {
 			if (allowedNullFields.has(key)) {
@@ -542,7 +544,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				estimatedTime: task.estimatedTime,
 				userFields: task.userFields,
 				epicId: task.epicId,
-				storyPoints: task.storyPoints
+				storyPoints: task.storyPoints,
+				replicate: task.replicate,
+				replicateParams: task.replicateParams
 			};
 			if (main_core.Type.isArrayFilled(fields.userFields)) {
 				fields.userFields = tasks_v2_component_fields_userFields.userFieldsManager.prepareUserFieldsForTaskFromTemplate(fields.userFields, tasks_v2_core.Core.getParams().taskUserFieldScheme);
@@ -639,6 +643,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			if (initialTask.parentId) {
 				tasks_v2_provider_service_relationService.subTasksService.addStore(initialTask.parentId, [data.id]);
 			}
+			if (initialTask.replicate && main_core.Type.isObject(initialTask.replicateParams)) {
+				void tasks_v2_provider_service_replicationService.replicationService.add(data.id, initialTask);
+			}
 			this.deleteStore(initialTask.id);
 		}
 		async copy(props) {
@@ -700,6 +707,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return tasks_v2_provider_service_templateService.templateService.update(id, fields);
 			}
 			const taskBeforeUpdate = this.getStoreTask(id);
+			this.#recalculateReplicationDeadlineOffset(taskBeforeUpdate, fields);
 			this.updateStoreTask(id, fields);
 			if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
 				return {};
@@ -903,6 +911,21 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			});
 			return mergedTask;
 		}
+		#recalculateReplicationDeadlineOffset(taskBeforeUpdate, fields) {
+			if (main_core.Type.isNil(fields.matchesWorkTime) || taskBeforeUpdate?.matchesWorkTime === fields.matchesWorkTime) {
+				return;
+			}
+			const replicateParams = fields.replicateParams ?? taskBeforeUpdate?.replicateParams;
+			const deadlineOffset = replicateParams?.deadlineOffset;
+			if (!main_core.Type.isObject(replicateParams) || !deadlineOffset) {
+				return;
+			}
+			const recalculatedOffsetMs = tasks_v2_lib_calendar.calendar.recalculateDurationByMatchWorkTime(deadlineOffset * 1000, taskBeforeUpdate.matchesWorkTime, fields.matchesWorkTime);
+			fields.replicateParams = {
+				...replicateParams,
+				deadlineOffset: Math.round(recalculatedOffsetMs / 1000)
+			};
+		}
 		deleteStore(id) {
 			tasks_v2_provider_service_relationService.subTasksService.unlinkStore(id);
 			tasks_v2_provider_service_relationService.relatedTasksService.unlinkStore(id);
@@ -998,7 +1021,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			return Object.fromEntries(Object.entries(fields).filter(([field]) => filterSet.has(field)));
 		}
 		hasChanges(task, fields) {
-			return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
+			if (main_core.Type.isObject(task)) {
+				return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
+			}
+			return false;
 		}
 		async insertStoreTask(task) {
 			if (tasks_v2_lib_idUtils.idUtils.isTemplate(task.id)) {
@@ -1124,5 +1150,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.TaskMappers = TaskMappers;
 	exports.taskService = taskService;
 
-})(this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}, BX, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component.Fields, BX.Event, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
+})(this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}, BX, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component.Fields, BX.Event, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Component.Fields, BX.Tasks.TaskModel, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
 //# sourceMappingURL=task-service.bundle.js.map

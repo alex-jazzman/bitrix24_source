@@ -362,18 +362,10 @@ jn.define('crm/conversion', (require, exports, module) => {
 						mode: component.mode,
 						...conversionConfig,
 					},
-				).then((response) => {
-					const isSuccess = !response || response.REQUIRED_ACTION || response.ERROR;
-					const status = isSuccess ? 'success' : 'error';
-
-					resolve(response);
-
-					void this.processAnalyticsEvents(conversionConfig, this.analytics, status);
-				}).catch((error) => {
-					reject(error);
-
-					void this.processAnalyticsEvents(conversionConfig, this.analytics, 'error');
-				});
+				)
+					.then(response => resolve(response))
+					.catch(error => reject(error))
+				;
 			});
 		}
 

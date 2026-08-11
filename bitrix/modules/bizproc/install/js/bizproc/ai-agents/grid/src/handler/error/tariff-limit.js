@@ -1,7 +1,7 @@
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 import type { BaseAjaxError } from '../../types';
-import { HandlerInterface } from './handler-interface';
+import type { HandlerInterface } from './handler-interface';
 
 export class TariffLimit implements HandlerInterface
 {

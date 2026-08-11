@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Call\Model\ConferenceTable;
 use Bitrix\Main\Engine\Action;
@@ -41,7 +41,7 @@ class ImConferenceListController extends Controller
 			return null;
 		}
 
-		$conference = Conference::getById($conferenceId);
+		$conference = Conference::getById((int)$conferenceId);
 		if (!$conference)
 		{
 			$this->addError(new Error(Loc::getMessage('IM_CONFERENCE_LIST_ERROR_WRONG_ID')));
@@ -75,7 +75,7 @@ class ImConferenceListController extends Controller
 	{
 		$currentUserId = CurrentUser::get()->getId();
 
-		$conference = Conference::getById($conferenceId);
+		$conference = Conference::getById((int)$conferenceId);
 		if (!$conference)
 		{
 			$this->addError(new Error(Loc::getMessage('IM_CONFERENCE_LIST_ERROR_WRONG_ID')));

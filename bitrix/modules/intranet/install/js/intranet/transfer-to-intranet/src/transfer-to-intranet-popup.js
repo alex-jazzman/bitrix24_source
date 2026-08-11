@@ -21,11 +21,15 @@ export type DepartmentType = {
 
 export type TransferToIntranetPopupType = {
 	userType: string,
+	userId?: number,
 	userName: string,
 	userPhoto: string,
 	componentName: string,
 	signedParameters: string,
-	rootDepartment: DepartmentType,
+	rootDepartment?: DepartmentType,
+	actionName?: string,
+	runActionName?: string,
+	showDepartmentControl?: boolean,
 }
 
 export class TransferToIntranetPopup extends EventEmitter

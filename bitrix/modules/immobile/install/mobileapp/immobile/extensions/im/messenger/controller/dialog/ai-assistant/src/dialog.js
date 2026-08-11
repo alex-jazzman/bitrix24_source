@@ -15,7 +15,6 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { NotifyPanelManager } = require('im/messenger/controller/dialog/lib/notify-panel-manager');
-	const { MCPButton, MarketButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const { DialogConfigurator, configs } = require('im/messenger/controller/dialog/lib/configurator');
@@ -69,11 +68,12 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 		/**
 		 * @param {DialogOpenOptions} options
 		 * @param {PageManager} parentWidget
+		 * @param {PerfPoint} [openPerfPoint]
 		 * @return {Promise<void>}
 		 */
-		async open(options, parentWidget = PageManager)
+		async open(options, parentWidget = PageManager, openPerfPoint = null)
 		{
-			await super.open(options, parentWidget);
+			await super.open(options, parentWidget, openPerfPoint);
 
 			await this.notifyPanelManager.checkServiceHealthStatus();
 		}
@@ -159,22 +159,6 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			helpdesk.openHelpArticle(articleCode, 'helpdesk');
 		}
 
-		getAssistantButtons()
-		{
-			const buttons = [];
-
-			if (Feature.isAiAssistantMCPSelectorAvailable)
-			{
-				buttons.push({ ...MCPButton });
-			}
-
-			if (Feature.isAssistantMarketButtonAvailable)
-			{
-				buttons.push({ ...MarketButton });
-			}
-
-			return buttons;
-		}
 
 		sendAnalyticsOpenDialog()
 		{

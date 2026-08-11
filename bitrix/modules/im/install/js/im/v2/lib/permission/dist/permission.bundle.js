@@ -119,7 +119,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			let minimalRoleForGroup = chatPermissions[actionGroup];
 			if (!minimalRoleForGroup) {
-				minimalRoleForGroup = im_v2_const.UserRole.member;
+				minimalRoleForGroup = im_v2_const.UserRole.none;
 			}
 			return this.#checkMinimalRole(minimalRoleForGroup, userRole);
 		}

@@ -1,4 +1,5 @@
 import type { AjaxError } from 'main.core';
+import { TaskModel } from 'tasks.task-model';
 
 import { TemplateType, Mark, PermissionType } from 'tasks.v2.const';
 import type { CrmItemDto } from 'tasks.v2.provider.service.crm-service';
@@ -82,6 +83,8 @@ export type TaskDto = {
 	multiResponsibles: UserDto[],
 	replicate: ?boolean,
 	replicateParams: ?ReplicateParamsDto,
+	replicateTemplate: ?TaskModel,
+	forkedByTemplate: ?TaskModel,
 	mark: ?$Values<typeof Mark>,
 	/** @description Template only props */
 	responsibleCollection: UserDto[],

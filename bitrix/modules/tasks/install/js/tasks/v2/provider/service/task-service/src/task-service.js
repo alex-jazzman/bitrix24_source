@@ -6,8 +6,10 @@ import { type Store } from 'ui.vue3.vuex';
 import { Core } from 'tasks.v2.core';
 import { Model, EventName, Endpoint } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
+import { calendar } from 'tasks.v2.lib.calendar';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { templateService } from 'tasks.v2.provider.service.template-service';
+import { replicationService } from 'tasks.v2.provider.service.replication-service';
 import { fileService } from 'tasks.v2.provider.service.file-service';
 import { subTasksService, relatedTasksService, ganttService } from 'tasks.v2.provider.service.relation-service';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
@@ -187,6 +189,8 @@ export const taskService = new class
 			userFields: task.userFields,
 			epicId: task.epicId,
 			storyPoints: task.storyPoints,
+			replicate: task.replicate,
+			replicateParams: task.replicateParams,
 		};
 
 		if (Type.isArrayFilled(fields.userFields))
@@ -333,6 +337,11 @@ export const taskService = new class
 			subTasksService.addStore(initialTask.parentId, [data.id]);
 		}
 
+		if (initialTask.replicate && Type.isObject(initialTask.replicateParams))
+		{
+			void replicationService.add(data.id, initialTask);
+		}
+
 		this.deleteStore(initialTask.id);
 	}
 
@@ -416,6 +425,8 @@ export const taskService = new class
 		}
 
 		const taskBeforeUpdate = this.getStoreTask(id);
+
+		this.#recalculateReplicationDeadlineOffset(taskBeforeUpdate, fields);
 
 		this.updateStoreTask(id, fields);
 
@@ -674,6 +685,35 @@ export const taskService = new class
 		return mergedTask;
 	}
 
+	#recalculateReplicationDeadlineOffset(taskBeforeUpdate: ?TaskModel, fields: TaskModel): void
+	{
+		if (
+			Type.isNil(fields.matchesWorkTime)
+			|| taskBeforeUpdate?.matchesWorkTime === fields.matchesWorkTime
+		)
+		{
+			return;
+		}
+
+		const replicateParams = fields.replicateParams ?? taskBeforeUpdate?.replicateParams;
+		const deadlineOffset = replicateParams?.deadlineOffset;
+		if (!Type.isObject(replicateParams) || !deadlineOffset)
+		{
+			return;
+		}
+
+		const recalculatedOffsetMs = calendar.recalculateDurationByMatchWorkTime(
+			deadlineOffset * 1000,
+			taskBeforeUpdate.matchesWorkTime,
+			fields.matchesWorkTime,
+		);
+
+		fields.replicateParams = {
+			...replicateParams,
+			deadlineOffset: Math.round(recalculatedOffsetMs / 1000),
+		};
+	}
+
 	deleteStore(id: number): void
 	{
 		subTasksService.unlinkStore(id);
@@ -795,7 +835,12 @@ export const taskService = new class
 
 	hasChanges(task: TaskModel, fields: TaskModel): boolean
 	{
-		return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
+		if (Type.isObject(task))
+		{
+			return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
+		}
+
+		return false;
 	}
 
 	async insertStoreTask(task: TaskModel): Promise<void>

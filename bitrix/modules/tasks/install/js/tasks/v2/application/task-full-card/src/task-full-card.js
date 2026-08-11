@@ -263,7 +263,7 @@ export class TaskFullCard
 
 	#handleTemplateAdd = (event: BaseEvent): void => {
 		const initialTemplate: TaskModel = event.getData().initialTemplate;
-		if (initialTemplate.id !== this.#params.taskId)
+		if (!initialTemplate || initialTemplate.id !== this.#params.taskId)
 		{
 			return;
 		}

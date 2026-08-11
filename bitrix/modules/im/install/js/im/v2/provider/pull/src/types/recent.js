@@ -55,6 +55,10 @@ export type RecentHideParams = {
 	}
 };
 
+export type UserLogoutParams = {
+	deactivatedCodes: string[],
+}
+
 type UserShowInRecentItem = {
 	user: RawUser,
 	date: string,

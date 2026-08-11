@@ -96,6 +96,15 @@ jn.define('im/messenger/controller/messenger-header/src/manager', (require, expo
 		}
 
 		/**
+		 * Redraws left buttons on the global controller for the given tab.
+		 * @param {string} tabId
+		 */
+		redrawLeftButtonsIfNeeded(tabId)
+		{
+			this.#globalController?.redrawLeftButtonsIfNeeded(tabId);
+		}
+
+		/**
 		 * Redraws right buttons on every registered nested controller for the given tab.
 		 * @param {string} tabId
 		 */

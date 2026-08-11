@@ -26,6 +26,7 @@ CREATE TABLE b_bp_workflow_template (
 	UPDATED_BY int NULL,
 	ACTIVATED_BY int NULL,
 	ACTIVATED_AT datetime NULL,
+	CREATE_SOURCE varchar(32) NULL DEFAULT 'USER',
 	primary key (ID),
 	index ix_bp_wf_template_mo(MODULE_ID, ENTITY, DOCUMENT_TYPE)
 );

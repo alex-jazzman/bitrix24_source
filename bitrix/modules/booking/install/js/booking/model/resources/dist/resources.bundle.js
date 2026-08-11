@@ -42,6 +42,7 @@ this.BX.Booking = this.BX.Booking || {};
 				createdAt: 0,
 				updatedAt: 0,
 				deletedAt: 0,
+				senderCode: booking_const.Communication.Bitrix24,
 				entities: [],
 				skus: [],
 				skusYandex: []
@@ -98,6 +99,10 @@ this.BX.Booking = this.BX.Booking || {};
 				/** @function resources/setResourcesSkuRelations */
 				setResourcesSkuRelations: (store, resourcesSkuRelations) => {
 					store.commit('setResourcesSkuRelations', resourcesSkuRelations);
+				},
+				/** @function resources/setSenderCodeForAll */
+				setSenderCodeForAll: (store, senderCode) => {
+					store.commit('setSenderCodeForAll', senderCode);
 				}
 			};
 		}
@@ -117,6 +122,11 @@ this.BX.Booking = this.BX.Booking || {};
 				},
 				setResourcesSkuRelations: (state, resourcesSkuRelations) => {
 					state.resourcesSkuRelations = resourcesSkuRelations;
+				},
+				setSenderCodeForAll: (state, senderCode) => {
+					for (const resource of Object.values(state.collection)) {
+						resource.senderCode = senderCode;
+					}
 				}
 			};
 		}

@@ -191,6 +191,12 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(leaveMessageField, settingsSection);
 		}
 
+		if (this.hasValue('chat_with_guests_available'))
+		{
+			let chatWithGuestsField = new Checker(this.getValue('chat_with_guests_available'));
+			CommunicationPage.addToSectionHelper(chatWithGuestsField, settingsSection);
+		}
+
 		if (this.hasValue('general_chat_message_admin_rights'))
 		{
 			let adminMessageField = new Checker(this.getValue('general_chat_message_admin_rights'));

@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/recent/config/src/global/copilot', (require, 
 		RecentTab,
 		ChatSearchSelectorSection,
 	} = require('im/messenger/const');
-	const { openChatCreateByActiveRecentTab } = require('im/messenger/lib/open-chat-create');
+	const { openChatCreateByActiveRecentTab, openCopilotDraftChatOnEmpty } = require('im/messenger/lib/open-chat-create');
 	const { RecentServiceName } = require('im/messenger/controller/recent/const');
 
 	const CopilotConfig = {
@@ -43,6 +43,7 @@ jn.define('im/messenger/controller/recent/config/src/global/copilot', (require, 
 				extension: 'im/messenger/controller/recent/service/empty-state/common',
 				props: {
 					welcomeScreenExtension: 'im/messenger/controller/recent/service/empty-state/lib/welcome-screen/copilot',
+					onActivatedWhenEmpty: () => openCopilotDraftChatOnEmpty(),
 				},
 			},
 			[RecentServiceName.pagination]: {

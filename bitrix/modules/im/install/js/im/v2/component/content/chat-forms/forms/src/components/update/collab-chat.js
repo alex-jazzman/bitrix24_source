@@ -117,21 +117,9 @@ export const CollabChatUpdating = {
 		{
 			this.rights.managerIds = managerIds;
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		onRightChange({ name, value }: { name: string, value: UserRoleItem })
 		{
-			this.rights.manageUsersAdd = newValue;
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUsersDelete = newValue;
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUi = newValue;
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.rights.manageMessages = newValue;
+			this.rights[name] = value;
 		},
 		onDescriptionChange(description: string)
 		{
@@ -303,12 +291,10 @@ export const CollabChatUpdating = {
 					:manageUsersDelete="rights.manageUsersDelete"
 					:manageUi="rights.manageUi"
 					:manageMessages="rights.manageMessages"
+					:chatType="ChatType.collab"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>

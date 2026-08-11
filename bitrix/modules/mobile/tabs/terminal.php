@@ -22,6 +22,7 @@ class Terminal implements Tabable
 	public function isAvailable()
 	{
 		return (!$this->context->extranet
+			&& !$this->context->isGuest
 			&& Loader::includeModule('crm')
 			&& Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability()
 			&& AvailabilityManager::getInstance()->isAvailable()

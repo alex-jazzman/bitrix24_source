@@ -26,6 +26,7 @@ CREATE TABLE b_bp_workflow_template (
   UPDATED_BY int NULL,
   ACTIVATED_BY int NULL,
   ACTIVATED_AT timestamp NULL,
+  CREATE_SOURCE varchar(32) NULL DEFAULT 'USER',
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_bp_workflow_template_module_id_entity_document_type ON b_bp_workflow_template (module_id, entity, document_type);

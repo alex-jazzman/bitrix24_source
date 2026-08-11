@@ -31,6 +31,7 @@
 	ListView.prototype.preBuild = function()
 	{
 		this.viewCont = BX.create('DIV', {
+			attrs: {'data-testid': 'calendar-list-view'},
 			props: {
 				className: this.contClassName
 			},
@@ -536,7 +537,8 @@
 			}
 			wrap = group.content.appendChild(BX.create('DIV', {
 				attrs: {
-					'data-bx-calendar-entry': entry.uid
+					'data-bx-calendar-entry': entry.uid,
+					'data-testid': 'calendar-list-view__event-' + entry.uid
 				},
 				props: {
 					className: ['calendar-timeline-stream-content-event', wrapAdditionalClass]

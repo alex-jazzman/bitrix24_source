@@ -111,7 +111,7 @@
 .booking-booking__base-component.--week-mode .booking-booking-intersections-resource {
 	min-width: 239px;
 	max-width: 239px;
-	min-height: var(--booking-resource-item-height);
+	min-height: var(--booking-cell-height);
 
 	border: none;
 	border-bottom: 1px solid var(--ui-color-base-10);
@@ -120,7 +120,7 @@
 /* @chef-ignore */
 .booking-booking__base-component.--week-mode .booking-booking-intersections-resource:has(+ .booking-booking__intersection-container_blank) {
 	border-bottom: none;
-	min-height: calc(var(--booking-resource-item-height) - 1px);
+	min-height: calc(var(--booking-cell-height) - 1px);
 }
 
 /* endregion */

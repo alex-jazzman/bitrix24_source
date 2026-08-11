@@ -1,0 +1,8 @@
+{
+    "defaultTableName": "b_note_collection",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/js": "js",
+        "install/templates": "templates"
+    }
+}

@@ -860,7 +860,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.#getCopilotChatDialogId());
-			const isUniversalRole = copilotMainRole?.code === CopilotRoleType.copilotUniversalRole;
+			const isUniversalRole = !copilotMainRole || copilotMainRole?.code === CopilotRoleType.copilotUniversalRole;
 			if (Feature.isBitrixGptV2Available && isUniversalRole)
 			{
 				return {};

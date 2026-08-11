@@ -1,18 +1,18 @@
 import { Loc, Type, Dom, Text, Reflection } from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import getItem from '../items/index';
 import Item from '../items/item';
 import ItemActive from '../items/item-active';
 import { ItemMainPage } from '../items/item-main-page';
 import ItemUserSelf from '../items/item-user-self';
 import ItemUserFavorites from '../items/item-user-favorites';
-import Options from "../options";
-import DefaultController from "./default-controller";
-import Utils from "../utils";
-import Backend from "../backend";
-import ItemAdminCustom from "../items/item-admin-custom";
-import {Menu, MenuItem} from 'main.popup';
-import ItemGroup from "../items/item-group";
+import Options from '../options';
+import DefaultController from './default-controller';
+import Utils from '../utils';
+import Backend from '../backend';
+import ItemAdminCustom from '../items/item-admin-custom';
+import { Menu } from 'main.popup';
+import ItemGroup from '../items/item-group';
 import { Counter } from 'ui.cnt';
 
 export default class ItemsController extends DefaultController{

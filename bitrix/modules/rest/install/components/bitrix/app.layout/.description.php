@@ -8,6 +8,9 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+$isRenamedMarket = \Bitrix\Main\Loader::includeModule('rest')
+	&& \Bitrix\Rest\Integration\Market\Label::isRenamedMarket();
+
 $arComponentDescription = array(
 	"NAME" => Loc::getMessage("RMP_LAYOUT_COMP_NAME_2"),
 	"DESCRIPTION" => Loc::getMessage("RMP_LAYOUT_COMP_DESCR_2"),
@@ -16,7 +19,7 @@ $arComponentDescription = array(
 		"ID" => "content",
 		"CHILD" => array(
 			"ID" => "b24marketplace",
-			"NAME" => \Bitrix\Rest\Integration\Market\Label::isRenamedMarket() ? Loc::getMessage("RMP_PATH_B24MP_DESCR_2_MSGVER_1") : Loc::getMessage("RMP_PATH_B24MP_DESCR_2_MSGVER_2"),
+			"NAME" => $isRenamedMarket ? Loc::getMessage("RMP_PATH_B24MP_DESCR_2_MSGVER_1") : Loc::getMessage("RMP_PATH_B24MP_DESCR_2_MSGVER_2"),
 		)
 	),
 //	"CACHE_PATH" => "Y",

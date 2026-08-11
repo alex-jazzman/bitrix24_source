@@ -1,12 +1,16 @@
-import { toValue } from 'ui.vue3';
 import { Runtime, Browser } from 'main.core';
+import { useHistory, useHighlightedBlocks, useBlockDiagram } from 'ui.block-diagram';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { toValue } from 'ui.vue3';
+import { type MenuItemOptions } from 'ui.vue3.components.menu';
+
 import { useAppStore } from '../../../entities/app';
-import { useCommonNodeSettingsStore } from '../../../entities/common-node-settings';
-import { useNodeSettingsStore, generateNextInputPortId } from '../../../entities/node-settings';
 import {
 	diagramStore as useDiagramStore,
 	useBufferStore,
 } from '../../../entities/blocks';
+import { useCommonNodeSettingsStore } from '../../../entities/common-node-settings';
+import { useNodeSettingsStore, generateNextInputPortId } from '../../../entities/node-settings';
 import { useLoc } from '../../../shared/composables';
 import {
 	PORT_TYPES,
@@ -14,10 +18,10 @@ import {
 	BLOCK_TYPES,
 	BLOCK_TYPES_WITHOUT_SETTINGS,
 } from '../../../shared/constants';
-import { useHistory, useHighlightedBlocks, useBlockDiagram } from 'ui.block-diagram';
-import type { MenuItemOptions } from 'ui.vue3.components.menu';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import type { Block, BlockId, Port } from '../../../shared/types';
+import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
+import { useDefaultTitle } from '../../../features/catalog';
+import { type Block, type BlockId, type Port } from '../../../shared/types';
+import { getContextMenuItemHtml } from './get-context-menu-item-html';
 
 const HIDE_SETTINGS_DELAY = 300;
 const DRAG_THRESHOLD = 5;
@@ -30,10 +34,11 @@ export class BlockMediator
 	#commonNodeSettingsStore = null;
 	#complexNodeSettingsStore = null;
 	#blockDiagram = null;
+	#nodeInspectorStore = null;
 	#diagramStore = null;
 	#bufferStore = null;
 	#highlightedBlocks = null;
-	#contextMenuItems = null;
+	#isMac = false;
 	#clickStartX = 0;
 	#clickStartY = 0;
 	#isShowingSettings = false;
@@ -48,17 +53,7 @@ export class BlockMediator
 		this.#diagramStore = useDiagramStore();
 		this.#blockDiagram = useBlockDiagram();
 		this.#bufferStore = useBufferStore();
-		const isMac = Browser.isMac();
-		this.#contextMenuItems = {
-			deleteBlock: {
-				text: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
-				shortcut: isMac ? '⌫' : 'Del',
-			},
-			copyBlock: {
-				text: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
-				shortcut: isMac ? '⌘ С' : 'Ctrl-C',
-			},
-		};
+		this.#isMac = Browser.isMac();
 		this.#highlightedBlocks = useHighlightedBlocks();
 
 		this.#blockDiagram.hooks.startDragBlock.on((block) => {
@@ -71,6 +66,7 @@ export class BlockMediator
 				this.#highlightedBlocks.add(settingsBlockId);
 			}
 		});
+		this.#nodeInspectorStore = useNodeDataInspectorStore();
 	}
 
 	isCurrentBlock(blockId: BlockId): boolean
@@ -173,7 +169,7 @@ export class BlockMediator
 		const shouldSwitch = await this.#shouldSwitchToBlock();
 		if (!shouldSwitch)
 		{
-			return;
+			return false;
 		}
 
 		if (!this.#commonNodeSettingsStore.isVisible)
@@ -182,15 +178,19 @@ export class BlockMediator
 			this.#appStore.showRightPanel();
 		}
 
+		await useDefaultTitle().waitForCatalog();
 		this.#commonNodeSettingsStore.showSettings(block);
+		this.#nodeInspectorStore.setBlock(block);
+
+		return true;
 	}
 
-	async showComplexNodeSettings(block: Block): void
+	async showComplexNodeSettings(block: Block): Promise<boolean>
 	{
 		const shouldSwitch = await this.#shouldSwitchToBlock();
 		if (!shouldSwitch)
 		{
-			return;
+			return false;
 		}
 
 		if (!this.#complexNodeSettingsStore.isShown)
@@ -200,7 +200,14 @@ export class BlockMediator
 			this.#complexNodeSettingsStore.toggleVisibility(true);
 		}
 
-		await this.#complexNodeSettingsStore.fetchNodeSettings(block);
+		this.#nodeInspectorStore.setBlock(block);
+
+		await this.#complexNodeSettingsStore.fetchNodeSettings(
+			block,
+			useDefaultTitle().resolveDefaultTitle(block.activity),
+		);
+
+		return true;
 	}
 
 	#areComplexNodeSettingsDirty(block: Block): boolean
@@ -229,7 +236,10 @@ export class BlockMediator
 
 		return {
 			id: itemId,
-			html: this.#getMenuItemHtml(itemId),
+			html: getContextMenuItemHtml(
+				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+				this.#isMac ? '⌫' : 'Del',
+			),
 			onclick: () => {
 				const isCurrentComplexBlock = this.isCurrentComplexBlock(block.id);
 				this.hideCurrentBlockSettings(block.id);
@@ -253,13 +263,24 @@ export class BlockMediator
 		];
 	}
 
+	getSettingsBlockMenuOptions(block: Block): Array<MenuItemOptions>
+	{
+		return [
+			this.getCtxMenuItemCopyBlock(block),
+			this.getCtxMenuItemDeleteBlock(block),
+		];
+	}
+
 	getCtxMenuItemCopyBlock(block: Block): MenuItemOptions
 	{
 		const itemId = 'copyBlock';
 
 		return {
 			id: itemId,
-			html: this.#getMenuItemHtml(itemId),
+			html: getContextMenuItemHtml(
+				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+				this.#isMac ? '⌘ С' : 'Ctrl-C',
+			),
 			onclick: (): void => {
 				this.#bufferStore.setBufferContent({
 					blocks: [block],
@@ -367,7 +388,6 @@ export class BlockMediator
 		if (complexBlock && nodeSettings)
 		{
 			this.#complexNodeSettingsStore.discardFormSettings();
-			this.#diagramStore.updateNodeTitle(complexBlock, nodeSettings.title);
 		}
 
 		if (shouldHide)
@@ -425,20 +445,6 @@ export class BlockMediator
 		}
 
 		return !shouldStay;
-	}
-
-	#getMenuItemHtml(itemId: string): string
-	{
-		return `
-			<span class="editor-chart-block-control-menu-item">
-				${this.#contextMenuItems[itemId].text}
-				<span class="editor-chart-block-control-menu-item__action-code">
-					<span class="editor-chart-block-control-menu-item__action-code_text">
-						${this.#contextMenuItems[itemId].shortcut}
-					</span>
-				</span>
-			</span>
-		`;
 	}
 
 	syncSettingsWithDiagram(): void

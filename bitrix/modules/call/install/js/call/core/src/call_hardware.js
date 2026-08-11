@@ -1,5 +1,5 @@
-import { CallSettingsManager } from '../../lib/settings-manager/src/settings-manager';
-import { HardwareManager } from '../../lib/hardware/src/hardware.js'
+import { CallSettingsManager } from 'call.lib.settings-manager';
+import { HardwareManager } from 'call.lib.hardware'
 import { NoiseSuppressionService } from './noiseSuppressionService';
 
 const lsKey = {
@@ -187,9 +187,9 @@ class CallHardwareManager extends HardwareManager
 		return this.#noiseSuppression.inputStream;
 	}
 
-	async _checkPermissions()
+	async checkPermissions()
 	{
-		const permissions = await super._checkPermissions();
+		const permissions = await super.checkPermissions();
 		const { microphonePermission, cameraPermission } = permissions ?? {};
 
 		const parentMicHandler = microphonePermission.onchange;

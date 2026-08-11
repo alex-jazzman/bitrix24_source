@@ -35,6 +35,10 @@ export const ToolbarButtons = {
 		};
 	},
 	computed: {
+		isTempChat(): boolean
+		{
+			return this.$store.getters['copilot/chats/isTempChat'](this.dialogId);
+		},
 		expandedKey(): ?string
 		{
 			if (!this.isCompact)
@@ -96,6 +100,11 @@ export const ToolbarButtons = {
 		},
 		onClearMode()
 		{
+			if (this.isTempChat)
+			{
+				return;
+			}
+
 			this.$store.dispatch('copilot/chats/toggleReasoning', this.dialogId);
 			Analytics.getInstance().copilot.onToggleReasoning(this.dialogId);
 		},

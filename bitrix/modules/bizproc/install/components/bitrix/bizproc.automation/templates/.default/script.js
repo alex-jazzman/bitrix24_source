@@ -223,9 +223,9 @@
 
 			this.actionPanel.draw();
 
-			const pathToIconSetMain = '/bitrix/js/ui/icon-set/main/images/';
-			const pathToIconSetCRM = '/bitrix/js/ui/icon-set/crm/images/';
-			const pathToIconSetActions = '/bitrix/js/ui/icon-set/actions/images/';
+			const pathToIconSetMain = '/bitrix/js/ui/icon-set/main/dist/images/';
+			const pathToIconSetCRM = '/bitrix/js/ui/icon-set/crm/dist/images/';
+			const pathToIconSetActions = '/bitrix/js/ui/icon-set/actions/dist/images/';
 
 			this.actionPanel.appendItem({
 				id: 'automation_choose_all',

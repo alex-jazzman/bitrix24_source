@@ -2,8 +2,8 @@ import {Dom, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {BackgroundDialog} from './background_dialog';
-import {View} from '../view/view';
-import type {CallView} from '../view/call-view-port';
+import { ViewEvent } from 'call.mapping';
+import type {CallView} from 'call.lib.view-contract';
 import '../css/promo-popup.css';
 
 const Events = {
@@ -267,7 +267,7 @@ export class PromoPopup3D
 		this.popup.show();
 
 		this.callView.subscribe(
-			View.Event.onDeviceSelectorShow,
+			ViewEvent.onDeviceSelectorShow,
 			() => this.popup ? this.popup.close() : ''
 		);
 	}

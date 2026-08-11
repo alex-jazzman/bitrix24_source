@@ -1,17 +1,8 @@
 import {Type} from 'main.core';
 
 import {AbstractCall} from './abstract_call';
-import {
-	EndpointDirection,
-	UserState,
-	Quality,
-	UserMnemonic,
-	CallEvent,
-	CallState,
-	CallType,
-	Provider
-} from './engine';
-import { CallEngineLegacy } from './engine_legacy';
+import { EndpointDirection, UserState, Quality, UserMnemonic, CallEvent, CallState, CallType, Provider } from './types';
+import { getLegacy } from './engine-registry';
 import { CALL_STATE, MediaStreamsKinds } from '../call_api.js';
 import { CallLegacy } from '../call-api-legacy.js';
 import { MediaRenderer } from '../view/media-renderer';
@@ -83,7 +74,6 @@ const BitrixCallEvent = {
 const pingPeriod = 5000;
 const backendPingPeriod = 25000;
 const reinvitePeriod = 5500;
-
 // const MAX_USERS_WITHOUT_SIMULCAST = 6;
 
 export class BitrixCallLegacy extends AbstractCall
@@ -95,6 +85,8 @@ export class BitrixCallLegacy extends AbstractCall
 	constructor(config)
 	{
 		super(config);
+
+		this.invitePeriod = config.invitePeriod > 0 ? config.invitePeriod : Util.getCallInvitePeriod();
 
 		this.videoQuality = Quality.VeryHigh; // initial video quality. will drop on new peers connecting
 
@@ -859,7 +851,7 @@ export class BitrixCallLegacy extends AbstractCall
 			data.code = code
 		}
 
-		CallEngineLegacy.getRestClient().callMethod(ajaxActions.decline, data);
+		getLegacy().getRestClient().callMethod(ajaxActions.decline, data);
 	};
 
 	hangup(code, reason, finishCall = false)
@@ -1077,6 +1069,7 @@ export class BitrixCallLegacy extends AbstractCall
 		this.BitrixCall.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
 		this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
 		this.BitrixCall.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
+		this.BitrixCall.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
 		this.BitrixCall.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
 		this.BitrixCall.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
 		this.BitrixCall.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
@@ -2236,19 +2229,10 @@ export class BitrixCallLegacy extends AbstractCall
 		);
 	}
 
-	#onCallMessageReceived = (e) =>
+	#onCallMessageReceived = (event) =>
 	{
-		let message;
+		const message = event.content;
 		let peer;
-
-		try
-		{
-			message = JSON.parse(e.text);
-		} catch (err)
-		{
-			this.log("Could not parse scenario message.", err);
-			return;
-		}
 
 		const eventName = message.eventName;
 		if (eventName === clientEvents.cameraState)
@@ -2490,7 +2474,7 @@ class Signaling
 
 	sendAnswer(data, repeated)
 	{
-		if (repeated && CallEngineLegacy.getPullClient().isPublishingEnabled())
+		if (repeated && getLegacy().getPullClient().isPublishingEnabled())
 		{
 			this.#sendPullEvent(pullEvents.answer, data);
 		}
@@ -2502,7 +2486,7 @@ class Signaling
 
 	sendHangup(data)
 	{
-		if (CallEngineLegacy.getPullClient().isPublishingEnabled())
+		if (getLegacy().getPullClient().isPublishingEnabled())
 		{
 			this.#sendPullEvent(pullEvents.hangup, data);
 			data.retransmit = false;
@@ -2517,7 +2501,7 @@ class Signaling
 
 	sendFinish(data)
 	{
-		if (CallEngineLegacy.getPullClient().isPublishingEnabled())
+		if (getLegacy().getPullClient().isPublishingEnabled())
 		{
 			this.#sendPullEvent(pullEvents.hangup, data);
 			data.retransmit = false;
@@ -2593,7 +2577,7 @@ class Signaling
 
 	sendPingToUsers(data)
 	{
-		if (CallEngineLegacy.getPullClient().isPublishingEnabled())
+		if (getLegacy().getPullClient().isPublishingEnabled())
 		{
 			this.#sendPullEvent(pullEvents.ping, data, 0);
 		}
@@ -2606,7 +2590,7 @@ class Signaling
 
 	sendUserInviteTimeout(data)
 	{
-		if (CallEngineLegacy.getPullClient().isPublishingEnabled())
+		if (getLegacy().getPullClient().isPublishingEnabled())
 		{
 			this.#sendPullEvent(pullEvents.userInviteTimeout, data, 0);
 		}
@@ -2636,7 +2620,7 @@ class Signaling
 		data.requestId = Util.getUuidv4();
 
 		this.call.log('Sending p2p signaling event ' + eventName + '; ' + JSON.stringify(data));
-		CallEngineLegacy.getPullClient().sendMessage(data.userId, 'im', eventName, data, expiry);
+		getLegacy().getPullClient().sendMessage(data.userId, 'im', eventName, data, expiry);
 	};
 
 	#sendMessage(eventName, data)
@@ -2667,7 +2651,7 @@ class Signaling
 		data.callId = this.call.id;
 		data.callInstanceId = this.call.instanceId;
 		data.requestId = Util.getUuidv4();
-		return CallEngineLegacy.getRestClient().callMethod(signalName, data);
+		return getLegacy().getRestClient().callMethod(signalName, data);
 	};
 }
 
@@ -2893,7 +2877,7 @@ class Peer
 		{
 			clearTimeout(this.callingTimeout);
 		}
-		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), 30000);
+		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 		this.updateCalculatedState();
 	}
 

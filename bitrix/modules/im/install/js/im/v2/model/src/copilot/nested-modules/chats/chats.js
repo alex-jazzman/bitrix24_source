@@ -2,6 +2,7 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree, type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
+import { Utils } from 'im.v2.lib.utils';
 
 import { type ImModelCopilotAIModel, type ImModelCopilotRole, type ImModelCopilotMcpAuth } from '../../../registry';
 import { formatFieldsWithConfig } from '../../../utils/validate';
@@ -135,6 +136,10 @@ export class ChatsModel extends BuilderModel
 
 				return chat.mcpAuth;
 			},
+			/** @function copilot/chats/isTempChat */
+			isTempChat: () => (dialogId: string): boolean => {
+				return Utils.dialog.isTempAiAssistantDialogId(dialogId);
+			},
 		};
 	}
 
@@ -235,6 +240,45 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('clearMcpAuth', dialogId);
 			},
+			/** @function copilot/chats/delete */
+			delete: (store: Store, dialogId: string) => {
+				if (!store.state.collection[dialogId])
+				{
+					return;
+				}
+
+				store.commit('delete', dialogId);
+			},
+			/** @function copilot/chats/migrate */
+			migrate: (store: Store, payload: { fromDialogId: string, toDialogId: string }) => {
+				const { fromDialogId, toDialogId } = payload;
+				const source = store.state.collection[fromDialogId];
+				if (!source || fromDialogId === toDialogId)
+				{
+					return;
+				}
+
+				const userFields = {
+					forceSearchEnabled: source.forceSearchEnabled,
+					agentModeEnabled: source.agentModeEnabled,
+					mcpAuth: source.mcpAuth,
+				};
+
+				const target = store.state.collection[toDialogId];
+				if (target)
+				{
+					store.commit('update', { dialogId: toDialogId, fields: userFields });
+				}
+				else
+				{
+					store.commit('add', {
+						dialogId: toDialogId,
+						fields: { ...this.getElementState(), ...userFields, dialogId: toDialogId, role: source.role },
+					});
+				}
+
+				store.commit('delete', fromDialogId);
+			},
 		};
 	}
 
@@ -270,6 +314,9 @@ export class ChatsModel extends BuilderModel
 			},
 			clearMcpAuth: (state: ChatsState, dialogId: string) => {
 				state.collection[dialogId].mcpAuth = null;
+			},
+			delete: (state: ChatsState, dialogId: string) => {
+				delete state.collection[dialogId];
 			},
 		};
 	}

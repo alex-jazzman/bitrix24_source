@@ -18,6 +18,7 @@ $MESS["CRM_TYPE_DETAIL_DELETE_CONFIRM"] = "Are sure you want to delete this Smar
 $MESS["CRM_TYPE_DETAIL_FIELDS_SECTION_TITLE"] = "SPA fields";
 $MESS["CRM_TYPE_DETAIL_FIELD_CLIENT"] = "\"Customer\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_DATES"] = "\"Start date\" \"End date\"";
+$MESS["CRM_TYPE_DETAIL_FIELD_DAYS_BEFORE_CLOSE"] = "Planned SPA item cycle length, days";
 $MESS["CRM_TYPE_DETAIL_FIELD_MY_COMPANY"] = "\"Company details\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_OBSERVERS"] = "\"Observers\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_RECURRING"] = "\"Recurring item\"";

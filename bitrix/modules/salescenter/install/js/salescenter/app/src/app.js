@@ -1,4 +1,5 @@
 import { ajax as Ajax, Event, Loc, Tag, Text, Type } from 'main.core';
+import { replaceCustomMessagePlaceholders } from 'crm.messagesender.editor';
 import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { MenuManager, Popup } from 'main.popup';
@@ -661,7 +662,7 @@ export class App
 			sessionId: this.sessionId,
 			compilationId: this.newCompilationId,
 			editable: this.options.templateMode === 'create',
-			messageData: this.store.getters['orderCreation/getMessageData'],
+			messageData: this.getMessageDataForBackend(),
 		};
 
 		if (this.stageOnOrderPaid !== null)
@@ -934,7 +935,7 @@ export class App
 			context: this.context,
 			currency: this.currencyCode,
 			assignedById: this.assignedById,
-			messageData: this.store.getters['orderCreation/getMessageData'],
+			messageData: this.getMessageDataForBackend(),
 		};
 
 		if (this.documentSelector)
@@ -1273,7 +1274,7 @@ export class App
 			stageOnOrderPaid: this.stageOnOrderPaid,
 			ownerTypeId: this.ownerTypeId,
 			ownerId: this.ownerId,
-			messageData: this.store.getters['orderCreation/getMessageData'],
+			messageData: this.getMessageDataForBackend(),
 		};
 		if (this.documentSelector)
 		{
@@ -1361,6 +1362,34 @@ export class App
 	isPaymentMode(): boolean
 	{
 		return this.context === ContextDictionary.deal || this.context === ContextDictionary.smartInvoice || this.context === ContextDictionary.terminalList;
+	}
+
+	getMessageDataForBackend(): ?Object
+	{
+		const messageData = this.store.getters['orderCreation/getMessageData'];
+		if (!messageData?.body)
+		{
+			return messageData;
+		}
+
+		let body = messageData.body;
+		// in case of double patterns like #LINK#LINK#
+		while (body.includes('#LINK#'))
+		{
+			body = body.replace('#LINK#', '# LINK#');
+		}
+
+		return {
+			...messageData,
+			body: replaceCustomMessagePlaceholders(body, (code) => {
+				if (code === 'LINK')
+				{
+					return '#LINK#';
+				}
+
+				return null;
+			}),
+		};
 	}
 }
 

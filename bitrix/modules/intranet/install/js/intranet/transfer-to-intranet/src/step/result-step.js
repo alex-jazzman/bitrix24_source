@@ -100,18 +100,8 @@ export class ResultStep
 
 	#renderBlock(): HTMLElement
 	{
-		const title = this.#isSuccess
-			? Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE')
-			: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE_ERROR');
-
-		const description = this.#isSuccess
-			? Loc.getMessage(
-				'INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION',
-				{
-					'[USER_NAME]': `<b>${this.#options.userName}</b>`,
-				},
-			)
-			: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION_ERROR');
+		const title = this.#getTitle();
+		const description = this.#getDescription();
 
 		return Tag.render`
 			<div class="transfer-result">
@@ -190,5 +180,24 @@ export class ResultStep
 				this.#parent.emit('changestate');
 			},
 		}).render();
+	}
+
+	#getTitle(): string
+	{
+		return this.#isSuccess
+			? Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE')
+			: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE_ERROR');
+	}
+
+	#getDescription(): string
+	{
+		return this.#isSuccess
+			? Loc.getMessage(
+				'INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION',
+				{
+					'[USER_NAME]': `<b>${this.#options.userName}</b>`,
+				},
+			)
+			: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION_ERROR');
 	}
 }

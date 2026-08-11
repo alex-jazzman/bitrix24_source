@@ -1,9 +1,9 @@
 import { Event, Uri, Type, Loc, Text, Tag, Dom } from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {PopupManager, Menu, MenuItem} from 'main.popup';
-import Options from "../options";
-import Utils from "../utils";
-import {SaveButton, CancelButton} from 'ui.buttons';
+import { EventEmitter } from 'main.core.events';
+import { PopupManager } from 'main.popup';
+import Options from '../options';
+import Utils from '../utils';
+import { SaveButton, CancelButton } from 'ui.buttons';
 import { Counter } from 'ui.cnt';
 
 export default class Item

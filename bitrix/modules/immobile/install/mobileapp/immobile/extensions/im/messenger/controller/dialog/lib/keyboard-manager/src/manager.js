@@ -122,7 +122,10 @@ jn.define('im/messenger/controller/dialog/lib/keyboard-manager/manager', (requir
 
 			if (button.command)
 			{
-				await this.#store.dispatch('messagesModel/disableKeyboardByMessageId', messageId);
+				await this.#store.dispatch('messagesModel/disableKeyboardByMessageId', {
+					id: messageId,
+					buttonId: button,
+				});
 
 				const dialogId = this.#dialogLocator.get('dialogId');
 				const botCommandHandler = new BotCommandHandler(dialogId, messageId);

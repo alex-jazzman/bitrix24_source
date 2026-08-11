@@ -364,17 +364,24 @@ export default class Event extends Base
 
 	async downloadIcsFile()
 	{
-		if (!this.#icsFile)
+		try
 		{
-			const response = await BX.ajax.runAction('calendar.api.sharingajax.getIcsFileContent', {
-				data: {
-					eventLinkHash: this.#value.eventLinkHash,
-				},
-			});
-			this.#icsFile = response.data;
-		}
+			if (!this.#icsFile)
+			{
+				const response = await BX.ajax.runAction('calendar.api.sharingajax.getIcsFileContent', {
+					data: {
+						eventLinkHash: this.#value.eventLinkHash,
+					},
+				});
+				this.#icsFile = response.data;
+			}
 
-		Util.downloadIcsFile(this.#icsFile, 'event');
+			Util.downloadIcsFile(this.#icsFile, 'event');
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
 	}
 
 	#onReturnButtonClick()

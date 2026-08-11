@@ -54,14 +54,9 @@ export const ReplicationContent = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-wrapper">
-			<div class="tasks-field-replication-title">
-				<TextSm style="color: var(--ui-color-base-3)">{{ loc('TASKS_V2_REPLICATION_TITLE') }}</TextSm>
-			</div>
-			<div class="tasks-field-replication-content">
-				<ReplicationContentState v-if="task.replicate"/>
-				<FieldAdd v-else v-hint="tooltip" :icon="Outline.REPEAT" :disabled ref="add"/>
-			</div>
+		<div class="tasks-field-replication-content">
+			<ReplicationContentState v-if="task.replicateParams"/>
+			<FieldAdd v-else v-hint="tooltip" :icon="Outline.REPEAT" :disabled ref="add"/>
 		</div>
 	`,
 };

@@ -12,6 +12,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
  * @var array $arResult
  */
 
+\CJSCore::Init(['helper']);
 \Bitrix\Main\UI\Extension::load([
 	'ui.forms',
 	'ui.vue3',
@@ -19,6 +20,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	'ui.hint',
 	'ui.icon-set.outline'
 ]);
+
+$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
+$frameOpenUrl = (new \Bitrix\Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
 ?>
 
 <?php
@@ -68,11 +72,17 @@ else
 
 <script>
 	BX.ready(() => {
+		BX.Helper.init({
+			frameOpenUrl: '<?= CUtil::JSUrlEscape($frameOpenUrl) ?>',
+			langId: '<?= LANGUAGE_ID ?>',
+		});
+
 		const params = {
 			signedUserId: '<?= $arResult['SIGNED_USER_ID'] ?? '' ?>',
 			containerNode: document.querySelector("[data-role='otp-container']"),
 			authUrl: '<?= $arResult['AUTH_URL'] ?>',
-			authOtpHelpLink: '<?= CUtil::JSUrlEscape($arResult["AUTH_OTP_HELP_LINK"]) ?>',
+			authOtpHelpLink: '<?= CUtil::JSUrlEscape($arResult['AUTH_OTP_HELP_LINK']) ?>',
+			helpButtonConfigByStep: <?= \Bitrix\Main\Web\Json::encode($arResult['HELP_BUTTON_CONFIG_BY_STEP']) ?>,
 			authLoginUrl: '<?= CUtil::JSUrlEscape($arResult["AUTH_LOGIN_URL"]) ?>',
 			rememberOtp: <?= $arResult['REMEMBER_OTP'] ? 'true' : 'false' ?>,
 			captchaCode: '<?= $arResult['CAPTCHA_CODE'] ?? '' ?>',
@@ -81,8 +91,10 @@ else
 			<?php if ($arResult['USE_PUSH_OTP']): ?>
 			pushOtpConfig: <?= \Bitrix\Main\Web\Json::encode($arResult['PUSH_OTP']) ?>,
 			canLoginBySms: <?= $arResult['CAN_LOGIN_BY_SMS'] ? 'true' : 'false' ?>,
+			canLoginByEmail: <?= $arResult['CAN_LOGIN_BY_EMAIL'] ? 'true' : 'false' ?>,
 			isRecoveryCodesEnabled: <?= $arResult['IS_RECOVERY_CODES_ENABLED'] ? 'true' : 'false' ?>,
 			maskedUserAuthPhoneNumber: '<?= $arResult['USER_MASKED_AUTH_PHONE_NUMBER'] ?? '' ?>',
+			maskedUserAuthEmail: '<?= $arResult['USER_MASKED_AUTH_EMAIL'] ?? '' ?>',
 			currentStep: '<?= $arResult['CURRENT_STEP'] ?>',
 			recoveryCodesHelpLink: '<?= $arResult['RECOVERY_CODES_HELP_LINK'] ?>',
 			userDevice: <?= \Bitrix\Main\Web\Json::encode($arResult['USER_DEVICE']) ?>,
@@ -100,5 +112,3 @@ else
 <?php
 }
 ?>
-
-

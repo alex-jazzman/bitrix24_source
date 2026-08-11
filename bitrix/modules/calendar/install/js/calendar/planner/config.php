@@ -17,14 +17,14 @@ return [
 	],
 	'js' => 'dist/planner.bundle.js',
 	'rel' => [
-		'ui.info-helper',
-		'main.core.events',
+		'calendar.ui.tools.draganddrop',
 		'calendar.util',
 		'main.core',
-		'calendar.ui.tools.draganddrop',
-		'main.popup',
+		'main.core.events',
 		'main.date',
+		'main.popup',
 		'ui.avatar',
+		'ui.info-helper',
 	],
 	'settings' => [
 		'maxPlannerUsers' => $maxPlannerUsers,

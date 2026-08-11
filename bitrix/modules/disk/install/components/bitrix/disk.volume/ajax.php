@@ -125,32 +125,40 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		);
 
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_FILE] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_FILE_UNNECESSARY_VERSION] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_GROUP_FILE] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_GROUP_FILE_UNNECESSARY_VERSION] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_UNNECESSARY_VERSION] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 
 
 		$listAction[\CDiskVolumeComponent::ACTION_DELETE_FOLDER] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 		$listAction[\CDiskVolumeComponent::ACTION_EMPTY_FOLDER] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 
 
 		$listAction[\CDiskVolumeComponent::ACTION_SETUP_CLEANER_JOB] = array(
-			'method' => array('GET','POST'),
+			'method' => array('POST'),
+			'check_csrf_token' => true,
 		);
 
 		$listAction[\CDiskVolumeComponent::ACTION_SEND_NOTIFICATION] = array(

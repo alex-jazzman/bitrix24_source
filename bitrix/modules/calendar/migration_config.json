@@ -1,0 +1,9 @@
+{
+    "defaultTableName": "b_calendar_event",
+    "installDirectoriesMapping": {
+        "install/js": "js",
+        "install/activities": "activities",
+        "install/components": "components",
+        "install/templates": "templates"
+    }
+}

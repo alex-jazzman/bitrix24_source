@@ -4657,7 +4657,8 @@ select:not(:-internal-list-box) {
 	color: #a9adb2;
 }
 
-.calendar-settings-question .ui-hint-icon {
+.calendar-settings-question-timezone .ui-hint-icon,
+.calendar-settings-question-email .ui-hint-icon {
 	width: 16px;
 	height: 16px;
 	margin-top: 0;
@@ -9223,19 +9224,6 @@ input.calendar-field.calendar-field-select.calendar-field-location-select-border
 .calendar-category-form-room-tag-selector .ui-tag-selector-add-button,
 .calendar-room-form-category-selector-container-with-change-button .ui-tag-selector-add-button {
 	width: 1000px;
-}
-
-.calendar-list-slider-messagebox-text {
-	text-align: center;
-	font-size: 13px;
-	margin: 20px 20px 10px 20px;
-	line-height: 17px;
-}
-
-.calendar-list-slider-messagebox-text-with-title {
-	font-size: 13px;
-	margin: 20px 20px 10px 20px;
-	line-height: 17px;
 }
 
 /** endregion **/

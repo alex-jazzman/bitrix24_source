@@ -377,15 +377,12 @@ if ($arParams['TYPE'] === 'details')
 
 	if($bWrite)
 	{
-		$moveToCategoryIDs = array_values(
-			array_diff(
-				$userPermissionsService
-					->category()
-					->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal)
-				,
-				array($arResult['CATEGORY_ID'])
-			)
-		);
+		$currentCategoryId = (int)$arResult['CATEGORY_ID'];
+		$moveToCategoryIDs =
+			$userPermissionsService
+				->category()
+				->getAvailableForAddingCategoriesIdsWithCurrent(CCrmOwnerType::Deal, $currentCategoryId)
+		;
 
 		// only works in old deal details
 		if(!empty($moveToCategoryIDs))
@@ -398,6 +395,7 @@ if ($arParams['TYPE'] === 'details')
 				),
 				'ENTITY_ID' => $arParams['ELEMENT_ID'],
 				'CATEGORY_IDS' => $moveToCategoryIDs,
+				'CURRENT_CATEGORY_ID' => $currentCategoryId,
 				'ACTION_NAME' => 'MOVE_TO_CATEGORY',
 				'RELOAD' => true
 			);
@@ -485,13 +483,30 @@ if($arParams['TYPE'] === 'list')
 	;
 
 	$categoryCount = count($categoryIDs);
+	$addEvent = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
+		->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+		)
+		->setSubSection(
+			!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+		)
+		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+	;
 	if ($categoryCount > 1)
 	{
 		$categories = DealCategory::getJavaScriptInfos($categoryIDs);
 		$categoryButtons = [];
 		foreach ($categories as $row)
 		{
-			$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $row['id']]);
+			$link = $addEvent
+				->buildUri($baseCreateUrl)
+				->addParams(['category_id' => $row['id']])
+				->getUri()
+			;
 			$categoryButton = [
 				'ID' => $row['id'],
 				'TITLE' => $row['name'],
@@ -565,7 +580,12 @@ if($arParams['TYPE'] === 'list')
 			//'ONCLICK' => "BX.CrmDealCategorySelector.items['{$categorySelectorID}'].openMenu(this)",
 		];
 
-		$mainButtonLink = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $categories[0]['id']]);
+		$mainButtonLink = $addEvent
+			->buildUri($baseCreateUrl)
+			->addParams(['category_id' => $categories[0]['id']])
+			->getUri()
+		;
+
 		if($isSliderEnabled)
 		{
 			$btnCfg['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($mainButtonLink) . '")';
@@ -579,18 +599,7 @@ if($arParams['TYPE'] === 'list')
 	}
 	elseif($categoryCount === 1)
 	{
-		$link = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
-			->setSection(
-				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
-					? $arParams['ANALYTICS']['c_section']
-					: null
-			)
-			->setSubSection(
-				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
-					? $arParams['ANALYTICS']['c_sub_section']
-					: null
-			)
-			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+		$link = $addEvent
 			->buildUri($baseCreateUrl)
 			->addParams(['category_id' => $categoryIDs[0]])
 			->getUri()

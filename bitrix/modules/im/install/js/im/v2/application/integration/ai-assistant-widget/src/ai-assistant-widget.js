@@ -1,5 +1,6 @@
-import { Type } from 'main.core';
+import { Type, type JsonObject } from 'main.core';
 
+import 'im.v2.css.tokens';
 import { Core } from 'im.v2.application.core';
 import { type RunActionError } from 'im.v2.lib.rest';
 import { Utils } from 'im.v2.lib.utils';
@@ -23,9 +24,11 @@ type MountPayload = {
 export class AiAssistantWidgetApplication
 {
 	#initPromise: Promise<AiAssistantWidgetApplication>;
+	#params: JsonObject;
 
-	constructor()
+	constructor(params: JsonObject = {})
 	{
+		this.#params = params;
 		this.#initPromise = this.#init();
 	}
 
@@ -92,6 +95,7 @@ export class AiAssistantWidgetApplication
 
 	async #init(): Promise<AiAssistantWidgetApplication>
 	{
+		Core.setApplicationData(this.#params);
 		await Core.ready();
 
 		return this;

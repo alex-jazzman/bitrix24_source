@@ -6,8 +6,7 @@ jn.define('in-app-url/routes/timeman', (require, exports, module) => {
 		inAppUrl.register('/timeman/work.time', (params, { context }) => {
 			PageManager.openPage({
 				type: 'page',
-				// eslint-disable-next-line no-undef
-				url: env.siteDir + 'mobile/timeman',
+				url: `${env.siteDir}mobile/timeman`,
 				useSearchBar: false,
 				titleParams: {
 					text: context?.title,

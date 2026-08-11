@@ -19,7 +19,7 @@
 /* region week-mode */
 .booking-booking__base-component.--week-mode .booking-booking__resource-panel {
 	flex-direction: column;
-	min-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
 	border: none;
 	overflow-x: hidden;
 	overflow-y: auto;

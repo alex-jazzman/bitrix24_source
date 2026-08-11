@@ -1,7 +1,7 @@
 import { Dom } from 'main.core';
 import { AvatarRound } from 'ui.avatar';
 
-import { EmployeeFieldType } from '../types';
+import type { EmployeeFieldType } from '../types';
 import { BaseField } from './base-field';
 
 export class PhotoField extends BaseField

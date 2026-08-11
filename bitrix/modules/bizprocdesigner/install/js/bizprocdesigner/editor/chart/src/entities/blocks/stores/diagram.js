@@ -9,20 +9,10 @@ import {
 	isBlockPropertiesDifferent,
 	parseItemsFromBlocksJson,
 } from '../utils';
-import { handleResponseError } from '../../../shared/utils';
+import { handleResponseError } from '../../../shared/utils/response';
 import { TEMPLATE_PUBLISH_STATUSES } from '../constants';
 
-import type {
-	ActivityData,
-	Block,
-	BlockId,
-	DiagramData,
-	Connection,
-	PortId,
-	Port,
-	DiagramTemplate,
-	TimestampMap,
-} from '../../../shared/types';
+import { type ActivityData, type Block, type BlockId, type DiagramData, type Connection, type PortId, type Port, type DiagramTemplate, type TimestampMap } from '../../../shared/types';
 
 export type PortType = 'input' | 'output' | 'aux' | 'top_aux' | 'inputRelation' | 'outputRelation';
 
@@ -92,10 +82,13 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 		{
 			return this.connections.filter((connection) => connection.targetBlockId === block.id);
 		},
-		getAllBlockAncestors(block: Block, targetPortId: ?PortId): Array<Block>
+		getAllBlockAncestors(
+			block: Block,
+			targetPortId: ?PortId,
+		): Array<{ block: Block, connections: Record<Port, PortId[]> }>
 		{
 			const stack = [];
-			const blocks = new Map([[block.id, block]]);
+			const ancestors = new Map([[block.id, { block, connections: {} }]]);
 			let inputs = this.getInputConnections(block);
 			if (targetPortId)
 			{
@@ -107,17 +100,38 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 			{
 				const connection = stack.shift();
 				this.blocks.filter((b) => b.id === connection.sourceBlockId).forEach((b) => {
-					if (!blocks.has(b.id))
+					if (!ancestors.has(b.id))
 					{
-						blocks.set(b.id, b);
+						ancestors.set(b.id, {
+							block: b,
+							connections: {},
+						});
 						stack.push(...this.getInputConnections(b));
 					}
+
+					const currentAncestor = ancestors.get(b.id);
+					if (inputs.includes(connection))
+					{
+						const { sourcePortId, targetPortId: targetId } = connection;
+						currentAncestor.connections[sourcePortId] = [
+							...(currentAncestor.connections[sourcePortId] ?? []),
+							targetId,
+						];
+
+						return;
+					}
+
+					const prevAncestor = ancestors.get(connection.targetBlockId);
+					currentAncestor.connections[connection.sourcePortId] = [
+						...(currentAncestor.connections[connection.sourcePortId] ?? []),
+						...Object.values(prevAncestor.connections).flat(),
+					];
 				});
 			}
 
-			blocks.delete(block.id);
+			ancestors.delete(block.id);
 
-			return [...blocks.values()];
+			return [...ancestors.values()];
 		},
 		async refreshDiagramData(
 			params: {
@@ -454,16 +468,6 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 					currentBlock.node.title = newBlock.node.title;
 				}
 			}
-		},
-		updateNodeTitle(blockId: BlockId, title: string): void
-		{
-			const block = this.blocks.find((b) => b.id === blockId);
-			if (!block)
-			{
-				return;
-			}
-
-			block.node.title = title;
 		},
 		updateTemplateConstants(event): void
 		{

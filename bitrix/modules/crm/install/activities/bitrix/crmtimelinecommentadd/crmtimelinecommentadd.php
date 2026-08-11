@@ -25,6 +25,14 @@ class CBPCrmTimelineCommentAdd extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
+
+		if (!is_array($documentId))
+		{
+			$this->WriteToTrackingService(GetMessage('BPCTLCA_INVALID_DOCUMENT_ID'), 0, CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		[$ownerTypeId, $ownerId] = CCrmBizProcHelper::resolveEntityId($documentId);
 
 		$authorId = CBPHelper::ExtractUsers($this->CommentUser, $documentId, true);

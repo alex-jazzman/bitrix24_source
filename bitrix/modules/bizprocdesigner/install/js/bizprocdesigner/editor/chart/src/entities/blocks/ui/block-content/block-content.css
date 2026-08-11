@@ -51,3 +51,7 @@
 	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
     opacity: 0.4;
 }
+
+.editor-chart-block-content.--default {
+	border-top: 1px solid var(--ui-color-palette-gray-04);
+}

@@ -1,51 +1,43 @@
 import { Cache } from 'main.core';
-import type { Store } from 'ui.vue3.vuex';
-import { type MessageModel } from '../model/message-model';
-import { AlertService } from './alert-service';
-import { AnalyticsService } from './analytics-service';
-import { CopilotService } from './copilot-service';
+import { type Context } from '../editor';
 import { DocumentService } from './document-service';
-import { FileService } from './file-service';
+import { EscapeService } from './escape-service';
 import { logger, type Logger } from './logger';
-import { PreferencesService } from './preferences-service';
+import { PlaceholderService } from './placeholder-service';
 import { SalescenterService } from './salescenter-service';
 import { SendService } from './send-service';
-import { TemplateService } from './template-service';
 
 /**
- * One instance of this class per editor instance. Some services can be shared between editors.
+ * One instance of this class per editor instance.
  */
 export class ServiceLocator
 {
+	#context: Context;
+	#providerFactory;
 	#services = new Cache.MemoryCache();
-	#store: ?Store = null;
-	#messageModel: ?MessageModel = null;
-	#emitter: ?EventEmitter = null;
 
-	setStore(store: Store): this
+	constructor({ context, providerFactory }: {context: Context, providerFactory: ?Object} = {})
 	{
-		this.#store = store;
-
-		return this;
+		this.#context = context;
+		this.#providerFactory = providerFactory ?? null;
 	}
 
-	setMessageModel(messageModel: MessageModel): this
+	setProviderFactory(providerFactory: Object): void
 	{
-		this.#messageModel = messageModel;
-
-		return this;
+		this.#providerFactory = providerFactory;
 	}
 
-	getMessageModel(): ?MessageModel
+	getSendService(): SendService
 	{
-		return this.#messageModel;
-	}
+		return this.#services.remember('sendService', () => {
+			const customData = this.#context.customData ?? {};
 
-	setEventEmitter(emitter: EventEmitter): this
-	{
-		this.#emitter = emitter;
-
-		return this;
+			return new SendService({
+				entityTypeId: customData.entityTypeId,
+				entityId: customData.entityId,
+				providerFactory: this.#providerFactory,
+			});
+		});
 	}
 
 	getLogger(): Logger
@@ -53,94 +45,27 @@ export class ServiceLocator
 		return logger;
 	}
 
-	getSendService(): SendService
+	getDocumentService(): DocumentService
 	{
-		return this.#services.remember('sendService', () => {
-			return new SendService({
-				logger: this.getLogger(),
-				store: this.#store,
-				messageModel: this.getMessageModel(),
-				eventEmitter: this.#emitter,
-				analyticsService: this.getAnalyticsService(),
-				preferencesService: this.getPreferencesService(),
-			});
-		});
-	}
-
-	getAlertService(): AlertService
-	{
-		return this.#services.remember('alertService', () => {
-			return new AlertService({
-				store: this.#store,
-			});
-		});
-	}
-
-	getFileService(): FileService
-	{
-		return this.#services.remember('fileService', () => {
-			return new FileService({
-				logger: this.getLogger(),
-				store: this.#store,
-			});
+		return this.#services.remember('documentService', () => {
+			return new DocumentService({ logger: this.getLogger() });
 		});
 	}
 
 	getSalescenterService(): SalescenterService
 	{
 		return this.#services.remember('salescenterService', () => {
-			return new SalescenterService({
-				logger: this.getLogger(),
-				store: this.#store,
-			});
+			return new SalescenterService({ logger: this.getLogger() });
 		});
 	}
 
-	getDocumentService(): DocumentService
+	getEscapeService(): EscapeService
 	{
-		return this.#services.remember('documentService', () => {
-			return new DocumentService({
-				logger: this.getLogger(),
-				store: this.#store,
-			});
-		});
+		return this.#services.remember('escapeService', () => new EscapeService());
 	}
 
-	getCopilotService(): CopilotService
+	getPlaceholderService(): PlaceholderService
 	{
-		return this.#services.remember('copilotService', () => {
-			return new CopilotService({
-				logger: this.getLogger(),
-				store: this.#store,
-			});
-		});
-	}
-
-	getTemplateService(): TemplateService
-	{
-		return this.#services.remember('templateService', () => {
-			return new TemplateService({
-				logger: this.getLogger(),
-				store: this.#store,
-			});
-		});
-	}
-
-	getPreferencesService(): PreferencesService
-	{
-		return this.#services.remember('preferencesService', () => {
-			return new PreferencesService({
-				store: this.#store,
-			});
-		});
-	}
-
-	getAnalyticsService(): AnalyticsService
-	{
-		return this.#services.remember('analyticsService', () => {
-			return new AnalyticsService({
-				store: this.#store,
-			});
-		});
+		return this.#services.remember('placeholderService', () => new PlaceholderService());
 	}
 }

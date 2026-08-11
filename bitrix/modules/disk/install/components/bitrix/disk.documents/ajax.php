@@ -524,6 +524,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'objectId' => $trackedObject->getFileId(),
 				'objectName' => $file->getName(),
 				'type' => $sharingMode,
+				'uniqueCode' => $supportsSharingAccessPopup ? $file->getUniqueCode() : null,
 				'supportsUnifiedLink' => $supportsSharingAccessPopup ? 'true' : 'false',
 				'supportsSharingAccessPopup' => $supportsSharingAccessPopup ? 'true' : 'false',
 			],

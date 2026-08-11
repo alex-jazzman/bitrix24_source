@@ -1,0 +1,690 @@
+<?php
+
+namespace Bitrix\Bizproc\Api\Service;
+
+use Bitrix\Bizproc\Api\Data\WorkflowTemplateService\WorkflowTemplate;
+use Bitrix\Bizproc\Api\Enum\ErrorMessage;
+use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateType;
+use Bitrix\Bizproc\Api\Request\WorkflowTemplateService as WorkflowTemplateRequest;
+use Bitrix\Bizproc\Api\Response\Error;
+use Bitrix\Bizproc\Api\Response\WorkflowTemplateService as WorkflowTemplateResponse;
+use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
+use Bitrix\Bizproc\Workflow\Template\WorkflowTemplateDraftTable;
+use Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduledTriggerSyncService;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query\Query;
+
+class WorkflowTemplateService
+{
+	private const TRACK_ON_INTERVAL = 7 * 86400; // 7 days in seconds
+	private WorkflowAccessService $accessService;
+
+	public function __construct(?WorkflowAccessService $accessService = null)
+	{
+		$this->accessService = $accessService ?? new WorkflowAccessService();
+	}
+
+	public function getList(
+		WorkflowTemplateRequest\GridTemplateRequest $request,
+	): WorkflowTemplateResponse\GridTemplateResponse
+	{
+		$query = WorkflowTemplateTable::query()
+			->setSelect([
+				'ID',
+				'NAME',
+				'DESCRIPTION',
+				'UPDATED_BY',
+				'CREATED_BY',
+				'MODIFIED',
+				'AUTO_EXECUTE',
+				'UPDATED_USER',
+				'CREATED_USER',
+				'USER',
+			])
+			->where('CREATED_BY', $request->getFilterUserId())
+			->where('TYPE', WorkflowTemplateType::Nodes->value)
+			->whereNull('SYSTEM_CODE')
+			->setOrder($request->getOrder())
+			->setLimit($request->getLimit())
+			->countTotal(true)
+		;
+
+		if ($request->hasOffset())
+		{
+			$query->setOffset($request->getOffset());
+		}
+
+		if (!empty($filters = $request->getOrmFilter()))
+		{
+			$query->setFilter($filters);
+		}
+		elseif (!empty($searchQuery = $request->getFilterSearchQuery()))
+		{
+			$query->where(
+				Query::filter()
+					->logic('or')
+					->whereLike('NAME', "%$searchQuery%")
+					->whereLike('DESCRIPTION', "%$searchQuery%"),
+			);
+		}
+
+		$queryResult = $query->exec();
+		$response = new WorkflowTemplateResponse\GridTemplateResponse();
+		$response->setTotalCount($queryResult->getCount());
+		$response->setCollection($queryResult->fetchCollection());
+
+		return $response;
+	}
+
+	public function prepareParameters(
+		WorkflowTemplateRequest\PrepareParametersRequest $request,
+	): WorkflowTemplateResponse\PrepareParametersResponse
+	{
+		try
+		{
+			\CBPHelper::parseDocumentId($request->complexDocumentType);
+		}
+		catch (\CBPArgumentNullException $e)
+		{
+			return WorkflowTemplateResponse\PrepareParametersResponse::createError(
+				\Bitrix\Bizproc\Error::createFromThrowable($e),
+			);
+		}
+
+		$parameters = [];
+		foreach ($request->templateParameters as $key => $property)
+		{
+			$value = $request->requestParameters[$key] ?? null;
+
+			if ($property['Type'] === FieldType::FILE)
+			{
+				if (!empty($value) && isset($value['name']))
+				{
+					$parameters[$key] = $value;
+					if (is_array($value['name']))
+					{
+						$parameters[$key] = [];
+						\CFile::ConvertFilesToPost($value, $parameters[$key]);
+					}
+				}
+				elseif ($this->isCorrectSignedFileIds($value))
+				{
+					$parameters[$key] = $value;
+				}
+
+				continue;
+			}
+
+			$parameters[$key] = $value;
+		}
+
+		$errors = [];
+		$response
+			= (new WorkflowTemplateResponse\PrepareParametersResponse())
+				->setRawParameters($parameters)
+				->setParameters(
+					\CBPWorkflowTemplateLoader::checkWorkflowParameters(
+						$request->templateParameters, $parameters, $request->complexDocumentType, $errors,
+					),
+				)
+		;
+
+		if ($errors)
+		{
+			foreach ($errors as $error)
+			{
+				$response->addError(new \Bitrix\Bizproc\Error($error['message'], $error['code']));
+			}
+		}
+
+		return $response;
+	}
+
+	public function setConstants(
+		WorkflowTemplateRequest\SetConstantsRequest $request,
+	): WorkflowTemplateResponse\SetConstantsResponse
+	{
+		if ($request->templateId <= 0)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createError(new Error('negative template id'));
+		}
+
+		if ($request->userId <= 0)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createError(new Error('negative user id'));
+		}
+
+		try
+		{
+			\CBPHelper::parseDocumentId($request->complexDocumentType);
+		}
+		catch (\CBPArgumentNullException $e)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createError(Error::createFromThrowable($e));
+		}
+
+		if (
+			!\CBPDocument::canUserOperateDocumentType(
+				\CBPCanUserOperateOperation::CreateWorkflow,
+				$request->userId,
+				$request->complexDocumentType,
+			)
+		)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createError(new Error('access denied'));
+		}
+
+		$constants = \CBPWorkflowTemplateLoader::getTemplateConstants($request->templateId);
+		if (!is_array($constants) || !$constants)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createOk();
+		}
+
+		$preparedResult = $this->prepareParameters(
+			new WorkflowTemplateRequest\PrepareParametersRequest(
+				templateParameters: $constants,
+				requestParameters: $request->requestConstants,
+				complexDocumentType: $request->complexDocumentType,
+			),
+		);
+
+		if (!$preparedResult->isSuccess())
+		{
+			return (new WorkflowTemplateResponse\SetConstantsResponse())->addErrors($preparedResult->getErrors());
+		}
+
+		$preparedConstants = $preparedResult->getParameters();
+		foreach ($constants as $key => $constant)
+		{
+			$constants[$key]['Default'] = $preparedConstants[$key] ?? null;
+		}
+
+		try
+		{
+			$user = new \CBPWorkflowTemplateUser($request->userId);
+			\CBPWorkflowTemplateLoader::update($request->templateId, [
+				'CONSTANTS' => $constants,
+				'USER_ID' => $user->getId(),
+				'MODIFIER_USER' => $user,
+			]);
+		}
+		catch (\Exception $e)
+		{
+			return WorkflowTemplateResponse\SetConstantsResponse::createError(
+				new Error('something go wrong, try again'),
+			);
+		}
+
+		ServiceLocator::getInstance()->get(ScheduledTriggerSyncService::class)?->syncByTemplate($request->templateId);
+
+		return WorkflowTemplateResponse\SetConstantsResponse::createOk();
+	}
+
+	public function prepareStartParameters(
+		WorkflowTemplateRequest\PrepareStartParametersRequest $request,
+	): WorkflowTemplateResponse\PrepareStartParametersResponse
+	{
+		if ($request->templateId <= 0)
+		{
+			return WorkflowTemplateResponse\PrepareStartParametersResponse::createError(
+				ErrorMessage::INVALID_PARAM_ARG->getError(
+					[
+						'#PARAM#' => 'templateId',
+						'#VALUE#' => $request->templateId,
+					],
+					ErrorMessage::INVALID_PARAM_ARG->value,
+				),
+			);
+		}
+
+		if ($request->targetUserId <= 0)
+		{
+			return WorkflowTemplateResponse\PrepareStartParametersResponse::createError(
+				ErrorMessage::INVALID_PARAM_ARG->getError(
+					[
+						'#PARAM#' => 'targetUserId',
+						'#VALUE#' => $request->targetUserId,
+					],
+					ErrorMessage::INVALID_PARAM_ARG->value,
+				),
+			);
+		}
+
+		try
+		{
+			\CBPHelper::parseDocumentId($request->complexDocumentType);
+		}
+		catch (\CBPArgumentNullException $e)
+		{
+			return WorkflowTemplateResponse\PrepareStartParametersResponse::createError(Error::createFromThrowable($e));
+		}
+
+		$template
+			= \CBPWorkflowTemplateLoader::getList(
+				[],
+				[
+					'ID' => $request->templateId,
+					'DOCUMENT_TYPE' => $request->complexDocumentType,
+					'ACTIVE' => 'Y',
+					'<AUTO_EXECUTE' => \CBPDocumentEventType::Automation,
+				],
+				false,
+				false,
+			['ID', 'PARAMETERS'],
+		)->fetch();
+
+		if (!$template)
+		{
+			return WorkflowTemplateResponse\PrepareStartParametersResponse::createError(
+				ErrorMessage::TEMPLATE_NOT_FOUND->getError(
+					['#ID#' => $request->templateId],
+					ErrorMessage::TEMPLATE_NOT_FOUND->value,
+				),
+			);
+		}
+
+		$workflowParameters = [];
+		if (is_array($template['PARAMETERS']) && $template['PARAMETERS'])
+		{
+			$preparedParameters = $this->prepareParameters(
+				new WorkflowTemplateRequest\PrepareParametersRequest(
+					$template['PARAMETERS'],
+					$request->requestParameters,
+					$request->complexDocumentType,
+				),
+			);
+
+			if (!$preparedParameters->isSuccess())
+			{
+				return (new WorkflowTemplateResponse\PrepareStartParametersResponse())->addErrors(
+					$preparedParameters->getErrors(),
+				);
+			}
+
+			$workflowParameters = $preparedParameters->getParameters();
+		}
+
+		$workflowParameters[\CBPDocument::PARAM_TAGRET_USER] = 'user_' . $request->targetUserId;
+		$workflowParameters[\CBPDocument::PARAM_DOCUMENT_EVENT_TYPE] = $request->eventType;
+
+		return (new WorkflowTemplateResponse\PrepareStartParametersResponse())->setParameters($workflowParameters);
+	}
+
+	public function saveTemplate(
+		WorkflowTemplateRequest\SaveTemplateRequest $request,
+	): WorkflowTemplateResponse\SaveTemplateResponse
+	{
+		$response = new WorkflowTemplateResponse\SaveTemplateResponse();
+
+		if ($request->checkAccess)
+		{
+			$documentType = $this->getDocumentType($request->parameters);
+			if (is_null($documentType))
+			{
+				$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+					'#PARAM#' => 'DOCUMENT_TYPE',
+					'#VALUE#' => $documentType,
+				]);
+				$response->addError($errorMsg);
+
+				return $response;
+			}
+
+			if (!$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+			{
+				$response->addError(
+					ErrorMessage::ACCESS_DENIED->getError(),
+				);
+
+				return $response;
+			}
+		}
+
+		try {
+			$template = WorkflowTemplate::createFromRequest($request);
+			$templateId = $template->getTemplateId();
+			$fields = $template->getFields();
+			if ($templateId > 0)
+			{
+				\CBPWorkflowTemplateLoader::update($templateId, $fields);
+				$response->setTemplateId($templateId);
+			}
+			else
+			{
+				$response->setTemplateId(\CBPWorkflowTemplateLoader::add($fields));
+			}
+
+			$this->handleTrackOnOption($response->getTemplateId(), $template->getFields());
+		}
+		catch (\Throwable $exception)
+		{
+			if (method_exists($exception, 'getErrors'))
+			{
+				$errors = $exception->getErrors();
+				$response->setActivityErrors($errors);
+				foreach ($errors as $error)
+				{
+					$response->addError(new Error($error['message'], $error['code'] ?? 0));
+				}
+			}
+			else
+			{
+				$response->addError(new Error($exception->getMessage(), $exception->getCode()));
+			}
+		}
+
+		return $response;
+	}
+
+	private function handleTrackOnOption(int $templateId, array $fields): void
+	{
+		if (isset($fields['TRACK_ON']))
+		{
+			$optionName = 'tpl_track_on_' . $templateId;
+			if ($fields['TRACK_ON'] === 'Y')
+			{
+				$trackOn = (int)Option::get('bizproc', $optionName, 0);
+				if ((time() - self::TRACK_ON_INTERVAL) > $trackOn)
+				{
+					Option::set('bizproc', $optionName, time());
+				}
+			}
+			else
+			{
+				Option::delete('bizproc', ['name' => $optionName]);
+			}
+		}
+	}
+
+	public function importTemplate(
+		WorkflowTemplateRequest\ImportTemplateRequest $request,
+	): WorkflowTemplateResponse\ImportTemplateResponse
+	{
+		$response = new WorkflowTemplateResponse\ImportTemplateResponse();
+
+		$documentType = $this->getDocumentType($request->parameters);
+		if (is_null($documentType))
+		{
+			$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+				'#PARAM#' => 'DOCUMENT_TYPE',
+				'#VALUE#' => $documentType,
+			]);
+			$response->addError($errorMsg);
+
+			return $response;
+		}
+
+		if ($request->checkAccess && !$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+		{
+			$response->addError(
+				ErrorMessage::IMPORT_ACCESS_DENIED->getError(),
+			);
+
+			return $response;
+		}
+
+		$newTemplateId = 0;
+		$file = $request->file;
+		if (is_uploaded_file($file['tmp_name']))
+		{
+			$data = (new \Bitrix\Main\IO\File($file['tmp_name']))->getContents();
+
+			try
+			{
+				$newTemplateId = \CBPWorkflowTemplateLoader::ImportTemplate(
+					$request->id,
+					$documentType,
+					$request->autostart,
+					$request->name,
+					$request->description,
+					$data,
+				);
+			}
+			catch (\Throwable $exception)
+			{
+				$response->addError(new Error(preg_replace("#[\r\n]+#", " ", $exception->getMessage())));
+			}
+		}
+
+		if ($newTemplateId <= 0)
+		{
+			$response->addError(new Error(Loc::getMessage('BIZPROC_LIB_API_WORKFLOW_TEMPLATE_SERVICE_IMPORT_ERROR')));
+		}
+
+		$response->setTemplateId($newTemplateId);
+
+		return $response;
+	}
+
+	private function getDocumentType(array $parameters): ?array
+	{
+		if (!isset($parameters['MODULE_ID'], $parameters['ENTITY'], $parameters['DOCUMENT_TYPE']))
+		{
+			return null;
+		}
+
+		return [
+			$parameters['MODULE_ID'],
+			$parameters['ENTITY'],
+			$parameters['DOCUMENT_TYPE'],
+		];
+	}
+
+	public function exportTemplate(
+		WorkflowTemplateRequest\ExportTemplateRequest $request)
+	: WorkflowTemplateResponse\ExportTemplateResponse
+	{
+		$response = new WorkflowTemplateResponse\ExportTemplateResponse();
+
+		$documentType = $this->getDocumentType($request->parameters);
+		if (is_null($documentType))
+		{
+			$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+				'#PARAM#' => 'DOCUMENT_TYPE',
+				'#VALUE#' => $documentType,
+			]);
+			$response->addError($errorMsg);
+
+			return $response;
+		}
+
+		if ($request->checkAccess && !$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+		{
+			$response->addError(
+				ErrorMessage::EXPORT_ACCESS_DENIED->getError(),
+			);
+
+			return $response;
+		}
+
+		$bp = \CBPWorkflowTemplateLoader::ExportTemplate($request->id);
+
+		if (!$bp)
+		{
+			$response->addError(new Error('Not found', 404));
+
+			return $response;
+		}
+
+		$response->setTemplateData((string)$bp);
+
+		return $response;
+	}
+
+	public function saveTemplateDraft(
+		WorkflowTemplateRequest\SaveTemplateDraftRequest $request,
+	): WorkflowTemplateResponse\SaveTemplateDraftResponse
+	{
+		$response = new WorkflowTemplateResponse\SaveTemplateDraftResponse();
+
+		if ($request->checkAccess)
+		{
+			$documentType = $this->getDocumentType($request->parameters);
+			if (is_null($documentType))
+			{
+				$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+					'#PARAM#' => 'DOCUMENT_TYPE',
+					'#VALUE#' => $documentType,
+				]);
+				$response->addError($errorMsg);
+
+				return $response;
+			}
+
+			if (!$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+			{
+				$response->addError(
+					ErrorMessage::ACCESS_DENIED->getError(),
+				);
+
+				return $response;
+			}
+		}
+
+		try
+		{
+			$saveRequest = new \Bitrix\Bizproc\Api\Request\WorkflowTemplateService\SaveTemplateRequest(
+				$request->templateId,
+				$request->parameters,
+				$request->fields,
+				$request->user,
+				$request->checkAccess,
+			);
+			$template = WorkflowTemplate::createFromRequest($saveRequest);
+			$templateId = $template->getTemplateId() > 0 ? $template->getTemplateId() : null;
+			$fields = $template->getFields();
+
+			$tpl = \Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable::createObject();
+			$availableFields = [
+				'NAME',
+				'DESCRIPTION',
+				'TYPE',
+				'SORT',
+				'AUTO_EXECUTE',
+				'IS_SYSTEM',
+				'TEMPLATE',
+				'CONSTANTS',
+				'VARIABLES',
+				'PARAMETERS',
+			];
+
+			foreach ($availableFields as $field)
+			{
+				if (isset($fields[$field]))
+				{
+					$tpl->set($field, $fields[$field]);
+				}
+			}
+
+			[$moduleId, $entity, $documentType] = $template->getDocumentType();
+			$tpl->setModuleId($moduleId);
+			$tpl->setEntity($entity);
+			$tpl->setDocumentType($documentType);
+
+
+			if ($request->draftId)
+			{
+				$result = WorkflowTemplateDraftTable::update(
+					$request->draftId,
+					[
+						'MODULE_ID' => $tpl->getModuleId(),
+						'ENTITY' => $tpl->getEntity(),
+						'DOCUMENT_TYPE' => $tpl->getDocumentType(),
+						'TEMPLATE_ID' => $templateId,
+						'TEMPLATE_DATA' => $tpl->collectValues(),
+						'USER_ID' => $request->user->getId(),
+						'CREATED' => new \Bitrix\Main\Type\DateTime(),
+					],
+				);
+			}
+			else
+			{
+				$result = WorkflowTemplateDraftTable::add([
+					'MODULE_ID' => $tpl->getModuleId(),
+					'ENTITY' => $tpl->getEntity(),
+					'DOCUMENT_TYPE' => $tpl->getDocumentType(),
+					'TEMPLATE_ID' => $templateId,
+					'TEMPLATE_DATA' => $tpl->collectValues(),
+					'USER_ID' => $request->user->getId(),
+					'CREATED' => new \Bitrix\Main\Type\DateTime(),
+				]);
+			}
+
+
+			if (!$result->isSuccess())
+			{
+				$response->addErrors($result->getErrors());
+
+				return $response;
+			}
+
+			$response->setTemplateDraftId((int)$result->getId());
+		}
+		catch (\Throwable $exception)
+		{
+			$response->addError(new Error($exception->getMessage(), $exception->getCode()));
+		}
+
+		return $response;
+	}
+
+	public function loadTemplateDraft(
+		WorkflowTemplateRequest\LoadTemplateDraftRequest $request,
+	): WorkflowTemplateResponse\LoadTemplateResponse
+	{
+		$response = new WorkflowTemplateResponse\LoadTemplateResponse();
+
+		if ($request->id <= 0)
+		{
+			$response->addError(new Error('incorrect draft id'));
+
+			return $response;
+		}
+
+		try
+		{
+			$draft = WorkflowTemplateDraftTable::getByPrimary($request->id)->fetchObject();
+			if (!$draft)
+			{
+				$response->addError(ErrorMessage::GET_DATA_ERROR->getError());
+			}
+
+			$response->setData($draft->collectValues());
+		}
+		catch (\Throwable $exception)
+		{
+			$response->addError(new Error($exception->getMessage(), $exception->getCode()));
+		}
+
+		return $response;
+	}
+
+	private function isCorrectSignedFileIds(mixed $value): bool
+	{
+		if (empty($value))
+		{
+			return false;
+		}
+
+		$ids = is_array($value) ? $value : [$value];
+		foreach ($ids as $id)
+		{
+			if (!is_string($id))
+			{
+				return false;
+			}
+
+			$unsigned = \CBPDocument::unSignParameters($id);
+			$fileId = $unsigned[0] ?? null;
+			if (!is_numeric($fileId) || $fileId <= 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+}

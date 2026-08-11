@@ -6,6 +6,6 @@
 	margin-bottom: 2px;
 }
 
-.booking-booking__base-component.--week-mode .booking-booking-card__title {
+.booking-booking__base-component.--week-mode .booking-booking-booking .booking-booking-card__title {
 	line-height: 1;
 }

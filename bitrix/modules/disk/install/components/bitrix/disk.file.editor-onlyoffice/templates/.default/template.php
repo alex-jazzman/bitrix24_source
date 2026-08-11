@@ -257,6 +257,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 
 	BX.Disk.UrlCleaner.cleanUrl(window.location, window.history, [
 		/^analytics\[/i,
+		/^immediate/i,
 	]);
 
 	new BX.Disk.Editor.OnlyOffice({

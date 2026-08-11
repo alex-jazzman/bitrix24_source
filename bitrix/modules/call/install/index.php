@@ -172,7 +172,7 @@ class call extends \CModule
 				$extranetSiteId = \CExtranet::GetExtranetSiteID();
 				if ($extranetSiteId)
 				{
-					$extranetSite = \Bitrix\Main\SiteTable::getRow(["filter" => ["=LID" => $defaultSiteId]]);
+					$extranetSite = \Bitrix\Main\SiteTable::getRow(["filter" => ["=LID" => $extranetSiteId]]);
 					$extranetDocRoot = $extranetSite["DOC_ROOT"];
 					if (!empty($extranetDocRoot))
 					{
@@ -190,7 +190,7 @@ class call extends \CModule
 								"CONDITION" => "#^/extranet/video/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
 								"RULE" => "alias=\$1&videoconf",
 								"PATH" => "/conference/videoconf.php",
-								"ID" => "bitrix:conference",
+								"ID" => "bitrix:conference.extranet",
 							]
 						);
 						\Bitrix\Main\UrlRewriter::add(
@@ -199,7 +199,7 @@ class call extends \CModule
 								'CONDITION' => '#^/extranet/call/detail/([0-9]+)#',
 								'RULE' => "callId=\$1",
 								'PATH' => '/extranet/call/index.php',
-								'ID' => 'bitrix:call',
+								'ID' => 'bitrix:call.extranet',
 							]
 						);
 					}

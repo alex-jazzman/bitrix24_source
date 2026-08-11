@@ -1,7 +1,7 @@
 import { rest as RestClient } from 'rest.client';
 
-import { Logger } from 'im.v2.lib.logger';
-import { RestMethod } from 'im.v2.const';
+import { Logger } from 'call.adapter.logger';
+import { RestMethod } from 'call.adapter.im-const';
 
 import type { BackgroundListRestResult } from '../types/rest';
 

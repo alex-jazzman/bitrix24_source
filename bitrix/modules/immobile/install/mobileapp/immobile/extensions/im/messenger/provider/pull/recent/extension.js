@@ -240,16 +240,28 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 				return;
 			}
 
-			await this.recentRepository.removeSections(params.dialogId, params.recentConfigToHide?.sections);
-			await this.store.dispatch('recentModel/delete', { id: params.dialogId });
+			// Section-aware hide: removes the chat from the hidden sections, fully removes
+			// it from recent + announces the close only if it is gone from every section
+			// (checked across ROOT and the chat's own parentChatId). Data is not touched.
+			await serviceLocator.get('chat-deletion-manager').hide({
+				dialogId: params.dialogId,
+				sections: params.recentConfigToHide?.sections,
+				parentChatId: params.parentChatId,
+			});
+
 			this.#saveShareDialogCache();
 		}
 
 		/**
 		 * @param {ChatUserLeavePullHandlerParams} params
+		 * @param {PullExtraParams} extra
 		 */
-		async handleChatUserLeave(params)
+		async handleChatUserLeave(params, extra)
 		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 			this.logger.info('handleChatUserLeave:', params);
 
 			const { dialogId, userId } = params;
@@ -279,33 +291,8 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 		}
 
-		/**
-		 * @param {ChatDeletePullHandlerParams} params
-		 * @param {PullExtraParams} extra
-		 */
-		async handleChatDelete(params, extra)
-		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-			this.logger.info('handleChatDelete:', params, extra);
-
-			if (params.userId === MessengerParams.getUserId())
-			{
-				return;
-			}
-
-			try
-			{
-				const recentProvider = new RecentDataProvider();
-				await recentProvider.delete({ dialogId: params.dialogId });
-			}
-			catch (error)
-			{
-				this.logger.error('handleChatDelete delete chat error', error);
-			}
-		}
+		// No handleChatDelete here: chat deletion (recent + chat data) is owned by
+		// ChatDeletionManager via DialogPullHandler. Leave handling stays below.
 
 		/**
 		 * @param {UserInvitePullHandlerParams} params

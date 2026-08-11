@@ -2,7 +2,9 @@ import { Dom } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model, Grid } from 'booking.const';
+import { Model } from 'booking.const';
+import { gridTokens, GridTokenKey } from 'booking.lib.grid';
+
 import './now-line.css';
 
 // @vue/component
@@ -124,9 +126,10 @@ export const NowLine = {
 				return;
 			}
 
-			const hourOffset = (now.getHours() + now.getMinutes() / 60) * Grid.SizeElement.WeekHourWidth;
-			const left = diffDays * Grid.SizeElement.WeekCellWidth + hourOffset;
-			const top = Grid.SizeElement.WeekDaysPanelHeight + this.scroll;
+			const weekHourWidth = gridTokens.get(GridTokenKey.WeekHourWidth);
+			const hourOffset = (now.getHours() + now.getMinutes() / 60) * weekHourWidth * this.zoom;
+			const left = diffDays * gridTokens.get(GridTokenKey.WeekCellWidth) * this.zoom + hourOffset;
+			const top = gridTokens.get(GridTokenKey.WeekDaysPanelHeight) + this.scroll;
 
 			Dom.style(this.$refs.nowLine, 'top', `${top}px`);
 			Dom.style(this.$refs.nowLine, 'left', `${left}px`);

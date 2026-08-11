@@ -164,8 +164,6 @@ if ($arResult['BIZPROC_AVAILABLE'])
 	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskCompletedInTimeline::getInstance()->build();
 }
 
-echo \Bitrix\Crm\Tour\NotificationsForcedSms::getInstance()->build();
-
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $listContainerID = "{$prefix}_list";

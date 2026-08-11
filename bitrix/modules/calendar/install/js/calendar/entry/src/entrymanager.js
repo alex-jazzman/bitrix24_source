@@ -1,7 +1,7 @@
 import { Entry } from './entry';
 import { SectionManager } from 'calendar.sectionmanager';
 import { Util } from 'calendar.util';
-import { Event, Loc, Tag, Type } from 'main.core';
+import { Event, Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { CompactEventForm } from 'calendar.compacteventform';
 import 'ui.notification';
@@ -544,12 +544,9 @@ export class EntryManager
 	static getLocationRepeatBusyErrorPopup(options = {})
 	{
 		return new MessageBox({
+			useAirDesign: true,
 			title: Loc.getMessage('EC_LOCATION_REPEAT_BUSY_POPUP_TITLE'),
-			message: Tag.render`
-				<div class="calendar-list-slider-messagebox-text-with-title">
-					${options.message}
-				</div>
-			`,
+			message: options.message,
 			minHeight: 100,
 			minWidth: 300,
 			maxWidth: 690,
@@ -558,14 +555,11 @@ export class EntryManager
 			onCancel: options.onCancelCallback,
 			yesCaption: Loc.getMessage('EC_LOCATION_REPEAT_BUSY_POPUP_SAVE_WITHOUT_ROOM'),
 			cancelCaption: Loc.getMessage('EC_LOCATION_REPEAT_BUSY_POPUP_RETURN_TO_EDIT'),
-			mediumButtonSize: false,
 			popupOptions: {
 				events: {
 					onPopupClose: options.onPopupCloseCallback,
 				},
 				closeByEsc: true,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
 			},
 		});

@@ -219,7 +219,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getOpenProfileItem() {
-			if (!this.isUser() || this.isBot()) {
+			if (!this.isUser() || this.isBot() || this.isCurrentUserGuest() || this.isGuest()) {
 				return null;
 			}
 			const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
@@ -341,6 +341,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const user = this.store.getters['users/get'](this.context.dialogId);
 			return user.type === im_v2_const.UserType.bot;
 		}
+		isGuest() {
+			if (!this.isUser()) {
+				return false;
+			}
+			return this.store.getters['users/isGuest'](this.context.dialogId);
+		}
+		isCurrentUserGuest() {
+			return this.store.getters['users/isGuest'](this.getCurrentUserId());
+		}
 		isChannel() {
 			return im_v2_lib_channel.ChannelManager.isChannel(this.context.dialogId);
 		}
@@ -422,7 +431,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const isInvitation = this.#isInvitationActive();
 			const isFakeUser = recentItem.isFakeElement;
 			const isAiAssistantBot = this.store.getters['users/bots/isAiAssistant'](dialogId);
-			return !isInvitation && !isFakeUser && !isAiAssistantBot;
+			const isGuest = this.store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+			return !isInvitation && !isFakeUser && !isAiAssistantBot && !isGuest;
 		}
 		#getRecentItem() {
 			return this.context.recentItem || this.store.getters['recent/get'](this.context.dialogId);
@@ -465,7 +475,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				title: this.#getKickItemText(),
 				onClick: async () => {
-					const userChoice = await im_v2_lib_confirm.showKickUserConfirm(this.context.dialog.dialogId);
+					const userChoice = await im_v2_lib_confirm.showKickUserConfirm(this.context.dialog.dialogId, this.context.user.id);
 					if (userChoice !== true) {
 						return;
 					}
@@ -498,7 +508,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getProfileItem() {
-			if (this.isBot()) {
+			if (this.isBot() || this.isGuest() || this.isCurrentUserGuest()) {
 				return null;
 			}
 			const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.user.id);
@@ -517,6 +527,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		isBot() {
 			return this.context.user.type === im_v2_const.UserType.bot;
+		}
+		isGuest() {
+			return this.store.getters['users/isGuest'](this.context.user.id);
+		}
+		isCurrentUserGuest() {
+			return this.store.getters['users/isGuest'](this.getCurrentUserId());
 		}
 		#getKickItemText() {
 			if (this.isCollabChat()) {
@@ -753,7 +769,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getCreateTaskItem() {
-			if (this.isDeletedMessage() || this.#isStickerMessage()) {
+			if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest()) {
 				return null;
 			}
 			return {
@@ -767,7 +783,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getCreateMeetingItem() {
-			if (this.isDeletedMessage() || this.#isStickerMessage()) {
+			if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest()) {
 				return null;
 			}
 			return {
@@ -1023,6 +1039,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 			return pins.length >= this.maxPins;
 		}
+		#isCurrentUserGuest() {
+			return this.store.getters['users/isGuest'](this.getCurrentUserId());
+		}
 	}
 
 	class AiAssistantMessageMenu extends MessageMenu {
@@ -1128,6 +1147,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
+		getSelectItem() {
+			if (this.store.getters['copilot/isChatOpenedInWidget'](this.context.dialogId)) {
+				return null;
+			}
+			return super.getSelectItem();
+		}
 		getSendFeedbackItem() {
 			const copilotManager = new im_v2_lib_copilot.CopilotManager();
 			if (!copilotManager.isCopilotBot(this.context.authorId)) {
@@ -1145,7 +1170,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		async #openForm() {
 			void new im_v2_lib_feedback.FeedbackManager().openCopilotForm({
 				userCounter: this.#getUserCounter(),
-				text: this.context.text
+				message: this.context
 			});
 		}
 		#getUserCounter() {

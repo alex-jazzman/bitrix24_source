@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core_events, ui_vue3, main_sidepanel, ui_iconSet_api_vue, ui_iconSet_api_core, main_core, ui_system_menu_vue, ui_vue3_components_button, bizproc_setupTemplate) {
+(function (exports, main_core_events, ui_vue3, ui_dialogs_messagebox, ui_iconSet_api_vue, ui_iconSet_api_core, main_core, ui_system_menu_vue, ui_vue3_components_button, bizproc_setupTemplate) {
 	'use strict';
 
 	// @vue/component
@@ -275,28 +275,37 @@ this.BX = this.BX || {};
 					class="bizproc-setuptemplateactivity-block__items"
 					data-draggable-container="true"
 				>
-					<div
+					<template
 						v-for="(item, itemIndex) in items"
 						:key="item.id"
-						class="bizproc-setuptemplateactivity-draggable-wrapper"
-						data-draggable-item="true"
 					>
 						<div
-							v-if="showDropPlaceholder(dnd, itemIndex)"
-							class="bizproc-setuptemplateactivity-drop-placeholder"
-						></div>
+							class="bizproc-setuptemplateactivity-draggable-wrapper"
+							data-draggable-item="true"
+						>
+							<div
+								v-if="showDropPlaceholder(dnd, itemIndex)"
+								class="bizproc-setuptemplateactivity-drop-placeholder"
+							></div>
+							<slot
+								name="item"
+								:item="item"
+								:itemIndex="itemIndex"
+							></slot>
+						</div>
 						<slot
-							name="item"
+							name="after-item"
 							:item="item"
 							:itemIndex="itemIndex"
 						></slot>
-					</div>
+					</template>
 					<div
 						v-if="showFinalDropPlaceholder(dnd)"
 						class="bizproc-setuptemplateactivity-drop-placeholder"
 					></div>
 				</div>
 			</DraggableContainer>
+			<slot name="before-footer"/>
 			<div class="bizproc-setuptemplateactivity-block__footer">
 				<div class="bizproc-setuptemplateactivity-block__footer-wrap">
 					<slot name="footer"/>
@@ -341,6 +350,10 @@ this.BX = this.BX || {};
 	});
 	const DELIMITER_TYPES = Object.freeze({
 		LINE: 'line'
+	});
+	const EDITING_MODES = Object.freeze({
+		CREATE: 'create',
+		EDIT: 'edit'
 	});
 	const CONSTANT_ID_PREFIX = 'SetupTemplateActivity_';
 	const PRESET_TITLE_ICONS = {
@@ -868,535 +881,12 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const EntitySelectorConstantSettings = {
-		name: 'EntitySelectorConstantSettings',
-		emits: ['update:modelValue'],
-		props: {
-			modelValue: {
-				type: Object,
-				required: true
-			},
-			/** @type EntitySelectorConstantConfiguration */
-			constantConfiguration: {
-				type: Object,
-				required: true
-			}
-		},
-		computed: {
-			selectorId: {
-				get() {
-					return this.modelValue?.selectorId;
-				},
-				set(value) {
-					const updatedValue = {
-						...this.modelValue,
-						selectorId: value,
-						selector: this.getSelectors().find(selector => selector.id === value)
-					};
-					this.$emit('update:modelValue', updatedValue);
-				}
-			}
-		},
-		methods: {
-			getSelectors() {
-				return this.constantConfiguration.options.selectors;
-			},
-			firstSelectorId() {
-				return this.getSelectors()[0].id;
-			},
-			getSelectorIds() {
-				return this.getSelectors().map(selector => selector.id);
-			}
-		},
-		mounted() {
-			const selectorId = this.modelValue.selectorId;
-			if (this.getSelectorIds().includes(selectorId)) {
-				return;
-			}
-			this.selectorId = this.firstSelectorId();
-		},
-		template: `
-		<div class="ui-ctl-container">
-			<div class="ui-ctl-top">
-				<label class="ui-ctl-title">
-					{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_ENTITY_SELECTOR_PROVIDER') }}
-				</label>
-			</div>
-			<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-				<select
-					v-model="selectorId"
-					class="ui-ctl-element"
-				>
-					<option
-						v-for="selector in getSelectors()"
-						:value="selector.id"
-					>
-						{{ selector.title }}
-					</option>
-				</select>
-			</div>
-		</div>
-	`
-	};
-
-	const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
-		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings
-	});
-	// @vue/component
-	const EditConstantPopupForm = {
-		name: 'EditConstantPopupForm',
-		components: {
-			UiButton: ui_vue3_components_button.Button,
-			EntitySelectorConstantSettings
-		},
-		inject: ['editSlider'],
-		props: {
-			/** @type ConstantItem */
-			item: {
-				type: Object,
-				required: true
-			},
-			/** @type ConstantConfiguration[] */
-			constantConfigurationList: {
-				type: Array,
-				required: true
-			},
-			isCreation: {
-				type: Boolean,
-				default: false
-			}
-		},
-		emits: ['update:item', 'cancel'],
-		setup() {
-			return {
-				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-				ButtonSize: ui_vue3_components_button.ButtonSize
-			};
-		},
-		data() {
-			return {
-				id: this.item.id,
-				name: this.item.name,
-				constantType: this.item.constantType,
-				multiple: this.item.multiple,
-				description: this.item.description,
-				defaultValue: this.item.default,
-				settings: this.item.settings,
-				options: this.convertMapToOptionsModelArray(this.item.options),
-				required: this.item.required,
-				errors: {
-					id: '',
-					name: '',
-					options: this.convertMapToOptionsModelArray(this.item.options).map(() => '')
-				}
-			};
-		},
-		computed: {
-			isEntitySelector() {
-				return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
-			},
-			isSelectType() {
-				return this.constantType === CONSTANT_TYPES.SELECT;
-			},
-			errorMessages() {
-				return {
-					required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
-					idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
-					idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
-					optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
-				};
-			},
-			constantSettingsComponent() {
-				const types = this.constantConfigurationList.map(constant => constant.type);
-				if (!types.includes(this.constantType)) {
-					return null;
-				}
-				return CONSTANT_SETTINGS_COMPONENT[this.constantType];
-			},
-			currentConstantConfiguration() {
-				return this.constantConfigurationList.find(constantConfiguration => constantConfiguration.type === this.constantType);
-			}
-		},
-		watch: {
-			constantType() {
-				this.options = [];
-			}
-		},
-		mounted() {
-			this.resetUnsupportedType();
-		},
-		methods: {
-			onAddOption() {
-				this.options.push({
-					name: ''
-				});
-				this.errors.options.push('');
-			},
-			onDeleteOption(index) {
-				this.options.splice(index, 1);
-				this.errors.options.splice(index, 1);
-			},
-			validateName() {
-				this.errors.name = '';
-				if (!main_core.Type.isStringFilled(this.name.trim())) {
-					this.errors.name = this.errorMessages.required;
-					return false;
-				}
-				return true;
-			},
-			validateId() {
-				this.errors.id = '';
-				const id = this.id.trim();
-				if (!main_core.Type.isStringFilled(id)) {
-					this.errors.id = this.errorMessages.required;
-					return false;
-				}
-				if (!/^[A-Za-z]\w*$/.test(id)) {
-					this.errors.id = this.errorMessages.idFormat;
-					return false;
-				}
-				return true;
-			},
-			validateOption(index) {
-				const name = this.options[index].name.trim();
-				this.errors.options[index] = '';
-				if (!main_core.Type.isStringFilled(name)) {
-					this.errors.options[index] = this.errorMessages.required;
-					return false;
-				}
-				for (const [optionKey, option] of this.options.entries()) {
-					if (optionKey !== index && option.name.trim() === name) {
-						this.errors.options[index] = this.errorMessages.optionUnique;
-						return false;
-					}
-				}
-				return true;
-			},
-			validateOptions() {
-				if (this.constantType !== CONSTANT_TYPES.SELECT) {
-					return true;
-				}
-				let errorsCount = 0;
-				this.errors.options = [];
-				this.options.forEach((option, index) => {
-					if (this.validateOption(index)) {
-						this.errors.options[index] = '';
-					} else {
-						errorsCount += 1;
-					}
-				});
-				return errorsCount === 0;
-			},
-			resetErrors() {
-				this.errors = {
-					id: '',
-					name: '',
-					options: []
-				};
-			},
-			onSave() {
-				const isValid = [this.validateId(), this.validateName(), this.validateOptions()].every(value => value);
-				if (!isValid) {
-					return;
-				}
-				const setUniqueError = () => {
-					this.errors.id = this.errorMessages.idUnique;
-				};
-				this.$emit('update:item', {
-					propertyValues: {
-						...this.item,
-						id: this.id.trim(),
-						name: this.name,
-						description: this.description,
-						constantType: this.constantType,
-						multiple: this.multiple,
-						options: this.convertOptionModelsToMap(this.options),
-						settings: this.settings,
-						default: this.defaultValue,
-						required: this.required
-					},
-					setError: setUniqueError
-				});
-			},
-			onCancel() {
-				this.editSlider?.close();
-				this.$emit('cancel');
-			},
-			convertMapToOptionsModelArray(options) {
-				const models = [];
-				Object.values(options).forEach(value => {
-					if (main_core.Type.isStringFilled(value)) {
-						models.push({
-							name: value
-						});
-					}
-				});
-				return models;
-			},
-			convertOptionModelsToMap(models) {
-				const options = {};
-				for (const model of models) {
-					if (main_core.Type.isStringFilled(model.name)) {
-						options[model.name] = model.name;
-					}
-				}
-				return options;
-			},
-			resetUnsupportedType() {
-				const types = this.constantConfigurationList.map(constant => constant.type);
-				if (!types.includes(this.constantType)) {
-					this.constantType = types[0];
-				}
-			}
-		},
-		template: `
-		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
-			<div class="bizproc-setuptemplateactivity-edit-constant-popup__container">
-				<div class="bizproc-setuptemplateactivity-edit-constant-popup__header">
-					<h1 class="bizproc-setuptemplateactivity-edit-constant-popup__title">
-						{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_SLIDER_TITLE') }}
-					</h1>
-				</div>
-
-				<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
-					<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_NAME_LABEL') }}
-								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="name"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.name !== '' }"
-									type="text"
-									@blur="validateName"
-								/>
-							</div>
-							<div
-								v-if="errors.name"
-								class="ui-ctl-label-text-error">
-								{{ errors.name }}
-							</div>
-						</div>
-
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ID_LABEL') }}
-								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="id"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.id !== '' }"
-									type="text"
-									:disabled="!isCreation"
-									@blur="validateId"
-								/>
-							</div>
-							<div
-								v-if="errors.id"
-								class="ui-ctl-label-text-error"
-							>
-								{{ errors.id }}
-							</div>
-						</div>
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TYPE_LABEL') }}
-								</label>
-							</div>
-							<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-								<select
-									v-model="constantType"
-									class="ui-ctl-element"
-								>
-									<option
-										v-for="constantConfiguration in constantConfigurationList"
-										:key="constantConfiguration.type"
-										:value="constantConfiguration.type"
-									>
-										{{ constantConfiguration.title }}
-									</option>
-								</select>
-							</div>
-						</div>
-						<template v-if="constantSettingsComponent">
-							<component
-								:is="constantSettingsComponent"
-								:constantConfiguration="currentConstantConfiguration"
-								v-model="settings"
-							/>
-						</template>
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
-								</div>
-							</div>
-							<div>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="multiple"
-										type="radio"
-										class="ui-ctl-element"
-										:value="true"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_VALUE_YES') }}
-								</label>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="multiple"
-										type="radio"
-										class="ui-ctl-element"
-										:value="false"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_VALUE_NO') }}
-								</label>
-							</div>
-						</div>
-
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
-								</div>
-							</div>
-							<div>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="required"
-										type="radio"
-										class="ui-ctl-element"
-										:value="true"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_VALUE_YES') }}
-								</label>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="required"
-										type="radio"
-										class="ui-ctl-element"
-										:value="false"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_VALUE_NO') }}
-								</label>
-							</div>
-						</div>
-
-						<div class="ui-ctl-container" v-if="!isEntitySelector">
-							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
-								</label>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="defaultValue"
-									class="ui-ctl-element"
-									type="text"
-								/>
-							</div>
-						</div>
-
-						<template v-if="isSelectType">
-							<div
-								v-for="(option, index) in options"
-								class="ui-ctl-container"
-							>
-								<div class="ui-ctl-top">
-									<div class="ui-ctl-title">
-										{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
-									</div>
-								</div>
-								<div class="ui-ctl ui-ctl-w100">
-									<div
-										class="ui-ctl-after ui-ctl-icon-clear"
-										@click="onDeleteOption(index)"
-									>
-									</div>
-									<input
-										v-model="option.name"
-										class="ui-ctl-element"
-										:class="{ '--error': errors.options[index] !== '' }"
-										type="text"
-										@blur="validateOption(index)"
-									/>
-								</div>
-								<div
-									v-if="errors.options[index]"
-									class="ui-ctl-label-text-error">
-									{{ errors.options[index] }}
-								</div>
-							</div>
-						</template>
-
-						<div
-							v-if="isSelectType"
-							class="ui-ctl-container"
-						>
-							<button
-								class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps"
-								type="button"
-								@click="onAddOption"
-							>
-								<div class="ui-icon-set --plus-l"/>
-								<span class="ui-btn-text">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD_OPTION_BTN') }}
-								</span>
-							</button>
-						</div>
-
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DESCRIPTION') }}
-								</label>
-							</div>
-							<div class="ui-ctl ui-ctl-textarea ui-ctl-w100">
-								<textarea
-									v-model="description"
-									class="ui-ctl-element"
-									type="text"
-								/>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="bizproc-setuptemplateactivity-edit-constant-popup__footer">
-				<UiButton
-					:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_SAVE')"
-					:size="ButtonSize.LARGE"
-					@click="onSave"
-				/>
-				<UiButton
-					:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
-					:style="AirButtonStyle.PLAIN"
-					:size="ButtonSize.LARGE"
-					@click="onCancel"
-				/>
-			</div>
-		</div>
-	`
-	};
-
 	// @vue/component
 	const ConstantField = {
 		name: 'ConstantField',
 		components: {
-			BIcon: ui_iconSet_api_vue.BIcon,
-			EditConstantPopupForm
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
-		inject: ['initEditSlider'],
 		props: {
 			/** @type TitleItem */
 			item: {
@@ -1409,16 +899,11 @@ this.BX = this.BX || {};
 				required: true
 			}
 		},
-		emits: ['delete', 'updateItemProperty', 'edit'],
+		emits: ['delete', 'updateItemProperty', 'edit', 'itemDragStart'],
 		setup() {
 			return {
 				Outline: ui_iconSet_api_core.Outline,
 				Main: ui_iconSet_api_core.Main
-			};
-		},
-		data() {
-			return {
-				isEdit: false
 			};
 		},
 		computed: {
@@ -1432,16 +917,7 @@ this.BX = this.BX || {};
 				});
 			}
 		},
-		created() {
-			main_core_events.EventEmitter.subscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-		},
-		unmounted() {
-			main_core_events.EventEmitter.unsubscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-		},
 		methods: {
-			handleClosePopup() {
-				this.isEdit = false;
-			},
 			onInput(event) {
 				const payload = {
 					propertyValues: {
@@ -1450,14 +926,8 @@ this.BX = this.BX || {};
 				};
 				this.$emit('updateItemProperty', payload);
 			},
-			onUpdateItem(payload) {
-				this.$emit('updateItemProperty', payload);
-			},
 			onEdit() {
-				this.initEditSlider().open();
-				this.$nextTick(() => {
-					this.isEdit = true;
-				});
+				this.$emit('edit');
 			},
 			handleDragStart(event) {
 				this.$emit('itemDragStart', {
@@ -1507,18 +977,6 @@ this.BX = this.BX || {};
 					</div>
 				</div>
 			</div>
-	
-			<Teleport
-				to="#bizproc-setuptemplateactivity-popup-content"
-			>
-				<EditConstantPopupForm
-					v-if="isEdit"
-					:item="item"
-					:constantConfigurationList="constantConfigurationList"
-					@update:item="onUpdateItem"
-					:isCreation="false"
-				/>
-			</Teleport>
 		</div>
 	`
 	};
@@ -1653,6 +1111,490 @@ this.BX = this.BX || {};
 					:options="menuOptions"
 					@close="isMenuShown = false"
 				/>
+			</div>
+		</div>
+	`
+	};
+
+	const EntitySelectorConstantSettings = {
+		name: 'EntitySelectorConstantSettings',
+		emits: ['update:modelValue'],
+		props: {
+			modelValue: {
+				type: Object,
+				required: true
+			},
+			/** @type EntitySelectorConstantConfiguration */
+			constantConfiguration: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			selectorId: {
+				get() {
+					return this.modelValue?.selectorId;
+				},
+				set(value) {
+					const updatedValue = {
+						...this.modelValue,
+						selectorId: value,
+						selector: this.getSelectors().find(selector => selector.id === value)
+					};
+					this.$emit('update:modelValue', updatedValue);
+				}
+			}
+		},
+		methods: {
+			getSelectors() {
+				return this.constantConfiguration.options.selectors;
+			},
+			firstSelectorId() {
+				return this.getSelectors()[0].id;
+			},
+			getSelectorIds() {
+				return this.getSelectors().map(selector => selector.id);
+			}
+		},
+		mounted() {
+			const selectorId = this.modelValue.selectorId;
+			if (this.getSelectorIds().includes(selectorId)) {
+				return;
+			}
+			this.selectorId = this.firstSelectorId();
+		},
+		template: `
+		<div class="ui-ctl-container">
+			<div class="ui-ctl-top">
+				<label class="ui-ctl-title">
+					{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_ENTITY_SELECTOR_PROVIDER') }}
+				</label>
+			</div>
+			<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+				<select
+					v-model="selectorId"
+					class="ui-ctl-element"
+				>
+					<option
+						v-for="selector in getSelectors()"
+						:value="selector.id"
+					>
+						{{ selector.title }}
+					</option>
+				</select>
+			</div>
+		</div>
+	`
+	};
+
+	const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
+		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings
+	});
+	// @vue/component
+	const EditConstantPopupForm = {
+		name: 'EditConstantPopupForm',
+		components: {
+			UiButton: ui_vue3_components_button.Button,
+			EntitySelectorConstantSettings
+		},
+		props: {
+			/** @type ConstantItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			/** @type ConstantConfiguration[] */
+			constantConfigurationList: {
+				type: Array,
+				required: true
+			},
+			isCreation: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:item', 'cancel', 'update:changed'],
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			const options = this.convertMapToOptionsModelArray(this.item.options);
+			return {
+				id: this.item.id,
+				name: this.item.name,
+				constantType: this.item.constantType,
+				multiple: this.item.multiple,
+				description: this.item.description,
+				defaultValue: this.item.default,
+				options,
+				settings: this.item.settings,
+				required: this.item.required,
+				initialOptionsSnapshot: JSON.stringify(options),
+				errors: {
+					id: '',
+					name: '',
+					options: options.map(() => '')
+				}
+			};
+		},
+		computed: {
+			isSelectType() {
+				return this.constantType === CONSTANT_TYPES.SELECT;
+			},
+			isEntitySelector() {
+				return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
+			},
+			submitButtonText() {
+				const key = this.isCreation ? 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD' : 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_EDIT';
+				return this.$Bitrix.Loc.getMessage(key);
+			},
+			isChanged() {
+				return this.id !== this.item.id || this.name !== this.item.name || this.constantType !== this.item.constantType || this.multiple !== this.item.multiple || this.required !== this.item.required || this.description !== this.item.description || this.defaultValue !== this.item.default || JSON.stringify(this.options) !== this.initialOptionsSnapshot;
+			},
+			errorMessages() {
+				return {
+					required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
+					idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
+					idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
+					optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
+				};
+			},
+			constantSettingsComponent() {
+				const types = this.constantConfigurationList.map(constant => constant.type);
+				if (!types.includes(this.constantType)) {
+					return null;
+				}
+				return CONSTANT_SETTINGS_COMPONENT[this.constantType];
+			},
+			currentConstantConfiguration() {
+				return this.constantConfigurationList.find(constantConfiguration => constantConfiguration.type === this.constantType);
+			}
+		},
+		watch: {
+			constantType() {
+				this.options = [];
+			},
+			isChanged(value) {
+				this.$emit('update:changed', value);
+			}
+		},
+		mounted() {
+			this.resetUnsupportedType();
+		},
+		methods: {
+			onAddOption() {
+				this.options.push({
+					name: ''
+				});
+				this.errors.options.push('');
+			},
+			onDeleteOption(index) {
+				this.options.splice(index, 1);
+				this.errors.options.splice(index, 1);
+			},
+			validateName() {
+				this.errors.name = '';
+				if (!main_core.Type.isStringFilled(this.name.trim())) {
+					this.errors.name = this.errorMessages.required;
+					return false;
+				}
+				return true;
+			},
+			validateId() {
+				this.errors.id = '';
+				const id = this.id.trim();
+				if (!main_core.Type.isStringFilled(id)) {
+					this.errors.id = this.errorMessages.required;
+					return false;
+				}
+				if (!/^[A-Za-z]\w*$/.test(id)) {
+					this.errors.id = this.errorMessages.idFormat;
+					return false;
+				}
+				return true;
+			},
+			validateOption(index) {
+				const name = this.options[index].name.trim();
+				this.errors.options[index] = '';
+				if (!main_core.Type.isStringFilled(name)) {
+					this.errors.options[index] = this.errorMessages.required;
+					return false;
+				}
+				for (const [optionKey, option] of this.options.entries()) {
+					if (optionKey !== index && option.name.trim() === name) {
+						this.errors.options[index] = this.errorMessages.optionUnique;
+						return false;
+					}
+				}
+				return true;
+			},
+			validateOptions() {
+				if (this.constantType !== CONSTANT_TYPES.SELECT) {
+					return true;
+				}
+				let errorsCount = 0;
+				this.errors.options = [];
+				this.options.forEach((option, index) => {
+					if (this.validateOption(index)) {
+						this.errors.options[index] = '';
+					} else {
+						errorsCount += 1;
+					}
+				});
+				return errorsCount === 0;
+			},
+			resetErrors() {
+				this.errors = {
+					id: '',
+					name: '',
+					options: []
+				};
+			},
+			onSave() {
+				const isValid = [this.validateId(), this.validateName(), this.validateOptions()].every(value => value);
+				if (!isValid) {
+					return;
+				}
+				const setUniqueError = () => {
+					this.errors.id = this.errorMessages.idUnique;
+				};
+				this.$emit('update:item', {
+					propertyValues: {
+						...this.item,
+						id: this.id.trim(),
+						name: this.name,
+						description: this.description,
+						constantType: this.constantType,
+						multiple: this.multiple,
+						options: this.convertOptionModelsToMap(this.options),
+						settings: this.settings,
+						default: this.defaultValue,
+						required: this.required
+					},
+					setError: setUniqueError
+				});
+			},
+			onCancel() {
+				this.$emit('cancel');
+			},
+			convertMapToOptionsModelArray(options) {
+				const models = [];
+				Object.values(options).forEach(value => {
+					if (main_core.Type.isStringFilled(value)) {
+						models.push({
+							name: value
+						});
+					}
+				});
+				return models;
+			},
+			convertOptionModelsToMap(models) {
+				const options = {};
+				for (const model of models) {
+					if (main_core.Type.isStringFilled(model.name)) {
+						options[model.name] = model.name;
+					}
+				}
+				return options;
+			},
+			resetUnsupportedType() {
+				const types = this.constantConfigurationList.map(constant => constant.type);
+				if (!types.includes(this.constantType)) {
+					this.constantType = types[0];
+				}
+			}
+		},
+		template: `
+		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
+			<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
+				<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<div class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_NAME_VALUE') }}
+							</div>
+						</div>
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="name"
+								class="ui-ctl-element"
+								:class="{ '--error': errors.name !== '' }"
+								type="text"
+								@blur="validateName"
+							/>
+						</div>
+						<div
+							v-if="errors.name"
+							class="ui-ctl-label-text-error">
+							{{ errors.name }}
+						</div>
+					</div>
+
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<div class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ID_LABEL') }}
+							</div>
+						</div>
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="id"
+								class="ui-ctl-element"
+								:class="{ '--error': errors.id !== '' }"
+								type="text"
+								:disabled="!isCreation"
+								@blur="validateId"
+							/>
+						</div>
+						<div
+							v-if="errors.id"
+							class="ui-ctl-label-text-error"
+						>
+							{{ errors.id }}
+						</div>
+					</div>
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TYPE_LABEL') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ui-ctl-sm">
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+							<select
+								v-model="constantType"
+								class="ui-ctl-element"
+							>
+								<option
+									v-for="constantConfiguration in constantConfigurationList"
+									:key="constantConfiguration.type"
+									:value="constantConfiguration.type"
+								>
+									{{ constantConfiguration.title }}
+								</option>
+							</select>
+						</div>
+					</div>
+					<template v-if="constantSettingsComponent">
+						<component
+							:is="constantSettingsComponent"
+							:constantConfiguration="currentConstantConfiguration"
+							v-model="settings"
+						/>
+					</template>
+					<div class="ui-ctl-container">
+						<label class="ui-ctl ui-ctl-checkbox ui-ctl-xs">
+							<input
+								v-model="multiple"
+								type="checkbox"
+								class="ui-ctl-element"
+							/>
+							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
+						</label>
+						<label class="ui-ctl ui-ctl-checkbox ui-ctl-xs">
+							<input
+								v-model="required"
+								type="checkbox"
+								class="ui-ctl-element"
+							/>
+							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
+						</label>
+					</div>
+					<div class="ui-ctl-container" v-if="!isEntitySelector">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="defaultValue"
+								class="ui-ctl-element"
+								type="text"
+							/>
+						</div>
+					</div>
+
+					<template v-if="isSelectType">
+						<div
+							v-for="(option, index) in options"
+							class="ui-ctl-container"
+						>
+							<div class="ui-ctl-top">
+								<div class="ui-ctl-title">
+									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
+								</div>
+							</div>
+							<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+								<div
+									class="ui-ctl-after ui-ctl-icon-clear"
+									@click="onDeleteOption(index)"
+								>
+								</div>
+								<input
+									v-model="option.name"
+									class="ui-ctl-element"
+									:class="{ '--error': errors.options[index] !== '' }"
+									type="text"
+									@blur="validateOption(index)"
+								/>
+							</div>
+							<div
+								v-if="errors.options[index]"
+								class="ui-ctl-label-text-error">
+								{{ errors.options[index] }}
+							</div>
+						</div>
+					</template>
+
+					<div
+						v-if="isSelectType"
+						class="ui-ctl-container"
+					>
+						<button
+							class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps"
+							type="button"
+							@click="onAddOption"
+						>
+							<div class="ui-icon-set --plus-l"/>
+							<span class="ui-btn-text">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD_OPTION_BTN') }}
+							</span>
+						</button>
+					</div>
+
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DESCRIPTION') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-textarea ui-ctl-w100 ui-ctl-sm">
+							<textarea
+								v-model="description"
+								class="ui-ctl-element"
+								type="text"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="bizproc-setuptemplateactivity-edit-constant-popup__footer">
+					<UiButton
+						:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
+						:style="AirButtonStyle.OUTLINE"
+						:size="ButtonSize.MEDIUM"
+						@click="onCancel"
+					/>
+					<UiButton
+						:text="submitButtonText"
+						:size="ButtonSize.MEDIUM"
+						@click="onSave"
+					/>
+				</div>
 			</div>
 		</div>
 	`
@@ -1824,12 +1766,6 @@ this.BX = this.BX || {};
 			PreviewApp,
 			EditConstantPopupForm
 		},
-		provide() {
-			return {
-				editSlider: ui_vue3.computed(() => this.sliderInstance),
-				initEditSlider: () => this.initEditSlider()
-			};
-		},
 		props: {
 			serializedBlocks: {
 				type: [String, null],
@@ -1850,10 +1786,9 @@ this.BX = this.BX || {};
 			return {
 				blocks: [],
 				isShowPreview: false,
-				sliderInstance: null,
 				initialConstantIds: new Set(),
-				currentBlockIndex: null,
-				createdConstant: null
+				editingConstant: null,
+				isEditingFormChanged: false
 			};
 		},
 		computed: {
@@ -1900,88 +1835,141 @@ this.BX = this.BX || {};
 		mounted() {
 			this.blocks = JSON.parse(this.serializedBlocks) ?? [];
 			this.initialConstantIds = new Set(this.localConstantIds);
-			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
 			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
 			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
 		},
 		beforeUnmount() {
 			this.isShowPreview = false;
-			main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
 			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
-			this.sliderInstance?.destroy();
-			this.sliderInstance = null;
 		},
 		unmounted() {
 			main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
 		},
 		methods: {
-			initEditSlider() {
-				if (this.sliderInstance) {
-					return this.sliderInstance;
-				}
-				this.sliderInstance = ui_vue3.markRaw(new main_sidepanel.Slider('', {
-					contentCallback: () => this.$refs.bizprocSetupTemplateActivityPopup,
-					width: 596,
-					outerBoundary: {
-						right: 8,
-						top: 64
-					},
-					startPosition: 'bottom',
-					overlayClassName: 'bizproc-setuptemplateactivity-app__overlay'
-				}));
-				return this.sliderInstance;
-			},
 			onAddBlock() {
 				this.blocks.push(makeEmptyBlock());
 			},
 			onAddItem(blockIndex, item) {
 				this.blocks[blockIndex].items.push(item);
 			},
-			onCreateConstant(blockIndex, item) {
-				this.currentBlockIndex = blockIndex;
-				this.createdConstant = {
-					...item
-				};
-				this.initEditSlider().open();
+			canSwitchEditingForm() {
+				if (this.editingConstant === null || !this.isEditingFormChanged) {
+					return Promise.resolve(true);
+				}
+				return this.showConfirmDiscard();
 			},
-			onSaveConstant(blockIndex, item) {
-				const newId = item.propertyValues.id;
-				const setError = item.setError;
-				if (this.allConstantIds.has(newId)) {
+			async onCreateConstant(blockIndex, item) {
+				if (!(await this.canSwitchEditingForm())) {
+					return;
+				}
+				this.isEditingFormChanged = false;
+				this.editingConstant = {
+					blockIndex,
+					itemIndex: null,
+					item: {
+						...item
+					},
+					mode: EDITING_MODES.CREATE
+				};
+			},
+			async onEditConstant(blockIndex, itemIndex) {
+				if (!(await this.canSwitchEditingForm())) {
+					return;
+				}
+				this.isEditingFormChanged = false;
+				this.editingConstant = {
+					blockIndex,
+					itemIndex,
+					item: {
+						...this.blocks[blockIndex].items[itemIndex]
+					},
+					mode: EDITING_MODES.EDIT
+				};
+			},
+			showConfirmDiscard() {
+				return new Promise(resolve => {
+					const messageBox = new ui_dialogs_messagebox.MessageBox({
+						message: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_CONFIRM'),
+						buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+						okCaption: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_OK'),
+						cancelCaption: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_CANCEL'),
+						onOk: () => {
+							resolve(true);
+							messageBox.close();
+						},
+						onCancel: () => {
+							resolve(false);
+							messageBox.close();
+						}
+					});
+					messageBox.show();
+				});
+			},
+			onSaveEditingConstant(payload) {
+				if (!this.editingConstant) {
+					return;
+				}
+				const {
+					blockIndex,
+					itemIndex,
+					mode
+				} = this.editingConstant;
+				const newValues = payload.propertyValues;
+				const setError = payload.setError;
+				const currentItem = mode === EDITING_MODES.EDIT ? this.blocks[blockIndex].items[itemIndex] : null;
+				const newId = newValues.id;
+				if (newId && newId !== currentItem?.id && this.allConstantIds.has(newId)) {
 					setError();
 					return;
 				}
-				this.blocks[blockIndex].items.push(item.propertyValues);
-				this.currentBlockIndex = null;
-				this.createdConstant = null;
-				this.sliderInstance?.close();
+				if (mode === EDITING_MODES.CREATE) {
+					this.blocks[blockIndex].items.push(newValues);
+				} else {
+					this.blocks[blockIndex].items[itemIndex] = {
+						...currentItem,
+						...newValues
+					};
+				}
+				this.editingConstant = null;
 			},
-			onCancelConstant() {
-				this.currentBlockIndex = null;
-				this.createdConstant = null;
+			onCancelEditingConstant() {
+				this.editingConstant = null;
 			},
 			onDeleteBlock(blockIndex) {
+				if (this.editingConstant?.blockIndex === blockIndex) {
+					this.editingConstant = null;
+				} else if (this.editingConstant?.blockIndex > blockIndex) {
+					this.editingConstant = {
+						...this.editingConstant,
+						blockIndex: this.editingConstant.blockIndex - 1
+					};
+				}
 				this.blocks.splice(blockIndex, 1);
 			},
 			onDeleteItem(blockIndex, itemIndex) {
+				if (this.editingConstant?.blockIndex === blockIndex && this.editingConstant.itemIndex === itemIndex) {
+					this.editingConstant = null;
+				} else if (this.editingConstant?.blockIndex === blockIndex && this.editingConstant.itemIndex > itemIndex) {
+					this.editingConstant = {
+						...this.editingConstant,
+						itemIndex: this.editingConstant.itemIndex - 1
+					};
+				}
 				this.blocks[blockIndex].items.splice(itemIndex, 1);
 			},
 			onUpdateItemProperty(blockIndex, itemIndex, payload) {
 				const currentItem = this.blocks[blockIndex].items[itemIndex];
 				const newValues = payload.propertyValues;
-				const setError = payload.setError;
-				const newId = newValues.id;
-				if (newId && newId !== currentItem.id && this.allConstantIds.has(newId)) {
-					setError();
-					return;
-				}
 				this.blocks[blockIndex].items[itemIndex] = {
 					...currentItem,
 					...newValues
 				};
-				if (this.sliderInstance?.isOpen()) {
-					this.sliderInstance.close();
-				}
+			},
+			isCreatingConstantInBlock(blockIndex) {
+				return this.editingConstant !== null && this.editingConstant.mode === EDITING_MODES.CREATE && this.editingConstant.blockIndex === blockIndex;
+			},
+			isEditingConstantUnderItem(blockIndex, itemIndex) {
+				return this.editingConstant !== null && this.editingConstant.mode === EDITING_MODES.EDIT && this.editingConstant.blockIndex === blockIndex && this.editingConstant.itemIndex === itemIndex;
 			},
 			onItemsReorder(blockIndex, newItems) {
 				this.blocks[blockIndex].items = newItems;
@@ -2086,7 +2074,30 @@ this.BX = this.BX || {};
 							:constantConfigurationList="constantConfigurationList"
 							@delete="onDeleteItem(blockIndex, itemIndex)"
 							@updateItemProperty="onUpdateItemProperty(blockIndex, itemIndex, $event)"
+							@edit="onEditConstant(blockIndex, itemIndex)"
 							@itemDragStart="onItemDragStart($event, blockIndex, itemIndex)"
+						/>
+					</template>
+					<template #after-item="{ itemIndex }">
+						<EditConstantPopupForm
+							v-if="isEditingConstantUnderItem(blockIndex, itemIndex)"
+							:item="editingConstant.item"
+							:constantConfigurationList="constantConfigurationList"
+							:isCreation="false"
+							@update:item="onSaveEditingConstant"
+							@update:changed="isEditingFormChanged = $event"
+							@cancel="onCancelEditingConstant"
+						/>
+					</template>
+					<template #before-footer>
+						<EditConstantPopupForm
+							v-if="isCreatingConstantInBlock(blockIndex)"
+							:item="editingConstant.item"
+							:constantConfigurationList="constantConfigurationList"
+							:isCreation="true"
+							@update:item="onSaveEditingConstant"
+							@update:changed="isEditingFormChanged = $event"
+							@cancel="onCancelEditingConstant"
 						/>
 					</template>
 					<template #footer>
@@ -2101,17 +2112,6 @@ this.BX = this.BX || {};
 			</div>
 		</div>
 
-		<div
-			class="bizproc-setuptemplateactivity-app__popup"
-			ref="bizprocSetupTemplateActivityPopup"
-		>
-			<div
-				id="bizproc-setuptemplateactivity-popup-content"
-				class="bizproc-setuptemplateactivity-app__popup-content"
-			>
-			</div>
-		</div>
-
 		<Teleport
 			to="#preview-panel"
 			:disabled="!isShowPreview"
@@ -2119,20 +2119,6 @@ this.BX = this.BX || {};
 			<PreviewApp
 				v-if="isShowPreview"
 				:blocks="preparedBlocks"
-			/>
-		</Teleport>
-
-		<Teleport
-			to="#bizproc-setuptemplateactivity-popup-content"
-			:disabled="!createdConstant"
-		>
-			<EditConstantPopupForm
-				v-if="createdConstant !== null"
-				:item="createdConstant"
-				:constantConfigurationList="constantConfigurationList"
-				@update:item="onSaveConstant(currentBlockIndex, $event)"
-				@cancel="onCancelConstant"
-				:isCreation="true"
 			/>
 		</Teleport>
 	`
@@ -2177,5 +2163,5 @@ this.BX = this.BX || {};
 
 	exports.SetupTemplateActivity = SetupTemplateActivity;
 
-})(this.BX.Bizproc = this.BX.Bizproc || {}, BX.Event, BX.Vue3, BX.SidePanel, BX.UI.IconSet, BX.UI.IconSet, BX, BX.UI.System.Menu, BX.Vue3.Components, BX.Bizproc);
+})(this.BX.Bizproc = this.BX.Bizproc || {}, BX.Event, BX.Vue3, BX.UI.Dialogs, BX.UI.IconSet, BX.UI.IconSet, BX, BX.UI.System.Menu, BX.Vue3.Components, BX.Bizproc);
 //# sourceMappingURL=setup-template-activity.bundle.js.map

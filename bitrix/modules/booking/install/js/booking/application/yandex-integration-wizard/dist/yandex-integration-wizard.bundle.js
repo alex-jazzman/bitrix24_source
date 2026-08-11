@@ -360,7 +360,8 @@ this.BX.Booking = this.BX.Booking || {};
 					description: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_DESCRIPTION'),
 					options: {
 						editMode: true,
-						catalogSkuEntityOptions: this.getCatalogSkuEntityOptions()
+						catalogSkuEntityOptions: this.getCatalogSkuEntityOptions(),
+						shortSlotsOnly: true
 					},
 					loadData: () => this.getResources(),
 					save: data => this.saveResources(data)
@@ -393,15 +394,17 @@ this.BX.Booking = this.BX.Booking || {};
 						skus: booking_lib_deepToRaw.deepToRaw(notConnected && resource.skusYandex.length === 0 ? resource.skus : resource.skusYandex)
 					};
 				});
-				await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
-				const mainResources = (this.$store.getters[`${booking_const.Model.Resources}/get`] || []).map(resource => {
+				const mainResources = await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources({
+					shortSlotsOnly: true
+				});
+				const mainResourcesWithoutSkus = mainResources.map(resource => {
 					return {
 						...resource,
 						skus: [],
 						skusYandex: []
 					};
 				});
-				return [...mainResources, ...resources];
+				return [...mainResourcesWithoutSkus, ...resources];
 			}
 		},
 		template: `

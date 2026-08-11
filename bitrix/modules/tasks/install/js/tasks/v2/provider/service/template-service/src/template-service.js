@@ -9,7 +9,7 @@ import { taskService, TaskMappers, type TagDto, type TaskDto } from 'tasks.v2.pr
 import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import { fileService } from 'tasks.v2.provider.service.file-service';
-import { subTasksService } from 'tasks.v2.provider.service.relation-service';
+import { subTasksService, relatedTasksService } from 'tasks.v2.provider.service.relation-service';
 import { userFieldsManager } from 'tasks.v2.component.fields.user-fields';
 import { type TaskModel } from 'tasks.v2.model.tasks';
 
@@ -249,6 +249,9 @@ export const templateService = new class
 				);
 			}
 
+			data.replicate = false;
+			data.replicateParams = null;
+
 			taskService.extractTask(data, false);
 
 			if (data.checklist?.length > 0)
@@ -292,14 +295,62 @@ export const templateService = new class
 		}
 	}
 
+	async addFromExistingTask(taskId: number): Promise<[number, ?Error]>
+	{
+		return this.#addTemplate(Endpoint.TemplateAddFromExistingTask, { task: { id: taskId } });
+	}
+
+	async addFromTaskEntity(task: TaskModel): Promise<[number, ?Error]>
+	{
+		const [id, error] = await this.#addTemplate(
+			Endpoint.TemplateAddFromTaskEntity,
+			{ task: TaskMappers.mapModelToDto(task) },
+		);
+
+		if (!error && task.checklist?.length > 0)
+		{
+			void checkListService.save(
+				id,
+				this.$store.getters[`${Model.CheckList}/getByIds`](task.checklist),
+			);
+		}
+
+		return [id, error];
+	}
+
+	async #addTemplate(endpoint: string, payload: TaskModel): Promise<[number, ?Error]>
+	{
+		try
+		{
+			const data = await apiClient.post(endpoint, payload);
+
+			data.id = idUtils.boxTemplate(data.id);
+
+			taskService.extractTask({ ...data, rights: mapRights(data.rights) });
+
+			EventEmitter.emit(EventName.TemplateAdded, {
+				template: taskService.getStoreTask(data.id),
+				initialTemplate: null,
+			});
+
+			if (data.containsRelatedTasks)
+			{
+				void relatedTasksService.list(data.id, true);
+			}
+
+			return [data.id, null];
+		}
+		catch (error)
+		{
+			console.error(endpoint, error);
+
+			return [0, new Error(error.errors?.[0]?.message)];
+		}
+	}
+
 	async update(id: string, fields: TaskModel): Promise<void>
 	{
 		const templateBefore = taskService.getStoreTask(id);
-
-		if (!taskService.hasChanges(templateBefore, fields))
-		{
-			return {};
-		}
 
 		taskService.updateStoreTask(id, fields);
 
@@ -308,10 +359,13 @@ export const templateService = new class
 			return {};
 		}
 
-		EventEmitter.emit(EventName.TemplateBeforeUpdate, {
-			template: taskService.getStoreTask(id),
-			fields: { id, ...fields },
-		});
+		if (taskService.hasChanges(templateBefore, fields))
+		{
+			EventEmitter.emit(EventName.TemplateBeforeUpdate, {
+				template: taskService.getStoreTask(id),
+				fields: { id, ...fields },
+			});
+		}
 
 		return this.#updateDebounced(id, fields, templateBefore);
 	}

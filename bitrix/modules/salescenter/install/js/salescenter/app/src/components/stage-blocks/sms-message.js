@@ -1,15 +1,22 @@
-import { Loc, ajax as Ajax } from 'main.core';
-import { Block } from 'salescenter.component.stage-block';
-import { StageMixin } from './stage-mixin';
-import { Error, SenderList, UserAvatar, MessageEdit, MessageView, MessageEditor, MessageControl } from 'salescenter.component.stage-block.sms-message';
-import { Manager } from 'salescenter.manager';
-import { SenderConfig } from 'salescenter.lib';
-import { UI } from 'ui.notification';
-import { StatusTypes as Status } from 'salescenter.component.stage-block';
+import { Dictionary } from 'crm.integration.analytics';
 import { Editor } from 'crm.messagesender.editor';
 import { Router } from 'crm.router';
-import { Dictionary } from 'crm.integration.analytics';
+import { ajax as Ajax, Loc } from 'main.core';
+import { Block, StatusTypes as Status } from 'salescenter.component.stage-block';
+import {
+	Error,
+	MessageControl,
+	MessageEdit,
+	MessageEditor,
+	MessageView,
+	SenderList,
+	UserAvatar,
+} from 'salescenter.component.stage-block.sms-message';
+import { SenderConfig } from 'salescenter.lib';
+import { Manager } from 'salescenter.manager';
+import { UI } from 'ui.notification';
 import { MessageMixin } from './message-mixin';
+import { StageMixin } from './stage-mixin';
 
 const TYPE_PHONE = 'phone';
 const TYPE_SENDER = 'sender';
@@ -102,7 +109,6 @@ const SmsMessage = {
 			smsSenderListComponentKey: 0,
 			messageSenderEditor: null,
 			showMessageSenderEditor: true,
-			templateError: false,
 			clientError: false,
 		};
 	},
@@ -249,15 +255,6 @@ const SmsMessage = {
 				newMessageData.fromId && newMessageData.senderId && newMessageData.senderCode,
 			);
 
-			if (newMessageData.senderCode === 'bitrix24')
-			{
-				this.setTemplateError(false);
-			}
-			else
-			{
-				this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
-			}
-
 			this.clientError = Boolean(
 				!newMessageData.entityId
 				|| !newMessageData.entityTypeId
@@ -267,7 +264,6 @@ const SmsMessage = {
 			this.$store.commit(
 				'orderCreation/setIsSenderSelected',
 				this.showMessageSenderEditor
-				&& !this.templateError
 				&& !this.clientError,
 			);
 		},
@@ -285,7 +281,14 @@ const SmsMessage = {
 	methods: {
 		initMessageSenderEditor()
 		{
-			this.messageSenderEditor = new Editor(this.messageSenderData);
+			const editorConfig = {
+				...this.messageSenderData,
+				message: {
+					...this.messageSenderData.message,
+					text: this.convertLegacyTemplateToBBCode(this.messageSenderData.message?.text ?? ''),
+				},
+			};
+			this.messageSenderEditor = new Editor(editorConfig);
 			this.messageSenderEditor.render().then(() => this.initMessageData()).catch(() => {});
 			this.messageSenderEditor.subscribe('onToChange', this.onToChangeHandler.bind(this));
 			this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
@@ -334,9 +337,9 @@ const SmsMessage = {
 			this.$store.dispatch(
 				'orderCreation/setMessageData',
 				{
-					entityId: to?.addressSource?.entityId,
-					entityTypeId: to?.addressSource?.entityTypeId,
-					phoneId: to?.address?.id,
+					entityId: to?.customData?.addressSource?.entityId,
+					entityTypeId: to?.customData?.addressSource?.entityTypeId,
+					phoneId: to?.id,
 				},
 			);
 		},
@@ -350,9 +353,9 @@ const SmsMessage = {
 				senderId: state.channel?.backend?.id,
 				senderCode: state.channel?.backend?.senderCode,
 				channelId: state.channel?.id,
-				entityId: state.to?.addressSource?.entityId,
-				entityTypeId: state.to?.addressSource?.entityTypeId,
-				phoneId: state.to?.address?.id,
+				entityId: state.to?.customData?.addressSource?.entityId,
+				entityTypeId: state.to?.customData?.addressSource?.entityTypeId,
+				phoneId: state.to?.id,
 			};
 			this.$store.dispatch('orderCreation/setMessageData', messageData);
 		},

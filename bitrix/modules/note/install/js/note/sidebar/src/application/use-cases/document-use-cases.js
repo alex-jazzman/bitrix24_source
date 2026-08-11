@@ -1,5 +1,6 @@
 import { Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { NoteAnalytics } from 'note.analytics';
 import { NoteEvent } from '../../services/note-events';
 import { openPickCollectionPopup } from '../../components/pick-collection-popup';
 import type { SidebarDocument } from '../../type';
@@ -352,6 +353,7 @@ export class DocumentUseCases
 		try
 		{
 			await this.#api.updateDocument(Number(docId), newTitle);
+			NoteAnalytics.documentUpdated(true);
 			this.#store.actions.updateDocumentLocal(
 				Number(docId),
 				{ title: newTitle },
@@ -363,6 +365,7 @@ export class DocumentUseCases
 		}
 		catch (error)
 		{
+			NoteAnalytics.documentUpdated(false);
 			this.#onFail(error);
 		}
 	}

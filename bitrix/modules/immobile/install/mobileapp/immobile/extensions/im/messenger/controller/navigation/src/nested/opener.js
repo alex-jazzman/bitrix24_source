@@ -24,9 +24,10 @@ jn.define('im/messenger/controller/navigation/src/nested/opener', (require, expo
 		/**
 		 * Opens the nested tab widget for the given parent chat.
 		 * @param {number} chatId — chatId of the parent chat
+		 * @param code
 		 * @returns {Promise<{widget: object, title: string}>}
 		 */
-		async open(chatId)
+		async open(chatId, code)
 		{
 			const store = serviceLocator.get('core').getStore();
 			const dialog = store.getters['dialoguesModel/getByChatId'](chatId);
@@ -55,6 +56,7 @@ jn.define('im/messenger/controller/navigation/src/nested/opener', (require, expo
 					type: 'common',
 					avatar,
 				},
+				code,
 				rightButtons: rightButtonsStub,
 				grabTitle: false,
 				tabs: {

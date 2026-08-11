@@ -13,6 +13,7 @@ export const PopupType = Object.freeze({
 	createChatManageUsersDeleteMenu: 'im-content-create-chat-manage-users-delete',
 	createChatManageUiMenu: 'im-content-create-chat-manage-ui',
 	createChatManageMessagesMenu: 'im-content-create-chat-can-post',
+	createChatManageGuestInvitesMenu: 'im-content-create-chat-manage-guest-invites',
 	messageBaseFileMenu: 'im-message-base-file-context-menu',
 	desktopItemMenu: 'im-navigation-desktop-item-context-menu',
 	messageHistoryLimit: 'im-message-history-limit-popup',

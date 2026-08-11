@@ -1,0 +1,24 @@
+.bx-imol-marketplace-links-popup__container {
+	padding: 12px 0;
+}
+
+.bx-imol-marketplace-links-popup__list {
+	display: flex;
+	flex-direction: column;
+}
+
+.bx-imol-marketplace-links-popup__item {
+	padding: 8px 20px;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-palette-black-base);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transition: background-color 200ms ease;
+}
+
+.bx-imol-marketplace-links-popup__item:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}

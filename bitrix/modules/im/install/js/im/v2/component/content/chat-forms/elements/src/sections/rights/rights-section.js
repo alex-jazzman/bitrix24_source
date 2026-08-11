@@ -1,11 +1,12 @@
 import { UserRole, PopupType, ChatType, ChatActionGroup } from 'im.v2.const';
+import { type DropdownItem } from 'im.v2.component.elements.dropdown';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CreateChatSection } from '../section/section';
 import { RoleSelector } from './components/role-selector';
-import { UserSelector } from './components/user-selector/user-selector';
-import { OwnerSelector } from './components/user-selector/owner';
 import { ManagersSelector } from './components/user-selector/managers';
-import { rightsDropdownItems } from './const/dropdown-items';
+import { OwnerSelector } from './components/user-selector/owner';
+import { UserSelector } from './components/user-selector/user-selector';
 import {
 	BlocksByChatType,
 	CanAddUsersCaptionByChatType,
@@ -18,8 +19,7 @@ import {
 	ManageUiHintByChatType,
 	SendMessagesHintByChatType,
 } from './const/config';
-
-import type { DropdownItem } from 'im.v2.component.elements.dropdown';
+import { getDropdownItemsWithDefault } from './helpers/get-dropdown-items-with-default.js';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -52,30 +52,53 @@ export const RightsSection = {
 			type: String,
 			required: true,
 		},
+		manageGuestInvites: {
+			type: String,
+			default: '',
+		},
 		chatType: {
 			type: String,
 			default: ChatType.chat,
 		},
 	},
-	emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'manageMessagesChange'],
-	computed:
-	{
+	emits: ['ownerChange', 'managersChange', 'rightChange'],
+	computed: {
 		PopupType: () => PopupType,
 		manageUsersAddItems(): DropdownItem[]
 		{
-			return this.prepareDropdownItems(this.manageUsersAdd);
+			return getDropdownItemsWithDefault(this.manageUsersAdd);
 		},
 		manageUsersDeleteItems(): DropdownItem[]
 		{
-			return this.prepareDropdownItems(this.manageUsersDelete);
+			return getDropdownItemsWithDefault(this.manageUsersDelete);
 		},
 		manageUiItems(): DropdownItem[]
 		{
-			return this.prepareDropdownItems(this.manageUi);
+			return getDropdownItemsWithDefault(this.manageUi);
 		},
 		manageMessagesItems(): DropdownItem[]
 		{
-			return this.prepareDropdownItems(this.manageMessages);
+			return getDropdownItemsWithDefault(this.manageMessages);
+		},
+		manageGuestInvitesItems(): DropdownItem[]
+		{
+			return getDropdownItemsWithDefault(this.manageGuestInvites);
+		},
+		showManageGuestInvitesBlock(): boolean
+		{
+			if (!FeatureManager.isFeatureAvailable(Feature.isChatWithGuestsAvailable))
+			{
+				return false;
+			}
+
+			if (!this.manageGuestInvites)
+			{
+				return false;
+			}
+
+			const blocksByType = BlocksByChatType[this.chatType] ?? BlocksByChatType.default;
+
+			return blocksByType.has(ChatActionGroup.manageGuestInvites);
 		},
 		showManageUiBlock(): boolean
 		{
@@ -120,17 +143,7 @@ export const RightsSection = {
 			return SendMessagesHintByChatType[this.chatType] ?? SendMessagesHintByChatType.default;
 		},
 	},
-	methods:
-	{
-		prepareDropdownItems(defaultValue: UserRoleItem): DropdownItem[]
-		{
-			return rightsDropdownItems.map((item) => {
-				return {
-					...item,
-					default: item.value === defaultValue,
-				};
-			});
-		},
+	methods: {
 		onOwnerChange(ownerId: number)
 		{
 			this.$emit('ownerChange', ownerId);
@@ -139,21 +152,9 @@ export const RightsSection = {
 		{
 			this.$emit('managersChange', managerIds);
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		emitRight(name: string, value: UserRoleItem)
 		{
-			this.$emit('manageUsersAddChange', newValue);
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.$emit('manageUsersDeleteChange', newValue);
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.$emit('manageUiChange', newValue);
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.$emit('manageMessagesChange', newValue);
+			this.$emit('rightChange', { name, value });
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -173,14 +174,22 @@ export const RightsSection = {
 				:hintText="addUsersHint"
 				:dropdownId="PopupType.createChatManageUsersAddMenu"
 				:dropdownItems="manageUsersAddItems"
-				@itemChange="onManageUsersAddChange"
+				@itemChange="emitRight('manageUsersAdd', $event)"
+			/>
+			<RoleSelector
+				v-if="showManageGuestInvitesBlock"
+				:title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_GUEST_INVITES')"
+				:hintText="loc('IM_CREATE_CHAT_MANAGE_GUEST_INVITES_HINT')"
+				:dropdownId="PopupType.createChatManageGuestInvitesMenu"
+				:dropdownItems="manageGuestInvitesItems"
+				@itemChange="emitRight('manageGuestInvites', $event)"
 			/>
 			<RoleSelector
 				:title="canKickUsersCaption"
 				:hintText="deleteUsersHint"
 				:dropdownId="PopupType.createChatManageUsersDeleteMenu"
 				:dropdownItems="manageUsersDeleteItems"
-				@itemChange="onManageUsersDeleteChange"
+				@itemChange="emitRight('manageUsersDelete', $event)"
 			/>
 			<RoleSelector
 				v-if="showManageUiBlock"
@@ -188,14 +197,14 @@ export const RightsSection = {
 				:hintText="manageUiHint"
 				:dropdownId="PopupType.createChatManageUiMenu"
 				:dropdownItems="manageUiItems"
-				@itemChange="onManageUiChange"
+				@itemChange="emitRight('manageUi', $event)"
 			/>
 			<RoleSelector
 				:title="canSendCaption"
 				:hintText="sendMessagesHint"
 				:dropdownId="PopupType.createChatManageMessagesMenu"
 				:dropdownItems="manageMessagesItems"
-				@itemChange="onManageMessagesChange"
+				@itemChange="emitRight('manageMessages', $event)"
 			/>
 		</CreateChatSection>
 	`,

@@ -7,6 +7,7 @@ $MESS["BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_BUTTON_CANCEL"] = "Cancel";
 $MESS["BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_BUTTON_OK"] = "Yes";
 $MESS["BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_CONFIRM_MESSAGE"] = "Are you sure you want to delete this agent? It will be deleted permanently along with its settings.";
 $MESS["BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_CONFIRM_TITLE"] = "Delete AI agent";
+$MESS["BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_DELETE_CHATBOTS_LABEL"] = "Also delete chat bots created by this agent";
 $MESS["BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_MESSAGE"] = "Are you sure you want to delete these agents? They will be deleted permanently along with their settings.";
 $MESS["BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_TITLE"] = "Delete AI agents";
 $MESS["BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE"] = "Agent has been restarted.";

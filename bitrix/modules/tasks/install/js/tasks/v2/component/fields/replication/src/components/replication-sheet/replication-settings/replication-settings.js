@@ -1,34 +1,46 @@
+import { InputSize } from 'ui.system.input.vue';
 import { TextMd } from 'ui.system.typography.vue';
 
-import { ReplicationPeriod } from 'tasks.v2.const';
-import { UiTabs } from 'tasks.v2.component.elements.ui-tabs';
+import { UiSelect } from 'tasks.v2.component.elements.select';
+import type { Item as SelectItem, MenuOptions } from 'tasks.v2.component.elements.select';
+import { ReplicationPeriod, ReplicationMonthlyType } from 'tasks.v2.const';
 import { ReplicateCreator } from 'tasks.v2.provider.service.task-service';
-import type { Tab } from 'tasks.v2.component.elements.ui-tabs';
 import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
 
-import { ReplicationSettingsDay } from './replication-settings-day/replication-settings-day';
-import { ReplicationSettingsWeek } from './replication-settings-week/replication-settings-week';
+import { ReplicationInterval } from './interval/interval';
 import { ReplicationSettingsMonth } from './replication-settings-month/replication-settings-month';
+import { ReplicationSettingsWeek } from './replication-settings-week/replication-settings-week';
 import { ReplicationSettingsYear } from './replication-settings-year/replication-settings-year';
+
 import './replication-settings.css';
 
 type Period = $Values<typeof ReplicationPeriod>;
+
+type PeriodSelectItem = SelectItem & {
+	component: Object,
+};
 
 // @vue/component
 export const ReplicationSettings = {
 	name: 'ReplicationSettings',
 	components: {
 		TextMd,
-		UiTabs,
-		ReplicationSettingsDay,
-		ReplicationSettingsWeek,
+		UiSelect,
+		ReplicationInterval,
 		ReplicationSettingsMonth,
+		ReplicationSettingsWeek,
 		ReplicationSettingsYear,
 	},
 	inject: {
 		replicateParams: {},
 	},
 	emits: ['update'],
+	setup(): { InputSize: typeof InputSize }
+	{
+		return {
+			InputSize,
+		};
+	},
 	computed: {
 		period: {
 			get(): Period
@@ -37,12 +49,64 @@ export const ReplicationSettings = {
 			},
 			set(period: Period): void
 			{
-				this.$emit('update', {
+				this.update({
 					period,
 					...this.getEmptyPrevTabData(this.replicateParams.period),
 					...this.getDefaultTabData(period),
 				});
 			},
+		},
+		interval: {
+			get(): number
+			{
+				switch (this.period)
+				{
+					case ReplicationPeriod.Daily:
+						return this.replicateParams.everyDay || 1;
+					case ReplicationPeriod.Weekly:
+						return this.replicateParams.everyWeek || 1;
+					case ReplicationPeriod.Monthly:
+						return (
+							this.replicateParams.monthlyType === ReplicationMonthlyType.Absolute
+								? this.replicateParams.monthlyMonthNum1
+								: this.replicateParams.monthlyMonthNum2
+						) || 1;
+					default:
+						return 1;
+				}
+			},
+			set(value: number): void
+			{
+				switch (this.period)
+				{
+					case ReplicationPeriod.Daily:
+						this.update({ everyDay: value });
+						break;
+					case ReplicationPeriod.Weekly:
+						this.update({ everyWeek: value });
+						break;
+					case ReplicationPeriod.Monthly:
+						if (this.replicateParams.monthlyType === ReplicationMonthlyType.Absolute)
+						{
+							this.update({ monthlyMonthNum1: value });
+						}
+						else
+						{
+							this.update({ monthlyMonthNum2: value });
+						}
+						break;
+					default:
+						break;
+				}
+			},
+		},
+		selectWidth(): number
+		{
+			return 160;
+		},
+		showInterval(): boolean
+		{
+			return this.period !== ReplicationPeriod.Yearly;
 		},
 		title(): string
 		{
@@ -50,13 +114,13 @@ export const ReplicationSettings = {
 				? this.loc('TASKS_V2_REPLICATION_SETTINGS_TITLE_ALT')
 				: this.loc('TASKS_V2_REPLICATION_SETTINGS_TITLE');
 		},
-		tabs(): Tab<Period>[]
+		items(): PeriodSelectItem[]
 		{
 			return [
 				{
 					id: ReplicationPeriod.Daily,
 					title: this.loc('TASKS_V2_REPLICATION_SETTINGS_TAB_DAY'),
-					component: ReplicationSettingsDay,
+					component: null,
 				},
 				{
 					id: ReplicationPeriod.Weekly,
@@ -75,8 +139,38 @@ export const ReplicationSettings = {
 				},
 			];
 		},
+		item(): PeriodSelectItem
+		{
+			return this.items.find(({ id }) => id === this.replicateParams.period) ?? this.items[0];
+		},
+		menuOptions(): MenuOptions
+		{
+			return {
+				width: this.selectWidth,
+			};
+		},
 	},
 	methods: {
+		update(params: Partial<TaskReplicateParams>): void
+		{
+			this.$emit('update', params);
+		},
+		onSelectItem(selectedItem: PeriodSelectItem): void
+		{
+			const prevPeriod = this.replicateParams.period;
+			const newPeriod = selectedItem.id;
+
+			if (prevPeriod === newPeriod)
+			{
+				return;
+			}
+
+			this.update({
+				period: newPeriod,
+				...this.getEmptyPrevTabData(prevPeriod),
+				...this.getDefaultTabData(newPeriod),
+			});
+		},
 		getEmptyPrevTabData(prevPeriod: Period): Partial<TaskReplicateParams>
 		{
 			switch (prevPeriod)
@@ -111,24 +205,31 @@ export const ReplicationSettings = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-section">
-			<TextMd tag="div" className="tasks-field-replication-row">
-				<span class="tasks-field-replication-secondary">{{ title }}</span>
-			</TextMd>
-			<div class="tasks-field-replication-sheet-replication-settings-content">
-				<UiTabs
-					v-model="period"
-					:tabs
-				>
-					<template v-slot="{ activeTab }">
-						<component
-							v-if="activeTab"
-							:is="activeTab.component"
-							@update="$emit('update', $event)"
-						/>
-					</template>
-				</UiTabs>
+		<div class="tasks-field-replication-settings">
+			<div class="tasks-field-replication-repeat-select">
+				<TextMd tag="div" className="tasks-field-replication-secondary">
+					{{ title }}
+				</TextMd>
+				<ReplicationInterval
+					v-if="showInterval"
+					v-model:interval="interval"
+					:period="period"
+				/>
+				<div class="tasks-field-replication-period-select">
+					<UiSelect
+						:item="item"
+						:items="items"
+						:size="InputSize.Lg"
+						:style="{ width: selectWidth }"
+						:menuOptions="menuOptions"
+						@update:item="onSelectItem"
+					/>
+				</div>
 			</div>
+			<component
+				:is="item.component"
+				@update="$emit('update', $event)"
+			/>
 		</div>
 	`,
 };

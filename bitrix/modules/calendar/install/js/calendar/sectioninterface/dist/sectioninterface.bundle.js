@@ -3,13 +3,11 @@ this.BX = this.BX || {};
 (function (exports, calendar_util, calendar_sync_interface, main_core, main_core_events, main_popup, ui_infoHelper, ui_entitySelector, calendar_sectionmanager, ui_dialogs_messagebox, ui_buttons) {
 	'use strict';
 
-	var _templateObject$4, _templateObject2$4, _templateObject3$3, _templateObject4$2;
 	class EditForm extends main_core_events.EventEmitter {
-		constructor() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		DOM = {};
+		isCreated = false;
+		constructor(options = {}) {
 			super();
-			babelHelpers.defineProperty(this, "DOM", {});
-			babelHelpers.defineProperty(this, "isCreated", false);
 			this.setEventNamespace('BX.Calendar.SectionInterface.EditForm');
 			this.DOM.outerWrap = options.wrap;
 			this.sectionAccessTasks = options.sectionAccessTasks;
@@ -19,8 +17,7 @@ this.BX = this.BX || {};
 			this.calendarContext = options.calendarContext;
 			this.keyHandlerBinded = this.keyHandler.bind(this);
 		}
-		show() {
-			let params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		show(params = {}) {
 			this.section = params.section;
 			this.create();
 			this.showAccess = params.showAccess !== false;
@@ -255,11 +252,10 @@ this.BX = this.BX || {};
 			}
 		}
 		showFullPicker() {
-			var _this$fullColorPicker;
 			if (this.simpleColorPopup) {
 				this.simpleColorPopup.close();
 			}
-			if (!this.fullColorPicker || (_this$fullColorPicker = this.fullColorPicker.getPopupWindow()) !== null && _this$fullColorPicker !== void 0 && _this$fullColorPicker.isDestroyed()) {
+			if (!this.fullColorPicker || this.fullColorPicker.getPopupWindow()?.isDestroyed()) {
 				this.fullColorPicker = new BX.ColorPicker({
 					bindElement: this.DOM.colorContWrap,
 					onColorSelected: BX.delegate(function (color) {
@@ -335,8 +331,21 @@ this.BX = this.BX || {};
 			});
 		}
 		buildAccessController() {
-			this.DOM.accessLink = this.DOM.optionsWrap.appendChild(main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-new-calendar-option-more\">", "</div>"])), main_core.Loc.getMessage('EC_SEC_SLIDER_ACCESS')));
-			this.DOM.accessWrap = this.DOM.formFieldsWrap.appendChild(main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-access-container\">\n\t\t\t\t\t<div class=\"calendar-list-slider-access-inner-wrap\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"calendar-list-slider-new-calendar-options-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>"])), this.DOM.accessTable = main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<table class=\"calendar-section-slider-access-table\"></table>\n\t\t\t\t\t\t"]))), this.DOM.accessButton = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-new-calendar-option-add\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>"])), main_core.Loc.getMessage('EC_SEC_SLIDER_ACCESS_ADD'))));
+			this.DOM.accessLink = this.DOM.optionsWrap.appendChild(main_core.Tag.render`<div class="calendar-list-slider-new-calendar-option-more">${main_core.Loc.getMessage('EC_SEC_SLIDER_ACCESS')}</div>`);
+			this.DOM.accessWrap = this.DOM.formFieldsWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-access-container">
+					<div class="calendar-list-slider-access-inner-wrap">
+						${this.DOM.accessTable = main_core.Tag.render`
+							<table class="calendar-section-slider-access-table"></table>
+						`}
+					</div>
+					<div class="calendar-list-slider-new-calendar-options-container">
+						${this.DOM.accessButton = main_core.Tag.render`
+							<span class="calendar-list-slider-new-calendar-option-add">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_ACCESS_ADD')}
+							</span>`}
+					</div>
+				</div>`);
 			this.accessControls = {};
 			this.accessTasks = this.sectionAccessTasks;
 			main_core.Event.bind(this.DOM.accessLink, 'click', () => {
@@ -567,21 +576,18 @@ this.BX = this.BX || {};
 		}
 	}
 
-	var _templateObject$3, _templateObject2$3, _templateObject3$2, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1;
-
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 	class TrackingUsersForm {
-		constructor() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-			babelHelpers.defineProperty(this, "DOM", {});
-			babelHelpers.defineProperty(this, "isCreated", false);
+		DOM = {};
+		isCreated = false;
+		constructor(options = {}) {
 			this.interfaceType = 'users';
 			this.DOM.outerWrap = options.wrap;
 			this.trackingUsers = options.trackingUsers || [];
 			this.trackingUserIdList = this.trackingUsers.map(item => parseInt(item.ID, 10));
 			this.trackingIdList = [];
 			this.CHECKED_CLASS = 'calendar-list-slider-item-checkbox-checked';
-			this.selectorId = "add-tracking".concat(calendar_util.Util.getRandomInt());
+			this.selectorId = `add-tracking${calendar_util.Util.getRandomInt()}`;
 			this.closeCallback = options.closeCallback;
 			this.superposedSections = main_core.Type.isArray(options.superposedSections) ? options.superposedSections : [];
 			this.selected = {};
@@ -616,7 +622,7 @@ this.BX = this.BX || {};
 		}
 		create() {
 			if (!this.DOM.innerWrap) {
-				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`<div></div>`);
 			}
 			this.selectorWrap = this.DOM.innerWrap.appendChild(main_core.Dom.create('DIV', {
 				props: {
@@ -640,12 +646,23 @@ this.BX = this.BX || {};
 			this.userTagSelector.renderTo(this.selectorWrap);
 
 			// List of sections
-			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-sections-wrap\"></div>"]))));
+			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render`<div class="calendar-list-slider-sections-wrap"></div>`);
 			this.createButtons();
 			this.isCreated = true;
 		}
 		createButtons() {
-			this.DOM.innerWrap.appendChild(main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-btn-container\">\n\t\t\t\t\t<button \n\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-primary\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>", "</button>\n\t\t\t\t\t<button \n\t\t\t\t\t\tclass=\"ui-btn ui-btn-link\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>", "</button>\n\t\t\t\t</div>\n\t\t\t"])), this.save.bind(this), main_core.Loc.getMessage('EC_SEC_SLIDER_SAVE'), this.close.bind(this), main_core.Loc.getMessage('EC_SEC_SLIDER_CANCEL')));
+			this.DOM.innerWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-btn-container">
+					<button 
+						class="ui-btn ui-btn-sm ui-btn-primary"
+						onclick="${this.save.bind(this)}"
+					>${main_core.Loc.getMessage('EC_SEC_SLIDER_SAVE')}</button>
+					<button 
+						class="ui-btn ui-btn-link"
+						onclick="${this.close.bind(this)}"
+					>${main_core.Loc.getMessage('EC_SEC_SLIDER_CANCEL')}</button>
+				</div>
+			`);
 		}
 		handleUserSelectorChanges() {
 			const selectedItems = this.userTagSelector.getDialog().getSelectedItems();
@@ -735,31 +752,55 @@ this.BX = this.BX || {};
 					const sections = response.data.sections.filter(section => {
 						return parseInt(section.OWNER_ID, 10) === parseInt(user.ID, 10);
 					});
-					this.sectionsWrap.appendChild(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Text.encode(user.FORMATTED_NAME)));
+					this.sectionsWrap.appendChild(main_core.Tag.render`
+						<div>
+							<span class="calendar-list-slider-card-section-title-text">
+								${main_core.Text.encode(user.FORMATTED_NAME)}
+							</span>
+						</div>
+					`);
 					if (sections.length > 0) {
 						this.createSectionBlock({
 							sectionList: sections,
 							wrap: this.sectionsWrap
 						});
 					} else {
-						this.sectionsWrap.appendChild(main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_NO_SECTIONS')));
+						this.sectionsWrap.appendChild(main_core.Tag.render`
+							<div>
+								<span class="calendar-list-slider-card-section-title-text">
+									${main_core.Loc.getMessage('EC_SEC_SLIDER_NO_SECTIONS')}
+								</span>
+							</div>
+						`);
 					}
 				});
 			}, response => {
 				calendar_util.Util.displayError(response.errors);
 			});
 		}
-		createSectionBlock() {
-			let params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		createSectionBlock(params = {}) {
 			let result = false;
 			if (main_core.Type.isArray(params.sectionList) && params.sectionList.length && main_core.Type.isElementNode(params.wrap)) {
 				let listWrap;
-				params.wrap.appendChild(main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-widget-content\">\n\t\t\t\t\t<div class=\"calendar-list-slider-widget-content-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), listWrap = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["<ul class=\"calendar-list-slider-container\"></ul>"])))));
+				params.wrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-widget-content">
+					<div class="calendar-list-slider-widget-content-block">
+						${listWrap = main_core.Tag.render`<ul class="calendar-list-slider-container"></ul>`}
+					</div>
+				</div>
+			`);
 				main_core.Event.bind(listWrap, 'click', this.sectionClick.bind(this));
 				params.sectionList.forEach(section => {
 					const id = section.ID.toString();
 					let checkbox;
-					const li = listWrap.appendChild(main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<li class=\"calendar-list-slider-item\" data-bx-calendar-section=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"calendar-list-slider-item-name\">", "</div>\n\t\t\t\t\t</li>\n\t\t\t\t"])), id, checkbox = main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"calendar-list-slider-item-checkbox\" style=\"background: ", "\"></div>\n\t\t\t\t\t\t"])), section.COLOR), main_core.Text.encode(section.NAME)));
+					const li = listWrap.appendChild(main_core.Tag.render`
+					<li class="calendar-list-slider-item" data-bx-calendar-section="${id}">
+						${checkbox = main_core.Tag.render`
+							<div class="calendar-list-slider-item-checkbox" style="background: ${section.COLOR}"></div>
+						`}
+						<div class="calendar-list-slider-item-name">${main_core.Text.encode(section.NAME)}</div>
+					</li>
+				`);
 					this.sectionIndex[id] = {
 						item: li,
 						checkbox
@@ -772,7 +813,6 @@ this.BX = this.BX || {};
 			return result;
 		}
 		sectionClick(e) {
-			var _this$sectionIndex$id;
 			const target = calendar_util.Util.findTargetNode(e.target || e.srcElement, this.DOM.outerWrap);
 			if (!main_core.Type.isElementNode(target)) {
 				return;
@@ -781,7 +821,7 @@ this.BX = this.BX || {};
 			if (id === null) {
 				return;
 			}
-			if (!((_this$sectionIndex$id = this.sectionIndex[id]) !== null && _this$sectionIndex$id !== void 0 && _this$sectionIndex$id.checkbox)) {
+			if (!this.sectionIndex[id]?.checkbox) {
 				return;
 			}
 			if (main_core.Dom.hasClass(this.sectionIndex[id].checkbox, this.CHECKED_CLASS)) {
@@ -806,7 +846,7 @@ this.BX = this.BX || {};
 				if (main_core.Dom.hasClass(this.DOM.outerWrap, 'show')) {
 					if (this.DOM.outerWrap.offsetHeight - this.DOM.innerWrap.offsetHeight < 36) {
 						const fullHeight = parseInt(this.DOM.innerWrap.offsetHeight, 10) + 200;
-						this.DOM.outerWrap.style.maxHeight = "".concat(fullHeight, "px");
+						this.DOM.outerWrap.style.maxHeight = `${fullHeight}px`;
 					}
 				} else {
 					this.DOM.outerWrap.style.maxHeight = '';
@@ -815,12 +855,9 @@ this.BX = this.BX || {};
 		}
 	}
 
-	var _templateObject$2, _templateObject2$2;
-
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 	class TrackingGroupsForm extends TrackingUsersForm {
-		constructor() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		constructor(options = {}) {
 			super(options);
 			this.interfaceType = 'groups';
 			this.trackingIdList = options.trackingGroups || [];
@@ -828,7 +865,7 @@ this.BX = this.BX || {};
 		}
 		create() {
 			if (!this.DOM.innerWrap) {
-				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`<div></div>`);
 			}
 			this.selectorWrap = this.DOM.innerWrap.appendChild(main_core.Dom.create('DIV', {
 				props: {
@@ -850,7 +887,7 @@ this.BX = this.BX || {};
 			this.groupTagSelector.renderTo(this.selectorWrap);
 
 			// List of sections
-			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-sections-wrap\"></div>"]))));
+			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render`<div class="calendar-list-slider-sections-wrap"></div>`);
 			this.createButtons();
 			this.isCreated = true;
 		}
@@ -900,8 +937,7 @@ this.BX = this.BX || {};
 		getSelectedSections() {
 			const sections = [];
 			this.superposedSections.forEach(section => {
-				var _this$trackingIdList, _this$collabs;
-				if (this.interfaceType === 'groups' && section.type === 'group' && !((_this$trackingIdList = this.trackingIdList) !== null && _this$trackingIdList !== void 0 && _this$trackingIdList.includes(section.ownerId)) && !((_this$collabs = this.collabs) !== null && _this$collabs !== void 0 && _this$collabs.includes(section.ownerId))) {
+				if (this.interfaceType === 'groups' && section.type === 'group' && !this.trackingIdList?.includes(section.ownerId) && !this.collabs?.includes(section.ownerId)) {
 					return;
 				}
 				sections.push(parseInt(section.id, 10));
@@ -921,8 +957,7 @@ this.BX = this.BX || {};
 	}
 
 	class TrackingCollabsForm extends TrackingGroupsForm {
-		constructor() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		constructor(options = {}) {
 			super(options);
 			this.interfaceType = 'collabs';
 			this.trackingIdList = options.trackingCollabs || [];
@@ -931,8 +966,7 @@ this.BX = this.BX || {};
 		getSelectedSections() {
 			const sections = [];
 			this.superposedSections.forEach(section => {
-				var _this$trackingIdList, _this$groups;
-				if (this.interfaceType === 'collabs' && section.type === 'group' && !((_this$trackingIdList = this.trackingIdList) !== null && _this$trackingIdList !== void 0 && _this$trackingIdList.includes(section.ownerId)) && !((_this$groups = this.groups) !== null && _this$groups !== void 0 && _this$groups.includes(section.ownerId))) {
+				if (this.interfaceType === 'collabs' && section.type === 'group' && !this.trackingIdList?.includes(section.ownerId) && !this.groups?.includes(section.ownerId)) {
 					return;
 				}
 				sections.push(parseInt(section.id, 10));
@@ -961,12 +995,9 @@ this.BX = this.BX || {};
 		}
 	}
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1;
-
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 	class TrackingTypesForm extends TrackingUsersForm {
-		constructor() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		constructor(options = {}) {
 			super(options);
 			this.trackingGroups = options.trackingGroups || [];
 			this.interfaceType = 'company';
@@ -984,11 +1015,11 @@ this.BX = this.BX || {};
 		}
 		create() {
 			if (!this.DOM.innerWrap) {
-				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+				this.DOM.innerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`<div></div>`);
 			}
 
 			// List of sections
-			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-sections-wrap\"></div>"]))));
+			this.sectionsWrap = this.DOM.innerWrap.appendChild(main_core.Tag.render`<div class="calendar-list-slider-sections-wrap"></div>`);
 			this.createButtons();
 			this.isCreated = true;
 		}
@@ -1019,7 +1050,13 @@ this.BX = this.BX || {};
 						wrap: this.sectionsWrap
 					});
 				} else {
-					this.sectionsWrap.appendChild(main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_NO_SECTIONS')));
+					this.sectionsWrap.appendChild(main_core.Tag.render`
+						<div>
+							<span class="calendar-list-slider-card-section-title-text">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_NO_SECTIONS')}
+							</span>
+						</div>
+					`);
 				}
 			}, response => {
 				calendar_util.Util.displayError(response.errors);
@@ -1041,27 +1078,24 @@ this.BX = this.BX || {};
 		}
 	}
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject0, _templateObject1, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24;
-
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 	class SectionInterface extends main_core_events.EventEmitter {
-		constructor(_ref) {
-			var _this$calendarContext, _this$calendarContext2;
-			let calendarContext = _ref.calendarContext,
-				readonly = _ref.readonly,
-				sectionManager = _ref.sectionManager,
-				_ref$isCollabFeatureE = _ref.isCollabFeatureEnabled,
-				isCollabFeatureEnabled = _ref$isCollabFeatureE === void 0 ? false : _ref$isCollabFeatureE;
+		name = 'sectioninterface';
+		uid = null;
+		DOM = {};
+		SLIDER_WIDTH = 400;
+		SLIDER_DURATION = 80;
+		sliderId = 'calendar:section-slider';
+		denyClose = false;
+		deletedSectionsIds = [];
+		isCollabFeatureEnabled = false;
+		constructor({
+			calendarContext,
+			readonly,
+			sectionManager,
+			isCollabFeatureEnabled = false
+		}) {
 			super();
-			babelHelpers.defineProperty(this, "name", 'sectioninterface');
-			babelHelpers.defineProperty(this, "uid", null);
-			babelHelpers.defineProperty(this, "DOM", {});
-			babelHelpers.defineProperty(this, "SLIDER_WIDTH", 400);
-			babelHelpers.defineProperty(this, "SLIDER_DURATION", 80);
-			babelHelpers.defineProperty(this, "sliderId", 'calendar:section-slider');
-			babelHelpers.defineProperty(this, "denyClose", false);
-			babelHelpers.defineProperty(this, "deletedSectionsIds", []);
-			babelHelpers.defineProperty(this, "isCollabFeatureEnabled", false);
 			this.setEventNamespace('BX.Calendar.SectionInterface');
 			this.sectionManager = sectionManager;
 			this.calendarContext = calendarContext;
@@ -1070,12 +1104,11 @@ this.BX = this.BX || {};
 			this.deleteSectionHandlerBinded = this.deleteSectionHandler.bind(this);
 			this.refreshSectionListBinded = this.refreshSectionList.bind(this);
 			this.keyHandlerBinded = this.keyHandler.bind(this);
-			this.currentUserId = (_this$calendarContext = this.calendarContext) === null || _this$calendarContext === void 0 || (_this$calendarContext = _this$calendarContext.currentUser) === null || _this$calendarContext === void 0 ? void 0 : _this$calendarContext.id;
+			this.currentUserId = this.calendarContext?.currentUser?.id;
 			this.isCollabFeatureEnabled = isCollabFeatureEnabled;
-			this.isNewProjectsOn = (_this$calendarContext2 = this.calendarContext) === null || _this$calendarContext2 === void 0 ? void 0 : _this$calendarContext2.isNewProjectsOn;
+			this.isNewProjectsOn = this.calendarContext?.isNewProjectsOn;
 			if (this.calendarContext !== null && this.calendarContext.util.config.accessNames) {
-				var _this$calendarContext3;
-				calendar_util.Util.setAccessNames((_this$calendarContext3 = this.calendarContext) === null || _this$calendarContext3 === void 0 || (_this$calendarContext3 = _this$calendarContext3.util) === null || _this$calendarContext3 === void 0 || (_this$calendarContext3 = _this$calendarContext3.config) === null || _this$calendarContext3 === void 0 ? void 0 : _this$calendarContext3.accessNames);
+				calendar_util.Util.setAccessNames(this.calendarContext?.util?.config?.accessNames);
 			}
 		}
 		show() {
@@ -1152,22 +1185,70 @@ this.BX = this.BX || {};
 			}
 		}
 		createContent() {
-			this.DOM.outerWrap = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-wrap\"></div>\n\t\t"])));
-			this.DOM.titleWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-title-container\">\n\t\t\t\t\t<div class=\"calendar-list-slider-title\"> \n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('EC_SECTION_BUTTON')));
+			this.DOM.outerWrap = main_core.Tag.render`
+			<div class="calendar-list-slider-wrap"></div>
+		`;
+			this.DOM.titleWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-title-container">
+					<div class="calendar-list-slider-title"> 
+						${main_core.Loc.getMessage('EC_SECTION_BUTTON')}
+					</div>
+				</div>
+			`);
 			const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
 			if (calendarContext && !this.readonly) {
-				this.DOM.sectionFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-widget calendar-list-slider-form-wrap\">\n\t\t\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_NEW_SECTION')));
+				this.DOM.sectionFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
+						<div class="calendar-list-slider-card-widget-title">
+							<span class="calendar-list-slider-card-widget-title-text">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_NEW_SECTION')}
+							</span>
+						</div>
+					</div>
+				`);
 			}
 			if (calendarContext && !this.readonly && (!calendarContext.util.isUserCalendar() || calendarContext.util.userIsOwner())) {
 				// #1. Controls
 				this.createAddButton();
 
 				// #2. Forms
-				this.DOM.trackingGroupsFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-widget calendar-list-slider-form-wrap\">\n\t\t\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_GROUP')));
+				this.DOM.trackingGroupsFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
+						<div class="calendar-list-slider-card-widget-title">
+							<span class="calendar-list-slider-card-widget-title-text">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_GROUP')}
+							</span>
+						</div>
+					</div>
+				`);
 				const collabTitleText = this.isNewProjectsOn ? main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT') : main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB');
-				this.DOM.trackingCollabsFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-widget calendar-list-slider-form-wrap\">\n\t\t\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), collabTitleText));
-				this.DOM.trackingUsersFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-widget calendar-list-slider-form-wrap\">\n\t\t\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_USER')));
-				this.DOM.trackingTypesFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-widget calendar-list-slider-form-wrap\">\n\t\t\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COMP')));
+				this.DOM.trackingCollabsFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
+						<div class="calendar-list-slider-card-widget-title">
+							<span class="calendar-list-slider-card-widget-title-text">
+								${collabTitleText}
+							</span>
+						</div>
+					</div>
+				`);
+				this.DOM.trackingUsersFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
+						<div class="calendar-list-slider-card-widget-title">
+							<span class="calendar-list-slider-card-widget-title-text">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_USER')}
+							</span>
+						</div>
+					</div>
+				`);
+				this.DOM.trackingTypesFormWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-widget calendar-list-slider-form-wrap">
+						<div class="calendar-list-slider-card-widget-title">
+							<span class="calendar-list-slider-card-widget-title-text">
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COMP')}
+							</span>
+						</div>
+					</div>
+				`);
 			}
 
 			// #3. List of sections
@@ -1186,7 +1267,7 @@ this.BX = this.BX || {};
 			if (main_core.Type.isElementNode(this.DOM.sectonListOuterWrap)) {
 				main_core.Dom.remove(this.DOM.sectonListOuterWrap);
 			}
-			this.DOM.sectonListOuterWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+			this.DOM.sectonListOuterWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render`<div></div>`);
 			main_core.Event.bind(this.DOM.sectonListOuterWrap, 'click', this.sectionClickHandler.bind(this));
 			this.createLocalSectionsList();
 			this.createExternalSectionsList();
@@ -1218,7 +1299,6 @@ this.BX = this.BX || {};
 			});
 		}
 		getSectionListWrapForSection(section) {
-			var _sectionExternalConne;
 			let sectionExternalType = section.getExternalType();
 			if (section.isGoogle()) {
 				sectionExternalType = 'google';
@@ -1226,21 +1306,42 @@ this.BX = this.BX || {};
 			if (section.data.IS_EXCHANGE) {
 				sectionExternalType = 'exchange';
 			}
-			const sectionExternalConnection = calendar_sectionmanager.SectionManager.getSectionExternalConnection(section, sectionExternalType);
 			const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
-			section.data.CAL_DAV_CON = (sectionExternalConnection === null || sectionExternalConnection === void 0 || (_sectionExternalConne = sectionExternalConnection.addParams) === null || _sectionExternalConne === void 0 ? void 0 : _sectionExternalConne.id) || null;
+			const sectionExternalConnection = calendar_sectionmanager.SectionManager.getSectionExternalConnection(section, sectionExternalType, calendarContext);
+			section.data.CAL_DAV_CON = sectionExternalConnection?.addParams?.id || null;
 			const key = sectionExternalType + (sectionExternalConnection ? sectionExternalConnection.getId() : '-disconnected');
 			if (!main_core.Type.isElementNode(this.DOM.extSectionListWrap[key])) {
 				const sectionListWrap = this.DOM.sectonListOuterWrap.appendChild(this.getSectionListWrap(this.getExternalConnectionBlockTitle({
 					type: sectionExternalType,
 					connection: sectionExternalConnection
 				})));
-				sectionListWrap.appendChild(main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-widget-content\">\n\t\t\t\t\t<div class=\"calendar-list-slider-widget-content-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), this.DOM.extSectionListWrap[key] = main_core.Tag.render(_templateObject0 || (_templateObject0 = babelHelpers.taggedTemplateLiteral(["<ul class=\"calendar-list-slider-container\"/>"])))));
+				sectionListWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-widget-content">
+					<div class="calendar-list-slider-widget-content-block">
+						${this.DOM.extSectionListWrap[key] = main_core.Tag.render`<ul class="calendar-list-slider-container"/>`}
+					</div>
+				</div>
+			`);
 				if (!sectionExternalConnection && calendarContext && calendarContext.util.userIsOwner() && !section.isArchive() && (!section.isExchange() || !calendarContext.util.config.bExchange && section.isExchange())) {
-					sectionListWrap.querySelector('.calendar-list-slider-widget-content-block').appendChild(main_core.Tag.render(_templateObject1 || (_templateObject1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div data-bx-calendar-open-sync=\"Y\" class=\"calendar-list-slider-card-widget-bottom-button\">\n\t\t\t\t\t\t\t\t<span class=\"calendar-list-slider-link\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_ADJUST_SYNC')));
-					sectionListWrap.querySelector('.calendar-list-slider-card-widget-title').appendChild(main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text calendar-list-title-disabled\" >\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_SYNC_DISABLED')));
+					sectionListWrap.querySelector('.calendar-list-slider-widget-content-block').appendChild(main_core.Tag.render`
+							<div data-bx-calendar-open-sync="Y" class="calendar-list-slider-card-widget-bottom-button">
+								<span class="calendar-list-slider-link">
+									${main_core.Loc.getMessage('EC_SEC_SLIDER_ADJUST_SYNC')}
+								</span>
+							</div>
+						`);
+					sectionListWrap.querySelector('.calendar-list-slider-card-widget-title').appendChild(main_core.Tag.render`
+							<span class="calendar-list-slider-card-widget-title-text calendar-list-title-disabled" >
+								${main_core.Loc.getMessage('EC_SEC_SLIDER_SYNC_DISABLED')}
+							</span>
+						`);
 				} else if (section.isArchive()) {
-					const hintNode = sectionListWrap.querySelector('.calendar-list-slider-card-widget-title').appendChild(main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-question calendar-list-slider-archive-hint\"\n\t\t\t\t\t\tdata-hint=\"", "\">\n\t\t\t\t\t\t\t<i></i>\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_TYPE_ARCHIVE_HELPER')));
+					const hintNode = sectionListWrap.querySelector('.calendar-list-slider-card-widget-title').appendChild(main_core.Tag.render`
+						<div class="ui-icon ui-icon-common-question calendar-list-slider-archive-hint"
+						data-hint="${main_core.Loc.getMessage('EC_SEC_SLIDER_TYPE_ARCHIVE_HELPER')}">
+							<i></i>	
+						</div>
+					`);
 					if (main_core.Type.isDomNode(hintNode)) {
 						calendar_util.Util.initHintNode(hintNode);
 					}
@@ -1248,9 +1349,10 @@ this.BX = this.BX || {};
 			}
 			return this.DOM.extSectionListWrap[key];
 		}
-		getExternalConnectionBlockTitle(_ref2) {
-			let type = _ref2.type,
-				connection = _ref2.connection;
+		getExternalConnectionBlockTitle({
+			type,
+			connection
+		}) {
 			let title = '';
 			const connectionName = connection ? connection.getConnectionAccountName() || connection.getConnectionName() : null;
 			switch (type) {
@@ -1312,7 +1414,13 @@ this.BX = this.BX || {};
 				return section.isCompanyCalendar() && !section.belongsToView();
 			});
 			if (sections.length > 0) {
-				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-card-section-title\">\n\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_TITLE_COMP_CALENDAR')));
+				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-card-section-title">
+					<span class="calendar-list-slider-card-section-title-text">
+						${main_core.Loc.getMessage('EC_SEC_SLIDER_TITLE_COMP_CALENDAR')}
+					</span>
+				</div>
+			`);
 				this.createSectionsBlock({
 					wrap: this.DOM.localSectionListWrap,
 					sectionList: this.sliderSections.filter(section => {
@@ -1328,7 +1436,13 @@ this.BX = this.BX || {};
 				});
 				if (sections.length > 0) {
 					const calendarName = this.currentUserId === parseInt(user.ID, 10) ? main_core.Loc.getMessage('EC_SEC_SLIDER_MY_CALENDARS_LIST') : main_core.Text.encode(user.FORMATTED_NAME);
-					this.DOM.localSectionListWrap.appendChild(main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"calendar-list-slider-card-section-title\">\n\t\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), calendarName));
+					this.DOM.localSectionListWrap.appendChild(main_core.Tag.render`
+					<div class="calendar-list-slider-card-section-title">
+						<span class="calendar-list-slider-card-section-title-text">
+							${calendarName}
+						</span>
+					</div>
+				`);
 					this.createSectionsBlock({
 						wrap: this.DOM.localSectionListWrap,
 						sectionList: sections
@@ -1339,7 +1453,13 @@ this.BX = this.BX || {};
 		createGroupsSectionList() {
 			const sections = this.sliderSections.filter(section => !section.belongsToView() && section.type === 'group' && (!section.isCollab() || this.isNewProjectsOn));
 			if (sections.length > 0) {
-				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-card-section-title\">\n\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage(this.isNewProjectsOn ? 'EC_SEC_SLIDER_TITLE_PROJECT_CALENDAR' : 'EC_SEC_SLIDER_TITLE_GROUP_CALENDAR')));
+				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-card-section-title">
+					<span class="calendar-list-slider-card-section-title-text">
+						${main_core.Loc.getMessage(this.isNewProjectsOn ? 'EC_SEC_SLIDER_TITLE_PROJECT_CALENDAR' : 'EC_SEC_SLIDER_TITLE_GROUP_CALENDAR')}
+					</span>
+				</div>
+			`);
 				this.createSectionsBlock({
 					wrap: this.DOM.localSectionListWrap,
 					sectionList: sections
@@ -1352,7 +1472,13 @@ this.BX = this.BX || {};
 			}
 			const sections = this.sliderSections.filter(section => !section.belongsToView() && section.type === 'group' && section.isCollab());
 			if (sections.length > 0) {
-				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"calendar-list-slider-card-section-title\">\n\t\t\t\t\t<span class=\"calendar-list-slider-card-section-title-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('EC_SEC_SLIDER_TITLE_COLLAB_CALENDAR')));
+				this.DOM.localSectionListWrap.appendChild(main_core.Tag.render`
+				<div class="calendar-list-slider-card-section-title">
+					<span class="calendar-list-slider-card-section-title-text">
+						${main_core.Loc.getMessage('EC_SEC_SLIDER_TITLE_COLLAB_CALENDAR')}
+					</span>
+				</div>
+			`);
 				this.createSectionsBlock({
 					wrap: this.DOM.localSectionListWrap,
 					sectionList: sections
@@ -1360,28 +1486,35 @@ this.BX = this.BX || {};
 			}
 		}
 		getSectionListWrap(title) {
-			return main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-card-widget\">\n\t\t\t\t<div class=\"calendar-list-slider-card-widget-title\">\n\t\t\t\t\t<span class=\"calendar-list-slider-card-widget-title-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(title));
+			return main_core.Tag.render`
+			<div class="calendar-list-slider-card-widget">
+				<div class="calendar-list-slider-card-widget-title">
+					<span class="calendar-list-slider-card-widget-title-text">
+						${main_core.Text.encode(title)}
+					</span>
+				</div>
+			</div>
+		`;
 		}
 		getLocalSectionListTitle() {
 			if (this.sectionManager.calendarType === 'user') {
 				return main_core.Loc.getMessage('EC_SEC_SLIDER_MY_CALENDARS_LIST');
 			}
 			const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
-			if (this.sectionManager.calendarType === 'group' && calendarContext !== null && calendarContext !== void 0 && calendarContext.isCollabCalendar) {
+			if (this.sectionManager.calendarType === 'group' && calendarContext?.isCollabCalendar) {
 				if (this.isNewProjectsOn) {
 					return main_core.Loc.getMessage('EC_SEC_SLIDER_THIS_PROJECT_CALENDARS_LIST');
 				}
 				return main_core.Loc.getMessage('EC_SEC_SLIDER_THIS_COLLAB_CALENDARS_LIST');
 			}
-			if (this.sectionManager.calendarType === 'group' && !(calendarContext !== null && calendarContext !== void 0 && calendarContext.isCollabCalendar)) {
+			if (this.sectionManager.calendarType === 'group' && !calendarContext?.isCollabCalendar) {
 				return main_core.Loc.getMessage('EC_SEC_SLIDER_GROUP_CALENDARS_LIST');
 			}
 			return main_core.Loc.getMessage('EC_SEC_SLIDER_TYPE_CALENDARS_LIST');
 		}
 		createAddButton() {
-			var _calendarContext$util;
 			const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
-			if ((_calendarContext$util = calendarContext.util.config.perm) !== null && _calendarContext$util !== void 0 && _calendarContext$util.edit_section && !calendarContext.isCollabUser) {
+			if (calendarContext.util.config.perm?.edit_section && !calendarContext.isCollabUser) {
 				const button = new ui_buttons.SplitButton({
 					text: main_core.Loc.getMessage('EC_ADD'),
 					size: ui_buttons.ButtonSize.MEDIUM,
@@ -1417,14 +1550,16 @@ this.BX = this.BX || {};
 				delimiter: true
 			}), this.getAddCompanyMenuItem(), this.getAddUserMenuItem()];
 			const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
-			const isBitrix24Template = calendarContext.util.config.isBitrix24Template;
+			const {
+				isBitrix24Template
+			} = calendarContext.util.config;
 			if (isBitrix24Template && !this.isNewProjectsOn) {
 				menuItems.push(this.getAddGroupMenuItem());
 			}
 			if (isBitrix24Template && (this.isCollabFeatureEnabled || this.isNewProjectsOn)) {
 				menuItems.push(this.getAddCollabMenuItem());
 			}
-			this.addBtnMenu = main_popup.MenuManager.create("add-btn-".concat(calendar_util.Util.getRandomInt()), this.DOM.addButtonMore, menuItems, {
+			this.addBtnMenu = main_popup.MenuManager.create(`add-btn-${calendar_util.Util.getRandomInt()}`, this.DOM.addButtonMore, menuItems, {
 				closeByEsc: true,
 				autoHide: true,
 				zIndex: this.zIndex,
@@ -1499,18 +1634,19 @@ this.BX = this.BX || {};
 				};
 			}
 			return {
-				text: this.isNewProjectsOn ? main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT') : main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB'),
+				text: main_core.Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB'),
 				onclick: () => {
 					this.addBtnMenu.close();
 					this.showTrackingCollabsForm();
 				}
 			};
 		}
-		createSectionsBlock(_ref3) {
-			let sectionList = _ref3.sectionList,
-				wrap = _ref3.wrap;
+		createSectionsBlock({
+			sectionList,
+			wrap
+		}) {
 			if (main_core.Type.isArray(sectionList)) {
-				const listWrap = wrap.appendChild(main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-widget-content\"></div>"])))).appendChild(main_core.Tag.render(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["<div class=\"calendar-list-slider-widget-content-block\"></div>"])))).appendChild(main_core.Tag.render(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["<ul class=\"calendar-list-slider-container\"></ul>"]))));
+				const listWrap = wrap.appendChild(main_core.Tag.render`<div class="calendar-list-slider-widget-content"></div>`).appendChild(main_core.Tag.render`<div class="calendar-list-slider-widget-content-block"></div>`).appendChild(main_core.Tag.render`<ul class="calendar-list-slider-container"></ul>`);
 				sectionList.forEach(section => {
 					this.createSectionUnit({
 						section,
@@ -1519,20 +1655,31 @@ this.BX = this.BX || {};
 				});
 			}
 		}
-		createSectionUnit(_ref4) {
-			let section = _ref4.section,
-				wrap = _ref4.wrap;
+		createSectionUnit({
+			section,
+			wrap
+		}) {
 			if (!section.DOM) {
 				section.DOM = {};
 			}
 			const sectionId = section.id.toString();
-			const li = wrap.appendChild(main_core.Tag.render(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<li class=\"calendar-list-slider-item\" data-bx-calendar-section=\"", "\"></li>\n\t\t"])), sectionId));
-			const checkbox = li.appendChild(main_core.Tag.render(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-item-checkbox ", "\" style=\"background-color: ", "\"></div>\n\t\t"])), section.isShown() ? 'calendar-list-slider-item-checkbox-checked' : '', section.color));
-			const title = li.appendChild(main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-item-name\" title=\"", "\">", "</div>\n\t\t"])), main_core.Text.encode(section.name), main_core.Text.encode(section.name)));
+			const li = wrap.appendChild(main_core.Tag.render`
+			<li class="calendar-list-slider-item" data-bx-calendar-section="${sectionId}"></li>
+		`);
+			const checkbox = li.appendChild(main_core.Tag.render`
+			<div class="calendar-list-slider-item-checkbox ${section.isShown() ? 'calendar-list-slider-item-checkbox-checked' : ''}" style="background-color: ${section.color}"></div>
+		`);
+			const title = li.appendChild(main_core.Tag.render`
+			<div class="calendar-list-slider-item-name" title="${main_core.Text.encode(section.name)}">${main_core.Text.encode(section.name)}</div>
+		`);
 			section.DOM.item = li;
 			section.DOM.checkbox = checkbox;
 			section.DOM.title = title;
-			section.DOM.actionCont = li.appendChild(main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-item-actions-container\" data-bx-calendar-section-menu=\"", "\">\n\t\t\t\t<span class=\"calendar-list-slider-item-context-menu\"></span>\n\t\t\t</div>\n\t\t"])), sectionId));
+			section.DOM.actionCont = li.appendChild(main_core.Tag.render`
+			<div class="calendar-list-slider-item-actions-container" data-bx-calendar-section-menu="${sectionId}">
+				<span class="calendar-list-slider-item-context-menu"></span>
+			</div>
+		`);
 		}
 		sectionClickHandler(e) {
 			const target = calendar_util.Util.findTargetNode(e.target || e.srcElement, this.DOM.outerWrap);
@@ -1549,7 +1696,7 @@ this.BX = this.BX || {};
 			}
 		}
 		findCheckBoxNodes(id) {
-			return this.DOM.sectonListOuterWrap.querySelectorAll(".calendar-list-slider-item[data-bx-calendar-section='".concat(id, "'] .calendar-list-slider-item-checkbox"));
+			return this.DOM.sectonListOuterWrap.querySelectorAll(`.calendar-list-slider-item[data-bx-calendar-section='${id}'] .calendar-list-slider-item-checkbox`);
 		}
 		switchSection(section) {
 			const checkboxNodes = this.findCheckBoxNodes(section.id);
@@ -1592,7 +1739,6 @@ this.BX = this.BX || {};
 			}
 		}
 		showSectionMenu(section, menuItemNode) {
-			var _section$data$EXPORT, _section$data$EXPORT2, _this$calendarContext4;
 			const menuItems = [];
 			const itemNode = menuItemNode.closest('[data-bx-calendar-section]');
 			if (main_core.Type.isElementNode(itemNode)) {
@@ -1643,7 +1789,7 @@ this.BX = this.BX || {};
 					}
 				});
 			}
-			if (!section.isPseudo() && (_section$data$EXPORT = section.data.EXPORT) !== null && _section$data$EXPORT !== void 0 && _section$data$EXPORT.LINK && (_section$data$EXPORT2 = section.data.EXPORT) !== null && _section$data$EXPORT2 !== void 0 && _section$data$EXPORT2.PATH && section.data.EXTERNAL_TYPE === 'local' && !((_this$calendarContext4 = this.calendarContext) !== null && _this$calendarContext4 !== void 0 && (_this$calendarContext4 = _this$calendarContext4.util) !== null && _this$calendarContext4 !== void 0 && _this$calendarContext4.isExtranetUser())) {
+			if (!section.isPseudo() && section.data.EXPORT?.LINK && section.data.EXPORT?.PATH && section.data.EXTERNAL_TYPE === 'local' && !this.calendarContext?.util?.isExtranetUser()) {
 				menuItems.push({
 					text: main_core.Loc.getMessage('EC_ACTION_EXPORT'),
 					onclick: () => {
@@ -1663,10 +1809,7 @@ this.BX = this.BX || {};
 			let provider;
 			let connection;
 			if (section.data.CAL_DAV_CON && section.belongsToView() && this.calendarContext.syncInterface) {
-				var _this$calendarContext5 = this.calendarContext.syncInterface.getProviderById(section.data.CAL_DAV_CON);
-				var _this$calendarContext6 = babelHelpers.slicedToArray(_this$calendarContext5, 2);
-				provider = _this$calendarContext6[0];
-				connection = _this$calendarContext6[1];
+				[provider, connection] = this.calendarContext.syncInterface.getProviderById(section.data.CAL_DAV_CON);
 			}
 			if (section.canDo('edit_section') && section.belongsToView() && !section.isPseudo() && (!section.isGoogle() && !connection || section.data.EXTERNAL_TYPE === 'local' || !connection)) {
 				menuItems.push({
@@ -1730,7 +1873,7 @@ this.BX = this.BX || {};
 				});
 			}
 			if (menuItems && menuItems.length > 0) {
-				this.sectionActionMenu = main_popup.MenuManager.create("section-menu-".concat(calendar_util.Util.getRandomInt()), menuItemNode, menuItems, {
+				this.sectionActionMenu = main_popup.MenuManager.create(`section-menu-${calendar_util.Util.getRandomInt()}`, menuItemNode, menuItems, {
 					closeByEsc: true,
 					autoHide: true,
 					zIndex: this.zIndex,
@@ -1775,8 +1918,7 @@ this.BX = this.BX || {};
 				this.trackingTypesForm.close();
 			}
 		}
-		showEditSectionForm() {
-			let params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		showEditSectionForm(params = {}) {
 			if (!this.DOM.sectionFormWrap) {
 				return;
 			}
@@ -1907,7 +2049,7 @@ this.BX = this.BX || {};
 					if (parseInt(section.id, 10) === sectionId) {
 						this.sectionManager.deleteSectionHandler(sectionId);
 						this.deletedSectionsIds.push(sectionId);
-						const deleteSectionNodes = this.DOM.sectonListOuterWrap.querySelectorAll(".calendar-list-slider-item[data-bx-calendar-section='".concat(sectionId, "']"));
+						const deleteSectionNodes = this.DOM.sectonListOuterWrap.querySelectorAll(`.calendar-list-slider-item[data-bx-calendar-section='${sectionId}']`);
 						deleteSectionNodes.forEach(node => {
 							main_core.Dom.addClass(node, 'calendar-list-slider-item-disappearing');
 						});
@@ -1984,6 +2126,7 @@ this.BX = this.BX || {};
 			const confirmCallback = this.getConfirmCallback();
 			const okCaption = this.getOkCaption();
 			this.DOM.confirmSectionPopup = new ui_dialogs_messagebox.MessageBox({
+				useAirDesign: true,
 				message: this.getSectionConfirmContent(),
 				minHeight: 120,
 				minWidth: 280,
@@ -2003,8 +2146,6 @@ this.BX = this.BX || {};
 						}
 					},
 					closeByEsc: true,
-					padding: 0,
-					contentPadding: 0,
 					animation: 'fading-slide'
 				}
 			});
@@ -2038,13 +2179,13 @@ this.BX = this.BX || {};
 			return null;
 		}
 		getSectionConfirmContent() {
-			let phrase = '';
 			if (this.currentConfirmMode === 'delete') {
-				phrase = main_core.Loc.getMessage('EC_SEC_DELETE_CONFIRM');
-			} else if (this.currentConfirmMode === 'hideSync' || this.currentConfirmMode === 'hideExternal') {
-				phrase = main_core.Loc.getMessage('EC_CAL_GOOGLE_HIDE_CONFIRM');
+				return main_core.Loc.getMessage('EC_SEC_DELETE_CONFIRM');
 			}
-			return main_core.Tag.render(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"calendar-list-slider-messagebox-text\">", "</div>\n\t\t"])), phrase);
+			if (this.currentConfirmMode === 'hideSync' || this.currentConfirmMode === 'hideExternal') {
+				return main_core.Loc.getMessage('EC_CAL_GOOGLE_HIDE_CONFIRM');
+			}
+			return '';
 		}
 		removeSection(section) {
 			section.remove();

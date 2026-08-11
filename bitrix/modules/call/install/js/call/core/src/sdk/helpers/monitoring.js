@@ -1,6 +1,4 @@
-import { Type } from 'main.core';
-
-import Util from '../../util';
+import { Type, Extension } from 'main.core';
 import { MONITORING_METRICS } from '../const';
 
 type BitrateEntry = {
@@ -46,7 +44,7 @@ export const fillDefaultValueMonitoringMetrics = (): MonitoringMetricsDefaults =
 
 // TODO: delete in the future
 export const checkMetricsFeatureAndExecutionCallback = (callback: () => void): void => {
-	if (Type.isFunction(callback) && Util.isMetricsEnabled())
+	if (Type.isFunction(callback) && Extension.getSettings('call.core')?.isMetricsEnabled)
 	{
 		callback();
 	}

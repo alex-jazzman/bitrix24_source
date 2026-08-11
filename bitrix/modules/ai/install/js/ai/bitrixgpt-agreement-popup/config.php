@@ -16,11 +16,11 @@ return [
 	'js' => 'dist/bitrixgpt-agreement-popup.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.system.dialog',
-		'ui.system.typography',
+		'ui.banner-dispatcher',
 		'ui.buttons',
 		'ui.notification',
-		'ui.banner-dispatcher',
+		'ui.system.dialog',
+		'ui.system.typography',
 	],
 	'skip_core' => false,
 	'settings' => [

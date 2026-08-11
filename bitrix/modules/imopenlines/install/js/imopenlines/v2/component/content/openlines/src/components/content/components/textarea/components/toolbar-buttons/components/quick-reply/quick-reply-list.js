@@ -71,13 +71,15 @@ export const QuickReplyList = {
 					:key="reply.id"
 					:class="{ '--highlighted': reply.id === highlightedId }"
 					class="bx-imol-quick-reply-popup__item"
+					data-testid="quick-reply-list-item"
 					@click="$emit('select', reply)"
 				>
-					<span class="bx-imol-quick-reply-popup__item-text --ellipsis">{{ reply.text }}</span>
+					<span class="bx-imol-quick-reply-popup__item-text --ellipsis">{{ reply.name || reply.text }}</span>
 					<BIcon
 						v-if="reply.canEdit"
 						:name="OutlineIcons.EDIT_L"
 						class="bx-imol-quick-reply-popup__item-edit"
+						data-testid="quick-reply-list-item-edit"
 						@click.stop="$emit('edit', reply)"
 					/>
 				</div>

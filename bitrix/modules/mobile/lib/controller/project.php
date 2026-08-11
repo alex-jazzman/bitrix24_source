@@ -17,6 +17,7 @@ use Bitrix\Mobile\Internal\Services\Project\ProjectReadService;
 use Bitrix\Mobile\Internal\Services\Project\ProjectSettingsValidator;
 use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Socialnetwork\Helper;
+use RuntimeException;
 
 Loc::loadMessages(__FILE__);
 
@@ -74,7 +75,18 @@ final class Project extends JsonController
 			return null;
 		}
 
-		$result = $this->getProjectAdapterService()->create(ProjectCreateDto::fromArray($fields));
+		try
+		{
+			$result = $this->getProjectAdapterService()->create(ProjectCreateDto::fromArray($fields));
+		}
+		catch (RuntimeException $exception)
+		{
+			$this->addErrors($this->markErrorsAsPublic([
+				new Error($exception->getMessage(), 'PROJECT_CREATE_ERROR'),
+			]));
+
+			return null;
+		}
 
 		return $result->withIsTrialTurnedOn($this->turnOnProjectsTrialIfNeeded());
 	}
@@ -92,7 +104,18 @@ final class Project extends JsonController
 			return null;
 		}
 
-		return $this->getProjectAdapterService()->update($projectId, ProjectCreateDto::fromArray($fields));
+		try
+		{
+			return $this->getProjectAdapterService()->update($projectId, ProjectCreateDto::fromArray($fields));
+		}
+		catch (RuntimeException $exception)
+		{
+			$this->addErrors($this->markErrorsAsPublic([
+				new Error($exception->getMessage(), 'PROJECT_UPDATE_ERROR'),
+			]));
+
+			return null;
+		}
 	}
 
 	/**

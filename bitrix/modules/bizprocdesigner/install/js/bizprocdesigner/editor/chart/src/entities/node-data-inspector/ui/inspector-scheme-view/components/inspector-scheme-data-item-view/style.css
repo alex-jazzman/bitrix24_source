@@ -1,0 +1,103 @@
+.inspector-scheme-view__data-item-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	align-self: stretch;
+	gap: 10px;
+	font-size: var(--ui-font-size-md);
+}
+
+.inspector-scheme-view__data-item-title {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 4px;
+	padding: 2px 6px 3px 4px;
+	border: 1px solid var(--inspector-group-data-item-border-color);
+	border-radius: 6px;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: grab;
+}
+
+.inspector-scheme-view__data-item-title.--ghost {
+	border: 1px solid var(--ui-color-palette-gray-30);
+	border-radius: 6px;
+	background: var(--ui-color-palette-white-base);
+	cursor: grabbing;
+}
+
+.inspector-scheme-view__data-item-hoverable {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	gap: 4px;
+	min-width: 0;
+	flex: 0 1 auto;
+}
+
+.inspector-scheme-view__data-item-title-container:hover .inspector-scheme-view__data-item-copy-button {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.inspector-scheme-view__data-item-copy-button {
+	display: flex;
+	flex: 0 0 16px;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+
+.inspector-scheme-view__data-item-title-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view__data-item-title-container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: 1 1 220px;
+	max-width: 220px;
+	min-width: 0;
+}
+
+.inspector-scheme-view__data-item-example-value {
+	flex: 0 0 160px;
+	min-width: 160px;
+	max-width: 160px;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-2);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view__data-item-type {
+	flex: 0 0 84px;
+	min-width: 84px;
+	max-width: 84px;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-4);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view__data-item-type::before {
+	content: '// ';
+}

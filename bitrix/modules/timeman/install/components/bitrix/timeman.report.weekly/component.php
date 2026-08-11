@@ -1,6 +1,7 @@
-<?
+<?php
 
 use Bitrix\Timeman\Integration\Intranet\Settings;
+use Bitrix\Timeman\V2\Public\Provider\SettingsProvider;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -34,6 +35,7 @@ if (count($arResult['arAccessUsers']['READ']) > 0)
 		$componentPage = 'tool-disabled';
 	}
 
+	$this->arResult['isReportsEnabled'] = (new SettingsProvider())->isReportsEnabledWithAi();
+
 	$this->IncludeComponentTemplate($componentPage);
 }
-?>

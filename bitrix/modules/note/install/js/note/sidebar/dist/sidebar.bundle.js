@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_import, note_permissions, main_core_events, ui_buttons, ui_entitySelector, ui_system_dialog, note_ui_themeContext, pull_client, ui_dialogs_messagebox) {
+(function (exports, ui_iconSet_api_vue, ui_iconSet_outline, note_analytics, note_ui_loader, ui_vue3, main_core, note_ui_actionMenu, main_sidepanel, note_import, note_permissions, main_core_events, ui_buttons, ui_entitySelector, ui_system_dialog, note_ui_themeContext, pull_client, ui_dialogs_messagebox) {
 	'use strict';
 
 	const SidebarLoader = {
@@ -375,6 +375,7 @@ this.BX.Note = this.BX.Note || {};
 				this.$emit('toggle', this.doc);
 			},
 			onOpen() {
+				note_analytics.NoteAnalytics.documentViewed('side_menu');
 				this.$emit('open', this.doc);
 				if (!this.canExpand) {
 					return;
@@ -623,7 +624,8 @@ this.BX.Note = this.BX.Note || {};
 				status: 'idle',
 				// idle | loading | results | empty | error
 				dropdownVisible: false,
-				focusedIndex: -1
+				focusedIndex: -1,
+				analyticsClickTracked: false
 			};
 		},
 		computed: {
@@ -719,12 +721,23 @@ this.BX.Note = this.BX.Note || {};
 					this.focusedIndex = -1;
 				}
 			},
+			onSearchRowClick() {
+				this.$refs.input?.focus();
+				// Emit click_search once per search session; the flag resets on resetSearch(),
+				// not on blur/tab-switch, so re-focus/tab changes never re-fire it.
+				if (!this.analyticsClickTracked) {
+					note_analytics.NoteAnalytics.searchClicked(false);
+					this.analyticsClickTracked = true;
+				}
+			},
 			onFocus() {
 				if (this.results.length > 0 || this.status === 'empty') {
 					this.dropdownVisible = true;
 				}
 			},
 			onBlur() {
+				// Re-arm click_search: leaving the field and clicking back in counts as a new search.
+				this.analyticsClickTracked = false;
 				setTimeout(() => {
 					this.dropdownVisible = false;
 				}, 150);
@@ -769,6 +782,7 @@ this.BX.Note = this.BX.Note || {};
 				this.results = [];
 				this.status = 'idle';
 				this.dropdownVisible = false;
+				this.analyticsClickTracked = false;
 			},
 			selectResult(item) {
 				this.resetSearch();
@@ -793,7 +807,7 @@ this.BX.Note = this.BX.Note || {};
 		// language=Vue
 		template: `
 		<div class="note-sidebar-search">
-			<div class="note-sidebar-search-row" @click="$refs.input.focus()">
+			<div class="note-sidebar-search-row" @click="onSearchRowClick">
 				<div class="note-sidebar-search-bg"></div>
 				<div class="note-sidebar-search-border"></div>
 				<span v-if="!hasQuery" class="note-sidebar-search-icon" aria-hidden="true">
@@ -1225,6 +1239,8 @@ this.BX.Note = this.BX.Note || {};
 			onSearchNavigateDocument(payload) {
 				const documentId = Number(payload?.documentId);
 				if (documentId > 0) {
+					// Direct click on a quick-search result.
+					note_analytics.NoteAnalytics.documentViewed('search');
 					this.actions.openDocument({
 						id: documentId
 					});
@@ -1233,6 +1249,8 @@ this.BX.Note = this.BX.Note || {};
 			onSearchNavigateSearch(payload) {
 				const query = String(payload?.query || '');
 				if (query.length > 0) {
+					// "Show all results" gesture navigating to the full search page.
+					note_analytics.NoteAnalytics.searchResult(true);
 					this.actions.navigateToSearch(query);
 				}
 			},
@@ -1594,6 +1612,7 @@ this.BX.Note = this.BX.Note || {};
 				if (isCurrent || !isExpanded) {
 					this.actions.toggleCollectionExpanded(collection);
 				}
+				note_analytics.NoteAnalytics.collectionViewed('side_menu');
 				this.actions.openCollection(collection);
 				if (typeof this.actions.navigateToWorkspace === 'function') {
 					this.actions.navigateToWorkspace(id);
@@ -3758,6 +3777,7 @@ this.BX.Note = this.BX.Note || {};
 			}
 			try {
 				await this.#api.updateDocument(Number(docId), newTitle);
+				note_analytics.NoteAnalytics.documentUpdated(true);
 				this.#store.actions.updateDocumentLocal(Number(docId), {
 					title: newTitle
 				}, {
@@ -3771,6 +3791,7 @@ this.BX.Note = this.BX.Note || {};
 					}
 				}));
 			} catch (error) {
+				note_analytics.NoteAnalytics.documentUpdated(false);
 				this.#onFail(error);
 			}
 		}
@@ -6808,5 +6829,5 @@ this.BX.Note = this.BX.Note || {};
 	exports.SidebarRootComponent = SidebarRootComponent;
 	exports.createSidebarFeature = createSidebarFeature;
 
-})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Import, BX.Note.Permissions, BX.Event, BX.UI, BX.UI.EntitySelector, BX.UI.System, BX.Note.Ui, BX, BX.UI.Dialogs);
+})(this.BX.Note.Sidebar = this.BX.Note.Sidebar || {}, BX.UI.IconSet, window, BX.Note, BX.Note.Ui, BX.Vue3, BX, BX.Note.Ui, BX.SidePanel, BX.Note.Import, BX.Note.Permissions, BX.Event, BX.UI, BX.UI.EntitySelector, BX.UI.System, BX.Note.Ui, BX, BX.UI.Dialogs);
 //# sourceMappingURL=sidebar.bundle.js.map

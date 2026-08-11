@@ -1,0 +1,7 @@
+<?php
+
+$MESS['TASKS_V2_NOTIFY_TASK_TEMPLATE_UPDATED'] = 'Шаблон задачи изменён';
+$MESS['TASKS_V2_NOTIFY_TASK_TEMPLATE_OPEN'] = 'Открыть';
+$MESS['TASKS_V2_NOTIFY_TEMPLATE_CREATED_SUCC'] = 'Шаблон создан';
+$MESS['TASKS_V2_NOTIFY_TEMPLATE_CREATED_FAIL'] = 'Не удалось сохранить шаблон';
+$MESS['TASKS_V2_NOTIFY_TEMPLATE_CREATED_OPEN'] = 'Открыть';

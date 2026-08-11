@@ -57,7 +57,8 @@ else
 <form action="<?=$arResult["AUTH_URL"]?>" METHOD="POST" target="_top">
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="AUTH" />
-	
+	<?= bitrix_sessid_post(); ?>
+
 	<table id="auth-form" cellspacing="0">
 		<tr>
 			<td colspan="2" align="right"><?

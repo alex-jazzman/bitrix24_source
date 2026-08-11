@@ -1,22 +1,21 @@
-import './style.css';
-
-import { ref, provide } from 'ui.vue3';
-import { mapState, mapActions } from 'ui.vue3.pinia';
 import { MenuManager, type MenuItem } from 'main.popup';
 import { BIcon } from 'ui.icon-set.api.vue';
-import { diagramStore } from '../../../../entities/blocks';
-
-import { useLoc } from '../../../../shared/composables';
-import { EditAuxPortSelector } from '../edit-aux-port-selector/edit-aux-port-selector';
+import { ref, provide } from 'ui.vue3';
+import { mapState, mapActions } from 'ui.vue3.pinia';
 
 import {
 	useNodeSettingsStore,
 	evaluateActionExpressionDocumentTitle,
 	isActionExpressionDocumentCorrect,
+	getConnectedBlocksContextForConstruction,
 	type ActionDictEntry,
 } from '../../../../entities/node-settings';
-import type { ActivityData } from '../../../../shared/types';
+import { useLoc } from '../../../../shared/composables';
+import { type ActivityData, type Block } from '../../../../shared/types';
+import { EditAuxPortSelector } from '../edit-aux-port-selector/edit-aux-port-selector';
 import { DocumentSelector } from './document-selector';
+
+import './style.css';
 
 // @vue/component
 export const EditActionExpression = {
@@ -29,6 +28,12 @@ export const EditActionExpression = {
 		{
 			type: Object,
 			required: true,
+		},
+		ruleCard:
+		{
+			type: [Object, null],
+			required: false,
+			default: null,
 		},
 		isExpertMode:
 		{
@@ -57,17 +62,24 @@ export const EditActionExpression = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule', 'currentSettingsItems']),
+		connectedBlocksContext(): Object
+		{
+			return getConnectedBlocksContextForConstruction(
+				this.block,
+				this.currentRule.id,
+				this.ruleCard,
+				this.construction,
+				this.currentSettingsItems,
+			);
+		},
 		shouldShowAuxPorts(): boolean
 		{
 			return this.block.node?.shouldShowAuxPorts === true;
 		},
 		connectedBlocks(): Array<Block>
 		{
-			/** @todo Get rid of store usage here */
-			const store = diagramStore();
-
-			return store.getAllBlockAncestors(this.block, this.currentRule.id);
+			return this.connectedBlocksContext.allBlocks;
 		},
 		selectedAction(): ActionDictEntry
 		{
@@ -163,6 +175,7 @@ export const EditActionExpression = {
 				this.block,
 				this.currentRule.id,
 				this.nodeSettings.fixedDocumentType,
+				this.connectedBlocks,
 			);
 
 			void selector

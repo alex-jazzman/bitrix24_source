@@ -1,5 +1,7 @@
-<?
-$MESS["EC_NS_INVITE"] = "Приглашение для участия в событии";
+<?php
+
+$MESS["EC_NS_NOTIFY_TITLE"] = "Календарь";
+$MESS["EC_NS_INVITE_MSGVER_1"] = "Приглашение участвовать в событии";
 $MESS["EC_NS_REMINDER"] = "Напоминание о событии";
 $MESS["EC_NS_CHANGE"] = "Изменение события";
 $MESS["EC_NS_INFO"] = "Информация о подтверждении/отклонении участия в событии";
@@ -7,4 +9,5 @@ $MESS['EC_NS_INFO_MSGVER_1'] = 'Информация о подтверждени
 $MESS["EC_NS_EVENT_COMMENT"] = "Новый комментарий к событию";
 $MESS["EC_NS_DELETE_LOCATION"] = "Удаление переговорной комнаты";
 $MESS['EC_NS_DELETE_LOCATION_MSGVER_1'] = 'Удаление переговорной комнаты';
-?>
+$MESS['EC_NS_ROLLBACK_SYNC'] = 'Ошибка синхронизации';
+$MESS['EC_NS_FINISHED_SYNC'] = 'Синхронизация выполнена';

@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_GOTOCHAT_WHATSAPP_TEXT"] = "Use Telegram to communicate with customers.";
-$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_GOTOCHAT_WHATSAPP_TITLE"] = "Customer messaging";

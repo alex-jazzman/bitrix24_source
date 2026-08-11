@@ -6,13 +6,15 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 	const { MCPSelector } = require('ai/mcp-selector');
 	const { withCurrentDomain } = require('utils/url');
 
-	const { EventType } = require('im/messenger/const');
+	const { Analytics, EventType, DialogWidgetType } = require('im/messenger/const');
 	const {
 		ReasoningButton,
 		MCPButton,
+		ASSISTANT_BUTTON_PRIORITY,
 	} = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
 	const { AssistantButtonType, AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/type');
 	const { MarketManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/market');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Reasoning } = require('im/messenger/lib/reasoning');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
@@ -36,13 +38,21 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {MarketManager} */
 		#marketManager;
 
+		/** @type {Map<string, AssistantButton>} */
+		#visibleButtons = new Map();
+
+		/** @type {boolean} */
+		#flushScheduled = false;
+
 		/**
 		 * @param {DialogLocator} dialogLocator
+		 * @param {string} dialogType
 		 */
-		constructor({ dialogLocator })
+		constructor({ dialogLocator, dialogType })
 		{
 			this.dialogLocator = dialogLocator;
 			this.dialogId = dialogLocator.get('dialogId');
+			this.dialogType = dialogType;
 
 			this.store = this.dialogLocator.get('store');
 			this.view = this.dialogLocator.get('view');
@@ -52,6 +62,65 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			};
 
 			this.#marketManager = new MarketManager({ dialogLocator });
+		}
+
+		/**
+		 * @desc Stream-rendering of legacy assistant buttons. Fast buttons (reasoning, mcp)
+		 *       are pushed immediately, market joins as soon as its REST call resolves.
+		 *       State of pressed buttons is preserved through #visibleButtons.
+		 */
+		buildInitialButtons()
+		{
+			this.#visibleButtons.clear();
+
+			if (this.dialogType === DialogWidgetType.copilot && Feature.isCopilotReasoningAvailable)
+			{
+				const design = Reasoning.isSupported(this.dialogId)
+					? AssistantButtonDesign.grey
+					: AssistantButtonDesign.disabledAlike;
+
+				this.#applyButton({ ...ReasoningButton, design });
+			}
+
+			if (this.dialogType === DialogWidgetType.aiAssistant && Feature.isAiAssistantMCPSelectorAvailable)
+			{
+				this.#applyButton({ ...MCPButton });
+			}
+
+			this.#scheduleFlush();
+
+			this.#marketManager.canShow()
+				.then((visible) => {
+					if (visible)
+					{
+						this.#applyButton(this.#marketManager.buildButton());
+						this.#scheduleFlush();
+					}
+				})
+				.catch((error) => logger.error(`${this.constructor.name}.buildInitialButtons: market canShow failed`, error))
+			;
+		}
+
+		#scheduleFlush()
+		{
+			if (this.#flushScheduled)
+			{
+				return;
+			}
+
+			this.#flushScheduled = true;
+			Promise.resolve().then(() => {
+				this.#flushScheduled = false;
+				this.#flush();
+			});
+		}
+
+		#flush()
+		{
+			const buttons = [...this.#visibleButtons.values()]
+				.sort((a, b) => (ASSISTANT_BUTTON_PRIORITY[a.id] ?? Infinity) - (ASSISTANT_BUTTON_PRIORITY[b.id] ?? Infinity));
+
+			void this.view.textField.showAssistantButtons(buttons);
 		}
 
 		get isReasoningActive()
@@ -65,6 +134,26 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		get mcpSelectedAuthId()
 		{
 			return this.#mcpSelectedAuthId;
+		}
+
+		/**
+		 * @desc Snapshot of AI settings for analytics (TPL-01). A field is `null` when
+		 *       the corresponding button is not rendered in this chat. Reasoning state
+		 *       is read from the manager state, MCP from the selected auth.
+		 * @returns {ModesState}
+		 */
+		getSettingsSnapshot()
+		{
+			const hasReasoningButton = this.#visibleButtons.has(ReasoningButton.id);
+			const hasMcpButton = this.#visibleButtons.has(MCPButton.id);
+
+			return {
+				mcp: hasMcpButton ? this.#mcpSelectedAuthId !== null : null,
+				mcpServerName: null,
+				reasoning: hasReasoningButton ? this.state.isReasoningActive : null,
+				webSearch: null,
+				agentMode: null,
+			};
 		}
 
 		subscribeViewEvents()
@@ -100,7 +189,18 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		 */
 		updateAssistantButton(id, button)
 		{
-			return this.view.textField.updateAssistantButton(id, button);
+			return this.#applyButton({ ...button, id });
+		}
+
+		/**
+		 * @param {AssistantButton} button
+		 * @returns {Promise<any>}
+		 */
+		#applyButton(button)
+		{
+			this.#visibleButtons.set(button.id, button);
+
+			return this.view.textField.updateAssistantButton(button.id, button);
 		}
 
 		#assistantButtonTapHandler = (buttonId) => {
@@ -131,6 +231,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 
 			logger.log(`${this.constructor.name}.reasoningButtonTapHandler, isReasoningActive: `, this.state.isReasoningActive);
 
+			const modesState = this.getSettingsSnapshot();
+			const willBeActive = !this.state.isReasoningActive;
+
 			const design = this.state.isReasoningActive ? AssistantButtonDesign.grey : AssistantButtonDesign.primary;
 
 			/** @type {AssistantButton} */
@@ -140,10 +243,16 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			};
 
 			await this.updateAssistantButton(AssistantButtonType.reasoning, newButton);
-			this.state.isReasoningActive = !this.state.isReasoningActive;
+			this.state.isReasoningActive = willBeActive;
 			AnalyticsService.getInstance().sendToggleReasoning({
 				dialogId: this.dialogId,
 				isActive: this.state.isReasoningActive,
+			});
+
+			AnalyticsService.getInstance().sendModeChange({
+				dialogId: this.dialogId,
+				mode: willBeActive ? Analytics.ChatMode.reasoningOn : Analytics.ChatMode.reasoningOff,
+				modesState,
 			});
 		}
 
@@ -174,7 +283,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 				...ReasoningButton,
 				design,
 			};
-			void this.view.textField.updateAssistantButton(AssistantButtonType.reasoning, newButton);
+			void this.#applyButton(newButton);
 		};
 
 		/**
@@ -251,7 +360,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		 */
 		async #sendSelectionHint(selectedAuthId)
 		{
-			await new ChatService().botService.sendAiAssistantMCPSelection(selectedAuthId);
+			await new ChatService().botService.sendAiAssistantMCPSelection(selectedAuthId, this.dialogId);
 		}
 
 	}

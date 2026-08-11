@@ -26,6 +26,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 		 * @param {object} props.workTime
 		 * @param {number} props.userId
 		 * @param {object} props.currentTheme
+		 * @param {boolean} props.canOpenProfile
 		 * @param {boolean} props.canEditProfile
 		 * @param {boolean} props.canUseTimeMan
 		 * @param {boolean} props.canUseCheckIn
@@ -43,6 +44,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 		render()
 		{
 			const {
+				canOpenProfile,
 				canEditProfile,
 				canUseTimeMan,
 				currentShift,
@@ -51,7 +53,6 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 				currentTheme,
 				canManageWorkTimeOnMobile,
 				isNewCheckInEnabled,
-				checkInAmount,
 			} = this.props;
 
 			return View(
@@ -67,6 +68,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 					userId,
 					canEditProfile,
 					currentTheme,
+					clickable: canOpenProfile,
 				}),
 				(this.shouldShowCheckIn() || canUseTimeMan) && Card(
 					{
@@ -90,7 +92,6 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 						testId: this.getTestId('check-in'),
 						currentShift,
 						isNewCheckInEnabled,
-						checkInAmount,
 					}),
 				),
 			);

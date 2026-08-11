@@ -20,14 +20,14 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 
 	let StatusEnum = null;
-	let PullCommand = null;
-	let CheckInTypeEnum = null;
+	let store = null;
+	let selectCurrentUserManualCount = null;
 
 	try
 	{
 		StatusEnum = require('stafftrack/model/shift').StatusEnum;
-		PullCommand = require('stafftrack/check-in-v2/enums').PullCommand;
-		CheckInTypeEnum = require('stafftrack/check-in-v2/enums').CheckInTypeEnum;
+		store = require('statemanager/redux/store');
+		selectCurrentUserManualCount = require('stafftrack/statemanager/redux/slices/check-in')?.selectCurrentUserManualCount;
 	}
 	catch (error)
 	{
@@ -46,7 +46,6 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		 * @param {string} props.testId
 		 * @param {object} props.currentShift
 		 * @param {boolean} props.isNewCheckInEnabled
-		 * @param {number} props.checkInAmount
 		 */
 		constructor(props)
 		{
@@ -54,11 +53,13 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 			this.state = {
 				currentShift: props.currentShift,
 				isNewCheckInEnabled: props.isNewCheckInEnabled,
-				checkInAmount: props.checkInAmount,
+				checkInAmount: props.isNewCheckInEnabled ? this.readManualCount() : 0,
 			};
 
 			this.subscribeToPullEvent = this.subscribeToPullEvent.bind(this);
+			this.handleStoreChange = this.handleStoreChange.bind(this);
 			this.timeUpdateInterval = null;
+			this.unsubscribeStore = null;
 
 			this.getTestId = createTestIdGenerator({
 				prefix: props.testId,
@@ -69,25 +70,41 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		{
 			BX.addCustomEvent('onPullEvent-stafftrack', this.subscribeToPullEvent);
 			this.startTimeUpdateInterval();
+			if (this.state.isNewCheckInEnabled)
+			{
+				this.unsubscribeStore = store.subscribe(this.handleStoreChange);
+			}
 		}
 
 		componentWillReceiveProps(props)
 		{
-			const nextState = {};
-
 			if (!isEqual(props?.currentShift, this.state.currentShift))
 			{
-				nextState.currentShift = props?.currentShift;
+				this.setState({ currentShift: props?.currentShift });
 			}
 
-			if (props?.checkInAmount !== this.state.checkInAmount)
+			if (props?.isNewCheckInEnabled !== this.state.isNewCheckInEnabled)
 			{
-				nextState.checkInAmount = props?.checkInAmount;
-			}
-
-			if (Object.keys(nextState).length > 0)
-			{
-				this.setState(nextState);
+				if (props?.isNewCheckInEnabled)
+				{
+					if (!this.unsubscribeStore)
+					{
+						this.unsubscribeStore = store.subscribe(this.handleStoreChange);
+					}
+					this.setState({
+						isNewCheckInEnabled: true,
+						checkInAmount: this.readManualCount(),
+					});
+				}
+				else
+				{
+					this.unsubscribeStore?.();
+					this.unsubscribeStore = null;
+					this.setState({
+						isNewCheckInEnabled: false,
+						checkInAmount: 0,
+					});
+				}
 			}
 		}
 
@@ -95,6 +112,22 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		{
 			BX.removeCustomEvent('onPullEvent-stafftrack', this.subscribeToPullEvent);
 			this.stopTimeUpdateInterval();
+			this.unsubscribeStore?.();
+			this.unsubscribeStore = null;
+		}
+
+		readManualCount()
+		{
+			return selectCurrentUserManualCount(store.getState(), Math.floor(Date.now() / 1000));
+		}
+
+		handleStoreChange()
+		{
+			const count = this.readManualCount();
+			if (count !== this.state.checkInAmount)
+			{
+				this.setState({ checkInAmount: count });
+			}
 		}
 
 		startTimeUpdateInterval()
@@ -121,19 +154,6 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		 */
 		subscribeToPullEvent(command, params, extra, moduleId)
 		{
-			if (command === PullCommand?.CHECK_IN_ADD.getValue())
-			{
-				const checkIn = params?.checkIn;
-				if (checkIn?.userId === Number(env.userId) && CheckInTypeEnum?.isManual(checkIn?.entityType))
-				{
-					this.setState({
-						checkInAmount: (this.state.checkInAmount || 0) + 1,
-					});
-				}
-
-				return;
-			}
-
 			const shift = params?.shift;
 
 			if (shift?.userId === Number(env.userId))
@@ -404,7 +424,6 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		testId: PropTypes.string,
 		currentShift: PropTypes.object,
 		isNewCheckInEnabled: PropTypes.bool,
-		checkInAmount: PropTypes.number,
 	};
 
 	module.exports = {

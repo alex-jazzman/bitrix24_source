@@ -65,7 +65,7 @@ export const GridDay = {
 	watch: {
 		scroll(value): void
 		{
-			this.$refs.columnsContainer.scrollLeft = value;
+			this.applyScroll(value);
 		},
 		editingBooking(): void
 		{
@@ -121,6 +121,8 @@ export const GridDay = {
 			this.setupDrag();
 		}
 
+		this.applyScroll(this.scroll);
+
 		EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 		EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
@@ -130,6 +132,10 @@ export const GridDay = {
 		EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
 	methods: {
+		applyScroll(value: number): void
+		{
+			this.$refs.columnsContainer.scrollLeft = value;
+		},
 		updateEars(): void
 		{
 			this.ears.toggleEars();

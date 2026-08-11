@@ -1,0 +1,11 @@
+{
+	"defaultTableName": "b_imconnectors_status",
+	"installDirectoriesMapping": {
+		"install/components": "components",
+		"install/images": "images",
+		"install/js": "js"
+	},
+	"publicDirectoriesMapping": {
+		"install/pub": "pub"
+	}
+}

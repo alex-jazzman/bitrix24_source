@@ -6,12 +6,30 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	'use strict';
 
 	const COMMAND_PREFIX = '/';
-	const AUTO_HIDE_DELAY = 5000;
 	const QuickCommand = {
-		getDialogId: 'getDialogId',
-		getChatId: 'getChatId',
-		rename: 'rename'
+		getDialogId: {
+			id: 'getDialogId',
+			command: `${COMMAND_PREFIX}getDialogId`
+		},
+		getChatId: {
+			id: 'getChatId',
+			command: `${COMMAND_PREFIX}getChatId`,
+			descriptionCode: 'IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_GET_DIALOG_ID_DESCRIPTION'
+		},
+		rename: {
+			id: 'rename',
+			command: `${COMMAND_PREFIX}rename`,
+			descriptionCode: 'IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_RENAME_DESCRIPTION'
+		},
+		quote: {
+			id: 'quote',
+			command: '>>',
+			descriptionCode: 'IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_QUOTE_DESCRIPTION',
+			keepText: true
+		}
 	};
+
+	const AUTO_HIDE_DELAY = 5000;
 	class QuickCommandManager {
 		#dialogId;
 		#chatService;
@@ -36,6 +54,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 			if (parsed && this.#handleCommand(parsed.command, parsed.args)) {
 				return im_v2_component_textarea.BeforeSendMessageAction.cancel;
 			}
+			return null;
 		}
 		#getText() {
 			const result = main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.getText, {
@@ -55,9 +74,9 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 		}
 		#getCommandMap() {
 			return {
-				[QuickCommand.getDialogId]: this.#executeGetDialogId.bind(this),
-				[QuickCommand.getChatId]: this.#executeGetDialogId.bind(this),
-				[QuickCommand.rename]: this.#executeRename.bind(this)
+				[QuickCommand.getDialogId.id]: this.#executeGetDialogId.bind(this),
+				[QuickCommand.getChatId.id]: this.#executeGetDialogId.bind(this),
+				[QuickCommand.rename.id]: this.#executeRename.bind(this)
 			};
 		}
 		#handleCommand(command, args) {
@@ -85,6 +104,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 		}
 	}
 
+	exports.QuickCommand = QuickCommand;
 	exports.QuickCommandManager = QuickCommandManager;
 
 })(this.BX.OpenLines.v2.Lib = this.BX.OpenLines.v2.Lib || {}, BX, BX.Event, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Component);

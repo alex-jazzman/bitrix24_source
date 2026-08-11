@@ -50,5 +50,5 @@ $MESS['TASKS_GET_INFO_FIELD_ONLY_OVERDUE_NAME'] = 'Только просроче
 $MESS['TASKS_GET_INFO_FIELD_EXCLUDE_RESPONSIBLE_ROLE'] = 'Исключить задачи, в которых сотрудник также является ответственным';
 $MESS['TASKS_GET_INFO_FIELD_EXCLUDE_RESPONSIBLE_ROLE_NAME'] = 'Исключить задачи, в которых сотрудник также является ответственным';
 
-$MESS['TASKS_GET_INFO_FIELD_CONDITION'] = 'Условия фильтрации задач';
-$MESS['TASKS_GET_INFO_FIELD_CONDITION_COLLAPSED'] = 'Настроить условия';
+$MESS['TASKS_GET_INFO_FIELD_CONDITION'] = 'Поля задачи';
+$MESS['TASKS_GET_INFO_FIELD_CONDITION_COLLAPSED'] = 'Условие выбрано, для просмотра нажмите Развернуть';

@@ -842,7 +842,7 @@ export class EventViewForm
 			(response) => {
 				if (top.window.BXIM && response.data && response.data.chatId)
 				{
-					top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
+					top.window.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 
 					return null;
 				}
@@ -852,6 +852,8 @@ export class EventViewForm
 				return null;
 			},
 			(response) => {
+				console.error(response);
+
 				alert(Loc.getMessage('EC_CONFERENCE_ERROR'));
 
 				return null;

@@ -2,7 +2,7 @@ import { Tag, Loc, Dom } from 'main.core';
 import { Text as TypographyText } from 'ui.system.typography';
 
 import { BaseField } from './base-field';
-import { EmployeeFieldType } from '../types';
+import type { EmployeeFieldType } from '../types';
 import { USER_MINI_PROFILE_ATTRIBUTES, USER_MINI_PROFILE_CONTEXT } from '../constants';
 
 export class FullNameField extends BaseField

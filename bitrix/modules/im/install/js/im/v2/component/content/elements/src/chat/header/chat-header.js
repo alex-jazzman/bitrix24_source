@@ -1,22 +1,22 @@
-import { LineLoader } from 'im.v2.component.elements.loader';
+import { type JsonObject } from 'main.core';
+
+import { FadeAnimation } from 'im.v2.component.animation';
 import { ChatAvatar } from 'im.v2.component.elements.avatar';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { LineLoader } from 'im.v2.component.elements.loader';
 import { ChatType, ActionByRole, UserType, ActionByUserType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { FadeAnimation } from 'im.v2.component.animation';
+import { type ImModelUser, type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
-import { CallHeaderButton } from './components/call-button/call-header-button';
-import { GroupChatTitle } from './components/title/group-chat';
-import { UserTitle as UserChatTitle } from './components/title/user';
-import { HeaderAvatar } from './components/header-avatar';
 import { AddToChatButton } from './components/add-to-chat-button';
+import { CallHeaderButton } from './components/call-button/call-header-button';
+import { HeaderAvatar } from './components/header-avatar';
 import { SearchButton } from './components/search-button';
 import { SidebarButton } from './components/sidebar-button';
+import { GroupChatTitle } from './components/title/group-chat';
+import { UserTitle as UserChatTitle } from './components/title/user';
 
 import './css/chat-header.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelUser, ImModelChat } from 'im.v2.model';
 
 const HEADER_WIDTH_BREAKPOINT = 700;
 
@@ -109,7 +109,9 @@ export const ChatHeader = {
 				return false;
 			}
 
-			const hasCreateChatAccess = PermissionManager.getInstance().canPerformActionByUserType(
+			const permissionManager = PermissionManager.getInstance();
+
+			const hasCreateChatAccess = permissionManager.canPerformActionByUserType(
 				ActionByUserType.createChat,
 			);
 			if (this.isUser && !hasCreateChatAccess)
@@ -117,7 +119,10 @@ export const ChatHeader = {
 				return false;
 			}
 
-			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.extend, this.dialogId);
+			const canPerformActionByRole = permissionManager.canPerformActionByRole(ActionByRole.extend, this.dialogId);
+			const canPerformActionByUserType = permissionManager.canPerformActionByUserType(ActionByUserType.extend);
+
+			return canPerformActionByRole && canPerformActionByUserType;
 		},
 		showSearchButton(): boolean
 		{

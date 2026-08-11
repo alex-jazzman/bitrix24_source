@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/search.bundle.js',
 	'rel' => [
 		'calendar.util',
-		'main.core.events',
 		'main.core',
+		'main.core.events',
 		'main.popup',
 	],
 	'skip_core' => false,

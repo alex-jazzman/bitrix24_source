@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, main_core, ui_vue3_vuex, booking_const, booking_lib_timezone, booking_lib_utils) {
+(function (exports, main_core, ui_vue3_vuex, booking_const, booking_lib_grid, booking_lib_timezone, booking_lib_utils) {
 	'use strict';
 
 	function getOverbookingOccupancy(overbookingMap, resources) {
@@ -48,8 +48,9 @@ this.BX.Booking = this.BX.Booking || {};
 		getState() {
 			const today = new Date();
 			const schedule = this.getVariable('schedule', {});
-			const isMultidayFeatureAvailable = this.getVariable('isMultidayFeatureAvailable', false);
-			const gridMode = isMultidayFeatureAvailable ? this.getVariable('gridMode', booking_const.Grid.Mode.Day) : booking_const.Grid.Mode.Day;
+			const enabledFeature = this.getVariable('enabledFeature', {});
+			const isMultidayFeatureEnabled = Boolean(enabledFeature.bookingLong);
+			const gridMode = isMultidayFeatureEnabled ? this.getVariable('gridMode', booking_const.Grid.Mode.Day) : booking_const.Grid.Mode.Day;
 			const timezone = this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
 			const firstWeekDay = this.getVariable('firstWeekDay', 1);
 			const selectedDateTs = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
@@ -61,7 +62,6 @@ this.BX.Booking = this.BX.Booking || {};
 				isFeatureEnabled: this.getVariable('isFeatureEnabled', false),
 				canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 				canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
-				isMultidayFeatureAvailable,
 				editingBookingId: this.getVariable('editingBookingId', 0),
 				editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 				draggedBookingId: 0,
@@ -116,8 +116,10 @@ this.BX.Booking = this.BX.Booking || {};
 				createdFromEmbedBookings: {},
 				createdFromEmbedWaitListItems: {},
 				menuOpenedForBookingKey: this.getVariable('menuOpenedForBookingKey', ''),
-				enabledFeature: this.getVariable('enabledFeature', {}),
-				shouldShowWhatsAppEmergency: false
+				enabledFeature,
+				shouldShowWhatsAppEmergency: false,
+				aiCallBannerMode: null,
+				isAiCallAhaShown: false
 			};
 		}
 
@@ -132,8 +134,6 @@ this.BX.Booking = this.BX.Booking || {};
 				canTurnOnTrial: state => state.canTurnOnTrial,
 				/** @function interface/canTurnOnDemo */
 				canTurnOnDemo: state => state.canTurnOnDemo,
-				/** @function interface/isMultidayFeatureAvailable */
-				isMultidayFeatureAvailable: state => state.isMultidayFeatureAvailable,
 				/** @function interface/isShownTrialPopup */
 				isShownTrialPopup: state => state.isShownTrialPopup,
 				/** @function interface/editingBookingId */
@@ -254,6 +254,10 @@ this.BX.Booking = this.BX.Booking || {};
 				mousePosition: state => state.mousePosition,
 				/** @function interface/shouldShowWhatsAppEmergency */
 				shouldShowWhatsAppEmergency: state => state.shouldShowWhatsAppEmergency,
+				/** @function interface/aiCallBannerMode */
+				aiCallBannerMode: state => state.aiCallBannerMode,
+				/** @function interface/isAiCallAhaShown */
+				isAiCallAhaShown: state => state.isAiCallAhaShown,
 				/** @function interface/getColliding */
 				getColliding: (state, getters) => {
 					return (resourceId, excludedBookingIds) => {
@@ -374,7 +378,7 @@ this.BX.Booking = this.BX.Booking || {};
 				},
 				/** @function interface/setGridMode */
 				setGridMode: (store, gridMode) => {
-					if (!store.state.isMultidayFeatureAvailable) {
+					if (!store.state.enabledFeature.bookingLong) {
 						return;
 					}
 					store.commit('setGridMode', gridMode);
@@ -474,11 +478,22 @@ this.BX.Booking = this.BX.Booking || {};
 				setHoveredPlacementSlotStats: (store, stats) => {
 					store.commit('setHoveredPlacementSlotStats', stats);
 				},
-				/** @function interface/goToDay */
-				goToDay: (store, selectedDateTs) => {
+				/** @function interface/goToDayMode */
+				goToDayMode: (store, payload) => {
+					const {
+						selectedDateTs,
+						resourceId
+					} = payload;
 					void store.dispatch('setGridMode', booking_const.Grid.Mode.Day);
 					store.commit('setSelectedDateTs', selectedDateTs);
 					store.commit('setViewDateTs', booking_lib_utils.Utils.time.getMonthStartTs(selectedDateTs));
+					if (resourceId) {
+						const resourceIndex = store.getters.resourcesIds.indexOf(resourceId);
+						if (resourceIndex > 0) {
+							const dayCellWidth = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayCellWidth);
+							store.commit('setScroll', resourceIndex * dayCellWidth);
+						}
+					}
 				},
 				/** @function interface/upsertBusySlotMany */
 				upsertBusySlotMany: (store, busySlots) => {
@@ -543,6 +558,14 @@ this.BX.Booking = this.BX.Booking || {};
 				/** @function interface/setShouldShowWhatsAppEmergency */
 				setShouldShowWhatsAppEmergency: (store, shouldShowWhatsAppEmergency) => {
 					store.commit('setShouldShowWhatsAppEmergency', shouldShowWhatsAppEmergency);
+				},
+				/** @function interface/setAiCallBannerMode */
+				setAiCallBannerMode: (store, aiCallBannerMode) => {
+					store.commit('setAiCallBannerMode', aiCallBannerMode);
+				},
+				/** @function interface/setIsAiCallAhaShown */
+				setIsAiCallAhaShown: (store, isAiCallAhaShown) => {
+					store.commit('setIsAiCallAhaShown', isAiCallAhaShown);
 				},
 				/** @function interface/setIsFeatureEnabled */
 				setIsFeatureEnabled: (store, isFeatureEnabled) => {
@@ -759,6 +782,12 @@ this.BX.Booking = this.BX.Booking || {};
 				setShouldShowWhatsAppEmergency: (state, shouldShowWhatsAppEmergency) => {
 					state.shouldShowWhatsAppEmergency = shouldShowWhatsAppEmergency;
 				},
+				setAiCallBannerMode: (state, aiCallBannerMode) => {
+					state.aiCallBannerMode = aiCallBannerMode;
+				},
+				setIsAiCallAhaShown: (state, isAiCallAhaShown) => {
+					state.isAiCallAhaShown = isAiCallAhaShown;
+				},
 				setIsFeatureEnabled: (state, isFeatureEnabled) => {
 					state.isFeatureEnabled = isFeatureEnabled;
 				},
@@ -807,5 +836,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Interface = Interface;
 
-})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking);
+})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking.Lib, BX.Booking);
 //# sourceMappingURL=interface.bundle.js.map

@@ -5,6 +5,8 @@ jn.define('im/messenger/provider/services/chat/create', (require, exports, modul
 	const { Type } = require('type');
 	const { RestMethod } = require('im/messenger/const');
 	const { runAction } = require('im/messenger/lib/rest');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ChatDataExtractor } = require('im/messenger/provider/services/lib/chat-data-extractor');
 
 	/**
 	 * @class CreateService
@@ -62,6 +64,11 @@ jn.define('im/messenger/provider/services/chat/create', (require, exports, modul
 		 */
 		async createCopilot(params)
 		{
+			if (Feature.isCopilotDraftChatAvailable)
+			{
+				return this.getOrCreateCopilotDraft();
+			}
+
 			const config = {
 				type: params.type,
 				copilotMainRole: params.copilotMainRole,
@@ -72,6 +79,18 @@ jn.define('im/messenger/provider/services/chat/create', (require, exports, modul
 					fields: config,
 				},
 			});
+		}
+
+		/**
+		 * @desc Gets or creates a hidden draft copilot chat (always universal role).
+		 * The response comes in the chat-load format, so chatId is extracted from it.
+		 * @returns {Promise<{chatId: number}>}
+		 */
+		async getOrCreateCopilotDraft()
+		{
+			const response = await runAction(RestMethod.imV2CopilotDraftChatGet);
+
+			return { chatId: new ChatDataExtractor(response).getChatId() };
 		}
 	}
 

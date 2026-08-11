@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Im\V2\Application\Context;
+use Bitrix\Im\V2\Application\Features;
 use Bitrix\Intranet\Integration\Templates\Air\ChatMenu;
 use Bitrix\Intranet\Site\Sections\CollaborationSection;
 use Bitrix\Main\Web\Json;
@@ -47,6 +48,7 @@ $this->setViewTarget("above_pagetitle", 100);
 if (\Bitrix\Main\Loader::includeModule('intranet'))
 {
 	$showCollaborationMenu = CollaborationSection::shouldShowNewStructure();
+
 	$APPLICATION->includeComponent(
 		'bitrix:main.interface.buttons',
 		'',
@@ -56,6 +58,30 @@ if (\Bitrix\Main\Loader::includeModule('intranet'))
 			'THEME' => 'air',
 		]
 	);
+
+	if ($showCollaborationMenu === false): ?>
+	<script>
+		BX.ready(() => {
+			const promoId = BX.Messenger.v2.Const.PromoId.bitrixGptAgent;
+			const showPromoId = BX.Messenger.v2.Lib.PromoManager.getInstance().needToShow(promoId);
+
+			if (showPromoId)
+			{
+				BX.Runtime.loadExtension('ui.banner-dispatcher')
+					.then(({ BannerDispatcher }) => {
+						BannerDispatcher.normal.toQueue(
+							(onDone) => {
+								BX.Runtime.loadExtension('im.v2.component.elements.bitrix-gpt-agent-promo')
+									.then(({ BitrixGptAgentPromo }) => BitrixGptAgentPromo.show({ onClose: onDone }))
+								;
+							},
+							{ forceShowOnTop: true },
+						);
+					})
+			}
+		});
+	</script>
+	<?php endif; ?><?php
 }
 
 $this->endViewTarget();

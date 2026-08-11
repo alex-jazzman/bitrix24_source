@@ -110,6 +110,10 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 			try
 			{
 				const response = await request.call(false);
+				if (response?.status !== 'success')
+				{
+					return false;
+				}
 
 				return response?.data;
 			}

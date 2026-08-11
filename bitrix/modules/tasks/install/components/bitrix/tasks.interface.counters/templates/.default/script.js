@@ -486,7 +486,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 				collapsedIcon: ui_buttons.ButtonIcon.CHATS,
 				style: ui_buttons.AirButtonStyle.OUTLINE,
 				size: ui_buttons.ButtonSize.SMALL,
-				useAirDesign: true
+				useAirDesign: true,
+				dataset: {
+					testid: 'tasks-counters-chat-button'
+				}
 			});
 			this.initChatButtonCounter();
 			this.chatButton.renderTo(container);
@@ -495,11 +498,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 			const {
 				Messenger
 			} = await top.BX.Runtime.loadExtension('im.public');
-			if (Messenger?.isEmbeddedMode() || Messenger?.isMessengerSliderOpened()) {
+			const isChatOpen = Boolean(Messenger?.isEmbeddedMode() || Messenger?.isMessengerSliderOpened());
+			if (this.isProjectsTaskList()) {
+				if (isChatOpen) {
+					top.BX.Event.EventEmitter.emit('IM.Recent:closeNestedList');
+					top.BX.Event.EventEmitter.emit('IM.Recent:openNestedList', {
+						parentDialogId: `sg${this.groupId}`,
+						options: {
+							recentType: 'tasksTask',
+							compactMode: true
+						}
+					});
+					BX.SidePanel.Instance.getSliderByWindow(window)?.close();
+				} else {
+					await Messenger?.openCollab(`sg${this.groupId}`, {
+						recentType: 'tasksTask',
+						compactMode: true
+					});
+				}
+			} else if (isChatOpen) {
 				BX.SidePanel.Instance.emulateAnchorClick('/online/?IM_TASK');
-				return;
+			} else {
+				BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
 			}
-			BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
 			ui_analytics.sendData({
 				tool: 'tasks',
 				category: 'chat_operations',
@@ -511,18 +532,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 			});
 		}
 		initChatButtonCounter() {
-			if (this.counters.new_comments_total && this.chatButton) {
-				const value = Number(this.counters.new_comments_total.VALUE);
-				if (this.chatButton.getLeftCounter()) {
-					this.chatButton.getLeftCounter().setValue(value);
-					this.chatButton.getLeftCounter().setColor(this.getChatButtonCounterColor(value));
-					return;
-				}
-				this.chatButton.setLeftCounter({
-					value,
-					color: this.getChatButtonCounterColor(value)
-				});
+			if (!this.chatButton) {
+				return;
 			}
+			const counterData = this.isProjectsTaskList() ? this.counters.new_comments : this.counters.new_comments_total;
+			if (!counterData) {
+				return;
+			}
+			const value = Number(counterData.VALUE);
+			if (this.chatButton.getRightCounter()) {
+				this.chatButton.getRightCounter().setValue(value);
+				this.chatButton.getRightCounter().setColor(this.getChatButtonCounterColor(value));
+				return;
+			}
+			this.chatButton.setRightCounter({
+				value,
+				color: this.getChatButtonCounterColor(value)
+			});
 		}
 		getChatButtonCounterColor(value) {
 			return value ? ui_buttons.ButtonCounterStyle.FILLED_SUCCESS : ui_buttons.ButtonCounterStyle.OUTLINE_NO_ACCENT;

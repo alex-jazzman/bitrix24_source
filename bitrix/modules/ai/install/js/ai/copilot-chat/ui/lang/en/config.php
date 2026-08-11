@@ -1,6 +1,6 @@
 <?php
 $MESS["AI_COPILOT_CHAT_ANSWER_WARNING_MSGVER_1"] = "Replies provided by #COPILOT_NAME# may not always be factually accurate. Always verify the information you receive. #LINK_START#Learn more#LINK_END#";
-$MESS["AI_COPILOT_CHAT_INPUT_PLACEHOLDER"] = "Enter your query";
+$MESS["AI_COPILOT_CHAT_INPUT_PLACEHOLDER"] = "Ask me anything";
 $MESS["AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_RETRY"] = "Try again";
 $MESS["AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_TEXT"] = "Try loading history later or click \"Try again\".";
 $MESS["AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_TITLE"] = "Could not load message history";

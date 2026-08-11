@@ -17,7 +17,7 @@ export class ApiClient
 		return this.handleResponse(response);
 	}
 
-	async post(endpoint, data): Promise<any>
+	async post(endpoint, data = {}): Promise<any>
 	{
 		const url = this.buildUrl(endpoint);
 		const response = await ajax.runAction(url, {
@@ -27,14 +27,11 @@ export class ApiClient
 		return this.handleResponse(response);
 	}
 
-	async put(endpoint, data): Promise<any>
+	async put(endpoint, data = {}): Promise<any>
 	{
 		const url = this.buildUrl(endpoint);
 		const response = await ajax.runAction(url, {
 			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-			},
 			json: data,
 		});
 

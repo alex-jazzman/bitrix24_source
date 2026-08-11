@@ -1,8 +1,9 @@
 import { Loc, Type } from 'main.core';
-import { Dialog, EntityOptions, Item, ItemOptions, TabOptions } from 'ui.entity-selector';
+import { Dialog, type EntityOptions, type Item, type ItemOptions, type TabOptions } from 'ui.entity-selector';
+
 import { diagramStore } from '../../../../entities/blocks';
-import type { ConditionExpressionField } from '../../../../entities/node-settings';
-import { type PortId, Block } from '../../../../shared/types';
+import { type ConditionExpressionField } from '../../../../entities/node-settings';
+import { type PortId, type Block } from '../../../../shared/types';
 
 const CustomDataFieldKey = 'field';
 
@@ -10,17 +11,19 @@ export class FieldSelector
 {
 	store: diagramStore;
 	currentBlock: Block;
-
 	currentPortId: PortId;
+	connectedBlocks: Array<Block> | null;
 
 	constructor(
 		currentBlock: Block,
 		currentPortId: PortId,
+		connectedBlocks: Array<Block> | null = null,
 	)
 	{
 		this.store = diagramStore();
 		this.currentBlock = currentBlock;
 		this.currentPortId = currentPortId;
+		this.connectedBlocks = connectedBlocks;
 	}
 
 	show(targetElement: Element): Promise<ConditionExpressionField>
@@ -141,6 +144,8 @@ export class FieldSelector
 								fieldId: key,
 								type: item.Type,
 								multiple: item.Multiple,
+								options: item.Options ?? null,
+								settings: item.Settings ?? null,
 							},
 						},
 					});
@@ -159,7 +164,10 @@ export class FieldSelector
 
 	getReturnItems(): ItemOptions[]
 	{
-		const blocks = this.store.getBlockAncestorsByInputPortId(this.currentBlock, this.currentPortId);
+		const blocks = this.connectedBlocks ?? this.store.getBlockAncestorsByInputPortId(
+			this.currentBlock,
+			this.currentPortId,
+		);
 
 		return blocks.reduce((acc, block: Block) => {
 			if (Type.isArrayFilled(block.activity.Children))
@@ -229,6 +237,8 @@ export class FieldSelector
 							fieldId: property.Id,
 							type: property.Type,
 							multiple: property.Multiple,
+							options: property.Options ?? null,
+							settings: property.Settings ?? null,
 						},
 					},
 				});

@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MESSAGESERVICE_PAGE_SMS_TITLE'] = "СМС";

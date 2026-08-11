@@ -69,6 +69,13 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		{
 			$this->writeDebugInfo($this->getDebugInfo());
 		}
+
+		Crm\Service\Container::getInstance()
+			->getContext()
+			->getAnalytics()
+			->setCategory(Dictionary::CATEGORY_ROBOT_OPERATIONS)
+			->setType(Dictionary::TYPE_CREATE_DYNAMIC_ACTIVITY)
+		;
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -131,12 +138,6 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 		if ($this->ItemId)
 		{
-			\CCrmBizProcHelper::sendOperationsAnalytics(
-				Dictionary::EVENT_ENTITY_CREATE,
-				$this,
-				$documentType[2] ?? '',
-			);
-
 			$this->fixResult($this->makeResultFromId($this->ItemId));
 		}
 

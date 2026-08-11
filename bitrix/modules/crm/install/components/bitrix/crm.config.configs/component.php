@@ -20,8 +20,12 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAd
 	return;
 }
 
+use Bitrix\Crm\Model\Field\DefaultValue\CloseDateConfigurator;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings;
 use Bitrix\Crm\Settings\Crm;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -48,6 +52,8 @@ if (empty($sMailFrom) && !IsModuleInstalled('bitrix24'))
 }
 
 $dupControl = \Bitrix\Crm\Integrity\DuplicateControl::getCurrent();
+$closeDateConfigurator = ServiceLocator::getInstance()->get(CloseDateConfigurator::class);
+
 $arResult['FORM_ID'] = 'CRM_SM_CONFIG';
 if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 {
@@ -515,6 +521,54 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			$maxDaysBeforeClose = Bitrix\Crm\Field\CloseDate::MAX_DAYS_BEFORE_CLOSE;
+			if (isset($_POST['QUOTE_DAYS_BEFORE_CLOSE']))
+			{
+				$quoteDaysBeforeClose = $closeDateConfigurator->parseDaysBeforeCloseValue($_POST['QUOTE_DAYS_BEFORE_CLOSE']);
+				$quoteDaysBeforeClose = min($quoteDaysBeforeClose, $maxDaysBeforeClose);
+
+				if ($quoteDaysBeforeClose === null)
+				{
+					Option::delete('crm', ['name' => 'crm_quote_days_before_close']);
+				}
+				else if ($quoteDaysBeforeClose !== $closeDateConfigurator->resolveDefaultCloseDateDays(CCrmOwnerType::Quote))
+				{
+					Option::set('crm', 'crm_quote_days_before_close', $quoteDaysBeforeClose);
+				}
+			}
+			if (isset($_POST['DEAL_DAYS_BEFORE_CLOSE']))
+			{
+				$dealDaysBeforeClose = $closeDateConfigurator->parseDaysBeforeCloseValue($_POST['DEAL_DAYS_BEFORE_CLOSE']);
+				$dealDaysBeforeClose = min($dealDaysBeforeClose, $maxDaysBeforeClose);
+
+				if ($dealDaysBeforeClose === null)
+				{
+					Option::delete('crm', ['name' => 'crm_deal_days_before_close']);
+				}
+				else if ($dealDaysBeforeClose !== $closeDateConfigurator->resolveDefaultCloseDateDays(CCrmOwnerType::Deal))
+				{
+					Option::set('crm', 'crm_deal_days_before_close', $dealDaysBeforeClose);
+				}
+			}
+			if (
+				isset($_POST['SMART_INVOICE_DAYS_BEFORE_CLOSE'])
+				&& Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled()
+			)
+			{
+				$smartInvoiceDaysBeforeClose = $closeDateConfigurator->parseDaysBeforeCloseValue($_POST['SMART_INVOICE_DAYS_BEFORE_CLOSE']);
+				$smartInvoiceDaysBeforeClose = min($smartInvoiceDaysBeforeClose, $maxDaysBeforeClose);
+
+				$smartInvoiceType = Container::getInstance()->getTypeByEntityTypeId(\CCrmOwnerType::SmartInvoice);
+				if (
+					$smartInvoiceType !== null
+					&& $smartInvoiceDaysBeforeClose !== $closeDateConfigurator->resolveDefaultCloseDateDays(\CCrmOwnerType::SmartInvoice)
+				)
+				{
+					$smartInvoiceType->setDaysBeforeClose($smartInvoiceDaysBeforeClose);
+					$smartInvoiceType->save();
+				}
+			}
+
 			$activityCompetionConfig = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getActivityCompletionConfig();
 			foreach(\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
 			{
@@ -751,6 +805,14 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'required' => false
 );
 
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'DEAL_DAYS_BEFORE_CLOSE',
+	'name' => GetMessage('CRM_FIELD_DEAL_DAYS_BEFORE_CLOSE'),
+	'type' => 'text',
+	'value' => $closeDateConfigurator->resolveDefaultCloseDateDays(CCrmOwnerType::Deal),
+	'required' => false,
+];
+
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'EXPORT_DEAL_PRODUCT_ROWS',
 	'name' => GetMessage('CRM_FIELD_EXPORT_PRODUCT_ROWS'),
@@ -773,6 +835,26 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->getDefaultListViewID(),
 	'required' => false
 );
+
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+{
+	$smartInvoiceDaysBeforeClose = '';
+	$smartInvoiceType = Container::getInstance()->getTypeByEntityTypeId(
+		\CCrmOwnerType::SmartInvoice,
+	);
+	if ($smartInvoiceType)
+	{
+		$smartInvoiceDaysBeforeClose = $closeDateConfigurator->resolveDefaultCloseDateDays(\CCrmOwnerType::SmartInvoice);
+	}
+
+	$arResult['FIELDS']['tab_main'][] = [
+		'id' => 'SMART_INVOICE_DAYS_BEFORE_CLOSE',
+		'name' => GetMessage('CRM_FIELD_SMART_INVOICE_DAYS_BEFORE_CLOSE'),
+		'type' => 'text',
+		'value' => $smartInvoiceDaysBeforeClose,
+		'required' => false,
+	];
+}
 
 if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 {
@@ -821,6 +903,14 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'value' => \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
 );
+
+$arResult['FIELDS']['tab_main'][] = [
+	'id' => 'QUOTE_DAYS_BEFORE_CLOSE',
+	'name' => GetMessage('CRM_FIELD_QUOTE_DAYS_BEFORE_CLOSE'),
+	'type' => 'text',
+	'value' => $closeDateConfigurator->resolveDefaultCloseDateDays(CCrmOwnerType::Quote),
+	'required' => false,
+];
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONVERSION_CONFIG',

@@ -30,8 +30,9 @@
 	};
 	const ALL_ROWS = ['Interval', 'WeekDays', 'MonthDay', 'YearMonth'];
 	const ALL_FIELDS = ['Interval', 'WeekDays', 'MonthDay', 'YearMonth'];
-	const TIMEZONE_OFFSET = /\s\[[\d-]+]$/;
-	const TIME_FORMAT = /(\d{1,2}:\d{2})(?::\d{2})?/;
+	const TIMEZONE_OFFSET = /\s\[-?\d+]$/;
+	const TIME_WITH_MERIDIEM = /(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap])\.?m\.?/i;
+	const TIME_PLAIN = /(\d{1,2}):(\d{2})(?::\d{2})?/;
 	class ScheduledTriggerRenderer {
 		#form = null;
 		#timePicker = null;
@@ -45,9 +46,23 @@
 			this.#activityFields = activityFields;
 			this.#updateVisibilityBound = this.#updateVisibility.bind(this);
 			this.#openTimePickerBound = this.#openTimePicker.bind(this);
-			this.#setupRunAtField();
-			this.#bindEvents();
-			this.#updateVisibility();
+			this.#ensureDateLib().then(() => {
+				this.#setupRunAtField();
+				this.#bindEvents();
+				this.#updateVisibility();
+			});
+		}
+		#ensureDateLib() {
+			if (this.#getFormatter()) {
+				return Promise.resolve();
+			}
+			if (BX?.Runtime?.loadExtension) {
+				return BX.Runtime.loadExtension('main.date').catch(() => {});
+			}
+			return Promise.resolve();
+		}
+		#getFormatter() {
+			return typeof BX !== 'undefined' && BX.Main && BX.Main.DateTimeFormat || null;
 		}
 		destroy() {
 			this.#timePicker?.hide();
@@ -80,7 +95,6 @@
 						targetNode: input,
 						inputField: input,
 						type: 'time',
-						amPmMode: false,
 						timePickerStyle: 'wheel',
 						minuteStep: 5,
 						events: {
@@ -103,30 +117,15 @@
 			if (!field) {
 				return;
 			}
-			const MAX_TIME_VALUE_LENGTH = 100;
-			const extractTimeValue = value => {
-				if (!main_core.Type.isString(value)) {
-					return '';
-				}
-				if (value.length > MAX_TIME_VALUE_LENGTH) {
-					return '';
-				}
-				const clean = value.replace(TIMEZONE_OFFSET, '');
-				const match = clean.match(TIME_FORMAT);
-				return match ? match[1] : '';
-			};
-			const createTimeInput = initialValue => {
-				return main_core.Dom.create('input', {
+			if (field.tagName === 'INPUT') {
+				const input = main_core.Dom.create('input', {
 					props: {
 						type: 'text',
 						autocomplete: 'off',
-						value: extractTimeValue(initialValue),
+						value: this.#extractTimeValue(field.value),
 						style: 'cursor: pointer; margin-right: 5px;'
 					}
 				});
-			};
-			if (field.tagName === 'INPUT') {
-				const input = createTimeInput(field.value);
 				const calendarInput = field.parentNode.querySelector('.calendar-icon');
 				main_core.Dom.style(field, 'display', 'none');
 				main_core.Dom.style(calendarInput, 'display', 'none');
@@ -146,7 +145,13 @@
 				this.#clearRunAt();
 				return;
 			}
-			this.#runAtHidden.value = this.#setTimeInDateTime(this.#runAtHidden.value, timeValue);
+			const time = this.#parseTimeToHM(timeValue);
+			if (!time) {
+				return;
+			}
+			const base = this.#getBaseDate();
+			base.setHours(time.hours, time.minutes, 0, 0);
+			this.#runAtHidden.value = this.#formatDateTime(base);
 		}
 		#clearRunAt() {
 			if (this.#runAtInput) {
@@ -156,39 +161,66 @@
 				this.#runAtHidden.value = '';
 			}
 		}
-		#setTimeInDateTime(value, time) {
-			const TIME_WITH_SECONDS = /^\d{1,2}:\d{2}:\d{2}$/;
-			const TIME_IN_DATETIME = /\d{1,2}:\d{2}(:\d{2})?/;
-			if (!time) {
-				return value;
-			}
-			const offsetMatch = main_core.Type.isString(value) ? value.match(TIMEZONE_OFFSET) : null;
-			const offset = offsetMatch ? offsetMatch[0] : '';
-			const clean = main_core.Type.isString(value) ? value.replace(TIMEZONE_OFFSET, '') : '';
-			const timeWithSeconds = TIME_WITH_SECONDS.test(time) ? time : `${time}:00`;
-			let base = clean;
-			if (!base) {
-				base = this.#buildBaseDateTime(time);
-			} else if (TIME_IN_DATETIME.test(base)) {
-				base = base.replace(TIME_IN_DATETIME, timeWithSeconds);
-			} else {
-				base = `${base} ${timeWithSeconds}`;
-			}
-			return `${base}${offset}`;
+		#extractTimeValue(value) {
+			const date = this.#parseDateTime(value);
+			return date ? this.#formatTime(date) : '';
 		}
-		#buildBaseDateTime(time) {
-			const runAtSettings = this.#getFieldSettings('RunAt');
-			const baseDate = main_core.Type.isString(runAtSettings?.defaultDate) ? runAtSettings.defaultDate : '';
-			if (!baseDate) {
-				return '';
+		#getBaseDate() {
+			return this.#parseDateTime(this.#runAtHidden?.value) || this.#parseDateTime(this.#getFieldSettings('RunAt')?.defaultDate) || new Date();
+		}
+		#parseDateTime(value) {
+			if (!main_core.Type.isStringFilled(value)) {
+				return null;
 			}
-			const [hoursStr = '00', minutesStr = '00'] = time.split(':');
-			const hours = Math.max(0, Math.min(23, parseInt(hoursStr, 10) || 0));
-			const minutes = Math.max(0, Math.min(59, parseInt(minutesStr, 10) || 0));
-			const hoursPadded = hours.toString().padStart(2, '0');
-			const minutesPadded = minutes.toString().padStart(2, '0');
-			const timeWithSeconds = `${hoursPadded}:${minutesPadded}:00`;
-			return TIME_FORMAT.test(baseDate) ? baseDate.replace(TIME_FORMAT, timeWithSeconds) : `${baseDate} ${timeWithSeconds}`;
+			const formatter = this.#getFormatter();
+			const clean = value.replace(TIMEZONE_OFFSET, '').trim();
+			if (!clean || !formatter) {
+				return null;
+			}
+			try {
+				return formatter.parse(clean) || null;
+			} catch (e) {
+				return null;
+			}
+		}
+		#formatTime(date) {
+			const formatter = this.#getFormatter();
+			return formatter ? formatter.format(formatter.getFormat('SHORT_TIME_FORMAT'), date) : '';
+		}
+		#formatDateTime(date) {
+			const formatter = this.#getFormatter();
+			return formatter ? formatter.format(formatter.getFormat('FORMAT_DATETIME'), date) : '';
+		}
+		#parseTimeToHM(value) {
+			if (!main_core.Type.isString(value)) {
+				return null;
+			}
+			const meridiem = value.match(TIME_WITH_MERIDIEM);
+			if (meridiem) {
+				let hours = parseInt(meridiem[1], 10);
+				const minutes = parseInt(meridiem[2], 10);
+				const isPm = meridiem[3].toLowerCase() === 'p';
+				if (isPm) {
+					hours = hours === 12 ? 12 : hours + 12;
+				} else {
+					hours = hours === 12 ? 0 : hours;
+				}
+				return this.#normalizeHM(hours, minutes);
+			}
+			const plain = value.match(TIME_PLAIN);
+			if (plain) {
+				return this.#normalizeHM(parseInt(plain[1], 10), parseInt(plain[2], 10));
+			}
+			return null;
+		}
+		#normalizeHM(hours, minutes) {
+			if (Number.isNaN(hours) || Number.isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+				return null;
+			}
+			return {
+				hours,
+				minutes
+			};
 		}
 		#updateVisibility() {
 			const type = this.#getField('ScheduleType')?.value;

@@ -1,5 +1,5 @@
 import { Analytics } from 'im.v2.lib.analytics';
-import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { Loader } from 'im.v2.component.elements.loader';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
@@ -96,7 +96,15 @@ export const MembersPanel = {
 		},
 		needAddButton(): boolean
 		{
-			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.extend, this.dialogId);
+			const canPerformActionByRole = PermissionManager.getInstance().canPerformActionByRole(
+				ActionByRole.extend,
+				this.dialogId,
+			);
+			const canPerformActionByUserType = PermissionManager.getInstance().canPerformActionByUserType(
+				ActionByUserType.extend,
+			);
+
+			return canPerformActionByRole && canPerformActionByUserType;
 		},
 		needCopyLinkButton(): boolean
 		{

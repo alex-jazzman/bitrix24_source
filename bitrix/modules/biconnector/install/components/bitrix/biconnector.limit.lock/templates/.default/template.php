@@ -9,22 +9,41 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 \Bitrix\Main\UI\Extension::load([
-	'ui.banner-dispatcher',
-	'ui.buttons',
-	'ui.system.dialog',
+	'biconnector.lock-popup',
 ]);
+
+$buttons = [];
+if ($arResult['IS_LICENCE_LIMIT'] === 'Y')
+{
+	$buttons = [
+		[
+			'text' => $arResult['LICENSE_BUTTON_TEXT'],
+			'url' => $arResult['LICENSE_URL'],
+			'style' => 'filled',
+			'closesPopup' => false,
+		],
+		[
+			'text' => $arResult['LATER_BUTTON_TEXT'],
+			'style' => 'plain',
+		],
+	];
+}
+
+$popupParams = [
+	'title' => $arResult['TITLE'],
+	'content' => $arResult['CONTENT'],
+	'buttons' => $buttons,
+	'closeSidePanelOnClose' => $arResult['FULL_LOCK'] === 'Y',
+	'emitOnClose' => (
+		$arResult['FULL_LOCK'] === 'Y'
+			? 'BiConnector:LimitPopup.Lock.onClose'
+			: 'BiConnector:LimitPopup.Warning.onClose'
+	),
+];
 
 ?>
 <script>
 	BX.ready(() => {
-		new BX.BIConnector.LimitLockPopup({
-			title: '<?= CUtil::JSEscape($arResult['TITLE']) ?>',
-			content: '<?= CUtil::JSEscape($arResult['CONTENT']) ?>',
-			licenseButtonText: '<?= CUtil::JSEscape($arResult['LICENSE_BUTTON_TEXT']) ?>',
-			laterButtonText: '<?= CUtil::JSEscape($arResult['LATER_BUTTON_TEXT']) ?>',
-			licenseUrl: '<?= CUtil::JSEscape($arResult['LICENSE_URL']) ?>',
-			fullLock: '<?= CUtil::JSEscape($arResult['FULL_LOCK']) ?>',
-			isLicenceLimit: '<?= CUtil::JSEscape($arResult['IS_LICENCE_LIMIT']) ?>',
-		});
-	})
+		BX.BIConnector.LockPopup.show(<?= \CUtil::PhpToJSObject($popupParams) ?>);
+	});
 </script>

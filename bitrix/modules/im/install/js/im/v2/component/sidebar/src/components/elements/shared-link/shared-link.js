@@ -1,18 +1,22 @@
+import { type JsonObject } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { Notifier } from 'im.v2.lib.notifier';
+import { type ImModelChat, type ImModelSidebarSharedLinkItem } from 'im.v2.model';
+import { GuestInvitationService } from 'im.v2.provider.service.guest-invitation';
+import { Analytics } from 'im.v2.lib.analytics';
 
-import { SharedLinkMenu } from './classes/menu';
+import { SharedLinkChangeType, SharedLinkMenu, SharedLinkMenuMode, type SharedLinkMenuContext } from './classes/menu';
 import { SharedLinkService } from './classes/service';
 import { copySharedLink } from './helpers/helpers';
 
 import './css/shared-link.css';
 
-import type { JsonObject } from 'main.core';
-import type { BaseEvent } from 'main.core.events';
-import type { ImModelChat, ImModelSidebarSharedLinkItem } from 'im.v2.model';
-
-const ICON_SIZE = 20;
+const CHANGE_LINK_ACTIONS = {
+	[SharedLinkChangeType.shared]: ({ code }) => (new SharedLinkService()).regenerate(code),
+	[SharedLinkChangeType.guest]: ({ chatId }) => (new GuestInvitationService()).updateLink(chatId),
+};
 
 // @vue/component
 export const SharedLink = {
@@ -32,42 +36,46 @@ export const SharedLink = {
 	},
 	computed: {
 		OutlineIcons: () => OutlineIcons,
-		ICON_SIZE: () => ICON_SIZE,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		link(): ImModelSidebarSharedLinkItem
+		sharedLink(): ImModelSidebarSharedLinkItem
 		{
 			return this.$store.getters['sidebar/sharedLink/getChatInviteLink'](this.dialog.chatId);
 		},
+		guestLink(): ?ImModelSidebarSharedLinkItem
+		{
+			return this.$store.getters['sidebar/sharedLink/getGuestInviteLink'](this.dialog.chatId);
+		},
+		hasGuestLink(): boolean
+		{
+			return Boolean(this.guestLink);
+		},
 		url(): string
 		{
-			return this.link.url;
+			return this.sharedLink?.url ?? '';
 		},
 	},
 	created()
 	{
 		this.contextMenuManager = new SharedLinkMenu();
-
-		this.contextMenuManager.subscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+		this.contextMenuManager.subscribe(SharedLinkMenu.events.onChangeLink, this.onChangeLink);
 	},
 	beforeUnmount()
 	{
 		this.contextMenuManager.destroy();
-
-		this.contextMenuManager.unsubscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+		this.contextMenuManager.unsubscribe(SharedLinkMenu.events.onChangeLink, this.onChangeLink);
 	},
 	methods: {
 		async onChangeLink(event: BaseEvent)
 		{
+			const { type, ...data } = event.getData();
 			this.isLoading = true;
 
 			try
 			{
-				const { code } = event.getData();
-				await (new SharedLinkService()).regenerate(code);
-
+				await CHANGE_LINK_ACTIONS[type](data);
 				Notifier.sharedLink.onChangeLinkComplete();
 			}
 			catch
@@ -79,18 +87,33 @@ export const SharedLink = {
 				this.isLoading = false;
 			}
 		},
-		copyLink()
+		onContainerClick()
 		{
-			void copySharedLink(this.url);
+			if (!this.hasGuestLink)
+			{
+				void copySharedLink(this.url);
+
+				Analytics.getInstance().chatInviteLink.onCopySharedLink(this.dialogId);
+
+				return;
+			}
+
+			this.contextMenuManager.openMenu(this.buildMenuContext(SharedLinkMenuMode.compact), this.$refs['icon-menu']);
 		},
 		showMenuPopup()
 		{
-			const context = {
-				url: this.url,
-				code: this.link.code,
+			this.contextMenuManager.openMenu(this.buildMenuContext(SharedLinkMenuMode.full), this.$refs['icon-menu']);
+		},
+		buildMenuContext(mode: $Values<typeof SharedLinkMenuMode>): SharedLinkMenuContext
+		{
+			return {
+				dialogId: this.dialogId,
+				chatId: this.dialog.chatId,
+				mode,
+				sharedLinkUrl: this.sharedLink?.url,
+				sharedLinkCode: this.sharedLink?.code,
+				guestLinkUrl: this.guestLink?.url,
 			};
-
-			this.contextMenuManager.openMenu(context, this.$refs['icon-menu']);
 		},
 		loc(phraseCode: string): string
 		{
@@ -98,11 +121,10 @@ export const SharedLink = {
 		},
 	},
 	template: `
-		<div @click="copyLink" class="bx-im-sidebar-shared-link__container --ui-context-content-dark">
+		<div @click="onContainerClick" class="bx-im-sidebar-shared-link__container --ui-context-content-dark">
 			<BIcon
 				class="bx-im-sidebar-shared-link__icon"
 				:name="OutlineIcons.COPY"
-				:size="ICON_SIZE"
 			/>
 			<div class="bx-im-sidebar-shared-link__content">
 				<div class="bx-im-sidebar-shared-link__content_title">
@@ -112,7 +134,6 @@ export const SharedLink = {
 							class="bx-im-sidebar-shared-link__icon_menu"
 							:class="{ '--disabled': isLoading }"
 							:name="OutlineIcons.MORE_L"
-							:size="ICON_SIZE"
 							:hoverable="true"
 							@click.stop="showMenuPopup"
 						/>

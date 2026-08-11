@@ -1,7 +1,8 @@
 import { Loc } from 'main.core';
 import { ref } from 'ui.vue3';
-import { useAppStore } from '../../entities/app';
-import { diagramStore } from '../../entities/blocks';
+
+import { useAppStore } from '../../entities/app/stores';
+import { diagramStore } from '../../entities/blocks/stores';
 import { debugBarApi } from '../../entities/debug-bar/api';
 import { DEBUG_BAR_ERROR_MESSAGES } from '../../entities/debug-bar/constants';
 import { validateTemplateId } from '../../entities/debug-bar/utils';

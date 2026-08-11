@@ -1,61 +1,39 @@
-import './style.css';
-import { Type } from 'main.core';
-
 import { mapState } from 'ui.vue3.pinia';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+
 import { FeatureCode } from 'bizprocdesigner.feature';
 
-import { useLoc, useFeature } from '../../../../shared/composables';
-import { PORT_TYPES, BLOCK_TYPES, ACTIVATION_STATUS } from '../../../../shared/constants';
-
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
-import { diagramStore, BlockHeader, BlockIcon } from '../../../../entities/blocks';
+import { useLoc, useFeature } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
+import { type Port as TPort } from '../../../../shared/types';
 
-import { IconButton } from '../../../../shared/ui';
+import './style.css';
 
 // @vue/component
 export const EditNodeSettingsForm = {
 	name: 'EditNodeSettingsForm',
 	components: {
 		BIcon,
-		IconButton,
-		BlockHeader,
-		BlockIcon,
 	},
-	props:
+	setup(): {
+		getMessage: () => string;
+		isFeatureAvailable: (code: string) => boolean;
+		iconSet: typeof Outline;
+		}
 	{
-		/** @type Block */
-		block:
-		{
-			type: Object,
-			required: true,
-		},
-		ports:
-		{
-			type: Object,
-			required: true,
-		},
-	},
-	setup(): { getMessage: () => string; }
-	{
-		const store: diagramStore = diagramStore();
 		const { getMessage } = useLoc();
 		const { isFeatureAvailable } = useFeature();
 
 		return {
-			iconSet: Outline,
 			getMessage,
 			isFeatureAvailable,
-			store,
+			iconSet: Outline,
 		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings']),
-		iconName(): string
-		{
-			return Outline[this.block?.node?.icon] ?? Outline.FILE;
-		},
+		...mapState(useNodeSettingsStore, ['block', 'ports', 'nodeSettings']),
 		rulePorts(): Array<TPort>
 		{
 			return this.ports
@@ -74,53 +52,6 @@ export const EditNodeSettingsForm = {
 		{
 			return this.block.node?.shouldShowAuxPorts !== true
 				&& this.isFeatureAvailable(FeatureCode.complexNodeConnections);
-		},
-		isSubIcon(): boolean
-		{
-			return this.block.node?.type === BLOCK_TYPES.TOOL
-				&& this.block.node?.icon && Outline[this.block.node.icon] !== Outline.DATABASE;
-		},
-		activationIcon(): string
-		{
-			return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE
-				? this.iconSet.PAUSE_L
-				: this.iconSet.PLAY_L;
-		},
-		icon(): string
-		{
-			if (this.block.node?.type === BLOCK_TYPES.TOOL)
-			{
-				const mcpLettersKey = 'MCP_LETTERS';
-
-				return Outline[this.block.node.icon] === Outline.DATABASE
-					? this.block.node.icon
-					: mcpLettersKey;
-			}
-
-			return this.block.node?.icon;
-		},
-		colorIndex(): number
-		{
-			return this.block.node?.type === BLOCK_TYPES.TOOL ? 0 : this.block.node?.colorIndex;
-		},
-		previewTypes(): Array
-		{
-			return [
-				{
-					id: 'rule',
-					ports: this.rulePorts,
-					sectionTitle: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE'),
-					caption: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_RULE'),
-					isAvailable: true,
-				},
-				{
-					id: 'relation',
-					ports: this.relationPorts,
-					sectionTitle: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONNECTION_SECTION_TITLE'),
-					caption: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_CONNECTION'),
-					isAvailable: this.isRelationFeatureAvailable,
-				},
-			];
 		},
 	},
 	watch:
@@ -146,123 +77,91 @@ export const EditNodeSettingsForm = {
 		{
 			this.nodeSettings.description = description;
 		},
-		isUrl(value: string): boolean
-		{
-			if (!value || !Type.isString(value))
-			{
-				return false;
-			}
-
-			try
-			{
-				const u = new URL(value);
-
-				return u.protocol === 'https:';
-			}
-			catch
-			{
-				return false;
-			}
-		},
-		toggleActivation(event: MouseEvent): void
-		{
-			this.store.toggleBlockActivation(this.block.id, true);
-		},
 	},
 	template: `
 		<div class="editor-chart-node-settings-form">
-			<div class="editor-chart-node-settings-form__node-brief">
-				<BlockHeader
-					:block="block"
-					:subIconExternal="isUrl(block.node?.icon)"
-					:title="nodeSettings.title"
-				>
-					<template #icon>
-						<BlockIcon
-							:iconName="icon"
-							:iconColorIndex="colorIndex"
-						/>
-					</template>
-					<template #subIcon
-							  v-if="isSubIcon">
-						<div
-							v-if="isUrl(block.node.icon)"
-							:style="getBackgroundImage(block.node.icon)"
-							class="ui-selector-item-avatar"
-						/>
-						<BlockIcon
-							v-else
-							:iconName="block.node.icon"
-							:iconColorIndex="7"
-							:iconSize="24"
-						/>
-					</template>
-				</BlockHeader>
-				<IconButton
-					:icon-name="activationIcon"
-					@click="toggleActivation"
-				/>
-			</div>
-			<div class="editor-chart-node-settings-form__section-delimeter"></div>
 			<div class="editor-chart-node-settings-form__section">
-				<div>
-					<span class="editor-chart-node-settings-form__label">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_LABEL') }}
-					</span>
-					<div class="ui-ctl ui-ctl-textbox editor-chart-node-settings-form__node-name-input">
-						<input type="text"
-							class="ui-ctl-element"
-							:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER')"
-							:value="nodeSettings.title"
-							:data-test-id="$testId('complexNodeName')"
-							@input="onChangeTitle"
-						/>
+				<div class="editor-chart-node-settings-form__section-header">
+					<div class="editor-chart-node-settings-form__section-header-main">
+						<BIcon :name="iconSet.EDIT_M" :size="30"/>
+						<span class="editor-chart-node-settings-form__section-title">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_TITLE') }}
+						</span>
 					</div>
+					<span class="editor-chart-node-settings-form__section-description">
+						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_DESCRIPTION') }}
+					</span>
 				</div>
-				<div class="editor-chart-node-settings-form__node-description">
-					<span class="editor-chart-node-settings-form__label">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_LABEL') }}
-					</span>
-					<div class="ui-ctl ui-ctl-textarea editor-chart-node-settings-form__node-description_textarea">
-						<textarea
-							rows="1"
-							class="ui-ctl-element"
-							:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_PLACEHOLDER')"
-							:value="nodeSettings.description"
-							:data-test-id="$testId('complexNodeDescription')"
-							@input="onChangeDescription"
-						></textarea>
+				<div class="editor-chart-node-settings-form__fields">
+					<div>
+						<span class="editor-chart-node-settings-form__label">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_LABEL_MSGVER_1') }}
+						</span>
+						<div class="ui-ctl ui-ctl-textbox editor-chart-node-settings-form__node-name-input">
+							<input type="text"
+								class="ui-ctl-element"
+								:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER_MSGVER_1')"
+								:value="nodeSettings.title"
+								:data-test-id="$testId('complexNodeName')"
+								@input="onChangeTitle"
+							/>
+						</div>
 					</div>
-					<p class="editor-chart-node-settings-form__node-description_text">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_TEXT') }}
-					</p>
+					<div class="editor-chart-node-settings-form__node-description">
+						<span class="editor-chart-node-settings-form__label">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_LABEL') }}
+						</span>
+						<div class="ui-ctl ui-ctl-textarea editor-chart-node-settings-form__node-description_textarea">
+							<textarea
+								rows="1"
+								class="ui-ctl-element"
+								:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_PLACEHOLDER_MSGVER_1')"
+								:value="nodeSettings.description"
+								:data-test-id="$testId('complexNodeDescription')"
+								@input="onChangeDescription"
+							></textarea>
+						</div>
+					</div>
 				</div>
 			</div>
-			<div class="editor-chart-node-settings-form__section-delimeter"></div>
-			<template
-				v-for="previewType in previewTypes"
-				:key="previewType.id"
-			>
-				<div
-					v-if="previewType.isAvailable"
-					class="editor-chart-node-settings-form__section"
-				>
-					<p class="editor-chart-node-settings-form__section-title">
-						{{ previewType.sectionTitle }}
-					</p>
+			<div class="editor-chart-node-settings-form__section --rules">
+				<div class="editor-chart-node-settings-form__section-header">
+					<div class="editor-chart-node-settings-form__section-header-main">
+						<BIcon :name="iconSet.DATA_READING" :size="26"/>
+						<span class="editor-chart-node-settings-form__section-title">
+							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE') }}
+						</span>
+					</div>
+					<span class="editor-chart-node-settings-form__section-description">
+						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_DESCRIPTION_MSGVER_1') }}
+					</span>
+				</div>
+				<slot
+					v-for="port in rulePorts"
+					:key="port.id"
+					:port="port"
+					name="preview"
+				/>
+				<slot
+					v-for="port in relationPorts"
+					:key="port.id"
+					:port="port"
+					name="preview"
+				/>
+				<div class="editor-chart-node-settings-form__add-buttons">
 					<slot
-						v-for="port in previewType.ports"
-						:key="port.id"
-						:port="port"
-						name="preview"
+						:itemType="'rule'"
+						:text="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EDIT_RULES_BUTTON')"
+						name="addSettingsItem"
 					/>
 					<slot
-						:itemType="previewType.id"
-						:text="previewType.caption"
+						v-if="isRelationFeatureAvailable"
+						:itemType="'relation'"
+						:text="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_ENTRY_POINT_BUTTON')"
 						name="addSettingsItem"
 					/>
 				</div>
-			</template>
+			</div>
 		</div>
 	`,
 };

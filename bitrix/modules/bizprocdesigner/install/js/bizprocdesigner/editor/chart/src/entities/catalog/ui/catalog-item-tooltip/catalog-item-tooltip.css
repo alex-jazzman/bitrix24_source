@@ -1,0 +1,33 @@
+.editor-chart-catalog-item-tooltip__title {
+	margin: 0 0 4px;
+	padding: 0;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-white-base);
+}
+
+.editor-chart-catalog-item-tooltip__subtitle {
+	margin: 0;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-white-base);
+}
+
+.editor-chart-catalog-item-tooltip__tooltip-content .popup-window-angly--arrow {
+	top: 0;
+	left: -8px;
+	bottom: 0;
+	margin: auto;
+	width: 36px;
+	height: 13px;
+	-webkit-mask-image: url(../images/hint-arrow.svg);
+	mask-image: url(../images/hint-arrow.svg);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	transform: rotate(-90deg);
+	background-color: var(--ui-color-accent-soft-element-blue);
+}

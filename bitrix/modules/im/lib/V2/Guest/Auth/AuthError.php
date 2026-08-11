@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Bitrix\Im\V2\Guest\Auth;
+
+use Bitrix\Im\V2\Error;
+
+class AuthError extends Error
+{
+	public const CHAT_TYPE_NOT_ALLOWED = 'CHAT_TYPE_NOT_ALLOWED';
+	public const GUEST_FEATURE_DISABLED = 'GUEST_FEATURE_DISABLED';
+	public const GUEST_REGISTRATION_ERROR = 'GUEST_REGISTRATION_ERROR';
+	public const AUTHORIZE_ERROR = 'AUTHORIZE_ERROR';
+	public const GUEST_NOT_FOUND = 'GUEST_NOT_FOUND';
+	public const DIFFERENT_GUEST = 'DIFFERENT_GUEST';
+	public const NOT_GUEST = 'NOT_GUEST';
+	public const GUEST_METHOD_NOT_ALLOWED = 'GUEST_METHOD_NOT_ALLOWED';
+	public const GUEST_SESSION_TERMINATED = 'GUEST_SESSION_TERMINATED';
+	public const JOIN_CHAT_ERROR = 'JOIN_CHAT_ERROR';
+	public const GUEST_INVALID_NAME = 'GUEST_INVALID_NAME';
+	public const GUEST_UPDATE_NAME_ERROR = 'GUEST_UPDATE_NAME_ERROR';
+}

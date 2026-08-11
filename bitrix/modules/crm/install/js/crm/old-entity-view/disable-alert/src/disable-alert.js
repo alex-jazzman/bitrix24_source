@@ -4,6 +4,7 @@ import 'ui.design-tokens.air';
 import './disable-alert.css';
 import OldEntityDisableAlertContent from './alert-content/old-entity-disable';
 import OldInvoiceReadonlyAlertContent from './alert-content/old-invoice-readonly';
+import OldInvoiceWarningAlertContent from './alert-content/old-invoice-warning';
 
 export type DisableAlertOptions = {
 	alertContainer: HTMLElement,
@@ -50,6 +51,8 @@ export class DisableAlert
 	{
 		switch (name)
 		{
+			case 'old-invoice-warning':
+				return new OldInvoiceWarningAlertContent(this.#alertContainer, this.#contentOptions).createNode();
 			case 'old-invoice-readonly':
 				return new OldInvoiceReadonlyAlertContent(this.#alertContainer, this.#contentOptions).createNode();
 			default:

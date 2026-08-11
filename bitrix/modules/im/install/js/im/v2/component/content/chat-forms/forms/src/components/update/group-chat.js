@@ -13,7 +13,7 @@ import {
 	RightsSection,
 	ChatMemberDiffManager,
 } from 'im.v2.component.content.chat-forms.elements';
-import { ChatType, EventType, PopupType, SidebarDetailBlock, type UserRole, type SelectorEntityItem } from 'im.v2.const';
+import { ChatType, EventType, PopupType, SidebarDetailBlock, type UserRole, type ChatTypeItem, type SelectorEntityItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import { type ImModelChat } from 'im.v2.model';
@@ -35,8 +35,7 @@ export const GroupChatUpdating = {
 		SettingsSection,
 		RightsSection,
 	},
-	props:
-	{
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
@@ -64,6 +63,7 @@ export const GroupChatUpdating = {
 				manageUsersDelete: '',
 				manageUi: '',
 				manageMessages: '',
+				manageGuestInvites: '',
 			},
 		};
 	},
@@ -77,6 +77,10 @@ export const GroupChatUpdating = {
 		chatId(): number
 		{
 			return this.dialog.chatId;
+		},
+		chatType(): ChatTypeItem
+		{
+			return this.dialog.type;
 		},
 		collapsedUsers(): TagSelectorElement[]
 		{
@@ -128,21 +132,9 @@ export const GroupChatUpdating = {
 		{
 			this.rights.managerIds = managerIds;
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		onRightChange({ name, value }: { name: string, value: UserRoleItem })
 		{
-			this.rights.manageUsersAdd = newValue;
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUsersDelete = newValue;
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUi = newValue;
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.rights.manageMessages = newValue;
+			this.rights[name] = value;
 		},
 		onDescriptionChange(description: string)
 		{
@@ -160,6 +152,7 @@ export const GroupChatUpdating = {
 			this.rights.manageUi = this.dialog.permissions.manageUi;
 			this.rights.manageUsersAdd = this.dialog.permissions.manageUsersAdd;
 			this.rights.manageUsersDelete = this.dialog.permissions.manageUsersDelete;
+			this.rights.manageGuestInvites = this.dialog.permissions.manageGuestInvites;
 			this.settings.isAvailableInSearch = this.dialog.type === ChatType.open;
 		},
 		async getMemberEntities(): Promise<[string, number][]>
@@ -201,6 +194,7 @@ export const GroupChatUpdating = {
 				manageUsersDelete: this.rights.manageUsersDelete,
 				manageUi: this.rights.manageUi,
 				manageMessages: this.rights.manageMessages,
+				manageGuestInvites: this.rights.manageGuestInvites,
 			}).catch(() => {
 				this.isUpdating = false;
 			});
@@ -225,6 +219,7 @@ export const GroupChatUpdating = {
 			MenuManager.getMenuById(PopupType.createChatManageUsersDeleteMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUiMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageMessagesMenu)?.close();
+			MenuManager.getMenuById(PopupType.createChatManageGuestInvitesMenu)?.close();
 		},
 		getChatService(): ChatService
 		{
@@ -296,12 +291,11 @@ export const GroupChatUpdating = {
 					:manageUsersDelete="rights.manageUsersDelete"
 					:manageUi="rights.manageUi"
 					:manageMessages="rights.manageMessages"
+					:manageGuestInvites="rights.manageGuestInvites"
+					:chatType="chatType"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>

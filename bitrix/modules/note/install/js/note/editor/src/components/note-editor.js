@@ -11,7 +11,9 @@ import { normalizeCurrentUser } from '../utils/normalize';
 import { safeParseMarkdown } from '../utils/safe-parse-markdown';
 import type { CurrentUser } from '../type';
 import { createLinkSelectionDecorationPlugin } from '../extensions/link-selection-decoration';
+import { createAttachmentSelectionDecorationPlugin } from '../extensions/attachment-selection-decoration';
 import { parseInternalNoteLink } from '../utils/internal-link';
+import { isAllowedUrl, openViaMobileApp } from '../utils/open-link';
 import { createScopedUploadService, insertUploadAssetNode } from '../services/upload-orchestration';
 import '../styles/editor.css';
 import '../styles/editor.mobile.css';
@@ -80,6 +82,10 @@ export const DocumentEditorComponent = {
 		title: {
 			type: String,
 			default: '',
+		},
+		onMentionClick: {
+			type: Function,
+			default: null,
 		},
 	},
 	emits: ['ready', 'update:modelValue', 'update:content', 'rename-title', 'open-internal-link'],
@@ -164,12 +170,12 @@ export const DocumentEditorComponent = {
 		},
 		editableLocal()
 		{
-			this.editor?.setEditable(this.effectiveEditable);
+			this.applyEditableState();
 		},
 		readOnly(nextReadOnly)
 		{
 			void nextReadOnly;
-			this.editor?.setEditable(this.effectiveEditable);
+			this.applyEditableState();
 		},
 		modelValue(nextValue)
 		{
@@ -229,15 +235,26 @@ export const DocumentEditorComponent = {
 			}
 
 			const parsed = parseInternalNoteLink(anchor.getAttribute('href'));
-			if (!parsed)
+			if (parsed)
 			{
-				return false;
+				event.preventDefault();
+				this.$emit('open-internal-link', parsed);
+
+				return true;
 			}
 
-			event.preventDefault();
-			this.$emit('open-internal-link', parsed);
+			// External / non-note link: inside the mobile app route it through the
+			// native bridge instead of escaping to the OS browser. Desktop keeps
+			// the browser's default anchor navigation.
+			// Same scheme allowlist as the mention path — disallowed schemes fall through to default anchor behaviour.
+			if (isAllowedUrl(anchor.href) && openViaMobileApp(anchor.href))
+			{
+				event.preventDefault();
 
-			return true;
+				return true;
+			}
+
+			return false;
 		},
 		updateTitle(newTitle: string): void
 		{
@@ -246,6 +263,24 @@ export const DocumentEditorComponent = {
 		setEditable(value: boolean): void
 		{
 			this.editableLocal = Boolean(value);
+		},
+		applyEditableState(): void
+		{
+			const editor = this.editor;
+			if (!editor)
+			{
+				return;
+			}
+
+			editor.setEditable(this.effectiveEditable);
+
+			// Leaving edit mode: drop the lingering selection so the attachment outline doesn't
+			// stay drawn (and handles don't re-surface) once back in view mode.
+			if (!this.effectiveEditable && !editor.state.selection.empty)
+			{
+				editor.commands.setTextSelection(editor.state.selection.from);
+				editor.commands.blur();
+			}
 		},
 		setShowToolbar(value: boolean): void
 		{
@@ -326,6 +361,7 @@ export const DocumentEditorComponent = {
 					provider: this.provider,
 					user: this.normalizedCurrentUser,
 					documentId: this.documentId,
+					onMentionClick: typeof this.onMentionClick === 'function' ? this.onMentionClick : null,
 				}),
 				...extraExtensions,
 			];
@@ -376,6 +412,7 @@ export const DocumentEditorComponent = {
 				this.editor.commands.setContent(doc, false);
 			}
 			this.editor.registerPlugin(createLinkSelectionDecorationPlugin());
+			this.editor.registerPlugin(createAttachmentSelectionDecorationPlugin());
 		},
 		resolveInitialContent(): Object
 		{

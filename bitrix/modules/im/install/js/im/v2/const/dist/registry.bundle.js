@@ -67,6 +67,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2RecentLoad: 'im.v2.Recent.load',
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
+		imV2CopilotDraftChatGet: 'im.v2.Copilot.DraftChat.get',
 		imV2AccessCheck: 'im.v2.Access.check',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 		imV2ChatMemberCheckMembership: 'im.v2.Chat.Member.checkMembership',
@@ -79,12 +80,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
 		imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
 		imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
-		imV2ChatGuestLinkGenerate: 'im.v2.Guest.Link.generate',
-		imV2ChatGuestLinkRegenerate: 'im.v2.Guest.Link.regenerate',
-		imV2ChatGuestLinkRevoke: 'im.v2.Guest.Link.revoke',
+		imV2GuestLinkGenerate: 'im.v2.Guest.Link.generate',
+		imV2GuestLinkRegenerate: 'im.v2.Guest.Link.regenerate',
+		imV2GuestLinkRevoke: 'im.v2.Guest.Link.revoke',
+		imV2GuestLinkInviteByEmail: 'im.v2.Guest.Link.inviteByEmail',
+		imV2GuestLinkInviteByPhoneNumber: 'im.v2.Guest.Link.inviteByPhoneNumber',
 		imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
 		imV2RecentPin: 'im.v2.Chat.pin',
 		imV2RecentUnpin: 'im.v2.Chat.unpin',
+		imV2GuestSetName: 'im.v2.Guest.setName',
 		imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
 		imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
 		imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
@@ -296,6 +300,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		sending: {
 			onBeforeAddMessageToModel: 'IM:Textarea:onBeforeAddMessageToModel'
+		},
+		guest: {
+			onAfterGuestNamePopupClose: 'IM:Guest:onAfterGuestNamePopupClose'
 		}
 	};
 
@@ -340,6 +347,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		center: 'center'
 	});
 	const DialogIdChatPrefix = 'chat';
+	const TempAiAssistantPrefix = 'temp-ai-assistant';
+
+	const CopilotRole = Object.freeze({
+		universalCode: 'copilot_assistant'
+	});
 
 	const FileStatus = Object.freeze({
 		upload: 'upload',
@@ -526,7 +538,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		user: 'user',
 		bot: 'bot',
 		extranet: 'extranet',
-		collaber: 'collaber'
+		collaber: 'collaber',
+		guest: 'guest'
 	};
 	const UserRole = {
 		guest: 'guest',
@@ -750,6 +763,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		createChatManageUsersDeleteMenu: 'im-content-create-chat-manage-users-delete',
 		createChatManageUiMenu: 'im-content-create-chat-manage-ui',
 		createChatManageMessagesMenu: 'im-content-create-chat-can-post',
+		createChatManageGuestInvitesMenu: 'im-content-create-chat-manage-guest-invites',
 		messageBaseFileMenu: 'im-message-base-file-context-menu',
 		desktopItemMenu: 'im-navigation-desktop-item-context-menu',
 		messageHistoryLimit: 'im-message-history-limit-popup',
@@ -842,7 +856,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all',
 		collabCardNavigation: 'im:collab-card-navigation:28042026:all',
 		collabCreateChat: 'im:collab-create-chat:28042026:all',
-		collabAi: 'socialnetwork:collab-project-ai:28042026:all'
+		collabProjectAi: 'socialnetwork:collab-project-ai:28042026:all',
+		collabAi: 'socialnetwork:collab-project-ai:28042026:all',
+		bitrixGptAgent: 'im:bitrix-gpt-agent:20052026:all'
 	});
 
 	const ActionByRole = Object.freeze({
@@ -876,7 +892,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		openSidebarMenu: 'openSidebarMenu',
 		updateInviteLink: 'updateInviteLink',
 		manageGuestLink: 'manageGuestLink',
-		updateGuestLink: 'updateGuestLink',
 		createDocumentSign: 'createDocumentSign',
 		createCalendarSlots: 'createCalendarSlots',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
@@ -886,7 +901,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		manageUi: 'manageUi',
 		manageUsersAdd: 'manageUsersAdd',
 		manageUsersDelete: 'manageUsersDelete',
-		manageMessages: 'manageMessages'
+		manageMessages: 'manageMessages',
+		manageGuestInvites: 'manageGuestInvites'
 	});
 	const ActionByUserType = Object.freeze({
 		getChannels: 'getChannels',
@@ -900,7 +916,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		leaveCollab: 'leaveCollab',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 		changeStickerPack: 'changeStickerPack',
-		createStickerPack: 'createStickerPack'
+		createStickerPack: 'createStickerPack',
+		extend: 'extend',
+		manageGuestLink: 'manageGuestLink'
 	});
 
 	const RawBotType = Object.freeze({
@@ -1106,6 +1124,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CollabEntityType = CollabEntityType;
 	exports.Color = Color;
 	exports.ColorToken = ColorToken;
+	exports.CopilotRole = CopilotRole;
 	exports.DataAttribute = DataAttribute;
 	exports.DesktopBroadcastAction = DesktopBroadcastAction;
 	exports.DesktopBxLink = DesktopBxLink;
@@ -1166,6 +1185,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.StickerPackType = StickerPackType;
 	exports.StickerType = StickerType;
 	exports.TabId = TabId;
+	exports.TempAiAssistantPrefix = TempAiAssistantPrefix;
 	exports.TextareaPanelType = TextareaPanelType;
 	exports.TranscriptionStatus = TranscriptionStatus;
 	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;

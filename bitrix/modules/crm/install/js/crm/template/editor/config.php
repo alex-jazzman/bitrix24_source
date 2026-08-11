@@ -13,12 +13,8 @@ return [
 		'crm_common',
 		'main.core',
 		'main.core.events',
-		'main.popup',
-		'ui.buttons',
+		'messageservice.template.editor',
 		'ui.design-tokens',
-		'ui.entity-selector',
-		'ui.notification',
-		'ui.progressbar',
 	],
 	'skip_core' => false,
 ];

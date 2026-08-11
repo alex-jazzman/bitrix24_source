@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, main_core, main_sidepanel, ui_notification, ui_iconSet_outline, note_ui_themeContext, main_popup, ui_buttons, ui_entitySelector, ui_hint, ui_system_dialog, main_core_events) {
+(function (exports, main_core, main_sidepanel, ui_notification, ui_iconSet_outline, note_ui_themeContext, main_popup, ui_buttons, ui_entitySelector, ui_hint, ui_system_dialog, main_core_events, note_analytics) {
 	'use strict';
 
 	class PermissionsApi {
@@ -536,7 +536,8 @@ this.BX.Note = this.BX.Note || {};
 			}, {
 				id: 'department',
 				options: {
-					selectMode: 'usersAndDepartments'
+					selectMode: 'usersAndDepartments',
+					allowSelectRootDepartment: true
 				}
 			}];
 			if (this.popupConfig?.kind === 'collection') {
@@ -725,6 +726,22 @@ this.BX.Note = this.BX.Note || {};
 		}
 		return permissions;
 	}
+
+	// Collection ACL popup only exposes MODERATE/MANAGE/VIEW sections, so byLevel[EDIT] stays empty
+	// for collections (backend collection levels: NONE/VIEW/MANAGE/MODERATE). EDIT is folded into
+	// reductorsCount as a no-loss safeguard. Counts include the ALL_USERS policy subject as-is.
+	function buildCollectionCreateStats(state) {
+		const byLevel = state?.byLevel || {};
+		const countAt = level => Array.isArray(byLevel[level]) ? byLevel[level].length : 0;
+
+		// Web-created collection is never an import, so no importType/import counters are sent.
+		return {
+			admin: countAt(LEVEL_MODERATE),
+			reductorsCount: countAt(LEVEL_MANAGE) + countAt(LEVEL_EDIT),
+			viewersCount: countAt(LEVEL_VIEW),
+			customCount: 0
+		};
+	}
 	function createCollectionEditConfig(api, collectionId, options = {}) {
 		const initialName = String(options?.collectionName || '');
 		return {
@@ -740,23 +757,29 @@ this.BX.Note = this.BX.Note || {};
 			tagSelectorContext: `NOTE_COLLECTION_PERMISSIONS_${collectionId}`,
 			load: () => api.loadCollectionPermissions(collectionId),
 			save: async state => {
-				const trimmedName = String(state.name || '').trim();
-				const renamed = trimmedName && trimmedName !== initialName.trim();
-				if (renamed) {
-					await api.updateCollection(collectionId, trimmedName);
-				}
-				const {
-					policyLevel,
-					permissions
-				} = flattenStateForCollection(state);
-				await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
-				if (renamed) {
-					main_core_events.EventEmitter.emit(EVENT_COLLECTION_RENAMED, new main_core_events.BaseEvent({
-						data: {
-							id: collectionId,
-							name: trimmedName
-						}
-					}));
+				try {
+					const trimmedName = String(state.name || '').trim();
+					const renamed = trimmedName && trimmedName !== initialName.trim();
+					if (renamed) {
+						await api.updateCollection(collectionId, trimmedName);
+					}
+					const {
+						policyLevel,
+						permissions
+					} = flattenStateForCollection(state);
+					await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
+					if (renamed) {
+						main_core_events.EventEmitter.emit(EVENT_COLLECTION_RENAMED, new main_core_events.BaseEvent({
+							data: {
+								id: collectionId,
+								name: trimmedName
+							}
+						}));
+					}
+					note_analytics.NoteAnalytics.collectionAccessChanged(true);
+				} catch (error) {
+					note_analytics.NoteAnalytics.collectionAccessChanged(false);
+					throw error;
 				}
 			},
 			successMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS'),
@@ -794,34 +817,43 @@ this.BX.Note = this.BX.Note || {};
 				});
 			},
 			save: async state => {
-				const trimmedName = String(state.name || '').trim();
-				const collection = await api.createCollection(trimmedName);
-				const collectionId = Number(collection?.id || 0);
-				if (!collectionId) {
-					throw new Error('note.permissions: collection create returned no id');
-				}
-				const {
-					policyLevel,
-					permissions
-				} = flattenStateForCollection(state);
+				// Single create_collection event by the outcome of both hits (create + save perms).
+				// Backend does not emit create_collection for web (removed in P3), so no double-count.
+				const stats = buildCollectionCreateStats(state);
 				try {
-					await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
-				} catch (savePermissionsError) {
-					try {
-						await api.deleteCollection(collectionId);
-					} catch (rollbackError) {
-						// Surface a more specific error so popup can show an extra hint
-						rollbackError.noteRollbackFailed = true;
-						throw rollbackError;
+					const trimmedName = String(state.name || '').trim();
+					const collection = await api.createCollection(trimmedName);
+					const collectionId = Number(collection?.id || 0);
+					if (!collectionId) {
+						throw new Error('note.permissions: collection create returned no id');
 					}
-					throw savePermissionsError;
-				}
-				if (typeof options.onCreated === 'function') {
-					options.onCreated({
-						id: collectionId,
-						name: String(collection?.name || trimmedName),
-						position: Number(collection?.position || 0)
-					});
+					const {
+						policyLevel,
+						permissions
+					} = flattenStateForCollection(state);
+					try {
+						await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
+					} catch (savePermissionsError) {
+						try {
+							await api.deleteCollection(collectionId);
+						} catch (rollbackError) {
+							// Surface a more specific error so popup can show an extra hint
+							rollbackError.noteRollbackFailed = true;
+							throw rollbackError;
+						}
+						throw savePermissionsError;
+					}
+					note_analytics.NoteAnalytics.collectionCreated(stats, true);
+					if (typeof options.onCreated === 'function') {
+						options.onCreated({
+							id: collectionId,
+							name: String(collection?.name || trimmedName),
+							position: Number(collection?.position || 0)
+						});
+					}
+				} catch (error) {
+					note_analytics.NoteAnalytics.collectionCreated(stats, false);
+					throw error;
 				}
 			},
 			successMessage: getMessage('NOTE_PERMISSIONS_POPUP_CREATE_SUCCESS'),
@@ -846,7 +878,13 @@ this.BX.Note = this.BX.Note || {};
 			load: () => api.loadDocumentPermissions(documentId),
 			save: async state => {
 				const permissions = flattenStateForDocument(state);
-				await api.saveDocumentPermissions(documentId, permissions);
+				try {
+					await api.saveDocumentPermissions(documentId, permissions);
+					note_analytics.NoteAnalytics.documentAccessChanged(true);
+				} catch (error) {
+					note_analytics.NoteAnalytics.documentAccessChanged(false);
+					throw error;
+				}
 			},
 			successMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS_DOCUMENT'),
 			errorMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_ERROR_DOCUMENT'),
@@ -983,5 +1021,5 @@ this.BX.Note = this.BX.Note || {};
 	exports.App = App;
 	exports.NotePermissionsApp = NotePermissionsApp;
 
-})(this.BX.Note.Permissions = this.BX.Note.Permissions || {}, BX, BX.SidePanel, BX.UI.Notification, window, BX.Note.Ui, BX.Main, BX.UI, BX.UI.EntitySelector, BX.UI, BX.UI.System, BX.Event);
+})(this.BX.Note.Permissions = this.BX.Note.Permissions || {}, BX, BX.SidePanel, BX.UI.Notification, window, BX.Note.Ui, BX.Main, BX.UI, BX.UI.EntitySelector, BX.UI, BX.UI.System, BX.Event, BX.Note);
 //# sourceMappingURL=permissions.bundle.js.map

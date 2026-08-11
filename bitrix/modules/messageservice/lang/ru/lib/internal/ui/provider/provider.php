@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MESSAGESERVICE_UI_PROVIDER_VIA'] = 'через #CHANNEL#';

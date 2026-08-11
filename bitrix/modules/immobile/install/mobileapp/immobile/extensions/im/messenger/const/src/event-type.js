@@ -61,6 +61,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				openConsole: 'ImMobile.Messenger.Dev:openConsole',
 			},
 		},
+		/** Chat domain events (data layer facts, not UI commands) */
+		chat: {
+			deleted: 'ImMobile.Messenger.Chat:deleted',
+		},
 		/** Extension events */
 		recent: {
 			itemSelected: 'onItemSelected',

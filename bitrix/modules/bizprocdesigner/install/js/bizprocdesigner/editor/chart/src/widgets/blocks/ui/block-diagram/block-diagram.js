@@ -1,11 +1,5 @@
-import type { FeatureCodeType } from 'bizprocdesigner.feature';
-import { FeatureCode } from 'bizprocdesigner.feature';
-import type { MenuItemOptions } from 'main.popup';
-import type { Point } from 'ui.block-diagram';
-import { computed, toValue, inject, watch, nextTick } from 'ui.vue3';
-import { storeToRefs } from 'ui.vue3.pinia';
 import { Runtime, Browser } from 'main.core';
-import { UI } from 'ui.notification';
+import { type MenuItemOptions } from 'main.popup';
 import {
 	useAnimationQueue,
 	useHistory,
@@ -14,12 +8,15 @@ import {
 	useBlockDiagram,
 	useHighlightedBlocks,
 	useContextMenu,
+	type Point,
 } from 'ui.block-diagram';
+import { UI } from 'ui.notification';
+import { computed, toValue, inject, watch, nextTick } from 'ui.vue3';
+import { storeToRefs } from 'ui.vue3.pinia';
+
+import { FeatureCode, type FeatureCodeType } from 'bizprocdesigner.feature';
+
 import { setUserSelectedBlock } from '../../../../entities/ai-assistant/api/api';
-import { useFeature, useLoc } from '../../../../shared/composables';
-import { PORT_TYPES } from '../../../../shared/constants';
-import type { Block, Connection, Port } from '../../../../shared/types';
-import { BLOCK_TYPES } from '../../../../shared/constants';
 import {
 	BlockDiagram as BlockDiagramEntity,
 	diagramStore as useDiagramStore,
@@ -27,9 +24,14 @@ import {
 	CONNECTION_SLOT_NAMES,
 	useBufferStore,
 } from '../../../../entities/blocks';
-import { useCopyPaste, BlockMediator } from '../../lib';
+import { useFeature, useLoc } from '../../../../shared/composables';
+import { PORT_TYPES, BLOCK_TYPES } from '../../../../shared/constants';
+import { type Block, type Connection, type Port } from '../../../../shared/types';
+import { useCopyPaste, BlockMediator, getContextMenuItemHtml } from '../../lib';
 
 import './block-diagram.css';
+
+const IS_MAC = Browser.isMac();
 
 type SetupType = {
 	blocks: Array<Block>,
@@ -237,12 +239,18 @@ export const BlockDiagram = {
 		const groupMenuItems = computed(() => [
 			{
 				id: 'copy-group',
-				text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+				html: getContextMenuItemHtml(
+					getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+					IS_MAC ? '⌘ С' : 'Ctrl-C',
+				),
 				onclick: handleCopy,
 			},
 			{
 				id: 'delete-group',
-				text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+				html: getContextMenuItemHtml(
+					getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+					IS_MAC ? '⌫' : 'Del',
+				),
 				onclick: handleDelete,
 			},
 		]);
@@ -422,32 +430,14 @@ export const BlockDiagram = {
 			return {
 				id: 'paste',
 				disabled: this.isBufferEmpty,
-				html: `
-					<span class="editor-chart-block-control-menu-item">
-						${this.menuItemText}
-						<span class="editor-chart-block-control-menu-item__action-code">
-							<span class="editor-chart-block-control-menu-item__action-code_text">
-								${this.menuItemShortcut}
-							</span>
-						</span>
-					</span>
-				`,
+				html: getContextMenuItemHtml(
+					this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE'),
+					IS_MAC ? '⌘ V' : 'Ctrl-V',
+				),
 				onclick: (point: Point): void => {
 					this.performPaste(point);
 				},
 			};
-		},
-		isMac(): boolean
-		{
-			return Browser.isMac();
-		},
-		menuItemShortcut(): string
-		{
-			return this.isMac ? '⌘ V' : 'Ctrl-V';
-		},
-		menuItemText(): string
-		{
-			return this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE');
 		},
 	},
 	// @todo to widget

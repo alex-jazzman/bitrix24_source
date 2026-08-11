@@ -1,5 +1,6 @@
 import { ajax, Loc } from 'main.core';
 import 'ui.icon-set.outline';
+import { NoteAnalytics } from 'note.analytics';
 import { syncIMEModel } from '../utils/sync-ime-model';
 
 const ACTION_QUICK_SEARCH = 'note.infrastructure.SearchController.quickSearch';
@@ -17,6 +18,7 @@ export const SidebarSearchInput = {
 			status: 'idle', // idle | loading | results | empty | error
 			dropdownVisible: false,
 			focusedIndex: -1,
+			analyticsClickTracked: false,
 		};
 	},
 	computed: {
@@ -143,6 +145,17 @@ export const SidebarSearchInput = {
 				this.focusedIndex = -1;
 			}
 		},
+		onSearchRowClick(): void
+		{
+			this.$refs.input?.focus();
+			// Emit click_search once per search session; the flag resets on resetSearch(),
+			// not on blur/tab-switch, so re-focus/tab changes never re-fire it.
+			if (!this.analyticsClickTracked)
+			{
+				NoteAnalytics.searchClicked(false);
+				this.analyticsClickTracked = true;
+			}
+		},
 		onFocus(): void
 		{
 			if (this.results.length > 0 || this.status === 'empty')
@@ -152,6 +165,8 @@ export const SidebarSearchInput = {
 		},
 		onBlur(): void
 		{
+			// Re-arm click_search: leaving the field and clicking back in counts as a new search.
+			this.analyticsClickTracked = false;
 			setTimeout(() => {
 				this.dropdownVisible = false;
 			}, 150);
@@ -208,6 +223,7 @@ export const SidebarSearchInput = {
 			this.results = [];
 			this.status = 'idle';
 			this.dropdownVisible = false;
+			this.analyticsClickTracked = false;
 		},
 		selectResult(item): void
 		{
@@ -229,7 +245,7 @@ export const SidebarSearchInput = {
 	// language=Vue
 	template: `
 		<div class="note-sidebar-search">
-			<div class="note-sidebar-search-row" @click="$refs.input.focus()">
+			<div class="note-sidebar-search-row" @click="onSearchRowClick">
 				<div class="note-sidebar-search-bg"></div>
 				<div class="note-sidebar-search-border"></div>
 				<span v-if="!hasQuery" class="note-sidebar-search-icon" aria-hidden="true">

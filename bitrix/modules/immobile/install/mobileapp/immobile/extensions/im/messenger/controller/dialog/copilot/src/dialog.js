@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
+
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 
@@ -24,16 +25,6 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 	const { BackgroundManager } = require('im/messenger/controller/dialog/lib/background');
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
-	const {
-		ReasoningButton,
-		ModeMenuButton,
-		MCPButton,
-		SearchModeButton,
-		AgentButton,
-		MarketButton,
-		AssistantButtonDesign,
-	} = require('im/messenger/controller/dialog/lib/assistant-button-manager');
-	const { Reasoning } = require('im/messenger/lib/reasoning');
 
 	const logger = getLogger('dialog--dialog');
 
@@ -143,7 +134,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			}
 		}
 
-		async open(options)
+		async open(options, parentWidget = PageManager, openPerfPoint = null)
 		{
 			const {
 				dialogId,
@@ -153,6 +144,8 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				integrationSettings,
 				onClose = () => {},
 			} = options;
+
+			this.openPerfPoint = openPerfPoint;
 
 			this.onClose = onClose;
 			this.initConfigurator(integrationSettings);
@@ -168,6 +161,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			this.withMessageHighlight = withMessageHighlight ?? false;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);
 
+			this.openPerfPoint?.startPoint('load-messages-from-db');
 			const hasDialog = await this.loadDialogFromDb();
 			if (hasDialog)
 			{
@@ -184,6 +178,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			});
 
 			this.firstDbPagePromise = this.loadHistoryMessagesFromDb();
+			this.openPerfPoint?.endPoint('load-messages-from-db');
 
 			let titleParams = null;
 			if (dialogTitleParams)
@@ -201,11 +196,13 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				}
 			}
 
-			this.createWidget(titleParams)
+			this.openPerfPoint?.startPoint('create-widget');
+			await this.createWidget(titleParams)
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.createWidget error:`, error);
 				})
 			;
+			this.openPerfPoint?.endPoint('create-widget');
 		}
 
 		/**
@@ -217,62 +214,6 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			return ChatTitle.createOptimisticCopilotTitleParams();
 		}
 
-
-		/**
-		 * @return {Array<AssistantButton>}
-		 */
-		getAssistantButtons()
-		{
-			if (!Feature.isBitrixGptV2Enabled)
-			{
-				return this.#getLegacyAssistantButtons();
-			}
-
-			const buttons = [];
-
-			buttons.push({ ...ModeMenuButton });
-
-			if (Feature.isCopilotMCPButtonAvailable)
-			{
-				buttons.push({ ...MCPButton });
-			}
-
-			if (Feature.isSearchModeButtonAvailable)
-			{
-				buttons.push({ ...SearchModeButton });
-			}
-
-			if (Feature.isAgentButtonAvailable)
-			{
-				buttons.push({ ...AgentButton });
-			}
-
-			if (Feature.isAssistantMarketButtonAvailable)
-			{
-				buttons.push({ ...MarketButton });
-			}
-
-			return buttons;
-		}
-
-		/**
-		 * @return {Array<AssistantButton>}
-		 */
-		#getLegacyAssistantButtons()
-		{
-			const buttons = [];
-
-			if (Feature.isCopilotReasoningAvailable)
-			{
-				const design = Reasoning.isSupported(this.dialogId)
-					? AssistantButtonDesign.grey
-					: AssistantButtonDesign.disabledAlike;
-
-				buttons.push({ ...ReasoningButton, design });
-			}
-
-			return buttons;
-		}
 
 		/**
 		 *
@@ -336,6 +277,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			AnalyticsService.getInstance().sendOpenCopilotDialog({
 				dialogId: this.dialogId,
 				context: this.openingContext,
+				modesState: this.locator.get('assistant-button-manager')?.getSettingsSnapshot() ?? null,
 			});
 		}
 	}

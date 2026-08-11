@@ -1,4 +1,6 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
 if(!CModule::IncludeModule("iblock"))
@@ -13,7 +15,6 @@ $iblockID = false;
 if ($arIBlock = $rsIBlock->Fetch())
 {
 	$iblockID = $arIBlock["ID"]; 
-	var_dump(WIZARD_INSTALL_DEMO_DATA);
 	if (WIZARD_INSTALL_DEMO_DATA)
 	{
 		CIBlock::Delete($arIBlock["ID"]); 
@@ -27,11 +28,11 @@ if($iblockID == false)
 			"1" => "X",
 			"2" => "R"
 		);
-	$dbGroup = CGroup::GetList("", "", Array("STRING_ID" => "content_editor"));
-	if($arGroup = $dbGroup -> Fetch())
+	$groupId = CGroup::GetIDByCode("content_editor");
+	if($groupId)
 	{
-		$permissions[$arGroup["ID"]] = 'W';
-	};
+		$permissions[$groupId] = 'W';
+	}
 	$iblockID = WizardServices::ImportIBlockFromXML(
 		$iblockXMLFile,
 		"corp_vacancies",
@@ -74,5 +75,3 @@ else
 }
 
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/about/vacancies.php", array("VACANCIES_IBLOCK_ID" => $iblockID));
-
-?>

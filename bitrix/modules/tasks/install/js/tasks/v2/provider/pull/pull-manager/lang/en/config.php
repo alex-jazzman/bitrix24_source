@@ -1,0 +1,3 @@
+<?php
+$MESS["TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_CREATED"] = "Recurring task template created.";
+$MESS["TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_OPEN"] = "Open";

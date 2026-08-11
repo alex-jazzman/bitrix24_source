@@ -1,8 +1,8 @@
 <?php
 $MESS["M_CRM_ENTITY_TAB_ACTION_ACTIVITY"] = "Plan activity";
 $MESS["M_CRM_ENTITY_TAB_ACTION_CHAT"] = "Discuss in chat";
-$MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE"] = "Add to exceptions";
-$MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION"] = "This action cannot be undone.\nAre you sure you want to add the item to exceptions?";
+$MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE"] = "Add to Exceptions";
+$MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION"] = "This action cannot be undone.\nAre you sure you want to add the item to Exceptions?";
 $MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION_OK"] = "Add";
 $MESS["M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TEXT"] = "Please contact your Bitrix24 administrator";
 $MESS["M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TITLE"] = "Insufficient permissions";

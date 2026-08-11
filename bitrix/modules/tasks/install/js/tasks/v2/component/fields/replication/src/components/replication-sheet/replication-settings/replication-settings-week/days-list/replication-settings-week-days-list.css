@@ -6,7 +6,7 @@
 }
 
 .tasks-replication-sheet-action-row.--weekdays {
-	justify-content: space-between;
+	gap: var(--ui-space-inline-lg2);
 }
 
 .tasks-field-replication-weekday-text:not(.--checked) {

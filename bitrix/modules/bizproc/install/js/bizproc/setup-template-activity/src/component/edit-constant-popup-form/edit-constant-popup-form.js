@@ -43,7 +43,6 @@ export const EditConstantPopupForm = {
 		UiButton,
 		EntitySelectorConstantSettings,
 	},
-	inject: ['editSlider'],
 	props: {
 		/** @type ConstantItem */
 		item: {
@@ -60,7 +59,7 @@ export const EditConstantPopupForm = {
 			default: false,
 		},
 	},
-	emits: ['update:item', 'cancel'],
+	emits: ['update:item', 'cancel', 'update:changed'],
 	setup(): { [string]: string }
 	{
 		return {
@@ -70,6 +69,8 @@ export const EditConstantPopupForm = {
 	},
 	data(): EditConstantPopupFormData
 	{
+		const options = this.convertMapToOptionsModelArray(this.item.options);
+
 		return {
 			id: this.item.id,
 			name: this.item.name,
@@ -77,24 +78,44 @@ export const EditConstantPopupForm = {
 			multiple: this.item.multiple,
 			description: this.item.description,
 			defaultValue: this.item.default,
+			options,
 			settings: this.item.settings,
-			options: this.convertMapToOptionsModelArray(this.item.options),
 			required: this.item.required,
+			initialOptionsSnapshot: JSON.stringify(options),
 			errors: {
 				id: '',
 				name: '',
-				options: this.convertMapToOptionsModelArray(this.item.options).map(() => ''),
+				options: options.map(() => ''),
 			},
 		};
 	},
 	computed: {
+		isSelectType(): boolean
+		{
+			return this.constantType === CONSTANT_TYPES.SELECT;
+		},
 		isEntitySelector(): boolean
 		{
 			return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
 		},
-		isSelectType(): boolean
+		submitButtonText(): string
 		{
-			return this.constantType === CONSTANT_TYPES.SELECT;
+			const key = this.isCreation
+				? 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD'
+				: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_EDIT';
+
+			return this.$Bitrix.Loc.getMessage(key);
+		},
+		isChanged(): boolean
+		{
+			return this.id !== this.item.id
+				|| this.name !== this.item.name
+				|| this.constantType !== this.item.constantType
+				|| this.multiple !== this.item.multiple
+				|| this.required !== this.item.required
+				|| this.description !== this.item.description
+				|| this.defaultValue !== this.item.default
+				|| JSON.stringify(this.options) !== this.initialOptionsSnapshot;
 		},
 		errorMessages(): string
 		{
@@ -126,6 +147,10 @@ export const EditConstantPopupForm = {
 		constantType(): void
 		{
 			this.options = [];
+		},
+		isChanged(value: boolean): void
+		{
+			this.$emit('update:changed', value);
 		},
 	},
 	mounted(): any
@@ -270,7 +295,6 @@ export const EditConstantPopupForm = {
 		},
 		onCancel(): void
 		{
-			this.editSlider?.close();
 			this.$emit('cancel');
 		},
 		convertMapToOptionsModelArray(options: Record<string, string>): Array<OptionModel>
@@ -309,238 +333,191 @@ export const EditConstantPopupForm = {
 	},
 	template: `
 		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
-			<div class="bizproc-setuptemplateactivity-edit-constant-popup__container">
-				<div class="bizproc-setuptemplateactivity-edit-constant-popup__header">
-					<h1 class="bizproc-setuptemplateactivity-edit-constant-popup__title">
-						{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_SLIDER_TITLE') }}
-					</h1>
-				</div>
-
-				<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
-					<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_NAME_LABEL') }}
-								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="name"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.name !== '' }"
-									type="text"
-									@blur="validateName"
-								/>
-							</div>
-							<div
-								v-if="errors.name"
-								class="ui-ctl-label-text-error">
-								{{ errors.name }}
+			<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
+				<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<div class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_NAME_VALUE') }}
 							</div>
 						</div>
-
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ID_LABEL') }}
-								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="id"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.id !== '' }"
-									type="text"
-									:disabled="!isCreation"
-									@blur="validateId"
-								/>
-							</div>
-							<div
-								v-if="errors.id"
-								class="ui-ctl-label-text-error"
-							>
-								{{ errors.id }}
-							</div>
-						</div>
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TYPE_LABEL') }}
-								</label>
-							</div>
-							<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-								<select
-									v-model="constantType"
-									class="ui-ctl-element"
-								>
-									<option
-										v-for="constantConfiguration in constantConfigurationList"
-										:key="constantConfiguration.type"
-										:value="constantConfiguration.type"
-									>
-										{{ constantConfiguration.title }}
-									</option>
-								</select>
-							</div>
-						</div>
-						<template v-if="constantSettingsComponent">
-							<component
-								:is="constantSettingsComponent"
-								:constantConfiguration="currentConstantConfiguration"
-								v-model="settings"
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="name"
+								class="ui-ctl-element"
+								:class="{ '--error': errors.name !== '' }"
+								type="text"
+								@blur="validateName"
 							/>
-						</template>
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
-								</div>
-							</div>
-							<div>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="multiple"
-										type="radio"
-										class="ui-ctl-element"
-										:value="true"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_VALUE_YES') }}
-								</label>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="multiple"
-										type="radio"
-										class="ui-ctl-element"
-										:value="false"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_VALUE_NO') }}
-								</label>
-							</div>
 						</div>
-
-						<div class="ui-ctl-container">
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
-								</div>
-							</div>
-							<div>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="required"
-										type="radio"
-										class="ui-ctl-element"
-										:value="true"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_VALUE_YES') }}
-								</label>
-								<label class="ui-ctl ui-ctl-radio ui-ctl-inline">
-									<input
-										v-model="required"
-										type="radio"
-										class="ui-ctl-element"
-										:value="false"
-									/>
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_VALUE_NO') }}
-								</label>
-							</div>
-						</div>
-
-						<div class="ui-ctl-container" v-if="!isEntitySelector">
-							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
-								</label>
-							</div>
-							<div class="ui-ctl ui-ctl-w100">
-								<input
-									v-model="defaultValue"
-									class="ui-ctl-element"
-									type="text"
-								/>
-							</div>
-						</div>
-
-						<template v-if="isSelectType">
-							<div
-								v-for="(option, index) in options"
-								class="ui-ctl-container"
-							>
-								<div class="ui-ctl-top">
-									<div class="ui-ctl-title">
-										{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
-									</div>
-								</div>
-								<div class="ui-ctl ui-ctl-w100">
-									<div
-										class="ui-ctl-after ui-ctl-icon-clear"
-										@click="onDeleteOption(index)"
-									>
-									</div>
-									<input
-										v-model="option.name"
-										class="ui-ctl-element"
-										:class="{ '--error': errors.options[index] !== '' }"
-										type="text"
-										@blur="validateOption(index)"
-									/>
-								</div>
-								<div
-									v-if="errors.options[index]"
-									class="ui-ctl-label-text-error">
-									{{ errors.options[index] }}
-								</div>
-							</div>
-						</template>
-
 						<div
-							v-if="isSelectType"
+							v-if="errors.name"
+							class="ui-ctl-label-text-error">
+							{{ errors.name }}
+						</div>
+					</div>
+
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<div class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ID_LABEL') }}
+							</div>
+						</div>
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="id"
+								class="ui-ctl-element"
+								:class="{ '--error': errors.id !== '' }"
+								type="text"
+								:disabled="!isCreation"
+								@blur="validateId"
+							/>
+						</div>
+						<div
+							v-if="errors.id"
+							class="ui-ctl-label-text-error"
+						>
+							{{ errors.id }}
+						</div>
+					</div>
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TYPE_LABEL') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ui-ctl-sm">
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+							<select
+								v-model="constantType"
+								class="ui-ctl-element"
+							>
+								<option
+									v-for="constantConfiguration in constantConfigurationList"
+									:key="constantConfiguration.type"
+									:value="constantConfiguration.type"
+								>
+									{{ constantConfiguration.title }}
+								</option>
+							</select>
+						</div>
+					</div>
+					<template v-if="constantSettingsComponent">
+						<component
+							:is="constantSettingsComponent"
+							:constantConfiguration="currentConstantConfiguration"
+							v-model="settings"
+						/>
+					</template>
+					<div class="ui-ctl-container">
+						<label class="ui-ctl ui-ctl-checkbox ui-ctl-xs">
+							<input
+								v-model="multiple"
+								type="checkbox"
+								class="ui-ctl-element"
+							/>
+							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
+						</label>
+						<label class="ui-ctl ui-ctl-checkbox ui-ctl-xs">
+							<input
+								v-model="required"
+								type="checkbox"
+								class="ui-ctl-element"
+							/>
+							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
+						</label>
+					</div>
+					<div class="ui-ctl-container" v-if="!isEntitySelector">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+							<input
+								v-model="defaultValue"
+								class="ui-ctl-element"
+								type="text"
+							/>
+						</div>
+					</div>
+
+					<template v-if="isSelectType">
+						<div
+							v-for="(option, index) in options"
 							class="ui-ctl-container"
 						>
-							<button
-								class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps"
-								type="button"
-								@click="onAddOption"
-							>
-								<div class="ui-icon-set --plus-l"/>
-								<span class="ui-btn-text">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD_OPTION_BTN') }}
-								</span>
-							</button>
-						</div>
-
-						<div class="ui-ctl-container">
 							<div class="ui-ctl-top">
-								<label class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DESCRIPTION') }}
-								</label>
+								<div class="ui-ctl-title">
+									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
+								</div>
 							</div>
-							<div class="ui-ctl ui-ctl-textarea ui-ctl-w100">
-								<textarea
-									v-model="description"
+							<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+								<div
+									class="ui-ctl-after ui-ctl-icon-clear"
+									@click="onDeleteOption(index)"
+								>
+								</div>
+								<input
+									v-model="option.name"
 									class="ui-ctl-element"
+									:class="{ '--error': errors.options[index] !== '' }"
 									type="text"
+									@blur="validateOption(index)"
 								/>
 							</div>
+							<div
+								v-if="errors.options[index]"
+								class="ui-ctl-label-text-error">
+								{{ errors.options[index] }}
+							</div>
+						</div>
+					</template>
+
+					<div
+						v-if="isSelectType"
+						class="ui-ctl-container"
+					>
+						<button
+							class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps"
+							type="button"
+							@click="onAddOption"
+						>
+							<div class="ui-icon-set --plus-l"/>
+							<span class="ui-btn-text">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD_OPTION_BTN') }}
+							</span>
+						</button>
+					</div>
+
+					<div class="ui-ctl-container">
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DESCRIPTION') }}
+							</label>
+						</div>
+						<div class="ui-ctl ui-ctl-textarea ui-ctl-w100 ui-ctl-sm">
+							<textarea
+								v-model="description"
+								class="ui-ctl-element"
+								type="text"
+							/>
 						</div>
 					</div>
 				</div>
-			</div>
-
-			<div class="bizproc-setuptemplateactivity-edit-constant-popup__footer">
-				<UiButton
-					:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_SAVE')"
-					:size="ButtonSize.LARGE"
-					@click="onSave"
-				/>
-				<UiButton
-					:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
-					:style="AirButtonStyle.PLAIN"
-					:size="ButtonSize.LARGE"
-					@click="onCancel"
-				/>
+				<div class="bizproc-setuptemplateactivity-edit-constant-popup__footer">
+					<UiButton
+						:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
+						:style="AirButtonStyle.OUTLINE"
+						:size="ButtonSize.MEDIUM"
+						@click="onCancel"
+					/>
+					<UiButton
+						:text="submitButtonText"
+						:size="ButtonSize.MEDIUM"
+						@click="onSave"
+					/>
+				</div>
 			</div>
 		</div>
 	`,

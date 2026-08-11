@@ -1,17 +1,1 @@
-.crm-form-fields-mapper-row {
-	display: flex;
-	flex-direction: row;
-}
-
-.crm-form-fields-mapper-row-label {
-	width: 300px;
-	flex-grow: 1;
-	font-weight: bold;
-}
-
-.crm-form-fields-mapper-row-label-error {
-	color: #ff7a7a;
-	font-weight: normal;
-}
-
-/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC81V2tLR2YiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wLzVXa0tHZiIsInNvdXJjZXNDb250ZW50IjpbIi5jcm0tZm9ybS1maWVsZHMtbWFwcGVyLXJvdyB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG59XG5cbi5jcm0tZm9ybS1maWVsZHMtbWFwcGVyLXJvdy1sYWJlbCB7XG5cdHdpZHRoOiAzMDBweDtcblx0ZmxleC1ncm93OiAxO1xuXHRmb250LXdlaWdodDogYm9sZDtcbn1cblxuLmNybS1mb3JtLWZpZWxkcy1tYXBwZXItcm93LWxhYmVsLWVycm9yIHtcblx0Y29sb3I6ICNmZjdhN2E7XG5cdGZvbnQtd2VpZ2h0OiBub3JtYWw7XG59XG4iXX0= */
+.crm-form-fields-mapper-row{display:flex;flex-direction:row}.crm-form-fields-mapper-row-label{width:300px;flex-grow:1;font-weight:700}.crm-form-fields-mapper-row-label-error{color:#ff7a7a;font-weight:400}

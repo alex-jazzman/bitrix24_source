@@ -6,7 +6,11 @@ import { DesktopApi } from 'im.v2.lib.desktop-api';
 
 import Util from '../util';
 import { Utils } from 'im.v2.lib.utils';
-import { checkAndEncodeURI } from '../view/tools';
+
+function checkAndEncodeURI(uri)
+{
+	return decodeURI(uri) === uri ? encodeURI(uri) : uri;
+}
 
 const Events = {
 	onClose: 'onClose',

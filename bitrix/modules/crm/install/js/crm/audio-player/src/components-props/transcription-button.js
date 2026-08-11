@@ -46,7 +46,7 @@ export const TranscriptionButton: BitrixVueComponentProps = {
 		{
 			if (this.transcriptionState === TranscriptionState.empty || this.isPending)
 			{
-				return AirButtonStyle.FILLED_COPILOT;
+				return AirButtonStyle.FILLED_BITRIX_GPT;
 			}
 
 			if (this.transcriptionState === TranscriptionState.failed)

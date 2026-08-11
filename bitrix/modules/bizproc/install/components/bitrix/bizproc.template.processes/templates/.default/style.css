@@ -126,3 +126,7 @@
 .ui-text-underline-none:hover {
 	text-decoration: none !important;
 }
+
+.bizproc-template-processes-grid-edit-link span {
+	pointer-events: none;
+}

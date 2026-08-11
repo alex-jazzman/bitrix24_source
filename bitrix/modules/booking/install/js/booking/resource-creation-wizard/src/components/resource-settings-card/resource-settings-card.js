@@ -44,7 +44,6 @@ export const ResourceSettingsCard = {
 	computed: {
 		...mapGetters({
 			timezone: `${Model.Interface}/timezone`,
-			isMultidayFeatureAvailable: `${Model.Interface}/isMultidayFeatureAvailable`,
 		}),
 		...mapResourceGetters({
 			resource: 'getResource',
@@ -88,7 +87,11 @@ export const ResourceSettingsCard = {
 		{
 			const slotRange: SlotRange = this.resource.slotRanges?.[0];
 
-			return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureAvailable);
+			return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureEnabled);
+		},
+		isMultidayFeatureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingLong;
 		},
 		isMain: {
 			get(): boolean
@@ -172,7 +175,7 @@ export const ResourceSettingsCard = {
 		},
 		updateSlotLength(value): void
 		{
-			this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureAvailable);
+			this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureEnabled);
 
 			if (this.resource.slotRanges.length === 0)
 			{
@@ -188,7 +191,7 @@ export const ResourceSettingsCard = {
 			return slotRanges.map((slotRange: SlotRange) => {
 				return {
 					...slotRange,
-					slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureAvailable),
+					slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureEnabled),
 					timezone: this.timezone,
 				};
 			});

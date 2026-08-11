@@ -1,5 +1,0 @@
-<?php
-
-$MESS['CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TITLE'] = 'Добавили новые каналы связи';
-$MESS['CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TEXT'] = 'Подключите WhatsApp или Telegram и пишите клиентам первыми';
-$MESS['CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_BUTTON'] = 'Подключить мессенджеры';

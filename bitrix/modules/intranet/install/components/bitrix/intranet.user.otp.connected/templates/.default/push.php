@@ -129,6 +129,42 @@ $arJSParams = [
 		</li>
 		<?php endif; ?>
 
+		<?php if ($arResult['PROVIDE_EMAIL_OTP'] && (!empty($arResult['OTP']['EMAIL']) || $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y')): ?>
+		<li class="intranet-user-otp-list__section-row">
+			<div class="intranet-user-otp-list__section-row-header-wrapper">
+				<div class="intranet-user-otp-list__section-row-header">
+					<div class="intranet-user-otp-list__row-label ui-text --md">
+						<div class="ui-icon-set --o-mail"></div>
+						<?= Loc::getMessage('INTRANET_USER_OTP_LIST_EMAIL') ?>
+					</div>
+					<div class="intranet-user-otp-list__row-status<?= empty($arResult['OTP']['EMAIL']) ? ' --single' : '' ?>">
+						<div class="intranet-user-otp-list__row-value ui-text --md">
+							<?php if (empty($arResult['OTP']['EMAIL'] ?? '')): ?>
+								<div
+									data-hint="<?= Loc::getMessage('INTRANET_USER_OTP_LIST_EMAIL_HINT_WITHOUT_CONNECT') ?>"
+									data-hint-no-icon="true"
+									class="ui-hint ui-icon-set --o-alert-accent"
+									<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+										onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyEmailOtpChange().show()"
+									<?php endif; ?>
+								></div>
+							<?php endif; ?>
+							<?= htmlspecialcharsbx($arResult['OTP']['EMAIL'] ?? '') ?>
+						</div>
+						<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+						<a class="intranet-user-otp-list__change-btn ui-link ui-link-secondary ui-link-dashed" onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyEmailOtpChange().show()">
+							<?= !empty($arResult['OTP']['EMAIL']) ? Loc::getMessage('INTRANET_USER_OTP_LIST_CHANGE_BTN') : Loc::getMessage('INTRANET_USER_OTP_LIST_ADD_EMAIL_BTN') ?>
+						</a>
+						<?php endif; ?>
+					</div>
+				</div>
+				<div class="intranet-user-otp-list__section-row-description">
+					<?= Loc::getMessage('INTRANET_USER_OTP_LIST_EMAIL_DESCRIPTION')?>
+				</div>
+			</div>
+		</li>
+		<?php endif; ?>
+
 		<?php if ($arResult["OTP"]["CAN_USE_RECOVERED_CODES"]):
 			$component = new \CBitrixComponent();
 			$component->initComponent('bitrix:security.user.recovery.codes');

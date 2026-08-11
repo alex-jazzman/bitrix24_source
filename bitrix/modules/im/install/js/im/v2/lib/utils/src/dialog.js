@@ -1,6 +1,20 @@
-import { DialogIdChatPrefix } from 'im.v2.const';
+import { Type } from 'main.core';
+
+import { DialogIdChatPrefix, TempAiAssistantPrefix } from 'im.v2.const';
+
+import { TextUtil } from './text';
 
 export const DialogUtil = {
+	isTempAiAssistantDialogId(dialogId: string): boolean
+	{
+		return Type.isString(dialogId) && dialogId.startsWith(TempAiAssistantPrefix);
+	},
+
+	buildTempAiAssistantDialogId(): string
+	{
+		return `${TempAiAssistantPrefix}-${TextUtil.getUuidV4()}`;
+	},
+
 	isDialogId(dialogId: string): boolean
 	{
 		const pattern = new RegExp(`^(?:${DialogIdChatPrefix})?\\d+$`);

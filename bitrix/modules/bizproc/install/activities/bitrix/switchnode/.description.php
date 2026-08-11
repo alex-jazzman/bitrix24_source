@@ -30,6 +30,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setNodeType(ActivityNodeType::COMPLEX->value)
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setGroups([ActivityGroup::WORKFLOW->value])
-	->setIcon(Outline::FILTER->name)
+	->setIcon(Outline::CONDITION->name)
 	->toArray()
 ;

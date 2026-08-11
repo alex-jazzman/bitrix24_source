@@ -67,6 +67,21 @@ export type RawCrm = {
 	dealId: ?number,
 }
 
+export type RawCrmEntity = {
+	id: number,
+}
+
+export type RawDialogCrm = {
+	lead: ?RawCrmEntity,
+	contact: ?RawCrmEntity,
+	deal: ?RawCrmEntity,
+	company: ?RawCrmEntity,
+}
+
+export type DialogCrmSaveResult = {
+	dialogCrm: RawDialogCrm,
+}
+
 export type RawCurrentSession = {
 	sessionId: number,
 	pause: boolean,

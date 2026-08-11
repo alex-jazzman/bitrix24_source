@@ -10,7 +10,7 @@ import { formatFieldsWithConfig } from 'im.v2.model';
 import { BotsModel } from './nested-modules/bots';
 import { userFieldsConfig } from './format/field-config';
 
-import type { User as ImModelUser } from '../type/user';
+import { type User as ImModelUser } from '../type/user';
 
 type UsersState = {
 	collection: {[userId: string]: ImModelUser},
@@ -22,6 +22,7 @@ type UsersState = {
 const UserPositionByType = {
 	[UserType.bot]: Loc.getMessage('IM_MODEL_USERS_CHAT_BOT'),
 	[UserType.collaber]: Loc.getMessage('IM_MODEL_USERS_COLLABER'),
+	[UserType.guest]: Loc.getMessage('IM_MODEL_USERS_COLLABER'),
 	default: Loc.getMessage('IM_MODEL_USERS_DEFAULT_NAME'),
 };
 
@@ -189,6 +190,10 @@ export class UsersModel extends BuilderModel
 			/** @function users/isCurrentUserAdmin */
 			isCurrentUserAdmin: (state: UsersState) => {
 				return state.isCurrentUserAdmin;
+			},
+			/** @function users/isGuest */
+			isGuest: (state: UsersState) => (userId: number) => {
+				return state.collection[userId]?.type === UserType.guest;
 			},
 		};
 	}

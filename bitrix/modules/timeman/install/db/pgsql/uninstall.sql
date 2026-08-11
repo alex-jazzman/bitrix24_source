@@ -19,3 +19,4 @@ drop table if exists b_timeman_monitor_absence;
 drop table if exists b_timeman_monitor_comment;
 drop table if exists b_timeman_monitor_user_chart;
 drop table if exists b_timeman_monitor_report_comment;
+drop table if exists b_timeman_scheduled_action;

@@ -1,2 +1,4 @@
 <?php
 $MESS["TASKS_V2_TEMPLATES"] = "Templates";
+$MESS["TASKS_V2_TEMPLATES_SAVE_AS_TEMPLATE"] = "Save as template";
+$MESS["TASKS_V2_TEMPLATES_SELECT_TEMPLATE"] = "Select template";

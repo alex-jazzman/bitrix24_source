@@ -1,2 +1,352 @@
-this.BX=this.BX||{},function(e,t,a,s){"use strict";var i;function l(e,t){var a="undefined"!=typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(!a){if(Array.isArray(e)||(a=function(e,t){if(!e)return;if("string"==typeof e)return r(e,t);var a=Object.prototype.toString.call(e).slice(8,-1);"Object"===a&&e.constructor&&(a=e.constructor.name);if("Map"===a||"Set"===a)return Array.from(e);if("Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a))return r(e,t)}(e))||t&&e&&"number"==typeof e.length){a&&(e=a);var s=0,i=function(){};return{s:i,n:function(){return s>=e.length?{done:!0}:{done:!1,value:e[s++]}},e:function(e){throw e},f:i}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var l,n=!0,o=!1;return{s:function(){a=a.call(e)},n:function(){var e=a.next();return n=e.done,e},e:function(e){o=!0,l=e},f:function(){try{n||null==a.return||a.return()}finally{if(o)throw l}}}}function r(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,s=new Array(t);a<t;a++)s[a]=e[a];return s}function n(e,t){c(e,t),t.add(e)}function o(e,t,a){c(e,t),t.set(e,a)}function c(e,t){if(t.has(e))throw new TypeError("Cannot initialize the same private elements twice on an object")}function d(e,t,a){if(!t.has(e))throw new TypeError("attempted to get private field on non-instance");return a}var b=new WeakMap,p=new WeakMap,v=new WeakMap,h=new WeakMap,u=new WeakMap,g=new WeakMap,m=new WeakMap,f=new WeakMap,S=new WeakMap,P=new WeakMap,H=new WeakMap,w=new WeakMap,F=new WeakMap,y=new WeakSet,G=new WeakSet,A=new WeakSet,k=new WeakSet,D=new WeakSet,I=new WeakSet,M=new WeakSet,C=new WeakSet,E=new WeakSet,T=new WeakSet,R=new WeakSet,_=function(){function e(t){var a,s,i,l,r;babelHelpers.classCallCheck(this,e),n(this,R),n(this,T),n(this,E),n(this,C),n(this,M),n(this,I),n(this,D),n(this,k),n(this,A),n(this,G),n(this,y),o(this,b,{writable:!0,value:void 0}),o(this,p,{writable:!0,value:void 0}),o(this,v,{writable:!0,value:void 0}),o(this,h,{writable:!0,value:void 0}),o(this,u,{writable:!0,value:void 0}),o(this,g,{writable:!0,value:void 0}),o(this,m,{writable:!0,value:void 0}),o(this,f,{writable:!0,value:void 0}),o(this,S,{writable:!0,value:void 0}),o(this,P,{writable:!0,value:void 0}),o(this,H,{writable:!0,value:void 0}),o(this,w,{writable:!0,value:void 0}),o(this,F,{writable:!0,value:new Map}),babelHelpers.classPrivateFieldSet(this,p,t.groups),babelHelpers.classPrivateFieldSet(this,v,new Set(t.groups)),babelHelpers.classPrivateFieldSet(this,h,t.scopes),babelHelpers.classPrivateFieldSet(this,u,new Set(t.scopes)),babelHelpers.classPrivateFieldSet(this,g,t.params),babelHelpers.classPrivateFieldSet(this,m,new Set(t.params)),babelHelpers.classPrivateFieldSet(this,w,null!==(a=t.isNew)&&void 0!==a&&a),babelHelpers.classPrivateFieldSet(this,f,t.paramList),babelHelpers.classPrivateFieldSet(this,S,new Map(Object.entries(null!==(s=t.requiredParamList)&&void 0!==s?s:{}))),this.activeUrlParamsSelector=null===(i=t.activeUrlParamsSelector)||void 0===i||i,this.isNewDashboard=null!==(l=t.isNewDashboard)&&void 0!==l&&l,babelHelpers.classPrivateFieldSet(this,b,null!==(r=t.isAllowedClearGroups)&&void 0!==r&&r)}return babelHelpers.createClass(e,[{key:"getValues",value:function(){return{groups:babelHelpers.classPrivateFieldGet(this,p),scopes:babelHelpers.classPrivateFieldGet(this,h),params:babelHelpers.classPrivateFieldGet(this,g)}}},{key:"getLayout",value:function(){var e=t.Tag.render(i||(i=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="dashboard-params-container">\n\t\t\t\t<div class="dashboard-params-title-container">\n\t\t\t\t\t<div class="dashboard-params-title">\n\t\t\t\t\t\t',"\n\t\t\t\t\t\t",'\n\t\t\t\t\t\t<span data-hint="','"></span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="dashboard-params-groups-selector"></div>\n\n\t\t\t\t<div class="dashboard-params-title-container">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class="dashboard-params-title">\n\t\t\t\t\t\t\t',"\n\t\t\t\t\t\t\t",'\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="dashboard-params-list-link">\n\t\t\t\t\t\t','\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="dashboard-params-params-selector"></div>\n\t\t\t</div>\n\t\t'])),t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_GROUPS"),babelHelpers.classPrivateFieldGet(this,b)?"":'<span class="ui-require-sign">*</span>',t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT_MSGVER_1"),t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_PARAMS"),this.isNewDashboard&&this.activeUrlParamsSelector?"\n\t\t\t\t\t\t\t\t<span data-hint='".concat(t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT"),"'></span>\n\t\t\t\t\t\t\t"):"",t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_PARAMS_LIST"));return BX.UI.Hint.init(e),d(this,y,B).call(this),babelHelpers.classPrivateFieldGet(this,P).renderTo(e.querySelector(".dashboard-params-groups-selector")),new s.TagSelector({locked:!0}).renderTo(e.querySelector(".dashboard-params-params-selector")),t.Event.bind(e.querySelector(".dashboard-params-list-link"),"click",d(this,I,X).bind(this)),e}},{key:"selectGroups",value:function(e){var t,a=l(e);try{for(a.s();!(t=a.n()).done;){var s=t.value,i=babelHelpers.classPrivateFieldGet(this,P).getDialog().getItem({id:s,entityId:"biconnector-superset-group"});i&&i.select()}}catch(e){a.e(e)}finally{a.f()}}}]),e}();function B(){var e=this,a=[];babelHelpers.classPrivateFieldGet(this,p).forEach((function(e){a.push(["biconnector-superset-group",e])}));var i=new s.TagSelector({multiple:!0,dialogOptions:{id:"biconnector-superset-group",context:"biconnector-superset-group",enableSearch:!1,dropdownMode:!0,showAvatars:!0,compactView:!1,dynamicLoad:!0,preload:!0,width:383,height:419,entities:[{id:"biconnector-superset-group",dynamicLoad:!0,options:{checkAccessRights:!0,onlyEditGroupsSelectable:!babelHelpers.classPrivateFieldGet(this,b)}}],preselectedItems:a,events:{onLoad:function(){d(e,G,W).call(e),babelHelpers.classPrivateFieldGet(e,b)||d(e,M,z).call(e)},"Item:onSelect":function(t){var a,s=t.getData().item;babelHelpers.classPrivateFieldGet(e,p).add(s.getId());var i,r=l(null!==(a=s.getCustomData().get("groupScopes"))&&void 0!==a?a:[]);try{for(r.s();!(i=r.n()).done;){var n=i.value;d(e,E,q).call(e,n,d(e,R,x).call(e,"group",s.getId()))}}catch(e){r.e(e)}finally{r.f()}d(e,D,U).call(e)},"Item:onDeselect":function(t){var a,s=t.getData().item;babelHelpers.classPrivateFieldGet(e,p).delete(s.getId());var i,r=l(null!==(a=s.getCustomData().get("groupScopes"))&&void 0!==a?a:[]);try{for(r.s();!(i=r.n()).done;){var n=i.value;d(e,T,j).call(e,n,d(e,R,x).call(e,"group",s.getId()))}}catch(e){r.e(e)}finally{r.f()}d(e,D,U).call(e)}}}});t.Dom.addClass(i.getDialog().getContainer(),"biconnector-settings-entity-selector"),babelHelpers.classPrivateFieldSet(this,P,i)}function W(){var e=this,i=[];Object.values(babelHelpers.classPrivateFieldGet(this,f)).forEach((function(t){var a=d(e,k,O).call(e,t.code),s=babelHelpers.classPrivateFieldGet(e,S).has(t.code);i.push({id:t.code,entityId:"biconnector-superset-params",title:a.title,supertitle:a.supertitle,tabs:"params",deselectable:!s,selected:babelHelpers.classPrivateFieldGet(e,w)&&s}),babelHelpers.classPrivateFieldGet(e,w)&&s&&(babelHelpers.classPrivateFieldGet(e,g).add(t.code),d(e,D,U).call(e))}));var l=[],r=[];babelHelpers.classPrivateFieldGet(this,g).forEach((function(t){l.push(["biconnector-superset-params",t]);var a=d(e,k,O).call(e,t),s=babelHelpers.classPrivateFieldGet(e,S).has(t);r.push({id:t,entityId:"biconnector-superset-params",title:a.title,supertitle:a.supertitle,deselectable:!s})}));var n=new s.TagSelector({id:"biconnector-superset-params",multiple:!0,locked:!this.activeUrlParamsSelector,items:r,dialogOptions:{id:"biconnector-superset-params",context:"biconnector-superset-params",enableSearch:!1,dropdownMode:!0,showAvatars:!1,compactView:!1,dynamicLoad:!0,items:i,preselectedItems:l,width:383,height:419,entities:[{id:"biconnector-superset-params"}],tabs:[{id:"params",title:"params"}]},events:{onBeforeTagAdd:function(t){var a=t.getData().tag;babelHelpers.classPrivateFieldGet(e,g).add(a.getId()),d(e,D,U).call(e)},onBeforeTagRemove:function(t){var a=t.getData().tag;babelHelpers.classPrivateFieldGet(e,g).delete(a.getId()),d(e,D,U).call(e)}}});if(t.Dom.addClass(n.getDialog().getContainer(),"biconnector-settings-entity-selector"),t.Dom.clean(document.querySelector(".dashboard-params-params-selector")),n.renderTo(document.querySelector(".dashboard-params-params-selector")),babelHelpers.classPrivateFieldSet(this,H,n),d(this,A,L).call(this),!this.activeUrlParamsSelector){var o=document.querySelector(".dashboard-params-list-link");o&&t.Dom.style(o,"display","none")}d(this,C,N).call(this),a.EventEmitter.emit("BIConnector.DashboardParamsSelector:initCompleted")}function L(){var e,t=l(babelHelpers.classPrivateFieldGet(this,H).getTags());try{for(t.s();!(e=t.n()).done;){var a=e.value,s=babelHelpers.classPrivateFieldGet(this,S).get(a.getId());if(s){var i=a.getContainer();i.setAttribute("data-hint",s),i.setAttribute("data-hint-no-icon",""),BX.UI.Hint.initNode(i)}}}catch(e){t.e(e)}finally{t.f()}}function O(e){var t,a,s=babelHelpers.classPrivateFieldGet(this,f)[e];return s?{title:null!==(t=s.title)&&void 0!==t?t:e,supertitle:null!==(a=s.superTitle)&&void 0!==a?a:""}:{title:e,supertitle:""}}function U(){var e=this,t=babelHelpers.classPrivateFieldGet(this,p).size!==babelHelpers.classPrivateFieldGet(this,v).size||babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this,p)).some((function(t){return!babelHelpers.classPrivateFieldGet(e,v).has(t)})),s=babelHelpers.classPrivateFieldGet(this,h).size!==babelHelpers.classPrivateFieldGet(this,u).size||babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this,h)).some((function(t){return!babelHelpers.classPrivateFieldGet(e,u).has(t)})),i=babelHelpers.classPrivateFieldGet(this,g).size!==babelHelpers.classPrivateFieldGet(this,m).size||babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this,g)).some((function(t){return!babelHelpers.classPrivateFieldGet(e,m).has(t)})),l=s||i||t,r=!babelHelpers.classPrivateFieldGet(this,b)&&0===babelHelpers.classPrivateFieldGet(this,p).size;a.EventEmitter.emit("BIConnector.DashboardParamsSelector:onChange",{isChanged:l,isLocked:r})}function X(){var e=new t.Uri("/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.url.parameter.list/slider.php");BX.SidePanel.Instance.open(e.toString(),{width:600,allowChangeHistory:!1})}function z(){var e=BX.UI.Hint.createInstance(),a=t.Loc.getMessage("DASHBOARD_PARAMS_SELECTOR_GROUP_NOT_EDITABLE_HINT");babelHelpers.classPrivateFieldGet(this,P).getTags().forEach((function(s){if(!s.isDeselectable()){var i=s.getContainer();t.Event.bind(i,"click",(function(){e.show(i,a)})),t.Event.bind(i,"mouseleave",(function(){e.hide(i)}))}}))}function N(){var e,t=l(babelHelpers.classPrivateFieldGet(this,m));try{for(t.s();!(e=t.n()).done;){var a=e.value,s=babelHelpers.classPrivateFieldGet(this,f)[a];s&&(babelHelpers.classPrivateFieldGet(this,u).has(s.scope)&&d(this,E,q).call(this,s.scope,d(this,R,x).call(this,"param",a)))}}catch(e){t.e(e)}finally{t.f()}var i,r=l(babelHelpers.classPrivateFieldGet(this,v));try{for(r.s();!(i=r.n()).done;){var n,o,c,b=i.value,p=null===(n=babelHelpers.classPrivateFieldGet(this,P))||void 0===n||null===(o=n.getDialog())||void 0===o?void 0:o.getItem({id:b,entityId:"biconnector-superset-group"});if(p){var h,g=l(null!==(c=p.getCustomData().get("groupScopes"))&&void 0!==c?c:[]);try{for(g.s();!(h=g.n()).done;){var S=h.value;d(this,E,q).call(this,S,d(this,R,x).call(this,"group",b))}}catch(e){g.e(e)}finally{g.f()}}}}catch(e){r.e(e)}finally{r.f()}}function q(e,t){var a=babelHelpers.classPrivateFieldGet(this,F).get(e);a||(a=new Set,babelHelpers.classPrivateFieldGet(this,F).set(e,a),babelHelpers.classPrivateFieldGet(this,h).add(e)),a.add(t)}function j(e,t){var a=babelHelpers.classPrivateFieldGet(this,F).get(e);null!=a&&a.delete(t)&&0===a.size&&(babelHelpers.classPrivateFieldGet(this,F).delete(e),babelHelpers.classPrivateFieldGet(this,h).delete(e))}function x(e,t){return"".concat(e,"_").concat(t)}e.DashboardParametersSelector=_}(this.BX.BIConnector=this.BX.BIConnector||{},BX,BX.Event,BX.UI.EntitySelector);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_core_events, ui_entitySelector) {
+	'use strict';
+
+	/* eslint-disable operator-linebreak */
+	class DashboardParametersSelector {
+		#isAllowedClearGroups;
+		#groups;
+		#initialGroups;
+		#scopes;
+		#initialScopes;
+		#params;
+		#initialParams;
+		#paramList;
+		#requiredParamList;
+		#groupSelector;
+		#paramsSelector;
+		#isNew;
+		#scopeOwners = new Map();
+		constructor(params) {
+			this.#groups = params.groups;
+			this.#initialGroups = new Set(params.groups);
+			this.#scopes = params.scopes;
+			this.#initialScopes = new Set(params.scopes);
+			this.#params = params.params;
+			this.#initialParams = new Set(params.params);
+			this.#isNew = params.isNew ?? false;
+			this.#paramList = params.paramList;
+			this.#requiredParamList = new Map(Object.entries(params.requiredParamList ?? {}));
+			this.activeUrlParamsSelector = params.activeUrlParamsSelector ?? true;
+			this.isNewDashboard = params.isNewDashboard ?? false;
+			this.#isAllowedClearGroups = params.isAllowedClearGroups ?? false;
+		}
+		getValues() {
+			return {
+				groups: this.#groups,
+				scopes: this.#scopes,
+				params: this.#params
+			};
+		}
+		getLayout() {
+			const container = main_core.Tag.render`
+			<div class="dashboard-params-container">
+				<div class="dashboard-params-title-container">
+					<div class="dashboard-params-title">
+						${main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS')}
+						${this.#isAllowedClearGroups ? '' : `<span class="ui-require-sign">*</span>`}
+						<span data-hint="${main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT_MSGVER_1')}"></span>
+					</div>
+				</div>
+				<div class="dashboard-params-groups-selector"></div>
+
+				<div class="dashboard-params-title-container">
+					<div>
+						<div class="dashboard-params-title">
+							${main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS')}
+							${this.isNewDashboard && this.activeUrlParamsSelector ? `
+								<span data-hint='${main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT')}'></span>
+							` : ''}
+						</div>
+					</div>
+					<div class="dashboard-params-list-link">
+						${main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_LIST')}
+					</div>
+				</div>
+				<div class="dashboard-params-params-selector"></div>
+			</div>
+		`;
+			BX.UI.Hint.init(container);
+			this.#initGroupSelector();
+			this.#groupSelector.renderTo(container.querySelector('.dashboard-params-groups-selector'));
+
+			// Param selector will be loaded on GroupSelector's onLoadScope event handler.
+			const stubParamsSelector = new ui_entitySelector.TagSelector({
+				locked: true
+			});
+			stubParamsSelector.renderTo(container.querySelector('.dashboard-params-params-selector'));
+			main_core.Event.bind(container.querySelector('.dashboard-params-list-link'), 'click', this.#openParamListSlider.bind(this));
+			return container;
+		}
+		selectGroups(groupIds) {
+			for (const groupId of groupIds) {
+				const groupItem = this.#groupSelector.getDialog().getItem({
+					id: groupId,
+					entityId: 'biconnector-superset-group'
+				});
+				if (groupItem) {
+					groupItem.select();
+				}
+			}
+		}
+		#initGroupSelector() {
+			const preselectedItems = [];
+			this.#groups.forEach(groupId => {
+				preselectedItems.push(['biconnector-superset-group', groupId]);
+			});
+			const groupSelector = new ui_entitySelector.TagSelector({
+				multiple: true,
+				dialogOptions: {
+					id: 'biconnector-superset-group',
+					context: 'biconnector-superset-group',
+					enableSearch: false,
+					dropdownMode: true,
+					showAvatars: true,
+					compactView: false,
+					dynamicLoad: true,
+					preload: true,
+					width: 383,
+					height: 419,
+					entities: [{
+						id: 'biconnector-superset-group',
+						dynamicLoad: true,
+						options: {
+							checkAccessRights: true,
+							onlyEditGroupsSelectable: !this.#isAllowedClearGroups
+						}
+					}],
+					preselectedItems,
+					events: {
+						onLoad: () => {
+							this.#initParamsSelector();
+							if (!this.#isAllowedClearGroups) {
+								this.#bindLockedGroupHints();
+							}
+						},
+						'Item:onSelect': event => {
+							const item = event.getData().item;
+							this.#groups.add(item.getId());
+							const groupScopes = item.getCustomData().get('groupScopes') ?? [];
+							for (const groupScopeCode of groupScopes) {
+								this.#acquireScope(groupScopeCode, this.#getOwnerCode('group', item.getId()));
+							}
+							this.#onChange();
+						},
+						'Item:onDeselect': event => {
+							const item = event.getData().item;
+							this.#groups.delete(item.getId());
+							const groupScopes = item.getCustomData().get('groupScopes') ?? [];
+							for (const groupScopeCode of groupScopes) {
+								this.#releaseScope(groupScopeCode, this.#getOwnerCode('group', item.getId()));
+							}
+							this.#onChange();
+						}
+					}
+				}
+			});
+			main_core.Dom.addClass(groupSelector.getDialog().getContainer(), 'biconnector-settings-entity-selector');
+			this.#groupSelector = groupSelector;
+		}
+		#initParamsSelector() {
+			const items = [];
+			Object.values(this.#paramList).forEach(param => {
+				const itemTitle = this.#getParamTitle(param.code);
+				const isRequired = this.#requiredParamList.has(param.code);
+				items.push({
+					id: param.code,
+					entityId: 'biconnector-superset-params',
+					title: itemTitle.title,
+					supertitle: itemTitle.supertitle,
+					tabs: 'params',
+					deselectable: !isRequired,
+					selected: this.#isNew && isRequired
+				});
+				if (this.#isNew && isRequired) {
+					this.#params.add(param.code);
+					this.#onChange();
+				}
+			});
+			const preselectedItems = [];
+			const tagItems = [];
+			this.#params.forEach(paramCode => {
+				preselectedItems.push(['biconnector-superset-params', paramCode]);
+				const itemTitle = this.#getParamTitle(paramCode);
+				const isRequired = this.#requiredParamList.has(paramCode);
+				tagItems.push({
+					id: paramCode,
+					entityId: 'biconnector-superset-params',
+					title: itemTitle.title,
+					supertitle: itemTitle.supertitle,
+					deselectable: !isRequired
+				});
+			});
+			const paramSelector = new ui_entitySelector.TagSelector({
+				id: 'biconnector-superset-params',
+				multiple: true,
+				locked: !this.activeUrlParamsSelector,
+				items: tagItems,
+				dialogOptions: {
+					id: 'biconnector-superset-params',
+					context: 'biconnector-superset-params',
+					enableSearch: false,
+					dropdownMode: true,
+					showAvatars: false,
+					compactView: false,
+					dynamicLoad: true,
+					items,
+					preselectedItems,
+					width: 383,
+					height: 419,
+					entities: [{
+						id: 'biconnector-superset-params'
+					}],
+					tabs: [{
+						id: 'params',
+						title: 'params'
+					}]
+				},
+				events: {
+					onBeforeTagAdd: event => {
+						const {
+							tag
+						} = event.getData();
+						this.#params.add(tag.getId());
+						this.#onChange();
+					},
+					onBeforeTagRemove: event => {
+						const {
+							tag
+						} = event.getData();
+						this.#params.delete(tag.getId());
+						this.#onChange();
+					}
+				}
+			});
+			main_core.Dom.addClass(paramSelector.getDialog().getContainer(), 'biconnector-settings-entity-selector');
+			main_core.Dom.clean(document.querySelector('.dashboard-params-params-selector'));
+			paramSelector.renderTo(document.querySelector('.dashboard-params-params-selector'));
+			this.#paramsSelector = paramSelector;
+			this.#addHintsToExistingTags();
+			if (!this.activeUrlParamsSelector) {
+				const listLink = document.querySelector('.dashboard-params-list-link');
+				if (listLink) {
+					main_core.Dom.style(listLink, 'display', 'none');
+				}
+			}
+			this.#buildInitialScopeOwners();
+			main_core_events.EventEmitter.emit('BIConnector.DashboardParamsSelector:initCompleted');
+		}
+		#addHintsToExistingTags() {
+			for (const tag of this.#paramsSelector.getTags()) {
+				const hintText = this.#requiredParamList.get(tag.getId());
+				if (hintText) {
+					const container = tag.getContainer();
+					container.setAttribute('data-hint', hintText);
+					container.setAttribute('data-hint-no-icon', '');
+					BX.UI.Hint.initNode(container);
+				}
+			}
+		}
+		#getParamTitle(paramCode) {
+			const param = this.#paramList[paramCode];
+			if (!param) {
+				return {
+					title: paramCode,
+					supertitle: ''
+				};
+			}
+			const title = param.title ?? paramCode;
+			const supertitle = param.superTitle ?? '';
+			return {
+				title,
+				supertitle
+			};
+		}
+		#onChange() {
+			const isGroupsChanged = this.#groups.size !== this.#initialGroups.size || [...this.#groups].some(groupId => !this.#initialGroups.has(groupId));
+			const isScopeChanged = this.#scopes.size !== this.#initialScopes.size || [...this.#scopes].some(scopeCode => !this.#initialScopes.has(scopeCode));
+			const isParamsChanged = this.#params.size !== this.#initialParams.size || [...this.#params].some(paramCode => !this.#initialParams.has(paramCode));
+			const isChanged = isScopeChanged || isParamsChanged || isGroupsChanged;
+			const isLocked = !this.#isAllowedClearGroups && this.#groups.size === 0;
+			main_core_events.EventEmitter.emit('BIConnector.DashboardParamsSelector:onChange', {
+				isChanged,
+				isLocked
+			});
+		}
+		#openParamListSlider() {
+			const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.url.parameter.list/slider.php';
+			const sliderLink = new main_core.Uri(componentLink);
+			BX.SidePanel.Instance.open(sliderLink.toString(), {
+				width: 600,
+				allowChangeHistory: false
+			});
+		}
+		#bindLockedGroupHints() {
+			const hint = BX.UI.Hint.createInstance();
+			const hintText = main_core.Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUP_NOT_EDITABLE_HINT');
+			this.#groupSelector.getTags().forEach(tag => {
+				if (!tag.isDeselectable()) {
+					const node = tag.getContainer();
+					main_core.Event.bind(node, 'click', () => {
+						hint.show(node, hintText);
+					});
+					main_core.Event.bind(node, 'mouseleave', () => {
+						hint.hide(node);
+					});
+				}
+			});
+		}
+		#buildInitialScopeOwners() {
+			for (const paramCode of this.#initialParams) {
+				const parameter = this.#paramList[paramCode];
+				if (!parameter) {
+					continue;
+				}
+				if (!this.#initialScopes.has(parameter.scope)) {
+					continue;
+				}
+				this.#acquireScope(parameter.scope, this.#getOwnerCode('param', paramCode));
+			}
+			for (const groupId of this.#initialGroups) {
+				const groupItem = this.#groupSelector?.getDialog()?.getItem({
+					id: groupId,
+					entityId: 'biconnector-superset-group'
+				});
+				if (!groupItem) {
+					continue;
+				}
+				const groupScopes = groupItem.getCustomData().get('groupScopes') ?? [];
+				for (const scopeCode of groupScopes) {
+					this.#acquireScope(scopeCode, this.#getOwnerCode('group', groupId));
+				}
+			}
+		}
+		#acquireScope(scopeCode, ownerCode) {
+			let owners = this.#scopeOwners.get(scopeCode);
+			if (!owners) {
+				owners = new Set();
+				this.#scopeOwners.set(scopeCode, owners);
+				this.#scopes.add(scopeCode);
+			}
+			owners.add(ownerCode);
+		}
+		#releaseScope(scopeCode, ownerCode) {
+			const owners = this.#scopeOwners.get(scopeCode);
+			if (!owners?.delete(ownerCode)) {
+				return;
+			}
+			if (owners.size === 0) {
+				this.#scopeOwners.delete(scopeCode);
+				this.#scopes.delete(scopeCode);
+			}
+		}
+		#getOwnerCode(type, code) {
+			return `${type}_${code}`;
+		}
+	}
+
+	exports.DashboardParametersSelector = DashboardParametersSelector;
+
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.UI.EntitySelector);
 //# sourceMappingURL=dashboard-parameters-selector.bundle.js.map

@@ -42,9 +42,9 @@ jn.define('analytics/validator', (require, exports, module) => {
 				continue;
 			}
 
-			if (value.split('_').length !== 2)
+			if (value.split('_').length > 2)
 			{
-				console.error(`Analytics: Parameter {${field}} must be a string containing a single underscore, (${value}) given.`);
+				console.error(`BX.UI.Analytics: The "${field}" property (${value}) in the "analytics" object must be a string containing a single underscore.`);
 
 				return false;
 			}

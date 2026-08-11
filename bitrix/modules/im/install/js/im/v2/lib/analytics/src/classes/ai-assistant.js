@@ -1,20 +1,20 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
+import { type ImModelChat } from 'im.v2.model';
 
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
-import { getChatType } from '../helpers/get-chat-type';
-import { isAiAssistant } from '../helpers/is-ai-assistant';
-import { getUserType } from '../helpers/get-user-type';
 import {
 	AI_ASSISTANT_CHAT_TYPE,
 	AnalyticsCategory,
 	AnalyticsEvent,
 	AnalyticsTool,
 	AnalyticsSection,
+	AnalyticsType,
 } from '../const';
-
-import type { ImModelChat } from 'im.v2.model';
+import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
+import { getUserType } from '../helpers/get-user-type';
+import { isAiAssistant } from '../helpers/is-ai-assistant';
 
 export class AiAssistant
 {
@@ -30,6 +30,27 @@ export class AiAssistant
 			c_section: AnalyticsSection.miniChat,
 			p2: getUserType(),
 			p5: `chatId_${dialog.chatId}`,
+		});
+	}
+
+	onOpenMiniChat()
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.copilot,
+			event: AnalyticsEvent.openMiniChat,
+		});
+	}
+
+	onChatCreateClick()
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.copilot,
+			event: AnalyticsEvent.clickCreateNew,
+			type: AnalyticsType.copilot,
+			c_section: AnalyticsSection.miniChat,
+			p2: getUserType(),
 		});
 	}
 

@@ -9,4 +9,5 @@ export const EventName = Object.freeze({
 	BookingOpenSkusSettings: 'booking:booking:open-skus-settings',
 	MultiBookingShowPreviousPeriod: 'booking:booking:multi-booking-show-previous-period',
 	MultiBookingShowNextPeriod: 'booking:booking:multi-booking-show-next-period',
+	AiCallBannerClosed: 'booking:banner:ai-call:closed',
 });

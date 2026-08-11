@@ -1,0 +1,24 @@
+<?php
+
+namespace Bitrix\Rest\V3\Exception;
+
+class UnknownFilterOperatorException extends RestException implements SkipWriteToLogException
+{
+	public function __construct(
+		protected string $operator,
+	) {
+		parent::__construct();
+	}
+
+	protected function getMessagePhraseCode(): string
+	{
+		return 'REST_V3_EXCEPTION_UNKNOWNFILTEROPERATOREXCEPTION';
+	}
+
+	protected function getMessagePhraseReplacement(): ?array
+	{
+		return [
+			'#OPERATOR#' => $this->operator,
+		];
+	}
+}

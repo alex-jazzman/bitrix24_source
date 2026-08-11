@@ -1,4 +1,3 @@
-import { StreamType } from 'crm.timeline.item';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax, Dom, Text, Type } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
@@ -7,6 +6,7 @@ import ControllerManager from './controller-manager';
 import { Base } from './controllers/base';
 import TimelineItem from './item';
 import Layout from './layout';
+import { StreamType } from './stream-type';
 
 declare type ConfigurableItemParams = {
 	timelineId: string,

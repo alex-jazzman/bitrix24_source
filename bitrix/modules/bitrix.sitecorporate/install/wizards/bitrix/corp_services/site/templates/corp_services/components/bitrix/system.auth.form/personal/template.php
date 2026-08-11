@@ -26,6 +26,7 @@
 	?>
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="AUTH" />
+	<?= bitrix_sessid_post(); ?>
 
 	<table width="95%">
 			<tr>

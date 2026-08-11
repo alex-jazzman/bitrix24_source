@@ -30,7 +30,7 @@ $arActivityDescription = (new ActivityDescription(
 	->set('AI_DESCRIPTION', Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_DESCRIPTION'))
 	->setGroups([ ActivityGroup::STORAGE->value ])
 	->setColorIndex(ActivityColorIndex::CYAN->value)
-	->setIcon(Outline::PLUS_M->name)
+	->setIcon(Outline::EDIT_L->name)
 	->setSort(200)
 	->toArray()
 ;

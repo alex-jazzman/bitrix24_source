@@ -14,6 +14,8 @@ return [
 		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.lib.feature',
+		'im.v2.lib.utils',
+		'im.v2.provider.service.copilot',
 	],
 	'skip_core' => true,
 ];

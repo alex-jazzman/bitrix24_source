@@ -2,11 +2,14 @@
  * @module im/messenger/controller/dialog/lib/suggests-manager/manager
  */
 jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (require, exports, module) => {
+	const { Type } = require('type');
+	const { Color } = require('tokens');
 	const { Loc } = require('im/messenger/loc');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const logger = getLoggerWithContext('dialog--suggests-manager', 'Suggest');
 
@@ -85,13 +88,22 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 			this.view.suggests.off(EventType.dialog.suggests.itemTap, this.#onItemTap);
 		}
 
+		subscribeStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.on('messagesModel/setChatCollection', this.#onChatCollectionChanged)
+			;
+		}
+
+		unsubscribeStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.off('messagesModel/setChatCollection', this.#onChatCollectionChanged)
+			;
+		}
+
 		show()
 		{
-			if (true) // TODO: Back not ready yet
-			{
-				return;
-			}
-
 			const params = SuggestsManager.getParams(this.dialogId);
 			if (!params)
 			{
@@ -101,6 +113,11 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 			logger.log(`${this.constructor.name}.show`);
 
 			this.view.suggests.show(params);
+
+			AnalyticsService.getInstance().sendSuggestsShow({
+				dialogId: this.dialogId,
+				modesState: this.#getSettingsSnapshot(),
+			});
 		}
 
 		hide()
@@ -109,6 +126,29 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 
 			this.view.suggests.hide();
 		}
+
+		/**
+		 * @param {MutationPayload<MessagesSetChatCollectionData, MessagesSetChatCollectionActions>} payload
+		 */
+		#onChatCollectionChanged = ({ payload }) => {
+			if (!this.isShown)
+			{
+				return;
+			}
+
+			const chatId = DialogHelper.createByDialogId(this.dialogId)?.chatId;
+			if (!chatId)
+			{
+				return;
+			}
+
+			const messageList = payload?.data?.messageList ?? [];
+			const hasMessageForCurrentChat = messageList.some((message) => message.chatId === chatId);
+			if (hasMessageForCurrentChat)
+			{
+				this.hide();
+			}
+		};
 
 		/**
 		 * @param {string} itemId
@@ -123,49 +163,62 @@ jn.define('im/messenger/controller/dialog/lib/suggests-manager/manager', (requir
 
 			logger.log(`${this.constructor.name}.#onItemTap`, item);
 
+			AnalyticsService.getInstance().sendSuggestsClick({
+				dialogId: this.dialogId,
+				suggestText: item.text,
+				modesState: this.#getSettingsSnapshot(),
+			});
+
 			this.hide();
 			this.dialogLocator.get('message-sender').sendTextMessage(item.text);
 		};
 
 		/**
-		 * @return {SuggestsShowParams}
+		 * @return {ModesState|null}
+		 */
+		#getSettingsSnapshot()
+		{
+			return this.dialogLocator.get('assistant-button-manager')?.getSettingsSnapshot() ?? null;
+		}
+
+		/**
+		 * @return {SuggestsShowParams|null}
 		 */
 		static getCopilotParams()
 		{
+			const phrases = Loc.getCopilotSuggests();
+			if (!Type.isArrayFilled(phrases))
+			{
+				return null;
+			}
+
 			const defaultItemProps = {
 				iconName: null,
 				imageUrl: null,
 				size: SuggestSize.M,
-				design: SuggestDesign.bitrixGpt,
+				design: SuggestDesign.grey,
 				mode: SuggestMode.solid,
 				rounded: true,
 				dropdown: false,
+				customStyle: {
+					backgroundColor: Color.chatOverallOverlay.toHex(),
+				},
 			};
 
 			return {
 				title: {
 					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_TITLE'),
 				},
-				items: [
-					{
+				items: phrases.map((text, index) => {
+					const id = `copilot_suggest_${index + 1}`;
+
+					return {
 						...defaultItemProps,
-						id: 'copilot_suggest_1',
-						testId: 'copilot_suggest_1',
-						text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_1'),
-					},
-					{
-						...defaultItemProps,
-						id: 'copilot_suggest_2',
-						testId: 'copilot_suggest_2',
-						text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_2'),
-					},
-					{
-						...defaultItemProps,
-						id: 'copilot_suggest_3',
-						testId: 'copilot_suggest_3',
-						text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_3'),
-					},
-				],
+						id,
+						testId: id,
+						text,
+					};
+				}),
 			};
 		}
 	}

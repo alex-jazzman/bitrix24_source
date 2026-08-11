@@ -2,6 +2,9 @@ import { Dom, Loc, Tag } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button, ButtonSize, ButtonIcon, ButtonColor, AirButtonStyle } from 'ui.buttons';
 import SyncStatusPopupV2 from './syncstatuspopup-v2';
+import type { ButtonOptions } from 'ui.buttons';
+
+import 'ui.icon-set.outline';
 
 export default class SyncButton
 {
@@ -33,6 +36,7 @@ export default class SyncButton
 			size: ButtonSize.EXTRA_SMALL,
 			counter: buttonData.counter ?? 0,
 			leftCounter: buttonData.counter ? { value: buttonData.counter ?? 0 } : '',
+			collapsedIcon: buttonData.collapsedIcon,
 			className: 'ui-btn-themes',
 			onclick: this.handleClick,
 			dataset: {
@@ -145,7 +149,7 @@ export default class SyncButton
 		});
 	};
 
-	getButtonData(): Object
+	getButtonData(): ButtonOptions
 	{
 		if (this.status === 'refused')
 		{
@@ -176,6 +180,7 @@ export default class SyncButton
 					color: ButtonColor.LIGHT_BORDER,
 					style: AirButtonStyle.OUTLINE,
 					counter: this.counters.sync_errors || 1,
+					collapsedIcon: ButtonIcon.EXCLAMATION,
 					iconClass: 'calendar-sync-btn-counter',
 				};
 			}
@@ -185,6 +190,7 @@ export default class SyncButton
 					text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
 					color: ButtonColor.LIGHT_BORDER,
 					style: AirButtonStyle.OUTLINE,
+					collapsedIcon: ButtonIcon.CALENDAR_WITH_CHECKS,
 					iconClass: 'ui-btn-clock',
 				};
 			}
@@ -194,6 +200,7 @@ export default class SyncButton
 					text: Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR_NEW'),
 					style: AirButtonStyle.FILLED,
 					color: ButtonColor.PRIMARY,
+					collapsedIcon: ButtonIcon.CALENDAR_WITH_CHECKS,
 				};
 			}
 		}

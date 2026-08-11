@@ -29,21 +29,25 @@
 	max-width: 100%;
 	cursor: default;
 	user-select: none;
+	overflow: hidden;
 }
 
 .booking-booking-card__content {
+	--content-padding-vertical: 4px;
+
 	overflow: hidden;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	color: var(--ui-color-palette-white-base);
-	padding: 4px 8px;
+	padding: var(--content-padding-vertical) 8px;
 }
 
 .booking-booking-card__upper-row {
 	display: flex;
 	align-items: center;
+	max-height: calc(100% + var(--content-padding-vertical) * 2);
 }
 
 .booking-booking-card__lower-row {

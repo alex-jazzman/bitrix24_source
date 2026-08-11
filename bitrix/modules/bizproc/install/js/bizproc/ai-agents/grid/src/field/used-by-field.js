@@ -1,10 +1,11 @@
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Tag, Dom, Text, Event, Type } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
 
 import { Text as TypographyText } from 'ui.system.typography';
-import { Item, Dialog, ItemOptions } from 'ui.entity-selector';
+import { Dialog } from 'ui.entity-selector';
+import type { Item, ItemOptions } from 'ui.entity-selector';
 
 import { Messenger } from 'im.public';
 

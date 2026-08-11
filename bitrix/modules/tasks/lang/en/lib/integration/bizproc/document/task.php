@@ -1,5 +1,6 @@
 <?php
 $MESS["TASKS_BP_DOCUMENT_ACCOMPLICES"] = "Participants";
+$MESS["TASKS_BP_DOCUMENT_ACTIVITY_DATE"] = "Active";
 $MESS["TASKS_BP_DOCUMENT_ADD_IN_REPORT"] = "Added to report";
 $MESS["TASKS_BP_DOCUMENT_ALLOW_CHANGE_DEADLINE"] = "Allow deadline change";
 $MESS["TASKS_BP_DOCUMENT_ALLOW_TIME_TRACKING"] = "Enable working time management";

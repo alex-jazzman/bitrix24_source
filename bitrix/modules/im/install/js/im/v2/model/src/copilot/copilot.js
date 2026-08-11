@@ -17,6 +17,7 @@ type CopilotModelState = {
 	name: string,
 	agentName: string,
 	widgetDialogId: string,
+	suggests: string[],
 };
 
 /* eslint-disable no-param-reassign */
@@ -45,6 +46,7 @@ export class CopilotModel extends BuilderModel
 			name: '',
 			agentName: '',
 			widgetDialogId: '',
+			suggests: [],
 		};
 	}
 
@@ -90,6 +92,10 @@ export class CopilotModel extends BuilderModel
 			/** @function copilot/isChatOpenedInWidget */
 			isChatOpenedInWidget: (state: CopilotModelState) => (dialogId: string): boolean => {
 				return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
+			},
+			/** @function copilot/getSuggests */
+			getSuggests: (state: CopilotModelState): string[] => {
+				return state.suggests;
 			},
 		};
 	}
@@ -139,6 +145,15 @@ export class CopilotModel extends BuilderModel
 			setWidgetDialogId: (store: Store, payload: string) => {
 				store.commit('setWidgetDialogId', payload ?? '');
 			},
+			/** @function copilot/setSuggests */
+			setSuggests: (store: Store, payload: string[]) => {
+				if (!Type.isArray(payload))
+				{
+					return;
+				}
+
+				store.commit('setSuggests', payload);
+			},
 		};
 	}
 
@@ -159,6 +174,9 @@ export class CopilotModel extends BuilderModel
 			},
 			setWidgetDialogId: (state: CopilotModelState, payload: string) => {
 				state.widgetDialogId = payload;
+			},
+			setSuggests: (state: CopilotModelState, payload: string[]) => {
+				state.suggests = payload;
 			},
 		};
 	}

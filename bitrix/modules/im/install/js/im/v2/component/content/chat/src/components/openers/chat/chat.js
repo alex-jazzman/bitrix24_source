@@ -6,6 +6,7 @@ import { Messenger } from 'im.public';
 import { ChatType, Layout, UserRole, ErrorCode, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { PromoManager } from 'im.v2.lib.promo';
@@ -25,7 +26,8 @@ import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { CollabEmptyStateWrapper } from './components/empty-state/collab/wrapper.js';
-import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
+import { AiAssistantEmptyState } from './components/empty-state/ai-assistant/empty-state.js';
+import { CopilotLegacyEmptyState } from './components/empty-state/copilot/copilot.js';
 import { TaskEmptyState } from './components/empty-state/task';
 import { UserService } from './classes/user-service';
 
@@ -136,10 +138,14 @@ export const ChatOpener = {
 		},
 		emptyStateComponent(): BitrixVueComponentProps
 		{
+			const copilotEmptyState = FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable)
+				? AiAssistantEmptyState
+				: CopilotLegacyEmptyState;
+
 			const EmptyStateComponentByLayout = {
 				[Layout.channel]: ChannelEmptyState,
 				[Layout.collab]: CollabEmptyStateWrapper,
-				[Layout.copilot]: CopilotEmptyState,
+				[Layout.copilot]: copilotEmptyState,
 				[Layout.chat]: this.chatEmptyStateComponent,
 				[Layout.taskComments]: TaskEmptyState,
 				default: EmptyState,

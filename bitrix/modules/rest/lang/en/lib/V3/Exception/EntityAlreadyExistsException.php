@@ -1,0 +1,2 @@
+<?php
+$MESS["REST_V3_EXCEPTION_ENTITYALREADYEXISTSEXCEPTION"] = 'Record with ID #ID# already exists.';

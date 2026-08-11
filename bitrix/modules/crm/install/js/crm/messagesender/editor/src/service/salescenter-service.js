@@ -1,5 +1,4 @@
 import { Runtime, Text, Type } from 'main.core';
-import type { Store } from 'ui.vue3.vuex';
 import { type Logger } from './logger';
 
 export type ApplicationResult = {
@@ -22,12 +21,10 @@ export type ApplicationResult = {
 export class SalescenterService
 {
 	#logger: Logger;
-	#store: Store;
 
-	constructor(params: { logger: Logger, store: Store })
+	constructor({ logger }: { logger: Logger })
 	{
-		this.#logger = params.logger;
-		this.#store = params.store;
+		this.#logger = logger;
 	}
 
 	showSalescenterDisabledSlider(): void
@@ -42,25 +39,20 @@ export class SalescenterService
 			});
 	}
 
-	openApplication(): Promise<ApplicationResult>
+	openApplication(customData: Object): Promise<ApplicationResult>
 	{
 		return Runtime.loadExtension('salescenter.manager')
 			.then(({ Manager }) => {
+				const { ownerTypeId, ownerId, mode, st, canSendMessage } = customData;
+
 				/** @see BX.Salescenter.Manager.openApplication */
 				return Manager.openApplication({
-					disableSendButton: this.#store.getters['channels/canSendMessage'] ? '' : 'y',
+					disableSendButton: canSendMessage ? '' : 'y',
 					context: 'sms',
-					ownerTypeId: this.#store.state.application.context.entityTypeId,
-					ownerId: this.#store.state.application.context.entityId,
-					mode: this.#store.state.application.contentProviders.salescenter.mode,
-					st: {
-						tool: 'crm',
-						category: 'payments',
-						event: 'payment_create_click',
-						c_section: 'crm_sms',
-						c_sub_section: 'web',
-						type: 'delivery_payment',
-					},
+					ownerTypeId,
+					ownerId,
+					mode,
+					st,
 				});
 			})
 			.then((result: BX.SidePanel.Dictionary): ApplicationResult => {
@@ -106,6 +98,8 @@ export class SalescenterService
 						},
 					};
 				}
+
+				this.#logger.warn('Unknown salescenter action', result.get('action'));
 
 				return {};
 			})

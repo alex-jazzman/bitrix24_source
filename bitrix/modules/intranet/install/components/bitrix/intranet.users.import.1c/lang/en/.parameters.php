@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CP_BCI1_ABSENCE_IBLOCK_ID"] = "Absence Calendar Information Block ID";
 $MESS["CP_BCI1_CREATE"] = "Create if required";
 $MESS["CP_BCI1_CURRENT"] = "Current";
@@ -49,6 +49,7 @@ $MESS["ISL_PASSWORD"] = "Password";
 $MESS["ISL_PERSONAL_BIRTHDAY"] = "Date Of Birth";
 $MESS["ISL_PERSONAL_CITY"] = "City";
 $MESS["ISL_PERSONAL_COUNTRY"] = "Country";
+$MESS["ISL_PERSONAL_COUNTRY_MSGVER_1"] = "Country/Region";
 $MESS["ISL_PERSONAL_FAX"] = "Fax";
 $MESS["ISL_PERSONAL_GENDER"] = "Sex";
 $MESS["ISL_PERSONAL_ICQ"] = "ICQ";
@@ -67,4 +68,3 @@ $MESS["ISL_PERSONAL_ZIP"] = "Zip";
 $MESS["ISL_SECOND_NAME"] = "Middle Name";
 $MESS["ISL_WORK_PHONE"] = "Work";
 $MESS["ISL_WORK_POSITION"] = "Position";
-?>

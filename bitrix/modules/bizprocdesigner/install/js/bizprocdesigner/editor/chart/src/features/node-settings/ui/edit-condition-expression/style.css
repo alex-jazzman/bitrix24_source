@@ -15,12 +15,13 @@
 	font-size: 13px;
 	line-height: 17px;
 	color: var(--ui-color-palette-gray-70);
-	margin-bottom: 5px;
+	margin-bottom: 4px;
+	padding-left: 2px;
 	display: inline-block;
 }
 
 .editor-chart-node-settings-edit-condition-expression-form__item {
-	margin-bottom: 9px;
+	margin-bottom: 16px;
 }
 
 .editor-chart-node-settings-edit-condition-expression-form__item:last-of-type {

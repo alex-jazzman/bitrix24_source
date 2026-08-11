@@ -17,6 +17,7 @@ export class QuickReplyManager
 	#sectionId: number = ALL_SECTIONS_ID;
 	#isLoadingNextPage: boolean = false;
 	#loadedDialogId: string | null = null;
+	#loadedLineId: number | null = null;
 
 	static #instance: QuickReplyManager | null = null;
 
@@ -38,14 +39,16 @@ export class QuickReplyManager
 
 	#getLineId(dialogId: string): number
 	{
+		const chatId = this.#store.getters['chats/get'](dialogId, true).chatId;
+		const session = this.#store.getters['openLines/sessions/getByChatId'](chatId);
 		const connector = this.#store.getters['openLines/connector/getByDialogId'](dialogId);
 
-		return connector?.lineId ?? 0;
+		return session?.queueId ?? connector?.lineId ?? 0;
 	}
 
 	hasStaleCache(dialogId: string): boolean
 	{
-		return this.#loadedDialogId !== dialogId;
+		return this.#loadedDialogId !== dialogId || this.#loadedLineId !== this.#getLineId(dialogId);
 	}
 
 	async loadList(dialogId: string, params: {
@@ -83,6 +86,7 @@ export class QuickReplyManager
 		this.#searchQuery = '';
 		this.#sectionId = ALL_SECTIONS_ID;
 		this.#loadedDialogId = dialogId;
+		this.#loadedLineId = this.#getLineId(dialogId);
 		await this.#store.dispatch('openLines/quickReply/clear');
 	}
 
@@ -141,6 +145,15 @@ export class QuickReplyManager
 		}
 
 		return savedReply;
+	}
+
+	resetCache(dialogId: string): void
+	{
+		if (this.#loadedDialogId === dialogId)
+		{
+			this.#loadedDialogId = null;
+			this.#loadedLineId = null;
+		}
 	}
 
 	selectReply(dialogId: string, reply: RawQuickReply): void

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_cnt, main_core_events, main_popup, ui_buttons, ui_dialogs_messagebox, main_core_event, ui_bannerDispatcher, main_core_cache, main_sidepanel) {
+(function (exports, main_core, ui_cnt, main_core_events, main_popup, ui_buttons, main_loader, ui_dialogs_messagebox, main_core_event, ui_bannerDispatcher, main_core_cache, main_sidepanel) {
 	'use strict';
 
 	class Options {
@@ -22,7 +22,7 @@ this.BX = this.BX || {};
 	}
 
 	class DefaultController {
-		#popup = null;
+		popup = null;
 		constructor(container, {
 			events
 		}) {
@@ -38,26 +38,29 @@ this.BX = this.BX || {};
 		}
 		createPopup() {}
 		getPopup() {
-			return this.#popup;
+			return this.popup;
+		}
+		bindPopupEvents() {
+			main_core_events.EventEmitter.subscribe(this.popup, 'onClose', () => {
+				main_core_events.EventEmitter.emit(this, Options.eventName('onClose'));
+			});
+			main_core_events.EventEmitter.subscribe(this.popup, 'onShow', () => {
+				main_core_events.EventEmitter.emit(this, Options.eventName('onShow'));
+			});
+			main_core_events.EventEmitter.subscribe(this.popup, 'onDestroy', () => {
+				this.popup = null;
+			});
 		}
 		show() {
-			if (this.#popup === null) {
-				this.#popup = this.createPopup(...arguments);
-				main_core_events.EventEmitter.subscribe(this.#popup, 'onClose', () => {
-					main_core_events.EventEmitter.emit(this, Options.eventName('onClose'));
-				});
-				main_core_events.EventEmitter.subscribe(this.#popup, 'onShow', () => {
-					main_core_events.EventEmitter.emit(this, Options.eventName('onShow'));
-				});
-				main_core_events.EventEmitter.subscribe(this.#popup, 'onDestroy', () => {
-					this.#popup = null;
-				});
+			if (this.popup === null) {
+				this.popup = this.createPopup(...arguments);
+				this.bindPopupEvents();
 			}
-			this.#popup.show();
+			this.popup.show();
 		}
 		hide() {
-			if (this.#popup) {
-				this.#popup.close();
+			if (this.popup) {
+				this.popup.close();
 			}
 		}
 	}
@@ -179,13 +182,26 @@ this.BX = this.BX || {};
 		isReady = true;
 		#unavailableToolPopup;
 		#mode;
+		constructor(container, {
+			events
+		}, currentPresetId) {
+			super(container, {
+				events
+			});
+			this.currentPresetId = currentPresetId;
+		}
 		createPopup(mode) {
-			let button;
 			this.#mode = mode;
-			const content = document.querySelector('#left-menu-preset-popup').cloneNode(true);
-			return main_popup.PopupManager.create(this.constructor.name.toString(), null, {
+			let button;
+			const content = main_core.Tag.render`
+			<div class="left-menu-popup-wrapper-skeleton"><div>
+		`;
+			new main_loader.Loader({
+				size: 100
+			}).show(content);
+			const popup = main_popup.PopupManager.create(this.constructor.name.toString(), null, {
 				overlay: true,
-				contentColor: "white",
+				contentColor: 'white',
 				contentNoPaddings: true,
 				lightShadow: true,
 				draggable: {
@@ -196,22 +212,7 @@ this.BX = this.BX || {};
 				offsetLeft: 20,
 				cacheable: false,
 				closeIcon: true,
-				content: content,
-				events: {
-					onFirstShow: () => {
-						[...content.querySelectorAll('.js-left-menu-preset-item')].forEach(node => {
-							node.addEventListener('click', () => {
-								const radio = node.querySelector('input[type="radio"]');
-								if (radio) {
-									radio.checked = true;
-								}
-								[...content.querySelectorAll('.js-left-menu-preset-item')].forEach(otherNode => {
-									otherNode.classList[otherNode === node ? 'add' : 'remove']('left-menu-popup-selected');
-								});
-							});
-						});
-					}
-				},
+				content,
 				buttons: [button = new ui_buttons.CreateButton({
 					text: main_core.Loc.getMessage('MENU_CONFIRM_BUTTON'),
 					onclick: () => {
@@ -232,7 +233,7 @@ this.BX = this.BX || {};
 							promise.then(response => {
 								button.setWaiting(false);
 								this.hide();
-								if (response.data.hasOwnProperty("url")) {
+								if (response.data.hasOwnProperty('url')) {
 									document.location.href = response.data.url;
 								} else {
 									document.location.reload();
@@ -250,6 +251,22 @@ this.BX = this.BX || {};
 					}
 				})]
 			});
+			main_core.Runtime.loadExtension('intranet.menu-preset').then(exports => {
+				const menuPreset = new exports.MenuPreset({
+					containerNode: document.querySelector('#left-menu-preset-popup'),
+					currentPresetId: this.currentPresetId
+				});
+				popup.setContent(menuPreset.getContent());
+				popup.adjustPosition();
+			}).catch(() => {});
+			return popup;
+		}
+		show(mode) {
+			if (this.popup === null) {
+				this.popup = this.createPopup(mode);
+				this.bindPopupEvents();
+			}
+			this.popup.show();
 		}
 		getMode() {
 			return this.#mode;
@@ -1010,8 +1027,121 @@ this.BX = this.BX || {};
 		return shortName.toUpperCase();
 	}
 
+	const ITEM_CODE_ADMIN_SHARED = 'admin';
+	const ITEM_CODE_USER_FAVORITES = 'standard';
+	const ITEM_CODE_USER_SELF = 'self';
+
+	class ItemAdminShared extends Item {
+		static code = 'admin';
+		canDelete() {
+			return this.container.dataset.deletePerm === 'Y';
+		}
+		delete() {
+			Backend.deleteAdminSharedItemMenu(this.getId()).then(() => {
+				if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0) {
+					Backend.deleteFavoritesItemMenu({
+						id: this.getId()
+					});
+				}
+				if (this.storage.indexOf(ITEM_CODE_USER_SELF) >= 0) {
+					Backend.deleteSelfITem(this.getId());
+				}
+				main_core_events.EventEmitter.emit(this, Options.eventName('onItemDelete'), {
+					animate: true
+				});
+			}).catch(this.showError);
+		}
+		getDropDownActions() {
+			if (!this.canDelete()) {
+				return [];
+			}
+			const contextMenuItems = [];
+			/*		contextMenuItems.push({
+						text: Loc.getMessage("MENU_RENAME_ITEM"),
+						onclick: () => {
+							this.constructor
+								.showUpdate(this)
+								.then(this.update.bind(this))
+								.catch(this.showError.bind(this));
+						}
+					});
+			*/
+
+			if (this.storage.filter(value => {
+				return value === ITEM_CODE_USER_FAVORITES || value === ITEM_CODE_USER_SELF;
+			}).length > 0) {
+				contextMenuItems.push({
+					text: main_core.Loc.getMessage('MENU_REMOVE_STANDARD_ITEM'),
+					onclick: this.delete.bind(this)
+				});
+				contextMenuItems.push({
+					text: main_core.Loc.getMessage('MENU_DELETE_CUSTOM_ITEM_FROM_ALL'),
+					onclick: () => {
+						Backend.deleteAdminSharedItemMenu(this.getId()).then(() => {
+							this.showMessage(main_core.Loc.getMessage('MENU_ITEM_WAS_DELETED_FROM_ALL'));
+							const codeToConvert = this.storage.indexOf(ITEM_CODE_USER_SELF) >= 0 ? ITEM_CODE_USER_SELF : ITEM_CODE_USER_FAVORITES;
+							this.container.dataset.type = codeToConvert;
+							this.container.dataset.storage = this.storage.filter(v => {
+								return v !== codeToConvert;
+							}).join(',');
+							main_core_events.EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
+						}).catch(this.showError);
+					}
+				});
+			} else {
+				contextMenuItems.push({
+					text: main_core.Loc.getMessage("MENU_DELETE_CUSTOM_ITEM_FROM_ALL"),
+					onclick: this.delete.bind(this)
+				});
+			}
+			return contextMenuItems;
+		}
+	}
+
+	class ItemAdminCustom extends Item {
+		static code = 'custom';
+		canDelete() {
+			return this.container.dataset.deletePerm === 'Y';
+		}
+		delete() {
+			if (this.canDelete()) {
+				Backend.deleteCustomItem(this.getId()).then(() => {
+					if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0) {
+						Backend.deleteFavoritesItemMenu({
+							id: this.getId()
+						});
+					}
+					main_core_events.EventEmitter.emit(this, Options.eventName('onItemDelete'), {
+						animate: true
+					});
+				}).catch(this.showError);
+			}
+		}
+		getDropDownActions() {
+			const actions = [];
+			if (this.canDelete()) {
+				actions.push({
+					text: main_core.Loc.getMessage("MENU_DELETE_ITEM_FROM_ALL"),
+					onclick: this.delete.bind(this)
+				});
+			}
+			return actions;
+		}
+	}
+
+	class ItemMainPage extends Item {
+		static code = 'main';
+		canDelete() {
+			return false;
+		}
+		openSettings() {
+			const url = `${main_core.Loc.getMessage('mainpage_settings_path')}&analyticContext=left_menu`;
+			BX.SidePanel.Instance.open(url);
+		}
+	}
+
 	class ItemUserFavorites extends Item {
-		static code = 'standard';
+		static code = ITEM_CODE_USER_FAVORITES;
 		static #currentPageInTopMenu = null;
 		canDelete() {
 			return true;
@@ -1064,8 +1194,8 @@ this.BX = this.BX || {};
 							openInNewPage: itemLinkNode && itemLinkNode.getAttribute("target") === "_blank" ? "Y" : "N"
 						}).then(() => {
 							this.showMessage(main_core.Loc.getMessage('MENU_ITEM_WAS_ADDED_TO_ALL'));
-							this.container.dataset.type = ItemAdminShared.code;
-							this.storage.push(ItemUserFavorites.code);
+							this.container.dataset.type = ITEM_CODE_ADMIN_SHARED;
+							this.storage.push(ITEM_CODE_USER_FAVORITES);
 							this.container.dataset.storage = this.storage.join(',');
 							main_core_events.EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
 						}).catch(this.showError);
@@ -1259,13 +1389,13 @@ this.BX = this.BX || {};
 	}
 
 	class ItemUserSelf extends Item {
-		static code = 'self';
+		static code = ITEM_CODE_USER_SELF;
 		canDelete() {
 			return true;
 		}
 		delete() {
 			return Backend.deleteSelfITem(this.getId()).then(() => {
-				if (this.storage.indexOf(ItemUserFavorites.code) >= 0) {
+				if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0) {
 					Backend.deleteFavoritesItemMenu({
 						id: this.getId()
 					});
@@ -1305,8 +1435,8 @@ this.BX = this.BX || {};
 							openInNewPage: itemLinkNode && itemLinkNode.getAttribute("target") === "_blank" ? "Y" : "N"
 						}).then(() => {
 							this.showMessage(main_core.Loc.getMessage('MENU_ITEM_WAS_ADDED_TO_ALL'));
-							this.container.dataset.type = ItemAdminShared.code;
-							this.storage.push(ItemUserSelf.code);
+							this.container.dataset.type = ITEM_CODE_ADMIN_SHARED;
+							this.storage.push(ITEM_CODE_USER_SELF);
 							this.container.dataset.storage = this.storage.join(',');
 							main_core_events.EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
 						}).catch(this.showError);
@@ -1346,115 +1476,6 @@ this.BX = this.BX || {};
 					node: this.createNode(itemInfo)
 				};
 			});
-		}
-	}
-
-	class ItemAdminShared extends Item {
-		static code = 'admin';
-		canDelete() {
-			return this.container.dataset.deletePerm === 'Y';
-		}
-		delete() {
-			Backend.deleteAdminSharedItemMenu(this.getId()).then(() => {
-				if (this.storage.indexOf(ItemUserFavorites.code) >= 0) {
-					Backend.deleteFavoritesItemMenu({
-						id: this.getId()
-					});
-				}
-				if (this.storage.indexOf(ItemUserSelf.code) >= 0) {
-					Backend.deleteSelfITem(this.getId());
-				}
-				main_core_events.EventEmitter.emit(this, Options.eventName('onItemDelete'), {
-					animate: true
-				});
-			}).catch(this.showError);
-		}
-		getDropDownActions() {
-			if (!this.canDelete()) {
-				return [];
-			}
-			const contextMenuItems = [];
-			/*		contextMenuItems.push({
-						text: Loc.getMessage("MENU_RENAME_ITEM"),
-						onclick: () => {
-							this.constructor
-								.showUpdate(this)
-								.then(this.update.bind(this))
-								.catch(this.showError.bind(this));
-						}
-					});
-			*/
-
-			if (this.storage.filter(value => {
-				return value === ItemUserFavorites.code || value === ItemUserSelf.code;
-			}).length > 0) {
-				contextMenuItems.push({
-					text: main_core.Loc.getMessage('MENU_REMOVE_STANDARD_ITEM'),
-					onclick: this.delete.bind(this)
-				});
-				contextMenuItems.push({
-					text: main_core.Loc.getMessage('MENU_DELETE_CUSTOM_ITEM_FROM_ALL'),
-					onclick: () => {
-						Backend.deleteAdminSharedItemMenu(this.getId()).then(() => {
-							this.showMessage(main_core.Loc.getMessage('MENU_ITEM_WAS_DELETED_FROM_ALL'));
-							const codeToConvert = this.storage.indexOf(ItemUserSelf.code) >= 0 ? ItemUserSelf.code : ItemUserFavorites.code;
-							this.container.dataset.type = codeToConvert;
-							this.container.dataset.storage = this.storage.filter(v => {
-								return v !== codeToConvert;
-							}).join(',');
-							main_core_events.EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
-						}).catch(this.showError);
-					}
-				});
-			} else {
-				contextMenuItems.push({
-					text: main_core.Loc.getMessage("MENU_DELETE_CUSTOM_ITEM_FROM_ALL"),
-					onclick: this.delete.bind(this)
-				});
-			}
-			return contextMenuItems;
-		}
-	}
-
-	class ItemAdminCustom extends Item {
-		static code = 'custom';
-		canDelete() {
-			return this.container.dataset.deletePerm === 'Y';
-		}
-		delete() {
-			if (this.canDelete()) {
-				Backend.deleteCustomItem(this.getId()).then(() => {
-					if (this.storage.indexOf(ItemUserFavorites.code) >= 0) {
-						Backend.deleteFavoritesItemMenu({
-							id: this.getId()
-						});
-					}
-					main_core_events.EventEmitter.emit(this, Options.eventName('onItemDelete'), {
-						animate: true
-					});
-				}).catch(this.showError);
-			}
-		}
-		getDropDownActions() {
-			const actions = [];
-			if (this.canDelete()) {
-				actions.push({
-					text: main_core.Loc.getMessage("MENU_DELETE_ITEM_FROM_ALL"),
-					onclick: this.delete.bind(this)
-				});
-			}
-			return actions;
-		}
-	}
-
-	class ItemMainPage extends Item {
-		static code = 'main';
-		canDelete() {
-			return false;
-		}
-		openSettings() {
-			const url = `${main_core.Loc.getMessage('mainpage_settings_path')}&analyticContext=left_menu`;
-			BX.SidePanel.Instance.open(url);
 		}
 	}
 
@@ -3196,6 +3217,7 @@ this.BX = this.BX || {};
 			Options.showLicenseButton = params.showLicenseButton;
 			Options.licenseButtonPath = params.licenseButtonPath;
 			Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
+			Options.currentPresetId = params.currentPresetId;
 			this.isCollapsedMode = params.isCollapsedMode;
 			this.analytics = new Analytics(params.isAdmin);
 			this.initAndBindNodes();
@@ -3389,7 +3411,7 @@ this.BX = this.BX || {};
 							closeEventWasProcessed = false;
 						}
 					}
-				});
+				}, Options.currentPresetId);
 				return presetController;
 			});
 		}
@@ -3571,25 +3593,6 @@ this.BX = this.BX || {};
 		}
 		showError(bindElement) {
 			this.showMessage(bindElement, main_core.Loc.getMessage('edit_error'));
-		}
-		showGlobalPreset() {
-			const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
-			if (BannerDispatcher) {
-				this.addGlobalPresetToBannerDispatcher(BannerDispatcher);
-			} else {
-				main_core.Runtime.loadExtension('ui.banner-dispatcher').then(exports => {
-					this.addGlobalPresetToBannerDispatcher(exports.BannerDispatcher);
-				}).catch(() => {});
-			}
-		}
-		addGlobalPresetToBannerDispatcher(BannerDispatcher) {
-			BannerDispatcher.high.toQueue(onDone => {
-				const presetController = this.getDefaultPresetController();
-				presetController.show('global');
-				presetController.getPopup().subscribe('onAfterClose', event => {
-					onDone();
-				});
-			});
 		}
 		handleShowHiddenClick() {
 			this.getItemsController().toggleHiddenContainer(true);
@@ -4382,5 +4385,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.UI, BX.Event, BX.Main, BX.UI, BX.UI.Dialogs, BX, BX.UI, BX.Cache, BX.SidePanel);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.UI, BX.Event, BX.Main, BX.UI, BX, BX.UI.Dialogs, BX, BX.UI, BX.Cache, BX.SidePanel);
 //# sourceMappingURL=script.js.map

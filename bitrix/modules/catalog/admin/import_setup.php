@@ -6,6 +6,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Web\Uri;
 
 const NO_AGENT_CHECK = true;
 
@@ -1143,12 +1144,12 @@ foreach($arReportsList as $strReportFile => $arReportParams)
 			if ($boolNeedEdit)
 			{
 				$url = "/bitrix/admin/cat_import_setup.php?lang=".LANGUAGE_ID."&ACT_FILE=".urlencode($strReportFile)."&ACTION=IMPORT_EDIT&PROFILE_ID=".$arProfile["ID"]."&".bitrix_sessid_get();
-				$strProfileLink = '<a href="'.CHTTP::URN2URI($url).'" title="'.GetMessage("CES_EDIT_PROPFILE_DESCR").'"><i>'.GetMessage("CES_DEFAULT").'</i></a><br /><i>('.GetMessage('CES_NEED_EDIT').')</i>';
+				$strProfileLink = '<a href="'.(new Uri($url))->toAbsolute().'" title="'.GetMessage("CES_EDIT_PROPFILE_DESCR").'"><i>'.GetMessage("CES_DEFAULT").'</i></a><br /><i>('.GetMessage('CES_NEED_EDIT').')</i>';
 			}
 			else
 			{
 				$url = ('Y' == $arProfile["IN_MENU"] ? '/bitrix/admin/cat_exec_imp.php' : "/bitrix/admin/cat_import_setup.php").'?lang='.LANGUAGE_ID."&ACT_FILE=".urlencode($strReportFile)."&ACTION=IMPORT&PROFILE_ID=".$arProfile["ID"]."&".bitrix_sessid_get();
-				$strProfileLink = '<a href="'.CHTTP::URN2URI($url).'" title="'.GetMessage("import_setup_begin").'"><i>'.GetMessage("CES_DEFAULT").'</i></a>';
+				$strProfileLink = '<a href="'.(new Uri($url))->toAbsolute().'" title="'.GetMessage("import_setup_begin").'"><i>'.GetMessage("CES_DEFAULT").'</i></a>';
 			}
 		}
 		else
@@ -1288,7 +1289,7 @@ foreach($arReportsList as $strReportFile => $arReportParams)
 		if ($bCanEdit)
 		{
 			$url = "/bitrix/admin/cat_import_setup.php?lang=".LANGUAGE_ID."&ACT_FILE=".urlencode($strReportFile)."&".bitrix_sessid_get()."&ACTION=IMPORT&PROFILE_ID=0";
-			$strProfileLink = '<a href="'.CHTTP::URN2URI($url).'" title="'.GetMessage("export_setup_begin").'"><i>'.GetMessage("CES_DEFAULT").'</i></a>';
+			$strProfileLink = '<a href="'.(new Uri($url))->toAbsolute().'" title="'.GetMessage("export_setup_begin").'"><i>'.GetMessage("CES_DEFAULT").'</i></a>';
 		}
 		$row->AddViewField('PROFILE', $strProfileLink);
 
@@ -1372,13 +1373,13 @@ foreach($arReportsList as $strReportFile => $arReportParams)
 			if ($boolNeedEdit)
 			{
 				$url = "/bitrix/admin/cat_import_setup.php?lang=".LANGUAGE_ID."&ACT_FILE=".urlencode($strReportFile)."&ACTION=IMPORT_EDIT&PROFILE_ID=".$arProfile["ID"]."&".bitrix_sessid_get();
-				$strProfileLink = '<a href="'.CHTTP::URN2URI($url).'" title="'.GetMessage("CES_EDIT_PROPFILE_DESCR").'">'.htmlspecialcharsbx($arProfile["NAME"]).'</a>'.
+				$strProfileLink = '<a href="'.(new Uri($url))->toAbsolute().'" title="'.GetMessage("CES_EDIT_PROPFILE_DESCR").'">'.htmlspecialcharsbx($arProfile["NAME"]).'</a>'.
 					'<br /><i>('.GetMessage('CES_NEED_EDIT').')</i>';
 			}
 			else
 			{
 				$url = ('Y' == $arProfile["IN_MENU"] ? "/bitrix/admin/cat_exec_imp.php" : "/bitrix/admin/cat_import_setup.php")."?lang=".LANGUAGE_ID."&ACT_FILE=".urlencode($strReportFile)."&ACTION=IMPORT&PROFILE_ID=".$arProfile["ID"]."&".bitrix_sessid_get();
-				$strProfileLink = '<a href="'.CHTTP::URN2URI($url).'" title="'.GetMessage("export_setup_begin").'">'.htmlspecialcharsbx($arProfile["NAME"]).'</a>';
+				$strProfileLink = '<a href="'.(new Uri($url))->toAbsolute().'" title="'.GetMessage("export_setup_begin").'">'.htmlspecialcharsbx($arProfile["NAME"]).'</a>';
 			}
 		}
 		else

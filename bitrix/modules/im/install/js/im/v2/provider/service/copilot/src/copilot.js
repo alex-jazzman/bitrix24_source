@@ -1,5 +1,5 @@
-import { ChatType } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
+import { ChatType, CopilotRole } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
 import { ChatService } from 'im.v2.provider.service.chat';
 
 export class CopilotChatService
@@ -10,12 +10,10 @@ export class CopilotChatService
 
 		try
 		{
-			const { newDialogId, newChatId } = await chatService.createChat({
+			const { newDialogId } = await chatService.createChat({
 				type: ChatType.copilot,
 				copilotMainRole: roleCode,
 			});
-
-			this.#sendAnalytics({ chatId: newChatId, dialogId: newDialogId });
 
 			await chatService.loadChatWithMessages(newDialogId);
 
@@ -30,14 +28,19 @@ export class CopilotChatService
 
 	createDefaultChat(): Promise<string>
 	{
-		const COPILOT_UNIVERSAL_ROLE = 'copilot_assistant';
-
-		return this.createChat({ roleCode: COPILOT_UNIVERSAL_ROLE });
+		return this.createChat({ roleCode: CopilotRole.universalCode });
 	}
 
-	#sendAnalytics({ chatId, dialogId })
+	async fetchDraftChat(): Promise<{ dialogId: string, chatId: number }>
 	{
-		Analytics.getInstance().copilot.onCreateChat(chatId);
-		Analytics.getInstance().ignoreNextChatOpen(dialogId);
+		try
+		{
+			return await new ChatService().loadCopilotDraftChat();
+		}
+		catch (error)
+		{
+			Logger.warn('CopilotChatService: fetchDraftChat failed', error);
+			throw error;
+		}
 	}
 }

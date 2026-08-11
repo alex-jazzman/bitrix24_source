@@ -1,4 +1,4 @@
 <?php
 
 $MESS['BPIEA_DESCR_NAME'] = "Блок условий";
-$MESS['BPIEA_DESCR_DESCR'] = "Блок условий";
+$MESS['BPIEA_DESCR_DESCR'] = "Создаёт группу связанных условий";

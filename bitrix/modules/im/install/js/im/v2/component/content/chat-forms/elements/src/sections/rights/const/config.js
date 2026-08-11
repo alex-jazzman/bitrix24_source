@@ -8,11 +8,18 @@ export const BlocksByChatType = {
 		ChatActionGroup.manageUsersDelete,
 		ChatActionGroup.manageMessages,
 	]),
+	[ChatType.videoconf]: new Set([
+		ChatActionGroup.manageUsersAdd,
+		ChatActionGroup.manageUsersDelete,
+		ChatActionGroup.manageUi,
+		ChatActionGroup.manageMessages,
+	]),
 	default: new Set([
 		ChatActionGroup.manageUsersAdd,
 		ChatActionGroup.manageUsersDelete,
 		ChatActionGroup.manageUi,
 		ChatActionGroup.manageMessages,
+		ChatActionGroup.manageGuestInvites,
 	]),
 };
 

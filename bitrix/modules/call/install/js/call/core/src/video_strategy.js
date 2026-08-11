@@ -1,7 +1,7 @@
 import {Type} from 'main.core';
 import {CallEvent, UserMnemonic} from './engine/engine';
-import { View } from './view/view';
-import type {CallView} from './view/call-view-port';
+import { ViewEvent } from 'call.mapping';
+import type {CallView} from 'call.lib.view-contract';
 
 const StrategyType = {
 	AllowAll: 'AllowAll',
@@ -55,8 +55,8 @@ export class VideoStrategy
 	{
 		this.call.addEventListener(CallEvent.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 		this.call.addEventListener(CallEvent.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
-		this.callView.subscribe(View.Event.onSetCentralUser, this.onCallViewSetCentralUserHandler);
-		this.callView.subscribe(View.Event.onLayoutChange, this.onCallViewLayoutChangeHandler);
+		this.callView.subscribe(ViewEvent.onSetCentralUser, this.onCallViewSetCentralUserHandler);
+		this.callView.subscribe(ViewEvent.onLayoutChange, this.onCallViewLayoutChangeHandler);
 	};
 
 	removeEvents()
@@ -69,8 +69,8 @@ export class VideoStrategy
 
 		if (this.callView)
 		{
-			this.callView.unsubscribe(View.Event.onSetCentralUser, this.onCallViewSetCentralUserHandler);
-			this.callView.unsubscribe(View.Event.onLayoutChange, this.onCallViewLayoutChangeHandler);
+			this.callView.unsubscribe(ViewEvent.onSetCentralUser, this.onCallViewSetCentralUserHandler);
+			this.callView.unsubscribe(ViewEvent.onLayoutChange, this.onCallViewLayoutChangeHandler);
 		}
 	};
 

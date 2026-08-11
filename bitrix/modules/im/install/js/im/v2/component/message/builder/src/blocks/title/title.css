@@ -1,0 +1,37 @@
+.bx-im-message-block-header__container {
+	padding: 10px 0 8px;
+}
+
+.bx-im-message-block-header__container.--color-ai-assistant {
+	background: linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%);
+	background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+}
+
+.bx-im-message-block-header__container.--size-2 {
+	padding: 8px 0 6px;
+}
+
+.bx-im-message-block-header__container.--color-primary {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-message-block-header__container.--color-secondary {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-message-block-header__container.--color-alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bx-im-message-block-header__text {
+	overflow: hidden;
+	font: var(--ui-font-size-lg)/20px var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-semi-bold);
+	overflow-wrap: break-word;
+}
+
+.bx-im-message-block-header__container.--size-2 .bx-im-message-block-header__text {
+	font-weight: var(--ui-font-weight-medium);
+}

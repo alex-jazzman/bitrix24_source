@@ -5,7 +5,9 @@ import {BitrixCallLegacy} from './bitrix_call_legacy'
 import {CallStub} from './stub'
 import {Hardware} from '../call_hardware';
 import Util from '../util'
+import { stuckCallFinishTracker } from 'call.lib.stuck-call-finish-tracker';
 import {AbstractCall} from './abstract_call';
+import { setLegacy } from './engine-registry';
 import {CallAI} from '../call_ai';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 
@@ -326,6 +328,7 @@ class EngineLegacy
 					connectionData: createCallResponse.connectionData,
 					isCopilotActive: callFields['RECORD_AUDIO'],
 					scheme: callFields['SCHEME'],
+					invitePeriod: config.invitePeriod,
 				});
 
 				call.addDialogInfo(callFields.ASSOCIATED_ENTITY);
@@ -514,6 +517,27 @@ class EngineLegacy
 			return;
 		}
 
+		// Cancel any pending stuck-call recovery finish: backend already
+		// finished the call, the engine layer will clean up the UI from this
+		// pull event, so a client-side CallManager.finish REST is redundant.
+		// getCallConnectionData() in util.js schedules recovery as
+		// (null, callUuid) — it does not know the callId at that point.
+		// Cancel both (null, uuid) and (callId, uuid) so the debounced REST
+		// call never fires regardless of which key was used to schedule it.
+		if (command === 'Call::finish')
+		{
+			const finishedCallUuid = params?.call?.UUID || params?.call?.uuid;
+			if (finishedCallUuid)
+			{
+				const finishedCallId = params?.callId || params?.call?.ID || params?.call?.id || null;
+				stuckCallFinishTracker.cancelPending(null, finishedCallUuid);
+				if (finishedCallId)
+				{
+					stuckCallFinishTracker.cancelPending(finishedCallId, finishedCallUuid);
+				}
+			}
+		}
+
 		if (command.startsWith('Call::'))
 		{
 			if (params.publicIds)
@@ -557,7 +581,7 @@ class EngineLegacy
 
 	#onPullClientEvent(command: string, params, extra)
 	{
-		if (command.startsWith('Call::') && params['callId'])
+		if (!!command && command.startsWith('Call::') && params['callId'])
 		{
 			const callId = params['callId'];
 			if (this.calls[callId])
@@ -651,7 +675,8 @@ class EngineLegacy
 			BX.onCustomEvent(window, "CallEvents::incomingCall", [{
 				call: call,
 				video: params.video === true,
-				isLegacyMobile: params.isLegacyMobile === true
+				isLegacyMobile: params.isLegacyMobile === true,
+				isRepeated: params.isRepeated === true,
 			}]);
 		}
 		this.log(call.id, "Incoming call " + call.id);
@@ -823,3 +848,5 @@ class BitrixCallFactory
 
 
 export const CallEngineLegacy = new EngineLegacy();
+Util.registerEngine(CallEngineLegacy);
+setLegacy(CallEngineLegacy);

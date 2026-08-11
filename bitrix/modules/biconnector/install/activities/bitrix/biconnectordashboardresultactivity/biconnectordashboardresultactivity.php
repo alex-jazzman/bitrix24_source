@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Activity\BaseActivity;
@@ -152,7 +151,7 @@ class CBPBIConnectorDashboardResultActivity extends BaseActivity implements IBPC
 
 	private function getResult(int $dashboardId): array
 	{
-		$superset = new SupersetController(Integrator::getInstance());
+		$superset = new SupersetController();
 		$dashboard = $superset->getDashboardRepository()->getById($dashboardId);
 
 		if (!$dashboard)

@@ -148,7 +148,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 			this.#setVote(messageId, value);
 			if (value === VoteValue.dislike && context) {
-				this.#openFeedbackForm(context);
+				this.#openFeedbackForm(messageId, context);
 			}
 			try {
 				await this.#service.send(messageId, value);
@@ -171,12 +171,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		#deleteVote(messageId) {
 			void this.#store.dispatch('copilot/votes/delete', messageId);
 		}
-		#openFeedbackForm(context) {
+		#openFeedbackForm(messageId, context) {
 			const chat = this.#store.getters['chats/get'](context.dialogId);
+			const message = this.#store.getters['messages/getById'](messageId);
 			const userCounter = chat?.userCounter ?? 0;
 			void this.#feedbackManager.openCopilotForm({
 				userCounter,
-				text: context.text
+				message
 			});
 		}
 	}

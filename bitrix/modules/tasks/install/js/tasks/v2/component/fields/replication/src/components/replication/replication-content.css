@@ -1,22 +1,46 @@
-.tasks-field-replication-wrapper {
-	display: flex;
-	gap: 14px;
-}
-
-.tasks-field-replication-title {
-	flex-shrink: 0;
-	width: 160px;
-	line-height: 25px;
-}
-
 .tasks-field-replication-content {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--ui-space-inline-2xs2);
 }
 
 .tasks-field-replication-actions {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-text-wrapper .b24-hover-pill-content
+{
+	padding-left: 4px;
+}
+
+.tasks-replication-content-text {
+	padding: var(--ui-space-inline-3xs) 0;
+}
+
+.task-replication-content-text-pause {
+	color: var(--ui-color-base-3);
+}
+
+.task-replication-content-control {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-element {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	color: var(--ui-color-base-4);
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-element-text {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-replication-content-element-text:hover {
+	color: var(--ui-color-base-3);
 }

@@ -4,11 +4,11 @@
 jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/button-managers/market', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
-	// const { MarketAppManager } = require('market-app-manager'); TODO uncomment this import after bp mobile 26.500.0 is released
+	const { MarketAppManager } = require('market-app-manager');
 
 	const { MarketButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
 
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('dialog--market-manager');
@@ -16,11 +16,16 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 	const MARKET_SECTION_CODE = 'general';
 	const MARKET_PLACEMENT_CODE = 'IMMOBILE_CONTEXT_MENU';
 
+	let hasApps = false;
+
 	/**
 	 * @class MarketManager
 	 */
 	class MarketManager
 	{
+		/** @type {Object} */
+		#view;
+
 		/** @type {DialogId} */
 		#dialogId;
 
@@ -30,12 +35,17 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {DialogPopupMenu|null} */
 		#popupMenu = null;
 
+		/** @type {?AssistantButton} */
+		#currentButton = null;
+
 		/**
 		 * @param {DialogLocator} dialogLocator
 		 */
 		constructor({ dialogLocator })
 		{
+			this.#view = dialogLocator.get('view');
 			this.#dialogId = dialogLocator.get('dialogId');
+			this.#apps = [];
 		}
 
 		/**
@@ -46,14 +56,89 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			return false;
 		}
 
+		/**
+		 * @returns {Promise<boolean>}
+		 */
+		async canShow()
+		{
+			if (!Feature.isAssistantMarketButtonAvailable)
+			{
+				return false;
+			}
+
+			if (hasApps)
+			{
+				return true;
+			}
+
+			try
+			{
+				await this.loadApps();
+				hasApps = Type.isArrayFilled(this.#apps);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.canShow: getList failed`, error);
+
+				return false;
+			}
+
+			return hasApps;
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildButton()
+		{
+			return { ...MarketButton };
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildCurrentButton()
+		{
+			return this.#currentButton ?? this.buildButton();
+		}
+
+		/**
+		 * @param {boolean} hasAnyActive
+		 */
+		applyCollapsedOverlay(hasAnyActive)
+		{
+			const text = hasAnyActive ? '' : MarketButton.text;
+			void this.#applyButton({ ...MarketButton, text });
+		}
+
+		/**
+		 * @param {AssistantButton} button
+		 * @returns {Promise<any>}
+		 */
+		#applyButton(button)
+		{
+			this.#currentButton = button;
+
+			return this.#view.textField.updateAssistantButton(button.id, button);
+		}
+
+		async loadApps()
+		{
+			if (Type.isArrayFilled(this.#apps))
+			{
+				return this.#apps;
+			}
+
+			this.#apps = await MarketAppManager.getList(MARKET_PLACEMENT_CODE);
+		}
+
 		async menuButtonTapHandler()
 		{
 			logger.log(`${this.constructor.name}.menuButtonTapHandler`);
 
 			try
 			{
-				const { MarketAppManager } = require('market-app-manager'); // TODO: delete this import after bp mobile 26.500.0 is released
-				this.#apps = await MarketAppManager.getList(MARKET_PLACEMENT_CODE);
+				await this.loadApps();
 			}
 			catch (error)
 			{

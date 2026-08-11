@@ -1984,6 +1984,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static GRAPHS_LINK = new Icon('GRAPHS_LINK', {
+			name: 'graphs_link',
+			path: '/bitrix/images/mobile/icons/graphs_link.svg',
+			content: '',
+		});
+
 		static GRAPHS_SETTINGS = new Icon('GRAPHS_SETTINGS', {
 			name: 'graphs_settings',
 			path: '/bitrix/images/mobile/icons/graphs_settings.svg',
@@ -3190,6 +3196,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static PLAY_WAVES = new Icon('PLAY_WAVES', {
+			name: 'play_waves',
+			path: '/bitrix/images/mobile/icons/play_waves.svg',
+			content: '',
+		});
+
 		static PLUS = new Icon('PLUS', {
 			name: 'plus',
 			path: '/bitrix/images/mobile/icons/plus.svg',
@@ -3409,12 +3421,6 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static RECORD_ON = new Icon('RECORD_ON', {
 			name: 'record_on',
 			path: '/bitrix/images/mobile/icons/record_on.svg',
-			content: '',
-		});
-
-		static RECORD_ON_2 = new Icon('RECORD_ON_2', {
-			name: 'record_on_2',
-			path: '/bitrix/images/mobile/icons/record_on_2.svg',
 			content: '',
 		});
 
@@ -5515,6 +5521,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 		static SOLID_QUESTION = new Icon('SOLID_QUESTION', {
 			name: 'solid_question',
 			path: '/bitrix/images/mobile/icons/solid_question.svg',
+			content: '',
+		});
+
+		static SOLID_RECORD_ON = new Icon('SOLID_RECORD_ON', {
+			name: 'solid_record_on',
+			path: '/bitrix/images/mobile/icons/solid_record_on.svg',
 			content: '',
 		});
 

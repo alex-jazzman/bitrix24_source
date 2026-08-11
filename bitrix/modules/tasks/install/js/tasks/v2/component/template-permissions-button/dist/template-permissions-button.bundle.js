@@ -150,6 +150,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
+		data() {
+			return {
+				intervalFreezingPopupParent: null
+			};
+		},
 		computed: {
 			preselected() {
 				return this.permissions.map(it => tasks_v2_provider_service_templateService.permissionBuilder.buildItemId(it));
@@ -202,13 +207,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					},
 					popupOptions: {
 						events: {
-							onClose: this.unfreeze
+							onClose: () => {
+								clearInterval(this.intervalFreezingPopupParent);
+								this.unfreeze();
+							}
 						}
 					}
 				});
 				this.selector.selectItemsByIds(this.preselected);
 				this.selector.show(this.$el);
-				setTimeout(() => this.freeze());
+				this.freeze();
+				// TODO: fix unfreezing and closing of all popups when slider is opened on top
+				this.intervalFreezingPopupParent = setInterval(() => {
+					this.freeze();
+				}, 100);
 			},
 			update() {
 				const permissions = this.selector.getSelectedItems().map(it => {

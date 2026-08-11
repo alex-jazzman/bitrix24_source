@@ -1,5 +1,6 @@
 <?php
 $MESS["IMOL_OPERATOR_ERROR_ACCESS_DENIED"] = "You do not have permission to access this chat.";
+$MESS["IMOL_OPERATOR_ERROR_ANSWER_ALREADY_TAKEN"] = "Another agent is already handling this conversation.";
 $MESS["IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG"] = "Could not create a concurrent chat.
 You can close this chat and start a new one.";
 $MESS["IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_MSGVER_1"] = "Could not create a concurrent conversation. You can move this conversation to a new one.";

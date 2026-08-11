@@ -33,3 +33,8 @@
 	vertical-align: top;
 	width: 85px;
 }
+
+.left-menu-popup-wrapper-skeleton {
+	width:800px;
+	height: 500px;
+}

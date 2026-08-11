@@ -69,6 +69,10 @@ export const Group = {
 		{
 			return !this.task.rights.edit || this.hasFlow;
 		},
+		isRestrictedView(): boolean
+		{
+			return Boolean(this.group?.isRestrictedView);
+		},
 		isLocked(): boolean
 		{
 			return !this.settings.restrictions.project.available;
@@ -90,7 +94,7 @@ export const Group = {
 
 			if (this.readonly)
 			{
-				if (!this.isSecret)
+				if (!this.isSecret && !this.isRestrictedView)
 				{
 					void this.openGroup();
 				}
@@ -109,6 +113,11 @@ export const Group = {
 		},
 		async openGroup(): void
 		{
+			if (!this.group || this.isRestrictedView)
+			{
+				return;
+			}
+
 			if (this.embedded)
 			{
 				void groupDialog.openProject(this.group);
@@ -146,11 +155,12 @@ export const Group = {
 			:data-task-field-value="task.groupId"
 			ref="group"
 		>
-			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" @click="handleClick">
+			<div class="tasks-field-group-group" :class="{ '--secret': isSecret, '--restricted': isRestrictedView, }" @click="handleClick">
 				<HoverPill
 					v-if="task.groupId"
 					:withClear
 					@clear="clear"
+					:readonly
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>

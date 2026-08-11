@@ -18,5 +18,7 @@ export const PromoId = Object.freeze({
 	createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all',
 	collabCardNavigation: 'im:collab-card-navigation:28042026:all',
 	collabCreateChat: 'im:collab-create-chat:28042026:all',
+	collabProjectAi: 'socialnetwork:collab-project-ai:28042026:all',
 	collabAi: 'socialnetwork:collab-project-ai:28042026:all',
+	bitrixGptAgent: 'im:bitrix-gpt-agent:20052026:all',
 });

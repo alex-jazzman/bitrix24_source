@@ -115,7 +115,10 @@ jn.define('im/messenger/lib/counters/update-system/system', (require, exports, m
 		 */
 		async readChildren(chatId)
 		{
-			const promises = this.store.getters['counterModel/getByParentChatId'](chatId)
+			// getActiveDescendants returns children with counter > 0 OR isMarkedAsUnread.
+			// getByParentChatId would keep only counter > 0 and miss a child that is
+			// marked-as-unread with a zero counter — its badge would hang on the parent.
+			const promises = this.store.getters['counterModel/getActiveDescendants'](chatId)
 				.map((counterState) => {
 					return this.readChat(counterState.chatId);
 				});

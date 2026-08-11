@@ -6,6 +6,7 @@ import { ExpandTransition } from './expand-transition';
 import { Dom, Event, Loc, Type } from 'main.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
+import { NoteAnalytics } from 'note.analytics';
 import type { Collection } from '../type';
 
 export const SidebarRootComponent = {
@@ -89,6 +90,8 @@ export const SidebarRootComponent = {
 			const documentId = Number(payload?.documentId);
 			if (documentId > 0)
 			{
+				// Direct click on a quick-search result.
+				NoteAnalytics.documentViewed('search');
 				this.actions.openDocument({ id: documentId });
 			}
 		},
@@ -97,6 +100,8 @@ export const SidebarRootComponent = {
 			const query = String(payload?.query || '');
 			if (query.length > 0)
 			{
+				// "Show all results" gesture navigating to the full search page.
+				NoteAnalytics.searchResult(true);
 				this.actions.navigateToSearch(query);
 			}
 		},
@@ -624,6 +629,7 @@ export const SidebarRootComponent = {
 			{
 				this.actions.toggleCollectionExpanded(collection);
 			}
+			NoteAnalytics.collectionViewed('side_menu');
 			this.actions.openCollection(collection);
 			if (typeof this.actions.navigateToWorkspace === 'function')
 			{

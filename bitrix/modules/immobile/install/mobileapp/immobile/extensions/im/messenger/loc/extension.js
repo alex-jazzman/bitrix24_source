@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/loc', (require, exports, module) => {
 	const { Loc: MobileLoc } = require('loc');
+	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { featurePhrases } = require('im/messenger/loc/src/feature-phrases');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -10,6 +11,7 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 	const logger = getLoggerWithContext('loc', 'Loc');
 
 	const IMMOBILE_COPILOT_BOT_NAME_KEY = 'IMMOBILE_COPILOT_BOT_NAME';
+	const IMMOBILE_COPILOT_AGENT_NAME_KEY = 'IMMOBILE_COPILOT_AGENT_NAME';
 
 	/**
 	 * @class Loc
@@ -23,6 +25,7 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 		{
 			Loc.setAiAssistantStatusMessages();
 			Loc.setCopilotBotNameMessage();
+			Loc.setCopilotAgentNameMessage();
 			Loc.setNavigationTabTitles();
 			Loc.applyFeaturePhrases();
 		}
@@ -74,6 +77,14 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 		/**
 		 * @private
 		 */
+		static setCopilotAgentNameMessage()
+		{
+			Loc.setMessage(IMMOBILE_COPILOT_AGENT_NAME_KEY, MessengerParams.getCopilotAgentName());
+		}
+
+		/**
+		 * @private
+		 */
 		static setNavigationTabTitles()
 		{
 			/** @type {Object<string, string>} */
@@ -94,6 +105,21 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {string[]}
+		 */
+		static getCopilotSuggests()
+		{
+			const { COPILOT_SUGGESTS: suggests = [] } = MessengerParams.get('MESSAGES', {});
+
+			if (Type.isArray(suggests))
+			{
+				return suggests.filter((suggest) => Type.isStringFilled(suggest));
+			}
+
+			return [];
+		}
+
+		/**
 		 * @param {string} messageId
 		 * @param {object?} replacements
 		 * @return {?string}
@@ -104,6 +130,14 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 				...replacements,
 				'#COPILOT_NAME#': Loc.getMessage(IMMOBILE_COPILOT_BOT_NAME_KEY),
 			});
+		}
+
+		/**
+		 * @return {?string}
+		 */
+		static getCopilotAgentName()
+		{
+			return Loc.getMessage(IMMOBILE_COPILOT_AGENT_NAME_KEY);
 		}
 	}
 

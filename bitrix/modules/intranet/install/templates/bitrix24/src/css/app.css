@@ -136,7 +136,7 @@ body.--right-panel-expanded.--right-panel-no-transition .app__page {
 }
 
 body.--right-panel-expanded.--resizing .app__right-panel {
-	min-width: 320px;
+	min-width: 360px;
 }
 
 body.--right-panel-expanded.--right-panel-no-transition .app__right-panel {

@@ -1,4 +1,5 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -38,11 +39,11 @@ if (WIZARD_INSTALL_DEMO_DATA)
 				$delete_after_copy = false
 			);
 		}
-		CModule::IncludeModule("search");
-		CSearch::ReIndexAll(false, 0, Array(WIZARD_SITE_ID, WIZARD_SITE_DIR));
+		if (CModule::IncludeModule("search"))
+		{
+			CSearch::ReIndexAll(false, 0, Array(WIZARD_SITE_ID, WIZARD_SITE_DIR));
+		}
 	}
-
-	WizardServices::PatchHtaccess(WIZARD_SITE_PATH);
 
 	WizardServices::ReplaceMacrosRecursive(WIZARD_SITE_PATH."company/", Array("SITE_DIR" => WIZARD_SITE_DIR));
 	WizardServices::ReplaceMacrosRecursive(WIZARD_SITE_PATH."contacts/", Array("SITE_DIR" => WIZARD_SITE_DIR));
@@ -138,4 +139,3 @@ if (WIZARD_INSTALL_DEMO_DATA)
 	CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/.section.php", array("SITE_DESCRIPTION" => htmlspecialcharsbx($wizard->GetVar("siteMetaDescription"))));
 	CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/.section.php", array("SITE_KEYWORDS" => htmlspecialcharsbx($wizard->GetVar("siteMetaKeywords"))));
 }
-?>

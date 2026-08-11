@@ -4,19 +4,24 @@ import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
 import { ApiClient } from 'booking.lib.api-client';
-import { ResourceMappers } from 'booking.provider.service.resources-service';
-import type { ResourceDto } from 'booking.provider.service.resources-service';
+import { ResourceMappers, type ResourceDto } from 'booking.provider.service.resources-service';
+import { type ResourceModel } from 'booking.model.resources';
 
 import { ResourceDialogDataExtractor } from './resource-dialog-data-extractor';
 import { MainResourcesExtractor } from './main-resources-extractor';
-import type { ResourceDialogResponse } from './types';
+import { type MainResourcesOptions, type ResourceDialogResponse } from './types';
+
+const MainResourcesCacheKey = Object.freeze({
+	All: 'all',
+	ShortSlotsOnly: 'shortSlotsOnly',
+});
 
 class ResourceDialogService
 {
 	#queryCache = [];
 	#loadByIdsPromises = {};
 	#loadBySkuIdsPromises = {};
-	#mainResourcesCache: Promise | null = null;
+	#mainResourcesCache: Map<string, Promise<ResourceDto[]>> = new Map();
 
 	async loadByIds(idsToLoad: number[], dateTs: number): Promise<void>
 	{
@@ -157,41 +162,65 @@ class ResourceDialogService
 		return this.#queryCache.some((it) => query.startsWith(it));
 	}
 
-	async getMainResources()
+	async getMainResources(options: MainResourcesOptions = {}): Promise<ResourceModel[]>
 	{
 		try
 		{
-			if (Type.isNull(this.#mainResourcesCache))
+			const cacheKey = this.#getMainResourcesCacheKey(options);
+			if (!this.#mainResourcesCache.has(cacheKey))
 			{
-				this.#mainResourcesCache = this.#requestGetMainResources();
+				this.#mainResourcesCache.set(cacheKey, this.#requestGetMainResources(options));
 			}
-			const data: ResourceDto[] = await this.#mainResourcesCache;
+
+			const mainResourcesPromise = this.#mainResourcesCache.get(cacheKey);
+			if (!mainResourcesPromise)
+			{
+				return [];
+			}
+
+			const data: ResourceDto[] = await mainResourcesPromise;
 			const extractor = new MainResourcesExtractor(data);
 
-			const ids = extractor.getMainResourceIds();
-			await Core.getStore().dispatch(`${Model.MainResources}/setMainResources`, ids);
+			if (options.shortSlotsOnly !== true)
+			{
+				const ids = extractor.getMainResourceIds();
+				await Core.getStore().dispatch(`${Model.MainResources}/setMainResources`, ids);
+			}
 
 			const resources = data.map(
 				(resourceDto) => ResourceMappers.mapDtoToModel(resourceDto),
 			);
 			await Core.getStore().dispatch(`${Model.Resources}/upsertMany`, resources);
+
+			return resources;
 		}
 		catch (error)
 		{
 			console.error('ResourceDialogGetMainResources: error', error);
+
+			return [];
 		}
 	}
 
-	#requestGetMainResources(): Promise<ResourceDto[]>
+	#getMainResourcesCacheKey(options: MainResourcesOptions): string
+	{
+		return options.shortSlotsOnly === true
+			? MainResourcesCacheKey.ShortSlotsOnly
+			: MainResourcesCacheKey.All;
+	}
+
+	#requestGetMainResources(options: MainResourcesOptions): Promise<ResourceDto[]>
 	{
 		const api = new ApiClient();
 
-		return api.post('ResourceDialog.getMainResources', {});
+		return api.post('ResourceDialog.getMainResources', {
+			shortSlotsOnly: options.shortSlotsOnly === true,
+		});
 	}
 
 	clearMainResourcesCache(): void
 	{
-		this.#mainResourcesCache = null;
+		this.#mainResourcesCache.clear();
 	}
 }
 

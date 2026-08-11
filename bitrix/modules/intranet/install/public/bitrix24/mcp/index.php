@@ -14,6 +14,14 @@ if (!\Bitrix\Main\Loader::includeModule('aiassistant'))
 	return null;
 }
 
+if (
+	class_exists(\Bitrix\AiAssistant\Config\Restriction::class)
+	&& !\Bitrix\AiAssistant\Config\Restriction::getInstance()->isAvailable()
+)
+{
+	\Bitrix\Iblock\Component\Tools::process404('', true, true, true);
+}
+
 /** @var CMain $APPLICATION */
 
 global $APPLICATION;

@@ -1,18 +1,24 @@
+import { type JsonObject } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 import { Utils } from 'im.v2.lib.utils';
-import { StatusGroup } from 'imopenlines.v2.const';
+
+import { StatusGroup, type StatusGroupName } from 'imopenlines.v2.const';
 import { RecentContextMenu } from 'imopenlines.v2.lib.menu';
+import { type ImolModelRecentItem, type ImolModelSession } from 'imopenlines.v2.model';
 import { RecentService } from 'imopenlines.v2.provider.service';
 
 import { EmptyState } from './components/empty-state';
-import { RecentGroup } from './components/recent-group';
+import { RecentDateGroup } from './components/recent-date-group.js';
 
 import './css/recent-list.css';
 
-import type { JsonObject } from 'main.core';
-import type { ImolModelRecentItem, ImolModelSession } from 'imopenlines.v2.model';
-import type { StatusGroupName } from 'imopenlines.v2.const';
+const componentByStatusGroup = {
+	[StatusGroup.new]: RecentDateGroup,
+	[StatusGroup.work]: RecentDateGroup,
+	[StatusGroup.answered]: RecentDateGroup,
+};
 
 type StatusGroupItemCollection = {
 	[StatusGroupName]: ImolModelRecentItem[];
@@ -21,7 +27,7 @@ type StatusGroupItemCollection = {
 // @vue/component
 export const RecentList = {
 	name: 'RecentList',
-	components: { EmptyState, RecentGroup, LoadingState },
+	components: { EmptyState, LoadingState },
 	emits: ['chatClick'],
 	data(): JsonObject
 	{
@@ -31,8 +37,7 @@ export const RecentList = {
 			firstPageLoaded: false,
 		};
 	},
-	computed:
-	{
+	computed: {
 		collection(): ImolModelRecentItem[]
 		{
 			return Core.getStore().getters['openLines/recent/getOpenLinesCollection'];
@@ -85,8 +90,7 @@ export const RecentList = {
 	{
 		this.destroyContextMenu();
 	},
-	methods:
-	{
+	methods: {
 		async onScroll(event: Event)
 		{
 			this.destroyContextMenu();
@@ -112,6 +116,10 @@ export const RecentList = {
 			const session = this.getSessionByDialogId(dialogId);
 
 			return session ? session.status : StatusGroup.new;
+		},
+		componentForGroup(groupName: StatusGroupName)
+		{
+			return componentByStatusGroup[groupName];
 		},
 		sortGroupItems(groupName: StatusGroupName, items: ImolModelRecentItem[]): ImolModelRecentItem[]
 		{
@@ -169,7 +177,8 @@ export const RecentList = {
 			<LoadingState v-if="isLoading && !firstPageLoaded" />
 			<div v-else @scroll="onScroll"  class="bx-imol-list-recent__scroll-container">
 				<EmptyState v-if="isEmptyCollection" />
-				<RecentGroup
+				<component
+					:is="componentForGroup(groupName)"
 					v-for="(groupItems, groupName) in sortedCollectionByGroups"
 					:groupItems="groupItems"
 					:groupName="groupName"

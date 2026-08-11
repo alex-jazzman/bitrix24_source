@@ -195,6 +195,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const method = this.getLoadRestMethodName();
 			return this.#requestChat(method, params);
 		}
+		loadCopilotDraftChat() {
+			return this.#requestChat(im_v2_const.RestMethod.imV2CopilotDraftChatGet, {
+				messageLimit: im_v2_provider_service_message.MessageService.getMessageRequestLimit()
+			});
+		}
 		loadChatWithContext(dialogId, messageId) {
 			const params = {
 				dialogId,
@@ -510,7 +515,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					manageSettings: chatConfig.manageSettings,
 					manageUsersAdd: chatConfig.manageUsersAdd,
 					manageUsersDelete: chatConfig.manageUsersDelete,
-					manageMessages: chatConfig.manageMessages
+					manageMessages: chatConfig.manageMessages,
+					manageGuestInvites: chatConfig.manageGuestInvites
 				}
 			});
 		}
@@ -613,6 +619,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return preparedConfig;
 		}
 		#updateChatInModel(dialogId, chatConfig) {
+			const permissions = {
+				manageUi: chatConfig.manageUi,
+				manageSettings: chatConfig.manageSettings,
+				manageUsersAdd: chatConfig.manageUsersAdd,
+				manageUsersDelete: chatConfig.manageUsersDelete,
+				manageMessages: chatConfig.manageMessages,
+				manageGuestInvites: chatConfig.manageGuestInvites
+			};
+			// do not pass keys the form did not set: during the deep merge in the model
+			// undefined would overwrite previously stored values (manageGuestInvites/manageSettings)
+			Object.keys(permissions).forEach(key => {
+				if (permissions[key] === undefined) {
+					delete permissions[key];
+				}
+			});
 			return im_v2_application_core.Core.getStore().dispatch('chats/update', {
 				dialogId,
 				fields: {
@@ -620,12 +641,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					description: chatConfig.description,
 					ownerId: chatConfig.ownerId,
 					role: im_v2_lib_roleManager.getChatRoleForUser(chatConfig),
-					permissions: {
-						manageUi: chatConfig.manageUi,
-						manageUsersAdd: chatConfig.manageUsersAdd,
-						manageUsersDelete: chatConfig.manageUsersDelete,
-						manageMessages: chatConfig.manageMessages
-					}
+					permissions
 				}
 			});
 		}
@@ -1194,6 +1210,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		loadChatWithContext(dialogId, messageId) {
 			return this.#loadService.loadChatWithContext(dialogId, messageId);
+		}
+		loadCopilotDraftChat() {
+			return this.#loadService.loadCopilotDraftChat();
 		}
 		loadComments(postId) {
 			return this.#loadService.loadComments(postId);

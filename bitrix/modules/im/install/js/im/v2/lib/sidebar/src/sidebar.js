@@ -1,22 +1,22 @@
 import { Core } from 'im.v2.application.core';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { type ImModelChat } from 'im.v2.model';
 
 import { SidebarConfig } from './classes/config';
 import { SidebarPreset } from './classes/preset';
-import { isChat, chatPreset } from './configs/chat';
-import { isUser, userPreset } from './configs/user';
-import { isBot, botPreset } from './configs/bot';
-import { isSelfChat, selfChatPreset } from './configs/self-chat';
-import { isLines, linesPreset } from './configs/lines';
-import { isCollab, collabPreset } from './configs/collab';
-import { isSupport, supportPreset } from './configs/support';
 import { isAiAssistantBot, aiAssistantBotPreset } from './configs/ai-assistant-bot';
-import { isComment, commentPreset } from './configs/comment';
+import { isBot, botPreset } from './configs/bot';
 import { isChannel, channelPreset } from './configs/channel';
+import { isChat, chatPreset } from './configs/chat';
+import { isCollab, collabPreset } from './configs/collab';
+import { isComment, commentPreset } from './configs/comment';
 import { isCopilot, copilotPreset } from './configs/copilot';
+import { isLines, linesPreset } from './configs/lines';
+import { isSelfChat, selfChatPreset } from './configs/self-chat';
+import { isSupport, supportPreset } from './configs/support';
 import { isTaskComments, taskCommentsPreset } from './configs/task-comments';
-
-import type { ImModelChat } from 'im.v2.model';
+import { isUser, userPreset } from './configs/user';
+import { isGuest, guestPreset } from './configs/guest';
 
 export { SidebarConfig } from './classes/config';
 export { SidebarPreset } from './classes/preset';
@@ -88,6 +88,7 @@ export class SidebarManager
 		this.#defaultConfigMap.set(isSelfChat, selfChatPreset);
 		this.#defaultConfigMap.set(isLines, linesPreset);
 		this.#defaultConfigMap.set(isCollab, collabPreset);
+		this.#defaultConfigMap.set(isGuest, guestPreset);
 		this.#defaultConfigMap.set(isUser, userPreset);
 		this.#defaultConfigMap.set(isChat, chatPreset);
 	}

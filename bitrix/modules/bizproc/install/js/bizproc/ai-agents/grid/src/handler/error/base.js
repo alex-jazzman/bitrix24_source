@@ -1,6 +1,6 @@
 import { Loc, Text } from 'main.core';
 import type { BaseAjaxError } from '../../types';
-import { HandlerInterface } from './handler-interface';
+import type { HandlerInterface } from './handler-interface';
 
 export class Base implements HandlerInterface
 {

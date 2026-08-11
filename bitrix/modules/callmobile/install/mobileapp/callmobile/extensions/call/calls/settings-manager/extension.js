@@ -12,7 +12,10 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this.plainCallCloudRecordingEnabled = BX.componentParameters.get('plainCallCloudRecordingEnabled');
 			this.callBalancerUrl = BX.componentParameters.get('callBalancerUrl');
 			this.optionsForTestingEnabled = BX.componentParameters.get('optionsForTestingEnabled');
+			this.gridViewEnabled = BX.componentParameters.get('gridViewEnabled');
 			this.mobileCallUIVisibilityTimer = BX.componentParameters.get('mobileCallUIVisibilityTimer');
+			this.callInvitePeriod = BX.componentParameters.get('callInvitePeriod');
+			this.isLargeMobileCallEnabled = BX.componentParameters.get('isLargeMobileCallEnabled');
 		}
 
 		/**
@@ -50,9 +53,24 @@ jn.define('call/settings-manager', (require, exports, module) => {
 				this.optionsForTestingEnabled = settings.optionsForTestingEnabled;
 			}
 
+			if (settings.gridViewEnabled !== undefined)
+			{
+				this.gridViewEnabled = settings.gridViewEnabled;
+			}
+
 			if (settings.mobileCallUIVisibilityTimer !== undefined)
 			{
 				this.mobileCallUIVisibilityTimer = settings.mobileCallUIVisibilityTimer;
+			}
+
+			if (settings.callInvitePeriod !== undefined)
+			{
+				this.callInvitePeriod = settings.callInvitePeriod;
+			}
+
+			if (settings.isLargeMobileCallEnabled !== undefined)
+			{
+				this.isLargeMobileCallEnabled = settings.isLargeMobileCallEnabled;
 			}
 		}
 
@@ -130,6 +148,19 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this._mobileCallUIVisibilityTimer = flag;
 		}
 
+		get callInvitePeriod()
+		{
+			return this._callInvitePeriod;
+		}
+
+		set callInvitePeriod(value)
+		{
+			if (Number.isFinite(value) && value > 0)
+			{
+				this._callInvitePeriod = value;
+			}
+		}
+
 		get optionsForTestingEnabled()
 		{
 			return this._optionsForTestingEnabled;
@@ -138,6 +169,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		set optionsForTestingEnabled(flag)
 		{
 			this._optionsForTestingEnabled = flag;
+		}
+
+		set gridViewEnabled(flag)
+		{
+			this._gridViewEnabled = flag;
+		}
+
+		get gridViewEnabled()
+		{
+			return this._gridViewEnabled;
 		}
 
 		/**
@@ -154,6 +195,22 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		set callBalancerUrl(value)
 		{
 			this._callBalancerUrl = value;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isLargeMobileCallEnabled()
+		{
+			return this._isLargeMobileCallEnabled;
+		}
+
+		/**
+		 * @param {boolean} flag
+		 */
+		set isLargeMobileCallEnabled(flag)
+		{
+			this._isLargeMobileCallEnabled = flag;
 		}
 
 		/**

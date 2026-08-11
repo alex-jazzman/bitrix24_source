@@ -1,11 +1,10 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
 
+import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES } from '../../../../shared/constants';
 
-import { useNodeSettingsStore } from '../../../../entities/node-settings';
+import './style.css';
 
 type AddSettingsItemSetup = {
 	getMessage: () => string;
@@ -24,6 +23,11 @@ export const AddSettingsItem = {
 		{
 			type: String,
 			required: true,
+		},
+		iconName:
+		{
+			type: String,
+			default: 'plus-m',
 		},
 	},
 	emits: ['addItem'],
@@ -55,12 +59,11 @@ export const AddSettingsItem = {
 		>
 			<BIcon
 				class="editor-chart-node-settings-add-item-button__plus"
-				name="plus-m"
-				:size="20"
+				:name="iconName"
+				:size="22"
 				color="#828b95"
 			/>
 			<span>
-				{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_SETTINGS_ITEM') }}
 				<slot />
 			</span>
 		</div>

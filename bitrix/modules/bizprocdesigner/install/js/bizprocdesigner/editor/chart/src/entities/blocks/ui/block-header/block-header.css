@@ -5,11 +5,13 @@
 	align-items: center;
 }
 
+.editor-chart-block-header__text {
+	padding-right: 8px;
+}
+
 .editor-chart-block-header__title {
 	display: -webkit-box;
-	flex-shrink: 1;
 	max-height: 46px;
-	padding-right: 8px;
 	margin: 0;
 	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
@@ -32,7 +34,7 @@
 	flex-shrink: 0;
 	width: 46px;
 	height: 46px;
-	margin-right: 8px;
+	margin-right: 11px;
 	border-radius: 7px;
 	background-color: var(--ui-color-palette-blue-25);
 	background-repeat: no-repeat;

@@ -119,6 +119,7 @@
 	--o-ui-icon-set__path_file-with-check-2: url("/bitrix/js/ui/icon-set/outline/dist/images/file-with-check-2.svg");
 	--o-ui-icon-set__path_file-with-check: url("/bitrix/js/ui/icon-set/outline/dist/images/file-with-check.svg");
 	--o-ui-icon-set__path_file-with-clock: url("/bitrix/js/ui/icon-set/outline/dist/images/file-with-clock.svg");
+	--o-ui-icon-set__path_file-settings: url("/bitrix/js/ui/icon-set/outline/dist/images/file-settings.svg");
 	--o-ui-icon-set__path_file: url("/bitrix/js/ui/icon-set/outline/dist/images/file.svg");
 	--o-ui-icon-set__path_filter-2-lines: url("/bitrix/js/ui/icon-set/outline/dist/images/filter-2-lines.svg");
 	--o-ui-icon-set__path_filter-funnel: url("/bitrix/js/ui/icon-set/outline/dist/images/filter-funnel.svg");
@@ -1128,6 +1129,10 @@
 
 .ui-icon-set.--o-file-with-clock {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_file-with-clock);
+}
+
+.ui-icon-set.--o-file-settings {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_file-settings);
 }
 
 .ui-icon-set.--o-file {

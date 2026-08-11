@@ -3,7 +3,7 @@ import {EventEmitter} from 'main.core.events';
 import Item from './item';
 import Backend from "../backend";
 import Options from "../options";
-import ItemUserFavorites from "./item-user-favorites";
+import {ITEM_CODE_USER_FAVORITES} from "./item-codes";
 
 export default class ItemAdminCustom extends Item
 {
@@ -17,14 +17,14 @@ export default class ItemAdminCustom extends Item
 	delete()
 	{
 		if (this.canDelete())
-		{
-			Backend
-				.deleteCustomItem(this.getId())
-				.then(() => {
-					if (this.storage.indexOf(ItemUserFavorites.code) >= 0)
-					{
-						Backend.deleteFavoritesItemMenu({id: this.getId()});
-					}
+			{
+				Backend
+					.deleteCustomItem(this.getId())
+					.then(() => {
+						if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0)
+						{
+							Backend.deleteFavoritesItemMenu({id: this.getId()});
+						}
 					EventEmitter.emit(this, Options.eventName('onItemDelete'), {animate: true});
 				})
 				.catch(this.showError)

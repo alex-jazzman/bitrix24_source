@@ -1,2 +1,36 @@
-<?
+<?php
+
 $MESS["BIC_OPTIONS_GDS_DEPLOYMENT_ID"] = "Идентификатор развертывания коннектора Google Datastudio";
+$MESS["BIC_OPTIONS_EXPORT_ROW_LIMIT"] = "Лимит выгружаемых строк (0 — без ограничений)";
+$MESS["BIC_OPTIONS_EXPORT_ROW_LIMIT_HINT"] = "Высокое значение лимита или его отсутствие могут потребовать увеличения ресурсов, выделяемых для BI Конструктора. По умолчанию - 1000000 строк";
+$MESS["BIC_TAB_SUPERSET"] = "BI Конструктор";
+$MESS["BIC_TAB_SUPERSET_TITLE"] = "Настройки BI Конструктора";
+$MESS["BIC_SUPERSET_MODE"] = "Режим работы BI Конструктора";
+$MESS["BIC_SUPERSET_MODE_CLOUD"] = "Облачный";
+$MESS["BIC_SUPERSET_MODE_SELFHOSTED"] = "Локальный";
+$MESS["BIC_SUPERSET_MODULE_NOT_INSTALLED"] = "Для переключения BI Конструктора в локальный режим необходимо установить модуль BI Конструктор (superset).";
+$MESS["BIC_SUPERSET_MODE_SWITCH_ERROR"] = "Невозможно сменить режим: BI Конструктор активен. Сначала отключите BI Конструктор в настройках вашего Битрикс24.";
+$MESS["BIC_SUPERSET_SELFHOSTED_DEPLOY_HINT"] = "Для подключения к собственному развёрнутому BI Конструктору укажите адрес и пароль администратора. Подробнее о развёртывании — в <a href=\"#ARTICLE_URL#\" target=\"_blank\">инструкции</a>.";
+$MESS["BIC_SUPERSET_ADDRESS"] = "Адрес сервера BI Конструктора";
+$MESS["BIC_SUPERSET_ADMIN_PASSWORD"] = "Пароль администратора";
+$MESS["BIC_SUPERSET_ADMIN_PASSWORD_HINT"] = "Значение параметра BI_BUILDER_ADMIN_PASSWORD из .env файла Docker-сборки BI Конструктора";
+$MESS["BIC_SUPERSET_VERSION"] = "Текущая версия образа BI Конструктора";
+$MESS["BIC_SUPERSET_CHECK_VERSION"] = "Проверить";
+$MESS["BIC_SUPERSET_VERSION_LOADING"] = "Проверка...";
+$MESS["BIC_SUPERSET_VERSION_ERROR"] = "Не удалось получить версию";
+$MESS["BIC_SUPERSET_VERSION_NO_SERVER"] = "Сервер BI Конструктора не настроен";
+$MESS["BIC_SUPERSET_MODE_SWITCH_CONFIRM"] = "При смене режима все отчёты и данные BI Конструктора будут удалены. Продолжить?";
+$MESS["BIC_SUPERSET_JWT_PUBLIC_KEY"] = "Публичный ключ JWT";
+$MESS["BIC_SUPERSET_JWT_PUBLIC_KEY_HINT"] = "Публичный ключ автоматически отправляется в BI Конструктор при сохранении настроек. Если не работает авторизация при редактировании отчёта, нажмите «Обновить».";
+$MESS["BIC_SUPERSET_JWT_REGENERATE"] = "Обновить";
+$MESS["BIC_SUPERSET_JWT_REGENERATE_LOADING"] = "Обновление...";
+$MESS["BIC_SUPERSET_JWT_REGENERATE_SUCCESS"] = "Ключ успешно обновлён";
+$MESS["BIC_SUPERSET_JWT_REGENERATE_ERROR"] = "Не удалось обновить ключ";
+$MESS["BIC_SUPERSET_BI_TOKEN"] = "Ключ шифрования";
+$MESS["BIC_SUPERSET_BI_TOKEN_HINT"] = "С помощью ключа данные для отчётов передаются из Битрикс24 в BI Конструктор. Обновите ключ, если он попал к посторонним лицам";
+$MESS["BIC_SUPERSET_BI_TOKEN_REGENERATE"] = "Обновить ключ";
+$MESS["BIC_SUPERSET_BI_TOKEN_REGENERATE_LOADING"] = "Обновление...";
+$MESS["BIC_SUPERSET_BI_TOKEN_REGENERATE_SUCCESS"] = "Ключ успешно обновлён";
+$MESS["BIC_SUPERSET_BI_TOKEN_REGENERATE_ERROR"] = "Не удалось обновить ключ";
+$MESS["BIC_SUPERSET_CONNECTION_SUCCESS"] = "Подключение к серверу BI Конструктора успешно установлено";
+$MESS["BIC_SUPERSET_CONNECTION_ERROR"] = "Не удалось подключиться к серверу BI Конструктора. Проверьте адрес сервера и пароль администратора";

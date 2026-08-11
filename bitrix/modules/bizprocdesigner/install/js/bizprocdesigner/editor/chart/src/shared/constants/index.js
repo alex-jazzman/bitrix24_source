@@ -1,4 +1,4 @@
-import type { PortTypes } from '../types';
+import { type PortTypes } from '../types';
 
 export const BLOCK_TYPES: { [string]: string } = Object.freeze({
 
@@ -46,3 +46,20 @@ export const COMPLEX_NODE_PORT_LABELS: { [string]: string } = Object.freeze({
 
 export const BX_FLAG_YES = 'Y';
 export const BX_FLAG_NO = 'N';
+
+export const TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE = Object.freeze({
+	CONSTANT: 'template_constant',
+	VARIABLE: 'template_variable',
+});
+
+export const TEMPLATE_DEFAULT_DATA_TYPE = 'string';
+
+export const COMPUTE_VALUE_PREFIXES: Record<string, string> = Object.freeze({
+	CONSTANT: 'Constant',
+	VARIABLE: 'Variable',
+});
+
+export const NODE_SETTINGS_TABS = Object.freeze({
+	basic: 'basic',
+	rules: 'rules',
+});

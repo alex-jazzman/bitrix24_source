@@ -256,10 +256,7 @@ this.BX.Booking = this.BX.Booking || {};
 		computed: {
 			soonHint() {
 				return {
-					text: this.loc('BOOKING_BOOKING_SOON_HINT'),
-					popupOptions: {
-						offsetLeft: -60
-					}
+					text: this.loc('BOOKING_BOOKING_SOON_HINT')
 				};
 			}
 		},

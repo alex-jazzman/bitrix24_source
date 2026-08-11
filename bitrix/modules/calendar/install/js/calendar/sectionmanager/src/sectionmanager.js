@@ -644,15 +644,14 @@ export class SectionManager
 		}
 	}
 
-	static getSectionExternalConnection(section, sectionExternalType): any
+	static getSectionExternalConnection(section, sectionExternalType, calendarContext): any
 	{
-		const calendarContext = Util.getCalendarContext();
 		const linkList = section.getConnectionLinks();
 
 		let provider = undefined;
 		let connection = undefined;
-		let connectionId = linkList.length
-			? parseInt(linkList[0].id)
+		const connectionId = linkList.length > 0
+			? parseInt(linkList[0].id, 10)
 			: parseInt(section.data.CAL_DAV_CON, 10)
 		;
 
@@ -662,7 +661,7 @@ export class SectionManager
 
 			if (
 				connection
-				&& (!linkList.length || connection.getType() === sectionExternalType)
+				&& (linkList.length === 0 || connection.getType() === sectionExternalType)
 			)
 			{
 				return connection;

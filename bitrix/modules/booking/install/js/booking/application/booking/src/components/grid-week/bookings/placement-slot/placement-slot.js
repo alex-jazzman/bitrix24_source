@@ -1,12 +1,13 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
-import { gridFactory } from 'booking.lib.grid';
+import { Grid, Model } from 'booking.const';
 import { checkBookingIntersection } from 'booking.lib.check-booking-intersection';
+import { gridFactory, gridTokens, GridTokenKey } from 'booking.lib.grid';
 
 import { BaseCell } from '../../../grid/base-cell/base-cell';
+import { MaxDurationMsCompactCell, MinSlotWidthPx, MaxOverflowPx } from '../../const';
+
 import './placement-slot.css';
-import { MaxDurationMsCompactCell } from '../../const';
 
 // @vue/component
 export const WeekPlacementSlot = {
@@ -31,6 +32,7 @@ export const WeekPlacementSlot = {
 			isHoveredPlacementSlotFixed: `${Model.Interface}/isHoveredPlacementSlotFixed`,
 			hoveredPlacementSlot: `${Model.Interface}/hoveredPlacementSlot`,
 			selectedPlacementSlots: `${Model.Interface}/selectedPlacementSlots`,
+			zoom: `${Model.Interface}/zoom`,
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
 		}),
 		grid(): GridBase
@@ -74,7 +76,11 @@ export const WeekPlacementSlot = {
 		},
 		width(): number
 		{
-			return this.grid.calculateWidth(this.cell.fromTs, this.cell.toTs);
+			const slotWidthPx = this.grid.calculateWidth(this.cell.fromTs, this.cell.toTs);
+			const gridWidthPx = gridTokens.get(GridTokenKey.WeekCellWidth) * Grid.Duration.Week * this.zoom;
+			const maxSlotWidthPx = gridWidthPx + MaxOverflowPx - this.left;
+
+			return Math.max(MinSlotWidthPx, Math.min(slotWidthPx, maxSlotWidthPx));
 		},
 		height(): number
 		{

@@ -1,7 +1,7 @@
 .booking-booking-header-resource {
 	min-width: calc(280px * var(--zoom));
 	max-width: calc(280px* var(--zoom));
-	min-height: var(--booking-resource-item-height);
+	min-height: var(--booking-cell-height);
 	background: var(--ui-color-background-primary);
 	border-right: 1px solid var(--ui-color-base-10);
 	padding: calc(13px * var(--half-zoom)) calc(10px * var(--half-zoom));
@@ -68,15 +68,29 @@
 
 /* region week-mode */
 .booking-booking__base-component.--week-mode .booking-booking-header-resource {
-	min-width: var(--left-panel-width);
-	max-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
+	max-width: var(--booking-left-panel-width);
+	padding: 13px 10px;
 	border-right: 1px solid var(--ui-color-base-10);
 	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-resource-title {
+	margin-right: 8px;
 }
 
 .booking-booking__base-component.--week-mode .booking-booking-header-resource-meta {
 	flex-direction: column-reverse;
 	align-items: flex-end;
+	gap: 8px;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-resource-name {
+	font-size: var(--ui-font-size-lg);
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-resource-type {
+	font-size: var(--ui-font-size-3xs);
 }
 
 .booking-booking-header-resource-meta-row {

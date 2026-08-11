@@ -1,7 +1,7 @@
 .crm-timeline__calendar-icon {
 	--crm-timeline__calendar-icon_size: 50px;
 	--crm-timeline__calendar-icon_border-width: 1px;
-	--crm-timeline__calendar-icon_primary-color: var(--ui-color-primary, #2fc6f6);
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-accent-main-primary-alt, #1F86FF);
 	--crm-timeline__calendar-icon_content-font: var(--ui-font-family-secondary, var(--ui-font-family-open-sans), 'Open Sans', sans-serif);
 	--crm-timeline__calendar-icon_bottom-radius: var(--ui-border-radius-2xs, 4px);
 	--crm-timeline__calendar-icon_top-radius: var(--ui-border-radius-xs, 6px);
@@ -60,7 +60,7 @@
 	width: 4px;
 	height: 4px;
 	border-radius: 50%;
-	background-color: var(--ui-color-background-primary, #fff);
+	background-color: var(--ui-color-bg-content-primary, #FFFFFF);
 	opacity: 0.5;
 }
 
@@ -72,7 +72,7 @@
 	width: calc(100% - var(--crm-timeline__calendar-icon_border-width) * 2);
 	margin-bottom: var(--crm-timeline__calendar-icon_border-width);
 	flex-grow: 1;
-	background-color: var(--ui-color-background-primary, #fff);
+	background-color: var(--ui-color-bg-content-primary, #FFFFFF);
 	border-bottom-left-radius: var(--crm-timeline__calendar-icon_bottom-radius);
 	border-bottom-right-radius: var(--crm-timeline__calendar-icon_bottom-radius);
 	font-family: var(--crm-timeline__calendar-icon_content-font);
@@ -83,13 +83,13 @@
 .crm-timeline__calendar-icon_day {
 	font-size: var(--ui-font-size-xl, 16px);
 	line-height: var(--ui-font-line-height-3xs, 1.2);
-	color: var(--ui-color-base-90, #525c69);
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .crm-timeline__calendar-icon_month {
 	font-size: var(--ui-font-size-7xs, 7px);
 	line-height: var(--ui-font-line-height-3xs, 1.2);
-	color: var(--ui-color-base-50, #A8ADB4);
+	color: var(--ui-color-base-3, #A8ADB4);
 }
 
 .crm-timeline__calendar-icon_date {
@@ -107,7 +107,7 @@
 	width: 20px;
 	height: 21px;
 	background-image: url('../../../images/timeline-card-logos/calendar/crm-timeline__calendar-event.svg');
-	background-color: var(--ui-color-background-primary);
+	background-color: var(--ui-color-bg-content-primary, #FFFFFF);
 	box-shadow: var(--ui-shadow-bottom-2xs);
 	border-radius: 50%;
 	position: absolute;
@@ -117,12 +117,10 @@
 }
 
 .crm-timeline__card-logo.--orange .crm-timeline__calendar-icon,
-.crm-timeline__card-logo.--orange-stripe .crm-timeline__calendar-icon {
-	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-50, #FFA900);
+.crm-timeline__card-logo.--orange-stripe .crm-timeline__calendar-icon,
+.crm-timeline__card-logo.--dark-orange .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-accent-main-warning, #FAA72C);
 }
 .crm-timeline__card-logo.--green .crm-timeline__calendar-icon {
-	--crm-timeline__calendar-icon_primary-color: var(--ui-color-primary-alt, #9dcf00);
-}
-.crm-timeline__card-logo.--dark-orange .crm-timeline__calendar-icon {
-	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-70, #c48300);
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-accent-main-success, #1BCE7B);
 }

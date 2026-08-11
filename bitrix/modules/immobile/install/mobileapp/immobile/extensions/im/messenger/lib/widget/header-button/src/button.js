@@ -24,13 +24,14 @@ jn.define('im/messenger/lib/widget/header-button/button', (require, exports, mod
 		constructor(options)
 		{
 			this.id = options.id;
-			this.type = options.type;
+			this.iconName = options.iconName;
 			this.callback = options.callback;
 
 			this.testId = Type.isStringFilled(options.testId) ? options.testId : `${options.id}_button`;
 			this.badgeCode = Type.isStringFilled(options.badgeCode) ? options.badgeCode : null;
 			this.shouldShow = Type.isFunction(options.shouldShow) ? options.shouldShow : async () => true;
 			this.isAccent = Type.isFunction(options.isAccent) ? options.isAccent : () => false;
+			this.isDot = Type.isFunction(options.isDot) ? options.isDot : () => false;
 		}
 
 		toWidgetHeaderButton()
@@ -38,8 +39,9 @@ jn.define('im/messenger/lib/widget/header-button/button', (require, exports, mod
 			return {
 				id: this.id,
 				testId: this.testId,
-				type: this.type,
+				type: this.iconName,
 				accent: this.isAccent(),
+				dot: this.isDot(),
 				callback: this.callback,
 				badgeCode: this.badgeCode,
 			};

@@ -1,159 +1,47 @@
-import { Receiver } from 'crm.messagesender';
-import { Skeleton } from 'crm.messagesender.editor.skeleton';
-import { type FilledPlaceholder } from 'crm.template.editor';
-import type { JsonObject } from 'main.core';
-import { ajax as Ajax, Dom, Loc, Runtime, Type } from 'main.core';
+import { getCrmMode } from 'crm.integration.analytics';
+import { type EventHandler } from 'crm.template.editor';
+import { ajax as Ajax, Cache, Loc, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import type { VueCreateAppResult } from 'ui.vue3';
-import { BitrixVue } from 'ui.vue3';
-import { Builder, BuilderDatabaseType, type Store } from 'ui.vue3.vuex';
-import { MessageEditor } from './components/message-editor';
-import { AnalyticsModel } from './model/analytics-model';
-import { ApplicationModel } from './model/application-model';
-import { ChannelsModel } from './model/channels-model';
-import { MessageModel } from './model/message-model';
-import { PreferencesModel } from './model/preferences-model';
-import { type Template, TemplatesModel } from './model/templates-model';
+
+import {
+	Editor as MessageServiceEditor,
+	type EditorOptions as MessageServiceEditorOptions,
+	type State as MessageServiceState,
+	replaceCustomMessagePlaceholders,
+} from 'messageservice.message.editor';
+import { type FilledPlaceholder } from 'messageservice.template.editor';
+
+import { CrmValuesContentProvider } from './content-provider/crm-values-content-provider';
+import { DocumentsContentProvider } from './content-provider/documents-content-provider';
+import { SalesCenterContentProvider } from './content-provider/salescenter-content-provider';
 import { ServiceLocator } from './service/service-locator';
-import { StateExporter } from './state-exporter';
 
-export type EditorOptions = {
-	renderTo: HTMLElement | string,
-	scene: Scene,
-	context: {
-		entityTypeId: ?number,
-		entityId: ?number,
-		categoryId: ?number,
-		userId: ?number,
-	},
-	channels?: Channel[],
-	promoBanners?: PromoBanner[],
+const SIMPLY_PROXIED_EVENTS = [
+	'onSendSuccess',
+	'onCancel',
+	'onChannelChange',
+	'onFromChange',
+	'onToChange',
+	'onTemplateChange',
+	'onStateChange',
+];
+
+export type EditorOptions = MessageServiceEditorOptions & {
+	analytics: Pick<MessageServiceEditorOptions['analytics'], 'c_section' | 'c_sub_section'>,
+	context: Context,
 	dynamicLoad?: boolean,
-	contentProviders: {[key: string]: ContentProvider},
-	notificationTemplate?: NotificationTemplate,
-	layout: Layout,
-	preferences: Preferences,
-	analytics: {
-		c_section: ?string,
-		c_sub_section: ?string,
+};
+
+export type State = MessageServiceState;
+
+export type Context = {
+	customData: {
+		entityTypeId?: ?number,
+		entityId?: ?number,
+		categoryId?: ?number,
 	},
-	message: {
-		text: ?string,
-	}
+	userId?: ?number,
 };
-
-export type Scene = { id: string };
-
-export type Channel = {
-	id: string,
-	backend: Backend,
-	type: string,
-	appearance: Appearance,
-	fromList: From[],
-	toList: Receiver[],
-	isConnected: boolean,
-	connectionUrl: string,
-	isPromo: boolean,
-	isTemplatesBased: boolean,
-};
-
-export type Backend = { senderCode: string, id: string };
-
-export type Appearance = {
-	icon: Icon,
-	title: string,
-	subtitle: string | null,
-	description?: string | null,
-};
-
-export type Icon = {
-	title: string,
-	color: string,
-	background: string,
-}
-
-export type From = {
-	id: string,
-	name: string,
-	description?: string | null,
-	isDefault: boolean,
-	isAvailable: boolean,
-	type?: string | null,
-};
-
-export type PromoBanner = {
-	id: string,
-	title: string,
-	subtitle: string,
-	background: string,
-	icon: ?Icon,
-	customIconName: ?string,
-	connectionUrl: string,
-}
-
-export type ContentProvider = {
-	isShown: boolean,
-	isLocked: boolean,
-	isEnabled: boolean,
-};
-
-export type NotificationTemplate = {
-	code: string,
-	translation?: {
-		LANGUAGE_ID: string,
-		TITLE: string,
-		TEXT: string,
-		TEXT_SMS: string,
-	},
-	placeholders: {name: string, value?: string, caption?: string}[],
-	signed: string,
-};
-
-export type Layout = {
-	isHeaderShown: boolean,
-	isFooterShown: boolean,
-	isSendButtonShown: boolean,
-	isCancelButtonShown: boolean,
-	isMessagePreviewShown: boolean,
-	isContentProvidersShown: boolean,
-	isEmojiButtonShown: boolean,
-	isMessageTextReadOnly: boolean,
-	padding: string,
-	paddingTop: ?string,
-	paddingBottom: ?string,
-	paddingLeft: ?string,
-	paddingRight: ?string,
-};
-
-export type Preferences = {
-	channelsSort: ChannelPosition[],
-	channelsLastUsedFrom: ChannelLastUsedFrom[],
-};
-
-export type ChannelPosition = {
-	channelId: string,
-	isHidden: boolean,
-	lastUsedNumber: ?string,
-};
-
-export type ChannelLastUsedFrom = {
-	channelId: string,
-	fromId: string,
-};
-
-export type State = {
-	channel: ?Channel,
-	from: ?From,
-	to: ?Receiver,
-	notificationTemplate?: NotificationTemplate,
-	template?: Template,
-	message: {
-		body: string,
-	}
-};
-
-// to avoid skeleton flickering for fast loads
-const SKELETON_SHOW_DELAY = 200;
 
 /**
  * @memberOf BX.Crm.MessageSender
@@ -171,12 +59,10 @@ const SKELETON_SHOW_DELAY = 200;
 export class Editor extends EventEmitter
 {
 	#options: EditorOptions;
-	#skeleton: ?Skeleton = null;
-	#locator: ?ServiceLocator = null;
-	#store: ?Store = null;
-	#app: ?VueCreateAppResult = null;
-	#rootComponent: ?Object = null;
-	#stateExporter: ?StateExporter = null;
+	#locator: ServiceLocator;
+	#templateEventHandler: EventHandler;
+	#innerEditor: MessageServiceEditor;
+	#templatesCache: Cache.MemoryCache = new Cache.MemoryCache();
 
 	constructor(options: EditorOptions)
 	{
@@ -186,56 +72,8 @@ export class Editor extends EventEmitter
 
 		this.#options = options;
 		this.#normalizeOptions(this.#options);
-	}
 
-	#normalizeOptions(options: EditorOptions): void
-	{
-		if (!Type.isArray(options.channels))
-		{
-			// eslint-disable-next-line no-param-reassign
-			options.channels = [];
-		}
-
-		for (const channel of options.channels)
-		{
-			if (!Type.isArray(channel.toList))
-			{
-				channel.toList = [];
-			}
-
-			channel.toList = channel.toList.map((to: JsonObject | Receiver) => {
-				if (Type.isPlainObject(to))
-				{
-					return Receiver.fromJSON(to);
-				}
-
-				return to;
-			});
-		}
-	}
-
-	#mergeOptions(newOptions: EditorOptions, oldOptions: EditorOptions): EditorOptions
-	{
-		const overrideKeys = new Set([
-			'channels',
-			'promoBanners',
-			'dynamicLoad',
-			'contentProviders',
-			'preferences',
-		]);
-
-		// shared references ok, but don't modify the original
-		const result = { ...oldOptions };
-
-		for (const [key, value] of Object.entries(newOptions))
-		{
-			if (overrideKeys.has(key))
-			{
-				result[key] = value;
-			}
-		}
-
-		return result;
+		this.#locator = new ServiceLocator({ context: this.#options.context });
 	}
 
 	getOptions(): EditorOptions
@@ -248,7 +86,22 @@ export class Editor extends EventEmitter
 	 */
 	getState(): ?State
 	{
-		return this.#stateExporter?.getState() ?? null;
+		const state = this.#innerEditor?.getState();
+		if (!state)
+		{
+			return null;
+		}
+
+		return {
+			...state,
+			message: {
+				...state.message,
+				body: this.#locator.getEscapeService().encode(
+					state.message.body,
+					this.#locator.getPlaceholderService().getKnownCodes(state),
+				),
+			},
+		};
 	}
 
 	/**
@@ -259,7 +112,7 @@ export class Editor extends EventEmitter
 	 */
 	getContainer(): ?HTMLElement
 	{
-		return this.#rootComponent?.$el ?? null;
+		return this.#innerEditor?.getContainer() ?? null;
 	}
 
 	/**
@@ -270,201 +123,244 @@ export class Editor extends EventEmitter
 	 */
 	getContentContainer(): ?HTMLElement
 	{
-		return this.getContainer()?.querySelector('[data-role="content-container"]') ?? null;
+		return this.#innerEditor?.getContentContainer() ?? null;
 	}
 
 	setChannel(id: string): this
 	{
-		void this.#store?.dispatch('channels/setChannel', {
-			channelId: id,
-		});
+		this.#innerEditor?.setChannel(id);
 
 		return this;
 	}
 
 	setFrom(id: string): this
 	{
-		void this.#store?.dispatch('channels/setFrom', {
-			fromId: id,
-		});
+		this.#innerEditor?.setFrom(id);
 
 		return this;
 	}
 
-	setTo(addressId: number): this
+	setTo(toId: string): this
 	{
-		void this.#store?.dispatch('channels/setReceiver', {
-			receiverAddressId: addressId,
-		});
+		this.#innerEditor?.setTo(String(toId));
 
 		return this;
 	}
 
 	setMessageText(text: string): this
 	{
-		void this.#store?.dispatch('message/setText', {
-			text,
-		});
+		this.#innerEditor?.setMessageText(
+			this.#locator.getEscapeService().decode(text),
+		);
 
 		return this;
 	}
 
 	setTemplate(templateOriginalId: number): this
 	{
-		void this.#store?.dispatch('templates/setTemplate', {
-			templateOriginalId,
-		});
+		this.#innerEditor?.setTemplate(templateOriginalId);
 
 		return this;
 	}
 
 	setFilledPlaceholder(filledPlaceholder: FilledPlaceholder): this
 	{
-		void this.#store?.dispatch('templates/setFilledPlaceholder', {
-			filledPlaceholder,
-		});
+		this.#innerEditor?.setFilledPlaceholder(filledPlaceholder);
 
 		return this;
 	}
 
 	setError(error: string): this
 	{
-		void this.#store?.dispatch('application/setAlert', { error });
+		this.#innerEditor?.setError(error);
 
 		return this;
 	}
 
 	resetAlert(): this
 	{
-		void this.#store?.dispatch('application/resetAlert');
+		this.#innerEditor?.resetAlert();
 
 		return this;
 	}
 
 	async render(): Promise<void>
 	{
-		const target = Type.isElementNode(this.#options.renderTo)
-			? this.#options.renderTo
-			: document.querySelector(this.#options.renderTo)
-		;
-		if (Type.isNil(target))
-		{
-			throw new TypeError(`Render container "${this.#options.renderTo}" not found`);
-		}
+		const options: MessageServiceEditorOptions = {
+			...this.#mapOptions(),
+			events: this.#getEvents(),
+		};
 
-		const skeletonTimeoutId = setTimeout(() => {
-			Dom.clean(target);
+		this.#innerEditor = new MessageServiceEditor(options);
 
-			this.#skeleton ??= new Skeleton({ layout: this.#options.layout });
-			this.#skeleton.renderTo(target);
-		}, SKELETON_SHOW_DELAY);
+		const factory = this.#innerEditor.getProviderFactory();
+		this.#registerResolvers(factory);
 
-		await this.#load();
+		this.#locator.setProviderFactory(factory);
 
-		this.#locator = new ServiceLocator();
-
-		const locator = this.#locator;
-		this.#app = BitrixVue.createApp({
-			name: 'CrmMessageSenderEditor',
-			components: {
-				MessageEditor,
-			},
-			beforeCreate(): void
-			{
-				this.$bitrix.Data.set('locator', locator);
-			},
-			template: '<MessageEditor/>',
-		});
-
-		const { store, models: { messageModel } } = await this.#buildStore();
-
-		this.#store = store;
-
-		this.#locator.setStore(store);
-		this.#locator.setMessageModel(messageModel);
-
-		this.#app.use(store);
-
-		clearTimeout(skeletonTimeoutId);
-		Dom.clean(target);
-		this.#rootComponent = this.#app.mount(target);
-
-		this.#locator.setEventEmitter(this.#rootComponent.$Bitrix.eventEmitter);
-		this.#stateExporter = new StateExporter({ store, eventEmitter: this });
-
-		this.#bindEvents();
-
-		this.#locator.getAnalyticsService().onRender();
+		return this.#innerEditor.render();
 	}
 
-	async #buildStore(): Promise<{store: Store, models: {messageModel: MessageModel}}>
+	#mapOptions(): MessageServiceEditorOptions
 	{
-		const messageModel = MessageModel.create()
-			.useDatabase(false)
-			.setLogger(this.#locator.getLogger())
-			.setVariables({
-				text: this.#options.message.text,
-			})
-		;
+		const messageOption = this.#options.message ?? {};
 
-		const { store } = await Builder
-			.init()
-			.addModel(
-				ApplicationModel.create()
-					.useDatabase(false)
-					.setLogger(this.#locator.getLogger())
-					.setVariables({
-						context: this.#options.context,
-						contentProviders: this.#options.contentProviders,
-						notificationTemplate: this.#options.notificationTemplate,
-						promoBanners: this.#options.promoBanners,
-						layout: this.#options.layout,
-						scene: this.#options.scene,
-					}),
-			).addModel(
-				ChannelsModel.create()
-					.useDatabase(false)
-					.setLogger(this.#locator.getLogger())
-					.setVariables({
-						collection: this.#options.channels,
-					}),
-			)
-			.addModel(
-				messageModel,
-			)
-			.addModel(
-				TemplatesModel.create()
-					.useDatabase(true) // cache for faster render, actualize on template load
-					.setLogger(this.#locator.getLogger())
-				,
-			)
-			.addModel(
-				PreferencesModel.create()
-					.useDatabase(false)
-					.setLogger(this.#locator.getLogger())
-					.setVariables({
-						channelsSort: this.#options.preferences?.channelsSort,
-						channelsLastUsedFrom: this.#options.preferences?.channelsLastUsedFrom,
-					}),
-			)
-			.addModel(
-				AnalyticsModel.create()
-					.useDatabase(false)
-					.setLogger(this.#locator.getLogger())
-					.setVariables({
-						analytics: this.#options.analytics,
-					}),
-			)
-			.setDatabaseConfig({
-				name: 'crm-messagesender-editor',
-				type: BuilderDatabaseType.indexedDb,
-				siteId: Loc.getMessage('SITE_ID'),
-				userId: Loc.getMessage('USER_ID'),
-			})
-			.build()
-		;
+		return {
+			...this.#options,
+			toList: this.#options.toList ?? [],
+			analytics: {
+				...this.#options.analytics,
+				tool: 'crm',
+				p1: getCrmMode(),
+			},
+			messages: {
+				template: {
+					selectField: Loc.getMessage('CRM_MESSAGESENDER_TEMPLATE_EDITOR_SELECT_FIELD'),
+				},
+			},
+			message: {
+				...messageOption,
+				text: this.#locator.getEscapeService().decode(messageOption.text ?? ''),
+			},
+		};
+	}
 
-		return { store, models: { messageModel } };
+	#getEvents(): Object
+	{
+		const events = {
+			onBeforeRender: async () => {
+				await this.#load();
+
+				this.#innerEditor.setOptions(this.#mapOptions());
+			},
+			onLoadPreview: async (event: BaseEvent) => {
+				const handler = await this.#getTemplateEventHandler();
+
+				const { template, ...restData } = event.getData();
+				const convertedTemplate = replaceCustomMessagePlaceholders(
+					this.#locator.getEscapeService().encode(
+						template ?? '',
+						this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState()),
+					),
+					(value) => `{${value}}`,
+				);
+
+				const proxyEvent = new BaseEvent({
+					data: {
+						...restData,
+						template: convertedTemplate,
+					},
+				});
+
+				return handler.onLoadPreview(proxyEvent);
+			},
+			'Template:onShowFieldsDialog': async (event: BaseEvent) => {
+				const handler = await this.#getTemplateEventHandler();
+
+				return handler.onShowFieldsDialog(event);
+			},
+			'Template:onUpdatePlaceholder': (event: BaseEvent) => {
+				const { filledPlaceholder } = event.getData();
+				const { template } = this.#innerEditor.getState();
+				if (!template)
+				{
+					return;
+				}
+
+				if (Type.isNil(this.#options.context.customData.entityTypeId))
+				{
+					return;
+				}
+
+				void Ajax.runAction(
+					'crm.activity.smsplaceholder.createOrUpdatePlaceholder',
+					{
+						data: {
+							placeholderId: filledPlaceholder.PLACEHOLDER_ID,
+							fieldName: Type.isStringFilled(filledPlaceholder.FIELD_NAME) ? filledPlaceholder.FIELD_NAME : null,
+							entityType: Type.isStringFilled(filledPlaceholder.FIELD_ENTITY_TYPE)
+								? filledPlaceholder.FIELD_ENTITY_TYPE
+								: null,
+							fieldValue: Type.isStringFilled(filledPlaceholder.FIELD_VALUE) ? filledPlaceholder.FIELD_VALUE : null,
+							templateId: template.ORIGINAL_ID,
+							entityTypeId: this.#options.context.customData.entityTypeId,
+							entityCategoryId: this.#options.context.customData.categoryId,
+						},
+					},
+				);
+			},
+			onLoadTemplates: (event) => {
+				event.preventDefault();
+
+				return this.#templatesCache.remember(this.#getTemplateCacheId(), () => {
+					return new Promise((resolve, reject) => {
+						Ajax.runAction('crm.activity.sms.getTemplates', {
+							data: {
+								senderId: this.#innerEditor.getState().channel.backend.id,
+								context: {
+									entityTypeId: this.#options.context.customData.entityTypeId,
+									entityId: this.#options.context.customData.entityId,
+									entityCategoryId: this.#options.context.customData.categoryId,
+								},
+							},
+						})
+							.then(resolve)
+							.catch(reject)
+						;
+					});
+				});
+			},
+			onSend: () => {
+				return this.#locator.getSendService().sendMessage(this.getState());
+			},
+			onMessageBodyChange: (event: BaseEvent) => {
+				const { body, oldBody } = event.getData();
+				const escape = this.#locator.getEscapeService();
+				const knownCodes = this.#locator.getPlaceholderService().getKnownCodes(this.#innerEditor.getState());
+
+				this.emit('onMessageBodyChange', {
+					body: escape.encode(body ?? '', knownCodes),
+					oldBody: escape.encode(oldBody ?? '', knownCodes),
+				});
+			},
+			onBeforeAddChannelOpen: (event: BaseEvent) => {
+				event.preventDefault();
+
+				void Runtime.loadExtension('crm.router').then(({ Router }) => {
+					return Router.Instance.openMessageSenderConnectionsSlider({
+						c_section: this.#options.analytics?.c_section,
+						c_sub_section: this.#options.analytics?.c_sub_section,
+					});
+				}).then(() => {
+					void this.reload();
+				});
+			},
+		};
+
+		for (const eventName of SIMPLY_PROXIED_EVENTS)
+		{
+			events[eventName] = (event: BaseEvent) => {
+				this.emit(eventName, event.getData());
+			};
+		}
+
+		return events;
+	}
+
+	#getTemplateEventHandler(): Promise<EventHandler>
+	{
+		if (this.#templateEventHandler)
+		{
+			return Promise.resolve(this.#templateEventHandler);
+		}
+
+		return Runtime.loadExtension('crm.template.editor').then((exports: { EventHandler: EventHandler }) => {
+			this.#templateEventHandler = new exports.EventHandler({
+				...this.#options.context.customData,
+			});
+
+			return this.#templateEventHandler;
+		});
 	}
 
 	#load(): Promise<void>
@@ -480,6 +376,61 @@ export class Editor extends EventEmitter
 			});
 	}
 
+	#actualizeOptions(): Promise<void>
+	{
+		return new Promise((resolve, reject) => {
+			Ajax.runAction('crm.messagesender.editor.load', {
+				json: {
+					sceneId: this.#options.scene.id,
+					customData: {
+						entityTypeId: this.#options.context.customData.entityTypeId,
+						entityId: this.#options.context.customData.entityId,
+						categoryId: this.#options.context.customData.categoryId,
+					},
+				},
+			}).then((response) => {
+				const newOptions = response.data.editor;
+				this.#normalizeOptions(newOptions);
+
+				this.#mutateOptions(this.#options, newOptions);
+				resolve();
+			}).catch(reject);
+		});
+	}
+
+	#mutateOptions(options: EditorOptions, mutations: EditorOptions): void
+	{
+		const overrideKeys = new Set([
+			'channels',
+			'toList',
+			'promoBanners',
+			'contentProviders',
+			'preferences',
+		]);
+
+		for (const [key, value] of Object.entries(mutations))
+		{
+			if (overrideKeys.has(key))
+			{
+				// eslint-disable-next-line no-param-reassign
+				options[key] = value;
+			}
+		}
+	}
+
+	#normalizeOptions(options: EditorOptions): void
+	{
+		// eslint-disable-next-line no-param-reassign
+		options.channels ??= [];
+		// eslint-disable-next-line no-param-reassign
+		options.toList ??= [];
+
+		// eslint-disable-next-line no-param-reassign
+		options.context ??= {};
+		// eslint-disable-next-line no-param-reassign
+		options.context.customData ??= {};
+	}
+
 	/**
 	 * Actualize editor options from the server.
 	 * Editor state is not lost.
@@ -493,98 +444,61 @@ export class Editor extends EventEmitter
 			return Promise.resolve();
 		}
 
-		void this.#store?.dispatch('application/setProgress', { isLoading: true });
+		this.#innerEditor?.setLoading(true);
+		this.#templatesCache = new Cache.MemoryCache();
 
 		return this.#actualizeOptions()
 			.then(() => {
-				void this.#store?.dispatch('application/actualizeState', {
-					context: this.#options.context,
-					contentProviders: this.#options.contentProviders,
-					notificationTemplate: this.#options.notificationTemplate,
-					promoBanners: this.#options.promoBanners,
-					layout: this.#options.layout,
-					scene: this.#options.scene,
-				});
-				void this.#store?.dispatch('channels/actualizeState', {
-					collection: this.#options.channels,
-				});
-				void this.#store?.dispatch('preferences/actualizeState', {
-					channelsSort: this.#options.preferences?.channelsSort,
-					channelsLastUsedFrom: this.#options.preferences?.channelsLastUsedFrom,
-				});
+				this.#innerEditor?.setOptions(this.#mapOptions());
 			}).finally(() => {
-				void this.#store?.dispatch('application/setProgress', { isLoading: false });
+				this.#innerEditor?.setLoading(false);
 			});
 	}
 
-	#actualizeOptions(): Promise<void>
+	#getTemplateCacheId(): string
 	{
-		return this.#loadOptions()
-			.then((options) => {
-				this.#options = this.#mergeOptions(options, this.#options);
-			});
-	}
+		const chan = this.getState()?.channel;
+		if (Type.isNil(chan))
+		{
+			return '';
+		}
 
-	#loadOptions(): Promise<EditorOptions>
-	{
-		return new Promise((resolve, reject) => {
-			Ajax.runAction('crm.messagesender.editor.load', {
-				json: {
-					sceneId: this.#options.scene?.id,
-					entityTypeId: this.#options.context.entityTypeId,
-					entityId: this.#options.context.entityId,
-					categoryId: this.#options.context.categoryId,
-				},
-			}).then((response) => {
-				const options = response.data.editor;
+		const parts = [
+			chan.backend.senderCode,
+			chan.backend.id,
+			this.#options.context.customData.entityTypeId,
+			this.#options.context.customData.entityId,
+			this.#options.context.customData.categoryId,
+		];
 
-				this.#normalizeOptions(options);
-
-				resolve(options);
-			}).catch(reject);
-		});
-	}
-
-	#bindEvents(): void
-	{
-		this.#rootComponent.$Bitrix.eventEmitter.subscribe(
-			'crm:messagesender:editor:onConnectionsSliderClose',
-			this.reload.bind(this),
-		);
-		this.#rootComponent.$Bitrix.eventEmitter.subscribe(
-			'crm:messagesender:editor:onPromoBannerSliderClose',
-			this.reload.bind(this),
-		);
-		this.#rootComponent.$Bitrix.eventEmitter.subscribe(
-			'crm:messagesender:editor:onSendSuccess',
-			() => {
-				this.emit('onSendSuccess');
-			},
-		);
-		this.#rootComponent.$Bitrix.eventEmitter.subscribe(
-			'crm:messagesender:editor:onCancel',
-			() => {
-				this.emit('onCancel');
-			},
-		);
+		return parts.filter((part) => !Type.isNil(part)).join('_');
 	}
 
 	destroy(): void
 	{
-		this.#app?.unmount();
-		this.#app = null;
+		this.#innerEditor?.destroy();
+		this.#innerEditor = null;
 
-		this.#rootComponent.$Bitrix.eventEmitter.unsubscribeAll();
-		this.#rootComponent = null;
-
-		this.#stateExporter?.destroy();
-		this.#stateExporter = null;
+		this.#templateEventHandler?.destroy();
+		this.#templateEventHandler = null;
 
 		this.unsubscribeAll();
 
-		this.#store = null;
-		this.#locator = null;
-
 		Runtime.destroy(this);
+	}
+
+	#registerResolvers(factory): void
+	{
+		factory.registerResolver('crmValues', (data) => {
+			return new CrmValuesContentProvider(data);
+		});
+
+		factory.registerResolver('salescenter', (data) => {
+			return new SalesCenterContentProvider(data, this.#locator);
+		});
+
+		factory.registerResolver('documents', (data) => {
+			return new DocumentsContentProvider(data, this.#locator);
+		});
 	}
 }

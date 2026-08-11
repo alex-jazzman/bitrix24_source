@@ -30,8 +30,8 @@ return [
 			'humanresources.internal.service.nodeMemberService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeMemberService::class,
 			],
-			'humanresources.service.internal.nodeCollabService' => [
-				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeCollabService::class,
+			'humanresources.internal.service.nodeMemberNotificationService' => [
+				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeMemberNotificationService::class,
 			],
 			'humanresources.service.internal.nodeSettingsService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeSettingsService::class,
@@ -303,6 +303,9 @@ return [
 			],
 			'humanresources.public.service.nodeService' => [
 				'className' => \Bitrix\HumanResources\Public\Service\NodeService::class,
+			],
+			'humanresources.public.service.access' => [
+				'className' => \Bitrix\HumanResources\Public\Service\AccessService::class,
 			],
 			'humanresources.private.internal.service.structure.roleService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\RoleService::class,

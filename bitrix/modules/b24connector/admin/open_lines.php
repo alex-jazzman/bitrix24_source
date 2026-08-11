@@ -41,8 +41,10 @@ if(!empty($errorMsgs))
 			<div style="text-align: center;">
 				<?php if (LANGUAGE_ID !== 'ru'): ?>
 					<img src="/bitrix/images/b24connector/fb.png" alt="Facebook" title="Facebook" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
+				<?php else: ?>
+					<img src="/bitrix/images/b24connector/vk.png" alt="Vkontakte" title="Vkontakte" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
+					<img src="/bitrix/images/b24connector/max.png" alt="MAX" title="MAX" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
 				<?php endif; ?>
-				<img src="/bitrix/images/b24connector/vk.png" alt="Vkontakte" title="Vkontakte" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
 				<img src="/bitrix/images/b24connector/telegram.png" alt="Telegram" title="Telegram" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
 				<img src="/bitrix/images/b24connector/skype.png" alt="Skype" title="Skype" style="margin: 0 25px 0 0;">&nbsp;&nbsp;
 				<span><?=Loc::getMessage('B24C_OL_OTHERS')?></span>

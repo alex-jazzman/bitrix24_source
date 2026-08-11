@@ -1,3 +1,0 @@
-<?php
-
-$MESS['CRM_MESSAGESENDER_PAGE_SMS_TITLE'] = "СМС";

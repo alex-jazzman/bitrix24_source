@@ -72,13 +72,26 @@
 
 /* region week-mode */
 .booking-booking__base-component.--week-mode .booking-booking_add-resource-container {
-	min-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
 	bottom: 0;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-add-resource-icon-container {
+	padding: 13px 10px;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-add-resource-icon .ui-icon-set {
+	--ui-icon-set__icon-size: 22px;
 }
 
 .booking-booking__base-component.--week-mode .booking-booking-header-add-resource {
 	min-width: 184px;
+	padding: 13px 10px 13px 0;
 	border: none;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-header-add-resource-text {
+	font-size: var(--ui-font-size-lg);
 }
 
 /* endregion*/

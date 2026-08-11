@@ -24,6 +24,7 @@ return [
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
 		'im.v2.lib.opener',
+		'im.v2.lib.promo',
 		'main.core',
 		'main.core.events',
 		'main.sidepanel',

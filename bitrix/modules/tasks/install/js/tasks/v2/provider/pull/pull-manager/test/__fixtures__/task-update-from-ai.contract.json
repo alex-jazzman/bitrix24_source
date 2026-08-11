@@ -1,0 +1,30 @@
+{
+  "_comment": "Shared fixture for the AI task_update pull payload. FROM_AI is a top-level boolean true (sibling of TASK_ID/USER_ID), never inside nested params; the key is Bitrix\\Tasks\\Integration\\Pull\\PushParam::FROM_AI. Read by the frontend pull-manager unit test (import) and the backend SendPushFromAiTest (filesystem). Change the FROM_AI shape only here.",
+  "command": "task_update",
+  "module_id": "tasks",
+  "params": {
+    "TASK_ID": 684695,
+    "USER_ID": 1146254,
+    "BEFORE": {
+      "DESCRIPTION": "Старое описание задачи",
+      "GROUP_ID": 1652
+    },
+    "AFTER": {
+      "DESCRIPTION": "Новое описание, проставленное AI-ассистентом",
+      "GROUP_ID": 1652
+    },
+    "TS": 1750090722,
+    "event_GUID": "abcdef0123456789abcdef0123456789",
+    "FROM_AI": true,
+    "params": {
+      "HIDE": true,
+      "updateCommentExists": false,
+      "removedParticipants": []
+    },
+    "taskRequireResult": "N",
+    "taskHasResult": "N",
+    "taskHasOpenResult": "N",
+    "updateDate": null,
+    "requireDeadlineChangeReason": false
+  }
+}

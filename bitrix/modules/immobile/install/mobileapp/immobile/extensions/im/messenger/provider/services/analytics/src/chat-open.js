@@ -132,45 +132,36 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 
 		/**
 		 * @param {DialogId} dialogId
-		 * @param {string} context
+		 * @param {string} [context]
+		 * @param {ModesState} [modesState]
 		 */
-		sendOpenCopilotDialog({ dialogId, context })
+		sendOpenCopilotDialog({ dialogId, context, modesState })
 		{
-			try
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
+			if (!dialogHelper?.isCopilot)
 			{
-				const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
-				if (!dialog)
-				{
-					return;
-				}
-
-				const userCounter = dialog.userCounter;
-				const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
-
-				const element = context === OpenDialogContextType.push ? Analytics.Element.push : null;
-
-				const analytics = new AnalyticsEvent()
-					.setTool(Analytics.Tool.ai)
-					.setCategory(Analytics.Category.chatOperations)
-					.setEvent(Analytics.Event.openChat)
-					.setType(Analytics.Type.ai)
-					.setSection(Analytics.Section.copilotTab)
-					.setElement(element)
-					.setP3(p3type)
-					.setP5(`chatId_${dialog.chatId}`);
-
-				const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
-				if (copilotMainRole)
-				{
-					analytics.setP4(AnalyticsHelper.getCopilotRole(copilotMainRole.code));
-				}
-
-				analytics.send();
+				return;
 			}
-			catch (e)
-			{
-				console.error(`${this.constructor.name}.sendOpenCopilotDialog.catch:`, e);
-			}
+
+			const p3type = dialogHelper.dialogModel.userCounter > 2
+				? Analytics.CopilotChatType.multiuser
+				: Analytics.CopilotChatType.private
+			;
+
+			const element = context === OpenDialogContextType.push ? Analytics.Element.push : null;
+
+			new AnalyticsEvent()
+				.setTool(Analytics.Tool.ai)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.openChat)
+				.setType(Analytics.Type.ai)
+				.setSection(Analytics.Section.copilotTab)
+				.setElement(element)
+				.setP3(p3type)
+				.setP4(AnalyticsHelper.buildAssistantSettingsP4({ dialogHelper, modesState }))
+				.setP5(AnalyticsHelper.getFormattedChatId(dialogHelper.chatId))
+				.send()
+			;
 		}
 
 		/**

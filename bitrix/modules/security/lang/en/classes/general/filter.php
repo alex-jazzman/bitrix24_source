@@ -18,5 +18,4 @@ $MESS["SECURITY_FILTER_IP_RULE"] = "Blocking #IP# by the proactive filter.";
 $MESS["SECURITY_FILTER_PHP"] = "PHP injection attempt";
 $MESS["SECURITY_FILTER_SQL"] = "SQL injection attempt";
 $MESS["SECURITY_FILTER_XSS"] = "XSS attack attempt";
-$MESS["SECURITY_OTP"] = "OTP password request";
 $MESS["SECURITY_REDIRECT"] = "Phishing attempt with redirecting";

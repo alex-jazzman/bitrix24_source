@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_designTokens, ui_feedback_form, ui_common, ui_dropdown, ui_buttons, ui_forms, ui_notification_center, main_loader, crm_placement_detailsearch, ui_dialogs_messagebox) {
+(function (exports, main_core, main_core_events, ui_designTokens, ui_feedback_form, ui_common, ui_dropdown, ui_buttons, ui_forms, ui_notification, main_loader, crm_placement_detailsearch, ui_dialogs_messagebox) {
 	'use strict';
 
 	class RequisiteAutocompleteField extends main_core_events.EventEmitter {

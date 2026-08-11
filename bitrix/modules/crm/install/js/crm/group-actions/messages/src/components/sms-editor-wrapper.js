@@ -1,6 +1,6 @@
-import { ajax as Ajax, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { Loc } from 'main.core';
+import { ajax as Ajax, Loc, Type } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { Editor } from 'crm.template.editor';
 
 let editorInstance = null;
 
@@ -85,25 +85,29 @@ export const SmsEditorWrapper = {
 			categoryId: this.categoryId,
 			entityId: 0,
 			entityTypeId: this.entityTypeId,
-			onSelect: (params) => { // this callback is called when templates placeholder is changed
-				createOrUpdatePlaceholder(
-					this.templateParam.ORIGINAL_ID,
-					this.entityTypeId,
-					this.categoryId,
-					{
-						id: params.id,
-						value: params.value,
-						entityType: params.entityType,
-						text: params.text,
-					},
-				);
-			},
+			events: {
+				onUpdatePlaceholder: (event: BaseEvent) => {
+					const { filledPlaceholder } = event.getData();
+
+					createOrUpdatePlaceholder(
+						this.templateParam.ORIGINAL_ID,
+						this.entityTypeId,
+						this.categoryId,
+						{
+							id: filledPlaceholder.PLACEHOLDER_ID,
+							value: filledPlaceholder.FIELD_NAME,
+							entityType: filledPlaceholder.FIELD_ENTITY_TYPE,
+							text: filledPlaceholder.FIELD_VALUE,
+						},
+					);
+				},
+			}
 		};
 		const preview = this.templateParam.PREVIEW;
 		const placeholders = this.templateParam.PLACEHOLDERS || {};
 		const filledPlaceholders = this.templateParam.FILLED_PLACEHOLDERS || [];
 
-		editorInstance = (new BX.Crm.Template.Editor(editorParams))
+		editorInstance = (new Editor(editorParams))
 			.setPlaceholders(placeholders)
 			.setFilledPlaceholders(filledPlaceholders)
 		;

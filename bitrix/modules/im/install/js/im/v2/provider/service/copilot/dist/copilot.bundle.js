@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_const, im_v2_lib_analytics, im_v2_provider_service_chat, im_v2_application_core, im_v2_provider_service_recent) {
+(function (exports, im_v2_const, im_v2_lib_logger, im_v2_provider_service_chat, im_v2_application_core, im_v2_provider_service_recent) {
 	'use strict';
 
 	class CopilotChatService {
@@ -12,15 +12,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const chatService = new im_v2_provider_service_chat.ChatService();
 			try {
 				const {
-					newDialogId,
-					newChatId
+					newDialogId
 				} = await chatService.createChat({
 					type: im_v2_const.ChatType.copilot,
 					copilotMainRole: roleCode
-				});
-				this.#sendAnalytics({
-					chatId: newChatId,
-					dialogId: newDialogId
 				});
 				await chatService.loadChatWithMessages(newDialogId);
 				return newDialogId;
@@ -30,17 +25,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		}
 		createDefaultChat() {
-			const COPILOT_UNIVERSAL_ROLE = 'copilot_assistant';
 			return this.createChat({
-				roleCode: COPILOT_UNIVERSAL_ROLE
+				roleCode: im_v2_const.CopilotRole.universalCode
 			});
 		}
-		#sendAnalytics({
-			chatId,
-			dialogId
-		}) {
-			im_v2_lib_analytics.Analytics.getInstance().copilot.onCreateChat(chatId);
-			im_v2_lib_analytics.Analytics.getInstance().ignoreNextChatOpen(dialogId);
+		async fetchDraftChat() {
+			try {
+				return await new im_v2_provider_service_chat.ChatService().loadCopilotDraftChat();
+			} catch (error) {
+				im_v2_lib_logger.Logger.warn('CopilotChatService: fetchDraftChat failed', error);
+				throw error;
+			}
 		}
 	}
 

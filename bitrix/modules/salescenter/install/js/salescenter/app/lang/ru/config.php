@@ -186,3 +186,4 @@ $MESS["SALESCENTER_CONFIRMATION_POPUP_OK_CAPTION"] = "Подтвердить";
 $MESS["SALESCENTER_CONFIRMATION_POPUP_CANCEL_CAPTION"] = "Решу позже";
 $MESS["SALESCENTER_EMAIL_CONFIRMATION_POPUP_TITLE"] = "Подтвердите адрес электронной почты";
 $MESS["SALESCENTER_EMAIL_CONFIRMATION_POPUP_MESSAGE"] = "Чтобы принимать оплату, подтвердите адрес электронной почты";
+$MESS["SALESCENTER_TEMPLATE_PLACEHOLDER_LINK"] = "Ссылка на оплату";

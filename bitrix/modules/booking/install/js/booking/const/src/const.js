@@ -1,4 +1,5 @@
 export { AhaMoment } from './freeze/aha-moment';
+export { AiCallBannerMode } from './freeze/ai-call-banner-mode';
 export { HelpDesk } from './freeze/help-desk';
 export { BookingSource } from './freeze/booking-source';
 export { BusySlot } from './freeze/busy-slot';

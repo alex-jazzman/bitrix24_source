@@ -14,7 +14,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		[tasks_v2_const.TaskField.Placements]: new Set(['containsPlacements']),
 		[tasks_v2_const.TaskField.Results]: new Set(['containsResults']),
 		[tasks_v2_const.TaskField.Reminders]: new Set(['numberOfReminders']),
-		[tasks_v2_const.TaskField.Replication]: new Set(['replicate'])
+		[tasks_v2_const.TaskField.Replication]: new Set(['replicateParams'])
 	};
 	function getAliasField(fieldName) {
 		return Object.entries(aliasFields).find(([, alias]) => alias.has(fieldName))?.[0];

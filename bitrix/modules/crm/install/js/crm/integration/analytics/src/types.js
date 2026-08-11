@@ -409,55 +409,6 @@ export type CommunicationChannelInviteEvent = {
 	p2: string,
 };
 
-export type CommunicationEditorInteractionEvent = {
-	tool: Dictionary.TOOL_CRM,
-	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-	event: Dictionary.EVENT_EDIT,
-	type: Dictionary.TYPE_MESSAGE,
-	c_section: Dictionary.SECTION_LEAD
-		| Dictionary.SECTION_DEAL
-		| Dictionary.SECTION_CONTACT
-		| Dictionary.SECTION_COMPANY
-		| Dictionary.SECTION_DYNAMIC
-		| Dictionary.SECTION_CUSTOM
-		| Dictionary.SECTION_MYCOMPANY
-		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
-		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
-		| Dictionary.SECTION_SALESCENTER_SLIDER
-		| Dictionary.SECTION_DOCUMENT
-	,
-	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
-	c_element: Dictionary.ELEMENT_PREVIEW
-		| Dictionary.ELEMENT_TEMPLATE_SELECTOR
-		| Dictionary.ELEMENT_TEMPLATE_OFFER
-		| Dictionary.ELEMENT_CHANNEL_SELECTOR
-		| Dictionary.ELEMENT_CHANNEL_LIST_CHANGE
-		| Dictionary.ELEMENT_ELEMENT_ADD
-	,
-	p2: 'element_source',
-	p5: 'channel_id',
-};
-
-export type CommunicationEditorCopilotEvent = {
-	tool: Dictionary.TOOL_CRM,
-	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-	event: Dictionary.EVENT_COPILOT,
-	type: Dictionary.TYPE_MESSAGE,
-	c_section: Dictionary.SECTION_LEAD
-		| Dictionary.SECTION_DEAL
-		| Dictionary.SECTION_CONTACT
-		| Dictionary.SECTION_COMPANY
-		| Dictionary.SECTION_DYNAMIC
-		| Dictionary.SECTION_CUSTOM
-		| Dictionary.SECTION_MYCOMPANY
-		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
-		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
-		| Dictionary.SECTION_SALESCENTER_SLIDER
-		| Dictionary.SECTION_DOCUMENT
-	,
-	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
-};
-
 export type CommunicationEditorSendEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
@@ -500,45 +451,6 @@ export type CommunicationEditorResendEvent = {
 	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
 	p3: 'template_id',
 	p5: 'channel_id',
-};
-
-export type CommunicationEditorCancelEvent = {
-	tool: Dictionary.TOOL_CRM,
-	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-	event: Dictionary.EVENT_CANCEL,
-	type: Dictionary.TYPE_MESSAGE,
-	c_section: Dictionary.SECTION_LEAD
-		| Dictionary.SECTION_DEAL
-		| Dictionary.SECTION_CONTACT
-		| Dictionary.SECTION_COMPANY
-		| Dictionary.SECTION_DYNAMIC
-		| Dictionary.SECTION_CUSTOM
-		| Dictionary.SECTION_MYCOMPANY
-		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
-		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
-		| Dictionary.SECTION_SALESCENTER_SLIDER
-		| Dictionary.SECTION_DOCUMENT
-	,
-	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
-};
-
-export type CommunicationEditorViewEvent = {
-	tool: Dictionary.TOOL_CRM,
-	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-	event: Dictionary.EVENT_VIEW,
-	c_section: Dictionary.SECTION_LEAD
-		| Dictionary.SECTION_DEAL
-		| Dictionary.SECTION_CONTACT
-		| Dictionary.SECTION_COMPANY
-		| Dictionary.SECTION_DYNAMIC
-		| Dictionary.SECTION_CUSTOM
-		| Dictionary.SECTION_MYCOMPANY
-		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
-		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
-		| Dictionary.SECTION_SALESCENTER_SLIDER
-		| Dictionary.SECTION_DOCUMENT
-	,
-	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
 };
 
 export type DisableAlertOldInvoiceReadonlyViewEvent = {

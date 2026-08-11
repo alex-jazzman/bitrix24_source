@@ -84,6 +84,10 @@ export const BlockComplexContent = {
 			type: Boolean,
 			default: false,
 		},
+		minRuleItemsCount: {
+			type: Number,
+			default: MIN_RULE_ITEMS_COUNT,
+		},
 	},
 	setup(): BlockComplexSetup
 	{
@@ -181,7 +185,7 @@ export const BlockComplexContent = {
 		},
 		reservedInputRules(): Array<TPort | Placeholder>
 		{
-			return RESERVED_INPUT_RULES_TITLES.map((title) => {
+			return RESERVED_INPUT_RULES_TITLES.slice(0, this.minRuleItemsCount).map((title) => {
 				const port = this.rulePorts.find((p) => p.title === title);
 				if (port)
 				{
@@ -196,8 +200,10 @@ export const BlockComplexContent = {
 		},
 		restInputRules(): Array<TPort>
 		{
+			const reserved = RESERVED_INPUT_RULES_TITLES.slice(0, this.minRuleItemsCount);
+
 			return this.rulePorts.filter((p) => {
-				return !RESERVED_INPUT_RULES_TITLES.includes(p.title);
+				return !reserved.includes(p.title);
 			});
 		},
 		lastInputRulePlaceholder(): Placeholder
@@ -250,7 +256,7 @@ export const BlockComplexContent = {
 		},
 		reservedOutputRules(): Array<TPort | Placeholder>
 		{
-			return RESERVED_OUTPUT_RULES_TITLES.map((title) => {
+			return RESERVED_OUTPUT_RULES_TITLES.slice(0, this.minRuleItemsCount).map((title) => {
 				const port = this.outputPorts.find((p) => p.title === title);
 				if (port)
 				{
@@ -265,8 +271,10 @@ export const BlockComplexContent = {
 		},
 		restOutputRules(): Array<TPort>
 		{
+			const reserved = RESERVED_OUTPUT_RULES_TITLES.slice(0, this.minRuleItemsCount);
+
 			return this.outputPorts.filter((p) => {
-				return !RESERVED_OUTPUT_RULES_TITLES.includes(p.title);
+				return !reserved.includes(p.title);
 			});
 		},
 		lastOutputRulePlaceholder(): Placeholder

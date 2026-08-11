@@ -26,6 +26,9 @@
 
 .booking-booking__base-component.--week-mode .booking-booking-booking {
 	--booking-padding: 2px;
+	min-width: var(--width);
+	max-width: var(--width);
+	min-height: var(--height);
 }
 
 .not-transition {
@@ -90,13 +93,12 @@
 	scale: 0.5;
 }
 
-.booking-booking-booking.--small {
+.booking-booking-booking.--extra-small {
 	--height: 12px;
 }
 
 .booking-booking-booking.--short {
 	--height: 12px;
-	--booking-padding: 1px;
 }
 
 .booking-booking-booking.--expired {
@@ -248,7 +250,11 @@
 	transition-timing-function: var(--booking-animation-function);
 }
 
-.booking-booking__base-component.--week-mode .booking-booking-card__container:not(.--week-grid-detailed) .booking-booking-card__padding {
+.booking-booking__base-component.--week-mode .booking-booking-card__padding {
+	padding: var(--booking-padding) var(--booking-padding) var(--booking-padding) calc(var(--booking-padding) * 0.6);
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-booking:not(.--week-grid-detailed) .booking-booking-card__padding {
 	padding-right: calc(var(--booking-padding) * 0.3);
 	padding-left: calc(var(--booking-padding) * 0.3 );
 }
@@ -257,9 +263,14 @@
 	padding-left: 0;
 }
 
-.booking-booking-booking.--compact-mode.--small .booking-booking-card__padding {
+.booking-booking-booking.--compact-mode.--extra-small .booking-booking-card__padding {
 	padding-top: 0;
 	padding-bottom: 0;
+}
+
+.booking-booking-booking.--compact-mode.--small .booking-booking-card__padding {
+	padding-top: 2px;
+	padding-bottom: 2px;
 }
 
 /* region name */
@@ -268,10 +279,16 @@
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.booking-booking-booking.--small .booking-booking-card__title {
-	display: none;
-	font-size: calc(var(--ui-font-size-md) * var(--zoom));
+.booking-booking__base-component.--week-mode .booking-booking-booking .booking-booking-card__title {
+	font-size: var(--ui-font-size-md);
 }
+
+.booking-booking-booking.--compact-mode.--overbooking .booking-booking-card__title,
+.booking-booking-booking.--extra-small .booking-booking-card__title,
+.booking-booking-booking.--small .booking-booking-card__title {
+	font-size: calc(var(--ui-font-size-xs) * var(--zoom));
+}
+
 /*endregion*/
 
 .booking-booking-card__inner {
@@ -317,6 +334,10 @@
 	padding: calc(4px * var(--zoom)) calc(8px * var(--zoom));
 	color: var(--ui-color-palette-white-base);
 	pointer-events: none;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-card__content {
+	padding: 4px 8px;
 }
 
 .booking-booking-booking.--drag-source .booking-booking-card__content {
@@ -367,10 +388,6 @@
 	display: none;
 }
 
-.booking-booking-booking.--short .booking-booking-card__title-container {
-	display: none;
-}
-
 /* region note */
 .booking-booking-booking.--zoom-is-less-than-08 .booking-booking-card__note-button {
 	display: none;
@@ -379,9 +396,15 @@
 .booking-booking-booking .booking-booking-card__note-button .ui-icon-set {
 	--ui-icon-set__icon-size: calc(16px * var(--quater-zoom));
 }
+
+.booking-booking__base-component.--week-mode .booking-booking-booking .booking-booking-card__note-button .ui-icon-set {
+	--ui-icon-set__icon-size: 16px;
+}
 /*endregion*/
 
 /* region profit */
+.booking-booking-booking.--extra-small .booking-booking-card__profit,
+.booking-booking-booking.--compact-mode.--overbooking .booking-booking-card__profit,
 .booking-booking__base-component.--zoom-is-less-than-08 .booking-booking-booking .booking-booking-card__profit {
 	display: none;
 }
@@ -396,6 +419,8 @@
 
 .booking-booking-card__title-container {
 	display: flex;
+	align-items: center;
+	max-height: 100%;
 	max-width: 100%;
 	margin-right: auto;
 	overflow: hidden;
@@ -415,6 +440,16 @@
 
 .booking-booking__base-component.--week-mode .booking-booking-booking .booking-booking-card__buttons {
 	align-self: flex-start;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-booking.--not-visited {
+	--light-lines-size: 3px;
+	--dark-lines-size: 9px;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-booking.--shaded {
+	--light-lines-size: 2px;
+	--dark-lines-size: 6px;
 }
 
 .booking-booking-booking-actions {

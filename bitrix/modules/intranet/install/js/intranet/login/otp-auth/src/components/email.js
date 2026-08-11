@@ -1,0 +1,185 @@
+import { Type } from 'main.core';
+import { Headline } from 'ui.system.typography.vue';
+import { VerificationCode } from './verification-code';
+import { Ajax } from '../api/ajax';
+import { Captcha } from './captcha';
+import { sendData } from 'ui.analytics';
+import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
+
+// @vue/component
+export const Email = {
+	components: {
+		VerificationCode,
+		Captcha,
+		Headline,
+	},
+	props: {
+		authUrl: {
+			type: String,
+			default: '',
+		},
+		captchaCode: {
+			type: String,
+			default: '',
+		},
+		errorMessage: {
+			type: String,
+			default: null,
+		},
+		maskedUserAuthEmail: {
+			type: String,
+			default: '',
+		},
+	},
+	data(): Object
+	{
+		return {
+			isWaiting: false,
+			code: '',
+			isEmailBlockVisible: true,
+			isCaptchaBlockVisible: false,
+			countdown: null,
+			countdownInterval: null,
+		};
+	},
+	computed: {
+		emailMessage(): String
+		{
+			return this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_EMAIL_SENDED', {
+				'#EMAIL#': `<strong>${this.maskedUserAuthEmail}</strong>`,
+			});
+		},
+		isResendEmailAvailable(): boolean
+		{
+			return (this.countdown && this.countdown <= 0);
+		},
+		isCountdownVisible(): boolean
+		{
+			return (this.countdown && this.countdown > 0);
+		},
+	},
+	mounted()
+	{
+		this.sendEmailCode();
+		this.sendAnalytics('email_show');
+	},
+	beforeUnmount()
+	{
+		clearInterval(this.countdownInterval);
+	},
+	methods: {
+		...useOtpCaptchaFlow({
+			mainBlockVisibleKey: 'isEmailBlockVisible',
+		}),
+		onSubmitForm(event)
+		{
+			this.handleFormSubmit(event);
+		},
+		async sendEmailCode()
+		{
+			await Ajax.sendAuthEmail().then((response) => {
+				this.countdown = Type.isNumber(response.data?.timeLeft) ? response.data.timeLeft : 0;
+				this.startCountdownTimer();
+			}, (response) => {
+				this.countdown = Type.isNumber(response.data?.timeLeft) ? response.data.timeLeft : 0;
+				this.startCountdownTimer();
+			}).catch((error) => console.error(error));
+		},
+		async resendEmailCode()
+		{
+			this.sendAnalytics('email_repeat_click');
+			await this.sendEmailCode();
+		},
+		startCountdownTimer()
+		{
+			clearInterval(this.countdownInterval);
+
+			this.countdownInterval = setInterval(() => {
+				this.countdown--;
+				if (this.countdown < 0)
+				{
+					clearInterval(this.countdownInterval);
+				}
+			}, 1000);
+		},
+		onCodeChange(code)
+		{
+			this.code = code;
+		},
+		onCodeComplete(code)
+		{
+			this.code = code;
+			this.handleCodeComplete(code);
+		},
+		showAlternativeMethods()
+		{
+			this.$emit('clear-errors');
+			this.$emit('show-alternatives');
+		},
+		sendAnalytics(event)
+		{
+			sendData({
+				tool: 'security',
+				category: 'fa_auth_form',
+				event,
+			});
+		},
+	},
+	template: `
+		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
+			<input type="hidden" name="AUTH_FORM" value="Y"/>
+			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="USER_OTP" :value="code"/>
+			<input type="hidden" name="CURRENT_STEP" value="email"/>
+			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
+
+			<div v-show="isEmailBlockVisible">
+				<div @click="showAlternativeMethods" class="intranet-back-button">
+					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --smscode"></i>
+				</div>
+				<div class="intranet-island-otp-push-sms__wrapper">
+					<Headline size='lg' class="intranet-form-title --padding">
+						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
+					</Headline>
+					<span class="intranet-island-otp-push-sms__description">
+						<div v-html="emailMessage"></div>
+					</span>
+					<VerificationCode
+						:code="code"
+						:isPhoneCode=true
+						:error="errorMessage"
+						@code-change="onCodeChange"
+						@code-complete="onCodeComplete"
+					></VerificationCode>
+	
+					<div class="intranet-island-otp-push-sms__resend">
+						<span v-if="isResendEmailAvailable" class="intranet-island-otp-push__link" @click="resendEmailCode">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_RESEND') }}
+						</span>
+						<span v-if="isCountdownVisible" class="intranet-island-otp-push-sms__countdown">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_COUNTDOWN', {'#SEC#': this.countdown}) }}
+						</span>
+					</div>
+	
+					<button
+						class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
+						type="submit"
+						@click="onSubmitForm($event)"
+					>
+							<span class="intranet-text-btn__content-wrapper">
+								{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
+							</span>
+						<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
+					</button>
+				</div>
+			</div>
+
+			<template v-if="captchaCode">
+				<captcha
+					v-show="isCaptchaBlockVisible"
+					:captchaCode="captchaCode"
+				></captcha>
+			</template>
+		</form>
+	`,
+};

@@ -13,11 +13,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @global CMain $APPLICATION
  * @global CUser $USER
  */
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\Loader;
-use \Bitrix\Rest\Engine\Access;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+use Bitrix\Rest\Engine\Access;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Rest\Internal\Integration\UI\CopilotService;
+use Bitrix\Main\Web\Uri;
 
 if(!CModule::IncludeModule("rest"))
 {
@@ -46,7 +47,7 @@ $arResult['INSTALL_HASH'] = false;
 if (isset($_GET["ver"]) && intval($_GET["ver"]) && isset($_GET["check_hash"]) && isset($_GET['install_hash']))
 {
 	$checkHash = $_GET['check_hash'];
-	$check = md5(rtrim(CHTTP::URN2URI('/'), '/').'|'.$_GET['ver'].'|'.$arParams['APP']);
+	$check = md5(rtrim((string)(new Uri('/'))->toAbsolute(), '/').'|'.$_GET['ver'].'|'.$arParams['APP']);
 
 	if($checkHash === $check)
 	{

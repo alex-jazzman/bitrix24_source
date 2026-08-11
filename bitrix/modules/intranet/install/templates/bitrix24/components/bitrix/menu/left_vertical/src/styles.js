@@ -26,7 +26,6 @@ import './css/menu-item-beta.css';
 import './css/menu-item-warning-state.css';
 import './css/menu-draggable-wrap.css';
 import './css/menu-popup-form.css';
-import './css/select-preset-popup.css';
 import './css/menu-popup.css';
 import './css/menu-btn-arrow-up.css';
 import './css/menu-marta.css';

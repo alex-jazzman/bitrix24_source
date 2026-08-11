@@ -1,14 +1,18 @@
-import { Loc, Tag, Type } from 'main.core';
+import { Dom, Loc, Tag, Type } from 'main.core';
 
 export class TitleField
 {
 	#defaultValue: string;
 	#fieldNode: ?HTMLInputElement;
+	#labelNode: ?HTMLElement;
+	#hintNode: ?HTMLElement;
 
 	constructor(defaultValue: string = '')
 	{
 		this.#defaultValue = Type.isString(defaultValue) ? defaultValue : '';
 		this.#fieldNode = null;
+		this.#labelNode = null;
+		this.#hintNode = null;
 	}
 
 	render(): HTMLElement
@@ -43,10 +47,60 @@ export class TitleField
 		{
 			this.#fieldNode.value = this.#defaultValue;
 		}
+		this.#labelNode = rootNode.querySelector('.dashboard-params-title');
+	}
+
+	setHintVisible(visible: boolean): void
+	{
+		if (visible)
+		{
+			this.#showHint();
+		}
+		else
+		{
+			this.#hideHint();
+		}
+	}
+
+	#showHint(): void
+	{
+		if (this.#hintNode || !Type.isDomNode(this.#labelNode))
+		{
+			return;
+		}
+
+		if (!BX?.UI?.Hint || !Type.isFunction(BX.UI.Hint.createNode))
+		{
+			return;
+		}
+
+		const hintText = Loc.getMessage('DASHBOARD_EDIT_TITLE_ATTACH_HINT') ?? '';
+		this.#hintNode = BX.UI.Hint.createNode(hintText);
+		Dom.addClass(this.#hintNode, 'dashboard-title-hint');
+		Dom.append(this.#hintNode, this.#labelNode);
+	}
+
+	#hideHint(): void
+	{
+		if (!this.#hintNode)
+		{
+			return;
+		}
+
+		Dom.remove(this.#hintNode);
+		this.#hintNode = null;
 	}
 
 	getValue(): string
 	{
 		return this.#fieldNode?.value ?? '';
+	}
+
+	setValue(value: string): void
+	{
+		if (this.#fieldNode)
+		{
+			this.#fieldNode.value = value;
+		}
 	}
 }

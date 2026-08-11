@@ -3,15 +3,22 @@ import { Grid, Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
 
 import { GridBase } from './grid-base';
+import { gridTokens } from './grid-tokens';
+import { GridTokenKey } from './const';
+
 class GridWeek extends GridBase
 {
 	calculateLeft(dayIndex: number, fromTs: number): number
 	{
-		const dayOffset = dayIndex * Grid.SizeElement.WeekCellWidth;
+		const dayOffset = dayIndex * gridTokens.get(GridTokenKey.WeekCellWidth) * this.#zoom;
 		const weekStartTs = this.bookingWeekStartTs;
 		const dayMs = Duration.getUnitDurations().d;
 		const dayStartTs = weekStartTs + dayIndex * dayMs;
-		const hourOffset = (fromTs - dayStartTs) / Duration.getUnitDurations().H * Grid.SizeElement.WeekHourWidth;
+		const hourOffset = (fromTs - dayStartTs)
+			/ Duration.getUnitDurations().H
+			* gridTokens.get(GridTokenKey.WeekHourWidth)
+			* this.#zoom
+		;
 
 		return dayOffset + hourOffset;
 	}
@@ -20,31 +27,35 @@ class GridWeek extends GridBase
 	{
 		const index = this.#resourcesIds.indexOf(resourceId);
 
-		return Grid.SizeElement.WeekDaysPanelHeight + index * Grid.SizeElement.WeekCellHeight;
+		return gridTokens.get(GridTokenKey.WeekDaysPanelHeight) + index * gridTokens.get(GridTokenKey.WeekCellHeight);
 	}
 
 	calculateHeight(): number
 	{
-		return Grid.SizeElement.WeekCellHeight;
+		return gridTokens.get(GridTokenKey.WeekCellHeight);
 	}
 
 	calculateWidth(fromTs: number, toTs: number): number
 	{
 		const weekStartTs = this.bookingWeekStartTs;
+
+		return this.#msToPixels(toTs - weekStartTs) - this.#msToPixels(fromTs - weekStartTs);
+	}
+
+	#msToPixels(ms: number): number
+	{
 		const dayMs = Duration.getUnitDurations().d;
+		const dayIndex = Math.floor(ms / dayMs);
+		const msWithinDay = ms - dayIndex * dayMs;
 
-		const fromRelMs = fromTs - weekStartTs;
-		const toRelMs = toTs - weekStartTs;
-
-		const fromDayIndex = Math.floor(fromRelMs / dayMs);
-		const toDayIndex = Math.floor(toRelMs / dayMs);
-
-		const fromHourOffset = (fromRelMs - fromDayIndex * dayMs)
+		const dayPixels = dayIndex * gridTokens.get(GridTokenKey.WeekCellWidth) * this.#zoom;
+		const hourPixels = msWithinDay
 			/ Duration.getUnitDurations().H
-			* Grid.SizeElement.WeekHourWidth;
-		const toHourOffset = (toRelMs - toDayIndex * dayMs) / Duration.getUnitDurations().H * Grid.SizeElement.WeekHourWidth;
+			* gridTokens.get(GridTokenKey.WeekHourWidth)
+			* this.#zoom
+		;
 
-		return (toDayIndex - fromDayIndex) * Grid.SizeElement.WeekCellWidth + (toHourOffset - fromHourOffset);
+		return dayPixels + hourPixels;
 	}
 
 	getDayIndex(dateTs: number): number
@@ -79,6 +90,11 @@ class GridWeek extends GridBase
 	get #offset(): number
 	{
 		return Core.getStore().getters[`${Model.Interface}/offset`];
+	}
+
+	get #zoom(): number
+	{
+		return Core.getStore().getters[`${Model.Interface}/zoom`];
 	}
 
 	get #resourcesIds(): number[]

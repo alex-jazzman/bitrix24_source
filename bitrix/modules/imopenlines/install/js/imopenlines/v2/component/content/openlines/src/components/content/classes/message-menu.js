@@ -1,12 +1,13 @@
-import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { Loc } from 'main.core';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
+
+import { UserType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { MessageMenu } from 'im.v2.lib.menu';
 
-import { MessageService, QuickReplyService } from 'imopenlines.v2.provider.service';
 import { Connector } from 'imopenlines.v2.const';
-
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+import { MessageService, QuickReplyService } from 'imopenlines.v2.provider.service';
 
 const MenuSectionCode = {
 	main: 'first',
@@ -21,6 +22,7 @@ export class OpenLinesMessageMenu extends MessageMenu
 		const firstGroupItems = [
 			this.getReplyItem(),
 			this.getCopyItem(),
+			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getForwardItem(),
 			this.getFavoriteItem(),
@@ -62,7 +64,7 @@ export class OpenLinesMessageMenu extends MessageMenu
 			title: Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY'),
 			onClick: () => {
 				const quickReplyService = new QuickReplyService();
-				quickReplyService.saveFromMessage({
+				void quickReplyService.saveFromMessage({
 					dialogId: this.context.dialogId,
 					messageId: this.context.id,
 				}).then((reply) => {
@@ -112,9 +114,11 @@ export class OpenLinesMessageMenu extends MessageMenu
 		return currentConnector?.connectorId === Connector.network;
 	}
 
-	#isSupport24(dialogId: string): boolean
+	#isMessageFromClient(): boolean
 	{
-		return Core.getStore().getters['users/bots/isSupport'](dialogId);
+		const author = Core.getStore().getters['users/get'](this.context.authorId);
+
+		return author?.type === UserType.extranet;
 	}
 
 	#canShowMultiDialogMenu(dialogId: string): boolean
@@ -122,6 +126,6 @@ export class OpenLinesMessageMenu extends MessageMenu
 		return !this.isDeletedMessage()
 			&& this.#isMultiDialog(dialogId)
 			&& this.#isNetworkConnector(dialogId)
-			&& this.#isSupport24(dialogId);
+			&& this.#isMessageFromClient();
 	}
 }

@@ -1,7 +1,9 @@
 <?php
 
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Internal\Integration\Main\VerifyEmailService;
 use Bitrix\Intranet\Internal\Integration\Main\VerifyPhoneService;
+use Bitrix\Intranet\Internal\Repository\BackupEmailConfirmationRepository;
 use Bitrix\Main\Engine\UrlManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -15,23 +17,23 @@ return [
 	'css' => 'dist/connect-popup.bundle.css',
 	'js' => 'dist/connect-popup.bundle.js',
 	'rel' => [
-		'main.popup',
-		'ui.design-tokens',
 		'intranet.design-tokens',
-		'ui.analytics',
-		'ui.type',
-		'main.phonenumber',
-		'main.core.events',
-		'main.sidepanel',
-		'main.core.cache',
 		'intranet.push-otp.connect-popup',
-		'ui.confetti',
-		'main.loader',
-		'main.qrcode',
-		'pull.client',
-		'ui.buttons',
-		'ui.icon-set.outline',
 		'main.core',
+		'main.core.cache',
+		'main.core.events',
+		'main.loader',
+		'main.phonenumber',
+		'main.popup',
+		'main.qrcode',
+		'main.sidepanel',
+		'pull.client',
+		'ui.analytics',
+		'ui.buttons',
+		'ui.confetti',
+		'ui.design-tokens',
+		'ui.icon-set.outline',
+		'ui.type',
 	],
 	'settings' => [
 		'recoveryCodes' => [
@@ -39,6 +41,10 @@ return [
 			'downloadLink' => UrlManager::getInstance()->create('intranet.v2.Otp.generateRecoveryCodesFile'),
 		],
 		'canSendSms' => (new VerifyPhoneService(new User(\Bitrix\Intranet\CurrentUser::get()->getId())))->canSendSms(),
+		'canSendEmail' => (new VerifyEmailService(
+			new User(\Bitrix\Intranet\CurrentUser::get()->getId()),
+			new BackupEmailConfirmationRepository(),
+		))->canSendEmail(),
 		'userId' => $userId,
 		'settingsUrl' => $userId ? SITE_DIR . 'company/personal/user/' . $userId . '/common_security/' : '',
 	],

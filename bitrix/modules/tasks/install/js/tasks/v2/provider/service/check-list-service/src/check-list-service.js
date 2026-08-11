@@ -79,6 +79,9 @@ class CheckListService
 
 	async save(taskId: number, checklists: CheckListModel[], skipNotification: boolean = false): Promise<void>
 	{
+		// eslint-disable-next-line no-param-reassign
+		checklists = this.#excludeDeletingItems(checklists);
+
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try
@@ -301,6 +304,33 @@ class CheckListService
 		{
 			promise?.resolve();
 		}
+	}
+
+	#excludeDeletingItems(checkLists: CheckListModel[]): CheckListModel[]
+	{
+		const deletingMap = this.$store.getters[`${Model.Interface}/deletingCheckListIds`] ?? {};
+		const deletingIds = new Set(Object.values(deletingMap));
+
+		if (deletingIds.size === 0)
+		{
+			return checkLists;
+		}
+
+		const queue = [...deletingIds];
+
+		while (queue.length > 0)
+		{
+			const parentId = queue.shift();
+			checkLists.forEach((item: CheckListModel) => {
+				if (!deletingIds.has(item.id) && item.parentId === parentId)
+				{
+					deletingIds.add(item.id);
+					queue.push(item.id);
+				}
+			});
+		}
+
+		return checkLists.filter((item: CheckListModel) => !deletingIds.has(item.id));
 	}
 
 	isCheckListExists(checkListId: number): boolean

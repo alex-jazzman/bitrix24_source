@@ -3,6 +3,56 @@ $MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_DESC"] = "#USER_PHONE#: phone numb
 #CODE#: confirmation code";
 $MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_NAME"] = "Login confirmation via SMS code";
 $MESS["SECURITY_INSTALL_SMS_TEMPLATE_OTP_CONFIRM_MESS"] = "#CODE# is Bitrix24 login confirmation code.";
+$MESS["SEC_EVENT_USER_OTP_CONFIRM_DESC"] = "#USER_ID#: user ID
+#EMAIL#: Backup email address for OTP
+#LOGIN#: Login
+#CODE#: Confirmation code
+#DATE#: Date and time";
+$MESS["SEC_EVENT_USER_OTP_CONFIRM_NAME"] = "Confirm backup email";
+$MESS["SEC_EVENT_USER_OTP_DESC"] = "#USER_ID#: User ID
+#EMAIL#: Back-up email address for one-time passwords
+#LOGIN#: Login
+#CODE#: One-time password
+#DATE#: Date and time
+#DEVICE#: Device type
+#BROWSER#: Browser
+#PLATFORM#: Operating system
+#DEVICE_INFO#: Device information
+#USER_AGENT#: Browser User Agent
+#IP#: IP address
+#COUNTRY#: Country
+#REGION#: Region
+#CITY#: City
+#LOCATION#: Full location
+#HELP_URL#: Help section page URL";
+$MESS["SEC_EVENT_USER_OTP_NAME"] = "One-time password";
+$MESS["SEC_TEMPLATE_USER_OTP_CONFIRM_MESSAGE"] = "Copy this email verification code and paste it when requested by Bitrix24:
+				
+#CODE#
+				
+Ignore this message if you didn't expect it.
+
+Your Bitrix24: #SERVER_NAME#
+Login: #LOGIN#
+Date: #DATE#";
+$MESS["SEC_TEMPLATE_USER_OTP_CONFIRM_SUBJECT"] = "#SITE_NAME#: Email confirmation code";
+$MESS["SEC_TEMPLATE_USER_OTP_MESSAGE"] = "Someone logged in to your account on #SERVER_NAME# and requested a one-time password:
+				
+#CODE#
+				
+Check the information below and make sure it was you.
+
+Date: #DATE#
+Login: #LOGIN#
+Device: #DEVICE_INFO#
+Browser: #USER_AGENT#
+IP address: #IP#
+Location: #LOCATION#
+
+If you can't confirm it was you, change your password as soon as possible.
+
+Learn more about account security here: #HELP_URL#";
+$MESS["SEC_TEMPLATE_USER_OTP_SUBJECT"] = "#SITE_NAME#: One-time password";
 $MESS["VIRUS_DETECTED_DESC"] = "#EMAIL# - Site administrator's e-mail address (from the Kernel module settings)";
 $MESS["VIRUS_DETECTED_MESSAGE"] = "Informational message from #SITE_NAME#
 

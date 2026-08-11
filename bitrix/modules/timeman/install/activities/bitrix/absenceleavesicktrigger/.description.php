@@ -37,7 +37,11 @@ $arActivityDescription =
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('AbsenceLeaveSickTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::TEAM_MANAGEMENT->value,
+			ActivityGroup::HR->value,
+		])
 		->setReturn([
 			'USER' => [
 				'Name' => (string)Loc::getMessage('TIMEMAN_ABSENCE_LEAVE_RETURN_FIELD_USER'),

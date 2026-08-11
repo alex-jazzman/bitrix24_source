@@ -65,6 +65,16 @@ if ($isMobile)
 		'<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
 		true,
 	);
+
+	// Mobile app bridge: CMobile::Init() attaches bitrix_mobile.js / mobile_lib.js
+	// (which define window.BXMobileApp / app) and mobile_tools exposes BX.MobileTools,
+	// so portal links and task/user mentions open natively instead of the OS browser.
+	// The bare note site template omits the mobile bootstrap, so we do it here.
+	if (\Bitrix\Main\Loader::includeModule('mobileapp') && !defined('SKIP_MOBILEAPP_INIT'))
+	{
+		\CMobile::Init();
+	}
+	\CJSCore::Init(['mobile_tools']);
 }
 
 $APPLICATION->SetTitle(Loc::getMessage('NOTE_EDITOR_TEMPLATE_PAGE_TITLE'));

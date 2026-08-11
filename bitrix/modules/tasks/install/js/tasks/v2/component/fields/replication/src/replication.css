@@ -1,3 +1,21 @@
+.tasks-field-replication {
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-field-replication-content-wrapper {
+	background: var(--ui-color-base-8);
+	padding: var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	cursor: pointer;
+}
+
+.tasks-field-replication-content-wrapper.--readonly {
+	cursor: default;
+}
+
 .tasks-full-card-field-container-replication {
 	background-color: rgba(255, 255, 255, 0.44) !important;
 	border-radius: var(--ui-border-radius-md);

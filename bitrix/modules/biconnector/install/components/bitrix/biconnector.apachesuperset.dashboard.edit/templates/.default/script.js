@@ -1,14 +1,18 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, biconnector_dashboardParametersSelector, biconnector_apacheSupersetAnalytics, ui_buttons, ui_textEditor, main_loader, ui_uploader_core, ui_uploader_tileWidget) {
+(function (exports, main_core, main_core_events, biconnector_dashboardParametersSelector, biconnector_apacheSupersetAnalytics, biconnector_ahaMoment, ui_buttons, ui_entitySelector, main_popup, ui_textEditor, main_loader, ui_uploader_core, ui_uploader_tileWidget) {
 	'use strict';
 
 	class TitleField {
 		#defaultValue;
 		#fieldNode;
+		#labelNode;
+		#hintNode;
 		constructor(defaultValue = '') {
 			this.#defaultValue = main_core.Type.isString(defaultValue) ? defaultValue : '';
 			this.#fieldNode = null;
+			this.#labelNode = null;
+			this.#hintNode = null;
 		}
 		render() {
 			return main_core.Tag.render`
@@ -36,9 +40,41 @@ this.BX = this.BX || {};
 			if (main_core.Type.isDomNode(this.#fieldNode)) {
 				this.#fieldNode.value = this.#defaultValue;
 			}
+			this.#labelNode = rootNode.querySelector('.dashboard-params-title');
+		}
+		setHintVisible(visible) {
+			if (visible) {
+				this.#showHint();
+			} else {
+				this.#hideHint();
+			}
+		}
+		#showHint() {
+			if (this.#hintNode || !main_core.Type.isDomNode(this.#labelNode)) {
+				return;
+			}
+			if (!BX?.UI?.Hint || !main_core.Type.isFunction(BX.UI.Hint.createNode)) {
+				return;
+			}
+			const hintText = main_core.Loc.getMessage('DASHBOARD_EDIT_TITLE_ATTACH_HINT') ?? '';
+			this.#hintNode = BX.UI.Hint.createNode(hintText);
+			main_core.Dom.addClass(this.#hintNode, 'dashboard-title-hint');
+			main_core.Dom.append(this.#hintNode, this.#labelNode);
+		}
+		#hideHint() {
+			if (!this.#hintNode) {
+				return;
+			}
+			main_core.Dom.remove(this.#hintNode);
+			this.#hintNode = null;
 		}
 		getValue() {
 			return this.#fieldNode?.value ?? '';
+		}
+		setValue(value) {
+			if (this.#fieldNode) {
+				this.#fieldNode.value = value;
+			}
 		}
 	}
 
@@ -863,6 +899,11 @@ this.BX = this.BX || {};
 		#node;
 		#paramsSelector;
 		#saveButton;
+		#attachedExternalId = null;
+		#attachedPublished = null;
+		#snapshotTitle = null;
+		#attachedCardNode = null;
+		#attachAhaMomentShown = false;
 		#titleField;
 		#descriptionField;
 		#groupsField;
@@ -931,9 +972,217 @@ this.BX = this.BX || {};
 			</div>
 		`;
 		}
+		onMoreButtonClick() {
+			const button = document.querySelector('.dashboard-edit-more-btn');
+			if (!button) {
+				return;
+			}
+			const menuId = 'dashboard-edit-more-menu';
+			const openedMenu = main_popup.MenuManager.getMenuById(menuId);
+			if (openedMenu) {
+				openedMenu.close();
+				return;
+			}
+			const angleOffset = Math.round(button.offsetWidth / 2 + main_popup.Popup.getOption('angleMinTop'));
+			const menu = main_popup.MenuManager.create({
+				id: menuId,
+				closeByEsc: true,
+				cacheable: false,
+				angle: {
+					offset: angleOffset
+				},
+				autoHide: true,
+				bindElement: button,
+				items: [{
+					text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_MENU_ITEM'),
+					onclick: () => {
+						menu.close();
+						this.#openAttachPopup();
+					}
+				}]
+			});
+			menu.show();
+		}
+		#openAttachPopup() {
+			let selectedItem = null;
+			const attachButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_CONFIRM'),
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.FILLED,
+				size: ui_buttons.ButtonSize.LARGE,
+				onclick: () => this.#handleAttachConfirm(selectedItem, dialog)
+			});
+			attachButton.setDisabled(true);
+			const cancelButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_CANCEL'),
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.PLAIN,
+				size: ui_buttons.ButtonSize.LARGE,
+				onclick: () => {
+					dialog.hide();
+					dialog.destroy();
+				}
+			});
+			const buttonsContainer = main_core.Tag.render`
+			<div class="dashboard-attach-popup-buttons"></div>
+		`;
+			main_core.Dom.append(attachButton.getContainer(), buttonsContainer);
+			main_core.Dom.append(cancelButton.getContainer(), buttonsContainer);
+			const closeButton = main_core.Tag.render`
+			<div class="ui-icon-set --cross-l dashboard-attach-popup-close"></div>
+		`;
+			const headerContent = main_core.Tag.render`
+			<div class="dashboard-attach-popup-header">
+				<div class="dashboard-attach-popup-header-text">
+					<div class="dashboard-attach-popup-header-title">
+						${main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_DIALOG_TITLE')}
+					</div>
+					<div class="dashboard-attach-popup-header-subtitle">
+						${main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_DIALOG_SUBTITLE')}
+					</div>
+				</div>
+				${closeButton}
+			</div>
+		`;
+			main_core.Event.bind(closeButton, 'click', () => {
+				dialog.hide();
+				dialog.destroy();
+			});
+			const dialog = new ui_entitySelector.Dialog({
+				id: 'biconnector-attach-superset-dashboard',
+				multiple: false,
+				hideOnSelect: false,
+				hideOnDeselect: false,
+				enableSearch: true,
+				showAvatars: true,
+				compactView: false,
+				dynamicLoad: true,
+				width: 512,
+				height: 470,
+				entities: [{
+					id: 'biconnector-superset-unlinked-dashboard',
+					dynamicLoad: true
+				}],
+				recentTabOptions: {
+					stub: true,
+					stubOptions: {
+						title: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_EMPTY_TITLE')
+					}
+				},
+				header: headerContent,
+				headerOptions: {
+					containerClass: 'dashboard-attach-popup-header-container'
+				},
+				footer: buttonsContainer,
+				footerOptions: {
+					containerClass: 'dashboard-attach-popup-footer-container'
+				},
+				popupOptions: {
+					overlay: true,
+					closeIcon: true,
+					autoHide: false,
+					animation: 'fading-slide',
+					className: 'dashboard-attach-popup'
+				},
+				events: {
+					'Item:onSelect': event => {
+						selectedItem = event.getData().item;
+						attachButton.setDisabled(false);
+					},
+					'Item:onDeselect': () => {
+						selectedItem = null;
+						attachButton.setDisabled(true);
+					}
+				}
+			});
+			dialog.show();
+		}
+		#handleAttachConfirm(selectedItem, dialog) {
+			if (!selectedItem) {
+				return;
+			}
+			const customData = selectedItem.getCustomData();
+			const externalId = Number(customData.get('externalId'));
+			const published = Boolean(customData.get('published'));
+			const title = String(customData.get('title') ?? '');
+			dialog.hide();
+			dialog.destroy();
+			if (this.#attachedExternalId === null) {
+				this.#snapshotTitle = this.#titleField.getValue();
+			}
+			this.#attachedExternalId = externalId;
+			this.#attachedPublished = published;
+			this.#titleField.setValue(title);
+			this.#titleField.setHintVisible(true);
+			this.#renderAttachedCard(title);
+			this.#showAttachAhaMoment();
+		}
+		#renderAttachedCard(title) {
+			this.#removeAttachedCard();
+			const container = this.#node;
+			if (!main_core.Type.isDomNode(container)) {
+				return;
+			}
+			const detachButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_DETACH'),
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				size: ui_buttons.ButtonSize.MEDIUM,
+				onclick: () => this.#detachDashboard()
+			});
+			this.#attachedCardNode = main_core.Tag.render`
+			<div class="dashboard-edit-attached-card">
+				<div class="dashboard-edit-attached-card-text">
+					<div class="dashboard-edit-attached-card-title">${main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_TITLE')}</div>
+					<div class="dashboard-edit-attached-card-subtitle">${main_core.Text.encode(title ?? '')}</div>
+				</div>
+			</div>
+		`;
+			main_core.Dom.append(detachButton.getContainer(), this.#attachedCardNode);
+			main_core.Dom.prepend(this.#attachedCardNode, container);
+		}
+		#removeAttachedCard() {
+			if (this.#attachedCardNode) {
+				main_core.Dom.remove(this.#attachedCardNode);
+				this.#attachedCardNode = null;
+			}
+		}
+		#showAttachAhaMoment() {
+			if (this.#attachAhaMomentShown) {
+				return;
+			}
+			const options = this.#props.attachAhaMoment;
+			if (!main_core.Type.isPlainObject(options) || options.canShow !== true) {
+				return;
+			}
+			const bindElement = this.#attachedCardNode?.querySelector('.dashboard-edit-attached-card-subtitle');
+			if (!main_core.Type.isDomNode(bindElement)) {
+				return;
+			}
+			this.#attachAhaMomentShown = true;
+			const ahaMoment = new biconnector_ahaMoment.AhaMoment({
+				...options,
+				compact: true,
+				title: main_core.Loc.getMessage('DASHBOARD_EDIT_AHA_TITLE'),
+				description: main_core.Loc.getMessage('DASHBOARD_EDIT_AHA_TEXT'),
+				bindElement,
+				popupAlignment: 'start'
+			});
+			ahaMoment.show();
+		}
+		#detachDashboard() {
+			if (this.#snapshotTitle !== null) {
+				this.#titleField.setValue(this.#snapshotTitle);
+				this.#snapshotTitle = null;
+			}
+			this.#attachedExternalId = null;
+			this.#attachedPublished = null;
+			this.#titleField.setHintVisible(false);
+			this.#removeAttachedCard();
+		}
 		#getDescriptionSection() {
 			return main_core.Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-description-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-description-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -955,7 +1204,7 @@ this.BX = this.BX || {};
 		}
 		#getMainSection() {
 			return main_core.Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-main-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-main-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -984,7 +1233,7 @@ this.BX = this.BX || {};
 		}
 		#getGallerySection() {
 			return main_core.Tag.render`
-			<div class="ui-entity-editor-section-edit dashboard-edit-gallery-section">
+			<div class="ui-entity-editor-section-edit dashboard-edit-section dashboard-edit-gallery-section">
 				<div class="ui-entity-editor-section-header">
 					<div class="ui-entity-editor-header-title">
 						<div class="ui-entity-editor-header-title-text dashboard-edit-section-title">
@@ -1056,6 +1305,10 @@ this.BX = this.BX || {};
 				groups: currentGroups,
 				...this.#parametersField.getValue(selectorData)
 			};
+			if (this.#attachedExternalId !== null) {
+				saveData.externalId = this.#attachedExternalId;
+				saveData.externalPublished = this.#attachedPublished;
+			}
 			this.#saveButton.setWaiting(true);
 			main_core.ajax.runComponentAction(this.#props.componentName, 'save', {
 				mode: 'class',
@@ -1147,4 +1400,4 @@ this.BX = this.BX || {};
 
 	exports.SupersetDashboardEditManager = SupersetDashboardEditManager;
 
-})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.TextEditor, BX, BX.UI.Uploader, BX.UI.Uploader);
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.UI, BX.UI.EntitySelector, BX.Main, BX.UI.TextEditor, BX, BX.UI.Uploader, BX.UI.Uploader);

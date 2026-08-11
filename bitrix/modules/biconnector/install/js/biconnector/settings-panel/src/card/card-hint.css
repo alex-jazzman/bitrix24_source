@@ -1,0 +1,25 @@
+.biconnector-settings-card-hint {
+	background-color: var(--ui-color-accent-soft-blue-3);
+	border-radius: var(--ui-border-radius-lg);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md2);
+}
+
+.biconnector-settings-card-hint__text {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2);
+}
+
+.biconnector-settings-card-hint__link {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: -0.05px;
+	color: var(--ui-color-accent-main-link, #0154c8);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.biconnector-settings-card-hint__link:hover {
+	text-decoration: underline;
+}

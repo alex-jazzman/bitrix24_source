@@ -16,6 +16,7 @@ type CatalogState = {
 	isShowSearch: boolean,
 	isExpandedCatalog: boolean,
 	isFixedCatalog: boolean,
+	initPromise: ?Promise<void>,
 };
 
 export type SearchResults = {
@@ -29,6 +30,7 @@ const REPLACE_TYPES_MAP = {
 	ReadDataStorageActivity: 'services',
 	DeleteDataStorageActivity: 'services',
 	SetupTemplateActivity: 'services',
+	AiProcessingActivity: 'services',
 
 	IfElseBranchActivity: 'operators',
 	ForEachActivity: 'operators',
@@ -46,6 +48,7 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 		isShowSearch: false,
 		isExpandedCatalog: true,
 		isFixedCatalog: true,
+		initPromise: null,
 	}),
 	getters: {
 		canSearch: (state: CatalogState): boolean => {
@@ -92,11 +95,28 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 
 			return groups.length + items.length;
 		},
+		getDefaultTitle: (state: CatalogState) => (activity: ?{ Type: string, PresetId?: ?string }): string => {
+			if (!activity?.Type)
+			{
+				return '';
+			}
+
+			return state.groups
+				.flatMap((group) => group.items ?? [])
+				.find((item) => item.id === activity.Type
+					&& (item.presetId ?? null) === (activity.PresetId ?? null))
+				?.title ?? '';
+		},
 	},
 	actions: {
-		async init(): Promise<void>
+		init(): Promise<void>
 		{
-			await this.fetchCatalogData();
+			if (!this.initPromise)
+			{
+				this.initPromise = this.fetchCatalogData();
+			}
+
+			return this.initPromise;
 		},
 		async fetchCatalogData(): Promise<void>
 		{

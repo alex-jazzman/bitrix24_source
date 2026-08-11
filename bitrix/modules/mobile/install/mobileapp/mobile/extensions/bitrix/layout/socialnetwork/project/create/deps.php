@@ -5,9 +5,7 @@ return [
 		'apptheme',
 		'asset-manager',
 		'bottom-sheet',
-		'layout/socialnetwork/project/advanced-settings',
-		'layout/socialnetwork/project/fields/*',
-		'layout/ui/fields-wrapper',
+		'layout/socialnetwork/project/fields/name',
 		'layout/ui/loading-screen',
 		'loc',
 		'notify',
@@ -19,6 +17,7 @@ return [
 		'ui-system/form/buttons',
 		'ui-system/layout/box',
 		'ui-system/layout/dialog-footer',
+		'utils/guid',
 	],
 	'bundle' => [
 		'./src/trial-feature-activation',

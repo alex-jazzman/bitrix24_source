@@ -27,6 +27,8 @@ jn.define('im/messenger/controller/navigation/src/nested/context', (require, exp
 		headerController;
 		/** @type {NestedMutationHandler|null} */
 		mutationHandler;
+		/** @type {NestedDeletionWatcher|null} */
+		deletionWatcher;
 
 		constructor({ widget, chatId, sessionId, previousRecentId, previousSessionId })
 		{
@@ -39,17 +41,21 @@ jn.define('im/messenger/controller/navigation/src/nested/context', (require, exp
 			this.tabCounters = null;
 			this.headerController = null;
 			this.mutationHandler = null;
+			this.deletionWatcher = null;
+			this.widgetCode = `im.tabs-${chatId}-${sessionId}`;
 		}
 
 		destroy()
 		{
 			this.mutationHandler?.destructor();
 			this.tabCounters?.destructor();
+			this.deletionWatcher?.destroy();
 			this.widget = null;
 			this.switcher = null;
 			this.tabCounters = null;
 			this.headerController = null;
 			this.mutationHandler = null;
+			this.deletionWatcher = null;
 			this.previousRecentId = null;
 			this.previousSessionId = null;
 		}

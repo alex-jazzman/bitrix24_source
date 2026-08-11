@@ -994,6 +994,8 @@ export class CompactEventForm extends EventEmitter
 
 		this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
 
+		this.eventType = params.eventType || null;
+
 		this.setSections(params.sections, params.trackingUserList);
 	}
 
@@ -1992,6 +1994,7 @@ export class CompactEventForm extends EventEmitter
 			hide_guests: this.userPlannerSelector.hideGuests ? 'Y' : 'N',
 			requestUid: BX.Calendar.Util.registerRequestId(),
 			private_event: entry.isPrivate() ? 'Y' : 'N',
+			event_type: this.eventType || '',
 		};
 
 		let checkCurrentUsersAccessibility = !entry.id || this.checkCurrentUsersAccessibility();
@@ -2348,6 +2351,7 @@ export class CompactEventForm extends EventEmitter
 				meetingNotify: this.userPlannerSelector.getInformValue() ? 'Y' : 'N',
 				hideGuests: this.userPlannerSelector.hideGuests ? 'Y' : 'N',
 				attendeesEntityList: this.userPlannerSelector.getEntityList(),
+				eventType: this.eventType,
 			},
 			jumpToControl,
 		});
@@ -2357,7 +2361,7 @@ export class CompactEventForm extends EventEmitter
 	outsideMouseDownClose(event)
 	{
 		const target = event.target || event.srcElement;
-		this.outsideMouseDown = !target.closest('div.popup-window');
+		this.outsideMouseDown = this.checkOutsideMouseClickTarget(target);
 	}
 
 	isCoveredByTopSlider(): boolean
@@ -2375,7 +2379,7 @@ export class CompactEventForm extends EventEmitter
 	checkOutsideClickClose(event)
 	{
 		const target = event.target || event.srcElement;
-		this.outsideMouseUp = !target.closest('div.popup-window');
+		this.outsideMouseUp = this.checkOutsideMouseClickTarget(target);
 
 		if (
 			Dom.hasClass(target, 'popup-window-close-icon')
@@ -2400,6 +2404,14 @@ export class CompactEventForm extends EventEmitter
 				this.close(false);
 			}, 0);
 		}
+	}
+
+	checkOutsideMouseClickTarget(target): boolean
+	{
+		return !target.closest('button.aiassistant-marta')
+			&& !target.closest('div.aiassistant-marta__chat-popup')
+			&& !target.closest('div.popup-window')
+		;
 	}
 
 	couldBeClosedByEsc(): boolean
@@ -2601,7 +2613,9 @@ export class CompactEventForm extends EventEmitter
 	showConfirmClosePopup()
 	{
 		this.DOM.confirmPopup = new MessageBox({
-			message: this.getConfirmContent(),
+			useAirDesign: true,
+			title: Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_QUESTION'),
+			message: Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_DESC'),
 			minHeight: 120,
 			minWidth: 350,
 			maxWidth: 350,
@@ -2621,21 +2635,11 @@ export class CompactEventForm extends EventEmitter
 					},
 				},
 				closeByEsc: true,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
 			},
 		});
 
 		this.DOM.confirmPopup.show();
-	}
-
-	getConfirmContent()
-	{
-		return Tag.render`
-			<div class="calendar-list-slider-messagebox-text">${`${Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_QUESTION')
-			}<br>${Loc.getMessage('EC_LEAVE_EVENT_CONFIRM_DESC')}`}</div>
-		`;
 	}
 
 	getUndeselectedItems()

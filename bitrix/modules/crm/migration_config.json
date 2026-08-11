@@ -1,0 +1,10 @@
+{
+    "defaultTableName": "b_crm_lead",
+    "installDirectoriesMapping": {
+        "install/activities": "activities",
+        "install/components": "components",
+        "install/images": "images",
+        "install/js": "js",
+        "install/tools": "tools"
+    }
+}

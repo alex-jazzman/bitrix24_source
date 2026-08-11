@@ -3,6 +3,7 @@ import { CurrencyCore } from 'currency.currency-core';
 import { Loader } from 'main.loader';
 import { PopupManager } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import 'main.kanban';
 
 /**
@@ -25,8 +26,8 @@ export class Column extends BX.Kanban.Column
 	editorNodeSelectPopup = null;
 	editorLoaded = false;
 	editorOpen = false;
-	quickFormSaveButton = null;
-	quickFormCancelButton = null;
+	quickFormSaveButtonInstance = null;
+	quickFormCancelButtonInstance = null;
 	editorId = null;
 	editor = null;
 	loader = null;
@@ -605,7 +606,7 @@ export class Column extends BX.Kanban.Column
 							'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
 							'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 							'ENABLE_SETTINGS_FOR_ALL': true,
-							'ANALYTICS_CONFIG': analyticsConfig,
+							'POST_FORM_ANALYTICS_DATA': analyticsConfig,
 							'HOST_COLUMN_FOR_QUICK_EDITOR_ID': this.getId().toString(),
 						}
 					}
@@ -667,7 +668,7 @@ export class Column extends BX.Kanban.Column
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
 						FIELDS: formFields,
 						CONTEXT: context,
-						ANALYTICS_CONFIG: analyticsConfig,
+						POST_FORM_ANALYTICS_DATA: analyticsConfig,
 						HOST_COLUMN_FOR_QUICK_EDITOR_ID: this.getId().toString(),
 					},
 					(result) => {
@@ -778,7 +779,7 @@ export class Column extends BX.Kanban.Column
 				(errors) => {
 					if(this.editorOpen)
 					{
-						this.quickFormSaveButton.classList.remove("ui-btn-wait");
+						this.quickFormSaveButtonInstance.setWaiting(false);
 						this.editorNode.classList.remove("crm-kanban-quick-form-wait");
 
 						var message = '';
@@ -991,13 +992,13 @@ export class Column extends BX.Kanban.Column
 
 	showQuickEditorLoader()
 	{
-		this.quickFormSaveButton.classList.add("ui-btn-wait");
+		this.quickFormSaveButtonInstance.setWaiting(true);
 		this.editorNode.classList.add("crm-kanban-quick-form-wait");
 	}
 
 	hideQuickEditorLoader()
 	{
-		this.quickFormSaveButton.classList.remove("ui-btn-wait");
+		this.quickFormSaveButtonInstance.setWaiting(false);
 		this.editorNode.classList.remove("crm-kanban-quick-form-wait");
 	}
 
@@ -1142,7 +1143,7 @@ export class Column extends BX.Kanban.Column
 		{
 			this.editorNode = Dom.create("div", {
 				props: {
-					className: "crm-kanban-quick-form"
+					className: "crm-kanban-quick-form --ui-context-content-light"
 				},
 				style: {
 					height: "0px"
@@ -1156,39 +1157,36 @@ export class Column extends BX.Kanban.Column
 				]
 			});
 
+			this.quickFormSaveButtonInstance = new Button({
+				text: Loc.getMessage("CRM_KANBAN_POPUP_SAVE"),
+				size: ButtonSize.SMALL,
+				useAirDesign: true,
+				style: AirButtonStyle.FILLED,
+				onclick: () => {
+					this.processQuickEditor();
+					this.showQuickEditorLoader();
+				},
+			});
+
+			this.quickFormCancelButtonInstance = new Button({
+				text: Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
+				size: ButtonSize.SMALL,
+				useAirDesign: true,
+				style: AirButtonStyle.OUTLINE,
+				onclick: () => {
+					this.enabledAddButton();
+					this.hideQuickFormEditor();
+					this.cleanEditor();
+				},
+			});
+
 			this.editorNodeCreate = Dom.create("div", {
 				props: {
 					className: "crm-kanban-quick-form-buttons"
 				},
 				children: [
-					this.quickFormSaveButton = Dom.create("input", {
-						attrs: {
-							type: "button",
-							value: Loc.getMessage("CRM_KANBAN_POPUP_SAVE"),
-							className: "ui-btn ui-btn-xs ui-btn-primary"
-						},
-						events: {
-							click: (ev) => {
-								this.processQuickEditor();
-								this.showQuickEditorLoader();
-								BX.PreventDefault(ev);
-							}
-						}
-					}),
-					this.quickFormCancelButton = Dom.create("input", {
-						attrs: {
-							type: "button",
-							value: Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
-							className: "ui-btn ui-btn-xs ui-btn-link"
-						},
-						events: {
-							click: () => {
-								this.enabledAddButton();
-								this.hideQuickFormEditor();
-								this.cleanEditor();
-							}
-						}
-					})
+					this.quickFormSaveButtonInstance.render(),
+					this.quickFormCancelButtonInstance.render(),
 				]
 			})
 		}

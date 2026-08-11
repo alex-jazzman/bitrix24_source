@@ -250,7 +250,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				></captcha>
 			</template>
 		</form>
-		<Teleport to=".intranet-body__footer-right">
+		<Teleport to=".intranet-body__footer-right" v-if="authOtpHelpLink">
 			<button class="intranet-help-widget intranet-page-base__help">
 				<i class="ui-icon-set intranet-help-widget__icon"></i>
 				<a class="intranet-help-widget__text" :href="authOtpHelpLink">
@@ -273,6 +273,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		static sendAuthSms() {
 			return main_core.ajax.runAction('intranet.v2.Otp.sendAuthSms', {});
 		}
+		static sendAuthEmail() {
+			return main_core.ajax.runAction('intranet.v2.Otp.sendAuthEmail', {});
+		}
 		static sendMobilePush(channelTag) {
 			return main_core.ajax.runAction('intranet.v2.Otp.sendMobilePush', {
 				data: {
@@ -282,6 +285,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		static sendRequestRecoverAccess() {
 			return main_core.ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {});
+		}
+		static getRequestRecoverAccessStatus() {
+			return main_core.ajax.runAction('intranet.v2.Otp.getRequestRecoverAccessStatus', {});
 		}
 		static resetOtpSession() {
 			return main_core.ajax.runAction('intranet.v2.Otp.resetOtpSession', {});
@@ -544,6 +550,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: Boolean,
 				default: false
 			},
+			canLoginByEmail: {
+				type: Boolean,
+				default: false
+			},
 			isRecoveryCodesEnabled: {
 				type: Boolean,
 				default: false
@@ -560,6 +570,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			showSms() {
 				this.$emit('show-sms');
 				this.sendAnalytics('choose_auth_type', 'sms');
+			},
+			showEmail() {
+				this.$emit('show-email');
+				this.sendAnalytics('choose_auth_type', 'email');
 			},
 			showRecoveryCodes() {
 				this.$emit('show-recovery-codes');
@@ -596,6 +610,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</Headline>
 
 			<div class="intranet-island-otp-push-alternative-items__wrapper">
+				<div data-testid="bx-intranet-2fa-alternative-methods-email" v-if="canLoginByEmail" class="intranet-island-otp-push-alternative__item" @click="showEmail">
+					<i class="ui-icon-set --o-mail intranet-island-otp-push-alternative-item__icon"></i>
+					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_EMAIL') }}</span>
+				</div>
 				<div data-testid="bx-intranet-2fa-alternative-methods-sms" v-if="canLoginBySms" class="intranet-island-otp-push-alternative__item" @click="showSms">
 					<i class="ui-icon-set --o-sms intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS') }}</span>
@@ -1041,6 +1059,168 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`
 	};
 
+	// @vue/component
+	const Email = {
+		components: {
+			VerificationCode,
+			Captcha,
+			Headline: ui_system_typography_vue.Headline
+		},
+		props: {
+			authUrl: {
+				type: String,
+				default: ''
+			},
+			captchaCode: {
+				type: String,
+				default: ''
+			},
+			errorMessage: {
+				type: String,
+				default: null
+			},
+			maskedUserAuthEmail: {
+				type: String,
+				default: ''
+			}
+		},
+		data() {
+			return {
+				isWaiting: false,
+				code: '',
+				isEmailBlockVisible: true,
+				isCaptchaBlockVisible: false,
+				countdown: null,
+				countdownInterval: null
+			};
+		},
+		computed: {
+			emailMessage() {
+				return this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_EMAIL_SENDED', {
+					'#EMAIL#': `<strong>${this.maskedUserAuthEmail}</strong>`
+				});
+			},
+			isResendEmailAvailable() {
+				return this.countdown && this.countdown <= 0;
+			},
+			isCountdownVisible() {
+				return this.countdown && this.countdown > 0;
+			}
+		},
+		mounted() {
+			this.sendEmailCode();
+			this.sendAnalytics('email_show');
+		},
+		beforeUnmount() {
+			clearInterval(this.countdownInterval);
+		},
+		methods: {
+			...useOtpCaptchaFlow({
+				mainBlockVisibleKey: 'isEmailBlockVisible'
+			}),
+			onSubmitForm(event) {
+				this.handleFormSubmit(event);
+			},
+			async sendEmailCode() {
+				await Ajax.sendAuthEmail().then(response => {
+					this.countdown = main_core.Type.isNumber(response.data?.timeLeft) ? response.data.timeLeft : 0;
+					this.startCountdownTimer();
+				}, response => {
+					this.countdown = main_core.Type.isNumber(response.data?.timeLeft) ? response.data.timeLeft : 0;
+					this.startCountdownTimer();
+				}).catch(error => console.error(error));
+			},
+			async resendEmailCode() {
+				this.sendAnalytics('email_repeat_click');
+				await this.sendEmailCode();
+			},
+			startCountdownTimer() {
+				clearInterval(this.countdownInterval);
+				this.countdownInterval = setInterval(() => {
+					this.countdown--;
+					if (this.countdown < 0) {
+						clearInterval(this.countdownInterval);
+					}
+				}, 1000);
+			},
+			onCodeChange(code) {
+				this.code = code;
+			},
+			onCodeComplete(code) {
+				this.code = code;
+				this.handleCodeComplete(code);
+			},
+			showAlternativeMethods() {
+				this.$emit('clear-errors');
+				this.$emit('show-alternatives');
+			},
+			sendAnalytics(event) {
+				ui_analytics.sendData({
+					tool: 'security',
+					category: 'fa_auth_form',
+					event
+				});
+			}
+		},
+		template: `
+		<form ref="authForm" name="form_auth" method="post" target="_top" :action="authUrl">
+			<input type="hidden" name="AUTH_FORM" value="Y"/>
+			<input type="hidden" name="TYPE" value="OTP"/>
+			<input type="hidden" name="USER_OTP" :value="code"/>
+			<input type="hidden" name="CURRENT_STEP" value="email"/>
+			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
+
+			<div v-show="isEmailBlockVisible">
+				<div @click="showAlternativeMethods" class="intranet-back-button">
+					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --smscode"></i>
+				</div>
+				<div class="intranet-island-otp-push-sms__wrapper">
+					<Headline size='lg' class="intranet-form-title --padding">
+						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
+					</Headline>
+					<span class="intranet-island-otp-push-sms__description">
+						<div v-html="emailMessage"></div>
+					</span>
+					<VerificationCode
+						:code="code"
+						:isPhoneCode=true
+						:error="errorMessage"
+						@code-change="onCodeChange"
+						@code-complete="onCodeComplete"
+					></VerificationCode>
+	
+					<div class="intranet-island-otp-push-sms__resend">
+						<span v-if="isResendEmailAvailable" class="intranet-island-otp-push__link" @click="resendEmailCode">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_RESEND') }}
+						</span>
+						<span v-if="isCountdownVisible" class="intranet-island-otp-push-sms__countdown">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_COUNTDOWN', {'#SEC#': this.countdown}) }}
+						</span>
+					</div>
+	
+					<button
+						class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
+						type="submit"
+						@click="onSubmitForm($event)"
+					>
+							<span class="intranet-text-btn__content-wrapper">
+								{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
+							</span>
+						<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
+					</button>
+				</div>
+			</div>
+
+			<template v-if="captchaCode">
+				<captcha
+					v-show="isCaptchaBlockVisible"
+					:captchaCode="captchaCode"
+				></captcha>
+			</template>
+		</form>
+	`
+	};
+
 	const CHARACTER_CHANGE = 'char-change';
 	const VALUE_PASTE = 'value-paste';
 
@@ -1394,6 +1574,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		state: () => ({
 			isRequesting: false,
 			isRequestSent: false,
+			canSendRequest: true,
 			requestTimestamp: null
 		}),
 		actions: {
@@ -1402,11 +1583,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 			},
 			setRequestSent(timestamp = Date.now()) {
 				this.isRequestSent = true;
+				this.canSendRequest = false;
 				this.requestTimestamp = timestamp;
+			},
+			clearRequestSent() {
+				this.isRequestSent = false;
+				this.requestTimestamp = null;
+			},
+			setCanSendRequest(value) {
+				this.canSendRequest = value;
 			},
 			resetState() {
 				this.isRequesting = false;
 				this.isRequestSent = false;
+				this.canSendRequest = true;
 				this.requestTimestamp = null;
 			}
 		}
@@ -1444,12 +1634,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 			},
 			isRequestSent() {
 				return this.store.isRequestSent;
+			},
+			canSendRequest() {
+				return this.store.canSendRequest;
 			}
 		},
 		mounted() {
 			sendOtpAnalytics({
 				event: 'restore_access_show'
 			});
+			this.store.setCanSendRequest(this.canSendRequestRecoverAccess);
+			this.loadStatus();
 		},
 		methods: {
 			showAlternatives() {
@@ -1458,6 +1653,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 				} else {
 					this.$emit('back-to-push');
 				}
+			},
+			loadStatus() {
+				Ajax.getRequestRecoverAccessStatus().then(response => {
+					const status = response?.data ?? {};
+					this.store.setCanSendRequest(status.canSend === true);
+					if (status.isSent === true) {
+						this.store.setRequestSent();
+					} else {
+						this.store.clearRequestSent();
+					}
+				}).catch(() => {
+					this.store.setCanSendRequest(this.canSendRequestRecoverAccess);
+				});
 			},
 			requestAccess() {
 				this.store.setRequesting(true);
@@ -1488,7 +1696,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
 		</div>
 		<div class="intranet-island-otp-recover-access__wrapper">
-			<template v-if="isRequestSent || !canSendRequestRecoverAccess">
+			<template v-if="isRequestSent || !canSendRequest">
 				<div class="intranet-island-otp-recover-access__icon --request-sent"></div>
 				<Headline size='lg' class="intranet-form-title">
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_SENT_TITLE') }}
@@ -1667,6 +1875,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			AlternativeMethods,
 			ApplicationOfflineCode,
 			Sms,
+			Email,
 			RecoveryCodes,
 			RecoverAccess,
 			Captcha
@@ -1687,6 +1896,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			authOtpHelpLink: {
 				type: String,
 				default: ''
+			},
+			helpButtonConfigByStep: {
+				type: Object,
+				default: () => ({})
 			},
 			authLoginUrl: {
 				type: String,
@@ -1712,11 +1925,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 				type: Boolean,
 				default: false
 			},
+			canLoginByEmail: {
+				type: Boolean,
+				default: false
+			},
 			isRecoveryCodesEnabled: {
 				type: Boolean,
 				default: false
 			},
 			maskedUserAuthPhoneNumber: {
+				type: String,
+				default: ''
+			},
+			maskedUserAuthEmail: {
+				type: String,
+				default: ''
+			},
+			recoveryCodesHelpLink: {
 				type: String,
 				default: ''
 			},
@@ -1733,10 +1958,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 				default: ''
 			},
 			currentStep: {
-				type: String,
-				default: ''
-			},
-			recoveryCodesHelpLink: {
 				type: String,
 				default: ''
 			},
@@ -1768,7 +1989,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				isWaiting: false,
 				errorMessage: this.errorMessageText,
 				currentAuthStep: currentStep,
-				isAlternativeMethodsAvailable: this.canLoginBySms || this.isRecoveryCodesEnabled,
+				isAlternativeMethodsAvailable: this.canLoginBySms || this.canLoginByEmail || this.isRecoveryCodesEnabled,
 				pullClient: null,
 				pendingOtpCode: null
 			};
@@ -1780,11 +2001,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 					push: 'PushOtp',
 					alternative: 'AlternativeMethods',
 					sms: 'Sms',
+					email: 'Email',
 					recoveryCodes: 'RecoveryCodes',
 					recoverAccess: 'RecoverAccess',
 					applicationOfflineCode: 'ApplicationOfflineCode'
 				};
 				return components[this.currentAuthStep] || 'LegacyOtp';
+			},
+			currentHelpButtonConfig() {
+				const helpButtonConfig = this.helpButtonConfigByStep?.[this.currentAuthStep];
+				if (!helpButtonConfig) {
+					return null;
+				}
+				if (helpButtonConfig.articleId) {
+					return helpButtonConfig;
+				}
+				return null;
 			}
 		},
 		created() {
@@ -1812,6 +2044,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 			onShowSms() {
 				this.currentAuthStep = 'sms';
 			},
+			onShowEmail() {
+				this.currentAuthStep = 'email';
+			},
 			onShowRecoveryCodes() {
 				this.currentAuthStep = 'recoveryCodes';
 			},
@@ -1829,6 +2064,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 			},
 			onClearErrors() {
 				this.errorMessage = '';
+			},
+			onHelpButtonClick() {
+				const articleId = this.currentHelpButtonConfig?.articleId;
+				const anchor = this.currentHelpButtonConfig?.anchor;
+				if (!articleId) {
+					return;
+				}
+				const query = anchor ? `redirect=detail&code=${articleId}&anchor=${encodeURIComponent(anchor)}` : `redirect=detail&code=${articleId}`;
+				BX.Helper.show(query);
 			},
 			initPushOtpSubscription() {
 				if (!this.pushOtpConfig) {
@@ -1893,8 +2137,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 :notShowLinks="notShowLinks"
 		 :isBitrix24="isBitrix24"
 		 :canLoginBySms="canLoginBySms"
+		 :canLoginByEmail="canLoginByEmail"
 		 :isRecoveryCodesEnabled="isRecoveryCodesEnabled"
 		 :maskedUserAuthPhoneNumber="maskedUserAuthPhoneNumber"
+		 :maskedUserAuthEmail="maskedUserAuthEmail"
 		 :userDevice="userDevice"
 		 :userData="userData"
 		 :accountChangeUrl="accountChangeUrl"
@@ -1908,11 +2154,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 		 @back-to-push="onBackToPush"
 		 @back-to-legacy="onBackToLegacy"
 		 @show-sms="onShowSms"
+		 @show-email="onShowEmail"
 		 @show-recovery-codes="onShowRecoveryCodes"
 		 @show-recover-access="onShowRecoverAccess"
 		 @application-offline-code="onApplicationOfflineCode"
 		 @clear-errors="onClearErrors"
 		/>
+		<Teleport to=".intranet-body__footer-right" v-if="currentHelpButtonConfig">
+			<button type="button" class="intranet-help-widget intranet-page-base__help" @click="onHelpButtonClick">
+				<i class="ui-icon-set intranet-help-widget__icon"></i>
+				<span class="intranet-help-widget__text">
+					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_HELP') }}
+				</span>
+			</button>
+		</Teleport>
 	`
 	};
 
@@ -1929,18 +2184,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 				pushOtpConfig: params.pushOtpConfig,
 				authUrl: params.authUrl,
 				authOtpHelpLink: params.authOtpHelpLink,
+				helpButtonConfigByStep: params.helpButtonConfigByStep,
 				authLoginUrl: params.authLoginUrl,
 				rememberOtp: params.rememberOtp,
 				captchaCode: params.captchaCode,
 				notShowLinks: params.notShowLinks,
 				canLoginBySms: params.canLoginBySms,
+				canLoginByEmail: params.canLoginByEmail,
 				isRecoveryCodesEnabled: params.isRecoveryCodesEnabled,
 				maskedUserAuthPhoneNumber: params.maskedUserAuthPhoneNumber,
+				maskedUserAuthEmail: params.maskedUserAuthEmail,
+				recoveryCodesHelpLink: params.recoveryCodesHelpLink,
 				userDevice: params.userDevice,
 				userData: params.userData,
 				accountChangeUrl: params.accountChangeUrl,
 				currentStep: params.currentStep,
-				recoveryCodesHelpLink: params.recoveryCodesHelpLink,
 				errorMessageText: params.errorMessage,
 				canSendRequestRecoverAccess: params.canSendRequestRecoverAccess,
 				userId: params.userId

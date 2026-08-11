@@ -1,3 +1,21 @@
+.tasks-field-replication {
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-field-replication-content-wrapper {
+	background: var(--ui-color-base-8);
+	padding: var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	cursor: pointer;
+}
+
+.tasks-field-replication-content-wrapper.--readonly {
+	cursor: default;
+}
+
 .tasks-full-card-field-container-replication {
 	background-color: rgba(255, 255, 255, 0.44) !important;
 	border-radius: var(--ui-border-radius-md);
@@ -17,27 +35,51 @@
 	color: var(--ui-color-base-4);
 }
 
-.tasks-field-replication-wrapper {
-	display: flex;
-	gap: 14px;
-}
-
-.tasks-field-replication-title {
-	flex-shrink: 0;
-	width: 160px;
-	line-height: 25px;
-}
-
 .tasks-field-replication-content {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--ui-space-inline-2xs2);
 }
 
 .tasks-field-replication-actions {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-text-wrapper .b24-hover-pill-content
+{
+	padding-left: 4px;
+}
+
+.tasks-replication-content-text {
+	padding: var(--ui-space-inline-3xs) 0;
+}
+
+.task-replication-content-text-pause {
+	color: var(--ui-color-base-3);
+}
+
+.task-replication-content-control {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-element {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	color: var(--ui-color-base-4);
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks-replication-content-element-text {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-replication-content-element-text:hover {
+	color: var(--ui-color-base-3);
 }
 
 .tasks-field-replication-row {
@@ -49,10 +91,17 @@
 .tasks-field-replication-link {
 	cursor: pointer;
 	color: var(--ui-color-accent-main-primary);
+	padding: var(--ui-space-inline-3xs) 0;
 }
 
 .tasks-field-replication-secondary {
 	color: var(--ui-color-base-2);
+}
+
+.tasks-bottom-sheet-replicate-content {
+	background-color: var(--ui-color-bg-vibrant-less);
+	-webkit-backdrop-filter: blur(24px);
+	backdrop-filter: blur(24px);
 }
 
 .tasks-bottom-sheet-replicate-content > .b24-bottom-sheet-content {
@@ -124,24 +173,12 @@
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
-	gap: var(--ui-space-inline-2xs2);
-	padding: var(--ui-space-inline-xs) var(--ui-space-stack-sm);
-	background-color: var(--ui-color-bg-content-secondary);
+	gap: var(--ui-space-inline-xs);
 	min-height: 28px;
 }
 
 .tasks-replication-sheet-action-row.--selectable {
 	cursor: pointer;
-}
-
-.tasks-replication-sheet-action-row:first-child {
-	border-top-left-radius: var(--ui-border-radius-md);
-	border-top-right-radius: var(--ui-border-radius-md);
-}
-
-.tasks-replication-sheet-action-row:last-child {
-	border-bottom-left-radius: var(--ui-border-radius-md);
-	border-bottom-right-radius: var(--ui-border-radius-md);
 }
 
 .tasks-replication-sheet-action-row:not(.--active) .tasks-field-replication-row.--text,
@@ -163,9 +200,43 @@
 	margin: 0 0 0 auto;
 }
 
+.tasks-field-replication-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm);
+	background: var(--ui-color-bg-content-primary);
+	padding: 18px;
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.04);
+}
+.tasks-field-replication-repeat-select {
+	display: flex;
+	align-items: center;
+}
 
+.tasks-field-replication-secondary {
+	margin-right: 16px;
+}
+
+.tasks-field-replication-period-select {
+	width: 160px;
+}
+
+.tasks-field-replication-period-select .ui-system-input {
+	padding-bottom: 0;
+}
 .tasks-field-replication-row-grow {
 	flex-grow: 1;
+}
+
+.task-field-replication-interval {
+	margin-right: 6px;
+	width: 3em;
+}
+
+.task-field-replication-interval .ui-system-input-container {
+	padding-inline: 2px;
+	text-align: center;
 }
 
 .tasks-replication-sheet-replication-settings-week {
@@ -182,13 +253,12 @@
 }
 
 .tasks-replication-sheet-action-row.--weekdays {
-	justify-content: space-between;
+	gap: var(--ui-space-inline-lg2);
 }
 
 .tasks-field-replication-weekday-text:not(.--checked) {
 	color: var(--ui-color-base-3);
 }
-
 
 
 

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIC_USAGE_STAT_GRID_ROW_DATASET_TYPE_SYSTEM'] = 'Системная';
+$MESS['BIC_USAGE_STAT_GRID_ROW_DATASET_TYPE_CUSTOM'] = 'Пользовательская';

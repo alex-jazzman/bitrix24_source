@@ -1,0 +1,11 @@
+{
+    "defaultTableName": "b_intranet_user",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/gadgets": "gadgets",
+        "install/images": "images",
+        "install/js": "js",
+        "install/routes": "routes",
+        "install/templates": "templates"
+    }
+}

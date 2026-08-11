@@ -44,15 +44,15 @@ if($IBLOCK_OFFERS_ID == false)
 		1 => CIBlockRights::FULL_ACCESS,
 		2 => CIBlockRights::PUBLIC_READ,
 	];
-	$dbGroup = CGroup::GetList('', '', Array("STRING_ID" => "sale_administrator"));
-	if($arGroup = $dbGroup -> Fetch())
+	$groupId = CGroup::GetIDByCode("sale_administrator");
+	if($groupId)
 	{
-		$permissions[$arGroup["ID"]] = CIBlockRights::EDIT_ACCESS;
+		$permissions[$groupId] = CIBlockRights::EDIT_ACCESS;
 	}
-	$dbGroup = CGroup::GetList('', '', Array("STRING_ID" => "content_editor"));
-	if($arGroup = $dbGroup -> Fetch())
+	$groupId = CGroup::GetIDByCode("content_editor");
+	if($groupId)
 	{
-		$permissions[$arGroup["ID"]] = CIBlockRights::EDIT_ACCESS;
+		$permissions[$groupId] = CIBlockRights::EDIT_ACCESS;
 	}
 
 	\Bitrix\Catalog\Product\Sku::disableUpdateAvailable();

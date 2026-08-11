@@ -2,10 +2,12 @@ import { Extension, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { ActionFactory } from './action/action-factory';
-import { TEMPLATE_SETUP_EVENT_NAME } from './constants';
+import { ACTION_TYPE, TEMPLATE_SETUP_EVENT_NAME } from './constants';
 import { TariffLimit } from './handler/error/tariff-limit';
 import { TemplateSetupHandler } from './handler/template-setup-handler';
 import type { ExtensionSettings, runActionConfig, SetFilterType, SetSortType } from './types';
+
+const SCENARIO_CREATE_SOURCE = 'SCENARIO';
 
 export class GridManager
 {
@@ -62,7 +64,11 @@ export class GridManager
 
 	runAction(actionConfig: runActionConfig): void
 	{
-		if (!this.validateAiAgentsAvailableByTariff())
+		if (
+			!this.#isDeleteAction(actionConfig)
+			&& !this.#isRestartOnScenarioWithBasicTariff(actionConfig)
+			&& !this.validateAiAgentsAvailableByTariff()
+		)
 		{
 			return;
 		}
@@ -78,6 +84,23 @@ export class GridManager
 			action.setActionParams(actionConfig.params);
 			action.execute();
 		}
+	}
+
+	#isDeleteAction(actionConfig: runActionConfig): boolean
+	{
+		return (
+			actionConfig.actionId === ACTION_TYPE.DELETE
+			|| actionConfig.actionId === ACTION_TYPE.GROUP_DELETE
+		);
+	}
+
+	#isRestartOnScenarioWithBasicTariff(actionConfig: runActionConfig): boolean
+	{
+		return (
+			actionConfig.actionId === ACTION_TYPE.RESTART
+			&& actionConfig.params?.createSource === SCENARIO_CREATE_SOURCE
+			&& this.#settings?.tariffInfo?.isBasicOrHigher === true
+		);
 	}
 
 	reload()

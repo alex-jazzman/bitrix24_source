@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (main_core, crm_template_editor, bizproc_automation) {
+(function (bizproc_automation, crm_template_editor, main_core) {
 	'use strict';
 
 	const namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -116,18 +116,18 @@
 			main_core.Dom.removeClass(this.#isRobot ? this.#editorWrapper.parentElement : this.#editorWrapper.parentElement?.parentElement, '--hidden');
 			const editor = new crm_template_editor.Editor({
 				target: this.#editorWrapper,
-				onSelect: ({
-					id,
-					value,
-					parentTitle,
-					title
-				}) => {
-					const templatePlaceholders = this.#placeholders.get(templateId);
-					templatePlaceholders.set(id, {
-						value,
-						parentTitle,
-						title
-					});
+				events: {
+					onUpdatePlaceholder: event => {
+						const {
+							filledPlaceholder
+						} = event.getData();
+						const templatePlaceholders = this.#placeholders.get(templateId);
+						templatePlaceholders.set(filledPlaceholder.PLACEHOLDER_ID, {
+							value: filledPlaceholder.FIELD_NAME,
+							parentTitle: filledPlaceholder.PARENT_TITLE,
+							title: filledPlaceholder.TITLE
+						});
+					}
 				},
 				dialogOptions: {
 					items: this.#dialogItems,
@@ -220,5 +220,5 @@
 	}
 	namespace.CrmSendWhatsAllMessageActivity = CrmSendWhatsAllMessageActivity;
 
-})(BX, BX.Crm.Template, BX.Bizproc.Automation);
+})(BX.Bizproc.Automation, BX.Crm.Template, BX);
 //# sourceMappingURL=script.js.map

@@ -16,6 +16,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 		#sectionId = ALL_SECTIONS_ID;
 		#isLoadingNextPage = false;
 		#loadedDialogId = null;
+		#loadedLineId = null;
 		static #instance = null;
 		static getInstance() {
 			if (!QuickReplyManager.#instance) {
@@ -28,11 +29,13 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 			this.#store = store;
 		}
 		#getLineId(dialogId) {
+			const chatId = this.#store.getters['chats/get'](dialogId, true).chatId;
+			const session = this.#store.getters['openLines/sessions/getByChatId'](chatId);
 			const connector = this.#store.getters['openLines/connector/getByDialogId'](dialogId);
-			return connector?.lineId ?? 0;
+			return session?.queueId ?? connector?.lineId ?? 0;
 		}
 		hasStaleCache(dialogId) {
-			return this.#loadedDialogId !== dialogId;
+			return this.#loadedDialogId !== dialogId || this.#loadedLineId !== this.#getLineId(dialogId);
 		}
 		async loadList(dialogId, params = {}) {
 			if (this.hasStaleCache(dialogId)) {
@@ -59,6 +62,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 			this.#searchQuery = '';
 			this.#sectionId = ALL_SECTIONS_ID;
 			this.#loadedDialogId = dialogId;
+			this.#loadedLineId = this.#getLineId(dialogId);
 			await this.#store.dispatch('openLines/quickReply/clear');
 		}
 		async loadNextPage(dialogId) {
@@ -104,6 +108,12 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 				await this.#store.dispatch('openLines/quickReply/update', savedReply);
 			}
 			return savedReply;
+		}
+		resetCache(dialogId) {
+			if (this.#loadedDialogId === dialogId) {
+				this.#loadedDialogId = null;
+				this.#loadedLineId = null;
+			}
 		}
 		selectReply(dialogId, reply) {
 			const lineId = this.#getLineId(dialogId);

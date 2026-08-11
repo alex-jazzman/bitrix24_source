@@ -1,5 +1,6 @@
 import { Loc } from 'main.core';
-import type { BookingAutoSelectionForm, BookingDefaultForm } from '../types';
+
+import { type BookingAutoSelectionForm, type BookingDefaultForm } from '../types';
 
 const defaultBookingForm = {
 	resourceIds: [],

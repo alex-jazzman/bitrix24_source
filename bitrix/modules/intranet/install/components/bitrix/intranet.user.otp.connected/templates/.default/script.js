@@ -13,6 +13,7 @@
 				ttl: params.ttl,
 				pullConfig: params.pullConfig,
 				phoneNumber: params.phoneNumber,
+				email: params.email,
 				isPhoneNumberConfirmed: params.isPhoneNumberConfirmed,
 				signedUserId: params.signedUserId,
 				userId: params.userId,
@@ -104,6 +105,32 @@
 			{
 				BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
 			}
+			else if (BX.SidePanel && BX.SidePanel.Instance && BX.SidePanel.Instance.getTopSlider())
+			{
+				BX.SidePanel.Instance.reload();
+			}
+			else
+			{
+				document.location.reload();
+			}
+		},
+
+		showError(message)
+		{
+			if (BX.getClass('BX.Intranet.UserProfile.Security'))
+			{
+				BX.Intranet.UserProfile.Security.showErrorPopup(message);
+			}
+			else if (BX.UI?.Notification?.Center)
+			{
+				BX.UI.Notification.Center.notify({
+					content: BX.Text.encode(message),
+				});
+			}
+			else
+			{
+				console.error(message);
+			}
 		},
 
 		deactivateUserOtp(numDays)
@@ -117,10 +144,7 @@
 			}).then((result) => {
 				this.reload();
 			}, (response) => {
-				if (BX.getClass('BX.Intranet.UserProfile.Security'))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
-				}
+				this.showError(response.errors?.[0]?.message ?? '');
 			});
 		},
 
@@ -133,10 +157,7 @@
 			}).then((result) => {
 				this.reload();
 			}, (response) => {
-				if (BX.getClass('BX.Intranet.UserProfile.Security'))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
-				}
+				this.showError(response.errors?.[0]?.message ?? '');
 			});
 		},
 
@@ -151,10 +172,7 @@
 			}).then((result) => {
 				this.reload();
 			}, (response) => {
-				if (BX.getClass('BX.Intranet.UserProfile.Security'))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
-				}
+				this.showError(response.errors?.[0]?.message ?? '');
 			});
 		},
 

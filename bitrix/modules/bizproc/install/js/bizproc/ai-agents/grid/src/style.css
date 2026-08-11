@@ -20,7 +20,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 1.4;
-	max-height: calc(1.4 * var(--ui-font-size-sm));
+	max-height: 1lh;
 }
 
 .bizproc-ai-agents-two-lines-height {
@@ -30,7 +30,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 1.4;
-	max-height: calc(1.4 * var(--ui-font-size-sm) * 2);
+	max-height: 2lh;
 }
 
 /* endregion */
@@ -390,6 +390,27 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 }
 .ai-agents-chats-counter {
 	color: var(--ui-color-base-3);
+}
+
+/* endregion */
+
+/* region Delete Popup */
+.bizproc-ai-agents__delete-popup {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-bottom: 8px;
+}
+
+.bizproc-ai-agents__delete-popup-text {
+	color: var(--ui-color-base-2);
+	line-height: 1.4;
+}
+
+.bizproc-ai-agents__delete-popup-checkbox.ui-ctl {
+	width: auto;
+	align-self: flex-start;
+	margin-bottom: 4px;
 }
 
 /* endregion */

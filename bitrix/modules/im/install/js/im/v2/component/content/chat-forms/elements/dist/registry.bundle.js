@@ -727,32 +727,61 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const UserSelector = {
-		name: 'UserSelector',
-		components: {
-			ChatHint: im_v2_component_elements_hint.ChatHint
-		},
+	const ManagersSelector = {
 		props: {
-			title: {
-				type: String,
+			managerIds: {
+				type: Array,
 				required: true
-			},
-			hintText: {
-				type: String,
-				required: false,
-				default: ''
+			}
+		},
+		emits: ['managersChange'],
+		computed: {
+			currentUserId() {
+				return im_v2_application_core.Core.getUserId();
+			}
+		},
+		created() {
+			const preselectedItems = this.managerIds.map(userId => {
+				return [im_v2_const.SelectorEntity.user, userId];
+			});
+			this.membersSelector = new ui_entitySelector.TagSelector({
+				maxHeight: 99,
+				placeholder: '',
+				addButtonCaption: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
+				addButtonCaptionMore: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
+				showCreateButton: false,
+				dialogOptions: {
+					enableSearch: false,
+					context: 'IM_CHAT_CREATE',
+					entities: [{
+						id: im_v2_const.SelectorEntity.user
+					}, {
+						id: im_v2_const.SelectorEntity.department
+					}],
+					preselectedItems
+				},
+				events: {
+					onAfterTagAdd: event => {
+						const selector = event.getTarget();
+						this.$emit('managersChange', selector.getTags().map(tag => tag.id));
+					},
+					onAfterTagRemove: event => {
+						const selector = event.getTarget();
+						this.$emit('managersChange', selector.getTags().map(tag => tag.id));
+					}
+				}
+			});
+		},
+		mounted() {
+			this.membersSelector.renderTo(this.$refs.managers);
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<div class="bx-im-content-create-chat__section_block">
-			<div class="bx-im-content-create-chat__section-header">
-				<div class="bx-im-content-create-chat__section-heading">
-					{{ title }}
-				</div>
-				<ChatHint v-if="hintText" :text="hintText" />
-			</div>
-			<slot></slot>
-		</div>
+		<div class="bx-im-chat-forms-sections-managers__container" ref="managers"></div>
 	`
 	};
 
@@ -814,79 +843,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const ManagersSelector = {
+	const UserSelector = {
+		name: 'UserSelector',
+		components: {
+			ChatHint: im_v2_component_elements_hint.ChatHint
+		},
 		props: {
-			managerIds: {
-				type: Array,
+			title: {
+				type: String,
 				required: true
-			}
-		},
-		emits: ['managersChange'],
-		computed: {
-			currentUserId() {
-				return im_v2_application_core.Core.getUserId();
-			}
-		},
-		created() {
-			const preselectedItems = this.managerIds.map(userId => {
-				return [im_v2_const.SelectorEntity.user, userId];
-			});
-			this.membersSelector = new ui_entitySelector.TagSelector({
-				maxHeight: 99,
-				placeholder: '',
-				addButtonCaption: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
-				addButtonCaptionMore: this.loc('IM_CREATE_CHAT_RIGHTS_SECTION_ADD_MANAGERS'),
-				showCreateButton: false,
-				dialogOptions: {
-					enableSearch: false,
-					context: 'IM_CHAT_CREATE',
-					entities: [{
-						id: im_v2_const.SelectorEntity.user
-					}, {
-						id: im_v2_const.SelectorEntity.department
-					}],
-					preselectedItems
-				},
-				events: {
-					onAfterTagAdd: event => {
-						const selector = event.getTarget();
-						this.$emit('managersChange', selector.getTags().map(tag => tag.id));
-					},
-					onAfterTagRemove: event => {
-						const selector = event.getTarget();
-						this.$emit('managersChange', selector.getTags().map(tag => tag.id));
-					}
-				}
-			});
-		},
-		mounted() {
-			this.membersSelector.renderTo(this.$refs.managers);
-		},
-		methods: {
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			hintText: {
+				type: String,
+				required: false,
+				default: ''
 			}
 		},
 		template: `
-		<div class="bx-im-chat-forms-sections-managers__container" ref="managers"></div>
+		<div class="bx-im-content-create-chat__section_block">
+			<div class="bx-im-content-create-chat__section-header">
+				<div class="bx-im-content-create-chat__section-heading">
+					{{ title }}
+				</div>
+				<ChatHint v-if="hintText" :text="hintText" />
+			</div>
+			<slot></slot>
+		</div>
 	`
 	};
 
-	const rightsDropdownItems = [{
-		value: im_v2_const.UserRole.member,
-		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MEMBER')
-	}, {
-		value: im_v2_const.UserRole.manager,
-		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MANAGER_V2')
-	}, {
-		value: im_v2_const.UserRole.owner,
-		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_OWNER'),
-		default: true
-	}];
-
 	const BlocksByChatType = {
 		[im_v2_const.ChatType.channel]: new Set([im_v2_const.ChatActionGroup.manageUsersAdd, im_v2_const.ChatActionGroup.manageUsersDelete, im_v2_const.ChatActionGroup.manageMessages]),
-		default: new Set([im_v2_const.ChatActionGroup.manageUsersAdd, im_v2_const.ChatActionGroup.manageUsersDelete, im_v2_const.ChatActionGroup.manageUi, im_v2_const.ChatActionGroup.manageMessages])
+		[im_v2_const.ChatType.videoconf]: new Set([im_v2_const.ChatActionGroup.manageUsersAdd, im_v2_const.ChatActionGroup.manageUsersDelete, im_v2_const.ChatActionGroup.manageUi, im_v2_const.ChatActionGroup.manageMessages]),
+		default: new Set([im_v2_const.ChatActionGroup.manageUsersAdd, im_v2_const.ChatActionGroup.manageUsersDelete, im_v2_const.ChatActionGroup.manageUi, im_v2_const.ChatActionGroup.manageMessages, im_v2_const.ChatActionGroup.manageGuestInvites])
 	};
 	const CanAddUsersCaptionByChatType = {
 		[im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_CREATE_CHANNEL_RIGHTS_SECTION_MANAGE_USERS_ADD'),
@@ -925,6 +914,27 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		default: main_core.Loc.getMessage('IM_CREATE_CHAT_MANAGE_SENDING_HINT')
 	};
 
+	const rightsDropdownItems = [{
+		value: im_v2_const.UserRole.member,
+		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MEMBER')
+	}, {
+		value: im_v2_const.UserRole.manager,
+		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_MANAGER_V2')
+	}, {
+		value: im_v2_const.UserRole.owner,
+		text: main_core.Loc.getMessage('IM_CREATE_CHAT_RIGHTS_SECTION_ROLE_OWNER'),
+		default: true
+	}];
+
+	const getDropdownItemsWithDefault = defaultValue => {
+		return rightsDropdownItems.map(item => {
+			return {
+				...item,
+				default: item.value === defaultValue
+			};
+		});
+	};
+
 	// @vue/component
 	const RightsSection = {
 		name: 'RightsSection',
@@ -960,25 +970,42 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: String,
 				required: true
 			},
+			manageGuestInvites: {
+				type: String,
+				default: ''
+			},
 			chatType: {
 				type: String,
 				default: im_v2_const.ChatType.chat
 			}
 		},
-		emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'manageMessagesChange'],
+		emits: ['ownerChange', 'managersChange', 'rightChange'],
 		computed: {
 			PopupType: () => im_v2_const.PopupType,
 			manageUsersAddItems() {
-				return this.prepareDropdownItems(this.manageUsersAdd);
+				return getDropdownItemsWithDefault(this.manageUsersAdd);
 			},
 			manageUsersDeleteItems() {
-				return this.prepareDropdownItems(this.manageUsersDelete);
+				return getDropdownItemsWithDefault(this.manageUsersDelete);
 			},
 			manageUiItems() {
-				return this.prepareDropdownItems(this.manageUi);
+				return getDropdownItemsWithDefault(this.manageUi);
 			},
 			manageMessagesItems() {
-				return this.prepareDropdownItems(this.manageMessages);
+				return getDropdownItemsWithDefault(this.manageMessages);
+			},
+			manageGuestInvitesItems() {
+				return getDropdownItemsWithDefault(this.manageGuestInvites);
+			},
+			showManageGuestInvitesBlock() {
+				if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatWithGuestsAvailable)) {
+					return false;
+				}
+				if (!this.manageGuestInvites) {
+					return false;
+				}
+				const blocksByType = BlocksByChatType[this.chatType] ?? BlocksByChatType.default;
+				return blocksByType.has(im_v2_const.ChatActionGroup.manageGuestInvites);
 			},
 			showManageUiBlock() {
 				const blocksByType = BlocksByChatType[this.chatType] ?? BlocksByChatType.default;
@@ -1013,31 +1040,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		methods: {
-			prepareDropdownItems(defaultValue) {
-				return rightsDropdownItems.map(item => {
-					return {
-						...item,
-						default: item.value === defaultValue
-					};
-				});
-			},
 			onOwnerChange(ownerId) {
 				this.$emit('ownerChange', ownerId);
 			},
 			onManagersChange(managerIds) {
 				this.$emit('managersChange', managerIds);
 			},
-			onManageUsersAddChange(newValue) {
-				this.$emit('manageUsersAddChange', newValue);
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.$emit('manageUsersDeleteChange', newValue);
-			},
-			onManageUiChange(newValue) {
-				this.$emit('manageUiChange', newValue);
-			},
-			onManageMessagesChange(newValue) {
-				this.$emit('manageMessagesChange', newValue);
+			emitRight(name, value) {
+				this.$emit('rightChange', {
+					name,
+					value
+				});
 			},
 			loc(phraseCode, replacements = {}) {
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -1056,14 +1069,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:hintText="addUsersHint"
 				:dropdownId="PopupType.createChatManageUsersAddMenu"
 				:dropdownItems="manageUsersAddItems"
-				@itemChange="onManageUsersAddChange"
+				@itemChange="emitRight('manageUsersAdd', $event)"
+			/>
+			<RoleSelector
+				v-if="showManageGuestInvitesBlock"
+				:title="loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_GUEST_INVITES')"
+				:hintText="loc('IM_CREATE_CHAT_MANAGE_GUEST_INVITES_HINT')"
+				:dropdownId="PopupType.createChatManageGuestInvitesMenu"
+				:dropdownItems="manageGuestInvitesItems"
+				@itemChange="emitRight('manageGuestInvites', $event)"
 			/>
 			<RoleSelector
 				:title="canKickUsersCaption"
 				:hintText="deleteUsersHint"
 				:dropdownId="PopupType.createChatManageUsersDeleteMenu"
 				:dropdownItems="manageUsersDeleteItems"
-				@itemChange="onManageUsersDeleteChange"
+				@itemChange="emitRight('manageUsersDelete', $event)"
 			/>
 			<RoleSelector
 				v-if="showManageUiBlock"
@@ -1071,14 +1092,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:hintText="manageUiHint"
 				:dropdownId="PopupType.createChatManageUiMenu"
 				:dropdownItems="manageUiItems"
-				@itemChange="onManageUiChange"
+				@itemChange="emitRight('manageUi', $event)"
 			/>
 			<RoleSelector
 				:title="canSendCaption"
 				:hintText="sendMessagesHint"
 				:dropdownId="PopupType.createChatManageMessagesMenu"
 				:dropdownItems="manageMessagesItems"
-				@itemChange="onManageMessagesChange"
+				@itemChange="emitRight('manageMessages', $event)"
 			/>
 		</CreateChatSection>
 	`

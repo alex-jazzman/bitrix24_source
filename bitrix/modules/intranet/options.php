@@ -569,7 +569,7 @@ $arUserFieldNames = array(
 );
 $userProp = array();
 foreach ($arUserFieldNames as $name)
-	$userProp[$name] = GetMessage('ISL_'.$name);
+	$userProp[$name] = GetMessage('ISL_'.$name.($name === 'PERSONAL_COUNTRY' ? '_MSGVER_1' : ''));
 
 $arRes = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('USER', 0, LANGUAGE_ID);
 if (!empty($arRes))

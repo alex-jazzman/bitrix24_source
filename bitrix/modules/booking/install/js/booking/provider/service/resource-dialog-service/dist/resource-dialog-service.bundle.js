@@ -39,11 +39,15 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 		}
 	}
 
+	const MainResourcesCacheKey = Object.freeze({
+		All: 'all',
+		ShortSlotsOnly: 'shortSlotsOnly'
+	});
 	class ResourceDialogService {
 		#queryCache = [];
 		#loadByIdsPromises = {};
 		#loadBySkuIdsPromises = {};
-		#mainResourcesCache = null;
+		#mainResourcesCache = new Map();
 		async loadByIds(idsToLoad, dateTs) {
 			try {
 				this.#loadByIdsPromises[dateTs] ??= {};
@@ -130,27 +134,41 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 		#isQueryLoaded(query) {
 			return this.#queryCache.some(it => query.startsWith(it));
 		}
-		async getMainResources() {
+		async getMainResources(options = {}) {
 			try {
-				if (main_core.Type.isNull(this.#mainResourcesCache)) {
-					this.#mainResourcesCache = this.#requestGetMainResources();
+				const cacheKey = this.#getMainResourcesCacheKey(options);
+				if (!this.#mainResourcesCache.has(cacheKey)) {
+					this.#mainResourcesCache.set(cacheKey, this.#requestGetMainResources(options));
 				}
-				const data = await this.#mainResourcesCache;
+				const mainResourcesPromise = this.#mainResourcesCache.get(cacheKey);
+				if (!mainResourcesPromise) {
+					return [];
+				}
+				const data = await mainResourcesPromise;
 				const extractor = new MainResourcesExtractor(data);
-				const ids = extractor.getMainResourceIds();
-				await booking_core.Core.getStore().dispatch(`${booking_const.Model.MainResources}/setMainResources`, ids);
+				if (options.shortSlotsOnly !== true) {
+					const ids = extractor.getMainResourceIds();
+					await booking_core.Core.getStore().dispatch(`${booking_const.Model.MainResources}/setMainResources`, ids);
+				}
 				const resources = data.map(resourceDto => booking_provider_service_resourcesService.ResourceMappers.mapDtoToModel(resourceDto));
 				await booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, resources);
+				return resources;
 			} catch (error) {
 				console.error('ResourceDialogGetMainResources: error', error);
+				return [];
 			}
 		}
-		#requestGetMainResources() {
+		#getMainResourcesCacheKey(options) {
+			return options.shortSlotsOnly === true ? MainResourcesCacheKey.ShortSlotsOnly : MainResourcesCacheKey.All;
+		}
+		#requestGetMainResources(options) {
 			const api = new booking_lib_apiClient.ApiClient();
-			return api.post('ResourceDialog.getMainResources', {});
+			return api.post('ResourceDialog.getMainResources', {
+				shortSlotsOnly: options.shortSlotsOnly === true
+			});
 		}
 		clearMainResourcesCache() {
-			this.#mainResourcesCache = null;
+			this.#mainResourcesCache.clear();
 		}
 	}
 	const resourceDialogService = new ResourceDialogService();

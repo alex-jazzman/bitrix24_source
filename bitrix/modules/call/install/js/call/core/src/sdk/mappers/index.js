@@ -4,14 +4,28 @@ export type RawMessage = {
 };
 
 export type Message = {
-	text: string,
+	content: any,
+	error: any,
 	from: string,
 	timestamp: number,
 };
 
 export const createMessage = (rawMessage: RawMessage): Message => {
+	let content = null;
+	let error = '';
+
+	try
+	{
+		content = JSON.parse(rawMessage.message);
+	}
+	catch (err)
+	{
+		error = err;
+	}
+
 	return {
-		text: rawMessage.message,
+		content,
+		error,
 		from: rawMessage.senderSid,
 		timestamp: Math.floor(Date.now() / 1000),
 	};

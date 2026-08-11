@@ -677,7 +677,7 @@ export class DashboardManager
 		BX.SidePanel.Instance.open(
 			sliderLink.toString(),
 			{
-				width: 790,
+				width: dashboardId === null ? 600 : 790,
 				allowChangeHistory: false,
 				cacheable: false,
 			},

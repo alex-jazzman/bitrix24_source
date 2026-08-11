@@ -136,6 +136,7 @@ export const RecentUnreadList = {
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
+			data-test-id="im_container-recent__unread-list"
 		>
 			<template #empty-state>
 				<RecentEmptyState 

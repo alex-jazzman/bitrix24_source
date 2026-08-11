@@ -1,8 +1,8 @@
 <?php
-$MESS['M_CRM_ENTITY_ACTION_EXCLUDE'] = 'В список исключений';
-$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить элемент в список исключений?';
-$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_LEAD'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить лид в список исключений?';
-$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_DEAL'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить сделку в список исключений?';
+$MESS['M_CRM_ENTITY_ACTION_EXCLUDE'] = 'В стоп-лист';
+$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить элемент в стоп-лист?';
+$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_LEAD'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить лид в стоп-лист?';
+$MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_DEAL'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить сделку в стоп-лист?';
 $MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_OK'] = 'Добавить';
 
 $MESS['M_CRM_ENTITY_ACTION_DELETE_MSGVER_1'] = 'Удалить';

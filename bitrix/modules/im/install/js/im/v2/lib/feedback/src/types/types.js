@@ -1,5 +1,7 @@
 import { type JsonObject } from 'main.core';
 
+import { type ImModelMessage } from 'im.v2.model';
+
 export type FormConfigType = {
 	id: string;
 	forms: FormEntryType[];
@@ -15,7 +17,7 @@ export type FormEntryType = {
 
 export type CopilotFormParams = {
 	userCounter: number,
-	text: string,
+	message: ImModelMessage,
 };
 
 export type AiAssistantFormParams = {

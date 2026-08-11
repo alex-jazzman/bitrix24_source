@@ -1,9 +1,11 @@
-import { Runtime } from 'main.core';
+import { Runtime, Loc, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { TaskCard } from 'tasks.v2.application.task-card';
 import type { Store } from 'ui.vue3.vuex';
 
 import { EventName, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { subTasksService } from 'tasks.v2.provider.service.relation-service';
 import { GroupMappers, groupService, type StageDto } from 'tasks.v2.provider.service.group-service';
@@ -27,6 +29,7 @@ export class TaskPullHandler extends BasePullHandler
 			task_view: this.#handleTaskViewed,
 			task_remove: this.#handleTaskDeleted,
 			default_deadline_changed: this.#handleDefaultDeadlineChanged,
+			task_regular_template_add: this.#handleTaskRegularTemplateAdded,
 			task_timer_stop: this.#handleStopOfTimer,
 		};
 	}
@@ -80,11 +83,14 @@ export class TaskPullHandler extends BasePullHandler
 
 		const task = mapPushToModel(data.TASK_ID, data.AFTER);
 
-		const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
-
-		if (data.USER_ID === this.#currentUserId && TaskFullCard.isOpened(task.id))
+		if (!this.isFromAi(data) && data.USER_ID === this.#currentUserId)
 		{
-			return;
+			const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
+
+			if (TaskFullCard.isOpened(task.id))
+			{
+				return;
+			}
 		}
 
 		this.#pushedTasks[task.id] = { ...this.#pushedTasks[task.id], ...task };
@@ -130,6 +136,28 @@ export class TaskPullHandler extends BasePullHandler
 
 	#handleDefaultDeadlineChanged = ({ deadlineUserOption }): void => {
 		void this.$store.dispatch(`${Model.Interface}/updateDeadlineUserOption`, deadlineUserOption);
+	};
+
+	#handleTaskRegularTemplateAdded = (data): void => {
+		const templateId = data.templateId;
+
+		BX.UI.Notification.Center.notify({
+			id: Text.getRandom(),
+			content: Loc.getMessage('TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_CREATED'),
+			useAirDesign: true,
+			actions: [
+				{
+					title: Loc.getMessage('TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_OPEN'),
+					events: {
+						click: (clickEvent, balloon) => {
+							balloon.close();
+
+							TaskCard.showFullCard({ taskId: idUtils.boxTemplate(templateId) });
+						},
+					},
+				},
+			],
+		});
 	};
 
 	#handleStopOfTimer = async (data: StopTimerPush): void => {

@@ -51,6 +51,7 @@ $MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_F_COMMENT"] = "Руководитель #USE
 $MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_M_COMMENT"] = "Руководитель #USER# к диалогу №#NUMBER# оставил комментарий: [b]#COMMENT#[/b]";
 $MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_F_LIKE_AND_COMMENT"] = "Руководитель #USER# оценила диалог №#NUMBER#: [b]#RATING#[/b] и оставила комментарий: [b]#COMMENT#[/b]";
 $MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_M_LIKE_AND_COMMENT"] = "Руководитель #USER# оценил диалог №#NUMBER#: [b]#RATING#[/b] и оставил комментарий: [b]#COMMENT#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_SCHEMA_GROUP"] = "Открытые линии";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Уведомление об оценке качества от клиента";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Уведомление об оценке качества от руководителя";
 $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "хорошо";

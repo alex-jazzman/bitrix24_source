@@ -76,7 +76,7 @@ if(count($jsMessagesCodes) >0 )
 }
 ?>
 
-<div class="bx-call-component-call-ai" data-call-id="<?= $arResult['CALL_ID'] ?>">
+<div class="bx-call-component-call-ai" data-call-id="<?= $arResult['CALL_ID'] ?>" data-call-uuid="<?= htmlspecialcharsbx($arResult['CALL_UUID']) ?>">
 	<div class="bx-call-component-call-ai__resume-container">
 		<div class="bx-call-component-call-ai__resume-wrapper">
 			<h2 class="bx-call-component-call-ai__slider-title">

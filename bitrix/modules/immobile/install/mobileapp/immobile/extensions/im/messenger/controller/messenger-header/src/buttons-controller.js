@@ -6,7 +6,22 @@ jn.define('im/messenger/controller/messenger-header/src/buttons-controller', (re
 
 	const { resolveFolderHeaderConfig } = require('im/messenger/controller/messenger-header/src/config');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { PopupCreateButton } = require('im/messenger/lib/widget/header-button');
+
+	/**
+	 * @type {Readonly<Record<string, keyof HeaderButtonsConfig>>}
+	 */
+	const ButtonsSide = Object.freeze({
+		right: 'rightButtons',
+		left: 'leftButtons',
+	});
+
+	/**
+	 * @type {Record<keyof HeaderButtonsConfig, string>}
+	 */
+	const WidgetButtonsSetter = Object.freeze({
+		[ButtonsSide.right]: 'setRightButtons',
+		[ButtonsSide.left]: 'setLeftButtons',
+	});
 
 	/**
 	 * @class HeaderButtonsController
@@ -28,6 +43,8 @@ jn.define('im/messenger/controller/messenger-header/src/buttons-controller', (re
 
 			/** @private */
 			this.rightButtons = null;
+			/** @private */
+			this.leftButtons = null;
 		}
 
 		/**
@@ -36,46 +53,65 @@ jn.define('im/messenger/controller/messenger-header/src/buttons-controller', (re
 		 */
 		async redrawRightButtonsIfNeeded(tabId)
 		{
-			const rightButtons = await this.getRightButtons(tabId);
+			const rightButtons = await this.getButtons(tabId, ButtonsSide.right);
 			if (isEqual(this.rightButtons, rightButtons))
 			{
 				return;
 			}
 
-			this.redrawRightButtons(rightButtons);
+			this.redrawButtons(rightButtons, ButtonsSide.right);
+		}
+
+		/**
+		 * @param {string} tabId
+		 * @return {Promise<void>}
+		 */
+		async redrawLeftButtonsIfNeeded(tabId)
+		{
+			const leftButtons = await this.getButtons(tabId, ButtonsSide.left);
+			if (isEqual(this.leftButtons, leftButtons))
+			{
+				return;
+			}
+
+			this.redrawButtons(leftButtons, ButtonsSide.left);
 		}
 
 		/**
 		 * @protected
-		 * @param {Array<object>} rightButtons
+		 * @param {Array<object>} buttons
+		 * @param {keyof HeaderButtonsConfig} side
 		 */
-		redrawRightButtons(rightButtons)
+		redrawButtons(buttons, side)
 		{
 			const activeRecentId = serviceLocator.get('recent-manager').getActiveRecentId();
+			const setter = WidgetButtonsSetter[side];
 
-			this.#ui.nestedWidgets()[activeRecentId]?.setRightButtons(rightButtons);
+			this.#ui.nestedWidgets()[activeRecentId]?.[setter]?.(buttons);
 		}
 
 		/**
 		 * @protected
 		 * @param {string} tabId
+		 * @param {keyof HeaderButtonsConfig} side
 		 * @return {Promise<Array<object>>}
 		 */
-		async getRightButtons(tabId)
+		async getButtons(tabId, side)
 		{
 			const config = this.#config[tabId] ?? resolveFolderHeaderConfig(tabId);
-			if (config)
+			const buttons = config?.[side];
+			if (!buttons)
 			{
-				const filterResults = await Promise.all(
-					config.rightButtons.map((button) => button.shouldShow()),
-				)
-
-				return config.rightButtons
-					.filter((button, index) => filterResults[index])
-					.map((button) => button.toWidgetHeaderButton());
+				return [];
 			}
 
-			return [];
+			const filterResults = await Promise.all(
+				buttons.map((button) => button.shouldShow()),
+			);
+
+			return buttons
+				.filter((button, index) => filterResults[index])
+				.map((button) => button.toWidgetHeaderButton());
 		}
 	}
 

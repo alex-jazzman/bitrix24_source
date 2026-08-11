@@ -1,0 +1,7 @@
+{
+    "defaultTableName": "b_sender_list",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

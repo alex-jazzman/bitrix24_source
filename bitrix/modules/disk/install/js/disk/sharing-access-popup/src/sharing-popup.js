@@ -1,8 +1,10 @@
-import { Tag, Loc, Dom, Extension } from 'main.core';
+import { Tag, Loc, Dom } from 'main.core';
 import { Dialog, DialogBackground } from 'ui.system.dialog';
 import { BitrixVue } from 'ui.vue3';
 
 import { RootApp } from './components';
+import { getAccessRights } from './api';
+import { notify } from './utils/notify';
 
 import './style.css';
 
@@ -16,8 +18,9 @@ export class SharingPopupDialog
 	#initialTab = null;
 	#mode = 'default';
 	#onAfterHide = null;
+	#initialAccessRights = null;
 
-	open(params = {}): void
+	async open(params = {}): Promise<void>
 	{
 		this.#objectId = params.objectId;
 		this.#uniqueCode = params.uniqueCode ?? null;
@@ -28,6 +31,20 @@ export class SharingPopupDialog
 		if (!this.#objectId)
 		{
 			throw new Error('SharingPopupDialog.open: objectId is required');
+		}
+
+		try
+		{
+			this.#initialAccessRights = await getAccessRights({
+				objectId: this.#objectId,
+				uniqueCode: this.#uniqueCode,
+			});
+		}
+		catch
+		{
+			notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+
+			return;
 		}
 
 		if (!this.#dialog)
@@ -77,6 +94,7 @@ export class SharingPopupDialog
 			objectId: this.#objectId,
 			uniqueCode: this.#uniqueCode,
 			initialTab: this.#initialTab,
+			initialAccessRights: this.#initialAccessRights,
 			mode: this.#mode,
 			closeDialog: this.close.bind(this),
 		});
@@ -99,6 +117,7 @@ export class SharingPopupDialog
 			this.#app = null;
 			this.#uniqueCode = null;
 			this.#initialTab = null;
+			this.#initialAccessRights = null;
 			this.#mode = 'default';
 		}
 	}
@@ -110,6 +129,7 @@ export class SharingPopupDialog
 		this.#container = null;
 		this.#objectId = null;
 		this.#initialTab = null;
+		this.#initialAccessRights = null;
 		this.#mode = 'default';
 		this.#onAfterHide = null;
 	}

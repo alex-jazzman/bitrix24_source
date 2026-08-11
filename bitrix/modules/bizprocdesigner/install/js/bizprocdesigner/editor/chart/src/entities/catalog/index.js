@@ -17,3 +17,4 @@ export * from './ui/catalog-group-back-btn/catalog-group-back-btn';
 export * from './ui/search-results-label/search-results-label';
 export * from './ui/search-results-layout/search-results-layout';
 export * from './ui/search-results-empty-label/search-results-empty-label';
+export * from './ui/catalog-item-tooltip/catalog-item-tooltip';

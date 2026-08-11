@@ -33,7 +33,7 @@ $params = Grid\Component\ComponentParams::get(
 	$grid,
 	[
 		'CURRENT_PAGE' => $grid->getPagination()?->getCurrentPage(),
-		'STUB' => $arResult['GRID_STUB'],
+		'STUB' => $arResult['GRID_STUB'] ?? null,
 	],
 );
 

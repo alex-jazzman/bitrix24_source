@@ -40,282 +40,15 @@ Class intranet extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
 
-		if (!$DB->TableExists('b_intranet_sharepoint'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		RegisterModule("intranet");
-
-		RegisterModuleDependences("search", "OnReindex", "intranet", "CIntranetSearch", "OnSearchReindex");
-		RegisterModuleDependences("search", "OnSearchGetURL", "intranet", "CIntranetSearch", "OnSearchGetURL");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetSearch", "OnUserUpdate");
-		RegisterModuleDependences("main", "OnAfterUserAdd", "intranet", "CIntranetSearch", "OnUserAdd");
-		RegisterModuleDependences("main", "OnUserDelete", "intranet", "CIntranetSearch", "OnUserDelete");
-		RegisterModuleDependences("search", "OnSearchGetFileContent", "intranet", "CIntranetSearchConverters", "OnSearchGetFileContent");
-		RegisterModuleDependences("search", "BeforeIndex", "intranet", "CIntranetSearch", "ExcludeBlogUser");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "UpdateActivity");
-		RegisterModuleDependences("main", "OnUserDelete", "intranet", "CIntranetEventHandlers", "OnUserDelete");
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementUpdate", "intranet", "CIntranetEventHandlers", "UpdateActivityIBlock");
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementAdd", "intranet", "CIntranetEventHandlers", "UpdateActivityIBlock");
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "intranet", "CIntranetEventHandlers", "OnAfterIBlockElementDelete");
-		RegisterModuleDependences("main", "OnAfterUserAdd", "intranet", "CIntranetEventHandlers", "OnAfterUserAdd");
-		RegisterModuleDependences("main", "OnUserInitialize", "intranet", "CIntranetEventHandlers", "OnAfterUserInitialize");
-		RegisterModuleDependences("main", "OnAfterUserAuthorize", "intranet", "CIntranetInviteDialog", "OnAfterUserAuthorize");
-		RegisterModuleDependences("main", "OnAfterUserAuthorize", "intranet", "CIntranetEventHandlers", "OnAfterUserAuthorize");
-		RegisterModuleDependences("forum", "onAfterMessageAdd", "intranet", "CIntranetEventHandlers", "onAfterForumMessageAdd");
-		RegisterModuleDependences("forum", "onAfterMessageDelete", "intranet", "CIntranetEventHandlers", "onAfterForumMessageDelete");
-		RegisterModuleDependences("main", "OnAfterUserTypeAdd", "intranet", "CIntranetEventHandlers", "OnAfterUserTypeAdd");
-
-		RegisterModuleDependences('main', 'OnBeforeUserRegister', 'intranet', \Bitrix\Intranet\Internal\Integration\Main\EventHandler\User\UserRegisterSiteGroups::class, 'addEmployeeSiteGroups');
-
-		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionUpdate");
-		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionAdd");
-
-		RegisterModuleDependences("main", "OnUserTypeBuildList", "intranet", "CUserTypeEmployee", "GetUserTypeDescription");
-		RegisterModuleDependences("iblock", "OnIBlockPropertyBuildList", "intranet", "CIBlockPropertyEmployee", "GetUserTypeDescription");
-
-		RegisterModuleDependences("main", "OnBeforeProlog", "intranet", "CIntranetEventHandlers", "OnCreatePanel");
-
-		// OnAfterUserAdd was already bound above, so skip it
-		RegisterModuleDependences("main", "OnBeforeUserUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeUserUpdate");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "OnAfterUserUpdate");
-		RegisterModuleDependences("socialservices", "OnAfterSocServUserAdd", "intranet", "CIntranetEventHandlers", "OnAfterSocServUserAdd");
-
-		// cache
-		RegisterModuleDependences("main", "onUserDelete", "intranet", "CIntranetEventHandlers", "ClearAllUsersCache");
-		RegisterModuleDependences("main", "onAfterUserAdd", "intranet", "CIntranetEventHandlers", "ClearAllUsersCache");
-		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "ClearSingleUserCache");
-		RegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "ClearDepartmentCache");
-
-		RegisterModuleDependences("socialnetwork", "OnFillSocNetAllowedSubscribeEntityTypes", "intranet", "CIntranetEventHandlers", "OnFillSocNetAllowedSubscribeEntityTypes");
-		RegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "intranet", "CIntranetEventHandlers", "OnFillSocNetLogEvents");
-
-		RegisterModuleDependences("socialnetwork", "OnFillSocNetAllowedSubscribeEntityTypes", "intranet", "CIntranetNotify", "OnFillSocNetAllowedSubscribeEntityTypes");
-		RegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "intranet", "CIntranetNotify", "OnFillSocNetLogEvents");
-		RegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "intranet", "CIntranetNotify", "OnSendMentionGetEntityFields");
-
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementAdd", "intranet", "CIntranetEventHandlers", "SPRegisterUpdatedItem");
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementUpdate", "intranet", "CIntranetEventHandlers", "SPRegisterUpdatedItem");
-
-		// rating
-		RegisterModuleDependences("main", "OnAfterAddRatingRule", "intranet", "CRatingRulesIntranet", "OnAfterAddRatingRule");
-		RegisterModuleDependences("main", "OnAfterUpdateRatingRule", "intranet", "CRatingRulesIntranet", "OnAfterUpdateRatingRule");
-		RegisterModuleDependences("main", "OnGetRatingRuleObjects",  "intranet", "CRatingRulesIntranet", "OnGetRatingRuleObjects");
-		RegisterModuleDependences("main", "OnGetRatingRuleConfigs",  "intranet", "CRatingRulesIntranet", "OnGetRatingRuleConfigs");
-		RegisterModuleDependences("main", "OnAfterAddRating", 	"intranet", "CRatingsComponentsIntranet", "OnAfterAddRating", 200);
-		RegisterModuleDependences("main", "OnAfterUpdateRating", "intranet", "CRatingsComponentsIntranet", "OnAfterUpdateRating", 200);
-		RegisterModuleDependences("main", "OnSetRatingsConfigs", "intranet", "CRatingsComponentsIntranet", "OnSetRatingConfigs", 200);
-		RegisterModuleDependences("main", "OnGetRatingsConfigs", "intranet", "CRatingsComponentsIntranet", "OnGetRatingConfigs", 200);
-		RegisterModuleDependences("main", "OnGetRatingsObjects", "intranet", "CRatingsComponentsIntranet", "OnGetRatingObject", 200);
-
-		//auth provider
-		RegisterModuleDependences("main","OnAuthProvidersBuildList","intranet","CIntranetAuthProvider","GetProviders",);
-		RegisterModuleDependences(
-			'iblock',
-			'OnAfterIBlockSectionDelete',
-			'intranet',
-			'CIntranetAuthProvider',
-			'OnAfterIBlockSectionDelete'
-		);
-		RegisterModuleDependences("search","OnSearchCheckPermissions","intranet","CIntranetAuthProvider","OnSearchCheckPermissions",);
-
-		// activity pulse
-		RegisterModuleDependences("crm", "OnAfterCrmContactAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmContactAddEvent");
-		RegisterModuleDependences("crm", "OnAfterCrmCompanyAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmCompanyAddEvent");
-		RegisterModuleDependences("crm", "OnAfterCrmLeadAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmLeadAddEvent");
-		RegisterModuleDependences("crm", "OnAfterCrmDealAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmDealAddEvent");
-		RegisterModuleDependences("crm", "OnAfterCrmAddEvent", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmAddEventEvent");
-		RegisterModuleDependences("sale", "OnOrderAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onOrderAddEvent");
-		RegisterModuleDependences("sale", "OnOrderUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onOrderUpdateEvent");
-		RegisterModuleDependences("catalog", "OnProductAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onProductAddEvent");
-		RegisterModuleDependences("catalog", "OnProductUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onProductUpdateEvent");
-		RegisterModuleDependences("webdav", "OnAfterDiskFileAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFileAddEvent");
-		RegisterModuleDependences("webdav", "OnAfterDiskFileUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFileUpdateEvent");
-		RegisterModuleDependences("webdav", "OnAfterDiskFolderAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFolderAddEvent");
-		RegisterModuleDependences("webdav", "OnAfterDiskFolderUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFolderUpdateEvent");
-		RegisterModuleDependences("webdav", "OnAfterDiskFirstUsageByDay", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFirstUsageByDayEvent");
-		RegisterModuleDependences("disk", "OnAfterDiskFileAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFileAddEvent");
-		RegisterModuleDependences("disk", "OnAfterDiskFileUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFileUpdateEvent");
-		RegisterModuleDependences("disk", "OnAfterDiskFolderAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFolderAddEvent");
-		RegisterModuleDependences("disk", "OnAfterDiskFolderUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFolderUpdateEvent");
-		RegisterModuleDependences("disk", "OnAfterDiskFirstUsageByDay", "intranet", "\\Bitrix\\Intranet\\UStat\\DiskEventHandler", "onAfterDiskFirstUsageByDayEvent");
-		RegisterModuleDependences("im", "OnAfterMessagesAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\ImEventHandler", "onAfterMessagesAddEvent");
-		RegisterModuleDependences("im", "OnCallStart", "intranet", "\\Bitrix\\Intranet\\UStat\\ImEventHandler", "onCallStartEvent");
-		RegisterModuleDependences('im', 'OnGetNotifySchema', 'intranet', '\Bitrix\Intranet\Integration\Im', 'onGetNotifySchema');
-		RegisterModuleDependences("main", "OnAddRatingVote", "intranet", "\\Bitrix\\Intranet\\UStat\\LikesEventHandler", "onAddRatingVoteEvent");
-		RegisterModuleDependences("mobileapp", "OnMobileInit", "intranet", "\\Bitrix\\Intranet\\UStat\\MobileEventHandler", "onMobileInitEvent");
-		RegisterModuleDependences("blog", "OnPostAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\SocnetEventHandler", "onPostAddEvent");
-		RegisterModuleDependences("blog", "OnCommentAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\SocnetEventHandler", "onCommentAddEvent");
-		RegisterModuleDependences("tasks", "OnTaskAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\TasksEventHandler", "onTaskAddEvent");
-		RegisterModuleDependences("tasks", "OnTaskUpdate", "intranet", "\\Bitrix\\Intranet\\UStat\\TasksEventHandler", "onTaskUpdateEvent");
-		RegisterModuleDependences("tasks", "OnTaskElapsedTimeAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\TasksEventHandler", "onTaskElapsedTimeAddEvent");
-		RegisterModuleDependences("tasks", "OnAfterCommentAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\TasksEventHandler", "onAfterCommentAddEvent");
-
-		RegisterModuleDependences('iblock', 'OnModuleUnInstall', 'intranet', 'CIntranetEventHandlers', 'OnIBlockModuleUnInstall');
-
-		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'intranet', 'CIntranetRestService', 'OnRestServiceBuildDescription');
-
-		RegisterModuleDependences("main", "OnApplicationsBuildList", "main", '\Bitrix\Intranet\OutlookApplication',	"OnApplicationsBuildList", 100, "modules/intranet/lib/outlookapplication.php");
-		RegisterModuleDependences("main", "OnApplicationsBuildList", "main", '\Bitrix\Intranet\PublicApplication',	"OnApplicationsBuildList", 100, "modules/intranet/lib/publicapplication.php");
-
-		RegisterModuleDependences("rest", "OnRestAppInstall", "intranet", 'CIntranetEventHandlers', "onRestAppInstall");
-		RegisterModuleDependences("rest", "OnRestAppDelete", "intranet", 'CIntranetEventHandlers', "onRestAppDelete");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-
-		$eventManager->registerEventHandler('humanresources','OnMemberAdded','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
-		$eventManager->registerEventHandler('humanresources','OnMemberUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
-		$eventManager->registerEventHandler('humanresources','OnMemberDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
-		$eventManager->registerEventHandler('humanresources','OnNodeUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeUpdated',);
-		$eventManager->registerEventHandler('humanresources','OnNodeDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeDeleted',);
-
-		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'intranet', '\Bitrix\Intranet\PublicApplication', 'onApplicationScopeError');
-		$eventManager->registerEventHandler('socialservices', '\Bitrix\Socialservices\User::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_ADD, 'intranet', 'CIntranetEventHandlers', 'OnAfterSocServUserAdd');
-		$eventManager->registerEventHandler('security', 'onOtpRequired', 'intranet', '\Bitrix\Intranet\Integration\Security', 'onOtpRequired');
-
-		// for main user online status
-		$eventManager->registerEventHandlerCompatible('main', 'onUserOnlineStatusGetCustomOfflineStatus', 'intranet', '\Bitrix\Intranet\UserAbsence', 'onUserOnlineStatusGetCustomOfflineStatus');
-
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementAdd', 'intranet', '\Bitrix\Intranet\Absence\Event', 'onAfterIblockElementAdd');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementUpdate', 'intranet', '\Bitrix\Intranet\Absence\Event', 'onAfterIblockElementUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementDelete', 'intranet', '\Bitrix\Intranet\Absence\Event', 'onAfterIblockElementDelete');
-
-		// for main user index rebuild
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', '\Bitrix\Intranet\Integration\Main', 'onAfterIblockSectionUpdate');
-
-		// for livefeed indexation
-		$eventManager->registerEventHandler('socialnetwork', 'onLogCommentIndexGetContent', 'intranet', '\Bitrix\Intranet\Integration\Socialnetwork\LogComment', 'onIndexGetContent');
-
-		$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'intranet', '\Bitrix\Intranet\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
-		$eventManager->registerEventHandler('main', 'OnUISelectorActionProcessAjax', 'intranet', '\Bitrix\Intranet\Integration\Main\UISelector\Handler', 'OnUISelectorActionProcessAjax');
-
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'getEntityList');
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onExport');
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onImport');
-		$eventManager->registerEventHandler('rest', 'onAfterPlacementAdd::LEFT_MENU', 'intranet', '\Bitrix\Intranet\Integration\Rest\EventHandler', 'onRegisterPlacementLeftMenu');
-		$eventManager->registerEventHandler('rest', 'onAfterPlacementDelete::LEFT_MENU', 'intranet', '\Bitrix\Intranet\Integration\Rest\EventHandler', 'onUnRegisterPlacementLeftMenu');
-
-		// for control button and secretary
-		$eventManager->registerEventHandler('tasks', 'onTaskUpdate', 'intranet', '\Bitrix\Intranet\Integration\Tasks', 'onTaskUpdate');
-		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'onCalendarEventUpdate');
-		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'OnCalendarEventDelete');
-
-		//for side-panel integration
-		$eventManager->registerEventHandler('ui', 'OnSidepanelBelowPage', 'intranet', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage');
-		$eventManager->registerEventHandler('crm', 'OnCrmEntityDetailsFrameBelowPage', 'intranet', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage');
-		$eventManager->registerEventHandler('main', 'MainSenderSmtpLimitDecrease', 'intranet', 'Bitrix\Intranet\Integration\Main\EventHandler', 'onSenderSmtpLimitDecrease');
-
-		// for user filter provider integration and extension
-		$eventManager->registerEventHandler('main', 'OnBuildFilterFactoryMethods', 'intranet', '\Bitrix\Intranet\User\Filter\FactoryIntranet', 'onBuildFilterFactoryMethods');
-
-		$eventManager->registerEventHandler(
-				'intranet',
-				'onUserInvited',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onUserInvitedHandler',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'main',
-				'OnUserInitialize',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onUserInitializeHandler',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'main',
-				'OnAfterUserAuthorize',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onAfterUserAuthorizeHandler',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'main',
-				'OnBeforeUserDelete',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onBeforeUserDeleteHandler',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'intranet',
-				'OnRegisterUser',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onRegisterUser',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'main',
-				'OnAfterSetUserGroup',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onAfterSetUserGroupHandler',
-				50
-			);
-
-		$eventManager->registerEventHandler(
-				'socialnetwork',
-				'OnSocNetUserToGroupAdd',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onSocNetUserToGroupAddHandler'
-			);
-
-		$eventManager->registerEventHandler(
-				'socialnetwork',
-				'OnSocNetUserToGroupUpdate',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onSocNetUserToGroupUpdateHandler'
-			);
-
-		$eventManager->registerEventHandler(
-				'socialnetwork',
-				'OnAfterSocNetUserToGroupDelete',
-				'intranet',
-				\Bitrix\Intranet\Invitation::class,
-				'onSocNetUserToGroupDeleteHandler'
-			);
-
-		$eventManager->registerEventHandler(
-			'socialservices',
-			'OnUserInitialize',
-			'intranet',
-			'CIntranetEventHandlers',
-			'OnAfterUserInitialize'
-		);
-
-		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
-		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
-
-		if (!file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bitrix24"))
-		{
-			CAgent::AddAgent("CIntranetSharepoint::AgentLists();", "intranet", "N", 500);
-			CAgent::AddAgent("CIntranetSharepoint::AgentQueue();", "intranet", "N", 300);
-			CAgent::AddAgent("CIntranetSharepoint::AgentUpdate();", "intranet", "N", 3600);
-		}
-
-		\Bitrix\Main\Loader::includeModule('intranet');
-		\Bitrix\Intranet\Integration\Timeman\Worktime::registerEventHandler();
 
 		$arFields = Array(
 			"ACTIVE" => "N",
@@ -351,6 +84,15 @@ Class intranet extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
+		$dropTables = false;
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+			return false;
+		}
+
 		return true;
 	}
 

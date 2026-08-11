@@ -68,3 +68,6 @@ $MESS["INTRANET_MAILDOMAIN_NOREG_MESSAGE"] = "<p>Вы пробовали зар�
 
 <p>Если у вас возникли вопросы, вы можете задать их в <a href=\"#SUPPORT_LINK#\">техническую поддержку</a>.</p>";
 
+$MESS["INTRANET_OTP_CONFIRM_SUBJECT"] = "#CODE# — ваш код подтверждения";
+$MESS["INTRANET_OTP_AUTH_SUBJECT"] = "#CODE# — ваш код для входа";
+

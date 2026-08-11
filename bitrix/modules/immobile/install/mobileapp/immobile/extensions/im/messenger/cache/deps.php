@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'apptheme',
 		'utils/function',
 		'utils/object',
 		'utils/array',

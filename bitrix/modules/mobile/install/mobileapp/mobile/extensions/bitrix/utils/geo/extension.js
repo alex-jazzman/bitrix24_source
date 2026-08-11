@@ -98,6 +98,22 @@ jn.define('utils/geo', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {?{
+		 *     isLocationServiceEnabled?: boolean,
+		 *     isUserApproximatePermissionGranted?: boolean,
+		 *     isUserPrecisePermissionGranted?: boolean,
+		 * }} status
+		 * @return {boolean}
+		 */
+		static isLocationPermissionGranted(status)
+		{
+			return Boolean(
+				status?.isLocationServiceEnabled
+				&& (status?.isUserPrecisePermissionGranted || status?.isUserApproximatePermissionGranted),
+			);
+		}
+
+		/**
 		 * @param {Object} [props={}]
 		 * @param {GeoAccuracy} [props.accuracy=GeoAccuracy.PRECISE]
 		 * @param {boolean} [props.shouldShowAlert=true]

@@ -1,6 +1,7 @@
 import { MoveableBlock, PORT_POSITION } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
-import type { MenuItemOptions } from 'ui.vue3.components.menu';
+import { type MenuItemOptions } from 'ui.vue3.components.menu';
+
 import { IconDivider, IconButton } from '../../../../shared/ui';
 import {
 	BlockContainer,
@@ -11,6 +12,7 @@ import {
 	PortsGrid,
 	PortInout,
 	BLOCK_LAYOUT_SLOT_NAMES,
+	shouldAnimateBlock,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
@@ -20,7 +22,7 @@ import {
 import { PORT_TYPES } from '../../../../shared/constants';
 import { BlockLayoutWidget } from '../block-layout/block-layout';
 import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
-import type { Block } from '../../../../shared/types';
+import { type Block } from '../../../../shared/types';
 
 import { BlockMediator } from '../../lib';
 
@@ -73,6 +75,7 @@ export const BlockOperator = {
 			portTypes: PORT_TYPES,
 			portPosition: PORT_POSITION,
 			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
+			shouldAnimateBlock,
 		};
 	},
 	computed: {
@@ -126,6 +129,8 @@ export const BlockOperator = {
 											:iconName="block.node.icon"
 											:iconColorIndex="block.node.colorIndex"
 											:deactivated="!isBlockActivated"
+											:blockId="block.id"
+											:animate="shouldAnimateBlock(block)"
 										/>
 									</template>
 								</BlockHeader>

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_layout, im_v2_lib_utils, im_v2_lib_unreadMode, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
+(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_utils, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_layout, im_v2_lib_unreadMode, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
 	'use strict';
 
 	class BotPullHandler {
@@ -895,6 +895,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 	}
 
+	const GUEST_INVITE_CODE_COOKIE = 'BITRIX_IM_GUEST_INVITE_CODE';
 	class UserPullHandler {
 		#store;
 		constructor() {
@@ -915,6 +916,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			const usersToStore = params.items.map(item => item.user);
 			const userManager = new im_v2_lib_user.UserManager();
 			userManager.setUsersToModel(usersToStore);
+		}
+		handleUserLogout(params) {
+			const {
+				deactivatedCodes
+			} = params;
+			const inviteCode = main_core.Http.Cookie.get(GUEST_INVITE_CODE_COOKIE);
+			if (!main_core.Type.isArrayFilled(deactivatedCodes) || deactivatedCodes.includes(inviteCode)) {
+				im_v2_lib_utils.Utils.browser.redirectTo('/');
+			}
 		}
 	}
 
@@ -1202,6 +1212,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 		handleUserShowInRecent(params) {
 			this.#userHandler.handleUserShowInRecent(params);
+		}
+		handleUserLogout(params) {
+			this.#userHandler.handleUserLogout(params);
 		}
 		// endregion 'user'
 
@@ -2532,5 +2545,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.SidebarPullHandler = SidebarPullHandler;
 	exports.StickersPullHandler = StickersPullHandler;
 
-})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

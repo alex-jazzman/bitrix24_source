@@ -129,6 +129,10 @@ export async function resolveFileNodes(
 				return;
 			}
 			attrs.unavailable = false;
+			// Preserve presentation attrs the resolver doesn't carry — otherwise setNodeMarkup
+			// (full attr replace) wipes the width/align from a pasted [[image ... width=N align=X]].
+			attrs.width = node.attrs.width ?? null;
+			attrs.align = node.attrs.align ?? null;
 
 			if (targetType === node.type.name)
 			{

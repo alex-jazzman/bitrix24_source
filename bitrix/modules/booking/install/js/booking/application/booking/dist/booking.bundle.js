@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, ui_vue3, booking_core, booking_component_mixin_locMixin, main_loader, ui_vue3_vuex, booking_const, booking_lib_datePeriod, booking_component_emptyFilterResultsPopup, booking_provider_service_mainPageService, booking_provider_service_saleChannelsService, booking_provider_service_dictionaryService, booking_provider_service_bookingService, booking_provider_service_calendarService, booking_provider_service_resourceDialogService, booking_lib_analytics, booking_lib_mousePosition, booking_lib_filterResultNavigator, booking_component_whatsappPopupChangesSendingMessages, main_date, booking_lib_busySlots, main_core_events, ui_datePicker, ui_iconSet_api_vue, ui_iconSet_main, ui_iconSet_actions, booking_provider_service_optionService, booking_component_counterFloating, main_core, booking_lib_drag, booking_lib_duration, main_popup, ui_dialogs_messagebox, booking_provider_service_waitListService, booking_component_bookingCard, booking_lib_isRealId, booking_component_actionsPopup, booking_lib_dealHelper, booking_lib_removeWaitListItem, ui_iconSet_api_core, ui_iconSet_outline, booking_lib_limit, booking_component_button, ui_ears, booking_lib_ahaMoments, booking_lib_grid, booking_lib_range, ui_vue3_components_richLoc, booking_component_popup, booking_lib_booking, booking_lib_inInterval, booking_lib_checkBookingIntersection, booking_provider_service_bookingActionsService, ui_notificationManager, booking_component_loader, ui_vue3_directives_hint, booking_lib_removeBooking, booking_lib_requestRevisionGuard, booking_component_timeSelector, ui_iconSet_animated, booking_component_counter, booking_lib_utils, booking_lib_cell, ui_system_skeleton_vue, ui_vue3_components_button, booking_lib_slotRanges, ui_vue3_components_counter, ui_cnt, ui_entitySelector, booking_lib_resources, booking_lib_resourcesDateCache, booking_component_statisticsPopup, booking_lib_helpDesk, ui_label, booking_lib_currencyFormat, ui_hint, booking_resourceCreationWizard, booking_lib_removeResource, booking_lib_sidePanelInstance, ui_counterpanel, booking_provider_service_clientService, booking_component_clientPopup, ui_bannerDispatcher, booking_lib_resolvable, ui_autoLaunch, booking_application_yandexIntegrationWizard, booking_application_skuResourcesEditor, booking_provider_service_resourcesService) {
+(function (exports, ui_vue3, booking_core, booking_component_mixin_locMixin, main_loader, ui_vue3_vuex, booking_const, booking_lib_datePeriod, booking_lib_duration, booking_component_emptyFilterResultsPopup, booking_provider_service_mainPageService, booking_provider_service_saleChannelsService, booking_provider_service_dictionaryService, booking_provider_service_bookingService, booking_provider_service_calendarService, booking_provider_service_resourceDialogService, booking_lib_analytics, booking_lib_mousePosition, booking_lib_filterResultNavigator, booking_component_whatsappPopupChangesSendingMessages, main_date, booking_lib_busySlots, booking_lib_grid, main_core_events, ui_datePicker, ui_iconSet_api_vue, ui_iconSet_main, ui_iconSet_actions, booking_provider_service_optionService, booking_component_counterFloating, main_core, booking_lib_drag, main_popup, ui_dialogs_messagebox, booking_provider_service_waitListService, booking_component_bookingCard, booking_lib_isRealId, booking_component_actionsPopup, booking_lib_dealHelper, booking_lib_removeWaitListItem, ui_iconSet_api_core, ui_iconSet_outline, booking_lib_limit, booking_component_button, ui_ears, booking_lib_ahaMoments, booking_lib_range, ui_vue3_components_richLoc, booking_component_popup, booking_lib_booking, booking_lib_inInterval, booking_lib_checkBookingIntersection, booking_provider_service_bookingActionsService, ui_notificationManager, booking_component_loader, ui_vue3_directives_hint, booking_lib_removeBooking, booking_lib_requestRevisionGuard, booking_component_timeSelector, ui_iconSet_animated, booking_component_counter, booking_lib_utils, booking_lib_cell, ui_system_skeleton_vue, ui_vue3_components_button, booking_lib_slotRanges, ui_vue3_components_counter, ui_cnt, ui_entitySelector, booking_lib_resources, booking_lib_resourcesDateCache, booking_component_statisticsPopup, booking_lib_helpDesk, ui_label, booking_lib_currencyFormat, ui_hint, booking_resourceCreationWizard, booking_lib_removeResource, booking_lib_sidePanelInstance, ui_counterpanel, booking_provider_service_clientService, booking_component_clientPopup, ui_bannerDispatcher, booking_lib_resolvable, ui_autoLaunch, booking_application_yandexIntegrationWizard, booking_application_skuResourcesEditor, booking_provider_service_resourcesService) {
 	'use strict';
 
 	const MarkColors = {
@@ -1730,9 +1730,10 @@ this.BX.Booking = this.BX.Booking || {};
 					main_core.Dom.style(this.$refs.nowLine, 'display', 'none');
 					return;
 				}
-				const hourOffset = (now.getHours() + now.getMinutes() / 60) * booking_const.Grid.SizeElement.WeekHourWidth;
-				const left = diffDays * booking_const.Grid.SizeElement.WeekCellWidth + hourOffset;
-				const top = booking_const.Grid.SizeElement.WeekDaysPanelHeight + this.scroll;
+				const weekHourWidth = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekHourWidth);
+				const hourOffset = (now.getHours() + now.getMinutes() / 60) * weekHourWidth * this.zoom;
+				const left = diffDays * booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekCellWidth) * this.zoom + hourOffset;
+				const top = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekDaysPanelHeight) + this.scroll;
 				main_core.Dom.style(this.$refs.nowLine, 'top', `${top}px`);
 				main_core.Dom.style(this.$refs.nowLine, 'left', `${left}px`);
 				main_core.Dom.style(this.$refs.nowLine, 'display', '');
@@ -2283,7 +2284,7 @@ this.BX.Booking = this.BX.Booking || {};
 				'--selected': selected,
 				'--bounded-to-bottom': cell.boundedToBottom,
 				'--height-is-less-than-40': height < 40,
-				'--small': height <= 12.5,
+				'--small': height <= 20,
 			}]"
 			:style="{
 				'--height': height + 'px',
@@ -5109,11 +5110,11 @@ this.BX.Booking = this.BX.Booking || {};
 			},
 			countWidth(overlappingBookings) {
 				const count = overlappingBookings.length > 0 ? overlappingBookings.length : 1;
-				return booking_const.Grid.SizeElement.DayCellWidth / count;
+				return booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayCellWidth) / count;
 			},
 			countHeight(overlappingBookings) {
 				const count = overlappingBookings.length > 0 ? overlappingBookings.length : 1;
-				return booking_const.Grid.SizeElement.WeekCellHeight / count;
+				return booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekCellHeight) / count;
 			},
 			countSideOffset(size) {
 				if (this.isShifted) {
@@ -5324,7 +5325,8 @@ this.BX.Booking = this.BX.Booking || {};
 					'--not-real': !this.isReal,
 					'--zoom-is-less-than-08': this.zoom < 0.8,
 					'--compact-mode': this.realHeight < 40 || this.zoom < 0.8,
-					'--small': this.realHeight <= 15,
+					'--small': this.realHeight > 15 && this.realHeight <= 20,
+					'--extra-small': this.realHeight <= 15,
 					'--long': this.realHeight >= 65,
 					'--disabled': this.disabled,
 					'--confirmed': this.booking.isConfirmed && !this.isNotVisited,
@@ -6418,7 +6420,7 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		watch: {
 			scroll(value) {
-				this.$refs.columnsContainer.scrollLeft = value;
+				this.applyScroll(value);
 			},
 			editingBooking() {
 				this.scrollToEditingBooking();
@@ -6458,6 +6460,7 @@ this.BX.Booking = this.BX.Booking || {};
 			if (this.isLoaded) {
 				this.setupDrag();
 			}
+			this.applyScroll(this.scroll);
 			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 		},
@@ -6466,6 +6469,9 @@ this.BX.Booking = this.BX.Booking || {};
 			main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 		},
 		methods: {
+			applyScroll(value) {
+				this.$refs.columnsContainer.scrollLeft = value;
+			},
 			updateEars() {
 				this.ears.toggleEars();
 				this.tryShowAhaMoment();
@@ -6741,10 +6747,14 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	const MinVisibleBookingDurationMs = booking_lib_duration.Duration.getUnitDurations().H / 2;
+	const MinAvailableZoom = 1;
+	const InsufficientZoomMinVisibleDurationMs = booking_lib_duration.Duration.getUnitDurations().H / 2;
+	const InsufficientZoomThreshold = 2;
 	const MinCreatedBookingDurationMs = booking_lib_duration.Duration.getUnitDurations().H * 12;
 	const MinCellStatsSlotSizeMinutes = MinCreatedBookingDurationMs / booking_lib_duration.Duration.getUnitDurations().i;
 	const MaxDurationMsCompactCell = 18 * booking_lib_duration.Duration.getUnitDurations().H;
+	const MaxOverflowPx = 35;
+	const MinSlotWidthPx = 78;
 
 	class WeekCellService {
 		isCreationAvailable({
@@ -6754,13 +6764,14 @@ this.BX.Booking = this.BX.Booking || {};
 			if (!resource) {
 				return false;
 			}
-			return !this.#hasSmallSlotSize(resource);
+			const slotSize = resource.slotRanges[0]?.slotSize ?? 60;
+			return this.isCreationAvailableForSlotSize(slotSize);
+		}
+		isCreationAvailableForSlotSize(slotSize) {
+			return slotSize >= MinCellStatsSlotSizeMinutes;
 		}
 		#getResourceById(resourceId) {
 			return this.#store.getters[`${booking_const.Model.Resources}/getById`](resourceId) || null;
-		}
-		#hasSmallSlotSize(resource) {
-			return (resource.slotRanges[0]?.slotSize ?? 60) < MinCellStatsSlotSizeMinutes;
 		}
 		get #store() {
 			return booking_core.Core.getStore();
@@ -6905,8 +6916,11 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		methods: {
-			goToDay(ts) {
-				void this.$store.dispatch(`${booking_const.Model.Interface}/goToDay`, ts + this.offset);
+			goToDayMode() {
+				void this.$store.dispatch(`${booking_const.Model.Interface}/goToDayMode`, {
+					selectedDateTs: this.cell.fromTs + this.offset,
+					resourceId: this.cell.resourceId
+				});
 			}
 		},
 		template: `
@@ -6946,7 +6960,7 @@ this.BX.Booking = this.BX.Booking || {};
 						:text="loc('BOOKING_BOOKING_SELECT')"
 						:size="ButtonSize.EXTRA_EXTRA_SMALL"
 						:color="ButtonColor.PRIMARY"
-						@click="goToDay(cell.fromTs)"
+						@click="goToDayMode()"
 					/>
 				</div>
 			</div>
@@ -6982,6 +6996,7 @@ this.BX.Booking = this.BX.Booking || {};
 				hoveredPlacementSlot: `${booking_const.Model.Interface}/hoveredPlacementSlot`,
 				isHoveredPlacementSlotFixed: `${booking_const.Model.Interface}/isHoveredPlacementSlotFixed`,
 				offset: `${booking_const.Model.Interface}/offset`,
+				zoom: `${booking_const.Model.Interface}/zoom`,
 				isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
 				isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 				resizedBookingId: `${booking_const.Model.Interface}/resizedBookingId`,
@@ -7019,9 +7034,7 @@ this.BX.Booking = this.BX.Booking || {};
 				return !(this.isFilterMode || this.resizedBookingId || this.isEditingBookingMode && !this.draggedDataTransfer.id);
 			},
 			isCreationAvailable() {
-				return weekCellService.isCreationAvailable({
-					resourceId: this.resourceId
-				});
+				return weekCellService.isCreationAvailableForSlotSize(this.slotSize);
 			},
 			slotSize() {
 				return this.resource?.slotRanges?.[0]?.slotSize ?? 60;
@@ -7196,7 +7209,7 @@ this.BX.Booking = this.BX.Booking || {};
 			getHourFromMouseEvent(event) {
 				const rect = this.$el.getBoundingClientRect();
 				const offsetX = event.clientX - rect.left;
-				const hour = Math.floor(offsetX / booking_const.Grid.SizeElement.WeekHourWidth);
+				const hour = Math.floor(offsetX / (booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekHourWidth) * this.zoom));
 				return Math.max(0, Math.min(23, hour));
 			},
 			isMouseInCell(event) {
@@ -7493,6 +7506,7 @@ this.BX.Booking = this.BX.Booking || {};
 				isHoveredPlacementSlotFixed: `${booking_const.Model.Interface}/isHoveredPlacementSlotFixed`,
 				hoveredPlacementSlot: `${booking_const.Model.Interface}/hoveredPlacementSlot`,
 				selectedPlacementSlots: `${booking_const.Model.Interface}/selectedPlacementSlots`,
+				zoom: `${booking_const.Model.Interface}/zoom`,
 				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`
 			}),
 			grid() {
@@ -7524,7 +7538,10 @@ this.BX.Booking = this.BX.Booking || {};
 				return baseTop;
 			},
 			width() {
-				return this.grid.calculateWidth(this.cell.fromTs, this.cell.toTs);
+				const slotWidthPx = this.grid.calculateWidth(this.cell.fromTs, this.cell.toTs);
+				const gridWidthPx = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekCellWidth) * booking_const.Grid.Duration.Week * this.zoom;
+				const maxSlotWidthPx = gridWidthPx + MaxOverflowPx - this.left;
+				return Math.max(MinSlotWidthPx, Math.min(slotWidthPx, maxSlotWidthPx));
 			},
 			height() {
 				if (this.hasOverbooking) {
@@ -7657,7 +7674,8 @@ this.BX.Booking = this.BX.Booking || {};
 				selectedFirstDayPeriodTs: 'selectedFirstDayPeriodTs',
 				hoveredPlacementSlot: 'hoveredPlacementSlot',
 				busySlots: 'busySlots',
-				selectedPlacementSlots: 'selectedPlacementSlots'
+				selectedPlacementSlots: 'selectedPlacementSlots',
+				zoom: 'zoom'
 			}),
 			...mapFilterGetters({
 				filteredBookingsIds: 'filteredBookingsIds',
@@ -7726,12 +7744,15 @@ this.BX.Booking = this.BX.Booking || {};
 			visibleBookingsMap() {
 				const visibleBookingsMap = new Map();
 				for (const booking of this.bookings) {
-					if (!booking_lib_booking.bookingService.isVisibleByMinDuration(booking, this.visiblePeriod, MinVisibleBookingDurationMs)) {
+					if (this.shouldFilterByMinVisibleBookingDuration && !booking_lib_booking.bookingService.isVisibleByMinDuration(booking, this.visiblePeriod, InsufficientZoomMinVisibleDurationMs)) {
 						continue;
 					}
 					visibleBookingsMap.set(booking_lib_booking.bookingService.generateKey(booking), booking);
 				}
 				return visibleBookingsMap;
+			},
+			shouldFilterByMinVisibleBookingDuration() {
+				return this.zoom < InsufficientZoomThreshold;
 			},
 			resourceBookingsUiGroupsMap() {
 				const visibleBookingsByResourceId = splitBookingsByResourceId([...this.visibleBookingsMap.values()]);
@@ -9688,6 +9709,10 @@ this.BX.Booking = this.BX.Booking || {};
 			resourceId: {
 				type: Number,
 				required: true
+			},
+			withScale: {
+				type: Boolean,
+				default: true
 			}
 		},
 		setup() {
@@ -9748,6 +9773,9 @@ this.BX.Booking = this.BX.Booking || {};
 					fill: true
 				});
 				return label.render().outerHTML;
+			},
+			isFirstResource() {
+				return this.resourceId === this.resourcesIds[0];
 			}
 		},
 		watch: {
@@ -9767,6 +9795,14 @@ this.BX.Booking = this.BX.Booking || {};
 		mounted() {
 			this.updateVisibility();
 			this.updateVisibilityDuringTransition();
+			if (this.isFirstResource) {
+				main_core.Event.EventEmitter.subscribe(booking_const.EventName.AiCallBannerClosed, this.tryShowAiCallAha);
+			}
+		},
+		beforeUnmount() {
+			if (this.isFirstResource) {
+				main_core.Event.EventEmitter.unsubscribe(booking_const.EventName.AiCallBannerClosed, this.tryShowAiCallAha);
+			}
 		},
 		methods: {
 			updateVisibilityDuringTransition() {
@@ -9789,6 +9825,19 @@ this.BX.Booking = this.BX.Booking || {};
 				} else {
 					this.visible = rect.right > 0 && rect.left < window.innerWidth;
 				}
+			},
+			async tryShowAiCallAha() {
+				const isAiCallAhaShown = this.$store.getters[`${booking_const.Model.Interface}/isAiCallAhaShown`];
+				if (isAiCallAhaShown || !this.$refs.meta) {
+					return;
+				}
+				void this.$store.dispatch(`${booking_const.Model.Interface}/setIsAiCallAhaShown`, true);
+				await booking_lib_ahaMoments.ahaMoments.show({
+					id: 'booking-ai-call-notification',
+					text: this.loc('BOOKING_AHA_AI_CALL_NOTIFICATION_TEXT'),
+					target: this.$refs.meta,
+					isPulsarTransparent: true
+				});
 			}
 		},
 		template: `
@@ -9802,7 +9851,7 @@ this.BX.Booking = this.BX.Booking || {};
 				<ResourceWorkload
 					v-if="!resource.isDeleted"
 					:resourceId="resourceId"
-					:scale="zoom"
+					:scale="withScale ? zoom : undefined"
 					:isGrid="true"
 				/>
 				<div class="booking-booking-header-resource-title">
@@ -9817,14 +9866,14 @@ this.BX.Booking = this.BX.Booking || {};
 					v-if="resource.isDeleted"
 					v-html="labelHTML"
 				></div>
-				<div class="booking-booking-header-resource-meta" v-else>
+				<div v-else class="booking-booking-header-resource-meta">
 					<div
 						class="booking-booking-header-resource-profit"
 						v-html="profit"
 					></div>
-					<div class="booking-booking-header-resource-meta-row">
+					<div class="booking-booking-header-resource-meta-row" ref="meta">
 						<div class="booking-booking-header-resource-actions">
-							<ResourceMenu :resourceId="resourceId" />
+							<ResourceMenu :resourceId="resourceId"/>
 						</div>
 						<UiCounter
 							v-if="neededShowIntersectionCounter"
@@ -9953,11 +10002,17 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		watch: {
 			scroll(value) {
-				this.$refs.container[this.inactiveScrollProperty] = 0;
-				this.$refs.container[this.scrollProperty] = value;
+				this.applyScroll(value);
 			}
 		},
+		mounted() {
+			this.applyScroll(this.scroll);
+		},
 		methods: {
+			applyScroll(value) {
+				this.$refs.container[this.inactiveScrollProperty] = 0;
+				this.$refs.container[this.scrollProperty] = value;
+			},
 			handleScroll() {
 				const scrollValue = this.$refs.container[this.scrollProperty];
 				this.$store.dispatch('interface/setScroll', scrollValue);
@@ -9972,7 +10027,7 @@ this.BX.Booking = this.BX.Booking || {};
 			<div class="booking-booking__resource-panel_resources">
 				<TransitionGroup name="booking-transition-resource">
 					<template v-for="resourceId of resourcesIds" :key="resourceId">
-						<Resource :resourceId="resourceId"/>
+						<Resource :resourceId="resourceId" :withScale="!isWeekMode"/>
 					</template>
 				</TransitionGroup>
 			</div>
@@ -9980,6 +10035,41 @@ this.BX.Booking = this.BX.Booking || {};
 		</div>
 	`
 	};
+
+	class WeekInitialZoom {
+		calculate(measurements) {
+			const {
+				containerWidth,
+				leftPanelWidth,
+				sidebarZoneWidth,
+				weekCellWidth
+			} = measurements;
+			const weekDaysWidth = weekCellWidth * booking_const.Grid.Duration.Week;
+			if (containerWidth <= 0 || weekDaysWidth <= 0) {
+				return MinAvailableZoom;
+			}
+			const availableWidth = containerWidth - leftPanelWidth - sidebarZoneWidth;
+			return Math.max(MinAvailableZoom, availableWidth / weekDaysWidth);
+		}
+		get(container) {
+			if (!main_core.Type.isDomNode(container)) {
+				return null;
+			}
+			const measurements = {
+				containerWidth: container.offsetWidth,
+				leftPanelWidth: booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.LeftPanelWidthWeek),
+				sidebarZoneWidth: booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.SidebarZoneWidth),
+				weekCellWidth: booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.WeekCellWidth)
+			};
+			if (!this.#hasRequiredMeasurements(measurements)) {
+				return null;
+			}
+			return this.calculate(measurements);
+		}
+		#hasRequiredMeasurements(measurements) {
+			return measurements.containerWidth > 0 && measurements.leftPanelWidth > 0 && measurements.sidebarZoneWidth > 0 && measurements.weekCellWidth > 0;
+		}
+	}
 
 	const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 
@@ -9992,6 +10082,12 @@ this.BX.Booking = this.BX.Booking || {};
 			ActionsMenu,
 			ResourcePanel,
 			Sidebar
+		},
+		data() {
+			return {
+				isGridTokensInitialized: false,
+				isInitialZoomMeasuring: false
+			};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
@@ -10016,11 +10112,36 @@ this.BX.Booking = this.BX.Booking || {};
 		watch: {
 			gridMode() {
 				void booking_lib_busySlots.busySlots.loadBusySlots();
+				void this.updateInitialZoom();
+			}
+		},
+		async mounted() {
+			await booking_lib_grid.gridTokens.init(this.$refs.baseComponent);
+			this.isGridTokensInitialized = true;
+			void this.updateInitialZoom();
+		},
+		methods: {
+			async updateInitialZoom() {
+				if (!this.isWeekMode) {
+					this.isInitialZoomMeasuring = false;
+					return;
+				}
+				this.isInitialZoomMeasuring = true;
+				try {
+					const zoom = new WeekInitialZoom().get(this.$refs.baseComponent);
+					if (zoom && zoom !== this.zoom) {
+						await this.$store.dispatch('interface/setZoom', zoom);
+					}
+				} finally {
+					this.isInitialZoomMeasuring = false;
+				}
 			}
 		},
 		template: `
 		<div
+			ref="baseComponent"
 			class="booking-booking__base-component --ui-context-content-light"
+			data-id="booking-booking-base-component"
 			id="booking-content"
 			:style="{
 				'--zoom': zoom,
@@ -10033,16 +10154,19 @@ this.BX.Booking = this.BX.Booking || {};
 				'--am-pm-mode': isAmPmMode,
 				'--week-mode': isWeekMode,
 				'--day-mode': !isWeekMode,
+				'--initial-zoom-measuring': isInitialZoomMeasuring,
 			}"
 		>
-			<ActionsMenu class="booking-booking__base-component_actions"/>
-			<ResourcePanel class="booking-booking__base-component_resources"/>
-			<div v-show="intersectionExpanded"
-				class="booking-booking__base-component_intersections" 
-				id="booking-resource-intersections"
-			></div>
-			<component :is="currentGridComponent"/>
-			<Sidebar/>
+			<template v-if="isGridTokensInitialized">
+				<ActionsMenu class="booking-booking__base-component_actions"/>
+				<ResourcePanel class="booking-booking__base-component_resources"/>
+				<div v-show="intersectionExpanded"
+					class="booking-booking__base-component_intersections" 
+					id="booking-resource-intersections"
+				></div>
+				<component :is="currentGridComponent"/>
+				<Sidebar/>
+			</template>
 		</div>
 	`
 	};
@@ -10914,6 +11038,99 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	const BannerAiCall = {
+		data() {
+			return {
+				bannerComponent: null,
+				isBannerActivated: false
+			};
+		},
+		created() {
+			this.autoCloseTimerId = null;
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				aiCallBannerMode: `${booking_const.Model.Interface}/aiCallBannerMode`
+			})
+		},
+		watch: {
+			aiCallBannerMode(value) {
+				if (value === booking_const.AiCallBannerMode.Invitation && !this.bannerComponent) {
+					void this.showBanner();
+				}
+			}
+		},
+		mounted() {
+			if (this.aiCallBannerMode === booking_const.AiCallBannerMode.Invitation) {
+				void this.showBanner();
+			}
+		},
+		methods: {
+			async showBanner() {
+				ui_bannerDispatcher.BannerDispatcher.high.toQueue(async onDone => {
+					const {
+						BannerAiCall
+					} = await main_core.Runtime.loadExtension('booking.component.banner-ai-call');
+					this.bannerComponent = ui_vue3.shallowRef(BannerAiCall);
+					void booking_provider_service_mainPageService.mainPageService.registerAiCallBannerShown();
+					booking_lib_analytics.AiCallBannerAnalytics.sendBannerView();
+					this.bannerClosed = new booking_lib_resolvable.Resolvable();
+					await this.bannerClosed;
+					onDone();
+				});
+			},
+			closeBanner() {
+				if (this.autoCloseTimerId) {
+					clearTimeout(this.autoCloseTimerId);
+					this.autoCloseTimerId = null;
+				}
+				if (!this.bannerComponent) {
+					return;
+				}
+				this.bannerComponent = null;
+				this.bannerClosed?.resolve();
+				main_core.Event.EventEmitter.emit(booking_const.EventName.AiCallBannerClosed);
+			},
+			async onEnable() {
+				const result = await booking_provider_service_mainPageService.mainPageService.switchAllToAiCall();
+				if (result === false) {
+					this.notifyEnableError();
+					this.closeBanner();
+					return;
+				}
+				booking_lib_analytics.AiCallBannerAnalytics.sendBannerClickStartFlow();
+				this.isBannerActivated = true;
+				this.autoCloseTimerId = setTimeout(() => this.closeBanner(), 2000);
+			},
+			onSkip() {
+				booking_lib_analytics.AiCallBannerAnalytics.sendBannerCloseSkip();
+				this.closeBanner();
+			},
+			onClose() {
+				if (!this.isBannerActivated) {
+					booking_lib_analytics.AiCallBannerAnalytics.sendBannerCloseCross();
+				}
+				this.closeBanner();
+			},
+			notifyEnableError() {
+				ui_notificationManager.Notifier.notify({
+					id: 'booking-banner-ai-call-enable-error',
+					text: main_core.Loc.getMessage('BOOKING_COMPONENT_BANNER_AI_CALL_ENABLE_ERROR')
+				});
+			}
+		},
+		template: `
+		<component
+			v-if="bannerComponent"
+			:is="bannerComponent"
+			:activated="isBannerActivated"
+			@enable="onEnable"
+			@skip="onSkip"
+			@close="onClose"
+		/>
+	`
+	};
+
 	const Trial = {
 		data() {
 			return {
@@ -11532,6 +11749,7 @@ this.BX.Booking = this.BX.Booking || {};
 	const SwitchViewButton = {
 		name: 'SwitchViewButton',
 		components: {
+			Icon: ui_iconSet_api_vue.BIcon,
 			UiButton: ui_vue3_components_button.Button
 		},
 		props: {
@@ -11546,20 +11764,28 @@ this.BX.Booking = this.BX.Booking || {};
 				ButtonColor: ui_vue3_components_button.ButtonColor,
 				ButtonSize: ui_vue3_components_button.ButtonSize,
 				ButtonState: ui_vue3_components_button.ButtonState,
-				Grid: booking_const.Grid
+				Grid: booking_const.Grid,
+				IconSet: ui_iconSet_api_vue.Set
 			};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
 				gridMode: `${booking_const.Model.Interface}/gridMode`,
-				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`
-			})
+				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`,
+				isLoaded: `${booking_const.Model.Interface}/isLoaded`
+			}),
+			isMultidayFeatureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingLong;
+			}
 		},
 		watch: {
 			async gridMode(newValue, oldValue) {
 				if (newValue !== oldValue) {
 					await booking_provider_service_optionService.optionService.set(booking_const.Option.GridMode, newValue);
 				}
+			},
+			isLoaded() {
+				void this.tryShowAhaMoment();
 			}
 		},
 		mounted() {
@@ -11568,13 +11794,34 @@ this.BX.Booking = this.BX.Booking || {};
 		methods: {
 			setGridMode(mode) {
 				if (this.gridMode !== mode) {
-					this.$store.dispatch(`${booking_const.Model.Interface}/setGridMode`, mode);
+					void this.$store.dispatch(`${booking_const.Model.Interface}/setGridMode`, mode);
 				}
+			},
+			handleWeekClick() {
+				if (!this.isMultidayFeatureEnabled) {
+					void booking_lib_limit.limit.show(booking_const.LimitFeatureId.MultidayBooking);
+					return;
+				}
+				this.setGridMode(booking_const.Grid.Mode.Week);
+			},
+			async tryShowAhaMoment() {
+				if (!booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.WeekView)) {
+					return;
+				}
+				await booking_lib_ahaMoments.ahaMoments.show({
+					id: 'booking-week-view',
+					title: this.loc('BOOKING_AHA_WEEK_VIEW_TITLE'),
+					text: this.loc('BOOKING_AHA_WEEK_VIEW_TEXT'),
+					target: this.$refs.weekButton
+				});
+				booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.WeekView);
 			}
 		},
 		template: `
-		<div class="booking-booking__switch-view-button" ref="dayWeekButton">
+		<div class="booking-booking__switch-view-container" ref="dayWeekButton">
 			<UiButton
+				class="booking-booking__switch-view-button"
+				data-id="booking-booking-switch-view-day-button"
 				:text="loc('BOOKING_BOOKING_SWITZER_DAY_BUTTON')"
 				:size="ButtonSize.SMALL"
 				:style="AirButtonStyle.OUTLINE_NO_ACCENT"
@@ -11582,14 +11829,22 @@ this.BX.Booking = this.BX.Booking || {};
 				removeRightCorners
 				@click="setGridMode(Grid.Mode.Day)"
 			/>
-			<UiButton
-				:text="loc('BOOKING_BOOKING_SWITZER_WEEK_BUTTON')"
-				:size="ButtonSize.SMALL"
-				:style="AirButtonStyle.OUTLINE_NO_ACCENT"
-				:state="isWeekMode ? ButtonState.ACTIVE : null"
-				removeLeftCorners
-				@click="setGridMode(Grid.Mode.Week)"
-			/>
+			<div
+				ref="weekButton"
+				class="booking-booking__switch-view-button"
+				data-id="booking-booking-switch-view-week-button"
+				:class="{'--locked': !isMultidayFeatureEnabled}"
+				@click="handleWeekClick"
+			>
+				<UiButton
+					:text="loc('BOOKING_BOOKING_SWITZER_WEEK_BUTTON')"
+					:size="ButtonSize.SMALL"
+					:style="AirButtonStyle.OUTLINE_NO_ACCENT"
+					:state="isWeekMode ? ButtonState.ACTIVE : null"
+					removeLeftCorners
+				/>
+				<Icon v-if="!isMultidayFeatureEnabled" :name="IconSet.LOCK"/>
+			</div>
 		</div>
 	`
 	};
@@ -11661,6 +11916,7 @@ this.BX.Booking = this.BX.Booking || {};
 			CountersPanel,
 			MultiBooking,
 			Banner,
+			BannerAiCall,
 			Trial,
 			IntegrationsButton,
 			SwitchViewButton,
@@ -11682,16 +11938,12 @@ this.BX.Booking = this.BX.Booking || {};
 				loadingFilter: false
 			};
 		},
-		created() {
-			this.loader = new main_loader.Loader();
-		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
 				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
 				selectedFirstDayPeriodTs: `${booking_const.Model.Interface}/selectedFirstDayPeriodTs`,
 				viewDateTs: `${booking_const.Model.Interface}/viewDateTs`,
 				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`,
-				isMultidayFeatureAvailable: `${booking_const.Model.Interface}/isMultidayFeatureAvailable`,
 				isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
 				isDeletingResourceFilterMode: `${booking_const.Model.Filter}/isDeletingResourceFilterMode`,
 				deletingResource: `${booking_const.Model.Filter}/deletingResource`,
@@ -11715,20 +11967,39 @@ this.BX.Booking = this.BX.Booking || {};
 			},
 			editingBooking() {
 				return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
+			},
+			filteredBookings() {
+				if (this.isWeekMode) {
+					return this.$store.getters[`${booking_const.Model.Bookings}/getByIntervalAndIds`](this.selectedFirstDayPeriodTs, this.selectedFirstDayPeriodTs + booking_lib_duration.Duration.getUnitDurations().w, this.filteredBookingsIds);
+				}
+				return this.$store.getters[`${booking_const.Model.Bookings}/getByDateAndIds`](this.selectedDateTs, this.filteredBookingsIds);
+			},
+			filteredResourcesIds() {
+				return this.filteredBookings.map(booking => booking.resourcesIds[0]).filter((value, index, array) => array.indexOf(value) === index);
 			}
 		},
 		watch: {
 			selectedDateTs() {
+				if (this.isWeekMode) {
+					return;
+				}
 				if (this.isFilterMode) {
 					void this.applyFilter();
 				} else if (this.isDeletingResourceFilterMode) {
 					void this.applyDeletingResourceFilter(this.deletingResource);
-				} else if (!this.isWeekMode) {
+				} else {
 					void this.fetchPage();
 				}
 			},
 			selectedFirstDayPeriodTs() {
-				if (this.isWeekMode) {
+				if (!this.isWeekMode) {
+					return;
+				}
+				if (this.isFilterMode) {
+					void this.applyFilter();
+				} else if (this.isDeletingResourceFilterMode) {
+					void this.applyDeletingResourceFilter(this.deletingResource);
+				} else {
 					void this.fetchPage();
 				}
 			},
@@ -11793,6 +12064,9 @@ this.BX.Booking = this.BX.Booking || {};
 					void this.applyDeletingResourceFilter(resource, true);
 				}
 			}
+		},
+		created() {
+			this.loader = new main_loader.Loader();
 		},
 		beforeMount() {
 			booking_lib_mousePosition.mousePosition.init();
@@ -11892,9 +12166,13 @@ this.BX.Booking = this.BX.Booking || {};
 			},
 			async tryNavigateToOptimalFilterResult(inFuture = false) {
 				const dateTs = await booking_lib_filterResultNavigator.filterResultNavigator.getOptimalFilterDateTs(inFuture);
-				if (dateTs && dateTs !== this.selectedDateTs) {
-					await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, dateTs);
+				if (!dateTs) {
+					return;
 				}
+				if (this.isWeekMode) {
+					await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedFirstDayPeriodTs`, dateTs);
+				}
+				await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, dateTs);
 			},
 			getFilterFieldsByCounterItem(counterItem) {
 				const fields = this.$refs.filter.getFields();
@@ -11934,8 +12212,7 @@ this.BX.Booking = this.BX.Booking || {};
 				this.afterTitleContainer.append(this.$refs.afterTitle.$el);
 			},
 			showResourcesWithBookings() {
-				const resourcesIds = this.$store.getters[`${booking_const.Model.Bookings}/getByDateAndIds`](this.selectedDateTs, this.filteredBookingsIds).map(booking => booking.resourcesIds[0]).filter((value, index, array) => array.indexOf(value) === index);
-				void this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, resourcesIds);
+				void this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, this.filteredResourcesIds);
 			},
 			async updateMarks() {
 				if (this.isFilterMode || this.isDeletingResourceFilterMode) {
@@ -11977,7 +12254,7 @@ this.BX.Booking = this.BX.Booking || {};
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
 			<IntegrationsButton :container="settingsButtonContainer"/>
-			<SwitchViewButton v-if="isMultidayFeatureAvailable" :container="counterPanelContainer"/>
+			<SwitchViewButton :container="counterPanelContainer"/>
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
@@ -11994,6 +12271,7 @@ this.BX.Booking = this.BX.Booking || {};
 			/>
 			<BaseComponent ref="layout"/>
 			<Banner/>
+			<BannerAiCall/>
 			<Trial/>
 			<WhatsappPopupChangesSendingMessages
 				v-if="shouldShowWhatsAppEmergency"
@@ -12019,5 +12297,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Booking = Booking;
 
-})(this.BX.Booking.Application = this.BX.Booking.Application || {}, BX.Vue3, BX.Booking, BX.Booking.Component.Mixin, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, BX.Main, BX.Booking.Lib, BX.Event, BX.UI.DatePicker, BX.UI.IconSet, window, window, BX.Booking.Provider.Service, BX.Booking.Component, BX, BX.Booking.Lib, BX.Booking.Lib, BX.Main, BX.UI.Dialogs, BX.Booking.Provider.Service, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Lib, BX.UI.IconSet, window, BX.Booking.Lib, BX.Booking.Component, BX.UI, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Lib, BX.UI.Vue3.Components, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Provider.Service, BX.UI.NotificationManager, BX.Booking.Component, BX.Vue3.Directives, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, window, BX.Booking.Component, BX.Booking, BX.Booking.Lib, BX.UI.System.Skeleton.Vue, BX.Vue3.Components, BX.Booking.Lib, BX.UI.Vue3.Components, BX.UI, BX.UI.EntitySelector, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.UI, BX.Booking.Lib, BX.UI, BX.Booking, BX.Booking.Lib, BX.Booking.Lib, BX.UI, BX.Booking.Provider.Service, BX.Booking.Component, BX.UI, BX.Booking.Lib, BX.UI.AutoLaunch, BX.Booking.Application, BX.Booking.Application, BX.Booking.Provider.Service);
+})(this.BX.Booking.Application = this.BX.Booking.Application || {}, BX.Vue3, BX.Booking, BX.Booking.Component.Mixin, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, BX.Main, BX.Booking.Lib, BX.Booking.Lib, BX.Event, BX.UI.DatePicker, BX.UI.IconSet, window, window, BX.Booking.Provider.Service, BX.Booking.Component, BX, BX.Booking.Lib, BX.Main, BX.UI.Dialogs, BX.Booking.Provider.Service, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Lib, BX.UI.IconSet, window, BX.Booking.Lib, BX.Booking.Component, BX.UI, BX.Booking.Lib, BX.Booking.Lib, BX.UI.Vue3.Components, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Provider.Service, BX.UI.NotificationManager, BX.Booking.Component, BX.Vue3.Directives, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, window, BX.Booking.Component, BX.Booking, BX.Booking.Lib, BX.UI.System.Skeleton.Vue, BX.Vue3.Components, BX.Booking.Lib, BX.UI.Vue3.Components, BX.UI, BX.UI.EntitySelector, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.UI, BX.Booking.Lib, BX.UI, BX.Booking, BX.Booking.Lib, BX.Booking.Lib, BX.UI, BX.Booking.Provider.Service, BX.Booking.Component, BX.UI, BX.Booking.Lib, BX.UI.AutoLaunch, BX.Booking.Application, BX.Booking.Application, BX.Booking.Provider.Service);
 //# sourceMappingURL=booking.bundle.js.map

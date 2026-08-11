@@ -6,14 +6,13 @@
 	width: var(--add-icon-size);
 	height: var(--add-icon-size);
 	border-radius: var(--ui-border-radius-2xl, 16px) 0 var(--ui-border-radius-lg, 12px) 0;
-	background-color: var(--ui-color-background-primary, #ffffff);
+	background-color: var(--ui-color-bg-content-secondary, #F6FAFB);
 	opacity: var(--ui-opacity-full, 1);
 	display: block;
 	position: absolute;
 	background-position: center center;
 	background-repeat: no-repeat;
 	transition: background-color 0.2s linear;
-	box-shadow: -1px -1px 2px rgba(0, 83, 109, 0.06);
 	z-index: 2;
 	overflow: hidden;
 }
@@ -24,16 +23,16 @@
 	height: 100%;
 	mask-position: center center;
 	mask-repeat: no-repeat;
-	background-color: var(--ui-color-primary, #2fc6f6);
+	background-color: var(--ui-color-accent-main-primary-alt-2, #58B1FF);
 }
 
 /* region Types */
 .crm-timeline__card-logo_add-icon.--type-success > i {
-	background-color: var(--ui-color-primary-alt, #9dcf00);
+	background-color: var(--ui-color-accent-main-success, #1BCE7B);
 }
 
 .crm-timeline__card-logo_add-icon.--type-failure > i {
-	background-color: var(--ui-color-background-on-alert, #e92f2a);
+	background-color: var(--ui-color-accent-main-alert, #FF5752);
 }
 
 .crm-timeline__card-logo_add-icon.--type-secondary > i {

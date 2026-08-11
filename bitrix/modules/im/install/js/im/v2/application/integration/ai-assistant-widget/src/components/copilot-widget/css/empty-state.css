@@ -1,0 +1,10 @@
+.bx-im-ai-assistant-widget-empty-state {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	padding: 16px 16px 36px;
+}
+
+.bx-im-ai-assistant-widget-empty-state .bx-im-ai-assistant-empty-state-view__scope {
+	--bx-im-ai-assistant-empty-state-view-gap: 20px;
+}

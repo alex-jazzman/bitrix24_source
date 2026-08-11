@@ -1,7 +1,46 @@
-import {Action} from "../../../action";
-import {Text} from "main.core";
+import { Text } from 'main.core';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { Action } from '../../../action';
+
+const ICON_TO_BICON_MAP = Object.freeze({
+	'call': Outline.PHONE_UP,
+	'call-default': Outline.PHONE_UP,
+	'call-incoming': Outline.PHONE_IN,
+	'call-outgoing': Outline.PHONE_OUT,
+	'mail-income-unread': Outline.MAIL,
+	'mail-income-read': Outline.MAIL_OPEN,
+	'mail-outcome': Outline.MAIL_SEND,
+	'email': Outline.MAIL,
+	'document': Outline.FILE,
+	'document-signed': Outline.DOCUMENT_SIGN,
+	'document-print': Outline.DOCUMENT_PRINT,
+	'document-addition': Outline.FORM,
+	'document-draft': Outline.FILE,
+	'shop': Outline.PACKAGE,
+	'shop-eye': Outline.SEEN_ITEMS,
+	'list-check': Outline.CHECK_LIST,
+	'check': Outline.SEEN_ITEMS,
+	'sms': Outline.SMS,
+	'comment': Outline.MESSAGE,
+	'openline': Outline.MESSAGES,
+	'channel-chat': Outline.OPEN_CHANNELS,
+	'channel-whatsapp': Outline.WHATSAPP,
+	'channel-web-form': Outline.CRM_FORM,
+	'task-activity': Outline.TASK,
+	'unread-comment': Outline.NEW_MESSAGE,
+	'bank-card': Outline.BANK_CARD,
+	'calendar-share': Outline.CALENDAR_SHARE,
+	'delivery': Outline.DELIVERY,
+	'notification': Outline.NOTIFICATION,
+	'repeat-sale': Outline.REPEAT_SALES,
+	'bizproc': Outline.BUSINES_PROCESS_STAGES,
+	'bizproc-task': Outline.BUSINES_PROCESS_STAGES,
+});
 
 export const Logo = {
+	components: {
+		BIcon,
+	},
 	props: {
 		type: String,
 		addIcon: String,
@@ -69,7 +108,32 @@ export const Logo = {
 			}
 
 			return result;
-		}
+		},
+
+		useBIcon(): boolean
+		{
+			return ICON_TO_BICON_MAP.hasOwnProperty(this.currentIcon) && !this.backgroundUrl;
+		},
+
+		bIconName(): string
+		{
+			return ICON_TO_BICON_MAP[this.currentIcon] || '';
+		},
+
+		bIconColor(): string
+		{
+			if (this.iconType === 'failure')
+			{
+				return 'var(--ui-color-accent-main-alert)';
+			}
+
+			if (this.iconType === 'secondary')
+			{
+				return 'var(--ui-color-background-secondary)';
+			}
+
+			return 'var(--ui-color-accent-main-primary-alt-2)';
+		},
 	},
 	watch: {
 		icon(newIcon): void
@@ -95,7 +159,13 @@ export const Logo = {
 		<div :class="className" @click="executeAction">
 			<div class="crm-timeline__card-logo_content">
 				<div :class="iconClassname">
-					<i :style="iconInteriorStyle"></i>
+					<BIcon
+						v-if="useBIcon"
+						:name="bIconName"
+						:size="48"
+						:color="bIconColor"
+					/>
+					<i v-else :style="iconInteriorStyle"></i>
 				</div>
 				<div :class="addIconClassname" v-if="addIcon">
 					<i></i>

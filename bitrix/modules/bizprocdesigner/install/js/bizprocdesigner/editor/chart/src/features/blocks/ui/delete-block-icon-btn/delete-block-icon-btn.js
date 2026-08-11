@@ -3,7 +3,7 @@ import { useHistory, useBlockDiagram } from 'ui.block-diagram';
 
 import { IconButton } from '../../../../shared/ui';
 // eslint-disable-next-line no-unused-vars
-import type { BlockId } from '../../../../shared/types';
+import { type BlockId } from '../../../../shared/types';
 import { diagramStore as useDiagramStore } from '../../../../entities/blocks';
 
 type DeleteBlockIconBtnSetup = {
@@ -25,6 +25,10 @@ export const DeleteBlockIconBtn = {
 		disabled: {
 			type: Boolean,
 			default: false,
+		},
+		size: {
+			type: Number,
+			default: 18,
 		},
 	},
 	emits: ['deletedBlock'],
@@ -68,6 +72,7 @@ export const DeleteBlockIconBtn = {
 	template: `
 		<IconButton
 			:icon-name="iconSet.TRASHCAN"
+			:size="size"
 			:color="'var(--ui-color-palette-gray-40)'"
 			:data-test-id="$testId('blockDelete', blockId)"
 			@mousedown.stop

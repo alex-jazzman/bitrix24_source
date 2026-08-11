@@ -1,7 +1,7 @@
 <?php
 
 use Bitrix\Bizproc;
-use Bitrix\Crm\Activity\Analytics\EventName;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Mode;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 
@@ -369,7 +369,7 @@ class CCrmBizProcHelper
 			return false;
 		}
 
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 
 		return $factory && $factory->isLinkWithProductsEnabled();
 	}
@@ -465,7 +465,7 @@ class CCrmBizProcHelper
 	{
 		$result = [];
 		$crmDynamicTypesMap =
-			\Bitrix\Crm\Service\Container::getInstance()
+			Container::getInstance()
 				->getDynamicTypesMap()
 				->load(['isLoadStages' => false, 'isLoadCategories' => false])
 		;

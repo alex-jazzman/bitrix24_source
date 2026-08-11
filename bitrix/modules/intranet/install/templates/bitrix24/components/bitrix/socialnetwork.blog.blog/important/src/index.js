@@ -1,4 +1,4 @@
-import { Dom, ajax as Ajax, Event, Tag, Loc, Runtime, Type } from 'main.core';
+import { Dom, ajax as Ajax, Event, Tag, Loc, Runtime } from 'main.core';
 import { Loader } from 'main.loader';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 

@@ -1,7 +1,5 @@
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline, Main } from 'ui.icon-set.api.core';
-import { EventEmitter } from 'main.core.events';
-import { EditConstantPopupForm } from '../edit-constant-popup-form/edit-constant-popup-form';
 import './constant-field.css';
 import type { ConstantConfiguration } from '../../types';
 
@@ -10,9 +8,7 @@ export const ConstantField = {
 	name: 'ConstantField',
 	components: {
 		BIcon,
-		EditConstantPopupForm,
 	},
-	inject: ['initEditSlider'],
 	props: {
 		/** @type TitleItem */
 		item: {
@@ -25,18 +21,12 @@ export const ConstantField = {
 			required: true,
 		},
 	},
-	emits: ['delete', 'updateItemProperty', 'edit'],
+	emits: ['delete', 'updateItemProperty', 'edit', 'itemDragStart'],
 	setup(): { [string]: string }
 	{
 		return {
 			Outline,
 			Main,
-		};
-	},
-	data(): { isEdit: boolean }
-	{
-		return {
-			isEdit: false,
 		};
 	},
 	computed: {
@@ -55,19 +45,7 @@ export const ConstantField = {
 			});
 		},
 	},
-	created(): void
-	{
-		EventEmitter.subscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-	},
-	unmounted(): void
-	{
-		EventEmitter.unsubscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-	},
 	methods: {
-		handleClosePopup(): void
-		{
-			this.isEdit = false;
-		},
 		onInput(event: Event): void
 		{
 			const payload: UpdateItemPropertyEventPayload = {
@@ -77,16 +55,9 @@ export const ConstantField = {
 			};
 			this.$emit('updateItemProperty', payload);
 		},
-		onUpdateItem(payload): void
-		{
-			this.$emit('updateItemProperty', payload);
-		},
 		onEdit(): void
 		{
-			this.initEditSlider().open();
-			this.$nextTick(() => {
-				this.isEdit = true;
-			});
+			this.$emit('edit');
 		},
 		handleDragStart(event: Event): void
 		{
@@ -137,18 +108,6 @@ export const ConstantField = {
 					</div>
 				</div>
 			</div>
-	
-			<Teleport
-				to="#bizproc-setuptemplateactivity-popup-content"
-			>
-				<EditConstantPopupForm
-					v-if="isEdit"
-					:item="item"
-					:constantConfigurationList="constantConfigurationList"
-					@update:item="onUpdateItem"
-					:isCreation="false"
-				/>
-			</Teleport>
 		</div>
 	`,
 };

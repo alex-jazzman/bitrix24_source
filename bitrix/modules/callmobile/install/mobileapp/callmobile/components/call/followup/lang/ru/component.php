@@ -31,3 +31,4 @@ $MESS['CALL_COMPONENT_INSIGHTS_STRENGTH'] = "Wow-моменты: сильные 
 $MESS['CALL_COMPONENT_INSIGHTS_WEAKNESS'] = "Точки роста: над чем можно поработать";
 $MESS['CALL_COMPONENT_INSIGHTS_FINAL_RECOMMENDATIONS'] = "Итоговые рекомендации";
 $MESS['CALL_COMPONENT_EMPTY_AGREEMENTS'] = "Не удалось подвести итоги встречи";
+$MESS['CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE'] = "BitrixGPT Follow-up";

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, booking_core, booking_const, booking_lib_duration) {
+(function (exports, booking_core, booking_const, booking_lib_duration, main_core) {
 	'use strict';
 
 	class GridBase {
@@ -17,45 +17,111 @@ this.BX.Booking = this.BX.Booking || {};
 		calculateRealHeight(...args) {
 			return this.calculateHeight(...args);
 		}
-		calculateWidth(width) {
-			return width;
+		calculateWidth(...args) {
+			throw new Error('Method calculateWidth must be implemented');
 		}
 		getUnitDurations() {
 			return booking_lib_duration.Duration.getUnitDurations();
 		}
 	}
 
+	const HoursInDay = 24;
+	const GridTokenKey = Object.freeze({
+		DayCellWidth: 'DayCellWidth',
+		DayCellHeight: 'DayCellHeight',
+		DayHourHeight: 'DayHourHeight',
+		DayDaysPanelHeight: 'DayDaysPanelHeight',
+		WeekCellWidth: 'WeekCellWidth',
+		WeekCellHeight: 'WeekCellHeight',
+		WeekCellPadding: 'WeekCellPadding',
+		WeekDaysPanelHeight: 'WeekDaysPanelHeight',
+		LeftPanelWidthDay: 'LeftPanelWidthDay',
+		LeftPanelWidthAmPm: 'LeftPanelWidthAmPm',
+		LeftPanelWidthWeek: 'LeftPanelWidthWeek',
+		SidebarZoneWidth: 'SidebarZoneWidth',
+		WeekHourWidth: 'WeekHourWidth'
+	});
+	const GridTokenCssVar = {
+		DayCellWidth: '--booking-day-cell-width',
+		DayCellHeight: '--booking-day-cell-height',
+		DayHourHeight: '--booking-day-hour-height',
+		DayDaysPanelHeight: '--booking-day-days-panel-height',
+		WeekCellWidth: '--booking-week-cell-width',
+		WeekCellHeight: '--booking-week-cell-height',
+		WeekCellPadding: '--booking-week-cell-padding',
+		WeekDaysPanelHeight: '--booking-week-days-panel-height',
+		LeftPanelWidthDay: '--booking-day-left-panel-width',
+		LeftPanelWidthAmPm: '--booking-am-pm-left-panel-width',
+		LeftPanelWidthWeek: '--booking-week-left-panel-width',
+		SidebarZoneWidth: '--booking-sidebar-zone-width'
+	};
+
+	class GridTokens {
+		#tokens = null;
+		async init(baseElement) {
+			if (!main_core.Type.isDomNode(baseElement)) {
+				throw new Error('Booking.GridTokens: baseElement is incorrect');
+			}
+			const computedStyles = getComputedStyle(baseElement);
+			const tokens = {};
+			for (const tokenKey of Object.keys(GridTokenCssVar)) {
+				tokens[tokenKey] = this.#parseToken(computedStyles, tokenKey);
+			}
+			tokens.WeekHourWidth = tokens.WeekCellWidth / HoursInDay;
+			this.#tokens = tokens;
+		}
+		get(key) {
+			if (this.#tokens === null) {
+				throw new Error('Booking.GridTokens: is not initialized');
+			}
+			return this.#tokens[key];
+		}
+		#parseToken(computedStyles, tokenKey) {
+			const cssVar = GridTokenCssVar[tokenKey];
+			const rawValue = computedStyles.getPropertyValue(cssVar).trim();
+			if (rawValue === '') {
+				throw new Error(`Booking.GridTokens: token ${cssVar} is not defined`);
+			}
+			const parsedValue = Number.parseFloat(rawValue);
+			if (!Number.isFinite(parsedValue)) {
+				throw new TypeError(`Booking.GridTokens: token ${cssVar} is incorrect`);
+			}
+			return parsedValue;
+		}
+	}
+	const gridTokens = new GridTokens();
+
 	class GridDay extends GridBase {
 		calculateLeft(resourceId) {
-			const cellWidth = 280 * this.#zoom;
+			const cellWidth = gridTokens.get(GridTokenKey.DayCellWidth) * this.#zoom;
 			const indexOfResource = this.#resourcesIds.indexOf(resourceId);
 			return indexOfResource * cellWidth;
 		}
 		calculateTop(fromTs) {
-			const hourHeight = 50 * this.#zoom;
 			const from = new Date(Math.max(this.#selectedDateTs, fromTs + this.#offset));
 			const bookingMinutes = from.getHours() * 60 + from.getMinutes();
 			const fromMinutes = this.#fromHour * 60;
-			return (bookingMinutes - fromMinutes) * (hourHeight / 60);
+			return (bookingMinutes - fromMinutes) * (this.#hourHeight / 60);
 		}
 		calculateHeight(fromTs, toTs) {
-			const hourHeight = 50 * this.#zoom;
-			const minHeight = hourHeight / 4;
+			const minHeight = this.#hourHeight / 4;
 			const from = Math.max(this.#selectedDateTs, fromTs + this.#offset);
 			const to = Math.min(new Date(this.#selectedDateTs).setHours(24), toTs + this.#offset);
-			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * hourHeight, minHeight);
+			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * this.#hourHeight, minHeight);
 		}
 		calculateWidth(width) {
 			return width * this.#zoom;
 		}
 		calculateRealHeight(fromTs, toTs) {
-			const hourHeight = 50 * this.#zoom;
-			const minHeight = hourHeight / 4;
+			const minHeight = this.#hourHeight / 4;
 			const minTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 0 : this.#fromHour);
 			const maxTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 24 : this.#toHour);
 			const from = Math.max(minTs, fromTs + this.#offset);
 			const to = Math.min(maxTs, toTs + this.#offset);
-			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * hourHeight, minHeight);
+			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * this.#hourHeight, minHeight);
+		}
+		get #hourHeight() {
+			return gridTokens.get(GridTokenKey.DayHourHeight) * this.#zoom;
 		}
 		get #selectedDateTs() {
 			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.#offset;
@@ -83,30 +149,31 @@ this.BX.Booking = this.BX.Booking || {};
 
 	class GridWeek extends GridBase {
 		calculateLeft(dayIndex, fromTs) {
-			const dayOffset = dayIndex * booking_const.Grid.SizeElement.WeekCellWidth;
+			const dayOffset = dayIndex * gridTokens.get(GridTokenKey.WeekCellWidth) * this.#zoom;
 			const weekStartTs = this.bookingWeekStartTs;
 			const dayMs = booking_lib_duration.Duration.getUnitDurations().d;
 			const dayStartTs = weekStartTs + dayIndex * dayMs;
-			const hourOffset = (fromTs - dayStartTs) / booking_lib_duration.Duration.getUnitDurations().H * booking_const.Grid.SizeElement.WeekHourWidth;
+			const hourOffset = (fromTs - dayStartTs) / booking_lib_duration.Duration.getUnitDurations().H * gridTokens.get(GridTokenKey.WeekHourWidth) * this.#zoom;
 			return dayOffset + hourOffset;
 		}
 		calculateTop(resourceId) {
 			const index = this.#resourcesIds.indexOf(resourceId);
-			return booking_const.Grid.SizeElement.WeekDaysPanelHeight + index * booking_const.Grid.SizeElement.WeekCellHeight;
+			return gridTokens.get(GridTokenKey.WeekDaysPanelHeight) + index * gridTokens.get(GridTokenKey.WeekCellHeight);
 		}
 		calculateHeight() {
-			return booking_const.Grid.SizeElement.WeekCellHeight;
+			return gridTokens.get(GridTokenKey.WeekCellHeight);
 		}
 		calculateWidth(fromTs, toTs) {
 			const weekStartTs = this.bookingWeekStartTs;
+			return this.#msToPixels(toTs - weekStartTs) - this.#msToPixels(fromTs - weekStartTs);
+		}
+		#msToPixels(ms) {
 			const dayMs = booking_lib_duration.Duration.getUnitDurations().d;
-			const fromRelMs = fromTs - weekStartTs;
-			const toRelMs = toTs - weekStartTs;
-			const fromDayIndex = Math.floor(fromRelMs / dayMs);
-			const toDayIndex = Math.floor(toRelMs / dayMs);
-			const fromHourOffset = (fromRelMs - fromDayIndex * dayMs) / booking_lib_duration.Duration.getUnitDurations().H * booking_const.Grid.SizeElement.WeekHourWidth;
-			const toHourOffset = (toRelMs - toDayIndex * dayMs) / booking_lib_duration.Duration.getUnitDurations().H * booking_const.Grid.SizeElement.WeekHourWidth;
-			return (toDayIndex - fromDayIndex) * booking_const.Grid.SizeElement.WeekCellWidth + (toHourOffset - fromHourOffset);
+			const dayIndex = Math.floor(ms / dayMs);
+			const msWithinDay = ms - dayIndex * dayMs;
+			const dayPixels = dayIndex * gridTokens.get(GridTokenKey.WeekCellWidth) * this.#zoom;
+			const hourPixels = msWithinDay / booking_lib_duration.Duration.getUnitDurations().H * gridTokens.get(GridTokenKey.WeekHourWidth) * this.#zoom;
+			return dayPixels + hourPixels;
 		}
 		getDayIndex(dateTs) {
 			const localDate = new Date(dateTs + this.#offset);
@@ -126,6 +193,9 @@ this.BX.Booking = this.BX.Booking || {};
 		get #offset() {
 			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
 		}
+		get #zoom() {
+			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/zoom`];
+		}
 		get #resourcesIds() {
 			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
 		}
@@ -141,7 +211,10 @@ this.BX.Booking = this.BX.Booking || {};
 	const gridFactory = new GridFactory();
 
 	exports.GridBase = GridBase;
+	exports.GridTokenCssVar = GridTokenCssVar;
+	exports.GridTokenKey = GridTokenKey;
 	exports.gridFactory = gridFactory;
+	exports.gridTokens = gridTokens;
 
-})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking, BX.Booking.Const, BX.Booking.Lib);
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking, BX.Booking.Const, BX.Booking.Lib, BX);
 //# sourceMappingURL=grid.bundle.js.map

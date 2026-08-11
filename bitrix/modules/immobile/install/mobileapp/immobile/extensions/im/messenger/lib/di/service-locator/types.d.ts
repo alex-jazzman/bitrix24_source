@@ -19,6 +19,7 @@ declare type MessengerLocatorServices = {
 	'navigation-manager'?: NavigationManager,
 	'promotion'?: Promotion,
 	'subscription-manager': SubscriptionManager,
+	'chat-deletion-manager': ChatDeletionManager,
 }
 
 export interface IServiceLocator<T>

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_system_dialog, ui_vue3, ui_vue3_components_button, ui_iconSet_api_vue, ui_notification, ui_system_input_vue, ui_system_menu_vue, ui_datePicker, ui_system_typography_vue, main_date, ui_switcher, ui_entitySelector, main_loader) {
+(function (exports, main_core, ui_system_dialog, ui_vue3, ui_vue3_components_button, ui_iconSet_api_vue, ui_notificationPanel, ui_iconSet_api_core, ui_iconSet_main, ui_system_input_vue, ui_system_menu_vue, ui_datePicker, ui_system_typography_vue, main_date, ui_switcher, ui_entitySelector, main_loader) {
 	'use strict';
 
 	const SharingAccessWrapper = {
@@ -59,11 +59,49 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const AUTO_HIDE_DELAY = 5000;
+	let activePanel = null;
+	let autoHideTimeout = null;
+	function clearAutoHide() {
+		if (autoHideTimeout) {
+			clearTimeout(autoHideTimeout);
+			autoHideTimeout = null;
+		}
+	}
+	function hideActivePanel() {
+		clearAutoHide();
+		if (activePanel) {
+			activePanel.hide();
+			activePanel = null;
+		}
+	}
 	function notify(messageKey) {
-		BX.UI.Notification.Center.notify({
+		hideActivePanel();
+		const panel = new ui_notificationPanel.NotificationPanel({
 			content: main_core.Loc.getMessage(messageKey),
-			autoHideDelay: 5000
+			backgroundColor: 'var(--ui-color-accent-main-alert)',
+			textColor: 'var(--ui-color-base-white-fixed)',
+			crossColor: 'var(--ui-color-base-white-fixed)',
+			leftIcon: new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Main.WARNING_ALARM,
+				color: 'var(--ui-color-base-white-fixed)'
+			}),
+			events: {
+				onHide: () => {
+					if (activePanel === panel) {
+						activePanel = null;
+						clearAutoHide();
+					}
+				}
+			}
 		});
+		activePanel = panel;
+		panel.show();
+		autoHideTimeout = setTimeout(() => {
+			if (activePanel === panel) {
+				panel.hide();
+			}
+		}, AUTO_HIDE_DELAY);
 	}
 
 	const ACCESS_PUBLIC_RIGHT_LABELS = {
@@ -2632,6 +2670,10 @@ this.BX = this.BX || {};
 				type: String,
 				default: null
 			},
+			initialAccessRights: {
+				type: Object,
+				default: null
+			},
 			mode: {
 				type: String,
 				default: 'default'
@@ -2643,8 +2685,8 @@ this.BX = this.BX || {};
 		},
 		data() {
 			return {
-				accessRights: null,
-				accessRightsLoading: true
+				accessRights: this.initialAccessRights,
+				accessRightsLoading: this.initialAccessRights === null
 			};
 		},
 		computed: {
@@ -2664,7 +2706,9 @@ this.BX = this.BX || {};
 			}
 		},
 		mounted() {
-			this.loadAccessRights();
+			if (this.accessRightsLoading) {
+				this.loadAccessRights();
+			}
 		},
 		methods: {
 			async loadAccessRights() {
@@ -2735,6 +2779,10 @@ this.BX = this.BX || {};
 				type: String,
 				default: null
 			},
+			initialAccessRights: {
+				type: Object,
+				default: null
+			},
 			mode: {
 				type: String,
 				default: 'default'
@@ -2755,6 +2803,7 @@ this.BX = this.BX || {};
 			<SharingAccessMainSettings
 				:objectId="objectId"
 				:uniqueCode="uniqueCode"
+				:initialAccessRights="initialAccessRights"
 				:mode="mode"
 				:closeDialog="closeDialog"
 				v-model:isPublic="isPublic"
@@ -2772,7 +2821,8 @@ this.BX = this.BX || {};
 		#initialTab = null;
 		#mode = 'default';
 		#onAfterHide = null;
-		open(params = {}) {
+		#initialAccessRights = null;
+		async open(params = {}) {
 			this.#objectId = params.objectId;
 			this.#uniqueCode = params.uniqueCode ?? null;
 			this.#initialTab = params.initialTab ?? null;
@@ -2780,6 +2830,15 @@ this.BX = this.BX || {};
 			this.#onAfterHide = params.onAfterHide ?? null;
 			if (!this.#objectId) {
 				throw new Error('SharingPopupDialog.open: objectId is required');
+			}
+			try {
+				this.#initialAccessRights = await getAccessRights({
+					objectId: this.#objectId,
+					uniqueCode: this.#uniqueCode
+				});
+			} catch {
+				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+				return;
 			}
 			if (!this.#dialog) {
 				this.#container = main_core.Tag.render`<div class="disk-sharing-access-popup__content"></div>`;
@@ -2817,6 +2876,7 @@ this.BX = this.BX || {};
 				objectId: this.#objectId,
 				uniqueCode: this.#uniqueCode,
 				initialTab: this.#initialTab,
+				initialAccessRights: this.#initialAccessRights,
 				mode: this.#mode,
 				closeDialog: this.close.bind(this)
 			});
@@ -2833,6 +2893,7 @@ this.BX = this.BX || {};
 				this.#app = null;
 				this.#uniqueCode = null;
 				this.#initialTab = null;
+				this.#initialAccessRights = null;
 				this.#mode = 'default';
 			}
 		}
@@ -2842,6 +2903,7 @@ this.BX = this.BX || {};
 			this.#container = null;
 			this.#objectId = null;
 			this.#initialTab = null;
+			this.#initialAccessRights = null;
 			this.#mode = 'default';
 			this.#onAfterHide = null;
 		}
@@ -2849,5 +2911,5 @@ this.BX = this.BX || {};
 
 	exports.SharingPopupDialog = SharingPopupDialog;
 
-})(this.BX.Disk = this.BX.Disk || {}, BX, BX.UI.System, BX.Vue3, BX.Vue3.Components, BX.UI.IconSet, BX.UI.Notification, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.UI.DatePicker, BX.UI.System.Typography.Vue, BX.Main, BX.UI, BX.UI.EntitySelector, BX);
+})(this.BX.Disk = this.BX.Disk || {}, BX, BX.UI.System, BX.Vue3, BX.Vue3.Components, BX.UI.IconSet, BX.UI, BX.UI.IconSet, window, BX.UI.System.Input.Vue, BX.UI.System.Menu, BX.UI.DatePicker, BX.UI.System.Typography.Vue, BX.Main, BX.UI, BX.UI.EntitySelector, BX);
 //# sourceMappingURL=sharing-popup.bundle.js.map

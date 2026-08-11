@@ -91,6 +91,14 @@
 	border-bottom: 1px dashed rgba(39,107,179,.6);
 }
 
+button.intranet-user-otp-con-top-status-link {
+	padding: 0;
+	background: none;
+	border: none;
+	border-bottom: 1px dashed rgba(39,107,179,.4);
+	font: inherit;
+}
+
 /* push template style */
 
 .intranet-user-otp-list__section-row {

@@ -119,6 +119,7 @@ export const Outline = Object.freeze({
 	FILE_WITH_CHECK_2: 'o-file-with-check-2',
 	FILE_WITH_CHECK: 'o-file-with-check',
 	FILE_WITH_CLOCK: 'o-file-with-clock',
+	FILE_SETTINGS: 'o-file-settings',
 	FILE: 'o-file',
 	FILTER_2_LINES: 'o-filter-2-lines',
 	FILTER_FUNNEL: 'o-filter-funnel',

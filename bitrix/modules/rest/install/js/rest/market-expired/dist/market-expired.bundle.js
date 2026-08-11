@@ -364,7 +364,10 @@ this.BX = this.BX || {};
 			return main_core.Tag.render`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
-					${this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT', this.getCopilotReplacements()) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_MARKET_PLUS')}
+					${this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT_MSGVER_1', {
+			...this.getCopilotReplacements(),
+			'[br]': '<br>'
+		}) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_MARKET_PLUS')}
 				</p>
 			</div>
 		`;
@@ -377,7 +380,7 @@ this.BX = this.BX || {};
 			if (this.type === PopupType.FINAL) {
 				return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_MARKET_PLUS', replacements);
 			}
-			return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_MARKET_PLUS', replacements);
+			return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_BITRIX_GPT_MSGVER_1', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_MARKET_PLUS', replacements);
 		}
 		renderButtons() {
 			return main_core.Tag.render`
@@ -458,7 +461,8 @@ this.BX = this.BX || {};
 		#getDescription() {
 			const replacements = {
 				...this.getCopilotReplacements(),
-				'#DATE#': this.expireDate
+				'#DATE#': this.expireDate,
+				'[br]': '<br>'
 			};
 			if (this.type === PopupType.FINAL) {
 				return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_BITRIX_GPT_MSGVER_1', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
@@ -986,9 +990,9 @@ this.BX = this.BX || {};
 		}
 		getContent() {
 			if (this.options.type === PopupType.FINAL) {
-				return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_BITRIX_GPT', this.getCopilotReplacements()) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_MARKET_PLUS');
+				return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_BITRIX_GPT_MSGVER_1', this.getCopilotReplacements()) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_MARKET_PLUS');
 			}
-			return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_BITRIX_GPT', {
+			return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_BITRIX_GPT_MSGVER_1', {
 				...this.getCopilotReplacements(),
 				'#DAYS#': this.options.expireDays
 			}) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_MARKET_PLUS', {
@@ -1021,9 +1025,9 @@ this.BX = this.BX || {};
 		}
 		getContent() {
 			if (this.options.type === PopupType.FINAL) {
-				return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT', this.getCopilotReplacements()) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_MARKET_PLUS');
+				return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT_MSGVER_1', this.getCopilotReplacements()) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_MARKET_PLUS');
 			}
-			return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT', {
+			return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT_MSGVER_1', {
 				...this.getCopilotReplacements(),
 				'#DAYS#': this.options.expireDays
 			}) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_MARKET_PLUS', {
@@ -1108,6 +1112,5 @@ this.BX = this.BX || {};
 	exports.CurtainPage = CurtainPage;
 	exports.MarketExpired = MarketExpired;
 
-})(this.BX.Rest = this.BX.Rest || {}, BX, BX.Main, BX.Event, BX, BX.UI.Analytics, BX.UI, BX, BX.UI, BX.UI, BX.UI, BX.UI.IconSet);
+})(this.BX.Rest = this.BX.Rest || {}, BX, BX.Main, BX.Event, BX, BX.UI.Analytics, BX.UI, BX.UI.Notification, BX.UI, BX.UI, BX.UI, BX.UI.IconSet);
 //# sourceMappingURL=market-expired.bundle.js.map
-

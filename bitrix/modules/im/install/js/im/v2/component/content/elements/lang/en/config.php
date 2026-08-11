@@ -39,4 +39,5 @@ $MESS["IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TEXT"] = "Invite yo
 $MESS["IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_FOUR_DAYS_TITLE"] = "Your collab is empty";
 $MESS["IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TEXT"] = "Your collab is ready! Invite your coworkers, external partners or customers to start collaborating.";
 $MESS["IM_CONTENT_COLLAB_ONBOARDING_INVITE_MEMBERS_ONE_DAY_TITLE"] = "Invite your team";
+$MESS["IM_CONTENT_COPILOT_DISCLAIMER_MSGVER_1"] = "Replies provided by #COPILOT_NAME# may not always be accurate. [link]Learn more[/link]";
 $MESS["IM_CONTENT_DROP_AREA"] = "Drag your files here";

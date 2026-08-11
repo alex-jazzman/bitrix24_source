@@ -1,0 +1,11 @@
+{
+	"defaultTableName": "b_bp_workflow_template",
+	"installDirectoriesMapping": {
+		"install/components": "components",
+		"install/js": "js",
+		"install/activities": "activities"
+	},
+	"publicDirectoriesMapping": {
+		"install/public": ""
+	}
+}

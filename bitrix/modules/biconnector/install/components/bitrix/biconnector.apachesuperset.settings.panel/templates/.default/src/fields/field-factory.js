@@ -2,15 +2,8 @@ import { EventEmitter } from 'main.core.events';
 import type { BaseEvent } from 'main.core.events';
 
 import {
-	DateFilterField,
 	DashboardDateFilterField,
-	KeyInfoField,
 	DashboardGroupsField,
-	ClearCacheField,
-	DashboardLanguageField,
-	DatasetTypingField,
-	TimeZoneField,
-	GlobalSettingsButtonField,
 } from './entities/index';
 
 export class FieldFactory
@@ -27,24 +20,10 @@ export class FieldFactory
 	{
 		switch (type)
 		{
-			case 'timePeriod':
-				return DateFilterField.create(controlId, settings);
 			case 'dashboardTimePeriod':
 				return DashboardDateFilterField.create(controlId, settings);
-			case 'keyInfo':
-				return KeyInfoField.create(controlId, settings);
 			case 'dashboardGroupsSelector':
 				return DashboardGroupsField.create(controlId, settings);
-			case 'clearCache':
-				return ClearCacheField.create(controlId, settings);
-			case 'dashboardLanguage':
-				return DashboardLanguageField.create(controlId, settings);
-			case 'datasetTyping':
-				return DatasetTypingField.create(controlId, settings);
-			case 'timeZone':
-				return TimeZoneField.create(controlId, settings);
-			case 'globalSettingsButton':
-				return GlobalSettingsButtonField.create(controlId, settings);
 			default:
 				return null;
 		}

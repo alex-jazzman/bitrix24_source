@@ -54,7 +54,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	</td>
 </tr>
 <tr>
-	<td align="right" width="40%" valign="top"><span class="adm-required-field"><?= GetMessage("BPCRU_PD_USER2") ?>:</span></td>
+	<td align="right" width="40%" valign="top"><?= GetMessage("BPCRU_PD_USER2") ?>:</td>
 	<td width="60%">
 		<?= CBPDocument::ShowParameterField("user", 'reserve_user_parameter', $arCurrentValues['reserve_user_parameter'], Array('rows'=>'2')) ?>
 	</td>

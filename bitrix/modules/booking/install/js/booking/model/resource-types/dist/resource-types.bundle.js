@@ -38,6 +38,10 @@ this.BX.Booking = this.BX.Booking || {};
 				/** @function resourceTypes/upsertMany */
 				upsertMany: (store, resourceTypes) => {
 					resourceTypes.forEach(resourceType => store.commit('upsert', resourceType));
+				},
+				/** @function resourceTypes/setSenderCodeForAll */
+				setSenderCodeForAll: (store, senderCode) => {
+					store.commit('setSenderCodeForAll', senderCode);
 				}
 			};
 		}
@@ -46,6 +50,11 @@ this.BX.Booking = this.BX.Booking || {};
 				upsert: (state, resourceType) => {
 					state.collection[resourceType.id] ??= resourceType;
 					Object.assign(state.collection[resourceType.id], resourceType);
+				},
+				setSenderCodeForAll: (state, senderCode) => {
+					for (const resourceType of Object.values(state.collection)) {
+						resourceType.senderCode = senderCode;
+					}
 				}
 			};
 		}

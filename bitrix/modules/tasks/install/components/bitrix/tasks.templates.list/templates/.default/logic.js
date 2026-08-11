@@ -147,6 +147,10 @@ function UnlinkTemplate(templateId, relationToId)
 
 				this.option('grid', BX.Main.gridManager.getById(this.option('gridId')));
 
+				this.initHints();
+
+				BX.Event.EventEmitter.subscribe('BX.Main.grid:paramsUpdated', this.initHints.bind(this));
+
 				const url = new BX.Uri(location.toString());
 				const relationToId = Number(url.getQueryParam('relationToId'));
 				if (relationToId > 0)
@@ -166,6 +170,35 @@ function UnlinkTemplate(templateId, relationToId)
 							.toString()
 						;
 					});
+				}
+			},
+
+			initHints: function() {
+				if (BX.UI && BX.UI.Hint)
+				{
+					const grid = this.getGrid();
+					const gridContainer = grid ? grid.getContainer() : null;
+
+					const tooltip = BX.UI.Hint.createInstance({
+						popupParameters: {
+							className: 'tasks-hint-popup',
+							darkMode: false,
+							offsetTop: 2,
+							background: 'var(--ui-color-bg-content-inapp)',
+							padding: 6,
+							angle: true,
+							targetContainer: document.body,
+							events: {
+								onPopupShow: (popup) => {
+									popup.setOffset({
+										offsetLeft: popup.bindElement.getBoundingClientRect()?.width / 2 ?? 0,
+									});
+								}
+							}
+						},
+						attributeName: 'data-tasks-hint',
+					});
+					tooltip.init(gridContainer);
 				}
 			},
 

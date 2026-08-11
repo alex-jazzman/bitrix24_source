@@ -35,6 +35,10 @@ export const ModeButton = {
 	},
 	computed: {
 		OutlineIcons: () => OutlineIcons,
+		isTempChat(): boolean
+		{
+			return this.$store.getters['copilot/chats/isTempChat'](this.dialogId);
+		},
 		ChipDesign: () => ChipDesign,
 		ChipSize: () => ChipSize,
 		chipText(): string
@@ -52,6 +56,11 @@ export const ModeButton = {
 		},
 		chipDesign(): ChipDesignItem
 		{
+			if (this.isTempChat)
+			{
+				return ChipDesign.Disabled;
+			}
+
 			if (this.isActive)
 			{
 				return ChipDesign.OutlineBitrixGpt;
@@ -74,6 +83,11 @@ export const ModeButton = {
 	methods: {
 		toggleMenu()
 		{
+			if (this.isTempChat)
+			{
+				return;
+			}
+
 			const menuChipElement = this.$refs.button?.$el;
 
 			this.menu.openMenu(
@@ -84,6 +98,11 @@ export const ModeButton = {
 		},
 		clearMode()
 		{
+			if (this.isTempChat)
+			{
+				return;
+			}
+
 			this.$emit('clearMode');
 		},
 		loc(phraseCode: string): string

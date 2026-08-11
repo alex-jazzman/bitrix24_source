@@ -1,11 +1,9 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
-
 import { mapActions } from 'ui.vue3.pinia';
 
-// eslint-disable-next-line no-unused-vars
-import { useNodeSettingsStore, type TRuleCard, type Construction } from '../../../../entities/node-settings';
+import { useNodeSettingsStore } from '../../../../entities/node-settings';
+
+import './style.css';
 
 // @vue/component
 export const DeleteConstruction = {
@@ -13,11 +11,6 @@ export const DeleteConstruction = {
 	components: { BIcon },
 	props:
 	{
-		iconColor:
-		{
-			type: String,
-			required: true,
-		},
 		/** @type TRuleCard */
 		ruleCard:
 		{
@@ -37,10 +30,11 @@ export const DeleteConstruction = {
 	},
 	template: `
 		<BIcon
-			:color="iconColor"
 			:data-test-id="$testId('complexNodeRuleSettingsDeleteConstruction', construction.id)"
+			:size="20"
 			class="editor-chart-node-settings-delete-construction"
-			name="cross-s"
+			name="cross-m"
+			color="#a8adb4"
 			@click="deleteConstruction(ruleCard, construction)"
 		/>
 	`,

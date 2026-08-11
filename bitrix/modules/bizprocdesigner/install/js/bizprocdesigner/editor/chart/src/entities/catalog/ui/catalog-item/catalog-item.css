@@ -119,7 +119,7 @@
 }
 
 .editor-chart-catalog-item__icon-wrapper.--bg-8 {
-	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
+	background-color: var(--designer-bp-settings-bg);
 }
 
 

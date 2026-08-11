@@ -1670,7 +1670,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			removeItem() {
 				this.$emit('removeItem', this.id);
 			},
-			async complete(isComplete) {
+			async complete(isComplete, persist = true) {
 				if (this.canToggle === false) {
 					return;
 				}
@@ -1691,7 +1691,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					});
 					listParents.forEach((fields, id) => {
 						this.updateCheckList(id, fields);
-						if (this.isPreview && this.isEdit) {
+						if (persist && this.isPreview && this.isEdit) {
 							this.saveCompleteState(id, fields.isComplete);
 						}
 					});
@@ -1700,7 +1700,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					id: this.id,
 					callback: completionCallback
 				});
-				if (this.isPreview && this.isEdit) {
+				if (persist && this.isPreview && this.isEdit) {
 					this.saveCompleteState(this.id, isComplete);
 				}
 			},
@@ -1970,9 +1970,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			handleCompleteState() {
 				if (this.totalCount > 0) {
-					this.complete(this.totalCount === this.completedCount);
+					this.complete(this.totalCount === this.completedCount, false);
 				} else if (this.completed) {
-					this.complete(false);
+					this.complete(false, false);
 				}
 			},
 			checkSticky() {
@@ -3446,6 +3446,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			return {
 				shownPopups: new Set(),
 				resizeObserver: null,
+				notifiers: new Map(),
 				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
 				ButtonSize: ui_vue3_components_button.ButtonSize,
 				ButtonIcon: ui_vue3_components_button.ButtonIcon,
@@ -3466,7 +3467,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isForwardMenuShown: false,
 				forwardMenuSectionCode: 'createSection',
 				forwardBindElement: null,
-				notifiers: new Map(),
 				isFreeze: false,
 				closing: false
 			};
@@ -3620,7 +3620,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			});
 			this.checkListChangeTracker = new CheckListChangeTracker({
 				computed: {
-					checkLists: () => this.checkLists
+					checkLists: () => this.checkLists.filter(item => {
+						return !this.deletingCheckListIds[item.id];
+					})
 				}
 			});
 			this.shownPopups = new Set();

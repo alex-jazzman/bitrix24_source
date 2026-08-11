@@ -322,13 +322,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 				const layout = main_core.Tag.render`
 					<a class='bx-im-message-image ${classModifier}'>
-						<img
-							class='bx-im-message-image-source'
-							src="${url}"
-						/>
+						<img class='bx-im-message-image-source' />
 					</a>
 				`;
-				main_core.Dom.attr(layout.firstChild, viewerAttributes);
+				main_core.Dom.attr(layout.firstChild, {
+					src: url,
+					...viewerAttributes
+				});
 				return layout.outerHTML;
 			});
 		},

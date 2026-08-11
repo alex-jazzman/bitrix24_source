@@ -51,6 +51,7 @@
 				if (main_core.Type.isPlainObject(params.settingsButtonExtenderParams)) {
 					this.#settingsButtonExtenderParams = params.settingsButtonExtenderParams;
 				}
+				this.isLinkWithProductsEnabled = params.isLinkWithProductsEnabled === true;
 			}
 			this.reloadGridTimeoutId = 0;
 		}
@@ -221,6 +222,15 @@
 				return Promise.resolve(this.exportPopups[exportType]);
 			}
 			return main_core.Runtime.loadExtension('ui.stepprocessing').then(exports$1 => {
+				const optionsFields = {};
+				if (this.isLinkWithProductsEnabled) {
+					optionsFields.EXPORT_PRODUCT_FIELDS = {
+						name: 'EXPORT_PRODUCT_FIELDS',
+						type: 'checkbox',
+						title: main_core.Loc.getMessage('CRM_ITEM_EXPORT_OPTION_EXPORT_PRODUCT_FIELDS'),
+						value: 'N'
+					};
+				}
 				this.exportPopups[exportType] = exports$1.ProcessManager.create({
 					id: 'crm.item.list.export.' + exportType,
 					controller: 'bitrix:crm.api.itemExport',
@@ -234,6 +244,7 @@
 						EXPORT_TYPE: exportType,
 						COMPONENT_NAME: 'bitrix:crm.item.list'
 					},
+					optionsFields: optionsFields,
 					messages: {
 						DialogTitle: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
 						DialogSummary: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_SUMMARY')
@@ -245,6 +256,17 @@
 						delete this.exportPopups[formatInner];
 					};
 				})(exportType));
+				this.exportPopups[exportType].setHandler(
+					BX.UI.StepProcessing.ProcessCallback.RequestStart,
+					function(actionData) {
+						const initialOptions = this.getDialog().getOptionFieldValues();
+						Object.keys(initialOptions).forEach(name => {
+							if (!(initialOptions[name] instanceof File)) {
+								actionData.append('INITIAL_OPTIONS[' + name + ']', initialOptions[name]);
+							}
+						});
+					}
+				);
 				return this.exportPopups[exportType];
 			});
 		}

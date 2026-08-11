@@ -4,6 +4,7 @@ export const DialogSpecialType = {
 	extranet: 'extranet',
 	network: 'network',
 	collaber: 'collaber',
+	guest: 'guest',
 	support24: 'support24',
 };
 

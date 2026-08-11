@@ -1,17 +1,15 @@
 import { Loc } from 'main.core';
+import { type MenuItemOptions } from 'ui.system.menu';
 
-import { UserMenu } from 'im.v2.lib.menu';
 import { Core } from 'im.v2.application.core';
-import { Utils } from 'im.v2.lib.utils';
+import { ActionByRole, ActionByUserType, UserType, type ApplicationContext } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { ActionByRole, ActionByUserType, UserType } from 'im.v2.const';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
-
-import type { MenuItemOptions } from 'ui.system.menu';
-import type { ImModelUser, ImModelChat } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
+import { UserMenu } from 'im.v2.lib.menu';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelUser, type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 type MembersMenuContext = {
 	dialog: ImModelChat,
@@ -58,6 +56,11 @@ export class MembersMenu extends UserMenu
 
 	getManagerItem(): ?MenuItemOptions
 	{
+		if (this.isGuest())
+		{
+			return null;
+		}
+
 		const isOwner = this.context.user.id === this.context.dialog.ownerId;
 		const canChangeManagers = PermissionManager.getInstance().canPerformActionByRole(
 			ActionByRole.changeManagers,
@@ -109,7 +112,7 @@ export class MembersMenu extends UserMenu
 
 	getOpenUserCalendarItem(): ?MenuItemOptions
 	{
-		if (this.isBot())
+		if (this.isBot() || this.isGuest() || this.isCurrentUserGuest())
 		{
 			return null;
 		}

@@ -1,69 +1,69 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,call_component_elements) {
+(function (exports, call_component_elements) {
 	'use strict';
 
 	// @vue/component
 	const UserListPopup = {
-	  name: 'UserListPopup',
-	  components: {
-	    CallPopupContainer: call_component_elements.CallPopupContainer,
-	    CallLoader: call_component_elements.CallLoader
-	  },
-	  emits: ['close'],
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    },
-	    usersData: {
-	      type: Array,
-	      required: true
-	    },
-	    loading: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    }
-	  },
-	  data() {
-	    return {
-	      hasError: false,
-	      isLoadingUsers: false
-	    };
-	  },
-	  computed: {
-	    getId() {
-	      return 'call-start-ai-call-promo-popup';
-	    },
-	    config() {
-	      const popupWidth = 240;
-	      return {
-	        width: popupWidth,
-	        padding: 0,
-	        overlay: false,
-	        autoHide: true,
-	        closeByEsc: true,
-	        angle: false,
-	        closeIcon: false,
-	        bindElement: this.bindElement,
-	        offsetTop: 15,
-	        offsetLeft: -((popupWidth - this.bindElement.offsetWidth) / 2)
-	      };
-	    },
-	    isLoading() {
-	      return this.loading || this.isLoadingUsers;
-	    }
-	  },
-	  methods: {
-	    backgroundStyle(user) {
-	      return {
-	        backgroundColor: user.color
-	      };
-	    }
-	  },
-	  template: `
+		name: 'UserListPopup',
+		components: {
+			CallPopupContainer: call_component_elements.CallPopupContainer,
+			CallLoader: call_component_elements.CallLoader
+		},
+		emits: ['close'],
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			},
+			usersData: {
+				type: Array,
+				required: true
+			},
+			loading: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				hasError: false,
+				isLoadingUsers: false
+			};
+		},
+		computed: {
+			getId() {
+				return 'call-start-ai-call-promo-popup';
+			},
+			config() {
+				const popupWidth = 240;
+				return {
+					width: popupWidth,
+					padding: 0,
+					overlay: false,
+					autoHide: true,
+					closeByEsc: true,
+					angle: false,
+					closeIcon: false,
+					bindElement: this.bindElement,
+					offsetTop: 15,
+					offsetLeft: -((popupWidth - this.bindElement.offsetWidth) / 2)
+				};
+			},
+			isLoading() {
+				return this.loading || this.isLoadingUsers;
+			}
+		},
+		methods: {
+			backgroundStyle(user) {
+				return {
+					backgroundColor: user.color
+				};
+			}
+		},
+		template: `
 		<CallPopupContainer
 			:config="config"
 			:id="getId"
@@ -91,5 +91,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.UserListPopup = UserListPopup;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Call.Component.Elements));
+})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Call.Component.Elements);
 //# sourceMappingURL=user-list-popup.bundle.js.map

@@ -80,6 +80,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 	private ?Grid\Panel\Panel $panel = null;
 	private ?NearestActivity\Manager $nearestActivityManager = null;
 	private bool $enableNextPage = false;
+	protected bool $isExportProductFields = false;
 
 	public function configureActions()
 	{
@@ -143,6 +144,13 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 		{
 			$this->exportType = $this->arParams['EXPORT_TYPE'];
 		}
+
+		$this->isExportProductFields = (
+			$this->isExportMode()
+			&& isset($this->arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'])
+			&& $this->arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'] === 'Y'
+			&& $this->factory->isLinkWithProductsEnabled()
+		);
 
 		if (!$this->isExportMode())
 		{
@@ -247,6 +255,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
 			'isIframe' => $this->isIframe(),
 			'isEmbedded' => $this->isEmbedded(),
+			'isLinkWithProductsEnabled' => $this->factory->isLinkWithProductsEnabled(),
 			'settingsButtonExtenderParams' => $settingsButtonExtenderParams,
 			'analytics' => [
 				'c_section' => Dictionary::getSectionByEntityType($this->entityTypeId),
@@ -977,6 +986,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 
 		$this->arResult['FIRST_EXPORT_PAGE'] = $pageNumber <= 1;
 		$this->arResult['LAST_EXPORT_PAGE'] = $pageNumber >= $lastPageNumber;
+		$this->arResult['EXPORT_PRODUCT_FIELDS'] = $this->isExportProductFields;
 		$this->includeComponentTemplate();
 
 		return [
@@ -1154,23 +1164,28 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 					}
 				}
 			}
-			$isLoadProducts = $this->isColumnVisible(Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID');
+			$isLoadProducts = $this->isColumnVisible(Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ID');
 			$itemProducts = [];
-			if ($isLoadProducts)
+			if ($isLoadProducts || $this->isExportProductFields)
 			{
-				foreach($list as $item)
+				foreach ($list as $item)
 				{
 					$itemProducts[$item->getId()] = [];
 				}
 				if (!empty($itemProducts))
 				{
+					$select = ['PRODUCT_NAME', 'OWNER_ID'];
+					if ($this->isExportProductFields)
+					{
+						$select[] = 'PRICE';
+						$select[] = 'QUANTITY';
+					}
 					$products = \Bitrix\Crm\ProductRowTable::getList([
-						'select' => [
-							'PRODUCT_NAME',
-							'OWNER_ID'
-						],
+						'select' => $select,
 						'filter' => [
-							'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::ResolveByTypeID($this->factory->getEntityTypeId()),
+							'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::ResolveByTypeID(
+								$this->factory->getEntityTypeId()
+							),
 							'@OWNER_ID' => array_keys($itemProducts),
 						],
 					]);
@@ -1213,7 +1228,24 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 					$this->appendOptionalColumns($item, $itemColumn, $display);
 					if (!empty($itemProducts[$item->getId()]))
 					{
-						$itemColumn[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = $this->getProductsItemColumn($itemProducts[$item->getId()]);
+						if ($this->isExportProductFields)
+						{
+							$itemColumn['EXPORT_PRODUCT_ROWS'] = [];
+							foreach ($itemProducts[$item->getId()] as $product)
+							{
+								$itemColumn['EXPORT_PRODUCT_ROWS'][] = [
+									'PRODUCT_NAME' => $product->getProductName(),
+									'PRICE' => $product->getPrice(),
+									'QUANTITY' => $product->getQuantity(),
+								];
+							}
+							$itemColumn['EXPORT_CURRENCY_ID'] = (string)$item->getCurrencyId();
+						}
+						else
+						{
+							$itemColumn[Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ID'] =
+								$this->getProductsItemColumn($itemProducts[$item->getId()]);
+						}
 					}
 				}
 

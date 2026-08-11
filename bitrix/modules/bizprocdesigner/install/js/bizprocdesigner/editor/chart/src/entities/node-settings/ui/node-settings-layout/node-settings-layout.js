@@ -1,8 +1,8 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useLoc } from '../../../../shared/composables';
+
+import './style.css';
 
 // @vue/component
 export const NodeSettingsLayout = {
@@ -26,7 +26,6 @@ export const NodeSettingsLayout = {
 			required: true,
 		},
 	},
-	emits: ['close'],
 	setup(): { getMessage: () => string; }
 	{
 		const { getMessage } = useLoc();
@@ -36,29 +35,20 @@ export const NodeSettingsLayout = {
 	template: `
 		<div
 			v-if="isShown"
-			class="editor-chart-node-settings"
+			class="editor-chart-node-settings-layout"
 			:class="{ '--saving': isSaving, '--loading': isLoading }"
 		>
 			<template v-if="!isLoading">
-				<div class="editor-chart-node-settings__header">
-					<span>{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE') }}</span>
-					<BIcon
-						class="editor-chart-node-settings__header_close-icon"
-						name="cross-m"
-						:size="20"
-						:data-test-id="$testId('complexNodeSettingsClose')"
-						color="#828b95"
-						@click="$emit('close')"
-					/>
+				<slot name="header" />
+				<div class="editor-chart-node-settings-layout__controls">
+					<slot name="tabs" />
+					<slot name="data-inspector-toggle" />
 				</div>
-				<slot />
+				<slot name="content" />
+				<div class="editor-chart-node-settings-layout__footer">
+					<slot name="actions" />
+				</div>
 			</template>
-			<div class="editor-chart-node-settings__footer">
-				<slot
-					v-if="!isLoading"
-					name="actions"
-				/>
-			</div>
 		</div>
 	`,
 };

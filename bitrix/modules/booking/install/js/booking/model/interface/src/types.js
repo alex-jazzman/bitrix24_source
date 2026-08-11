@@ -1,10 +1,10 @@
 import { DraggedElementKind, Grid } from 'booking.const';
+import type { AiCallBannerMode } from 'booking.const';
 
 export type InterfaceModelState = {
 	isFeatureEnabled: boolean,
 	canTurnOnTrial: boolean,
 	canTurnOnDemo: boolean,
-	isMultidayFeatureAvailable: boolean,
 	isLoaded: boolean,
 	saleChannelsLoaded: boolean,
 	gridMode: $Values<typeof Grid.Mode>,
@@ -54,6 +54,8 @@ export type InterfaceModelState = {
 	menuOpenedForWaitListItem: number,
 	enabledFeature: EnabledFeatures,
 	shouldShowWhatsAppEmergency: boolean,
+	aiCallBannerMode: $Values<typeof AiCallBannerMode> | null,
+	isAiCallAhaShown: boolean,
 }
 
 export type CellStats = {
@@ -114,4 +116,11 @@ export type EnabledFeatures = {
 	bookingMulti: boolean;
 	bookingCrmSlider: boolean;
 	bookingNotificationsSettings: boolean;
+	bookingNotificationsAiCall: boolean;
+	bookingLong: boolean;
 }
+
+export type GoToDayPayload = {
+	selectedDateTs: number,
+	resourceId?: number,
+};

@@ -102,3 +102,7 @@ $MESS["CRM_FIELD_REMOVE_ENTITY_BADGES_INTERVAL_DAYS_HINT"] = "Статус по�
 $MESS["CRM_MODULE_SETTINGS_ENABLE_UNCONNECTED_RECIPIENTS_TITLE"] = "Разрешить отправлять письма на любые адреса";
 $MESS["CRM_MODULE_SETTINGS_EMAIL_RECIPIENTS_OUTGOING_EMAIL_OWNER_TYPE_TITLE"] = "При отправке на адрес не из CRM создавать";
 $MESS["CRM_MODULE_SETTINGS_ENABLE_UNCONNECTED_RECIPIENTS_HINT"] = "Позволяет сотрудникам отправлять письма на адреса, которые не сохранены в CRM, или сохранены в другом контакте, лиде или компании.";
+
+$MESS['CRM_FIELD_DEAL_DAYS_BEFORE_CLOSE'] = 'Дней до завершения сделки с момента создания';
+$MESS['CRM_FIELD_QUOTE_DAYS_BEFORE_CLOSE'] = 'Дней до завершения предложения с момента создания';
+$MESS['CRM_FIELD_SMART_INVOICE_DAYS_BEFORE_CLOSE'] = 'Дней до завершения счёта с момента создания';

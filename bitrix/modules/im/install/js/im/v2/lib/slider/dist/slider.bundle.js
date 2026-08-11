@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_sidepanel, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_application_launch, im_v2_lib_desktop, im_v2_lib_layout, im_v2_lib_call, im_v2_lib_confirm) {
+(function (exports, main_core, main_sidepanel, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_application_launch, im_v2_lib_desktop, im_v2_lib_layout, im_v2_lib_call, im_v2_lib_confirm, im_v2_lib_promo) {
 	'use strict';
 
 	const SLIDER_PREFIX = 'im:slider';
@@ -86,9 +86,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return im_v2_application_launch.Launch('messenger');
 			}).then(application => {
 				im_v2_lib_logger.Logger.warn('Slider: Messenger application launched', application);
+				this.#showBitrixGptAgentPromo();
 				return application;
 			});
 			return this.applicationPromise;
+		}
+		#showBitrixGptAgentPromo() {
+			const shouldShowBitrixGptAgentPromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.bitrixGptAgent);
+			if (!shouldShowBitrixGptAgentPromo) {
+				return;
+			}
+			void main_core.Runtime.loadExtension('ui.banner-dispatcher').then(({
+				BannerDispatcher
+			}) => {
+				BannerDispatcher.normal.toQueue(onDone => {
+					void main_core.Runtime.loadExtension('im.v2.component.elements.bitrix-gpt-agent-promo').then(({
+						BitrixGptAgentPromo
+					}) => {
+						BitrixGptAgentPromo.show({
+							onClose: onDone
+						});
+						main_core_events.EventEmitter.subscribeOnce(im_v2_const.EventType.slider.onClose, () => {
+							BitrixGptAgentPromo.close();
+						});
+					});
+				}, {
+					forceShowOnTop: true
+				});
+			});
 		}
 		async initMessengerComponent() {
 			const application = await this.applicationPromise;
@@ -201,5 +226,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessengerSlider = MessengerSlider;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.SidePanel, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.SidePanel, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=slider.bundle.js.map

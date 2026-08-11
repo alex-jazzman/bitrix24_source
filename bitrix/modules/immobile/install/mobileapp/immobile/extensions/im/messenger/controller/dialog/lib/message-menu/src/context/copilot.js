@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 			{
 				const actions = [
 					MessageMenuActionType.reaction,
+					MessageMenuActionType.reply,
 					MessageMenuActionType.forward,
 					MessageMenuActionType.mark,
 					MessageMenuActionType.feedback,
@@ -45,6 +46,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 
 			return baseActions.filter((action) => ([
 				MessageMenuActionType.reaction,
+				MessageMenuActionType.reply,
 				MessageMenuActionType.edit,
 				MessageMenuActionType.delete,
 				MessageMenuActionType.copy,
@@ -68,6 +70,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 					{
 						sectionId: MessageMenuSectionId.dialogMain,
 						children: [
+							MessageMenuActionType.reply,
 							MessageMenuActionType.copy,
 							MessageMenuActionType.forward,
 							MessageMenuActionType.mark,
@@ -80,6 +83,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 							MessageMenuActionType.delete,
 							MessageMenuActionType.multiselect,
 						],
+
 					},
 				];
 			}
@@ -90,6 +94,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 					{
 						sectionId: MessageMenuSectionId.dialogMain,
 						children: [
+							MessageMenuActionType.reply,
 							MessageMenuActionType.forward,
 							MessageMenuActionType.mark,
 							MessageMenuActionType.feedback,
@@ -114,6 +119,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/copilot',
 				{
 					sectionId: MessageMenuSectionId.dialogMain,
 					children: [
+						MessageMenuActionType.reply,
 						MessageMenuActionType.copy,
 						MessageMenuActionType.forward,
 						MessageMenuActionType.mark,

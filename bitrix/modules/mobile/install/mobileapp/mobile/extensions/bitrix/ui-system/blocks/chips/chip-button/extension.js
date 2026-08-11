@@ -40,6 +40,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {Avatar | AvatarStack} [avatar]
 	 * @property {Function} [forwardRef]
 	 * @property {Color} [backgroundColor]
+	 * @property {Color} [color]
 	 * @property {Color} [iconColor]
 	 * @property {SpinnerDesign} [loaderDesign]
 	 * @property {Function} [onClick]
@@ -461,7 +462,9 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		getColor()
 		{
-			return this.design?.color;
+			const { color } = this.props;
+
+			return color || this.design?.color;
 		}
 
 		getColorGradient()
@@ -633,6 +636,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		ellipsize: PropTypes.instanceOf(Ellipsize),
 		iconColor: PropTypes.instanceOf(Color),
 		backgroundColor: PropTypes.instanceOf(Color),
+		color: PropTypes.instanceOf(Color),
 		loaderDesign: PropTypes.instanceOf(SpinnerDesign),
 	};
 

@@ -1,0 +1,28 @@
+.bizprocdesigner-inspector-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	height: 100%;
+	box-sizing: border-box;
+	padding-bottom: 80px;
+}
+
+.bizprocdesigner-inspector-empty-state__image {
+	width: 320px;
+	height: 163px;
+	opacity: 0.8;
+	background: url('./images/empty-state.png') no-repeat center / contain;
+}
+
+.bizprocdesigner-inspector-empty-state__text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.bizprocdesigner-inspector-empty-state__title {
+	color: var(--ui-color-base-2);
+}

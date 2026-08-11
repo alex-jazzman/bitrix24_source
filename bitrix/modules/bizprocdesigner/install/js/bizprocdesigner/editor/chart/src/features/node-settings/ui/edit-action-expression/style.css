@@ -15,7 +15,8 @@
 	font-size: 13px;
 	line-height: 17px;
 	color: var(--ui-color-palette-gray-70);
-	margin-bottom: 5px;
+	margin-bottom: 4px;
+	padding-left: 2px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;

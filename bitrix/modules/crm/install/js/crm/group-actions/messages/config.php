@@ -10,9 +10,11 @@ return [
 	'rel' => [
 		'crm.autorun',
 		'crm.integration.analytics',
+		'crm.template.editor',
 		'main.core',
 		'main.core.events',
 		'main.popup',
+		'ui.analytics',
 		'ui.design-tokens',
 		'ui.entity-catalog',
 		'ui.notification',

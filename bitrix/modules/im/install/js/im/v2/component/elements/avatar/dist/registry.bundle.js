@@ -761,6 +761,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isCollaber() {
 				return this.user?.type === im_v2_const.UserType.collaber;
 			},
+			isGuest() {
+				return this.$store.getters['users/isGuest'](this.avatarDialogId);
+			},
 			isExtranetChat() {
 				return this.avatarDialog.extranet;
 			},
@@ -794,6 +797,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					component: ExtranetUserAvatar
 				}, {
 					condition: () => this.isCollaber,
+					component: CollaberAvatar
+				}, {
+					condition: () => this.isGuest,
 					component: CollaberAvatar
 				}, {
 					condition: () => this.isCollabChat,
@@ -884,6 +890,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const avatarMap = {
 					[im_v2_const.UserType.extranet]: ExtranetUserAvatar,
 					[im_v2_const.UserType.collaber]: CollaberAvatar,
+					[im_v2_const.UserType.guest]: CollaberAvatar,
 					[im_v2_const.UserType.bot]: this.getBotAvatar()
 				};
 				return avatarMap[this.user.type] ?? Avatar;

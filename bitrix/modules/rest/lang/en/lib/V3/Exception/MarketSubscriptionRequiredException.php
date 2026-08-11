@@ -1,0 +1,2 @@
+<?php
+$MESS["REST_V3_EXCEPTION_MARKET_SUBSCRIPTION_REQUIRED_EXCEPTION"] = "#COPILOT_NAME# + Market subscription is required to use REST API.";

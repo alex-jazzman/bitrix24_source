@@ -6,6 +6,21 @@ describe('internal-link', () => {
 			assert.deepStrictEqual(parseInternalNoteLink('/note/document/123/'), { type: 'document', id: 123 });
 		});
 
+		it('parses base-relative document link (no /note prefix)', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/document/123/'), { type: 'document', id: 123 });
+		});
+
+		it('parses base-relative document link with hash', () => {
+			assert.deepStrictEqual(
+				parseInternalNoteLink('/document/7/#slug'),
+				{ type: 'document', id: 7, hash: 'slug' },
+			);
+		});
+
+		it('still parses the full /note-prefixed document link', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/note/document/5/'), { type: 'document', id: 5 });
+		});
+
 		it('parses relative document link without trailing slash', () => {
 			assert.deepStrictEqual(parseInternalNoteLink('/note/document/42'), { type: 'document', id: 42 });
 		});
@@ -75,8 +90,40 @@ describe('internal-link', () => {
 			assert.strictEqual(parseInternalNoteLink('//portal/note/document/123/', 'https://portal'), null);
 		});
 
-		it('rejects collection link (not supported in MVP)', () => {
-			assert.strictEqual(parseInternalNoteLink('/note/collection/5/'), null);
+		it('parses relative workspace (collection) link with /note prefix', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/note/workspace/7/'), { type: 'collection', id: 7 });
+		});
+
+		it('parses base-relative workspace (collection) link (no /note prefix)', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/workspace/7/'), { type: 'collection', id: 7 });
+		});
+
+		it('parses legacy /collection/{id}/ link with /note prefix', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/note/collection/5/'), { type: 'collection', id: 5 });
+		});
+
+		it('parses legacy /collection/{id}/ link without /note prefix', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/collection/5/'), { type: 'collection', id: 5 });
+		});
+
+		it('parses relative collection link without trailing slash', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/note/collection/12'), { type: 'collection', id: 12 });
+		});
+
+		it('parses relative collection link with query string', () => {
+			assert.deepStrictEqual(parseInternalNoteLink('/note/collection/8/?foo=bar'), { type: 'collection', id: 8 });
+		});
+
+		it('rejects collection link with zero id', () => {
+			assert.strictEqual(parseInternalNoteLink('/note/collection/0/'), null);
+		});
+
+		it('rejects collection link with malformed id', () => {
+			assert.strictEqual(parseInternalNoteLink('/note/collection/abc/'), null);
+		});
+
+		it('rejects collection link with extra path segments', () => {
+			assert.strictEqual(parseInternalNoteLink('/note/collection/5/extra/'), null);
 		});
 
 		it('rejects non-note paths', () => {
@@ -109,9 +156,23 @@ describe('internal-link', () => {
 			assert.strictEqual(parseInternalNoteLink('/note/'), null);
 		});
 
-		it('rejects absolute same-origin collection link (MVP: documents only)', () => {
-			assert.strictEqual(
+		it('parses absolute same-origin workspace (collection) link', () => {
+			assert.deepStrictEqual(
+				parseInternalNoteLink('http://portal/note/workspace/5/', 'http://portal'),
+				{ type: 'collection', id: 5 },
+			);
+		});
+
+		it('parses absolute same-origin legacy collection link', () => {
+			assert.deepStrictEqual(
 				parseInternalNoteLink('http://portal/note/collection/5/', 'http://portal'),
+				{ type: 'collection', id: 5 },
+			);
+		});
+
+		it('rejects different-origin absolute collection link', () => {
+			assert.strictEqual(
+				parseInternalNoteLink('https://other/note/collection/5/', 'https://portal'),
 				null,
 			);
 		});

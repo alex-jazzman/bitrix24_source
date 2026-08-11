@@ -321,8 +321,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			{
 				$invitation = new EmailInvitation(
 					$invitationData['EMAIL'] ?? $invitationData['email'],
-					$invitationData['NAME'] ?? null,
-					$invitationData['LAST_NAME'] ?? null,
+					$this->normalizeInvitationProfileValue($invitationData['NAME'] ?? null),
+					$this->normalizeInvitationProfileValue($invitationData['LAST_NAME'] ?? null),
 					$formType,
 				);
 			}
@@ -330,8 +330,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			{
 				$invitation = new PhoneInvitation(
 					$invitationData['PHONE'] ?? $invitationData['phone'],
-					$invitationData['NAME'] ?? null,
-					$invitationData['LAST_NAME'] ?? null,
+					$this->normalizeInvitationProfileValue($invitationData['NAME'] ?? null),
+					$this->normalizeInvitationProfileValue($invitationData['LAST_NAME'] ?? null),
 					$invitationData['PHONE_COUNTRY'] ?? null,
 					$formType,
 				);
@@ -345,6 +345,13 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		return $invitationCollection;
+	}
+
+	private function normalizeInvitationProfileValue(?string $value): ?string
+	{
+		$value = trim((string)$value);
+
+		return $value === '' ? null : $value;
 	}
 
 	/**

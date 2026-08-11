@@ -28,7 +28,10 @@ $arActivityDescription =
 			],
 		])
 		->setExcluded(\Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'N')
-		->setGroups([ ActivityGroup::STARTER->value ])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::AI->value,
+		])
 		->setColorIndex(ActivityColorIndex::PINK->value)
 		->setIcon(Outline::AI_ROBOT->name)
 		->toArray()

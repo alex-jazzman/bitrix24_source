@@ -108,6 +108,13 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			$converter->setTargetItem($itemTypeId, $options);
 		}
 
+		Crm\Service\Container::getInstance()
+			->getContext()
+			->getAnalytics()
+			->setCategory(Dictionary::CATEGORY_ROBOT_OPERATIONS)
+			->setType(Dictionary::TYPE_CONVERT_DOCUMENT_ACTIVITY)
+		;
+
 		$responsibleId = CBPHelper::ExtractUsers($this->Responsible, $documentId, true);
 		$conversionResult = $converter->execute([
 			'USER_ID' => $responsibleId,
@@ -118,12 +125,6 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		if ($conversionResult->isSuccess())
 		{
-			\CCrmBizProcHelper::sendOperationsAnalytics(
-				Dictionary::EVENT_ENTITY_CREATE,
-				$this,
-				CCrmOwnerType::ResolveName($entityTypeId),
-			);
-
 			$this->setReturnIds($conversionResult);
 			$this->onSuccessConversion($entityTypeId, $entityId);
 		}

@@ -1,0 +1,40 @@
+.editor-chart-common-node-settings-preview {
+	display: flex;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	border-radius: var(--ui-border-radius-sm);
+	padding: 8px 8px 8px 12px;
+	font-size: 14px;
+	line-height: 20px;
+	cursor: pointer;
+	margin-top: 14px;
+	margin-left: 3px;
+}
+
+.editor-chart-common-node-settings-preview:hover {
+	border-color: var(--ui-color-blue-57);
+}
+
+.editor-chart-common-node-settings-preview__edit-icon {
+	display: none;
+	margin-left: auto;
+}
+
+.editor-chart-common-node-settings-preview:hover .editor-chart-common-node-settings-preview__edit-icon {
+	display: block;
+}
+
+.editor-chart-common-node-settings-preview__dnd-icon {
+	cursor: grab;
+	margin-right: 11px;
+}
+
+.editor-chart-common-node-settings-preview__construction {
+	color: var(--ui-color-palette-black-base);
+	display: block;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.editor-chart-common-node-settings-preview__construction.--empty {
+	color: var(--ui-color-palette-gray-50);
+}

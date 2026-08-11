@@ -4,7 +4,7 @@ import { STREAM_QUALITY, LOCAL_STREAM_QUALITY_HEIGHT } from './stream_quality';
 import { Event, Type } from 'main.core';
 
 import Util from './util';
-import { RoomType } from './engine/engine';
+import { RoomType } from './engine/types';
 import { Hardware } from './call_hardware';
 import { MediaServer } from './media-server';
 import { CallStreamManager } from './media-stream-manager';
@@ -84,6 +84,25 @@ export class Call
 		pendingPublications: {},
 		pendingSubscriptions: {},
 		publicationTimeout: 10000,
+		republicationTries: 3,
+		republication: {
+			[MediaStreamsKinds.Camera]: {
+				tries: 0,
+				isActive: false,
+			},
+			[MediaStreamsKinds.Microphone]: {
+				tries: 0,
+				isActive: false,
+			},
+			[MediaStreamsKinds.Screen]: {
+				tries: 0,
+				isActive: false,
+			},
+			[MediaStreamsKinds.ScreenAudio]: {
+				tries: 0,
+				isActive: false,
+			},
+		},
 		subscriptionTimeout: 1500,
 		subscriptionTries: 5,
 		cameraStream: null,
@@ -498,6 +517,7 @@ export class Call
 
 	onPublishFailed(kind)
 	{
+		this.#updateRepublicationState(kind);
 		this.#triggerEvents('PublishFailed', [kind]);
 		let eventName;
 		if (kind === MediaStreamsKinds.Camera)
@@ -664,6 +684,11 @@ export class Call
 		this.#clearPingTimeout();
 		clearInterval(this.#privateProperties.callStatsInterval);
 
+		this.#updateRepublicationState(MediaStreamsKinds.Camera);
+		this.#updateRepublicationState(MediaStreamsKinds.Microphone);
+		this.#updateRepublicationState(MediaStreamsKinds.Screen);
+		this.#updateRepublicationState(MediaStreamsKinds.ScreenAudio);
+
 		this.#privateProperties.mediaServerUrl = '';
 		this.#privateProperties.roomData = '';
 		this.#privateProperties.allMediaServersConnected = false;
@@ -787,7 +812,6 @@ export class Call
 						monitoringJwtToken,
 						monitoringEnvironment,
 						monitoringRegion,
-						roomType: data.result.roomType,
 					});
 				})
 				.catch((error) => {
@@ -1207,8 +1231,7 @@ export class Call
 		}
 		else if (data?.newMessage)
 		{
-			const message = createMessage(data.newMessage);
-			this.#triggerEvents('MessageReceived', [message]);
+			this.#processMessage(data.newMessage);
 		}
 		else if (data?.handRaised)
 		{
@@ -2214,7 +2237,7 @@ export class Call
 				});
 			});
 
-			if (tries)
+			if (tries > 0)
 			{
 				this.#addPendingSubscription(participant, track, tries - 1)
 				this.#changeSubscriptionToTrack(track.sid, participant.sid, true, participant.mediaServerId);
@@ -2228,6 +2251,18 @@ export class Call
 						withCounter: true,
 					});
 				});
+
+				if (!participant.hasFailedSubscription(track.source))
+				{
+					const data = {
+						eventName: 'SubscriptionFailed',
+						trackSource: track.source,
+						trackId: track.id,
+						userId: participant.userId,
+					};
+
+					this.sendMessage(JSON.stringify(data));
+				}
 
 				this.#triggerEvents('TrackSubscriptionFailed', [{participant: participant, track: track}]);
 			}
@@ -2347,6 +2382,13 @@ export class Call
 
 	async republishTrack(mediaStreamKind)
 	{
+		const { tries, isActive } = this.#privateProperties.republication[mediaStreamKind];
+		if (tries >= this.#privateProperties.republicationTries || isActive)
+		{
+			return;
+		}
+
+		this.#updateRepublicationState(mediaStreamKind, true);
 		this.setLog(`Start republishing a track with kind ${mediaStreamKind}`, LOG_LEVEL.INFO);
 		await this.unpublishTrack(mediaStreamKind);
 		const track = await this.getTrack(mediaStreamKind);
@@ -2357,9 +2399,24 @@ export class Call
 		else
 		{
 			this.setLog(`Republishing a track with kind ${mediaStreamKind} failed: track not found`, LOG_LEVEL.ERROR);
+			this.#updateRepublicationState(mediaStreamKind);
 			this.#releaseStream(mediaStreamKind);
-			this.#triggerEvents('PublishFailed', [mediaStreamKind]);
+			this.onPublishFailed(mediaStreamKind);
 		}
+	}
+
+	#updateRepublicationState(mediaStreamKind, addTry): void
+	{
+		if (addTry)
+		{
+			this.#privateProperties.republication[mediaStreamKind].tries++
+			this.#privateProperties.republication[mediaStreamKind].isActive = true;
+
+			return;
+		}
+
+		this.#privateProperties.republication[mediaStreamKind].tries = 0;
+		this.#privateProperties.republication[mediaStreamKind].isActive = false;
 	}
 
 	async unpublishTrack(mediaStreamKind)
@@ -2890,6 +2947,8 @@ export class Call
 		const bySystem = options?.bySystem || false;
 		const calledFrom = options?.calledFrom || '';
 
+		this.#updateRepublicationState(MediaStreamsKinds.Microphone);
+
 		if (this.#privateProperties.mediaMutedBySystem)
 		{
 			return;
@@ -2951,7 +3010,7 @@ export class Call
 		{
 			this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
 			this.#releaseStream(MediaStreamsKinds.Microphone);
-			this.#triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
+			this.onPublishFailed(MediaStreamsKinds.Microphone);
 
 			return;
 		}
@@ -2988,6 +3047,8 @@ export class Call
 		const calledFrom = options?.calledFrom || '';
 		const hasQueue = this.#privateProperties.videoQueue !== VIDEO_QUEUE.INITIAL;
 
+		this.#updateRepublicationState(MediaStreamsKinds.Camera);
+
 		this.setLog(`Start disabling video - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}, hasQueue: ${hasQueue}, videoQueue: ${this.#privateProperties.videoQueue} `, LOG_LEVEL.INFO);
 		if (this.#privateProperties.isReconnecting)
 		{
@@ -3022,7 +3083,7 @@ export class Call
 					});
 				});
 
-				this.#triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+				this.onPublishFailed(MediaStreamsKinds.Camera);
 			};
 
 			if (this.#privateProperties.mediaMutedBySystem)
@@ -3155,20 +3216,57 @@ export class Call
 		}
 
 		this.setLog('Start enabling screen sharing', LOG_LEVEL.INFO);
-		const tracks = await this.getLocalScreen()
-		const videoTrack = tracks?.video;
-		const audioTrack = tracks?.audio;
+		const tracks = await this.getLocalScreen();
+		await this.#applyScreenShare(tracks?.video, tracks?.audio, 'has no track');
+	}
 
-		if (!videoTrack)
+	async startScreenShareWithStream(stream: MediaStream)
+	{
+		if (!stream)
 		{
-			this.setLog('Enabling screen sharing failed: has no track', LOG_LEVEL.ERROR);
-			this.#releaseStream(MediaStreamsKinds.Screen);
-			this.onPublishFailed(MediaStreamsKinds.Screen);
-			this.onPublishFailed(MediaStreamsKinds.ScreenAudio);
 			return;
 		}
 
-		await this.publishTrack(MediaStreamsKinds.Screen, videoTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Screen));
+		this.setLog('Start enabling screen sharing with existing stream', LOG_LEVEL.INFO);
+		this.#privateProperties.screenStream = stream;
+
+		const videoTrack = stream.getVideoTracks()[0];
+		const audioTrack = stream.getAudioTracks()[0];
+
+		if (videoTrack)
+		{
+			CallStreamManager.setLocalStream(MediaStreamsKinds.Screen, videoTrack);
+		}
+
+		if (audioTrack)
+		{
+			CallStreamManager.setLocalStream(MediaStreamsKinds.ScreenAudio, audioTrack);
+		}
+
+		await this.#applyScreenShare(videoTrack, audioTrack);
+	}
+
+	async #applyScreenShare(
+		videoTrack?: MediaStreamTrack,
+		audioTrack?: MediaStreamTrack,
+		failReason: string = 'track is not live',
+	)
+	{
+		if (!videoTrack || videoTrack.readyState !== 'live')
+		{
+			this.setLog(`Enabling screen sharing failed: ${failReason}`, LOG_LEVEL.ERROR);
+			this.#releaseStream(MediaStreamsKinds.Screen);
+			this.onPublishFailed(MediaStreamsKinds.Screen);
+			this.onPublishFailed(MediaStreamsKinds.ScreenAudio);
+
+			return;
+		}
+
+		await this.publishTrack(
+			MediaStreamsKinds.Screen,
+			videoTrack,
+			this.#getStreamQualityOptions(MediaStreamsKinds.Screen),
+		);
 
 		if (audioTrack)
 		{
@@ -3176,9 +3274,16 @@ export class Call
 		}
 	}
 
+	clearScreenStream()
+	{
+		this.#privateProperties.screenStream = null;
+	}
+
 	async stopScreenShare()
 	{
 		this.setLog('Start disabling screen sharing', LOG_LEVEL.INFO);
+		this.#updateRepublicationState(MediaStreamsKinds.Screen);
+		this.#updateRepublicationState(MediaStreamsKinds.ScreenAudio);
 		this.#releaseStream(MediaStreamsKinds.Screen);
 		this.#releaseStream(MediaStreamsKinds.ScreenAudio);
 		this.removeTrack(MediaStreamsKinds.Screen);
@@ -3499,7 +3604,10 @@ export class Call
 
 				const stream = await this.#getUserMedia(options, true);
 
-				this.#triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
+				if (stream !== null)
+				{
+					this.#triggerEvents('GetUserMediaFailed', [{error, options, fallbackMode}]);
+				}
 
 				return stream;
 			}
@@ -4047,6 +4155,42 @@ export class Call
 		}
 	}
 
+	#processMessage(messageData): void
+	{
+		const message = createMessage(messageData);
+
+		if (message.error || !message.content)
+		{
+			this.setLog(`Could not new message: ${messageData.message} ${message.error.message}`, LOG_LEVEL.WARNING);
+
+			return;
+		}
+
+		if (message.content?.eventName === 'SubscriptionFailed')
+		{
+			const { userId, trackSource, trackId } = message.content;
+
+			if (userId == this.#privateProperties.userId)
+			{
+				this.republishTrack(trackSource);
+			}
+			else
+			{
+				const participant = this.#privateProperties.remoteParticipants[userId];
+				const pendingSubscription = this.#privateProperties.pendingSubscriptions[userId]?.[trackId];
+
+				if (pendingSubscription || !participant?.getTrack(trackSource))
+				{
+					participant.addFailedSubscription(trackSource);
+				}
+			}
+
+			return;
+		}
+
+		this.#triggerEvents('MessageReceived', [message]);
+	}
+
 	#setUserPermissions(_permissionsJSON)
 	{
 		try
@@ -4241,6 +4385,7 @@ export class Call
 
 		this.setLog(`Got an expected track with kind ${remoteTrack.source} (sid: ${trackId}) for a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
 		participant.addTrack(remoteTrack.source, remoteTrack);
+		participant.deleteFailedSubscription(remoteTrack.source);
 		if (remoteTrack.source !== MediaStreamsKinds.Camera || !participant.isMutedVideo)
 		{
 			this.#triggerEvents('RemoteMediaAdded', [participant, remoteTrack]);
@@ -4761,6 +4906,8 @@ export class Call
 
 class Participant
 {
+	#failedSubscriptions;
+
 	name = '';
 	image = '';
 	userId = '';
@@ -4790,6 +4937,7 @@ class Participant
 		this.isSpeaking = participant?.isSpeaking || false;
 		this.isHandRaised = participant?.isHandRaised || false;
 		this.cameraStreamQuality = cameraStreamQuality || STREAM_QUALITY.HIGH;
+		this.#failedSubscriptions = {};
 	}
 
 	subscribeTrack(MediaStreamKind) {};
@@ -4830,6 +4978,21 @@ class Participant
 
 	getTrack(MediaStreamKind) {
 		return this.tracks?.[MediaStreamKind]
+	}
+
+	addFailedSubscription(mediaStreamKind): void
+	{
+		this.#failedSubscriptions[mediaStreamKind] = true;
+	}
+
+	deleteFailedSubscription(mediaStreamKind): void
+	{
+		delete this.#failedSubscriptions[mediaStreamKind];
+	}
+
+	hasFailedSubscription(mediaStreamKind): boolean
+	{
+		return Boolean(this.#failedSubscriptions[mediaStreamKind]);
 	}
 
 	setStreamQuality(quality)

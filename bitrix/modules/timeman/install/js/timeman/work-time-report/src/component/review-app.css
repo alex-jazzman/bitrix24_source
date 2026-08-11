@@ -1,0 +1,30 @@
+.tm-work-time-report-review__footer {
+	gap: var(--ui-space-inline-xs, 8px);
+	align-items: center;
+}
+
+.tm-work-time-report__comment {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.tm-work-time-report__footer-discuss-btn {
+	flex: 1;
+}
+
+.tm-work-time-report-review__like-readonly {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.tm-work-time-report-review__like-readonly.--approved {
+	--ui-icon-set__icon-color: var(--ui-color-primary-base, #2066b0);
+}
+
+.tm-work-time-report__comment {
+	padding: var(--ui-space-inset-xs, 8px);
+	border-radius: var(--ui-border-radius-sm, 8px);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-1, #333);
+	background: var(--ui-color-design-disabled-bg, #EDEEF0);
+}

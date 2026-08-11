@@ -10,9 +10,8 @@ return [
 		'./dist/hardware.bundle.js',
 	],
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'main.core.events',
-		'im.v2.lib.desktop-api',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -1,5 +1,5 @@
 import { CallSettingsManager } from 'call.lib.settings-manager';
-import { MediaStreamsKinds } from './call_api';
+import { MediaStreamsKinds } from './sdk/const';
 import { Hardware } from './call_hardware';
 
 class StreamManager
@@ -20,6 +20,17 @@ class StreamManager
 	getLocalStream(mediaStreamKind): ?MediaStreamTrack
 	{
 		return this.#tracks[mediaStreamKind]?.track || null;
+	}
+
+	setLocalStream(mediaStreamKind, track): void
+	{
+		this.#tracks[mediaStreamKind] = { track };
+	}
+
+	clearStream(mediaStreamKind): void
+	{
+		delete this.#tracks[mediaStreamKind];
+		delete this.#trackRequests[mediaStreamKind];
 	}
 
 	async getUserMedia(constraints): Promise<MediaStream>

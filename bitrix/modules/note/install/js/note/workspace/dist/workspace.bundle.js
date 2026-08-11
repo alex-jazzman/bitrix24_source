@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, ui_buttons, ui_designTokens_air, ui_iconSet_outline, main_core, ui_vue3, ui_notification, ui_iconSet_api_vue, note_ui_documentList, note_ui_actionMenu, note_permissions, note_sidebar) {
+(function (exports, ui_buttons, ui_designTokens_air, ui_iconSet_outline, main_core, ui_vue3, ui_notification, ui_iconSet_api_vue, note_ui_documentList, note_ui_actionMenu, note_permissions, note_sidebar, note_analytics) {
 	'use strict';
 
 	const ACTION_LIST = 'note.infrastructure.DocumentController.listByCollection';
@@ -321,6 +321,7 @@ this.BX = this.BX || {};
 				void this.loadPage(true);
 			},
 			onOpen(item) {
+				note_analytics.NoteAnalytics.documentViewed('docs_list');
 				this.$emit('open', {
 					documentId: item.documentId
 				});
@@ -343,15 +344,20 @@ this.BX = this.BX || {};
 				if (url === '') {
 					return;
 				}
+				let success = false;
 				try {
 					if (navigator?.clipboard?.writeText) {
 						await navigator.clipboard.writeText(url);
+						success = true;
 					} else if (window.BX?.clipboard?.copy) {
+						// BX.clipboard.copy has no reliable return value; treat absence of a throw as success.
 						window.BX.clipboard.copy(url);
+						success = true;
 					}
 				} catch {
-					// silent
+					success = false;
 				}
+				note_analytics.NoteAnalytics.collectionLinkCopied(success);
 				BX.UI.Notification.Center.notify({
 					content: this.messages.linkCopied,
 					position: 'top-right'
@@ -586,5 +592,5 @@ this.BX = this.BX || {};
 
 	exports.NoteWorkspacePageComponent = NoteWorkspacePageComponent;
 
-})(this.BX.Note = this.BX.Note || {}, BX.UI, BX, window, BX, BX.Vue3, BX.UI.Notification, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Permissions, BX.Note.Sidebar);
+})(this.BX.Note = this.BX.Note || {}, BX.UI, window, window, BX, BX.Vue3, BX.UI.Notification, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Permissions, BX.Note.Sidebar, BX.Note);
 //# sourceMappingURL=workspace.bundle.js.map

@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,6 @@ class ImMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\ImMobile\Workspace::class;
 
 	public function __construct()
 	{
@@ -35,48 +32,30 @@ class ImMobile extends CModule
 	{
 		ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->registerEventHandler(
-			'rest',
-			'OnRestServiceBuildDescription',
-			$this->MODULE_ID,
-			\Bitrix\ImMobile\Marketplace\Placement::class,
-			'onRestServiceBuildDescription'
-		);
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+			return false;
+		}
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		$eventManager = EventManager::getInstance();
+		$dropTables = false;
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'rest',
-			'OnRestServiceBuildDescription',
-			$this->MODULE_ID,
-			\Bitrix\ImMobile\Marketplace\Placement::class,
-			'onRestServiceBuildDescription'
-		);
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles()

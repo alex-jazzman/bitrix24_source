@@ -68,6 +68,54 @@ jn.define('im/messenger/provider/services/analytics/src/assistant-button', (requ
 
 		/**
 		 * @param {DialogId} dialogId
+		 * @param {string} mode - one of Analytics.ChatMode
+		 * @param {ModesState} [modesState] - state BEFORE the change
+		 */
+		sendModeChange({ dialogId, mode, modesState })
+		{
+			this.#sendModeChangeEvent({ dialogId, mode, modesState });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {ModesState} [modesState] - state BEFORE the role change
+		 */
+		sendRoleChange({ dialogId, modesState })
+		{
+			this.#sendModeChangeEvent({
+				dialogId,
+				mode: Analytics.ChatMode.roleChange,
+				modesState,
+			});
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} mode - one of Analytics.ChatMode
+		 * @param {ModesState} [modesState] - state BEFORE the change
+		 */
+		#sendModeChangeEvent({ dialogId, mode, modesState })
+		{
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
+			if (!dialogHelper)
+			{
+				return;
+			}
+
+			new AnalyticsEvent()
+				.setTool(Analytics.Tool.ai)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.modeChange)
+				.setSection(AnalyticsHelper.getSectionCode())
+				.setP1(mode)
+				.setP4(AnalyticsHelper.buildAssistantSettingsP4({ dialogHelper, modesState }))
+				.setP5(AnalyticsHelper.getFormattedChatId(dialogHelper.chatId))
+				.send()
+			;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
 		 */
 		sendClickMCPIntegrations(dialogId)
 		{

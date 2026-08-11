@@ -133,21 +133,9 @@ export const ChannelUpdating = {
 		{
 			this.settings.description = description;
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		onRightChange({ name, value }: { name: string, value: UserRoleItem })
 		{
-			this.rights.manageUsersAdd = newValue;
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUsersDelete = newValue;
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUi = newValue;
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.rights.manageMessages = newValue;
+			this.rights[name] = value;
 		},
 		onChatTypeChange(isAvailableInSearch: boolean)
 		{
@@ -313,10 +301,7 @@ export const ChannelUpdating = {
 					:manageMessages="rights.manageMessages"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>

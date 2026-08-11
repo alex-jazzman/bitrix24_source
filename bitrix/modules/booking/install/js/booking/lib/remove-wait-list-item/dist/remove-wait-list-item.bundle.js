@@ -66,5 +66,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.RemoveWaitListItem = RemoveWaitListItem;
 
-})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX, BX, BX.Booking.Const, BX.Booking, BX.Booking.Provider.Service);
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX, BX.UI.Notification, BX.Booking.Const, BX.Booking, BX.Booking.Provider.Service);
 //# sourceMappingURL=remove-wait-list-item.bundle.js.map

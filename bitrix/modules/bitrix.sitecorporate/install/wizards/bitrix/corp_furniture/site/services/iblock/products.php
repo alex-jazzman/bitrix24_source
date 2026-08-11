@@ -1,4 +1,6 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
 if(!CModule::IncludeModule("iblock"))
@@ -26,11 +28,11 @@ if($iblockID == false)
 			"1" => "X",
 			"2" => "R"
 		);
-	$dbGroup = CGroup::GetList("", "", Array("STRING_ID" => "content_editor"));
-	if($arGroup = $dbGroup -> Fetch())
+	$groupId = CGroup::GetIDByCode("content_editor");
+	if ($groupId)
 	{
-		$permissions[$arGroup["ID"]] = 'W';
-	};
+		$permissions[$groupId] = 'W';
+	}
 	$iblockID = WizardServices::ImportIBlockFromXML(
 		$iblockXMLFile,
 		"furniture_products",
@@ -74,4 +76,3 @@ CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/include/random.php", array("PRODUC
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/_index.php", array("PRODUCTS_IBLOCK_ID" => $iblockID));
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/products/index.php", array("PRODUCTS_IBLOCK_ID" => $iblockID));
 CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/products/.left.menu_ext.php", array("PRODUCTS_IBLOCK_ID" => $iblockID));
-?>

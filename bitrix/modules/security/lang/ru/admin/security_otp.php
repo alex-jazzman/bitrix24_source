@@ -18,5 +18,8 @@ $MESS ['SEC_OTP_MANDATORY_SKIP_DAYS'] = "Количество дней для п
 $MESS ['SEC_OTP_NEW_MANDATORY_RIGHTS']= "Пользователи с обязательной двухэтапной авторизацией";
 $MESS ['SEC_OTP_MANDATORY_RIGHTS_SELECT']= "Добавить пользователей";
 $MESS["SEC_OTP_LOG"] = "Журналирование";
-$MESS["SEC_OTP_LOG_ENABLE"] = "Занести попытку запроса кода OTP в журнал:";
+$MESS["SEC_OTP_LOG_ENABLE"] = "Занести попытку запроса одноразового пароля в журнал:";
+$MESS['SEC_OTP_ALLOW_SMS'] = 'Разрешить отправку одноразового пароля по СМС:';
+$MESS['SEC_OTP_ALLOW_EMAIL'] = 'Разрешить отправку одноразового пароля по email:';
+$MESS['SEC_OTP_LOG_SENDING'] = 'Занести отправку одноразового пароля (по СМС, email) в журнал:';
 ?>

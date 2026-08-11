@@ -131,6 +131,7 @@ $MESS['BOOKING_MULTI_ITEM_TITLE'] = '#DATE# (#DURATION#)';
 
 $MESS['BOOKING_BOOKING_SOON_HINT'] = 'Скоро будет доступно';
 
+$MESS['BOOKING_AHA_AI_CALL_NOTIFICATION_TEXT'] = 'AI-звонки для этого ресурса';
 $MESS['BOOKING_AHA_ADD_RESOURCES_TITLE'] = 'Добавьте ресурсы';
 $MESS['BOOKING_AHA_ADD_RESOURCES_TEXT_MSGVER_1'] = 'Например, специалистов, технику, недвижимость в аренду или курьеров для доставки. После этого вы сможете записывать клиентов';
 $MESS['BOOKING_AHA_MESSAGE_TEMPLATE_TITLE'] = 'Подбирайте нужные шаблоны сообщений';
@@ -145,6 +146,8 @@ $MESS['BOOKING_AHA_EXPAND_GRID_TITLE_MSGVER_1'] = 'Расписание можн
 $MESS['BOOKING_AHA_EXPAND_GRID_TEXT_MSGVER_1'] = 'Так удобнее, если вы работаете с большим количеством ресурсов';
 $MESS['BOOKING_AHA_SELECT_RESOURCES_TITLE_MSGVER_1'] = 'Настройте расписание, как вам удобно';
 $MESS['BOOKING_AHA_SELECT_RESOURCES_TEXT_MSGVER_1'] = 'Выводите на сетку ресурсы, с которыми вы работаете постоянно. Так они всегда будут под рукой';
+$MESS['BOOKING_AHA_WEEK_VIEW_TITLE'] = 'Новое недельное расписание';
+$MESS['BOOKING_AHA_WEEK_VIEW_TEXT'] = 'Удобно для бронирований на несколько дней — например, для аренды техники, авто или недвижимости';
 $MESS['BOOKING_AHA_ARTICLE_LINK_TITLE'] = 'Как это работает';
 
 $MESS['BOOKING_QUICK_FILTER_HELP_MSGVER_1'] = '[bold]Фильтр слотов[/bold] покажет только те ресурсы, которые свободны в выбранное время';
@@ -225,3 +228,5 @@ $MESS['BOOKING_BOOKING_WEEK_STATS_CELL_BUSY'] = 'Занято';
 $MESS['BOOKING_BOOKING_WEEK_STATS_CELL_FREE'] = 'Свободно';
 
 $MESS['BOOKING_BOOKING_DAY_CELL_RESTRICTION'] = 'В расписание на день можно добавлять записи длительностью до 12 часов';
+
+$MESS['BOOKING_COMPONENT_BANNER_AI_CALL_ENABLE_ERROR'] = 'Ошибка включения. Обратитесь к администратору вашего Битрикс24';

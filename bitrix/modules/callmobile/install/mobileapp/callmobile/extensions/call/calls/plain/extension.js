@@ -14,7 +14,6 @@ jn.define('call/calls/plain', (require, exports, module) => {
 	const pingPeriod = 5000;
 	const backendPingPeriod = 25000;
 	const reinvitePeriod = 5500;
-
 	const ajaxActions = Object.freeze({
 		invite: "call.CallManager.invite",
 		cancel: "call.CallManager.cancel",
@@ -118,6 +117,8 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
 				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
 			});
+
+			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()
@@ -553,7 +554,14 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				data.reason = reason;
 			}
 
-			callEngine.getRestClient().callMethod(ajaxActions.decline, data).then(() => this.destroy());
+			return callEngine.getRestClient().callMethod(ajaxActions.decline, data)
+				.then(() => {
+					this.destroy();
+				})
+				.catch((error) => {
+					CallUtil.error('Failed to send decline to server', error);
+					this.destroy();
+				});
 		};
 
 		hangup(force = false)
@@ -652,6 +660,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				"Call::voiceStarted": this._onPullEventVoiceStarted.bind(this),
 				"Call::voiceStopped": this._onPullEventVoiceStopped.bind(this),
 				"Call::microphoneState": this._onPullEventMicrophoneState.bind(this),
+				"Call::cameraState": this._onPullEventCameraState.bind(this),
 				"Call::videoPaused": this._onPullEventVideoPaused.bind(this),
 				"Call::usersJoined": this._onPullEventUsersJoined.bind(this),
 				"Call::usersInvited": this._onPullEventUsersInvited.bind(this),
@@ -873,6 +882,17 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			]);
 		}
 
+		_onPullEventCameraState(params)
+		{
+			const cameraStateValue = params.cameraState === true || params.cameraState === 'Y' || params.cameraState === 1 || params.cameraState === '1';
+			const peer = this.getPeer(params.senderId);
+			if (peer)
+			{
+				peer.remoteCameraState = cameraStateValue;
+				peer.updateIncomingTracksFromPeerConnection();
+			}
+		}
+
 		_onPullEventVideoPaused(params)
 		{
 			this.eventEmitter.emit(BX.Call.Event.onUserVideoPaused, [
@@ -1030,6 +1050,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			this.offersStack = 0;
 
 			this.trackList = {};
+			this.remoteCameraState = true;
 
 			this._incomingVideoTrack = null;
 			this._incomingScreenTrack = null;
@@ -1154,7 +1175,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			{
 				clearTimeout(this.callingTimeout);
 			}
-			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), 30000);
+			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 			this.updateCalculatedState();
 		}
 
@@ -1462,10 +1483,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				return;
 			}
 
-			if (trackList)
-			{
-				this.trackList = CallUtil.array_flip(trackList);
-			}
+			this.trackList = trackList ? CallUtil.array_flip(trackList) : {};
 
 			if (this.peerConnection)
 			{
@@ -1623,10 +1641,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				return;
 			}
 
-			if (trackList)
-			{
-				this.trackList = CallUtil.array_flip(trackList);
-			}
+			this.trackList = trackList ? CallUtil.array_flip(trackList) : {};
 
 			let sessionDescription = {
 				type: "answer",
@@ -1970,40 +1985,37 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			this.call.log("_onPeerConnectionRemoveStream", e);
 		}
 
-		_onPeerConnectionSignalingStateChange()
+		updateIncomingTracksFromPeerConnection()
 		{
+			if (!this.peerConnection || this.peerConnection.signalingState !== 'stable')
+			{
+				return;
+			}
+
 			let screenTrack = null;
 			let videoTrack = null;
-			if (this.peerConnection.signalingState == "stable")
-			{
-				this.peerConnection.getTransceivers().forEach(tr => {
-					if (
-						(tr.currentDirection == "sendrecv" || tr.currentDirection == "recvonly")
-						&& (tr.receiver && tr.receiver.track)
-					)
+
+			this.peerConnection.getTransceivers().forEach(tr => {
+				if (
+					(tr.currentDirection === "sendrecv" || tr.currentDirection === "recvonly")
+					&& (tr.receiver && tr.receiver.track)
+				)
+				{
+					const track = tr.receiver.track;
+
+					if (track.kind === 'video')
 					{
-						let track = tr.receiver.track;
-						console.log(`track received. mid: ${tr.mid} kind: ${track.kind}`);
-						if (track.kind === 'audio')
+						if (this.trackList[tr.mid] === 'screen')
 						{
-							// do nothing
+							screenTrack = track;
 						}
-						if (track.kind === 'video')
+						else if (this.trackList[tr.mid] === 'video' || this.remoteCameraState === true)
 						{
-							if (this.trackList[tr.mid] === 'screen')
-							{
-								screenTrack = track;
-							}
-							else
-							{
-								videoTrack = track;
-							}
+							videoTrack = track;
 						}
 					}
-				})
-
-				this.call.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
-			}
+				}
+			});
 
 			// if we set screen track before video track in Android after screen track was deleted on the other side
 			// we will get "MediaStreamTrack has been disposed" error
@@ -2017,6 +2029,16 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				this.incomingVideoTrack = videoTrack;
 				this.incomingScreenTrack = screenTrack;
 			}
+		}
+
+		_onPeerConnectionSignalingStateChange()
+		{
+			if (this.peerConnection.signalingState == "stable")
+			{
+				this.call.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
+			}
+
+			this.updateIncomingTracksFromPeerConnection();
 		}
 
 		stopSignalingTimeout()

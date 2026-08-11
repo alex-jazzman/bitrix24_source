@@ -15,5 +15,6 @@ return [
 		'rest',
 		'tariff-plan-restriction',
 		'toast',
+		'utils/guid',
 	],
 ];

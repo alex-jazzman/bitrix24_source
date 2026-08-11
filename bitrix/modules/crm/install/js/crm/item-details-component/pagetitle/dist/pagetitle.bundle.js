@@ -43,6 +43,7 @@ this.BX.Crm.ItemDetailsComponent = this.BX.Crm.ItemDetailsComponent || {};
 		#categories;
 		#editorGuid = null;
 		#labelTemplate;
+		#menuId;
 		#logger;
 		#isProgress = false;
 		constructor({
@@ -59,6 +60,7 @@ this.BX.Crm.ItemDetailsComponent = this.BX.Crm.ItemDetailsComponent || {};
 			this.#categories = categories;
 			this.#editorGuid = editorGuid;
 			this.#labelTemplate = main_core.Type.isStringFilled(labelTemplate) ? labelTemplate : '#CATEGORY#';
+			this.#menuId = `item-category-changer-${this.#entityTypeId}-${this.#id}`;
 			this.#logger = logger;
 			main_core_events.EventEmitter.makeObservable(this, 'BX.Crm.ItemDetailsComponent.CategoryChanger');
 		}
@@ -96,19 +98,23 @@ this.BX.Crm.ItemDetailsComponent = this.BX.Crm.ItemDetailsComponent || {};
 		}
 		#onCategorySelectorClick(event) {
 			const items = [];
-			for (const category of this.#getAllCategoriesExceptCurrent()) {
+			for (const category of this.#categories) {
 				items.push({
 					text: category.getName(),
 					onclick: this.#onCategorySelect.bind(this, category.getId())
 				});
 			}
 			main_popup.MenuManager.show({
-				id: `item-category-changer-${this.#entityTypeId}-${this.#id}`,
+				id: this.#menuId,
 				bindElement: event.target,
 				items
 			});
 		}
 		#onCategorySelect(wantCategoryId) {
+			if (wantCategoryId === this.#categoryId) {
+				main_popup.MenuManager.destroy(this.#menuId);
+				return;
+			}
 			if (this.#isProgress) {
 				return;
 			}
@@ -211,12 +217,9 @@ this.BX.Crm.ItemDetailsComponent = this.BX.Crm.ItemDetailsComponent || {};
 		#getCurrentCategory() {
 			return this.#categories.find(category => category.getId() === this.#categoryId);
 		}
-		#getAllCategoriesExceptCurrent() {
-			return this.#categories.filter(category => category.getId() !== this.#categoryId);
-		}
 	}
 
 	exports.CategoryChanger = CategoryChanger;
 
-})(this.BX.Crm.ItemDetailsComponent.PageTitle = this.BX.Crm.ItemDetailsComponent.PageTitle || {}, BX.Crm.Models, BX, BX.Event, BX.Main, BX, BX.UI.Dialogs);
+})(this.BX.Crm.ItemDetailsComponent.PageTitle = this.BX.Crm.ItemDetailsComponent.PageTitle || {}, BX.Crm.Models, BX, BX.Event, BX.Main, BX.UI.Notification, BX.UI.Dialogs);
 //# sourceMappingURL=pagetitle.bundle.js.map

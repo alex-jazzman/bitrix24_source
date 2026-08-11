@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,7 @@ class BizprocMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\BizprocMobile\Workspace::class;
+	public array $errors = [];
 
 	public function __construct()
 	{
@@ -35,48 +33,32 @@ class BizprocMobile extends CModule
 	{
 		ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onBeforeTabsGet',
-			$this->MODULE_ID,
-			\Bitrix\BizprocMobile\BizpocTab::class,
-			'onBeforeTabsGet'
-		);
+			return false;
+		}
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		$eventManager = EventManager::getInstance();
+		$dropTables = false;
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onBeforeTabsGet',
-			$this->MODULE_ID,
-			\Bitrix\BizprocMobile\BizpocTab::class,
-			'onBeforeTabsGet'
-		);
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles()
@@ -85,14 +67,14 @@ class BizprocMobile extends CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizprocmobile/install/mobileapp/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/mobileapp/',
 			true,
-			true
+			true,
 		);
 
 		CopyDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizprocmobile/install/components/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/',
 			true,
-			true
+			true,
 		);
 
 		return true;
@@ -156,7 +138,7 @@ class BizprocMobile extends CModule
 
 		$APPLICATION->IncludeAdminFile(
 			Loc::getMessage('BIZPROCMOBILE_INSTALL_TITLE'),
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step.php'
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step.php',
 		);
 	}
 
@@ -174,7 +156,7 @@ class BizprocMobile extends CModule
 		{
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('BIZPROCMOBILE_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep1.php'
+				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep1.php',
 			);
 		}
 		elseif($step === 2)
@@ -185,7 +167,7 @@ class BizprocMobile extends CModule
 
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('BIZPROCMOBILE_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep2.php'
+				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep2.php',
 			);
 		}
 	}

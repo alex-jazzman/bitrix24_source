@@ -15,11 +15,11 @@ return [
 	'css' => 'dist/copilot-agreement.bundle.css',
 	'js' => 'dist/copilot-agreement.bundle.js',
 	'rel' => [
+		'ai.engine',
 		'main.core',
 		'main.popup',
 		'ui.buttons',
 		'ui.notification',
-		'ai.engine',
 	],
 	'skip_core' => false,
 	'settings' => [

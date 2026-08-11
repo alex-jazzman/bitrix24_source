@@ -74,7 +74,7 @@
 	width: 19px;
 	height: 19px;
 	margin-right: 3px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='19' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.75 6.042c-.875 0-1.583.709-1.583 1.583v4.75c0 .874.708 1.583 1.583 1.583h6.333c.875 0 1.583-.709 1.583-1.583v-4.75c0-.874-.708-1.583-1.583-1.583H4.75zm11.875.791l-3.167 1.48v3.552l3.167 1.302V6.833z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='20' fill='none' viewBox='0 0 19 20'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M4.75 6.042c-.875 0-1.583.709-1.583 1.583v4.75c0 .874.708 1.583 1.583 1.583h6.333c.875 0 1.583-.709 1.583-1.583v-4.75c0-.874-.708-1.583-1.583-1.583zm11.875.791-3.167 1.48v3.552l3.167 1.302z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	background-position: center;
 	background-repeat: no-repeat;
 	opacity: 0.75;
@@ -82,7 +82,7 @@
 }
 
 .bx-call-chat-header-call-button__icon.--copilot {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.541 7.626c0-.874.709-1.583 1.583-1.583h6.334c.874 0 1.583.709 1.583 1.583v4.75c0 .875-.709 1.584-1.583 1.584H5.124a1.583 1.583 0 01-1.583-1.584v-4.75zm10.292.888c0-.123.07-.235.182-.287l2.534-1.183c.21-.098.45.055.45.287v5.363a.317.317 0 01-.437.293l-2.533-1.04a.317.317 0 01-.196-.294V8.514zm-6.271 3.42c.045.126.226.126.272 0l.612-1.685a.144.144 0 01.088-.086l1.713-.6a.141.141 0 000-.268l-1.713-.602a.143.143 0 01-.087-.086l-.61-1.686c-.046-.126-.227-.126-.273 0l-.612 1.685a.143.143 0 01-.087.086l-1.714.6a.141.141 0 000 .268l1.713.602c.04.014.073.046.087.086l.61 1.686zm3.285-.003a.599.599 0 11-1.198 0 .599.599 0 011.198 0z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M3.541 7.626c0-.874.709-1.583 1.583-1.583h6.334c.874 0 1.583.709 1.583 1.583v4.75c0 .875-.709 1.584-1.583 1.584H5.124a1.583 1.583 0 0 1-1.583-1.584zm10.292.888c0-.123.07-.235.182-.287l2.534-1.183c.21-.098.45.055.45.287v5.363a.317.317 0 0 1-.437.293l-2.533-1.04a.32.32 0 0 1-.196-.294zm-6.271 3.42c.045.126.226.126.272 0l.612-1.685a.14.14 0 0 1 .088-.086l1.713-.6a.141.141 0 0 0 0-.268l-1.713-.602a.14.14 0 0 1-.087-.086l-.61-1.686c-.046-.126-.227-.126-.273 0l-.612 1.685a.14.14 0 0 1-.087.086l-1.714.6a.141.141 0 0 0 0 .268l1.713.602c.04.014.073.046.087.086zm3.285-.003a.599.599 0 1 1-1.198 0 .599.599 0 0 1 1.198 0' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .bx-call-chat-header-call-button__icon.--compact {
@@ -107,7 +107,7 @@
 .bx-call-chat-header-call-button__chevron {
 	width: 8px;
 	height: 5px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='8' height='5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath opacity='.7' fill-rule='evenodd' clip-rule='evenodd' d='M6.955.288L4.692 2.55l-.57.562-.56-.562L1.3.288.5 1.086l3.627 3.628 3.627-3.628-.799-.798z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' fill='none' viewBox='0 0 8 5'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M6.955.288 4.692 2.55l-.57.562-.56-.562L1.3.288l-.8.798 3.627 3.628 3.627-3.628z' clip-rule='evenodd' opacity='.7'/%3E%3C/svg%3E");
 	background-position: center;
 	background-repeat: no-repeat;
 }

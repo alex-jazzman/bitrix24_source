@@ -27,7 +27,6 @@ return [
 		'booking.lib.limit',
 		'booking.lib.side-panel-instance',
 		'booking.lib.timezone',
-		'booking.model.ai-agent',
 		'booking.model.resource-creation-wizard',
 		'booking.provider.service.ai-agent-launcher-service',
 		'booking.provider.service.catalog-service-sku-service',

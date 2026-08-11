@@ -204,7 +204,7 @@ export const BaseCell = {
 				'--selected': selected,
 				'--bounded-to-bottom': cell.boundedToBottom,
 				'--height-is-less-than-40': height < 40,
-				'--small': height <= 12.5,
+				'--small': height <= 20,
 			}]"
 			:style="{
 				'--height': height + 'px',

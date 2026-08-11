@@ -25,6 +25,7 @@ return [
 		'tasks:background/tasks-notifications',
 
 		'crm:in-app-url/background',
+		'im:in-app-url/background',
 		'in-app-url/deeplink',
 		"sign:background",
 		"mail:background",
@@ -52,5 +53,7 @@ return [
 
 		'timeman:background',
 		'stafftrack:check-in-v2/background',
+
+		'bitrix-gpt-onboarding/background',
 	],
 ];

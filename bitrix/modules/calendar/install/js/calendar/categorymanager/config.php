@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/categorymanager.bundle.js',
 	'rel' => [
 		'calendar.sectionmanager',
-		'main.core',
 		'calendar.util',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

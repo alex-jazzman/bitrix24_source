@@ -13,7 +13,8 @@
 
 .editor-chart-node-settings-edit-aux-port-selector-form__label {
 	color: var(--ui-color-palette-gray-70);
-	margin-bottom: 5px;
+	margin-bottom: 4px;
+	padding-left: 2px;
 	display: inline-block;
 }
 

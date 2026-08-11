@@ -1,8 +1,10 @@
 import { Loc } from 'main.core';
 import { ref } from 'ui.vue3';
+
 import { useToastStore } from '../../../shared/stores';
 import { diagramStore } from '../../../entities/blocks';
-import { debugBarApi, DEBUG_BAR_CONFIG, DEBUG_BAR_ERROR_MESSAGES } from '../../../entities/debug-bar';
+import { debugBarApi } from '../../../entities/debug-bar/api';
+import { DEBUG_BAR_CONFIG, DEBUG_BAR_ERROR_MESSAGES } from '../../../entities/debug-bar/index.js';
 import { handleResponseError } from '../../../shared/utils';
 
 export function useDebugSessions()

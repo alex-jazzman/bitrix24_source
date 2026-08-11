@@ -22,17 +22,25 @@ export class ProcessingStep
 	send(): void
 	{
 		const start = Date.now();
+		const request = this.#options.runActionName
+			? BX.ajax.runAction(this.#options.runActionName, {
+				data: {
+					userId: this.#options.userId,
+					departmentIds: this.#options.showDepartmentControl === false ? [] : this.#departmentIds,
+				},
+			})
+			: BX.ajax.runComponentAction(this.#options.componentName, this.#options.actionName ?? 'moveToIntranet', {
+				signedParameters: this.#options.signedParameters,
+				mode: 'ajax',
+				data: this.#options.showDepartmentControl === false
+					? {}
+					: {
+						departmentId: this.#departmentIds,
+						isEmail: 'N',
+					},
+			});
 
-		const data = {
-			departmentId: this.#departmentIds,
-			isEmail: 'N',
-		};
-
-		BX.ajax.runComponentAction(this.#options.componentName, 'moveToIntranet', {
-			signedParameters: this.#options.signedParameters,
-			mode: 'ajax',
-			data,
-		}).then((response) => {
+		request.then((response) => {
 			const time = (Date.now() - start);
 			let delay = 0;
 			if (time <= 2500)

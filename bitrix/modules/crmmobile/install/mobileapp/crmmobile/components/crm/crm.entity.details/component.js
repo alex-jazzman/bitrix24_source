@@ -25,6 +25,7 @@
 		.create(result.card)
 		.setTestIdPrefix('CRM_ENTITY_DETAILS')
 		.setAnalyticsProvider(analyticsProvider)
+		.setSendAnalyticsInBody(true)
 		.setMenuActionsProvider(menuProvider)
 		.setTopToolbarFactory(DetailToolbarFactory)
 		.setRightButtonsProvider(rightButtonsProvider)

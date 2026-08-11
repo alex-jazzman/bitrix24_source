@@ -16,7 +16,13 @@ this.BX.Booking = this.BX.Booking || {};
 		SelectResources: 'select_resources',
 		CyclePopup: 'cycle_popup',
 		SearchNavigation: 'search_navigation',
-		IntegrationMapsYa: 'integration_maps_ya'
+		IntegrationMapsYa: 'integration_maps_ya',
+		WeekView: 'week_view'
+	});
+
+	const AiCallBannerMode = Object.freeze({
+		Invitation: 'invitation',
+		AutoSwitched: 'auto_switched'
 	});
 
 	const HelpDesk = Object.freeze({
@@ -206,7 +212,8 @@ this.BX.Booking = this.BX.Booking || {};
 		StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation',
 		BookingOpenSkusSettings: 'booking:booking:open-skus-settings',
 		MultiBookingShowPreviousPeriod: 'booking:booking:multi-booking-show-previous-period',
-		MultiBookingShowNextPeriod: 'booking:booking:multi-booking-show-next-period'
+		MultiBookingShowNextPeriod: 'booking:booking:multi-booking-show-next-period',
+		AiCallBannerClosed: 'booking:banner:ai-call:closed'
 	});
 
 	const Limit = Object.freeze({
@@ -217,11 +224,11 @@ this.BX.Booking = this.BX.Booking || {};
 		MultiResources: 'booking_multi',
 		NotificationsSettings: 'booking_notifications_settings',
 		Overbooking: 'booking_overbooking',
-		Waitlist: 'booking_waitlist'
+		Waitlist: 'booking_waitlist',
+		MultidayBooking: 'booking_long'
 	});
 
 	const Model = Object.freeze({
-		AiAgent: 'ai-agent',
 		BookingInfo: 'booking-info',
 		Bookings: 'bookings',
 		Clients: 'clients',
@@ -298,7 +305,8 @@ this.BX.Booking = this.BX.Booking || {};
 		AhaSelectResources: 'aha_select_resources',
 		AhaCyclePopup: 'aha_cycle_popup',
 		AhaSearchNavigation: 'aha_search_navigation',
-		AhaIntegrationMapsYa: 'aha_integration_maps_ya'
+		AhaIntegrationMapsYa: 'aha_integration_maps_ya',
+		AhaWeekView: 'aha_week_view'
 	});
 
 	const NotificationChannel = Object.freeze({
@@ -343,16 +351,6 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 
 	const Grid = Object.freeze({
-		SizeElement: {
-			/** @description --booking-resource-item-width */
-			WeekCellWidth: 145,
-			/** @description --booking-resource-item-height */
-			WeekCellHeight: 80,
-			/** @description --booking-height-second-row-week-grid */
-			WeekDaysPanelHeight: 40,
-			WeekHourWidth: 6,
-			DayCellWidth: 280
-		},
 		Duration: {
 			Day: 1,
 			Week: 7
@@ -388,7 +386,8 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 	const AnalyticsCategory = Object.freeze({
 		booking: 'booking',
-		waitlist: 'waitlist'
+		waitlist: 'waitlist',
+		banners: 'banners'
 	});
 	const AnalyticsEvent = Object.freeze({
 		showPopup: 'show_popup',
@@ -416,6 +415,7 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 
 	exports.AhaMoment = AhaMoment;
+	exports.AiCallBannerMode = AiCallBannerMode;
 	exports.AnalyticsCSection = AnalyticsCSection;
 	exports.AnalyticsCSubSection = AnalyticsCSubSection;
 	exports.AnalyticsCategory = AnalyticsCategory;

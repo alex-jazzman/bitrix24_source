@@ -1,0 +1,41 @@
+.editor-chart-node-settings-edit-filter-expression {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.editor-chart-node-settings-edit-filter-expression__item {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.editor-chart-node-settings-edit-filter-expression__label {
+	color: var(--ui-color-text-secondary, #525c69);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.editor-chart-node-settings-edit-filter-expression__loader {
+	display: flex;
+	justify-content: center;
+	padding: 8px 0;
+}
+
+.editor-chart-node-settings-edit-filter-expression__error {
+	color: var(--ui-color-background-on-alert);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label
+{
+	background: var(--ui-color-accent-main-warning);
+}
+
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__content
+{
+	border-radius: 8px;
+	border: 1px solid var(--ui-color-accent-main-warning);
+	background: var(--ui-color-accent-soft-orange-3);
+}

@@ -5,7 +5,8 @@ $MESS['IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2'] = "Звук";
 $MESS['IM_SIDEBAR_ENABLE_AUTODELETE_TITLE'] = "Автоудаление сообщений";
 $MESS['IM_SIDEBAR_AUTODELETE_NO_PERMISSION'] = "Недостаточно прав для работы с автоудалением. [helpdesklink]Подробнее[/helpdesklink]";
 $MESS['IM_SIDEBAR_SHARED_LINK_DESCRIPTION_MSGVER_1'] = "Ссылка на приглашение в чат";
-$MESS['IM_SIDEBAR_SHARED_LINK_COPY_MENU'] = "Копировать";
+$MESS['IM_SIDEBAR_SHARED_LINK_COPY_MENU_MSGVER_1'] = "Ссылка для сотрудников";
+$MESS['IM_SIDEBAR_SHARED_GUEST_LINK_COPY_MENU'] = "Ссылка для гостей";
 $MESS['IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'] = "Сменить";
 
 $MESS['IM_SIDEBAR_CREATE_GROUP_CHAT'] = "Создать групповой чат";

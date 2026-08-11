@@ -4,6 +4,48 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports, ui_analytics, booking_const, booking_core, main_core) {
 	'use strict';
 
+	class AiCallBannerAnalytics {
+		static sendBannerView() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.banners,
+				event: 'banner_view',
+				type: 'ai_inform'
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendBannerClickStartFlow() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.banners,
+				event: 'banner_click',
+				type: 'ai_inform',
+				c_element: 'start_flow'
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendBannerCloseSkip() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.banners,
+				event: 'banner_close',
+				type: 'ai_inform',
+				c_element: 'skip_button'
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendBannerCloseCross() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.banners,
+				event: 'banner_close',
+				type: 'ai_inform',
+				c_element: 'close_button'
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
 	class BannerAnalytics {
 		static sendShowPopup() {
 			const options = {
@@ -292,6 +334,7 @@ this.BX.Booking = this.BX.Booking || {};
 		}
 	}
 
+	exports.AiCallBannerAnalytics = AiCallBannerAnalytics;
 	exports.BannerAnalytics = BannerAnalytics;
 	exports.BookingAnalytics = BookingAnalytics;
 	exports.RcwAnalytics = RcwAnalytics;

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_uploader_core, ui_iconSet_outline, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_application_core, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_collab, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_lib_access, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
+(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_iconSet_outline, ui_uploader_core, im_v2_application_core, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_collab, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_lib_access, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
 	'use strict';
 
 	const EVENT_NAMESPACE$1 = 'BX.Messenger.v2.Textarea.FormatToolbarManager';
@@ -6011,7 +6011,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable);
 			},
 			needToShowAllParticipants() {
-				return this.dialog.type !== im_v2_const.ChatType.user;
+				if (this.dialog.type === im_v2_const.ChatType.user) {
+					return false;
+				}
+				if (this.dialog.type === im_v2_const.ChatType.copilot) {
+					return new im_v2_lib_copilot.CopilotManager().isGroupCopilotChat(this.dialogId);
+				}
+				return true;
 			}
 		},
 		watch: {
@@ -6192,7 +6198,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return new im_v2_lib_copilot.CopilotManager().isGroupCopilotChat(this.dialogId);
 			},
 			needToShowMentionPopup() {
-				if (this.isCopilotType) {
+				if (this.isCopilotType && !im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
 					return this.isGroupCopilotChat;
 				}
 				return true;
@@ -7070,32 +7076,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.b24,
 					title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
-					clickHandler: this.onSelectFromB24
+					clickHandler: this.onSelectFromB24,
+					showCondition: () => !this.isGuest
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.task,
 					title: this.loc('IM_TEXTAREA_SELECT_TASK'),
 					clickHandler: this.onCreateTaskClick,
-					showCondition: () => !this.isCopilotChat
+					showCondition: () => !this.isCopilotChat && !this.isGuest
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.meeting,
 					title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
 					clickHandler: this.onCreateMeetingClick,
-					showCondition: () => !this.isCopilotChat
+					showCondition: () => !this.isCopilotChat && !this.isGuest
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.calendarSlot,
 					title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
 					clickHandler: this.onCreateCalendarSlotClick,
-					showCondition: () => this.isCalendarSlotAvailable
+					showCondition: () => this.isCalendarSlotAvailable && !this.isGuest
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.documentSign,
 					title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
 					clickHandler: this.onCreateDocumentSignClick,
-					showCondition: () => this.isDocumentSignAvailable
+					showCondition: () => this.isDocumentSignAvailable && !this.isGuest
 				}, {
 					icon: im_v2_component_elements_menu.MenuItemIcon.vote,
 					title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
 					clickHandler: this.onCreateVoteClick,
-					showCondition: () => this.isVoteCreationAvailable
+					showCondition: () => this.isVoteCreationAvailable && !this.isGuest
 				}];
 			},
 			availableMenuItems() {
@@ -7151,6 +7158,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					return im_v2_const.Color.accentBlue;
 				}
 				return im_v2_const.Color.gray40;
+			},
+			isGuest() {
+				return this.$store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
 			}
 		},
 		methods: {
@@ -8026,6 +8036,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				type: Boolean,
 				default: true
 			},
+			withDraft: {
+				type: Boolean,
+				default: true
+			},
 			withUploadMenu: {
 				type: Boolean,
 				default: true
@@ -8045,6 +8059,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			withCopilot: {
 				type: Boolean,
 				default: true
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			deferredDialogPromise: {
+				type: Object,
+				default: null
 			}
 		},
 		emits: ['mounted'],
@@ -8063,7 +8085,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					messageId: 0
 				},
 				showFormatToolbar: false,
-				formatToolbarPosition: {}
+				formatToolbarPosition: {},
+				dialogReady: !this.deferredDialogPromise
 			};
 		},
 		computed: {
@@ -8073,7 +8096,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
 			dialogInited() {
-				return this.dialog.inited;
+				return this.dialog.inited || !this.dialogReady;
 			},
 			replyMode() {
 				return this.panelType === im_v2_const.TextareaPanelType.reply;
@@ -8088,6 +8111,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.panelType === im_v2_const.TextareaPanelType.market;
 			},
 			isDisabled() {
+				if (this.disabled) {
+					return true;
+				}
 				return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 			},
 			baseTextareaPlaceholder() {
@@ -8130,12 +8156,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			isFocused() {
 				return this.$refs.textarea === document.activeElement;
+			},
+			isGuest() {
+				return this.$store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+			},
+			showMarketIcon() {
+				return this.withMarket && !this.isGuest;
 			}
 		},
 		watch: {
 			text(newValue) {
 				this.adjustTextareaHeight();
-				this.getDraftManager().setDraftText(this.dialogId, newValue);
+				if (!this.dialogReady) {
+					return;
+				}
+				if (this.withDraft) {
+					this.getDraftManager().setDraftText(this.dialogId, newValue);
+				}
 				if (main_core.Type.isStringFilled(newValue)) {
 					this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.writing);
 				}
@@ -8144,7 +8181,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		created() {
 			this.initResizeManager();
 			this.restoreTextareaHeight();
-			void this.restorePanel();
 			this.initSendingService();
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
@@ -8159,12 +8195,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.getEmitter().subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 			this.getEmitter().subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
 		},
-		mounted() {
-			void this.initMentionManager();
+		async mounted() {
 			if (this.withAutoFocus) {
 				this.focus();
 			}
 			this.$emit('mounted');
+			await this.getDialogReadyPromise();
 		},
 		beforeUnmount() {
 			this.resizeManager.destroy();
@@ -8193,17 +8229,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 				return this.text;
 			},
-			sendMessage() {
+			async sendMessage() {
 				this.text = this.text.trim();
 				if (this.isDisabled || !this.dialogInited) {
 					return;
 				}
+				await this.getDialogReadyPromise();
 				const eventResult = main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.onBeforeSendMessage);
 				if (eventResult.includes(BeforeSendMessageAction.cancel)) {
 					this.resetTextarea();
 					return;
 				}
-				const text = this.mentionManager.replaceMentions(this.text);
+				const text = this.mentionManager ? this.mentionManager.replaceMentions(this.text) : this.text;
 				if (this.hasActiveMessageAction()) {
 					this.handlePanelAction(text);
 					this.closePanel();
@@ -8392,7 +8429,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const newLineCombination = im_v2_lib_hotkey.isNewLineCombination(event);
 				if (sendMessageCombination && !newLineCombination) {
 					event.preventDefault();
-					this.sendMessage();
+					void this.sendMessage();
 					return;
 				}
 				if (newLineCombination) {
@@ -8414,7 +8451,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					this.handleLastOwnMessageEdit(event);
 					return;
 				}
-				this.mentionManager.onKeyDown(event);
+				this.mentionManager?.onKeyDown(event);
 			},
 			handleNewLine() {
 				this.text = im_v2_lib_textarea.Textarea.addNewLine(this.$refs.textarea);
@@ -8435,7 +8472,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					this.openEditPanel(lastOwnMessageId);
 				}
 			},
-			onSendMessage(event) {
+			async onSendMessage(event) {
 				const {
 					text,
 					dialogId
@@ -8443,6 +8480,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (this.dialogId !== dialogId) {
 					return;
 				}
+				await this.getDialogReadyPromise();
 				this.getSendingService().sendMessage({
 					text,
 					dialogId: this.dialogId
@@ -8618,6 +8656,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					return;
 				}
 				this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
+			},
+			getDialogReadyPromise() {
+				if (!this.dialogReadyPromise) {
+					this.dialogReadyPromise = this.initDialogReadyPromise();
+				}
+				return this.dialogReadyPromise;
+			},
+			async initDialogReadyPromise() {
+				if (this.deferredDialogPromise) {
+					try {
+						await this.deferredDialogPromise;
+					} catch (error) {
+						im_v2_lib_logger.Logger.error('ChatTextarea: deferredDialogPromise rejected', error);
+					}
+					// wait for parent to finish flushing prop updates (withMention/dialogId)
+					await this.$nextTick();
+				}
+				if (this.text === '' && this.withDraft) {
+					void this.restorePanel();
+				}
+				if (this.withMention) {
+					await this.initMentionManager();
+				}
+				this.dialogReady = true;
 			},
 			async initMentionManager() {
 				const {
@@ -8799,7 +8861,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							:dialogId="dialogId"
 						/>
 						<BIcon
-							v-if="withMarket"
+							v-if="showMarketIcon"
 							:name="OutlineIcons.APPS"
 							:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
 							:size="ICON_SIZE"
@@ -8812,11 +8874,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							:dialogId="dialogId"
 						/>
 						<AudioInput
+							v-if="dialogReady"
 							:dialogId="dialogId"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>
-						<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
+						<SendButton
+							:dialogId="dialogId"
+							:editMode="editMode"
+							:isDisabled="isDisabled"
+							@click="sendMessage"
+						/>
 					</div>
 				</div>
 			</div>
@@ -8854,5 +8922,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.BeforeSendMessageAction = BeforeSendMessageAction;
 	exports.ChatTextarea = ChatTextarea;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, BX?.UI?.Uploader??{}, window??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, window??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
 //# sourceMappingURL=textarea.bundle.js.map

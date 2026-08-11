@@ -58,6 +58,9 @@ export class ResourcesSelector
 					id: EntitySelectorEntity.Resource,
 					dynamicLoad: true,
 					dynamicSearch: true,
+					options: {
+						shortSlotsOnly: true,
+					},
 				},
 			],
 			searchOptions: {

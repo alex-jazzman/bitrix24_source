@@ -38,7 +38,7 @@ this.BX = this.BX || {};
 			},
 			buttonStyle() {
 				if (this.transcriptionState === TranscriptionState.empty || this.isPending) {
-					return ui_vue3_components_button.AirButtonStyle.FILLED_COPILOT;
+					return ui_vue3_components_button.AirButtonStyle.FILLED_BITRIX_GPT;
 				}
 				if (this.transcriptionState === TranscriptionState.failed) {
 					return ui_vue3_components_button.AirButtonStyle.FILLED_ALERT;

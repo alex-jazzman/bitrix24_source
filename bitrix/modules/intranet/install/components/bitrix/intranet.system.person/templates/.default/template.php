@@ -111,13 +111,13 @@ endif;
 		{
 			?><a href="<?echo $arUser['DETAIL_URL']?>"><?
 		}
-		if ($arUser['PERSONAL_PHOTO']) 
+		if ($arUser['PERSONAL_PHOTO'])
 		{
-			echo $arUser['PERSONAL_PHOTO']; 
+			echo $arUser['PERSONAL_PHOTO'];
 		}
 		if ($arResult['CAN_VIEW_PROFILE'])
 		{
-			?></a><? 
+			?></a><?
 		}
 		?></div><?
 	}
@@ -133,7 +133,7 @@ endif;
 			{
 				continue;
 			}
-			echo $arParams['USER_PROP'][$key] ? $arParams['USER_PROP'][$key] : GetMessage('ISL_'.$key); ?>:
+			echo $arParams['USER_PROP'][$key] ? $arParams['USER_PROP'][$key] : GetMessage('ISL_'.$key.($key === 'PERSONAL_COUNTRY' ? '_MSGVER_1' : '')); ?>:
 			<? switch($key)
 			{
 				case 'EMAIL':

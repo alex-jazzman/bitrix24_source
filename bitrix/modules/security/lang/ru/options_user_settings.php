@@ -124,3 +124,5 @@ $MESS['SEC_OTP_PUSH_STEP3'] = 'Перейдите по ссылке на экр�
 $MESS['SEC_OTP_PUSH_STEP4'] = 'Установите мобильное приложение.';
 $MESS['SEC_OTP_PUSH_SUCCESS'] = 'Приложение успешно подключено!';
 $MESS['SEC_OTP_PUSH_SAVING'] = 'Сохраняем настройки...';
+$MESS['SEC_OTP_PARAMS'] = 'Параметры';
+$MESS['SEC_OTP_EMAIL'] = 'Резервный email для одноразовых паролей:';

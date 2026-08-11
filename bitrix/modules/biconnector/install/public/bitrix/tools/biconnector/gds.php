@@ -5,6 +5,7 @@ use Bitrix\BIConnector\Integration\Superset\CultureFormatter;
 
 define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
+define('BX_SENDPULL_COUNTER_QUEUE_DISABLE', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
 define('SKIP_DISK_QUOTA_CHECK', true);
 define('CACHED_b_file', false);

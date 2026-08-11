@@ -1,5 +1,6 @@
 import { Dom, Reflection, ready, addCustomEvent, Event } from 'main.core';
 import { Counter, CounterStyle } from 'ui.cnt';
+import { HeaderMartaButton } from './marta-button';
 
 export class Header
 {
@@ -8,6 +9,7 @@ export class Header
 	constructor()
 	{
 		this.#initMobileBurger();
+		this.#initMartaButton();
 	}
 
 	getContainer(): HTMLElement
@@ -81,6 +83,13 @@ export class Header
 
 		addCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', (total) => {
 			this.#burgerCounter.update(total);
+		});
+	}
+
+	#initMartaButton()
+	{
+		ready(() => {
+			(new HeaderMartaButton()).init();
 		});
 	}
 }

@@ -147,7 +147,9 @@
 }
 
 .debug-bar-trace-json {
+	/* @chef-ignore */
 	scrollbar-width: thin;
+	/* @chef-ignore */
 	scrollbar-color: var(--debug-bar-scrollbar-thumb) var(--debug-bar-scrollbar-track);
 }
 

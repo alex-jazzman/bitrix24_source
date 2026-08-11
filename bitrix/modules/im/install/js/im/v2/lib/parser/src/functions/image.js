@@ -273,14 +273,11 @@ export const ParserImage = {
 
 				const layout = Tag.render`
 					<a class='bx-im-message-image ${classModifier}'>
-						<img
-							class='bx-im-message-image-source'
-							src="${url}"
-						/>
+						<img class='bx-im-message-image-source' />
 					</a>
 				`;
 
-				Dom.attr(layout.firstChild, viewerAttributes);
+				Dom.attr(layout.firstChild, { src: url, ...viewerAttributes });
 
 				return layout.outerHTML;
 			},

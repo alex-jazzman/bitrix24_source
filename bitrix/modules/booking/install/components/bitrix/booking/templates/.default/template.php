@@ -73,7 +73,6 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 		const features = <?= Json::encode($arResult['features']) ?>;
 		const canTurnOnTrial = <?= $arResult['canTurnOnTrial'] ? 'true' : 'false'?>;
 		const canTurnOnDemo = <?= $arResult['canTurnOnDemo'] ? 'true' : 'false'?>;
-		const isMultidayFeatureAvailable = <?= $arResult['isMultidayFeatureAvailable'] ? 'true' : 'false'?>;
 		const timezone = '<?= $arResult['timezone'] ?>' || Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const firstWeekDay = <?= (int)$arResult['firstWeekDay'] ?>;
 		const filterId = '<?= $arResult['FILTER_ID'] ?>';
@@ -99,7 +98,6 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 			features,
 			canTurnOnTrial,
 			canTurnOnDemo,
-			isMultidayFeatureAvailable,
 			timezone,
 			firstWeekDay,
 			filterId,

@@ -2,6 +2,7 @@ import { Cache, Dom, Tag, Validation, Loc, Extension, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
+import 'phone_number';
 import './style.css';
 import type { InvitationProvider } from './provider/invitation-provider';
 import { InvitationToGroup } from './provider/invitation-to-group';

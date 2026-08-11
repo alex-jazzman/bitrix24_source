@@ -1,13 +1,13 @@
-import type { RawSettings } from 'im.v2.const';
-import type {
-	ImModelUser,
-	ImModelAnchor,
-	ImModelCallItem,
-	ImModelTariffRestrictions,
-	ImModelCopilotAIModel,
-	ImModelCounter,
+import { type RawSettings } from 'im.v2.const';
+import {
+	type ImModelUser,
+	type ImModelAnchor,
+	type ImModelCallItem,
+	type ImModelTariffRestrictions,
+	type ImModelCopilotAIModel,
+	type ImModelCounter,
 } from 'im.v2.model';
-import type { RawUser } from 'im.v2.provider.pull';
+import { type RawUser } from 'im.v2.provider.pull';
 
 export type ApplicationData = {
 	isCurrentUserAdmin: boolean,
@@ -24,6 +24,8 @@ export type ApplicationData = {
 	},
 	counters: ImModelCounter[],
 	notificationCounter: number,
+	isGuestWelcome?: boolean,
+	videoCallsTermsUrl?: string,
 };
 
 export type PreloadedEntityType = {

@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/provider/services/chat',
+		'im:messenger/application/lib/chat-deletion-manager',
 		'im:messenger/controller/sidebar-v2/loc',
 		'im:messenger/controller/sidebar-v2/const',
 		'im:messenger/controller/sidebar-v2/user-actions/navigation',

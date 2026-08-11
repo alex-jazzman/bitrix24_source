@@ -11,8 +11,6 @@ $APPLICATION->SetTitle("Заказы");
 	"SEND_NEW_USER_NOTIFY" => "Y",
 	"DELIVERY_NO_AJAX" => "N",
 	"TEMPLATE_LOCATION" => "popup",
-	"PROP_1" => array(
-	),
 	"PATH_TO_BASKET" => "#SITE_DIR#personal/cart/",
 	"PATH_TO_PERSONAL" => "#SITE_DIR#personal/order/",
 	"PATH_TO_PAYMENT" => "#SITE_DIR#personal/order/payment/",

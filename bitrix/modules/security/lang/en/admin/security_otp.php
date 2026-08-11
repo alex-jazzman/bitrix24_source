@@ -1,9 +1,12 @@
 <?php
+$MESS["SEC_OTP_ALLOW_EMAIL"] = "Allow sending one-time password via email:";
 $MESS["SEC_OTP_ALLOW_RECOVERY_CODES"] = "Allow recovery codes";
 $MESS["SEC_OTP_ALLOW_REMEMBER"] = "Allow persistent OTP's";
+$MESS["SEC_OTP_ALLOW_SMS"] = "Allow sending one-time password via SMS:";
 $MESS["SEC_OTP_DEFAULT_YPE"] = "Default password generation algorithm";
 $MESS["SEC_OTP_LOG"] = "Logging";
 $MESS["SEC_OTP_LOG_ENABLE"] = "Log requests for OTP password:";
+$MESS["SEC_OTP_LOG_SENDING"] = "Log OTP sending events (via SMS and email):";
 $MESS["SEC_OTP_MANDATORY_RIGHTS_SELECT"] = "Add users";
 $MESS["SEC_OTP_MANDATORY_SKIP_DAYS"] = "Days left to connect";
 $MESS["SEC_OTP_NEW_BUTTON_OFF"] = "Disable two-step authentication";

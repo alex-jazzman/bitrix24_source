@@ -106,6 +106,8 @@ export type TaskModel = {
 	mark: ?$Values<typeof Mark>,
 	replicateParams: TaskReplicateParams | null,
 	viewers?: Viewers,
+	replicateTemplate: TaskModel | null,
+	forkedByTemplate: TaskModel | null,
 };
 
 export type TaskRights = {

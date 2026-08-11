@@ -1,0 +1,32 @@
+.editor-chart-node-settings-header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 18px 9px;
+	font-size: 14px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-palette-black-solid);
+}
+
+.editor-chart-node-settings-header__controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+.editor-chart-block-header__status {
+	padding-top: 2px;
+	padding-left: 7px;
+}
+
+.editor-chart-block-header__status .editor-chart-block-status-not-published:before {
+	top: 5px;
+}
+
+.ui-chip.editor-chart-data-inspector-toggle {
+	margin-bottom: 7px;
+}

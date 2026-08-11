@@ -1,4 +1,3 @@
-/* global BXMobileApp */
 import {
 	CheckInMapServiceBase,
 	CheckInMapEventType,
@@ -418,7 +417,17 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			const paddingOffset = paddingBottomRight.subtract(paddingTopLeft).divideBy(2);
 			const projected = this.mapInstance.project(L.latLng(bounds[0]), finalZoom);
 			const center = this.mapInstance.unproject(projected.add(paddingOffset), finalZoom);
-			this.mapInstance.setView(center, finalZoom);
+
+			if (options.animate)
+			{
+				this.mapInstance.flyTo(center, finalZoom, {
+					duration: options.duration ?? 0.5,
+				});
+			}
+			else
+			{
+				this.mapInstance.setView(center, finalZoom);
+			}
 
 			return;
 		}
@@ -436,6 +445,8 @@ export default class CheckInMapService extends CheckInMapServiceBase
 			paddingTopLeft,
 			paddingBottomRight,
 			maxZoom,
+			animate: options.animate === true,
+			duration: options.duration,
 		});
 	}
 
@@ -626,6 +637,20 @@ export default class CheckInMapService extends CheckInMapServiceBase
 	setClusterIcon(markerIds, iconConfig)
 	{
 		this.clustering.setClusterIcon(markerIds, iconConfig);
+	}
+
+	setGrayscale(enabled)
+	{
+		if (!this.mapInstance)
+		{
+			return;
+		}
+
+		const tilePane = this.mapInstance.getPane('tilePane');
+		if (tilePane)
+		{
+			tilePane.style.filter = enabled ? 'grayscale(1)' : '';
+		}
 	}
 
 	#fitToLayersInFlight = false;

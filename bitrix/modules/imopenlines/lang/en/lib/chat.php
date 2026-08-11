@@ -49,6 +49,7 @@ $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_4"] = "4";
 $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_5"] = "5";
 $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_DISLIKE"] = "negative";
 $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "positive";
+$MESS["IMOL_CHAT_NOTIFY_SCHEMA_GROUP"] = "Open Channels";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Client rating notification";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Supervisor rating notification";
 $MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Enquiry has been resubmitted to the queue because there are no agents available";

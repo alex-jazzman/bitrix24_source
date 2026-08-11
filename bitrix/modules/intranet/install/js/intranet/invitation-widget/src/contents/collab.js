@@ -7,7 +7,7 @@ import { Content } from './content';
 
 export class CollabContent extends Content
 {
-	articleCode: string = '22706764';
+	articleCode: string;
 	#openChat: ?function;
 
 	constructor(options: CollabContentOptions)
@@ -19,6 +19,7 @@ export class CollabContent extends Content
 
 		this.isNewProjectsAvailable = settings?.isNewProjectsAvailable;
 		this.canCreateProjects = settings?.canCreateProjects;
+		this.articleCode = this.isNewProjectsAvailable ? '28397818' : '22706764';
 	}
 
 	getConfig(): ConfigContent
@@ -68,7 +69,7 @@ export class CollabContent extends Content
 			);
 
 			return Tag.render`
-				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()}">
+				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}">
 					<div class="intranet-invitation-widget-content">
 						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab">
 							<div class="ui-icon-set --collab"></div>
@@ -81,7 +82,11 @@ export class CollabContent extends Content
 							</div>
 							<div class="intranet-invitation-widget-item-link">
 								<span onclick="${showCollabHelper}" class="intranet-invitation-widget-item-link-text">
-									${Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')}
+									${
+										this.isNewProjectsAvailable
+										? Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC')
+										: Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')
+									}
 								</span>
 							</div>
 						</div>

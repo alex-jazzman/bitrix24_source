@@ -12,6 +12,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.sidepanel',
+		'note.analytics',
 		'note.import',
 		'note.permissions',
 		'note.ui.action-menu',

@@ -1,4 +1,5 @@
 import { NoteSearchPageComponent } from 'note.search';
+import { NoteAnalytics } from 'note.analytics';
 import { ROUTE_NAME_DOCUMENT, ROUTE_NAME_SEARCH } from '../router/route-names';
 
 export const SearchPage = {
@@ -21,6 +22,8 @@ export const SearchPage = {
 				return;
 			}
 
+			// Opening a document from the full search-results page.
+			NoteAnalytics.documentViewed('search_page');
 			this.$router.push({
 				name: ROUTE_NAME_DOCUMENT,
 				params: { id: documentId },

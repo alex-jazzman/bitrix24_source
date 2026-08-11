@@ -1,0 +1,81 @@
+.bx-im-ai-assistant-suggestion {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	border: 0;
+	min-width: 0;
+	cursor: pointer;
+	white-space: nowrap;
+	font-family: var(--im-font-family-system);
+
+	transition: background-color .15s ease, color .15s ease;
+}
+
+.bx-im-ai-assistant-suggestion.--overlay {
+	--bx-im-ai-assistant-suggestion-height: 28px;
+
+	height: var(--bx-im-ai-assistant-suggestion-height);
+	padding: 0 var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-pill);
+
+	background-color: var(--ui-color-chat-overall-overlay);
+	color: var(--ui-color-base-white-fixed);
+	box-shadow:
+		var(--ui-box-shadow-chips-default-x)
+		var(--ui-box-shadow-chips-default-y)
+		1px
+		var(--ui-box-shadow-chips-default-spread)
+		var(--ui-box-shadow-chips-default-color);
+
+	font-size: var(--im-font-size-md);
+	font-weight: 400;
+	line-height: var(--bx-im-ai-assistant-suggestion-height);
+}
+
+.bx-im-ai-assistant-suggestion.--overlay:hover {
+	background-color: var(--ui-color-chat-overall-overlay);
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-hover-default),
+		var(--ui-color-bg-state-hover-default)
+	);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bx-im-ai-assistant-suggestion.--gradient {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-pill);
+
+	background: linear-gradient(
+		251deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 14.06%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 48.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 98.35%
+	);
+	box-shadow: none;
+
+	font-size: var(--im-font-size-xs);
+	font-weight: 500;
+	line-height: 15px;
+}
+
+.bx-im-ai-assistant-suggestion.--gradient .bx-im-ai-assistant-suggestion__text {
+	display: inline-block;
+
+	background-image: linear-gradient(
+		251deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.bx-im-ai-assistant-suggestion.--gradient:hover {
+	filter: brightness(0.97);
+}

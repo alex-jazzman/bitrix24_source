@@ -4,7 +4,7 @@
 	justify-content: center;
 	box-sizing: border-box;
 	min-height: 62px;
-	min-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
 	background: var(--ui-color-bg-content-secondary);
 	border-bottom: 1px solid var(--ui-color-base-7);
 	cursor: pointer;

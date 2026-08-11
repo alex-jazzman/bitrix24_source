@@ -156,7 +156,10 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
-		if (!$this->canDeferOtp())
+		if (
+			!$this->canDeferOtp()
+			|| $this->isIntegrator()
+		)
 		{
 			$this->addError(new \Bitrix\Main\Error("No rights"));
 			return false;

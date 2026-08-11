@@ -9,7 +9,6 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { MessageContextCreator } = require('im/messenger/provider/services/lib/message-context-creator');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
@@ -614,6 +613,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 					this.closeDeletedChat({
 						dialogId: chatData.dialogId,
 						chatType: chatData.type,
+						parentChatId: chatData.parentChatId ?? 0,
 					});
 				}
 				// recent should be first deleting because he's find chat by ChatDataProvider by chatId
@@ -667,16 +667,16 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			shouldShowAlert = true,
 		})
 		{
-			if (this.store.getters['applicationModel/isDialogOpen'](dialogId))
-			{
-				MessengerEmitter.emit(EventType.dialog.external.delete, {
-					dialogId,
-					chatType,
-					parentChatId,
-					shouldSendDeleteAnalytics,
-					shouldShowAlert,
-				});
-			}
+			// Announce-only: data is already removed by sync's source-specific
+			// deleteFromSource. closeOnSync announces the nested-aware UI close and
+			// keeps the original "only for an open dialog" guard.
+			serviceLocator.get('chat-deletion-manager').closeOnSync({
+				dialogId,
+				chatType,
+				parentChatId,
+				shouldShowAlert,
+				shouldSendDeleteAnalytics,
+			});
 		}
 
 		/**

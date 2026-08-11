@@ -1,7 +1,8 @@
 .editor-chart-node-settings-form {
-	padding: 0 18px 10px 18px;
+	padding: 18px 18px 8px;
 	flex: 1;
 	overflow-y: auto;
+	background: var(--ui-color-bg-content-secondary);
 }
 
 .editor-chart-node-settings-form::-webkit-scrollbar,
@@ -9,49 +10,27 @@
 	background-color: transparent;
 }
 
-.editor-chart-node-settings-form__node-brief {
-	font-size: 14px;
-	font-weight: var( --ui-font-weight-medium);
-	line-height: 19px;
-	color: var(--ui-color-palette-black-solid);
-	margin: 8px 0;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.editor-chart-node-settings-form__node-brief_icon {
-	background-color: var(--ui-color-palette-blue-25);
-	border-radius: 7px;
-	padding: 5px;
-	width: 38px;
-	height: 38px;
-	box-sizing: border-box;
-	margin-right: 13px;
-}
-
-.editor-chart-node-settings-form__node-brief_controls {
-	margin-left: auto;
-}
-
-.editor-chart-node-settings-form__node-brief_controls > .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60);
-	--ui-icon-set__icon-size: 20px;
-	cursor: pointer;
-	margin-left: 3px;
-}
-
-.editor-chart-node-settings-form__section-delimeter {
-	height: 1px;
-	background: rgba(0, 0, 0, 0.06);
-}
-
 .editor-chart-node-settings-form__section {
-	margin-top: 12px;
+	padding: 12px 15px 21px 15px;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
+}
+
+.editor-chart-node-settings-form__section + .editor-chart-node-settings-form__section {
+	margin-top: 19px;
+}
+
+.editor-chart-node-settings-form__section.--rules .editor-chart-node-settings-form__section-header {
+	margin-bottom: 19px;
 }
 
 .editor-chart-node-settings-form__section.--data {
 	position: relative;
+}
+
+.node-settings-form__section-inspector-toggle-button {
+	margin-top: 20px;
 }
 
 .editor-chart-node-settings-form__label {
@@ -63,19 +42,24 @@
 }
 
 .editor-chart-node-settings-form__node-name-input.ui-ctl {
-	--ui-field-size: 38px;
+	--ui-field-size: 34px;
 	width: 100%;
 	border-radius: var(--ui-border-radius-sm);
 }
 
+.editor-chart-node-settings-form__node-name-input.ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
 .editor-chart-node-settings-form__node-description {
-	margin-top: 14px;
+	margin-top: 15px;
 }
 
 .editor-chart-node-settings-form__node-description_textarea.ui-ctl,
 .editor-chart-node-settings-form__node-description_textarea.ui-ctl > .ui-ctl-element {
 	min-height: 44px;
 	height: auto;
+	width: 100%;
 }
 
 .editor-chart-node-settings-form__node-description_textarea.ui-ctl > .ui-ctl-element {
@@ -84,18 +68,47 @@
 	resize: vertical;
 }
 
-.editor-chart-node-settings-form__node-description_text {
-	font-size: 12px;
-	line-height: 15px;
-	color: var(--ui-color-palette-gray-50);
-	margin-top: 6px;
+.editor-chart-node-settings-form__section-header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 17px;
+}
+
+.editor-chart-node-settings-form__section-header-main {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	margin-bottom: 5px;
 }
 
 .editor-chart-node-settings-form__section-title {
-	font-size: 15px;
-	line-height: 20px;
-	font-weight: var( --ui-font-weight-medium);
-	color: var( --ui-color-palette-gray-90);
-	margin-bottom: 12px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.editor-chart-node-settings-form__section-description {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	padding-left: 3px;
+}
+
+.editor-chart-node-settings-form__fields {
+	margin-left: 4px;
+}
+
+.editor-chart-node-settings-form__add-buttons {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 12px;
+}
+
+.editor-chart-node-settings-form__add-buttons .editor-chart-node-settings-add-item-button {
 	margin-top: 0;
 }

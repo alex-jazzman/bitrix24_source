@@ -375,7 +375,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			}
 
 			const messages = this.store.getters['messagesModel/getByChatId'](modelMessages[0].chatId);
-			const newLastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
+			const newLastMessage = Type.isArrayFilled(messages) ? messages[messages.length - 1] : null;
 			let newRecentItem = recentItem;
 			if (recentItem.uploadingState?.message?.id === deletedRecentMessage.id)
 			{
@@ -398,7 +398,22 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			}
 			else
 			{
-				return false;
+				await this.store.dispatch('dialoguesModel/update', {
+					dialogId,
+					fields: {
+						lastMessageId: 0,
+						lastId: 0,
+					},
+				}).catch((error) => Logger.error(
+					`${this.constructor.name}.fullDeleteMessage.dialoguesModel/update.catch:`,
+					error,
+				));
+
+				return this.store.dispatch('recentModel/delete', { id: dialogId })
+					.catch((error) => Logger.error(
+						`${this.constructor.name}.fullDeleteMessage.recentModel/delete.catch:`,
+						error,
+					));
 			}
 
 			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
@@ -534,7 +549,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			}
 
 			const messages = this.store.getters['messagesModel/getByChatId'](tempMessages[0].chatId);
-			const newLastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
+			const newLastMessage = Type.isArrayFilled(messages) ? messages[messages.length - 1] : null;
 			const newRecentItem = recentItem;
 			if (newLastMessage)
 			{

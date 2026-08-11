@@ -327,6 +327,11 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 
 		getEntityType(user)
 		{
+			if (user.isGuest)
+			{
+				return AvatarEntityType.GUEST;
+			}
+
 			if (user.isCollaber)
 			{
 				return AvatarEntityType.COLLAB;
@@ -428,7 +433,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 
 		renderDetails()
 		{
-			const { user, currentTheme } = this.props;
+			const { user, currentTheme, clickable } = this.props;
 
 			if (!user)
 			{
@@ -528,7 +533,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 							flexShrink: 2,
 						},
 					}),
-					IconView({
+					clickable && IconView({
 						icon: Icon.CHEVRON_TO_THE_RIGHT,
 						size: 20,
 						color: textColor,

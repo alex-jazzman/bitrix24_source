@@ -62,6 +62,11 @@ jn.define('im/messenger/lib/element/dialog/message/call/handler', (require, expo
 				return;
 			}
 
+			if (!CallManager.getInstance().hasActiveCallInDialog(dialog.dialogId))
+			{
+				return;
+			}
+
 			const configuration = new CallMessageConfiguration(message.id);
 			const callMessageType = configuration.getMessage().params.COMPONENT_PARAMS.messageType;
 			const analyticsElement = callMessageType === CallMessageType.START

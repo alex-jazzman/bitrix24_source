@@ -1,3 +1,22 @@
-.booking-booking__switch-view-button {
+.booking-booking__switch-view-container {
 	display: flex;
+	position: relative;
+}
+
+.booking-booking__switch-view-button.--locked {
+	opacity: 0.6;
+}
+
+.booking-booking__switch-view-button.--locked .ui-btn {
+	padding-right: 20px;
+}
+
+.booking-booking__switch-view-button .ui-icon-set {
+	position: absolute;
+	top: 50%;
+	right: 5px;
+	transform: translateY(-50%);
+	pointer-events: none;
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
 }

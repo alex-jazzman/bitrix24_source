@@ -380,6 +380,13 @@ class TypeDetail
 		this.startProgress();
 
 		this.type.setTitle(this.form.querySelector('[name="title"]').value);
+
+		const daysBeforeCloseInput = this.form.querySelector('[name="daysBeforeClose"]');
+		if (daysBeforeCloseInput)
+		{
+			this.type.setDaysBeforeClose(daysBeforeCloseInput.value);
+		}
+
 		TypeModel.getBooleanFieldNames().forEach((fieldName) => {
 			const fieldNode = this.getBooleanFieldNodeByName(fieldName);
 			if (fieldNode)
@@ -723,6 +730,7 @@ class TypeDetail
 		{
 			this.form.querySelector('[name="title"]').value = data.title || '';
 		}
+
 		TypeModel.getBooleanFieldNames().forEach((fieldName) => {
 			const node = this.getBooleanFieldNodeByName(fieldName);
 			if (node)
@@ -730,6 +738,16 @@ class TypeDetail
 				this.setBooleanFieldCheckedState(node, data[fieldName]);
 			}
 		});
+
+		const daysBeforeCloseInput = this.form.querySelector('[name="daysBeforeClose"]');
+		if (
+			daysBeforeCloseInput
+			&& !Type.isNil(data.daysBeforeClose)
+		)
+		{
+			daysBeforeCloseInput.value = String(data.daysBeforeClose);
+		}
+
 		this.disableLinkedUserFieldsIfNotAvailable();
 	}
 

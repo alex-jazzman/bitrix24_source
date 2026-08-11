@@ -1,5 +1,5 @@
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
 
 export type BaseActionType = {
 	grid: ?BX.Main.grid,
@@ -162,7 +162,9 @@ export class BaseAction
 	{
 		const maxDisplayCount = 5;
 		const userValues = Object.values(users);
-		const displayedNames = userValues.slice(0, maxDisplayCount);
+		const displayedNames = userValues.slice(0, maxDisplayCount).map((user) => {
+			return Type.isString(user) ? user : user.fullName;
+		});
 		const remainingCount = userValues.length - maxDisplayCount;
 		const namesString = displayedNames.join(', ');
 

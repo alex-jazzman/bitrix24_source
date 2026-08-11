@@ -32,6 +32,7 @@ $arActivityDescription = (new ActivityDescription(
 	->setExcluded(
 		(bool)\Bitrix\Main\Config\Option::get('bizproc', 'complex_activity_excluded', 1),
 	)
+	->setAdditionalResult(['FilterReturnPropertiesMap'])
 	->setComplexActivitySettings(
 		new Complex\Settings(
 			actionDictionary: new Complex\NodeActionDictionary(

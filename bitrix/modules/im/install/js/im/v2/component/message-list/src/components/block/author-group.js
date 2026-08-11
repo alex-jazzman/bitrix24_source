@@ -1,4 +1,5 @@
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { Core } from 'im.v2.application.core';
 import { ActionByRole, ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -82,6 +83,13 @@ export const AuthorGroup = {
 
 			const isBotChat = this.isUser && this.contextUser.type === UserType.bot;
 			if (isBotChat)
+			{
+				return false;
+			}
+
+			const isCurrentUserGuest = this.$store.getters['users/isGuest'](Core.getUserId());
+			const isGuest = this.$store.getters['users/isGuest'](this.authorDialogId);
+			if (isCurrentUserGuest && isGuest)
 			{
 				return false;
 			}

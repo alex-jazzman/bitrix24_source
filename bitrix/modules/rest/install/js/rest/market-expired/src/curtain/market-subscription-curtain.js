@@ -28,12 +28,12 @@ export class MarketSubscriptionCurtain extends MarketExpiredCurtain
 		if (this.options.type === PopupType.FINAL)
 		{
 			return this.options.isRenamedMarket
-				? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT', this.getCopilotReplacements())
+				? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT_MSGVER_1', this.getCopilotReplacements())
 				: Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_MARKET_PLUS');
 		}
 
 		return this.options.isRenamedMarket
-			? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT', {
+			? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT_MSGVER_1', {
 				...this.getCopilotReplacements(),
 				'#DAYS#': this.options.expireDays,
 			})

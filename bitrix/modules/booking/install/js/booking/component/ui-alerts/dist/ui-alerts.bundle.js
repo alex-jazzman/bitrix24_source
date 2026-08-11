@@ -77,18 +77,9 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	Object.defineProperty(exports, "AlertColor", {
-		enumerable: true,
-		get: function () { return ui_alerts.AlertColor; }
-	});
-	Object.defineProperty(exports, "AlertIcon", {
-		enumerable: true,
-		get: function () { return ui_alerts.AlertIcon; }
-	});
-	Object.defineProperty(exports, "AlertSize", {
-		enumerable: true,
-		get: function () { return ui_alerts.AlertSize; }
-	});
+	exports.AlertColor = ui_alerts.AlertColor;
+	exports.AlertIcon = ui_alerts.AlertIcon;
+	exports.AlertSize = ui_alerts.AlertSize;
 	exports.UiAlerts = UiAlerts;
 
 })(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX.UI);

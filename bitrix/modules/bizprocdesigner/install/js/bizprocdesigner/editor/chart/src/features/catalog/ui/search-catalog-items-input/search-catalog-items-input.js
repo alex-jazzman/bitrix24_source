@@ -1,14 +1,15 @@
-import './search-catalog-items-input.css';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import {
 	mapWritableState,
 	mapActions,
 } from 'ui.vue3.pinia';
+
 import {
-	HeaderSearchLayoutSetup,
 	TextInput,
 	useCatalogStore,
 } from '../../../../entities/catalog';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+
+import './search-catalog-items-input.css';
 
 // @vue/component
 export const SearchCatalogItemsInput = {
@@ -16,6 +17,12 @@ export const SearchCatalogItemsInput = {
 	components: {
 		TextInput,
 		BIcon,
+	},
+	props: {
+		focusable: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -86,6 +93,7 @@ export const SearchCatalogItemsInput = {
 		/>
 		<TextInput
 			:modelValue="searchText"
+			:focusable="isFocused && focusable"
 			@update:modelValue="onInputSearchText"
 			@focus="onFocus"
 			@blur="onBlur"

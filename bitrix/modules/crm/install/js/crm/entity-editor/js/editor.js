@@ -73,6 +73,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		BX.Crm.EntityEditor.superclass.initialize.apply(this, [id, settings]);
 
+		if (this._enableAjaxForm)
+		{
+			this.bindControllersToAjaxForms(this._ajaxForms);
+		}
+
 		this._modeChangeNotifier.notify([ this ]);
 
 		if(!BX.type.isElementNode(this._container))
@@ -205,27 +210,25 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	{
 		if (
 			BX.Type.isNull(this.hostColumnForQuickEditor)
-			|| !BX.Type.isElementNode(this.hostColumnForQuickEditor.quickFormSaveButton)
+			|| !this.hostColumnForQuickEditor.quickFormSaveButtonInstance
 		)
 		{
 			return;
 		}
 
-		this.hostColumnForQuickEditor.quickFormSaveButton.classList.remove('ui-btn-disabled');
-		this.hostColumnForQuickEditor.quickFormSaveButton.disabled = false;
+		this.hostColumnForQuickEditor.quickFormSaveButtonInstance.setDisabled(false);
 	};
 	BX.Crm.EntityEditor.prototype.disableQuickFormSaveButton = function()
 	{
 		if (
 			BX.Type.isNull(this.hostColumnForQuickEditor)
-			|| !BX.Type.isElementNode(this.hostColumnForQuickEditor.quickFormSaveButton)
+			|| !this.hostColumnForQuickEditor.quickFormSaveButtonInstance
 		)
 		{
 			return;
 		}
 
-		this.hostColumnForQuickEditor.quickFormSaveButton.classList.add('ui-btn-disabled');
-		this.hostColumnForQuickEditor.quickFormSaveButton.disabled = true;
+		this.hostColumnForQuickEditor.quickFormSaveButtonInstance.setDisabled(true);
 	};
 	BX.Crm.EntityEditor.prototype.enableSaveButton = function()
 	{
@@ -385,14 +388,34 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	BX.Crm.EntityEditor.prototype.initializeAjaxForm = function()
 	{
 		BX.Crm.EntityEditor.superclass.initializeAjaxForm.apply(this);
+
 		BX.addCustomEvent(this._ajaxForm, "onAfterSubmit", this._afterFormSubmitHandler);
 		BX.addCustomEvent(this._ajaxForm, "onSubmitCancel", this._cancelFormSubmitHandler);
+
+		this.bindControllersToAjaxForms(this._ajaxForms);
+	};
+	BX.Crm.EntityEditor.prototype.bindControllersToAjaxForms = function(ajaxForms)
+	{
+		if (!BX.Type.isArray(this._controllers) || this._controllers.length === 0)
+		{
+			return;
+		}
+
+		this._controllers.forEach(
+			function(controller) {
+				if (BX.Type.isFunction(controller.bindToAjaxForms))
+				{
+					controller.bindToAjaxForms(ajaxForms || this._ajaxForms || this._ajaxForm);
+				}
+			},
+			this,
+		);
 	};
 	BX.Crm.EntityEditor.prototype.getAjaxFormConfigData = function()
 	{
 		return {
-			'ACTION_ENTITY_TYPE': this.getEntityTypeForAction(),
-			'ACTION_ENTITY_ID': this._entityId
+			ACTION_ENTITY_TYPE: this.getEntityTypeForAction(),
+			ACTION_ENTITY_ID: this._entityId,
 		};
 	};
 	BX.Crm.EntityEditor.prototype.releaseAjaxForm = function()
@@ -778,29 +801,9 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		var wrapper = this._pageTitle.parentNode ? this._pageTitle.parentNode : this._pageTitle;
 		BX.addClass(wrapper, "crm-pagetitle");
 	};
-	BX.Crm.EntityEditor.prototype.adjustButtons = function()
-	{
-		//Move configuration menu button to last section if bottom panel is hidden.
-		if(this._config.isScopeToggleEnabled() && !this._enableBottomPanel && this._controls.length > 0)
-		{
-			var lastSection = this._controls[this._controls.length - 1];
-			var sectionControls = lastSection.getChildren();
-			var lastSectionControl = sectionControls[sectionControls.length - 1];
-			lastSectionControl.ensureButtonPanelWrapperCreated().appendChild(
-				BX.create(
-					"span",
-					{
-						props:
-							{
-								className: this._config.getScope() === BX.UI.EntityConfigScope.common
-									? "crm-entity-card-common" : "crm-entity-card-private"
-							},
-						events: { click: BX.delegate(this.onConfigMenuButtonClick, this) }
-					}
-				)
-			);
-		}
-	};
+	// Suppress parent behavior: when bottom panel is hidden (kanban quick-form / popup),
+	// the parent injects a config-icon into the last section. CRM quick-form has no config control.
+	BX.Crm.EntityEditor.prototype.adjustButtons = function() {};
 	BX.Crm.EntityEditor.prototype.addModeChangeListener = function(listener)
 	{
 		this._modeChangeNotifier.addListener(listener);

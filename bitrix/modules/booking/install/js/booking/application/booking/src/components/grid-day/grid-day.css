@@ -31,7 +31,7 @@
 	height: max-content;
 	overflow-x: auto;
 	overflow-y: hidden;
-	padding-right: 260px;
+	padding-right: var(--booking-sidebar-zone-width);
 }
 
 .booking-booking-grid-columns-ears {

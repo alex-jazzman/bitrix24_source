@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/messenger-header/src/controller', (require, e
 	/**
 	 * @class MessengerHeaderController
 	 *
-	 * Controls the header (title + right buttons) for a single navigation widget.
+	 * Controls the header (title + right/left buttons) for a single navigation widget.
 	 * Created by HeaderConfigurator.
 	 */
 	class MessengerHeaderController
@@ -37,6 +37,15 @@ jn.define('im/messenger/controller/messenger-header/src/controller', (require, e
 		redrawRightButtonsIfNeeded(tabId)
 		{
 			this.buttonsController.redrawRightButtonsIfNeeded(tabId);
+		}
+
+		/**
+		 * @param {string} tabId
+		 * @return {void}
+		 */
+		redrawLeftButtonsIfNeeded(tabId)
+		{
+			this.buttonsController.redrawLeftButtonsIfNeeded(tabId);
 		}
 	}
 

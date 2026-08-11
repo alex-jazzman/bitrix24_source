@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, ui_dialogs_messagebox, ui_buttons, ui_notification_center, crm_router, ui_infoHelper, main_sidepanel, crm_common, crm_dataStructures, main_core_events) {
+(function (exports, main_core, ui_dialogs_messagebox, ui_buttons, ui_notification, crm_router, ui_infoHelper, main_sidepanel, crm_common, crm_dataStructures, main_core_events) {
 	'use strict';
 
 	const Types = Object.freeze({
@@ -1013,5 +1013,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ReceiverRepository = ReceiverRepository;
 	exports.Types = Types;
 
-})(this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {}, BX, BX.UI.Dialogs, BX.UI, BX, BX.Crm, BX.UI, BX.SidePanel, BX, BX.Crm.DataStructures, BX.Event);
+})(this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {}, BX, BX.UI.Dialogs, BX.UI, BX.UI.Notification, BX.Crm, BX.UI, BX.SidePanel, BX, BX.Crm.DataStructures, BX.Event);
 //# sourceMappingURL=messagesender.bundle.js.map

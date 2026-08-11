@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'im:messenger/application/lib/channel-pull-watch-manager',
+		'im:messenger/application/lib/chat-deletion-manager',
 		'im:messenger/application/lib/counters-update-system',
 		'im:messenger/application/lib/dialog-manager',
 		'im:messenger/application/lib/event-handler/external',
@@ -45,5 +46,6 @@ return [
 		'im:messenger/provider/services/read',
 		'im:messenger/provider/services/sending',
 		'im:messenger/provider/services/sync',
+		'debug/prism',
 	],
 ];

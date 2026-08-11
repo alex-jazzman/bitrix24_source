@@ -986,6 +986,7 @@ foreach ($arFilter as $k => $v)
 		&& $k !== '__JOINS'
 		&& $k !== '__CONDITIONS'
 		&& !str_starts_with($k, 'UF_')
+		&& !str_contains($k, '_UF_')
 		&& preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1
 		&& $v !== false
 		&& str_ends_with($k, '_numsel') === false

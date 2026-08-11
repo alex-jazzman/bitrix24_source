@@ -340,6 +340,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class ContactsInput {
 		#input;
+		#dataTestId;
+		constructor(dataTestId = 'invite-page-contact-input') {
+			this.#dataTestId = dataTestId;
+		}
 		getInput() {
 			this.#input ??= new ui_system_input.Input({
 				placeholder: this.getPlaceholder(),
@@ -348,9 +352,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 				onBlur: this.#validateContactsInput.bind(this),
 				onInput: this.#onInput.bind(this),
 				onClear: this.#onClear.bind(this),
-				dataTestId: 'invite-page-contact-input'
+				dataTestId: this.#dataTestId
 			});
 			return this.#input;
+		}
+		render() {
+			const wrapper = this.getInput().render();
+			const container = wrapper.querySelector('.ui-system-input-container');
+			const containerId = `${this.#dataTestId}-container`;
+			container?.setAttribute('id', containerId);
+			container?.setAttribute('data-test-id', containerId);
+			return wrapper;
 		}
 		getValue() {
 			throw new Error('Not Implemented');
@@ -380,18 +392,81 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	class RowTextInput {
+		#input;
+		#placeholder;
+		#dataTestId;
+		#ariaLabel;
+		constructor(options) {
+			this.#placeholder = options.placeholder;
+			this.#dataTestId = options.dataTestId;
+			this.#ariaLabel = options.ariaLabel;
+		}
+		getInput() {
+			this.#input ??= new ui_system_input.Input({
+				placeholder: this.#placeholder,
+				design: ui_system_input.InputDesign.Grey,
+				dataTestId: this.#dataTestId
+			});
+			return this.#input;
+		}
+		render() {
+			const wrapper = this.getInput().render();
+			const container = wrapper.querySelector('.ui-system-input-container');
+			const input = wrapper.querySelector('input');
+			const containerId = `${this.#dataTestId}-container`;
+			container?.setAttribute('id', containerId);
+			container?.setAttribute('data-test-id', containerId);
+			input?.setAttribute('aria-label', this.#ariaLabel);
+			input?.setAttribute('autocomplete', 'off');
+			return wrapper;
+		}
+		getValue() {
+			return String(this.getInput().getValue() ?? '').trim();
+		}
+		clear() {
+			this.getInput().setValue('');
+		}
+	}
+
+	class NameInput extends RowTextInput {
+		constructor(dataTestId = 'invite-page-name-input') {
+			super({
+				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
+				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_ARIA_LABEL'),
+				dataTestId
+			});
+		}
+	}
+
+	class LastNameInput extends RowTextInput {
+		constructor(dataTestId = 'invite-page-last-name-input') {
+			super({
+				placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
+				ariaLabel: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_ARIA_LABEL'),
+				dataTestId
+			});
+		}
+	}
+
 	class InputRow {
 		#container;
 		#contactsInput;
+		#nameInput;
+		#lastNameInput;
 		#id;
 		constructor(options) {
 			this.#id = options.id;
 			this.#contactsInput = options.contactsInput;
+			this.#nameInput = options.nameInput;
+			this.#lastNameInput = options.lastNameInput;
 		}
 		render() {
 			this.#container ??= main_core.Tag.render`
 			<div data-test-id="invite-input-row${this.#id}" class="intranet-invite-form-row">
 				${this.#contactsInput.getInput().render()}
+				${this.#lastNameInput ? this.#lastNameInput.render() : ''}
+				${this.#nameInput ? this.#nameInput.render() : ''}
 			</div>
 		`;
 			return this.#container;
@@ -406,7 +481,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return !main_core.Type.isStringFilled(this.getContactsValue());
 		}
 		getValue() {
-			return this.#contactsInput.getValue();
+			const result = this.#contactsInput.getValue();
+			const lastName = this.#lastNameInput?.getValue();
+			const name = this.#nameInput?.getValue();
+			if (main_core.Type.isStringFilled(lastName)) {
+				result.LAST_NAME = lastName;
+			}
+			if (main_core.Type.isStringFilled(name)) {
+				result.NAME = name;
+			}
+			return result;
 		}
 		getContactsValue() {
 			return this.#contactsInput.getInput().getValue();
@@ -419,6 +503,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 		clear() {
 			this.#contactsInput.getInput().setValue('');
+			this.#lastNameInput?.clear();
+			this.#nameInput?.clear();
 		}
 	}
 
@@ -485,24 +571,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class InputRowFactory {
 		#inviteType;
+		#nextId = 0;
+		#withProfileNameFields;
 		constructor(params) {
 			this.#inviteType = params.inviteType ?? InviteType.ALL;
+			this.#withProfileNameFields = params.withProfileNameFields === true;
 		}
 		createInputsRow(id) {
-			return new InputRow({
-				id,
-				contactsInput: this.#createContactsInput()
-			});
+			const rowId = typeof id === 'number' ? id : this.#nextId;
+			this.#nextId = Math.max(this.#nextId, rowId + 1);
+			const options = {
+				id: rowId,
+				contactsInput: this.#createContactsInput(rowId)
+			};
+			if (this.#withProfileNameFields) {
+				options.lastNameInput = new LastNameInput(`invite-input-row${rowId}-last-name-input`);
+				options.nameInput = new NameInput(`invite-input-row${rowId}-name-input`);
+			}
+			return new InputRow(options);
 		}
-		#createContactsInput() {
+		#createContactsInput(rowId) {
 			switch (this.#inviteType) {
 				case InviteType.EMAIL:
-					return new EmailInput();
+					return new EmailInput(`invite-input-row${rowId}-email-input`);
 				case InviteType.PHONE:
-					return new PhoneInput();
+					return new PhoneInput(`invite-input-row${rowId}-phone-input`);
 				case InviteType.All:
 				default:
-					return new EmailOrPhoneInput();
+					return new EmailOrPhoneInput(`invite-input-row${rowId}-contact-input`);
 			}
 		}
 	}
@@ -1760,7 +1856,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		#getAllowRegisterWhiteList() {
 			if (!this.#allowRegisterWhiteList) {
 				this.#allowRegisterWhiteList = new ui_system_input.Input({
-					label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS'),
+					label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
 					placeholder: 'example.com',
 					design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled,
 					onInput: this.#onAllowRegisterWhiteListInput.bind(this),
@@ -2548,7 +2644,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				inviteType,
 				departmentControl,
 				departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
-				inputsFactory: this.createInputRowFactory(inviteType),
+				inputsFactory: this.createInputRowFactory(inviteType, true),
 				showMassInviteButton
 			});
 		}
@@ -2638,9 +2734,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 				addButtonCaption: withGroups ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP_MSGVER_1') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_MSGVER_1')
 			});
 		}
-		createInputRowFactory(inviteType) {
+		createInputRowFactory(inviteType, withProfileNameFields = false) {
 			return new InputRowFactory({
-				inviteType
+				inviteType,
+				withProfileNameFields
 			});
 		}
 		#getProjectId() {

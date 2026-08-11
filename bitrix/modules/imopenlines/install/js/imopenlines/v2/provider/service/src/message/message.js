@@ -6,13 +6,10 @@ import { RestMethod } from 'imopenlines.v2.const';
 
 export class MessageService
 {
-	addSession(dialogId: string, messageId: string | number): Promise<void>
+	addSession(dialogId: string, messageId: string | number): Promise
 	{
 		const queryParams = {
-			data: {
-				dialogId,
-				messageId,
-			},
+			data: { dialogId, messageId },
 		};
 
 		return runAction(RestMethod.linesV2MessageAddSession, queryParams)

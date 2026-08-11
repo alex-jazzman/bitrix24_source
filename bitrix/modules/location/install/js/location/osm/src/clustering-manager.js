@@ -858,7 +858,7 @@ export class ClusteringManager
 		const maxSize = this.#getRouteMaxClusterSize();
 		const pixelCoords = this.#buildPixelCoordsMap(filteredIds);
 
-		const groups = filteredIds.map((id) => [id]);
+		const groups = this.#groupCoLocatedRouteMarkers(filteredIds, maxRadius);
 		this.#mergeRouteGroups(groups, { firstId, lastId, maxRadius, maxSize, pixelCoords }, true);
 		this.#mergeRouteGroups(groups, { firstId, lastId, maxRadius, maxSize, pixelCoords }, false);
 
@@ -890,6 +890,42 @@ export class ClusteringManager
 		});
 
 		return pixelCoords;
+	}
+
+	// Pre-pass: collapses consecutive markers that would always cluster together — i.e. their
+	// pixel distance at the deepest allowed zoom (fitBoundsMaxZoom) is still within
+	// maxClusterRadius — into a single group, bypassing the maxSize cap used by
+	// #mergeRouteGroups. Such markers cannot be visually separated by zooming in (auto-tracking
+	// often emits multiple check-ins with near-identical GPS coordinates), so respecting
+	// maxSize would produce multiple stacked clusters at the same screen position.
+	#groupCoLocatedRouteMarkers(ids, maxRadius)
+	{
+		const { mapInstance, markerOriginalLatLngs, fitBoundsMaxZoom } = this.#host;
+		const groups = [];
+		let currentGroup = null;
+		let anchorPoint = null;
+
+		ids.forEach((id) => {
+			const ll = markerOriginalLatLngs.get(id);
+			const point = ll ? mapInstance.project(ll, fitBoundsMaxZoom) : null;
+			const isColocated = currentGroup
+				&& point
+				&& anchorPoint
+				&& anchorPoint.distanceTo(point) <= maxRadius;
+
+			if (isColocated)
+			{
+				currentGroup.push(id);
+
+				return;
+			}
+
+			currentGroup = [id];
+			anchorPoint = point;
+			groups.push(currentGroup);
+		});
+
+		return groups;
 	}
 
 	// Centroid-to-centroid pixel distance between two groups.

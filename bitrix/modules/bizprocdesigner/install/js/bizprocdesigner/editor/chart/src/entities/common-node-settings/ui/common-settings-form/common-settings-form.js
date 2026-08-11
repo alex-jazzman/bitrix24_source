@@ -2,33 +2,33 @@ import 'window';
 import { BitrixVue, markRaw } from 'ui.vue3';
 import { Dom, Tag, Type, Event, Loc, ajax, Text } from 'main.core';
 import { MenuManager, type MenuItem } from 'main.popup';
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { editorAPI } from '../../../../shared/api';
-import { IconButton } from '../../../../shared/ui';
-import { BLOCK_TYPES, ACTIVATION_STATUS } from '../../../../shared/constants';
 import { handleResponseError } from '../../../../shared/utils';
 import { usePropertyDialog } from '../../../../shared/composables';
-import { diagramStore, BlockHeader, BlockIcon } from '../../../../entities/blocks';
+import { diagramStore } from '../../../../entities/blocks';
 import { ValueSelector } from './value-selector';
 
-import type { Block, SettingsControls } from '../../../../shared/types';
+import { type Block, type SettingsControls } from '../../../../shared/types';
 
 import './style.css';
 
 const SCROLL_ZONE = 50;
 const SCROLL_SPEED = 10;
+const RULE_FORM_ID = 'form-settings-rule';
+const SETTINGS_FIELDS_IDS = new Set([
+	'row_title',
+	'row_activity_editor_comment',
+]);
 
 // @vue/component
 export const CommonNodeSettingsForm = {
 	name: 'CommonNodeSettingsForm',
 	components: {
 		BIcon,
-		BlockHeader,
-		BlockIcon,
-		IconButton,
 	},
 	props:
 	{
@@ -47,9 +47,24 @@ export const CommonNodeSettingsForm = {
 			type: Boolean,
 			default: false,
 		},
+		isSetupTemplateActivity:
+		{
+			type: Boolean,
+			required: true,
+		},
+		selectedTabId:
+		{
+			type: String,
+			required: true,
+		},
+		defaultTitle:
+		{
+			type: String,
+			default: '',
+		},
 	},
-	emits: ['showPreview'],
-	setup(): Object
+	emits: ['showPreview', 'close'],
+	setup(): { iconSet: typeof Outline, store: diagramStore }
 	{
 		const store: diagramStore = diagramStore();
 
@@ -66,6 +81,7 @@ export const CommonNodeSettingsForm = {
 		hasSettings: boolean,
 		currentBlock: Block,
 		settingsForm: HTMLElement | null,
+		settingsFormTitle: string,
 		nodeControls: Array<any> | null,
 		inputListeners: [],
 		shouldShowWithTransition: boolean,
@@ -83,13 +99,14 @@ export const CommonNodeSettingsForm = {
 		}
 	{
 		return {
-			isLoading: false,
+			isLoading: true,
 			isVisible: this.panelAlreadyOpened,
 			hasErrors: false,
 			isSubmitting: false,
 			hasSettings: false,
 			useDocumentContext: false,
 			settingsForm: null,
+			settingsFormTitle: '',
 			nodeControls: null,
 			inputListeners: [],
 			shouldShowWithTransition: false,
@@ -108,33 +125,9 @@ export const CommonNodeSettingsForm = {
 	},
 	computed:
 	{
-		icon(): string
+		isRuleHidden(): boolean
 		{
-			if (this.block.node?.type === BLOCK_TYPES.TOOL)
-			{
-				const mcpLettersKey = 'MCP_LETTERS';
-
-				return Outline[this.block.node.icon] === Outline.DATABASE
-					? this.block.node.icon
-					: mcpLettersKey;
-			}
-
-			return this.block.node?.icon;
-		},
-		colorIndex(): number
-		{
-			return this.block.node?.type === BLOCK_TYPES.TOOL ? 0 : this.block.node?.colorIndex;
-		},
-		isSubIcon(): boolean
-		{
-			return this.block.node?.type === BLOCK_TYPES.TOOL
-			&& this.block.node?.icon && Outline[this.block.node.icon] !== Outline.DATABASE;
-		},
-		activationIcon(): string
-		{
-			return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE
-				? this.iconSet.PAUSE_L
-				: this.iconSet.PLAY_L;
+			return this.selectedTabId === 'basic';
 		},
 	},
 	watch: {
@@ -155,6 +148,26 @@ export const CommonNodeSettingsForm = {
 				window.BPAShowSelector = this.showSelector;
 				window.HideShow = this.hideShow;
 				this.blurActiveElementIfNeeded();
+			});
+		},
+		isRuleHidden(isHidden: boolean): void
+		{
+			this.$nextTick(() => {
+				if (!this.$refs.ruleContainer)
+				{
+					return;
+				}
+
+				const ruleSection = this.$refs.ruleContainer.parentElement;
+				if (Dom.hasClass(ruleSection, '--empty'))
+				{
+					Dom.removeClass(ruleSection, '--empty');
+				}
+
+				if (!isHidden && this.$refs.ruleContainer.offsetHeight === 0)
+				{
+					Dom.addClass(ruleSection, '--empty');
+				}
 			});
 		},
 	},
@@ -234,9 +247,22 @@ export const CommonNodeSettingsForm = {
 			await this.$nextTick();
 			await this.renderControls();
 		},
-		extractFormData(form: HTMLElement): { [key: string]: any }
+		extractFormData(): { [key: string]: any }
 		{
-			const formData = ajax.prepareForm(form).data;
+			const settingsFormData = ajax.prepareForm(this.settingsForm).data;
+			const ruleFormData = this.ruleSettingsForm
+				? ajax.prepareForm(this.ruleSettingsForm).data
+				: {};
+			const title = Type.isStringFilled(settingsFormData.title)
+				? settingsFormData.title
+				: (this.defaultTitle || this.currentBlock?.activity?.Properties?.Title || '');
+			const formData = this.isSetupTemplateActivity
+				? { ...settingsFormData, title }
+				: {
+					...ruleFormData,
+					title,
+					activity_editor_comment: settingsFormData.activity_editor_comment ?? '',
+				};
 
 			formData.documentType = this.documentType;
 			formData.activityType = this.currentBlock.activity?.Type ?? '';
@@ -245,7 +271,7 @@ export const CommonNodeSettingsForm = {
 
 			return formData;
 		},
-		async submitForm(formData: { [key: string]: any }): Promise<void>
+		async submitForm(formData: { [key: string]: any }): Promise<boolean>
 		{
 			this.isSubmitting = true;
 
@@ -254,7 +280,7 @@ export const CommonNodeSettingsForm = {
 				this.validateForm(formData);
 				if (this.hasErrors)
 				{
-					return;
+					return false;
 				}
 
 				EventEmitter.emit('Bizproc.NodeSettings:nodeSettingsSaving', { formData });
@@ -265,7 +291,7 @@ export const CommonNodeSettingsForm = {
 				const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [], Name: 'Template' }];
 				compatibleTemplate[0].Children.push(
 					this.currentBlock.activity,
-					...this.store.getAllBlockAncestors(this.currentBlock).map((b) => b.activity),
+					...this.store.getAllBlockAncestors(this.currentBlock).map(({ block }) => block.activity),
 				);
 
 				preparedSettingsData.arWorkflowTemplate = JSON.stringify(compatibleTemplate);
@@ -281,10 +307,13 @@ export const CommonNodeSettingsForm = {
 						this.store.updateBlockId(this.currentBlock.id, preparedSettingsData.activity_id);
 					}
 
-					this.store.publicDraft();
-
+					await this.store.publicDraft();
 					this.handleFormCancel();
+
+					return true;
 				}
+
+				return false;
 			}
 			catch (error)
 			{
@@ -292,6 +321,8 @@ export const CommonNodeSettingsForm = {
 				{
 					MessageBox.alert(error.errors[0].message);
 				}
+
+				return false;
 			}
 			finally
 			{
@@ -300,17 +331,12 @@ export const CommonNodeSettingsForm = {
 		},
 		handleFormSave(): void
 		{
-			if (this.isSubmitting)
+			if (this.isSubmitting || !this.settingsForm)
 			{
 				return;
 			}
 
-			if (!this.settingsForm)
-			{
-				return;
-			}
-
-			const formData = this.extractFormData(this.settingsForm);
+			const formData = this.extractFormData();
 			this.submitForm(formData);
 		},
 		handleFormCancel(): void
@@ -372,7 +398,6 @@ export const CommonNodeSettingsForm = {
 		{
 			const selector = new ValueSelector(this.store, this.currentBlock);
 			const targetElement = document.getElementById(id);
-
 			selector
 				.show(targetElement)
 				.then((value) => {
@@ -443,19 +468,15 @@ export const CommonNodeSettingsForm = {
 				</div>
 			`;
 		},
-		async renderControls(): void
+		async getNodeSettingsControls(requestId: number): Promise<{...}>
 		{
-			const requestId = ++this.lastRenderRequestId;
 			window.BPAShowSelector = this.showSelector;
 			window.HideShow = this.hideShow;
 
-			this.isLoading = true;
-			const id = this.currentBlock.activity.Name ?? '';
-			const activity = this.currentBlock.activity.Type ?? '';
 			const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [], Name: 'Template' }];
 			compatibleTemplate[0].Children.push(
 				this.currentBlock?.activity,
-				...this.store.getAllBlockAncestors(this.currentBlock).map((b) => b.activity),
+				...this.store.getAllBlockAncestors(this.currentBlock).map(({ block }) => block.activity),
 			);
 			const workflowParameters = this.store.template.PARAMETERS;
 			const workflowVariables = this.store.template.VARIABLES;
@@ -471,32 +492,9 @@ export const CommonNodeSettingsForm = {
 				window.arWorkflowConstants = workflowConstants;
 			}
 
-			const { createFormData } = usePropertyDialog();
-			const formData = createFormData({
-				id,
-				documentType: this.documentType,
-				activity,
-				workflow: {
-					parameters: workflowParameters,
-					variables: workflowVariables,
-					template: compatibleTemplate,
-					constants: workflowConstants,
-				},
-			});
-
-			this.isLoading = true;
-
-			if (this.$refs.contentContainer)
-			{
-				this.$refs.contentContainer.innerHTML = '';
-			}
-			this.hasErrors = false;
-			this.nodeControls = [];
-
-			let settingControls = null;
 			try
 			{
-				settingControls = await editorAPI.getNodeSettingsControls({
+				const settingsControls = await editorAPI.getNodeSettingsControls({
 					documentType: this.documentType,
 					activity: this.currentBlock?.activity,
 					workflow: {
@@ -508,31 +506,128 @@ export const CommonNodeSettingsForm = {
 				});
 				if (this.isRenderCancelled(requestId))
 				{
-					return;
+					return null;
 				}
+
+				return settingsControls;
 			}
 			catch (error)
 			{
 				if (this.isRenderCancelled(requestId))
 				{
-					return;
+					return null;
 				}
+
 				handleResponseError(error);
 
+				return null;
+			}
+		},
+		createFormData(): FormData
+		{
+			const id = this.currentBlock.activity.Name ?? '';
+			const activity = this.currentBlock.activity.Type ?? '';
+			const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [], Name: 'Template' }];
+			compatibleTemplate[0].Children.push(
+				this.currentBlock?.activity,
+				...this.store.getAllBlockAncestors(this.currentBlock).map(({ block }) => block.activity),
+			);
+			const { createFormData } = usePropertyDialog();
+
+			return createFormData({
+				id,
+				documentType: this.documentType,
+				activity,
+				workflow: {
+					parameters: this.store.template.PARAMETERS,
+					variables: this.store.template.VARIABLES,
+					template: compatibleTemplate,
+					constants: this.store.template.CONSTANTS,
+				},
+			});
+		},
+		clearDefaultTitleInput(form: ?HTMLElement): void
+		{
+			if (!form || !Type.isStringFilled(this.defaultTitle))
+			{
+				return;
+			}
+			const titleInput = form.querySelector('[name="title"]');
+			if (titleInput && titleInput.value === this.defaultTitle)
+			{
+				titleInput.value = '';
+			}
+		},
+		applyFieldPlaceholders(form: ?HTMLElement): void
+		{
+			if (!form)
+			{
 				return;
 			}
 
+			const titleInput = form.querySelector('[name="title"]');
+			if (titleInput)
+			{
+				titleInput.placeholder = this.loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER_MSGVER_1');
+			}
+
+			const commentInput = form.querySelector('[name="activity_editor_comment"]');
+			if (commentInput)
+			{
+				commentInput.placeholder = this.loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_PLACEHOLDER_MSGVER_1');
+			}
+		},
+		async renderControls(): Promise<void>
+		{
+			const requestId = ++this.lastRenderRequestId;
+			this.isLoading = true;
+			if (this.$refs.contentContainer)
+			{
+				this.$refs.contentContainer.innerHTML = '';
+			}
+
+			if (this.$refs.ruleContainer)
+			{
+				this.$refs.ruleContainer.innerHTML = '';
+			}
+
+			this.hasErrors = false;
+			this.nodeControls = [];
+
+			const settingControls = await this.getNodeSettingsControls(requestId);
 			this.useDocumentContext = Boolean(settingControls?.useDocumentContext);
 			if (settingControls && Type.isArray(settingControls.controls))
 			{
+				this.settingsForm = Tag.render`<form id="form-settings" class="node-settings-form__general-form"></form>`;
+				Dom.append(this.settingsForm, this.$refs.contentContainer);
+				this.ruleSettingsForm = Tag.render`<form></form>`;
+				Dom.append(this.ruleSettingsForm, this.$refs.ruleContainer);
 				await this.renderNodeControls(settingControls, requestId);
 			}
 			else
 			{
-				await this.renderPropertyDialog(formData);
+				this.settingsForm = await this.renderPropertyDialog(requestId);
+				if (this.settingsForm)
+				{
+					Dom.append(this.settingsForm, this.$refs.contentContainer);
+				}
+
+				this.isLoading = false;
+				this.hasSettings = Boolean(this.settingsForm);
 			}
+
+			if (!this.hasSettings || this.isSetupTemplateActivity)
+			{
+				return;
+			}
+
+			this.settingsFormData = ajax.prepareForm(this.settingsForm).data;
+			this.settingsFormTitle = this.settingsFormData.title ?? '';
+			this.ruleSettingsForm.id = RULE_FORM_ID;
+			Dom.addClass(this.ruleSettingsForm, RULE_FORM_ID);
 		},
-		renderNodeControls(settingControls: SettingsControls, requestId: number): void
+		// eslint-disable-next-line max-lines-per-function
+		renderNodeControls(settingControls: SettingsControls, requestId: number): Promise<void>
 		{
 			this.nodeControls = Type.isArray(settingControls.controls) ? settingControls.controls : [];
 			const brokenLinks = Type.isPlainObject(settingControls.brokenLinks)
@@ -558,6 +653,7 @@ export const CommonNodeSettingsForm = {
 				'designer',
 			);
 
+			// eslint-disable-next-line max-lines-per-function
 			return new Promise((resolve) => {
 				if (this.isRenderCancelled(requestId))
 				{
@@ -566,13 +662,10 @@ export const CommonNodeSettingsForm = {
 					return;
 				}
 
-				const form = Tag.render`<form id="form-settings"></form>`;
-				this.settingsForm = form;
-
 				if (Type.isObject(brokenLinks) && Object.keys(brokenLinks).length > 0)
 				{
 					const brokenLinksAlert = this.renderBrokenLinksAlert(brokenLinks);
-					Dom.append(brokenLinksAlert, form);
+					Dom.append(brokenLinksAlert, this.settingsForm);
 				}
 
 				const activityTypeName = this.currentBlock.activity?.Type ?? '';
@@ -590,6 +683,8 @@ export const CommonNodeSettingsForm = {
 						: null;
 				}
 
+				const settingsFragment = new DocumentFragment();
+				const rulesFragment = new DocumentFragment();
 				this.nodeControls.forEach((field) => {
 					let control = renderedControls[field.controlId];
 
@@ -616,7 +711,7 @@ export const CommonNodeSettingsForm = {
 										'data-component-key': componentKey,
 									},
 								});
-								this.dynamicComponents[componentKey] = rendererOrComponent;
+								this.dynamicComponents[componentKey] = { rendererOrComponent, wrapper };
 								this.customFieldsData[componentKey] = field;
 
 								control = wrapper;
@@ -639,10 +734,19 @@ export const CommonNodeSettingsForm = {
 							this.inputListeners.push(input);
 						}
 
-						Dom.append(row, form);
+						if (SETTINGS_FIELDS_IDS.has(row.id))
+						{
+							Dom.append(row, settingsFragment);
+						}
+						else
+						{
+							Dom.append(row, rulesFragment);
+						}
 					}
 				});
 
+				Dom.append(settingsFragment, this.settingsForm);
+				Dom.append(rulesFragment, this.ruleSettingsForm);
 				if (this.isRenderCancelled(requestId))
 				{
 					resolve();
@@ -650,8 +754,6 @@ export const CommonNodeSettingsForm = {
 					return;
 				}
 
-				this.$refs.contentContainer.innerHTML = '';
-				Dom.append(form, this.$refs.contentContainer);
 				this.mountDynamicComponents();
 
 				this.cancelPendingCollectionRender();
@@ -671,16 +773,23 @@ export const CommonNodeSettingsForm = {
 						if (instance && Type.isFunction(instance.afterFormRender))
 						{
 							const activityFields = this.nodeControls.reduce((acc, field) => {
+								if (field.controlId === 'title' || field.controlId === 'activity_editor_comment')
+								{
+									return acc;
+								}
+
 								acc[field.fieldName] = field;
 
 								return acc;
 							}, {});
-							await instance.afterFormRender(form, activityFields);
+							await instance.afterFormRender(this.ruleSettingsForm, activityFields);
 						}
 						EventEmitter.emit('BX.Bizproc.CommonNodeSettings:onBlocksReady', {
 							blocks: this.store.blocks,
 						});
 
+						this.applyFieldPlaceholders(this.settingsForm);
+						this.clearDefaultTitleInput(this.settingsForm);
 						this.hasSettings = true;
 					}
 					catch (error)
@@ -734,25 +843,66 @@ export const CommonNodeSettingsForm = {
 
 			return alert.root;
 		},
-		async renderPropertyDialog(formData: FormData): Promise<void>
+		createSettingsForm(form: HTMLElement, notRuleNodes: Array<HTMLElement>): HTMLElement
+		{
+			const settingsForm = form.cloneNode(true);
+			const table = settingsForm.querySelector('.adm-detail-content-table');
+			table.innerHTML = '';
+			const tBody = Tag.render`<tbody></tbody>`;
+			Dom.append(tBody, table);
+			notRuleNodes.forEach((node) => Dom.append(node, tBody));
+
+			return settingsForm;
+		},
+		async renderPropertyDialog(requestId: string): Promise<HTMLElement | null>
 		{
 			const { renderPropertyDialog } = usePropertyDialog();
-			const form = await renderPropertyDialog(this.$refs.contentContainer, formData);
-			if (!form)
+			const formData = this.createFormData();
+			const form = await renderPropertyDialog(this.$refs.ruleContainer, formData);
+			if (this.isRenderCancelled(requestId))
 			{
-				this.isLoading = false;
-				this.hasSettings = false;
+				if (form)
+				{
+					Dom.remove(form);
+				}
 
-				return;
+				return null;
 			}
 
-			this.settingsForm = form;
-			this.hasSettings = true;
-			this.isLoading = false;
+			if (!form)
+			{
+				return null;
+			}
+
+			this.applyFieldPlaceholders(form);
+
+			if (this.isSetupTemplateActivity)
+			{
+				this.clearDefaultTitleInput(form);
+
+				return form;
+			}
+
+			const settingsContainer = form.querySelector('.adm-detail-content-table > tbody:has(#bpastitle)');
+			const notRuleNodes = settingsContainer.querySelectorAll('#id_activity_comment, :scope > tr:has(#bpastitle)');
+			notRuleNodes.forEach((node) => Dom.remove(node));
+			this.ruleSettingsForm = form;
+
+			const settingsForm = this.createSettingsForm(form, notRuleNodes);
+			settingsForm.name = `${settingsForm.name}_settings`;
+			const brokenLinksAlert = this.ruleSettingsForm.querySelector('#bp_act_set_broken_link');
+			if (brokenLinksAlert)
+			{
+				Dom.remove(brokenLinksAlert);
+			}
+
+			this.clearDefaultTitleInput(settingsForm);
+
+			return settingsForm;
 		},
 		getDocuments(): [{ id: string, text: string }]
 		{
-			return this.store.getAllBlockAncestors(this.currentBlock).reduce((acc, block: Block) => {
+			return this.store.getAllBlockAncestors(this.currentBlock).reduce((acc, { block }: Block) => {
 				if (Type.isArrayFilled(block.activity.ReturnProperties))
 				{
 					block.activity.ReturnProperties.forEach((property) => {
@@ -821,75 +971,6 @@ export const CommonNodeSettingsForm = {
 			if (this.hasErrors)
 			{
 				Dom.removeClass(event.target, 'has-error');
-			}
-		},
-
-		isUrl(value: string): boolean
-		{
-			if (!value || !Type.isString(value))
-			{
-				return false;
-			}
-
-			try
-			{
-				const u = new URL(value);
-
-				return u.protocol === 'https:';
-			}
-			catch
-			{
-				return false;
-			}
-		},
-
-		getSafeUrl(url: string): string
-		{
-			if (!url || !Type.isString(url))
-			{
-				return '';
-			}
-
-			try
-			{
-				const u = new URL(url.trim());
-				if (u.protocol !== 'https:')
-				{
-					return '';
-				}
-
-				return u.href;
-			}
-			catch
-			{
-				return '';
-			}
-		},
-
-		getBackgroundImage(url: string): Object
-		{
-			const safeUrl = this.getSafeUrl(url);
-			if (!safeUrl)
-			{
-				return {};
-			}
-
-			return {
-				'background-image': `url('${safeUrl}')`,
-			};
-		},
-
-		toggleActivation(event: MouseEvent): void
-		{
-			this.store.toggleBlockActivation(this.currentBlock.id, true);
-		},
-
-		syncActivatedField(): void
-		{
-			const activatedInput = document.getElementsByName('activated')[0];
-			if (activatedInput)
-			{
-				activatedInput.value = activatedInput.value === 'Y' ? 'N' : 'Y';
 			}
 		},
 		handleScroll(): void
@@ -972,8 +1053,7 @@ export const CommonNodeSettingsForm = {
 		mountDynamicComponents(): void
 		{
 			Object.entries(this.dynamicComponents).forEach(([componentKey, component]) => {
-				const escapedKey = CSS.escape(componentKey);
-				const wrapper = this.$el.querySelector(`[data-component-key="${escapedKey}"]`);
+				const wrapper = component.wrapper;
 				if (!wrapper || wrapper.children.length > 0)
 				{
 					return;
@@ -982,7 +1062,7 @@ export const CommonNodeSettingsForm = {
 				const field = this.customFieldsData[componentKey];
 				if (field)
 				{
-					const app = BitrixVue.createApp(component, { field });
+					const app = BitrixVue.createApp(component.rendererOrComponent, { field });
 					app.mount(wrapper);
 					this.childVueApps.push(app);
 				}
@@ -1064,8 +1144,7 @@ export const CommonNodeSettingsForm = {
 
 			if (onSelect && value)
 			{
-				onSelect.call(
-					null,
+				onSelect(
 					value,
 					selector.selectedItem?.getCustomData().get('property'),
 				);
@@ -1074,45 +1153,23 @@ export const CommonNodeSettingsForm = {
 	},
 	template: `
 		<transition name="slide-fade">
-			<div 
+			<div
 				v-if="isVisible"
-				class="node-settings-panel"
-				:class="{ '--loading': isLoading }"
+				class="node-settings-panel --common"
+				:class="{ '--loading': isLoading, '--setup-template-activity': isSetupTemplateActivity }"
 				ref="settingsPanel"
 			>
 				<div class="node-settings-header">
-					<h3 class="node-settings-title">{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE')}}</h3>
+					<h3 class="node-settings-title">
+						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE')}}
+					</h3>
 					<span class="node-settings-title-close-icon" @click="handleFormCancel"></span>
 				</div>
-				<div class="node-settings-form__node-brief">
-					<BlockHeader :block="block" :subIconExternal="isUrl(block.node?.icon)">
-						<template #icon>
-							<BlockIcon
-								:iconName="icon"
-								:iconColorIndex="colorIndex"
-							/>
-						</template>
-						<template #subIcon
-								  v-if="isSubIcon">
-							<div
-								v-if="isUrl(block.node.icon)"
-								:style="getBackgroundImage(block.node.icon)"
-								class="ui-selector-item-avatar"
-							/>
-							<BlockIcon
-								v-else
-								:iconName="block.node.icon"
-								:iconColorIndex="7"
-								:iconSize="24"
-							/>
-						</template>
-					</BlockHeader>
-					<IconButton
-						:icon-name="activationIcon"
-						@click="toggleActivation"
-					/>
+				<slot name="header"/>
+				<div class="node-settings-form__controls">
+					<slot name="tabs" />
+					<slot name="data-inspector-toggle" />
 				</div>
-				<div class="node-settings-form__section-delimeter"></div>
 				<Transition
 					:css="shouldShowWithTransition"
 					name="node-settings-transition"
@@ -1122,7 +1179,57 @@ export const CommonNodeSettingsForm = {
 							<div class="node-settings-content_empty-block"></div>
 							<p>{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TEXT')}}</p>
 						</div>
-						<div ref="contentContainer"></div>
+						<div
+							class="node-settings-form__section"
+							:hidden="!isRuleHidden"
+						>
+							<div class="node-settings-form__section-header">
+								<div class="node-settings-form__section-header-main">
+									<BIcon :name="iconSet.EDIT_M" :size="30"/>
+									<span class="node-settings-form__section-title">
+										{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_TITLE') }}
+									</span>
+								</div>
+								<span class="node-settings-form__section-description">
+									{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_DESCRIPTION') }}
+								</span>
+							</div>
+							<div ref="contentContainer"></div>
+						</div>
+						<div
+							v-if="isRuleHidden"
+							class="node-settings-form__section --rules"
+						>
+							<div class="node-settings-form__section-header">
+								<div class="node-settings-form__section-header-main">
+									<BIcon :name="iconSet.DATA_READING" :size="28"/>
+									<span class="node-settings-form__section-title">
+										{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE') }}
+									</span>
+								</div>
+								<span class="node-settings-form__section-description">
+									{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_DESCRIPTION_MSGVER_1') }}
+								</span>
+							</div>
+							<slot
+								name="common-node-settings-preview"
+								:title="settingsFormTitle"
+							/>
+						</div>
+						<div
+							class="node-settings-content__rule"
+							:hidden="isRuleHidden"
+						>
+							<div class="node-settings-content__rule_top">
+								<span class="node-settings-content__rule_top-operator">
+									{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION') }}
+								</span>
+								<span class="node-settings-content__rule_top-description">
+									{{ loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_DESCRIPTION') }}
+								</span>
+							</div>
+							<div ref="ruleContainer"></div>
+						</div>
 					</div>
 				</Transition>
 				<div
@@ -1130,14 +1237,15 @@ export const CommonNodeSettingsForm = {
 					class="node-settings-footer"
 				>
 					<template v-if="hasSettings">
-						<button 
+						<button
 							class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps"
+							:class="{ 'ui-btn-wait': isSubmitting }"
 							@click="handleFormSave"
 						>
 							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
 						</button>
 						<button
-							class="ui-btn --air ui-btn-lg --style-outline ui-btn-no-caps"
+							class="ui-btn ui-btn-lg ui-btn-link ui-btn-no-caps"
 							@click="handleFormCancel"
 						>
 							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}

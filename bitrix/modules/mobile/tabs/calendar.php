@@ -32,7 +32,17 @@ class Calendar implements Tabable
 			return false;
 		}
 
-		return !$this->context->extranet || $this->context->isCollaber;
+		if ($this->context->isCollaber)
+		{
+			return true;
+		}
+
+		if ($this->context->extranet || $this->context->isGuest)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	public function getData(): ?array

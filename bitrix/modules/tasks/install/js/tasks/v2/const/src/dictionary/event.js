@@ -16,6 +16,7 @@ export const EventName = Object.freeze({
 	TemplateAdded: 'tasks:templateAdded',
 	TemplateBeforeUpdate: 'tasks:templateBeforeUpdate',
 	TemplateDeleted: 'tasks:templateDeleted',
+	ReplicateTemplateAdded: 'tasks:replicateTemplateAdded',
 	TagDeleted: 'tasks:card:tagDeleted',
 	UserMenuExternalItems: 'tasks:card:userMenuExternalItems',
 	OpenSliderCard: 'tasks:card:openSliderCard',
@@ -45,6 +46,9 @@ export const EventName = Object.freeze({
 	OpenTemplateHistory: 'tasks:template:openHistory',
 	UpdateReplicateParams: 'tasks:template:update-replicate-params',
 	ChatActionBeforeExecute: 'tasks:chat-action:before-execute',
+	NotifyTaskTemplateUpdated: 'tasks:full-card:task-template-updated',
+	NotifyTemplateCreated: 'tasks:full-card:template-created',
+	ToggleReplicate: 'tasks:template:toggle-replicate',
 	OpenTimeTrackingPopup: 'task:card:open-time-tracking-popup',
 	CloseAllBottomSheets: 'tasks:card:close-all-bottom-sheets',
 });

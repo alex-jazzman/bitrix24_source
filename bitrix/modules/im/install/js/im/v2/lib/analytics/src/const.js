@@ -93,6 +93,10 @@ export const AnalyticsEvent = Object.freeze({
 	addUser: 'add_mentioned_user',
 	openUnreadMode: 'show_unread',
 	readAllChats: 'read_all',
+	openMiniChat: 'open_mini_chat',
+	bitrixGptAgentPromoView: 'banner_view',
+	bitrixGptAgentPromoButtonClick: 'button_click',
+	bitrixGptAgentPromoClose: 'banner_close',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -123,6 +127,7 @@ export const AnalyticsCategory = Object.freeze({
 	audioMessage: 'audiomessage',
 	videoMessage: 'videomessage',
 	notificationOperations: 'notif_ops',
+	banners: 'banners',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -148,6 +153,7 @@ export const AnalyticsType = Object.freeze({
 	formatLink: 'link',
 	formatCode: 'code',
 	tasks: 'tasks',
+	ahaSpringRelease2026: 'ahaspringrelease2026',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -175,6 +181,7 @@ export const AnalyticsSection = Object.freeze({
 	taskCommentsLayout: 'tasksTask_tab',
 	notificationLayout: 'notification_tab',
 	mentionPopup: 'mention_popup',
+	im: 'im',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -191,6 +198,9 @@ export const AnalyticsSubSection = Object.freeze({
 	recentSearch: 'recent_search',
 	chatHeader: 'chat_header',
 	message: 'message',
+	sharedLink: 'link',
+	sharedLinkMenu: 'link_context_menu',
+	sharedLinkCompactMenu: 'link_menu',
 });
 
 export const AnalyticsElement = Object.freeze({

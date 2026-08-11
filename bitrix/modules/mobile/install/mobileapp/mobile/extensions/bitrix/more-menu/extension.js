@@ -31,6 +31,23 @@ jn.define('more-menu', (require, exports, module) => {
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
+	const dispatchManualCheckIns = (checkIns) => {
+		if (!Type.isArrayFilled(checkIns))
+		{
+			return;
+		}
+
+		try
+		{
+			const { upsertCheckIns } = require('stafftrack/statemanager/redux/slices/check-in');
+			dispatch(upsertCheckIns(checkIns));
+		}
+		catch (error)
+		{
+			console.warn('stafftrack check-in slice unavailable', error);
+		}
+	};
+
 	const { PropTypes } = require('utils/validation');
 
 	const { createTestIdGenerator } = require('utils/test');
@@ -273,7 +290,6 @@ jn.define('more-menu', (require, exports, module) => {
 				currentTheme,
 				restrictions,
 				isNewCheckInEnabled,
-				checkInAmount,
 			} = this.state;
 
 			if (loading && menuList.length === 0)
@@ -325,12 +341,12 @@ jn.define('more-menu', (require, exports, module) => {
 						},
 						new MoreMenuHeader({
 							testId: this.getTestId('header'),
+							canOpenProfile: restrictions?.canOpenProfile ?? true,
 							canEditProfile: restrictions?.canEditProfile,
 							canUseTimeMan: restrictions?.canUseTimeMan,
 							canUseCheckIn: restrictions?.canUseCheckIn,
 							canManageWorkTimeOnMobile: restrictions?.canManageWorkTimeOnMobile,
 							isNewCheckInEnabled,
-							checkInAmount,
 							currentShift,
 							workTime,
 							userId: user?.id,
@@ -338,7 +354,7 @@ jn.define('more-menu', (require, exports, module) => {
 						}),
 						this.renderCompanyPanel(),
 						this.renderToolsPanel(),
-						this.renderSettingsPanel(restrictions?.canUseSecuritySettings),
+						this.renderSettingsPanel(),
 					),
 				),
 			);
@@ -401,9 +417,15 @@ jn.define('more-menu', (require, exports, module) => {
 			return menuList.some((section) => section?.items.length > 0);
 		}
 
-		renderSettingsPanel(canUseSecuritySettings)
+		renderSettingsPanel()
 		{
-			const { counters } = this.state;
+			const { counters, restrictions = {} } = this.state;
+			const {
+				canUseSecuritySettings,
+				canUseTabPresetSettings,
+				canUseNotificationSettings,
+				canGoToWeb,
+			} = restrictions;
 
 			return MoreMenuPanel(
 				{
@@ -413,6 +435,9 @@ jn.define('more-menu', (require, exports, module) => {
 						new SettingsList({
 							testId: this.getTestId('settings-list'),
 							canUseSecuritySettings,
+							canUseTabPresetSettings,
+							canUseNotificationSettings,
+							canGoToWeb,
 							counters,
 						}),
 					],
@@ -478,11 +503,11 @@ jn.define('more-menu', (require, exports, module) => {
 								const {
 									currentShift,
 									workTime,
-									checkInAmount,
 									...cachedState
 								} = state;
 
 								this.processUsersDebaunced(cachedData?.data);
+								dispatchManualCheckIns(cachedData?.data?.manualCheckIns);
 								this.setState({ ...cachedState, counters: {} });
 							})
 							.setHandler((response) => {
@@ -510,6 +535,7 @@ jn.define('more-menu', (require, exports, module) => {
 								const counters = getMenuCounters(canInvite);
 
 								this.processUsersDebaunced(response?.data);
+								dispatchManualCheckIns(response?.data?.manualCheckIns);
 
 								this.setState({ ...state, counters }, () => {
 									this.updateMoreBadge();
@@ -559,7 +585,6 @@ jn.define('more-menu', (require, exports, module) => {
 				currentShift: data.currentShift || null,
 				workTime: data.workTime || null,
 				isNewCheckInEnabled: data.isNewCheckInEnabled || false,
-				checkInAmount: data.checkInAmount || null,
 				company: data.company || null,
 				helpdeskUrl: data.helpdeskUrl || null,
 				supportBotId: data.supportBotId || 0,

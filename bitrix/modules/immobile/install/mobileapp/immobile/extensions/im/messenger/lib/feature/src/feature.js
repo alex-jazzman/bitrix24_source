@@ -512,6 +512,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().isAiAssistantRegenerateAvailable;
 		}
 
+		static get isCopilotDraftChatAvailable()
+		{
+			return MessengerParams.getImFeatures().isCopilotDraftChatAvailable;
+		}
+
 		static get isCopilotMCPButtonAvailable()
 		{
 			return MessengerParams.getImFeatures().aiAssistantMcpSelectorAvailable;
@@ -535,6 +540,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return this.isAssistantButtonsSupported
 				&& Feature.nativeFeature?.isFeatureEnabled('chat_mention_actions')
 				&& MessengerParams.isMarketAvailable();
+		}
+
+		static get isVibecodeButtonAvailable()
+		{
+			return MessengerParams.getVibecodeButtonAvailable();
 		}
 
 		static get isNativeStickerMessageSupported()

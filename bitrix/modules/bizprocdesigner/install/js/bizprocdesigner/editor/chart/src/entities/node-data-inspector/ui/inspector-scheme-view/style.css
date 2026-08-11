@@ -1,0 +1,34 @@
+.inspector-scheme-view {
+	display: flex;
+	flex-direction: column;
+	padding: 0 18px;
+}
+
+.inspector-scheme-view > .inspector-scheme-view__item-list {
+	--inspector-group-item-background-color: var(--ui-color-base-7);
+	--inspector-group-item-icon-color: var(--ui-color-base-3);
+	--inspector-group-data-item-border-color: var(--ui-color-base-5);
+}
+
+.inspector-scheme-view__item-list.--green {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-green-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-success-alt-2);
+	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-green);
+}
+
+.inspector-scheme-view__item-list.--orange {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-orange-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-warning);
+	--inspector-group-data-item-border-color: var(--ui-color-design-filled-warning-bg);
+}
+
+.inspector-scheme-view__item-list.--blue {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-blue-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-primary);
+	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-blue);
+}
+
+.inspector-scheme-view__item-list-group-divider {
+	align-self: stretch;
+	border-bottom: 1px solid var(--ui-color-palette-gray-15);
+}

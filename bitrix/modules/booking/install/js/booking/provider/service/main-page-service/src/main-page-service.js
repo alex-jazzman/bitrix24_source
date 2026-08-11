@@ -2,7 +2,7 @@ import { Type } from 'main.core';
 import { LocalStorageCache } from 'main.core.cache';
 
 import { Core } from 'booking.core';
-import { Model } from 'booking.const';
+import { Communication, Model } from 'booking.const';
 import { DatePeriod } from 'booking.lib.date-period';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
 import { ApiClient, apiClient } from 'booking.lib.api-client';
@@ -90,6 +90,10 @@ class MainPageService
 			Core.getStore().dispatch(
 				`${Model.Interface}/setShouldShowWhatsAppEmergency`,
 				extractor.getShouldShowWhatsAppEmergency(),
+			),
+			Core.getStore().dispatch(
+				`${Model.Interface}/setAiCallBannerMode`,
+				extractor.getAiCallBannerMode(),
 			),
 			Core.getStore().dispatch(`${Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
 			Core.getStore().dispatch(`${Model.Notifications}/upsertManySenders`, extractor.getSenders()),
@@ -196,6 +200,40 @@ class MainPageService
 		catch (error)
 		{
 			console.error('BookingMainPageActivateDemoRequest: error', error);
+		}
+
+		return Promise.resolve(false);
+	}
+
+	async switchAllToAiCall(): Promise<boolean>
+	{
+		try
+		{
+			await new ApiClient().post('AiCallBanner.switchAllToAiCall', {});
+
+			const store = Core.getStore();
+			store.dispatch(`${Model.Resources}/setSenderCodeForAll`, Communication.AiCall);
+			store.dispatch(`${Model.ResourceTypes}/setSenderCodeForAll`, Communication.AiCall);
+
+			return true;
+		}
+		catch (error)
+		{
+			console.error('BookingAiCallBannerSwitchAllToAiCallRequest: error', error);
+		}
+
+		return Promise.resolve(false);
+	}
+
+	async registerAiCallBannerShown(): Promise<boolean>
+	{
+		try
+		{
+			return await new ApiClient().post('AiCallBanner.registerShown');
+		}
+		catch (error)
+		{
+			console.error('BookingAiCallBannerRegisterShownRequest: error', error);
 		}
 
 		return Promise.resolve(false);

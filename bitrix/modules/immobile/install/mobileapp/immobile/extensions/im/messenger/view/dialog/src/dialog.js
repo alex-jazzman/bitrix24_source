@@ -757,11 +757,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		#showSuggests()
 		{
-			if (true) // TODO: Back not ready yet
-			{
-				return;
-			}
-
 			if (!Feature.isBitrixGptV2Enabled)
 			{
 				return;

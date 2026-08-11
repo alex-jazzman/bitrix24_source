@@ -23,10 +23,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Color } = require('tokens');
+
+	const FEEDBACK_MESSAGE_MAX_LENGTH = 1000;
 
 	const {
 		CopyAction,
@@ -1258,10 +1261,29 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 		onFeedback(actionHelper, params)
 		{
 			let formId = 'copilotRoles';
-			if (actionHelper.isAiAssistantMessage())
+			if (Feature.isBitrixGptV2Available)
+			{
+				formId = 'aiAssistantV2';
+			}
+			else if (actionHelper.isAiAssistantMessage())
 			{
 				formId = 'aiAssistant';
 			}
+
+			const messageModel = actionHelper.messageModel;
+			const dialogModel = actionHelper.dialogModel;
+
+			const extraHiddenFields = Feature.isBitrixGptV2Available
+				? {
+					message: messageModel.text.slice(0, FEEDBACK_MESSAGE_MAX_LENGTH),
+					chat_id: dialogModel?.chatId ?? 0,
+					message_id: messageModel.id,
+					user_id: MessengerParams.getUserId(),
+					sending_time: messageModel.date instanceof Date
+						? messageModel.date.toISOString()
+						: String(messageModel.date),
+				}
+				: {};
 
 			const openFormFallback = () => {
 				const hiddenFields = encodeURIComponent(JSON.stringify({
@@ -1272,6 +1294,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 					region_model: env.languageId,
 					phone_model: device.model,
 					os_version: device.version,
+					...extraHiddenFields,
 				}));
 
 				PageManager.openPage({
@@ -1302,6 +1325,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 					(new FeedbackForm({
 						formId,
 						senderPage: 'MessageMenu',
+						extraHiddenFields,
 					})).openInBackdrop();
 				}
 				else

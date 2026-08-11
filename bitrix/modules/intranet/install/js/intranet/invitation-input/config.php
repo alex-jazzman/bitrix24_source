@@ -16,6 +16,7 @@ return [
 		'main.core',
 		'main.core.cache',
 		'main.core.events',
+		'phone_number',
 		'ui.entity-selector',
 	],
 	'skip_core' => false,

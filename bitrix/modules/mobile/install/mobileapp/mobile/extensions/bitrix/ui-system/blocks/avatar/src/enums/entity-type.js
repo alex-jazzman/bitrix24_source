@@ -32,6 +32,20 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 			accentGradient: AvatarAccentGradient.GREEN,
 		});
 
+		static GUEST = new AvatarEntityType('GUEST', {
+			accent: true,
+			shape: AvatarShape.CIRCLE,
+			placeholder: {
+				emptyAvatar: {
+					uri: 'person_green.svg',
+					named: EmptyAvatar.COLLAB_USER,
+				},
+				backgroundColor: Color.collabAccentPrimary,
+			},
+			accentType: AvatarAccentType.GREEN,
+			accentGradient: AvatarAccentGradient.GREEN,
+		});
+
 		static GROUP = new AvatarEntityType('GROUP', {
 			placeholder: {
 				emptyAvatar: {

@@ -32,6 +32,7 @@ type BaseUpdateConfig = {
 	manageUsersDelete: RoleItem,
 	manageUi: RoleItem,
 	manageMessages: RoleItem,
+	manageGuestInvites: RoleItem,
 
 	addedMemberEntities: SelectorEntityItem[],
 	deletedMemberEntities?: SelectorEntityItem[],

@@ -32,6 +32,16 @@ export class CopilotMessageMenu extends MessageMenu
 		];
 	}
 
+	getSelectItem(): ?MenuItemOptions
+	{
+		if (this.store.getters['copilot/isChatOpenedInWidget'](this.context.dialogId))
+		{
+			return null;
+		}
+
+		return super.getSelectItem();
+	}
+
 	getSendFeedbackItem(): MenuItemOptions
 	{
 		const copilotManager = new CopilotManager();
@@ -55,7 +65,7 @@ export class CopilotMessageMenu extends MessageMenu
 	{
 		void (new FeedbackManager()).openCopilotForm({
 			userCounter: this.#getUserCounter(),
-			text: this.context.text,
+			message: this.context,
 		});
 	}
 

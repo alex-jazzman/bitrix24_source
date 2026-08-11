@@ -1,7 +1,5 @@
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Slider } from 'main.sidepanel';
-// eslint-disable-next-line no-unused-vars
-import { markRaw, computed } from 'ui.vue3';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { BlockComponent } from '../block/block';
 import { AddBlockBtn } from '../add-block-btn/add-block-btn';
@@ -19,15 +17,9 @@ import { EditConstantPopupForm } from '../edit-constant-popup-form/edit-constant
 
 import { PreviewApp } from '../preview-app/preview-app';
 import { makeEmptyBlock, convertConstants } from '../../utils';
-import { ITEM_TYPES } from '../../constants';
+import { ITEM_TYPES, EDITING_MODES } from '../../constants';
 
 import './app.css';
-import type {
-	Block,
-	Item,
-	UpdateItemPropertyEventPayload,
-	ConstantItem,
-} from '../../types';
 
 const ACTIVITY_NAME = 'SetupTemplateActivity';
 
@@ -61,13 +53,6 @@ export const BlocksAppComponent = {
 		PreviewApp,
 		EditConstantPopupForm,
 	},
-	provide(): { sliderInstance: typeof Slider }
-	{
-		return {
-			editSlider: computed(() => this.sliderInstance),
-			initEditSlider: () => this.initEditSlider(),
-		};
-	},
 	props:
 	{
 		serializedBlocks: {
@@ -90,10 +75,9 @@ export const BlocksAppComponent = {
 		return {
 			blocks: [],
 			isShowPreview: false,
-			sliderInstance: null,
 			initialConstantIds: new Set(),
-			currentBlockIndex: null,
-			createdConstant: null,
+			editingConstant: null,
+			isEditingFormChanged: false,
 		};
 	},
 	computed:
@@ -158,7 +142,6 @@ export const BlocksAppComponent = {
 		this.blocks = JSON.parse(this.serializedBlocks) ?? [];
 		this.initialConstantIds = new Set(this.localConstantIds);
 
-		EventEmitter.subscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
 		EventEmitter.subscribe(
 			'Bizproc.NodeSettings:nodeSettingsSaving',
 			this.onNodeSettingsSave,
@@ -168,10 +151,7 @@ export const BlocksAppComponent = {
 	beforeUnmount(): void
 	{
 		this.isShowPreview = false;
-		EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
-		this.sliderInstance?.destroy();
-		this.sliderInstance = null;
 	},
 	unmounted()
 	{
@@ -182,26 +162,6 @@ export const BlocksAppComponent = {
 	},
 	methods:
 	{
-		initEditSlider(): Object
-		{
-			if (this.sliderInstance)
-			{
-				return this.sliderInstance;
-			}
-
-			this.sliderInstance = markRaw(new Slider('', {
-				contentCallback: () => this.$refs.bizprocSetupTemplateActivityPopup,
-				width: 596,
-				outerBoundary: {
-					right: 8,
-					top: 64,
-				},
-				startPosition: 'bottom',
-				overlayClassName: 'bizproc-setuptemplateactivity-app__overlay',
-			}));
-
-			return this.sliderInstance;
-		},
 		onAddBlock(): void
 		{
 			this.blocks.push(makeEmptyBlock());
@@ -210,66 +170,161 @@ export const BlocksAppComponent = {
 		{
 			this.blocks[blockIndex].items.push(item);
 		},
-		onCreateConstant(blockIndex: number, item: Item): void
+		canSwitchEditingForm(): Promise<boolean>
 		{
-			this.currentBlockIndex = blockIndex;
-			this.createdConstant = { ...item };
-			this.initEditSlider().open();
-		},
-		onSaveConstant(blockIndex: number, item: Item): void
-		{
-			const newId = item.propertyValues.id;
-			const setError = item.setError;
+			if (this.editingConstant === null || !this.isEditingFormChanged)
+			{
+				return Promise.resolve(true);
+			}
 
-			if (this.allConstantIds.has(newId))
+			return this.showConfirmDiscard();
+		},
+		async onCreateConstant(blockIndex: number, item: ConstantItem): Promise<void>
+		{
+			if (!await this.canSwitchEditingForm())
+			{
+				return;
+			}
+
+			this.isEditingFormChanged = false;
+			this.editingConstant = {
+				blockIndex,
+				itemIndex: null,
+				item: { ...item },
+				mode: EDITING_MODES.CREATE,
+			};
+		},
+		async onEditConstant(blockIndex: number, itemIndex: number): Promise<void>
+		{
+			if (!await this.canSwitchEditingForm())
+			{
+				return;
+			}
+
+			this.isEditingFormChanged = false;
+			this.editingConstant = {
+				blockIndex,
+				itemIndex,
+				item: { ...this.blocks[blockIndex].items[itemIndex] },
+				mode: EDITING_MODES.EDIT,
+			};
+		},
+		showConfirmDiscard(): Promise<boolean>
+		{
+			return new Promise((resolve) => {
+				const messageBox = new MessageBox({
+					message: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_CONFIRM'),
+					buttons: MessageBoxButtons.OK_CANCEL,
+					okCaption: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_OK'),
+					cancelCaption: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DISCARD_CANCEL'),
+					onOk: () => {
+						resolve(true);
+						messageBox.close();
+					},
+					onCancel: () => {
+						resolve(false);
+						messageBox.close();
+					},
+				});
+				messageBox.show();
+			});
+		},
+		onSaveEditingConstant(payload: UpdateItemPropertyEventPayload): void
+		{
+			if (!this.editingConstant)
+			{
+				return;
+			}
+
+			const { blockIndex, itemIndex, mode } = this.editingConstant;
+			const newValues = payload.propertyValues;
+			const setError = payload.setError;
+			const currentItem = mode === EDITING_MODES.EDIT ? this.blocks[blockIndex].items[itemIndex] : null;
+			const newId = newValues.id;
+
+			if (newId && newId !== currentItem?.id && this.allConstantIds.has(newId))
 			{
 				setError();
 
 				return;
 			}
 
-			this.blocks[blockIndex].items.push(item.propertyValues);
-			this.currentBlockIndex = null;
-			this.createdConstant = null;
+			if (mode === EDITING_MODES.CREATE)
+			{
+				this.blocks[blockIndex].items.push(newValues);
+			}
+			else
+			{
+				this.blocks[blockIndex].items[itemIndex] = {
+					...currentItem,
+					...newValues,
+				};
+			}
 
-			this.sliderInstance?.close();
+			this.editingConstant = null;
 		},
-		onCancelConstant(): void
+		onCancelEditingConstant(): void
 		{
-			this.currentBlockIndex = null;
-			this.createdConstant = null;
+			this.editingConstant = null;
 		},
 		onDeleteBlock(blockIndex: number): void
 		{
+			if (this.editingConstant?.blockIndex === blockIndex)
+			{
+				this.editingConstant = null;
+			}
+			else if (this.editingConstant?.blockIndex > blockIndex)
+			{
+				this.editingConstant = {
+					...this.editingConstant,
+					blockIndex: this.editingConstant.blockIndex - 1,
+				};
+			}
+
 			this.blocks.splice(blockIndex, 1);
 		},
 		onDeleteItem(blockIndex: number, itemIndex: number): void
 		{
+			if (this.editingConstant?.blockIndex === blockIndex && this.editingConstant.itemIndex === itemIndex)
+			{
+				this.editingConstant = null;
+			}
+			else if (this.editingConstant?.blockIndex === blockIndex && this.editingConstant.itemIndex > itemIndex)
+			{
+				this.editingConstant = {
+					...this.editingConstant,
+					itemIndex: this.editingConstant.itemIndex - 1,
+				};
+			}
+
 			this.blocks[blockIndex].items.splice(itemIndex, 1);
 		},
 		onUpdateItemProperty(blockIndex: number, itemIndex: number, payload: UpdateItemPropertyEventPayload): void
 		{
 			const currentItem = this.blocks[blockIndex].items[itemIndex];
 			const newValues = payload.propertyValues;
-			const setError = payload.setError;
-			const newId = newValues.id;
-
-			if (newId && newId !== currentItem.id && this.allConstantIds.has(newId))
-			{
-				setError();
-
-				return;
-			}
 
 			this.blocks[blockIndex].items[itemIndex] = {
 				...currentItem,
 				...newValues,
 			};
-
-			if (this.sliderInstance?.isOpen())
-			{
-				this.sliderInstance.close();
-			}
+		},
+		isCreatingConstantInBlock(blockIndex: number): boolean
+		{
+			return (
+				this.editingConstant !== null
+				&& this.editingConstant.mode === EDITING_MODES.CREATE
+				&& this.editingConstant.blockIndex === blockIndex
+			);
+		},
+		isEditingConstantUnderItem(blockIndex: number, itemIndex: number): boolean
+		{
+			return (
+				this.editingConstant !== null
+				&& this.editingConstant.mode === EDITING_MODES.EDIT
+				&& this.editingConstant.blockIndex === blockIndex
+				&& this.editingConstant.itemIndex === itemIndex
+			);
 		},
 		onItemsReorder(blockIndex: number, newItems: Array<any>): void
 		{
@@ -390,7 +445,30 @@ export const BlocksAppComponent = {
 							:constantConfigurationList="constantConfigurationList"
 							@delete="onDeleteItem(blockIndex, itemIndex)"
 							@updateItemProperty="onUpdateItemProperty(blockIndex, itemIndex, $event)"
+							@edit="onEditConstant(blockIndex, itemIndex)"
 							@itemDragStart="onItemDragStart($event, blockIndex, itemIndex)"
+						/>
+					</template>
+					<template #after-item="{ itemIndex }">
+						<EditConstantPopupForm
+							v-if="isEditingConstantUnderItem(blockIndex, itemIndex)"
+							:item="editingConstant.item"
+							:constantConfigurationList="constantConfigurationList"
+							:isCreation="false"
+							@update:item="onSaveEditingConstant"
+							@update:changed="isEditingFormChanged = $event"
+							@cancel="onCancelEditingConstant"
+						/>
+					</template>
+					<template #before-footer>
+						<EditConstantPopupForm
+							v-if="isCreatingConstantInBlock(blockIndex)"
+							:item="editingConstant.item"
+							:constantConfigurationList="constantConfigurationList"
+							:isCreation="true"
+							@update:item="onSaveEditingConstant"
+							@update:changed="isEditingFormChanged = $event"
+							@cancel="onCancelEditingConstant"
 						/>
 					</template>
 					<template #footer>
@@ -405,17 +483,6 @@ export const BlocksAppComponent = {
 			</div>
 		</div>
 
-		<div
-			class="bizproc-setuptemplateactivity-app__popup"
-			ref="bizprocSetupTemplateActivityPopup"
-		>
-			<div
-				id="bizproc-setuptemplateactivity-popup-content"
-				class="bizproc-setuptemplateactivity-app__popup-content"
-			>
-			</div>
-		</div>
-
 		<Teleport
 			to="#preview-panel"
 			:disabled="!isShowPreview"
@@ -423,20 +490,6 @@ export const BlocksAppComponent = {
 			<PreviewApp
 				v-if="isShowPreview"
 				:blocks="preparedBlocks"
-			/>
-		</Teleport>
-
-		<Teleport
-			to="#bizproc-setuptemplateactivity-popup-content"
-			:disabled="!createdConstant"
-		>
-			<EditConstantPopupForm
-				v-if="createdConstant !== null"
-				:item="createdConstant"
-				:constantConfigurationList="constantConfigurationList"
-				@update:item="onSaveConstant(currentBlockIndex, $event)"
-				@cancel="onCancelConstant"
-				:isCreation="true"
 			/>
 		</Teleport>
 	`,

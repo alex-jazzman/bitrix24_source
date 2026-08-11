@@ -1,7 +1,5 @@
+
 import './text-input.css';
-import { onMounted, useTemplateRef, toValue } from 'ui.vue3';
-import { useLoc } from '../../../../shared/composables';
-import type { GetMessage } from '../../../../shared/composables';
 
 export type TextInputSetup = {
 	getMessage: GetMessage,
@@ -9,7 +7,7 @@ export type TextInputSetup = {
 
 // @vue/component
 export const TextInput = {
-	name: 'catalog-input',
+	name: 'TextInput',
 	props: {
 		modelValue: {
 			type: String,
@@ -20,28 +18,38 @@ export const TextInput = {
 			default: false,
 		},
 	},
-	setup(props): {...}
-	{
-		const textInput = useTemplateRef('textInput');
-		const { getMessage } = useLoc();
-
-		onMounted(() => {
-			if (props.focusable)
+	computed: {
+		placeholder(): string
+		{
+			return this.$bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_SEARCH_PLACEHOLDER');
+		},
+	},
+	watch: {
+		focusable(isFocus: boolean): void
+		{
+			if (isFocus)
 			{
-				toValue(textInput)?.focus();
+				this.$refs?.textInput?.focus();
 			}
-		});
-
-		return {
-			getMessage,
-		};
+			else
+			{
+				this.$refs?.textInput?.blur();
+			}
+		},
+	},
+	mounted()
+	{
+		if (this.focusable)
+		{
+			this.$refs?.textInput?.focus();
+		}
 	},
 	template: `
 		<div class="editor-chart-catalog-input">
 			<input
 				ref="textInput"
 				:value="modelValue"
-				:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_SEARCH_PLACEHOLDER')"
+				:placeholder="placeholder"
 				:data-test-id="$testId('catalogSearchInput')"
 				:class="{
 					'editor-chart-catalog-input__input': true,

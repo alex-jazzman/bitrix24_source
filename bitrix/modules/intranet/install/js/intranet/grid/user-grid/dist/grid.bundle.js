@@ -533,7 +533,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			button.renderTo(this.getFieldNode());
 		}
 		#updateData(data) {
-			if (!main_core.Type.isStringFilled(data.get('newEmail')) && !main_core.Type.isBoolean(data.get('newPhone'))) {
+			if (!main_core.Type.isStringFilled(data.get('newEmail')) && !main_core.Type.isStringFilled(data.get('newPhone'))) {
 				top.console.error('Empty new email or phone');
 				return;
 			}
@@ -800,7 +800,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 		getMessageWithProfileNames(messageCode, users) {
 			const maxDisplayCount = 5;
 			const userValues = Object.values(users);
-			const displayedNames = userValues.slice(0, maxDisplayCount);
+			const displayedNames = userValues.slice(0, maxDisplayCount).map(user => {
+				return main_core.Type.isString(user) ? user : user.fullName;
+			});
 			const remainingCount = userValues.length - maxDisplayCount;
 			const namesString = displayedNames.join(', ');
 			if (displayedNames.length < 2 && remainingCount < 1) {

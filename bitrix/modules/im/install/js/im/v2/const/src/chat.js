@@ -45,3 +45,5 @@ export const DialogAlignment = Object.freeze({
 });
 
 export const DialogIdChatPrefix = 'chat';
+
+export const TempAiAssistantPrefix = 'temp-ai-assistant';

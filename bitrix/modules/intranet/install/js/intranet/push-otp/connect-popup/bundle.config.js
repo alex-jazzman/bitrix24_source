@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/connect-popup.bundle.js',
 	namespace: 'BX.Intranet.PushOtp',
 	browserslist: true,
-	minification: true,
 };

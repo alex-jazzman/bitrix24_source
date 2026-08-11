@@ -155,7 +155,7 @@ export const LegacyOtp = {
 				></captcha>
 			</template>
 		</form>
-		<Teleport to=".intranet-body__footer-right">
+		<Teleport to=".intranet-body__footer-right" v-if="authOtpHelpLink">
 			<button class="intranet-help-widget intranet-page-base__help">
 				<i class="ui-icon-set intranet-help-widget__icon"></i>
 				<a class="intranet-help-widget__text" :href="authOtpHelpLink">

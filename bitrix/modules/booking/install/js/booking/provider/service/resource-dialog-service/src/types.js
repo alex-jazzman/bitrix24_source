@@ -5,3 +5,7 @@ export type ResourceDialogResponse = {
 	bookings: BookingDto[],
 	resources: ResourceDto[],
 };
+
+export type MainResourcesOptions = {
+	shortSlotsOnly?: boolean,
+};

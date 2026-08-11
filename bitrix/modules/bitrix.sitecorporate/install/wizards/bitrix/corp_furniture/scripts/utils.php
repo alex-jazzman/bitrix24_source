@@ -1,5 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
 class WizardServices
 {
 	function GetTemplates($relativePath)
@@ -379,7 +382,7 @@ class WizardServices
 
 		$obUserField = new CUserTypeEntity;
 		$fieldID = $obUserField->Add($arFields);
-		$GLOBALS["USER_FIELD_MANAGER"]->arFieldsCache = array();
+
 		return $fieldID;
 	}
 	
@@ -447,4 +450,3 @@ class WizardServices
 	}
 	
 }
-?>

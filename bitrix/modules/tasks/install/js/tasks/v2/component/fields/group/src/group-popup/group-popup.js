@@ -87,6 +87,10 @@ export const GroupPopup = {
 				[GroupType.Scrum]: this.loc('TASKS_V2_GROUP_ABOUT_SCRUM'),
 			}[this.group?.type] ?? this.loc('TASKS_V2_GROUP_ABOUT');
 		},
+		groupRestricted(): boolean
+		{
+			return !this.group || Boolean(this.group.isRestrictedView);
+		}
 	},
 	mounted(): void
 	{
@@ -97,6 +101,11 @@ export const GroupPopup = {
 	methods: {
 		openGroup(): void
 		{
+			if (this.groupRestricted)
+			{
+				return;
+			}
+
 			this.closePopup();
 
 			this.$emit('openGroup');
@@ -107,7 +116,7 @@ export const GroupPopup = {
 		},
 		handleMouseEnter(): void
 		{
-			if (!this.group)
+			if (this.groupRestricted)
 			{
 				return;
 			}

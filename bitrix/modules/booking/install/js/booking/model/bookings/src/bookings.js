@@ -75,6 +75,13 @@ export class Bookings extends BuilderModel
 						});
 				};
 			},
+			/** @function bookings/getByIntervalAndIds */
+			getByIntervalAndIds: (state: BookingsState, getters) => {
+				return (fromTs: number, toTs: number, ids: number[]): BookingModel[] => {
+					return getters.getByInterval(fromTs, toTs)
+						.filter((booking: BookingModel) => ids.includes(booking.id));
+				};
+			},
 			/** @function bookings/getByDateAndIds */
 			getByDateAndIds: (state: BookingsState, getters) => {
 				return (dateTs: number, ids: number[]): BookingModel[] => {

@@ -1,0 +1,2 @@
+<?php
+$MESS["BIC_USAGE_STAT_ENTITY_SELECTOR_DASHBOARD_TAB"] = "Dashboards";

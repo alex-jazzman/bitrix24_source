@@ -13,12 +13,8 @@ import { ConnectEvent as CommunicationChannelConnectEventBuilder } from './build
 import { InviteEvent as CommunicationChannelInviteEventBuilder } from './builders/communication/channel/invite-event';
 
 import { DeleteEvent as CommunicationDeleteEvent } from './builders/communication/delete-event';
-import { CancelEvent as CommunicationEditorCancelEventBuilder } from './builders/communication/editor/cancel-event';
-import { CopilotEvent as CommunicationEditorCopilotEventBuilder } from './builders/communication/editor/copilot-event';
-import { InteractionEvent as CommunicationEditorInteractionEventBuilder } from './builders/communication/editor/interaction-event';
 import { ResendEvent as CommunicationEditorResendEventBuilder } from './builders/communication/editor/resend-event';
 import { SendEvent as CommunicationEditorSendEventBuilder } from './builders/communication/editor/send-event';
-import { ViewEvent as CommunicationEditorViewEventBuilder } from './builders/communication/editor/view-event';
 import { FormEvent as CommunicationFormEvent } from './builders/communication/form-event';
 import { SendEvent as CommunicationSendEvent } from './builders/communication/send-event';
 import { AddEvent as EntityAddEventBuilder } from './builders/entity/add-event';
@@ -50,12 +46,8 @@ import type {
 	AICallParsingEvent,
 	CommunicationChannelConnectEvent,
 	CommunicationChannelInviteEvent,
-	CommunicationEditorCancelEvent,
-	CommunicationEditorCopilotEvent,
-	CommunicationEditorInteractionEvent,
 	CommunicationEditorResendEvent,
 	CommunicationEditorSendEvent,
-	CommunicationEditorViewEvent,
 	EntityAddEvent,
 	EntityChangeStageEvent,
 	EntityCloseEvent,
@@ -114,12 +106,8 @@ const Builder = Object.freeze({
 			InviteEvent: CommunicationChannelInviteEventBuilder,
 		},
 		Editor: {
-			ViewEvent: CommunicationEditorViewEventBuilder,
-			InteractionEvent: CommunicationEditorInteractionEventBuilder,
-			CopilotEvent: CommunicationEditorCopilotEventBuilder,
 			SendEvent: CommunicationEditorSendEventBuilder,
 			ResendEvent: CommunicationEditorResendEventBuilder,
-			CancelEvent: CommunicationEditorCancelEventBuilder,
 		},
 	},
 	RepeatSale: {
@@ -171,12 +159,8 @@ export type {
 	RepeatSaleSegmentEditEvent,
 	CommunicationChannelConnectEvent,
 	CommunicationChannelInviteEvent,
-	CommunicationEditorInteractionEvent,
-	CommunicationEditorCopilotEvent,
 	CommunicationEditorSendEvent,
 	CommunicationEditorResendEvent,
-	CommunicationEditorCancelEvent,
-	CommunicationEditorViewEvent,
 	OldEntityViewOldInvoiceReadonlyViewEvent,
 	OldEntityViewOldInvoiceReadonlyClickEvent,
 	OldEntityViewOldInvoiceReadonlyCloseEvent,

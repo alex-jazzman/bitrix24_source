@@ -4,6 +4,7 @@
  * @module im/messenger/cache/shared-storage/recent
  */
 jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { throttle } = require('utils/function');
 	const { uniqBy } = require('utils/array');
 
@@ -35,6 +36,7 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 			const uniqueItemList = uniqBy(itemList, (item) => String(item.id));
 
 			const state = {
+				theme: AppTheme.id,
 				sections,
 				items: uniqueItemList
 					.filter((item) => item.id !== 'loadNextPage' && item.id !== 'loading' && item.sectionCode !== 'call')
@@ -44,6 +46,20 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 			logger.log(`${this.constructor.name}.save:`, state);
 
 			return super.save(state);
+		}
+
+		get()
+		{
+			const state = super.get();
+			if (state && state.theme !== AppTheme.id)
+			{
+				logger.log(`${this.constructor.name}.get: cached theme "${state.theme}" mismatches current "${AppTheme.id}", dropping cache`);
+				void this.clear();
+
+				return false;
+			}
+
+			return state;
 		}
 
 		sortItemList(a, b)

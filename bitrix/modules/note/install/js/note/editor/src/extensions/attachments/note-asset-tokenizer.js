@@ -10,6 +10,8 @@ type AssetType = 'image' | 'file' | 'video';
 type TokenAttrs = {
 	assetType: AssetType,
 	fileId: number,
+	width: number | null,
+	align: string | null,
 };
 
 type MarkdownToken = {
@@ -26,9 +28,14 @@ type ParsedNode = {
 		name: null,
 		size: null,
 		mimeType: null,
+		width?: number | null,
+		align?: string | null,
 	},
 };
 
+// Block-level tokenizer for all asset types (image/file/video). Each [[<type> fileId=N ...]] token
+// owns its line and becomes a top-level block node — images are block nodes again, so they are no
+// longer wrapped in a paragraph nor handled by a separate inline tokenizer.
 export const NoteAssetTokenizer: Object = Node.create({
 	name: 'noteAsset',
 
@@ -51,8 +58,10 @@ export const NoteAssetTokenizer: Object = Node.create({
 				type: 'noteAsset',
 				raw: result.raw,
 				attrs: {
-					assetType: result.assetType,
+					assetType: ((result.assetType: any): AssetType),
 					fileId: result.fileId,
+					width: result.width,
+					align: result.align,
 				},
 			};
 		},
@@ -67,15 +76,24 @@ export const NoteAssetTokenizer: Object = Node.create({
 			return null;
 		}
 
+		const attrs: Object = {
+			fileId: token.attrs.fileId,
+			documentId: null,
+			name: null,
+			size: null,
+			mimeType: null,
+		};
+
+		// Resizable media (image, video) carries presentation attributes (resize width, alignment); file does not.
+		if (nodeType === 'imageAttachment' || nodeType === 'video')
+		{
+			attrs.width = token.attrs.width ?? null;
+			attrs.align = token.attrs.align ?? null;
+		}
+
 		return {
 			type: nodeType,
-			attrs: {
-				fileId: token.attrs.fileId,
-				documentId: null,
-				name: null,
-				size: null,
-				mimeType: null,
-			},
+			attrs,
 		};
 	},
 });

@@ -13397,7 +13397,7 @@ this.BX.Location = this.BX.Location || {};
 			const maxRadius = this.#options.maxClusterRadius ?? 30;
 			const maxSize = this.#getRouteMaxClusterSize();
 			const pixelCoords = this.#buildPixelCoordsMap(filteredIds);
-			const groups = filteredIds.map(id => [id]);
+			const groups = this.#groupCoLocatedRouteMarkers(filteredIds, maxRadius);
 			this.#mergeRouteGroups(groups, {
 				firstId,
 				lastId,
@@ -13441,6 +13441,36 @@ this.BX.Location = this.BX.Location || {};
 				}
 			});
 			return pixelCoords;
+		}
+
+		// Pre-pass: collapses consecutive markers that would always cluster together — i.e. their
+		// pixel distance at the deepest allowed zoom (fitBoundsMaxZoom) is still within
+		// maxClusterRadius — into a single group, bypassing the maxSize cap used by
+		// #mergeRouteGroups. Such markers cannot be visually separated by zooming in (auto-tracking
+		// often emits multiple check-ins with near-identical GPS coordinates), so respecting
+		// maxSize would produce multiple stacked clusters at the same screen position.
+		#groupCoLocatedRouteMarkers(ids, maxRadius) {
+			const {
+				mapInstance,
+				markerOriginalLatLngs,
+				fitBoundsMaxZoom
+			} = this.#host;
+			const groups = [];
+			let currentGroup = null;
+			let anchorPoint = null;
+			ids.forEach(id => {
+				const ll = markerOriginalLatLngs.get(id);
+				const point = ll ? mapInstance.project(ll, fitBoundsMaxZoom) : null;
+				const isColocated = currentGroup && point && anchorPoint && anchorPoint.distanceTo(point) <= maxRadius;
+				if (isColocated) {
+					currentGroup.push(id);
+					return;
+				}
+				currentGroup = [id];
+				anchorPoint = point;
+				groups.push(currentGroup);
+			});
+			return groups;
 		}
 
 		// Centroid-to-centroid pixel distance between two groups.
@@ -13619,7 +13649,6 @@ this.BX.Location = this.BX.Location || {};
 		}
 	}
 
-	/* global BXMobileApp */
 	class CheckInMapService extends location_core.CheckInMapServiceBase {
 		constructor(props) {
 			super(props);
@@ -13941,7 +13970,13 @@ this.BX.Location = this.BX.Location || {};
 				const paddingOffset = paddingBottomRight.subtract(paddingTopLeft).divideBy(2);
 				const projected = this.mapInstance.project(toLatLng(bounds[0]), finalZoom);
 				const center = this.mapInstance.unproject(projected.add(paddingOffset), finalZoom);
-				this.mapInstance.setView(center, finalZoom);
+				if (options.animate) {
+					this.mapInstance.flyTo(center, finalZoom, {
+						duration: options.duration ?? 0.5
+					});
+				} else {
+					this.mapInstance.setView(center, finalZoom);
+				}
 				return;
 			}
 			const leafletBounds = toLatLngBounds(bounds);
@@ -13953,7 +13988,9 @@ this.BX.Location = this.BX.Location || {};
 			this.mapInstance.fitBounds(leafletBounds, {
 				paddingTopLeft,
 				paddingBottomRight,
-				maxZoom
+				maxZoom,
+				animate: options.animate === true,
+				duration: options.duration
 			});
 		}
 		setZoom(zoom) {
@@ -14092,6 +14129,15 @@ this.BX.Location = this.BX.Location || {};
 		}
 		setClusterIcon(markerIds, iconConfig) {
 			this.clustering.setClusterIcon(markerIds, iconConfig);
+		}
+		setGrayscale(enabled) {
+			if (!this.mapInstance) {
+				return;
+			}
+			const tilePane = this.mapInstance.getPane('tilePane');
+			if (tilePane) {
+				tilePane.style.filter = enabled ? 'grayscale(1)' : '';
+			}
 		}
 		#fitToLayersInFlight = false;
 

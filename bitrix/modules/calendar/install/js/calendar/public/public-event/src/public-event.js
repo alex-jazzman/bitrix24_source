@@ -98,8 +98,8 @@ export class PublicEvent
 
 		return {
 			eventName: this.#params.event.name,
-			from: new Date(parseInt(this.#params.event.timestampFrom) * 1000 + offset),
-			to: new Date(parseInt(this.#params.event.timestampTo) * 1000 + offset),
+			from: new Date(parseInt(this.#params.event.timestampFrom, 10) * 1000 + offset),
+			to: new Date(parseInt(this.#params.event.timestampTo, 10) * 1000 + offset),
 			timezone: this.#params.event.timezone,
 			browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 			isFullDay: this.#params.event.isFullDay,
@@ -217,6 +217,7 @@ export class PublicEvent
 
 	#handleDecisionAction(decision: Status): void
 	{
+		// eslint-disable-next-line promise/catch-or-return
 		BX.ajax.runAction('calendar.api.publicevent.handleDecision', {
 			data: {
 				decision,
@@ -249,17 +250,24 @@ export class PublicEvent
 
 	async #downloadIcsFile(): Promise
 	{
-		if (!this.#icsFile)
+		try
 		{
-			const response = await BX.ajax.runAction('calendar.api.publicevent.getIcsFileContent', {
-				data: {
-					eventId: this.#params.event.id,
-					hash: this.#params.event.hash,
-				},
-			});
-			this.#icsFile = response.data;
-		}
+			if (!this.#icsFile)
+			{
+				const response = await BX.ajax.runAction('calendar.api.publicevent.getIcsFileContent', {
+					data: {
+						eventId: this.#params.event.id,
+						hash: this.#params.event.hash,
+					},
+				});
+				this.#icsFile = response.data;
+			}
 
-		Util.downloadIcsFile(this.#icsFile, 'event');
+			Util.downloadIcsFile(this.#icsFile, 'event');
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
 	}
 }

@@ -238,7 +238,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 			isCollabEnabled: '<?= $arResult['IS_COLLAB_ENABLED'] ? 'Y' : 'N' ?>',
 			canCurrentUserInvite: <?= $arResult['canCurrentUserInvite'] ? 'true' : 'false' ?>,
 			canCurrentUserCreateDepartment: <?= $arResult['canCurrentUserCreateDepartment'] ? 'true' : 'false' ?>,
-			useLocalEmailProgram: <?= $arResult['USE_INVITE_LOCAL_EMAIL_PROGRAM'] ? 'true' : 'false' ?>,
+			useLocalEmailProgram: false,
 			leftMenuItems: <?= Json::encode(array_merge($arResult['MENU_ITEMS'], $arResult['SUB_MENU_ITEMS'] ?? [])); ?>,
 		});
 	});

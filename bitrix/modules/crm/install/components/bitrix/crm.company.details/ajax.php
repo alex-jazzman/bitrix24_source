@@ -94,6 +94,7 @@ if($action === 'SAVE')
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 	$sourceEntityID =  isset($params['COMPANY_ID']) ? (int)$params['COMPANY_ID'] : 0;
+	$analytics = ($_POST['ANALYTICS'] ?? []);
 
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 	if(($ID > 0 && !\CCrmCompany::CheckUpdatePermission($ID, $currentUserPermissions, $categoryID))
@@ -444,6 +445,7 @@ if($action === 'SAVE')
 			$entity = new \CCrmCompany(false);
 			$saveOptions = [
 				'REGISTER_SONET_EVENT' => true,
+				'ANALYTICS' => $analytics,
 				'eventId' => $_POST['EVENT_ID'] ?? null,
 			];
 

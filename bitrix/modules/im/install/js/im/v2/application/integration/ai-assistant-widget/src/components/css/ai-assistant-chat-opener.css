@@ -9,3 +9,8 @@
 .right-panel-ai-chat__content .bx-im-content-chat__textarea_container {
 	padding-bottom: 0;
 }
+
+.bx-im-ai-assistant-widget-empty-state {
+	display: flex;
+	height: 100%;
+}

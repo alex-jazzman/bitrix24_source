@@ -353,8 +353,12 @@ export class SectionInterface extends EventEmitter
 			sectionExternalType = 'exchange';
 		}
 
-		const sectionExternalConnection = SectionManager.getSectionExternalConnection(section, sectionExternalType);
 		const calendarContext = this.calendarContext || Util.getCalendarContext();
+		const sectionExternalConnection = SectionManager.getSectionExternalConnection(
+			section,
+			sectionExternalType,
+			calendarContext,
+		);
 
 		section.data.CAL_DAV_CON = sectionExternalConnection?.addParams?.id || null;
 		const key = sectionExternalType + (
@@ -389,7 +393,7 @@ export class SectionInterface extends EventEmitter
 				&& !section.isArchive()
 				&& (
 					!section.isExchange()
-					||	(!calendarContext.util.config.bExchange && section.isExchange())
+					|| (!calendarContext.util.config.bExchange && section.isExchange())
 				)
 			)
 			{
@@ -841,11 +845,7 @@ export class SectionInterface extends EventEmitter
 		}
 
 		return {
-			text: (
-				this.isNewProjectsOn
-					? Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_PROJECT')
-					: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB')
-			),
+			text: Loc.getMessage('EC_SEC_SLIDER_POPUP_MENU_ADD_COLLAB'),
 			onclick: (): void => {
 				this.addBtnMenu.close();
 				this.showTrackingCollabsForm();
@@ -1570,6 +1570,7 @@ export class SectionInterface extends EventEmitter
 		const okCaption = this.getOkCaption();
 
 		this.DOM.confirmSectionPopup = new MessageBox({
+			useAirDesign: true,
 			message: this.getSectionConfirmContent(),
 			minHeight: 120,
 			minWidth: 280,
@@ -1589,8 +1590,6 @@ export class SectionInterface extends EventEmitter
 					},
 				},
 				closeByEsc: true,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
 			},
 		});
@@ -1639,22 +1638,19 @@ export class SectionInterface extends EventEmitter
 		return null;
 	}
 
-	getSectionConfirmContent(): HTMLElement
+	getSectionConfirmContent(): string
 	{
-		let phrase = '';
-
 		if (this.currentConfirmMode === 'delete')
 		{
-			phrase = Loc.getMessage('EC_SEC_DELETE_CONFIRM');
-		}
-		else if (this.currentConfirmMode === 'hideSync' || this.currentConfirmMode === 'hideExternal')
-		{
-			phrase = Loc.getMessage('EC_CAL_GOOGLE_HIDE_CONFIRM');
+			return Loc.getMessage('EC_SEC_DELETE_CONFIRM');
 		}
 
-		return Tag.render`
-			<div class="calendar-list-slider-messagebox-text">${phrase}</div>
-		`;
+		if (this.currentConfirmMode === 'hideSync' || this.currentConfirmMode === 'hideExternal')
+		{
+			return Loc.getMessage('EC_CAL_GOOGLE_HIDE_CONFIRM');
+		}
+
+		return '';
 	}
 
 	removeSection(section)

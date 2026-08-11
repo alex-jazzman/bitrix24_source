@@ -4,6 +4,10 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports, main_core, ui_vue3_vuex, booking_const, ui_vue3, booking_core) {
 	'use strict';
 
+	function resolveDefaultSenderCode(senders) {
+		const aiCall = senders.find(s => s.code === booking_const.Communication.AiCall);
+		return aiCall?.canUse ? booking_const.Communication.AiCall : booking_const.Communication.Bitrix24;
+	}
 	function getResource(resourceId) {
 		const store = booking_core.Core.getStore();
 		const resource = store.getters['resources/getById'](resourceId);
@@ -212,6 +216,10 @@ this.BX.Booking = this.BX.Booking || {};
 					if (patch.typeId) {
 						const resourceType = rootGetters[`${booking_const.Model.ResourceTypes}/getById`](patch.typeId);
 						const notificationsData = Object.fromEntries([...Object.values(booking_const.NotificationFieldsMap.NotificationOn), ...Object.values(booking_const.NotificationFieldsMap.TemplateType), ...Object.values(booking_const.NotificationFieldsMap.Settings).flat(), 'senderCode'].map(field => [field, resourceType[field]]));
+						if (!notificationsData.senderCode) {
+							const senders = rootGetters[`${booking_const.Model.Notifications}/getSenders`];
+							notificationsData.senderCode = resolveDefaultSenderCode(senders);
+						}
 						Object.assign(patch, notificationsData);
 					}
 					commit('updateResource', patch);

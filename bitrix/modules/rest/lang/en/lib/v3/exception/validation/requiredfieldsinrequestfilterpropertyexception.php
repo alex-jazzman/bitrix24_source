@@ -1,2 +1,0 @@
-<?php
-$MESS['REST_V3_EXCEPTION_VALIDATION_REQUIREDFIELDSINREQUESTFILTERPROPERTYEXCEPTION'] = 'A filter by the required field `#FIELD#` must be provided.';

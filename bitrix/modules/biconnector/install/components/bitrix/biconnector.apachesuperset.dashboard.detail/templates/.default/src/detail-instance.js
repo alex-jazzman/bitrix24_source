@@ -1,7 +1,7 @@
 import { Dom, Event, Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import type { MenuItemOptions } from 'main.popup';
-import { Menu, MenuItem } from 'main.popup';
+import type { MenuItem, MenuItemOptions } from 'main.popup';
+import { Menu } from 'main.popup';
 import { Loader } from 'main.loader';
 import { DateTimeFormat } from 'main.date';
 import type { DetailConfig } from './type/detail-config';
@@ -15,6 +15,10 @@ import { ChatSelector } from './chat-selector';
 import { AhaMoment } from 'biconnector.aha-moment';
 import { SharePopup } from 'biconnector.share-popup';
 import 'sidepanel';
+
+const COMPACT_HEADER_CLASS = 'dashboard-header--compact';
+const MEASURING_HEADER_CLASS = 'dashboard-header--measuring';
+const HEADER_FIT_SAFETY = 8;
 
 export class DetailInstance
 {
@@ -37,6 +41,16 @@ export class DetailInstance
 	#dashboardSavedEventName: string;
 	#onDashboardSavedHandler: Function;
 	#sharePopup: ?SharePopup;
+
+	#compactHintAbort: ?AbortController;
+
+	#headerNode: ?HTMLElement;
+	#headerTitleText: ?HTMLElement;
+	#headerButtons: ?HTMLElement;
+	#headerChromeWidth: number = 0;
+	#buttonsExpandedWidth: number = 0;
+	#headerResizeObserver: ?ResizeObserver;
+	#headerTitleObserver: ?MutationObserver;
 
 	constructor(config: DetailConfig)
 	{
@@ -253,7 +267,6 @@ export class DetailInstance
 		this.#initMoreMenu();
 		this.#initDownloadButton();
 		this.#initShareButton();
-		this.#initGptButton();
 		this.#initInfoButton();
 
 		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
@@ -275,6 +288,138 @@ export class DetailInstance
 			this.#disableEditButton();
 			Event.unbindAll(this.#editBtn);
 		}
+
+		this.#initAdaptiveHeader();
+		this.#initCompactHints();
+	}
+
+	#initAdaptiveHeader(): void
+	{
+		const header = this.#dashboardNode.querySelector('.dashboard-header');
+		const titleSection = this.#dashboardNode.querySelector('.dashboard-header-title-section');
+		const titleText = this.#dashboardNode.querySelector('#dashboard-selector-text');
+		const selector = this.#dashboardNode.querySelector('#dashboard-selector');
+		const buttons = this.#dashboardNode.querySelector('.dashboard-header-buttons');
+		if (!header || !titleSection || !titleText || !selector || !buttons)
+		{
+			return;
+		}
+
+		this.#headerResizeObserver?.disconnect();
+		this.#headerTitleObserver?.disconnect();
+
+		this.#headerNode = header;
+		this.#headerTitleText = titleText;
+		this.#headerButtons = buttons;
+
+		this.#measureHeaderMetrics(titleSection, selector);
+		this.#evaluateHeaderCompact();
+
+		this.#headerResizeObserver = new ResizeObserver(() => this.#evaluateHeaderCompact());
+		this.#headerResizeObserver.observe(header);
+		this.#headerTitleObserver = new MutationObserver(() => this.#evaluateHeaderCompact());
+		this.#headerTitleObserver.observe(titleText, { characterData: true, childList: true, subtree: true });
+
+		if (document.fonts && document.fonts.ready)
+		{
+			document.fonts.ready.then(() => {
+				if (!this.#headerNode)
+				{
+					return;
+				}
+				this.#measureHeaderMetrics(titleSection, selector);
+				this.#evaluateHeaderCompact();
+			});
+		}
+	}
+
+	#measureHeaderMetrics(titleSection: HTMLElement, selector: HTMLElement): void
+	{
+		const outer = (el: ?HTMLElement, ...sides: Array<string>): number => {
+			if (!el)
+			{
+				return 0;
+			}
+			const cs = window.getComputedStyle(el);
+			return el.getBoundingClientRect().width + sides.reduce((sum, side) => sum + (parseFloat(cs[side]) || 0), 0);
+		};
+
+		this.#headerNode.classList.add(MEASURING_HEADER_CLASS);
+
+		const logoOuter = outer(titleSection.querySelector('.dashboard-header-logo'), 'marginRight');
+		const chevronOuter = outer(selector.querySelector('.dashboard-header-selector-icon'), 'marginLeft', 'marginRight');
+		this.#headerChromeWidth = logoOuter + chevronOuter + HEADER_FIT_SAFETY;
+		this.#buttonsExpandedWidth = this.#headerButtons.getBoundingClientRect().width;
+
+		this.#headerNode.classList.remove(MEASURING_HEADER_CLASS);
+	}
+
+	#evaluateHeaderCompact(): void
+	{
+		if (!this.#headerNode || !this.#headerTitleText)
+		{
+			return;
+		}
+		const needed = this.#headerChromeWidth + this.#headerTitleText.scrollWidth + this.#buttonsExpandedWidth;
+		this.#headerNode.classList.toggle(COMPACT_HEADER_CLASS, needed > this.#headerNode.clientWidth);
+	}
+
+	#initCompactHints()
+	{
+		if (this.#compactHintAbort)
+		{
+			this.#compactHintAbort.abort();
+		}
+		this.#compactHintAbort = new AbortController();
+		const { signal } = this.#compactHintAbort;
+
+		let hintAnchor = null;
+
+		const hide = () => {
+			if (hintAnchor && BX?.UI?.Hint && Type.isFunction(BX.UI.Hint.hide))
+			{
+				BX.UI.Hint.hide(hintAnchor);
+				hintAnchor = null;
+			}
+		};
+
+		const buttons = this.#dashboardNode.querySelectorAll('.dashboard-header-buttons [data-compact-hint]');
+		buttons.forEach((button) => {
+			const label = button.querySelector('.dashboard-header-button-label');
+			const hintText = button.getAttribute('data-compact-hint') || '';
+
+			button.addEventListener('mouseenter', () => {
+				if (!hintText || (label && label.offsetWidth > 0))
+				{
+					return;
+				}
+				if (!BX?.UI?.Hint || !Type.isFunction(BX.UI.Hint.show))
+				{
+					return;
+				}
+				hintAnchor = button;
+				BX.UI.Hint.show(button, hintText, false, false);
+			}, { signal });
+
+			button.addEventListener('mouseleave', hide, { signal });
+			button.addEventListener('click', hide, { signal });
+		});
+	}
+
+	#alignMenuPopupToArrow(button: HTMLElement, popup: Object): void
+	{
+		if (!popup || !Type.isFunction(popup.adjustPosition))
+		{
+			return;
+		}
+		const buttonStyle = window.getComputedStyle(button);
+		const paddingRight = parseFloat(buttonStyle.paddingRight) || 0;
+		const dropdownArrowStyle = window.getComputedStyle(button, '::after');
+		const dropdownArrowWidth = parseFloat(dropdownArrowStyle.width) || 8;
+		const dropdownArrowCenter = button.offsetWidth - paddingRight - dropdownArrowWidth / 2;
+		popup.setOffset({ offsetLeft: Math.round(dropdownArrowCenter), offsetTop: 0 });
+		popup.bindOptions.forceBindPosition = true;
+		popup.adjustPosition();
 	}
 
 	#initInfoButton()
@@ -405,7 +550,10 @@ export class DetailInstance
 			angle: {
 				position: 'top',
 			},
-			bindElement: this.#getRectForButtonArrow(downloadButton),
+			bindElement: downloadButton,
+			events: {
+				onShow: (event) => this.#alignMenuPopupToArrow(downloadButton, event.getTarget()),
+			},
 			autoHide: true,
 			items: [
 				{
@@ -592,7 +740,10 @@ export class DetailInstance
 			angle: {
 				position: 'top',
 			},
-			bindElement: this.#getRectForButtonArrow(shareButton),
+			bindElement: shareButton,
+			events: {
+				onShow: (event) => this.#alignMenuPopupToArrow(shareButton, event.getTarget()),
+			},
 			autoHide: true,
 			items: menuItems,
 		});
@@ -735,111 +886,6 @@ export class DetailInstance
 		return this.#moreMenu;
 	}
 
-	#initGptButton(): void
-	{
-		const gptBtn = this.#dashboardNode.querySelector('#bitrixgpt-btn');
-		if (!gptBtn)
-		{
-			return;
-		}
-
-		Event.unbindAll(gptBtn);
-		Event.bind(gptBtn, 'click', this.#onGptButtonClick.bind(this));
-	}
-
-	// Scaffold for the BitrixGPT button. The previous wiring talked to
-	// `Controller\Superset::loadDashboardDataAction`, which dispatched to
-	// `/data` in bx-superset; both layers were removed when /meta absorbed
-	// the drill-down path (`chart_ids` parameter). The next iteration will
-	// hand the dashboard off through the MCP tool set instead — keeping the
-	// click handler + #showGptResult panel here as scaffolding so we don't
-	// re-author them from scratch.
-	async #onGptButtonClick(): Promise<void>
-	{
-		/*
-		const gptBtn = this.#dashboardNode.querySelector('#bitrixgpt-btn');
-		Dom.addClass(gptBtn, 'ui-btn-wait');
-
-		try
-		{
-			const appliedFilters = await this.#embeddedLoader.getAppliedFilters();
-
-			const response = await BX.ajax.runAction('biconnector.superset.loadDashboardData', {
-				data: {
-					dashboardId: this.#embeddedParams.id,
-					appliedFilters: JSON.stringify(appliedFilters),
-				},
-			});
-
-			this.#showGptResult(response.data);
-		}
-		catch (error)
-		{
-			console.error('BitrixGPT load failed:', error);
-		}
-		finally
-		{
-			Dom.removeClass(gptBtn, 'ui-btn-wait');
-		}
-		*/
-	}
-
-	#showGptResult(data: Object): void
-	{
-		let panel = this.#dashboardNode.querySelector('.dashboard-gpt-panel');
-		if (!panel)
-		{
-			panel = Dom.create('div', {
-				attrs: { className: 'dashboard-gpt-panel' },
-				style: {
-					position: 'fixed',
-					right: '0',
-					top: '0',
-					width: '400px',
-					height: '100vh',
-					backgroundColor: '#fff',
-					borderLeft: '1px solid #e0e0e0',
-					zIndex: '1000',
-					overflow: 'auto',
-					padding: '20px',
-					boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
-				},
-			});
-
-			const closeBtn = Dom.create('div', {
-				attrs: { className: 'ui-icon-set --cross-60' },
-				style: { cursor: 'pointer', float: 'right' },
-				events: {
-					click: () => Dom.remove(panel),
-				},
-			});
-
-			panel.appendChild(closeBtn);
-			this.#dashboardNode.appendChild(panel);
-		}
-
-		const content = panel.querySelector('.dashboard-gpt-panel-content')
-			|| Dom.create('div', { attrs: { className: 'dashboard-gpt-panel-content' } });
-
-		if (!content.parentNode)
-		{
-			panel.appendChild(content);
-		}
-
-		const pre = Dom.create('pre', {
-			style: {
-				whiteSpace: 'pre-wrap',
-				wordBreak: 'break-word',
-				fontSize: '12px',
-				lineHeight: '1.4',
-			},
-			text: JSON.stringify(data, null, 2),
-		});
-
-		content.innerHTML = '';
-		content.appendChild(pre);
-	}
-
 	#postOptionsForFilter(event): void
 	{
 		if (event.origin === this.#embeddedParams.supersetDomain)
@@ -862,23 +908,4 @@ export class DetailInstance
 		return this.#embeddedParams.filters[filterId] || [];
 	}
 
-	#getRectForButtonArrow(button: HTMLElement): Object
-	{
-		const buttonRect = button.getBoundingClientRect();
-
-		const buttonStyle = window.getComputedStyle(button);
-		const paddingRight = parseFloat(buttonStyle.paddingRight) || 0;
-
-		const arrowStyle = window.getComputedStyle(button, '::after');
-		const arrowWidth = parseFloat(arrowStyle.width) || 0;
-
-		const arrowCenterX = buttonRect.right - (paddingRight + arrowWidth / 2);
-
-		return {
-			top: buttonRect.top,
-			bottom: buttonRect.bottom,
-			left: arrowCenterX,
-			right: arrowCenterX,
-		};
-	}
 }

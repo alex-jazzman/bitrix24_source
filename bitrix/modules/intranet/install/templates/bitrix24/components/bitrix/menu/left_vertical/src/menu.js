@@ -65,6 +65,7 @@ export default class Menu
 		Options.showLicenseButton = params.showLicenseButton;
 		Options.licenseButtonPath = params.licenseButtonPath;
 		Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
+		Options.currentPresetId = params.currentPresetId;
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.analytics = new Analytics(params.isAdmin);
@@ -285,6 +286,7 @@ export default class Menu
 						},
 					},
 				},
+				Options.currentPresetId,
 			);
 
 			return presetController;
@@ -497,33 +499,6 @@ export default class Menu
 	showError(bindElement)
 	{
 		this.showMessage(bindElement, Loc.getMessage('edit_error'));
-	}
-
-	showGlobalPreset()
-	{
-		const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
-
-		if (BannerDispatcher)
-		{
-			this.addGlobalPresetToBannerDispatcher(BannerDispatcher);
-		}
-		else
-		{
-			Runtime.loadExtension('ui.banner-dispatcher').then((exports) => {
-				this.addGlobalPresetToBannerDispatcher(exports.BannerDispatcher);
-			}).catch(() => {});
-		}
-	}
-
-	addGlobalPresetToBannerDispatcher(BannerDispatcher: BannerDispatcher)
-	{
-		BannerDispatcher.high.toQueue((onDone) => {
-			const presetController = this.getDefaultPresetController();
-			presetController.show('global');
-			presetController.getPopup().subscribe('onAfterClose', (event) => {
-				onDone();
-			});
-		});
 	}
 
 	handleShowHiddenClick()

@@ -22,7 +22,6 @@ if($APPLICATION->GetGroupRight("seo") > "D")
 		$bShowYandexServices =
 			COption::GetOptionString('main', 'vendor', '') == '1c_bitrix'
 			&& Loc::getDefaultLang(LANGUAGE_ID) == 'ru';
-		$bShowGoogleServices = $bShowYandexServices;
 		
 		$aMenu = array(
 			array(
@@ -147,13 +146,6 @@ if($APPLICATION->GetGroupRight("seo") > "D")
 			$arAdvList[] = $yandexAdvItem;
 		}
 		
-		// not show Yandex and Google on portal
-		if($bShowGoogleServices)
-			$arEngineList[] = [
-				'url' => 'seo_search_google.php?lang='.LANGUAGE_ID,
-				'text' => Loc::getMessage("SEO_MENU_GOOGLE"),
-			];
-
 		if(count($arEngineList) > 0)
 		{
 			$aMenu[0]["items"][] = [

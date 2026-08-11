@@ -16,6 +16,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		BotCode,
 		UserType,
 		UserInputAction,
+		CopilotRoleType,
 		Color: MessengerColor,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -141,7 +142,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 			else if (dialog.type && dialog.type === DialogType.copilot)
 			{
-				this.description = this.getCopilotRoleName();
+				this.#applyCopilotTitle();
 			}
 
 			this.createDialogNameColor(dialog);
@@ -152,12 +153,24 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		static createOptimisticCopilotTitleParams()
 		{
-			const title = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COPILOT_OPTIMISTIC_TITLE');
+			let title = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COPILOT_OPTIMISTIC_TITLE');
+			let detailText = ChatTitle.getChatDescriptionByDialogType(DialogType.copilot);
+
+			if (Feature.isBitrixGptV2Available)
+			{
+				const agentName = Loc.getCopilotAgentName();
+				if (Type.isStringFilled(agentName))
+				{
+					title = agentName;
+				}
+				detailText = Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_PERSONAL_ASSISTANT');
+			}
+
 			const avatar = ChatAvatar.createOptimisticCopilotAvatar(title);
 
 			return {
 				text: title,
-				detailText: ChatTitle.getChatDescriptionByDialogType(DialogType.copilot),
+				detailText,
 				imageUrl: avatar.uri,
 				useLetterImage: true,
 				avatar,
@@ -893,19 +906,71 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		}
 
 		/**
-		 * @desc get name copilot role
+		 * @desc Selected CoPilot role name (or "online" when no role is set).
 		 * @return {string}
 		 * @private
 		 */
 		getCopilotRoleName()
 		{
 			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.dialogId);
+
 			if (!copilotMainRole || !Type.isStringFilled(copilotMainRole?.name))
 			{
 				return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
 			}
 
 			return copilotMainRole?.name;
+		}
+
+		/**
+		 * @desc CoPilot role is not selected (universal assistant role).
+		 * @return {boolean}
+		 */
+		isCopilotUniversalRole()
+		{
+			const copilotData = this.store.getters['dialoguesModel/copilotModel/getByDialogId'](this.dialogId);
+			const mainRole = copilotData?.roles?.[copilotData?.chats?.[0]?.role];
+
+			return !mainRole || mainRole?.code === CopilotRoleType.copilotUniversalRole;
+		}
+
+		/**
+		 * @desc Single source of CoPilot dialog naming: sets title/description across 3 branches
+		 * so getTitle()/getDescription() stay consistent everywhere.
+		 */
+		#applyCopilotTitle()
+		{
+			if (!Feature.isBitrixGptV2Available)
+			{
+				this.description = this.getCopilotRoleName();
+
+				return;
+			}
+
+			const copilotData = this.store.getters['dialoguesModel/copilotModel/getByDialogId'](this.dialogId);
+			const mainRole = copilotData?.roles?.[copilotData?.chats[0]?.role];
+			const isUniversalRole = !mainRole || mainRole?.code === CopilotRoleType.copilotUniversalRole;
+			if (!isUniversalRole)
+			{
+				this.description = this.getCopilotRoleName();
+
+				return;
+			}
+
+			const agentName = Loc.getCopilotAgentName();
+			const hasCopilotCustomTitle = copilotData?.chats?.[0]?.titleIsCustom
+			if (hasCopilotCustomTitle)
+			{
+				this.description = Type.isStringFilled(agentName) ? agentName : this.getCopilotRoleName();
+
+				return;
+			}
+
+			if (Type.isStringFilled(agentName))
+			{
+				this.name = agentName;
+			}
+			this.description = Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_PERSONAL_ASSISTANT');
 		}
 	}
 

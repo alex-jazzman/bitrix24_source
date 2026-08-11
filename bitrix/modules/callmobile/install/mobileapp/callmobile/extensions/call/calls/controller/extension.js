@@ -14,6 +14,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 	const { BitrixCallJwt } = require('call/calls/bitrix-jwt');
 	const { CallMenu } = require('call/calls/menu');
 	const { DeviceAccessError, CallJoinedElseWhereError, CallStub } = require('call/calls/engine');
+	const { stuckCallFinishTracker } = require('call/calls/stuck-call-finish-tracker');
 	const { CallSettingsManager } = require('call/settings-manager');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
@@ -22,10 +23,23 @@ jn.define('call/calls/controller', (require, exports, module) => {
 	const { Tourist } = require('tourist');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
-	const DEFAULT_DEVICE = 'speaker';
+	const AUDIO_DEVICE = Object.freeze({
+		BLUETOOTH: 'bluetooth',
+		WIRED: 'wired',
+		RECEIVER: 'receiver',
+		SPEAKER: 'speaker',
+		NONE: 'none',
+	});
+
+	const DEFAULT_DEVICE = AUDIO_DEVICE.SPEAKER;
 
 	const CAMERA_BUTTON_CLICK_THROTTLE_DELAY = 500;
 	const ANSWER_CONNECTION_TIMEOUT_MS = 8000;
+
+	const IS_ANDROID = device.platform === 'android';
+	const IS_IOS = device.platform === 'iOS';
+
+	const LARGE_CALL_ERROR = 'largeCallsRejection';
 
 	class CallController
 	{
@@ -76,6 +90,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onCallUserMicrophoneStateHandler = this.onCallUserMicrophoneState.bind(this);
 			this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
 			this.onCallUserVideoPausedHandler = this.onCallUserVideoPaused.bind(this);
+			this.onCallUserCameraStateHandler = this.onCallUserCameraState.bind(this);
 			this.onCallUsersLimitExceededHandler = this.onCallUsersLimitExceeded.bind(this);
 			this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 			this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
@@ -147,6 +162,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this._nativeAnsweredAction = null;
 			this.ignoreNativeCallAnswer = false;
 
+			this.answeredElsewhereCalls = new Set();
+
 			this.onProximitySensorDebounced = CallUtil.debounce(this.onProximitySensor.bind(this), 500);
 			this.init();
 
@@ -162,6 +179,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			BX.addCustomEvent('onCallInvite', this.onCallInvite.bind(this));
 			// new incoming call (from CallEngine)
 			BX.addCustomEvent('CallEvents::incomingCall', this.onIncomingCall.bind(this));
+			BX.addCustomEvent('onPullEvent-call', this.onPullSelfAnswerElsewhere.bind(this));
 			BX.addCustomEvent(EventType.callMobile.chatUserChanged, this.onChatUserChanged.bind(this));
 
 			// try join existing call (from chat)
@@ -430,6 +448,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
+			if (CallUtil.getIsLargeRoom(e.chatData.chatId)
+				&& !CallSettingsManager.isLargeMobileCallEnabled
+			)
+			{
+				this.__createErrorControlToast(BX.message('MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED'));
+				return;
+			}
+
 			const chatData = e.chatData || {};
 			const userData = e.userData || {};
 			const dialogData = {
@@ -633,6 +659,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						console.log('startCall.BitrixDev.createCall.createResult', createResult);
 
 						this.currentCall = createResult.call;
+
 						this.bindCallEvents();
 						if (!this.callView)
 						{
@@ -946,6 +973,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					: callEngine.getJwtCallWithId(callInfo.callUuid, callConfig);
 			}).then((result) => {
 				this.currentCall = result.call;
+
+				if (this.#isLargeCallBlocked(this.currentCall.connectionData?.roomType))
+				{
+					return Promise.reject(LARGE_CALL_ERROR);
+				}
+
 				device.setIdleTimerDisabled(true);
 				this.changeProximitySensorStatus(true);
 
@@ -999,6 +1032,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					{
 						// Stuck call: the media room is gone. Finish it on the PHP side
 						// with silent=Y (no chat spam) and drop the recent card locally.
+						// Debounce via stuckCallFinishTracker: delay the REST so a
+						// concurrent Pull `Call::finish` can cancel it before it hits
+						// the server. Engine pull handler calls
+						// stuckCallFinishTracker.cancelPending(id, uuid) on arrival.
 						const finishData = { silent: 'Y' };
 						if (callInfo.callId)
 						{
@@ -1010,9 +1047,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						}
 						if (finishData.callId || finishData.callUuid)
 						{
-							callEngine.getRestClient()
-								.callMethod('call.CallManager.finish', finishData)
-								.catch((e) => CallUtil.error('call.CallManager.finish failed', e));
+							stuckCallFinishTracker.scheduleFinish(
+								finishData.callId,
+								finishData.callUuid,
+								() => callEngine.getRestClient()
+									.callMethod('call.CallManager.finish', finishData)
+									.catch((e) => CallUtil.error('call.CallManager.finish failed', e)),
+							);
 
 							const callFields = {
 								id: callInfo.callId,
@@ -1025,6 +1066,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						}
 
 						this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'));
+					}
+					else if (error === LARGE_CALL_ERROR)
+					{
+						this.__createErrorControlToast(BX.message('MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED'));
 					}
 					else if (error instanceof CallJoinedElseWhereError)
 					{
@@ -1048,6 +1093,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						: callInfo.callUuid
 					;
 					this.sendJoinCallErrorAnalytics(errorCode, analyticsCallId);
+					this.clearEverything();
 				});
 		}
 
@@ -1058,6 +1104,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			const newCall = callEngine.legacyCalls[e.callId] || callEngine.jwtCalls[e.callUuid];
 
 			if (!this.canCallBeAnswered(newCall, e.ignoreCallTimeout))
+			{
+				return;
+			}
+
+			// Mark is auto-cleared by TTL in onPullSelfAnswerElsewhere (~5s) — that's how
+			// race (initial invite right after self-answer) is told apart from a manual
+			// re-invite into the same callUuid: race lives in the TTL window, manual
+			// re-invite happens later when the mark is already gone.
+			if (
+				(newCall?.uuid && this.answeredElsewhereCalls.has(newCall.uuid))
+				|| (e.callUuid && this.answeredElsewhereCalls.has(e.callUuid))
+				|| (newCall?.id && this.answeredElsewhereCalls.has(String(newCall.id)))
+				|| (e.callId && this.answeredElsewhereCalls.has(String(e.callId)))
+			)
 			{
 				return;
 			}
@@ -1306,9 +1366,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						this.currentCall.setConnectionData({
 							mediaServerUrl: response.result.mediaServerUrl,
 							roomData: response.result.roomData,
+							roomType: response.result.roomType,
 						});
 					}
 				});
+
+				if (this.#isLargeCallBlocked(response.result.roomType))
+				{
+					return Promise.reject(LARGE_CALL_ERROR);
+				}
 
 				return this.requestDeviceAccess(useVideo);
 			}).then(() => {
@@ -1344,6 +1410,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
 				}
+				else if (error === LARGE_CALL_ERROR)
+				{
+					this.__createErrorControlToast(BX.message('MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED'), true);
+				}
 				else if (
 					error?.errorCode === BX.Call.ErrorPreventingReconnection.CanNotCreateRoom
 					|| error?.errorCode === BX.Call.ErrorPreventingReconnection.RoomNotFound
@@ -1353,6 +1423,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					// Stuck call: media room is gone. Finish on PHP with silent=Y and
 					// drop the recent card locally. `call` may be a CallStub (only
 					// callId) or a PlainCallJwt (id + uuid) — pass whichever exists.
+					// Debounce via stuckCallFinishTracker: delay the REST so a
+					// concurrent Pull `Call::finish` can cancel it before it hits
+					// the server.
 					const callId = call?.id ?? call?.callId ?? null;
 					const callUuid = call?.uuid ?? null;
 					if (callId || callUuid)
@@ -1366,9 +1439,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						{
 							finishData.callUuid = callUuid;
 						}
-						callEngine.getRestClient()
+						stuckCallFinishTracker.scheduleFinish(callId, callUuid, () => callEngine.getRestClient()
 							.callMethod('call.CallManager.finish', finishData)
-							.catch((e) => CallUtil.error('call.CallManager.finish failed', e));
+							.catch((e) => CallUtil.error('call.CallManager.finish failed', e)));
 
 						const callFields = {
 							id: callId,
@@ -1648,6 +1721,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.on(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
 				.on(BX.Call.Event.onUserVideoPaused, this.onCallUserVideoPausedHandler)
+				.on(BX.Call.Event.onUserCameraState, this.onCallUserCameraStateHandler)
 				.on(BX.Call.Event.onUsersLimitExceeded, this.onCallUsersLimitExceededHandler)
 				.on(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler)
 				.on(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler)
@@ -1698,6 +1772,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.off(BX.Call.Event.onUserStateChanged, this.onCallUserStateChangedHandler)
 				.off(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.off(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
+				.off(BX.Call.Event.onUserCameraState, this.onCallUserCameraStateHandler)
 				.off(BX.Call.Event.onUsersLimitExceeded, this.onCallUsersLimitExceededHandler)
 				.off(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler)
 				.off(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler)
@@ -1830,11 +1905,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							this.callView.setVideoStreams([{id: env.userId, stream: this.localVideoStream, mirrorLocalVideo: (MediaDevices.cameraDirection === 'front')}]);
 						}
 
-						if (CallUtil.getSdkAudioManager().currentDevice !== 'bluetooth')
+						if (CallUtil.getSdkAudioManager().currentDevice !== AUDIO_DEVICE.BLUETOOTH)
 						{
 							this.selectedAudioDeviceOnIncoming = viewProps.isVideoCall !== false
 								? DEFAULT_DEVICE
-								: 'receiver';
+								: AUDIO_DEVICE.RECEIVER;
 							CallUtil.getSdkAudioManager().selectAudioDevice(this.selectedAudioDeviceOnIncoming);
 							this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 						}
@@ -2674,7 +2749,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (this.callView)
 			{
 				CallUtil.setUserData(e.userData);
-				this.callView.setUserData(e.userData);
+				// skipUpdate: the user model is created synchronously by setUserStates and the
+				// render is flushed once by the (debounced) updateDisplayedUsers below. Without it,
+				// a live mass-join fired one extra empty force-render per joined user.
+				this.callView.setUserData(e.userData, { skipUpdate: true });
 				this.callView.setUserStates({ [e.userId]: BX.Call.UserState.Idle });
 				this.onCallUserStateChanged(e.userId, BX.Call.UserState.Connected);
 
@@ -2684,29 +2762,42 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onCallUsersJoined(users)
 		{
-			if (this.callView)
+			if (!this.callView || !Array.isArray(users) || users.length === 0)
 			{
-				users.forEach((user) => {
-					CallUtil.setUserData({
-						[user.id]: {
-							name: user.userName,
-							avatar_hr: user.avatarImage,
-							avatar: user.avatarImage,
-						},
-					});
-
-				})
-				// this.callView.setUserData(users);
-				this.callView.addAllUsers(users);
-
-				users.forEach((user) => {
-					this.onCallUserStateChanged(user.id, BX.Call.UserState.Connected, null, false, false);
-				})
-
-				this.callView.updateDisplayedUsers();
+				return;
 			}
 
-			this.callView.updateTotalUsersCount(this.currentCall?.associatedEntity?.userCounter);
+			const mergedUserDataMap = users.reduce((acc, user) => {
+				acc[user.id] = {
+					name: user.name,
+					avatar_hr: user.avatar_hr,
+					avatar: user.avatar,
+				};
+				return acc;
+			}, {});
+
+			CallUtil.setUserData(mergedUserDataMap);
+
+			this.callView.applyUsersJoined(users, {
+				totalUsersCount: this.currentCall?.associatedEntity?.userCounter,
+			});
+
+			// Group-level side effects from onCallUserStateChanged(Connected) — once per batch.
+			media.audioPlayer().stopPlayingSound();
+
+			if (!this.callStartTime)
+			{
+				this.stopAnswerConnectionTimeout();
+				this.callStartTime = Date.now();
+				callInterface.indicator().setMode('active');
+				this.startCallTimer();
+			}
+
+			if (this._nativeAnsweredAction)
+			{
+				this._nativeAnsweredAction.fullfill();
+				this._nativeAnsweredAction = null;
+			}
 		}
 
 		onCallUserStateChanged(userId, state, prevState, isLegacyMobile, canChangeUI)
@@ -2762,6 +2853,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (this.callView)
 			{
 				this.callView.setUserVideoPaused(userId, videoPaused);
+			}
+		}
+
+		onCallUserCameraState(userId, cameraState)
+		{
+			if (this.callView && !cameraState)
+			{
+				this.callView.setVideoStream(userId, null);
 			}
 		}
 
@@ -2935,10 +3034,111 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		declineCall()
 		{
+			const declinePromise = this.currentCall
+				? this.currentCall.decline(603)
+				: Promise.resolve();
+
+			this.clearEverything();
+
+			return declinePromise;
+		}
+
+		// Closes the incoming card when the same user answered on another device.
+		// Reacts at controller level (not inside the call object) so the close fires even if
+		// Call::answer / Call::usersAnswered arrives in the race window between
+		// engine creating the call object and controller subscribing via bindCallEvents().
+		onPullSelfAnswerElsewhere(command, params)
+		{
+			if (command !== 'Call::answer' && command !== 'Call::usersAnswered')
+			{
+				return;
+			}
+
+			if (this.currentCall?.ready)
+			{
+				return;
+			}
+
+			const eventCallId = params?.call?.ID || params?.call?.id || params?.callId;
+			const eventCallUuid = params?.call?.UUID || params?.call?.uuid || params?.callUuid;
+
+			if (!eventCallId && !eventCallUuid)
+			{
+				return;
+			}
+
+			// If currentCall is already set, react only to events for that very call.
+			// If it's not set yet (Pull beat controller.onIncomingCall), fall through —
+			// we'll mark the elsewhere answer by event ids so the upcoming onIncomingCall skips.
 			if (this.currentCall)
 			{
-				this.currentCall.decline(603);
+				const currentCallId = this.currentCall.id;
+				const currentCallUuid = this.currentCall.uuid;
+				const matchesCurrentCall = (currentCallUuid && eventCallUuid && currentCallUuid === eventCallUuid)
+					|| (currentCallId && eventCallId && String(currentCallId) === String(eventCallId));
+				if (!matchesCurrentCall)
+				{
+					return;
+				}
 			}
+
+			const myInstanceId = this.currentCall?.instanceId;
+			const candidates = command === 'Call::usersAnswered'
+				? (Array.isArray(params?.senders) ? params.senders : [])
+				: [params];
+
+			// Without a local instanceId yet (currentCall not created here), any self-answer
+			// with a non-empty callInstanceId is by definition elsewhere.
+			const elsewhere = candidates.some((entry) =>
+				Number(entry?.senderId) === Number(env.userId)
+				&& entry?.callInstanceId
+				&& (!myInstanceId || entry.callInstanceId !== myInstanceId),
+			);
+			if (!elsewhere)
+			{
+				return;
+			}
+
+			// Record by both forms — onIncomingCall checks newCall.uuid, but for legacy/classic
+			// calls the upstream identifier might come as id only.
+			// TTL ~5s separates race (initial invite right after self-answer, comes in <1s)
+			// from manual re-invite into the same callUuid (user-driven, much later).
+			const markKeys = [];
+			if (eventCallUuid)
+			{
+				this.answeredElsewhereCalls.add(eventCallUuid);
+				markKeys.push(eventCallUuid);
+			}
+			if (eventCallId)
+			{
+				const idKey = String(eventCallId);
+				this.answeredElsewhereCalls.add(idKey);
+				markKeys.push(idKey);
+			}
+			setTimeout(() => {
+				markKeys.forEach((key) => this.answeredElsewhereCalls.delete(key));
+			}, 7000);
+
+			if (!this.currentCall)
+			{
+				const nativeCall = ('callservice' in window) ? callservice.currentCall() : null;
+				const nativeCallId = nativeCall?.params?.call?.ID || nativeCall?.params?.call?.id;
+				const nativeCallUuid = nativeCall?.params?.call?.UUID || nativeCall?.params?.call?.uuid;
+				const matchesNativeCall = nativeCall?.params?.type === 'internal'
+					&& (
+						(eventCallUuid && nativeCallUuid === eventCallUuid)
+						|| (eventCallId && String(nativeCallId) === String(eventCallId))
+					);
+
+				if (matchesNativeCall)
+				{
+					this.nativeCall = nativeCall;
+					this.clearEverything();
+				}
+
+				return;
+			}
+
 			this.clearEverything();
 		}
 
@@ -3142,7 +3342,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				await this.currentCall?.setVideoEnabled(state);
 				this.callView?.setCameraState(state);
-				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, state);
+
+				let audioDeviceForProximity = null;
+				if (IS_ANDROID && this.selectedAudioDeviceOnIncoming)
+				{
+					CallUtil.getSdkAudioManager().selectAudioDevice(this.selectedAudioDeviceOnIncoming);
+					this.callView?.setSoundOutputDevice(this.selectedAudioDeviceOnIncoming);
+					audioDeviceForProximity = this.selectedAudioDeviceOnIncoming;
+				}
+
+				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, audioDeviceForProximity, state);
 			}
 			catch (err)
 			{
@@ -3213,6 +3422,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 
 			Notification.showErrorToast(toastParams, this.rootWidget);
+		}
+
+		#isLargeCallBlocked(roomType)
+		{
+			return roomType === BX.Call.RoomType.Large
+				&& !CallSettingsManager.isLargeMobileCallEnabled;
 		}
 
 		#runWithCurrentCallGuard(callback)
@@ -3493,7 +3708,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		chooseAudioDevice()
 		{
-			if (CallUtil.getSdkAudioManager().currentDevice === 'bluetooth')
+			if (CallUtil.getSdkAudioManager().currentDevice === AUDIO_DEVICE.BLUETOOTH)
 			{
 				this.callView?.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 				return;
@@ -3569,6 +3784,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onNativeCallEnded(nativeAction)
 		{
+			let actionPromise = Promise.resolve();
+
 			if (this.nativeCall && this.nativeCall.connected)
 			{
 				this.onHangupButtonClick();
@@ -3580,13 +3797,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 			else
 			{
-				this.declineCall();
+				actionPromise = this.declineCall();
 			}
 
-			// todo: remove if (nativeAction) :)
 			if (nativeAction)
 			{
-				setTimeout(() => nativeAction.fullfill(), 500);
+				const fulfillAction = () => nativeAction.fullfill();
+				const safetyTimeout = new Promise((resolve) => {
+					setTimeout(resolve, 500);
+				});
+
+				Promise.race([actionPromise, safetyTimeout])
+					.catch(() => {})
+					.then(fulfillAction);
 			}
 		}
 
@@ -3698,6 +3921,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			device.setIdleTimerDisabled(false);
 			this.changeProximitySensorStatus(false);
 			this.callWithLegacyMobile = false;
+			this.selectedAudioDeviceOnIncoming = null;
 
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
@@ -3775,7 +3999,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				isVideoEnabled = this.currentCall.isVideoEnabled();
 			}
-			if (audioDevice != 'receiver' || isVideoEnabled)
+			if (audioDevice != AUDIO_DEVICE.RECEIVER || isVideoEnabled)
 			{
 				device.setProximitySensorEnabled(false);
 				return;
@@ -3835,18 +4059,31 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		checkOutputDevice()
 		{
-			const setDevice = this.callView?.state?.soundOutputDevice;
-			if (device.platform === 'iOS'
-				&& CallUtil.getSdkAudioManager().currentDevice === 'bluetooth'
-				&& (setDevice === 'receiver' || setDevice === 'wired')
+			const setDevice = this.callView?.getSoundOutputDevice();
+			if (IS_IOS
+				&& CallUtil.getSdkAudioManager().currentDevice === AUDIO_DEVICE.BLUETOOTH
+				&& (setDevice === AUDIO_DEVICE.RECEIVER || setDevice === AUDIO_DEVICE.WIRED)
 			)
 			{
 				this.__createHintControlToast({ message: BX.message('CALLMOBILE_MESSAGE_SWITCH_BP_DEVICE') });
 			}
 
-			if (this.callView && this.callView.state.soundOutputDevice !== CallUtil.getSdkAudioManager().currentDevice)
+			const currentSdkDevice = CallUtil.getSdkAudioManager().currentDevice;
+
+			if (IS_ANDROID
+				&& this.selectedAudioDeviceOnIncoming
+				&& currentSdkDevice !== this.selectedAudioDeviceOnIncoming
+				&& currentSdkDevice !== AUDIO_DEVICE.BLUETOOTH
+				&& currentSdkDevice !== AUDIO_DEVICE.WIRED)
 			{
-				this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
+				CallUtil.getSdkAudioManager().selectAudioDevice(this.selectedAudioDeviceOnIncoming);
+
+				return;
+			}
+
+			if (this.callView && this.callView.state.soundOutputDevice !== currentSdkDevice)
+			{
+				this.callView.setSoundOutputDevice(currentSdkDevice);
 			}
 		}
 

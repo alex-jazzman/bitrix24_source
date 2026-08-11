@@ -1,0 +1,11 @@
+.bx-im-message-block-space-divider__container.--size-s {
+	height: 10px;
+}
+
+.bx-im-message-block-space-divider__container.--size-m {
+	height: 16px;
+}
+
+.bx-im-message-block-space-divider__container.--size-l {
+	height: 24px;
+}

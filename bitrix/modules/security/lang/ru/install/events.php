@@ -30,4 +30,58 @@ $MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_DESC"] = "#USER_PHONE# - номе�
 #CODE# - код подтверждения
 ";
 $MESS["SECURITY_INSTALL_SMS_TEMPLATE_OTP_CONFIRM_MESS"] = "#CODE# — код подтверждения для входа в Битрикс24";
+$MESS['SEC_EVENT_USER_OTP_NAME'] = 'Одноразовый пароль';
+$MESS['SEC_EVENT_USER_OTP_DESC'] = '#USER_ID# - ID пользователя
+#EMAIL# - Резервный email для одноразового пароля
+#LOGIN# - Логин
+#CODE# - Одноразовый пароль
+#DATE# - Дата и время
+#DEVICE# - Тип устройства
+#BROWSER# - Название браузера
+#PLATFORM# - Платформа
+#DEVICE_INFO# - Комбинированная информация об устройстве
+#USER_AGENT# - User Agent браузера
+#IP# - IP-адрес
+#COUNTRY# - Страна
+#REGION# - Регион
+#CITY# - Город
+#LOCATION# - Комбинированное местоположение
+#HELP_URL# - Ссылка на документацию
+';
+$MESS['SEC_TEMPLATE_USER_OTP_SUBJECT'] = '#SITE_NAME#: Одноразовый пароль';
+$MESS['SEC_TEMPLATE_USER_OTP_MESSAGE'] = 'В ваш аккаунт на #SERVER_NAME# выполнен вход и запрошен одноразовый пароль:
+				
+#CODE#
+				
+Проверьте данные и убедитесь, что это были вы.
+
+Дата: #DATE#
+Логин: #LOGIN#
+Устройство: #DEVICE_INFO#
+Браузер: #USER_AGENT#
+IP-адрес: #IP#
+Местоположение: #LOCATION#
+
+Если это не вы, рекомендуем как можно скорее сменить пароль. 
+
+Подробнее о защите аккаунта: #HELP_URL#
+';
+$MESS['SEC_EVENT_USER_OTP_CONFIRM_NAME'] = 'Подтверждение резервного email';
+$MESS['SEC_EVENT_USER_OTP_CONFIRM_DESC'] = '#USER_ID# - ID пользователя
+#EMAIL# - Резервный email для одноразового пароля
+#LOGIN# - Логин
+#CODE# - Код подтверждения
+#DATE# - Дата и время
+';
+$MESS['SEC_TEMPLATE_USER_OTP_CONFIRM_SUBJECT'] = '#SITE_NAME#: Код для подтверждения почты';
+$MESS['SEC_TEMPLATE_USER_OTP_CONFIRM_MESSAGE'] = 'Скопируйте код для подтверждения почты и вставьте его в Битрикс24:
+				
+#CODE#
+				
+Если вы получили это письмо по ошибке, проигнорируйте его.
+
+Ваш Битрикс24: #SERVER_NAME#
+Логин для входа: #LOGIN#
+Дата: #DATE#
+';
 ?>

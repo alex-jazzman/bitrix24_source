@@ -10,6 +10,7 @@ export default class ItemSharing extends Item
 		const objectId = dataset.objectId;
 		const objectName = dataset.objectName;
 		const mode = dataset.type;
+		const uniqueCode = dataset.uniqueCode;
 		const supportsSharingAccessPopup = dataset.supportsSharingAccessPopup === 'true';
 
 		this.data['onclick'] = () => {
@@ -42,6 +43,7 @@ export default class ItemSharing extends Item
 				const popup = new SharingPopupDialog();
 				popup.open({
 					objectId: Number(objectId),
+					uniqueCode,
 				});
 			});
 		};

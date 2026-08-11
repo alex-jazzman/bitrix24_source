@@ -4,9 +4,9 @@ const unitDurations = Duration.getUnitDurations();
 
 export const SlotLengthLimitWithoutMultiday = (unitDurations.H * 12) / unitDurations.i;
 
-export function normalizeSlotLength(slotLength: number, isMultidayFeatureAvailable: boolean): number
+export function normalizeSlotLength(slotLength: number, isMultidayFeatureEnabled: boolean): number
 {
-	if (isMultidayFeatureAvailable || slotLength <= SlotLengthLimitWithoutMultiday)
+	if (isMultidayFeatureEnabled || slotLength <= SlotLengthLimitWithoutMultiday)
 	{
 		return slotLength;
 	}

@@ -14,7 +14,7 @@ $isCheckinEnabled = false;
 if (Main\Loader::includeModule('timeman'))
 {
 	$counter = Counter::get();
-	$isCheckinEnabled = CheckIn::isEnabled();
+	$isCheckinEnabled = CheckIn::isGeoAvailable();
 }
 
 return [

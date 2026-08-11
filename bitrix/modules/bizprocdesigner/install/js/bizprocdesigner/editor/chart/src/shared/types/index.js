@@ -1,7 +1,9 @@
-import { TEMPLATE_PUBLISH_STATUSES } from '../../entities/blocks';
+import { TEMPLATE_PUBLISH_STATUSES } from '../../entities/blocks/index.js';
 
-// eslint-disable-next-line import/named
-import { SHARED_TOAST_TYPES } from '../constants';
+import {
+	SHARED_TOAST_TYPES,
+	TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE,
+} from '../constants';
 
 export type BlockId = string;
 
@@ -39,6 +41,7 @@ export type BlockNode = {
 	type: string;
 	icon: string;
 	colorIndex: number;
+	contentBlockColor?: ?number;
 	shouldShowAuxPorts?: boolean;
 };
 
@@ -93,7 +96,19 @@ export type DiagramTemplate = {
 	DOCUMENT_TYPE: string,
 	PARAMETERS?: any,
 	VARIABLES?: any,
-	CONSTANTS?: any,
+	CONSTANTS?: DiagramTemplateGeneralData,
+};
+
+export type DiagramTemplateGeneralData = {
+	[String]: {
+		Name: string,
+		Default: any,
+		Description: string,
+		Multiple: number,
+		Type: string,
+		Required: number,
+		Options: Array,
+	},
 };
 
 export type UpdateTemplateData = {
@@ -160,6 +175,30 @@ export type BufferContent = {
 	content: Block,
 };
 
+export type DocumentField = {
+	fieldKey: string,
+	name: string,
+	type: string,
+	multiple: boolean,
+	required: boolean,
+	options: { [string]: string },
+	property: { [string]: mixed },
+};
+
+export type EntitySelectorItem = {
+	title?: string,
+	customData?: {
+		fieldKey?: string,
+		field?: {
+			type?: string,
+			multiple?: boolean,
+			required?: boolean,
+			options?: { [string]: string },
+		},
+		property?: { [string]: mixed },
+	},
+};
+
 export type SettingsControls = {
 	brokenLinks: { [key: string]: string };
 	controls: Array;
@@ -167,3 +206,31 @@ export type SettingsControls = {
 }
 
 export type BlockFrameTextAlign = 'none' | 'top' | 'bottom' | 'left' | 'right';
+
+export type DiagramStore = DiagramData & {
+	template: DiagramTemplate;
+	blocks: Array<Block>;
+	connections: Array<Connection>;
+	getInputConnections: (block: Block) => Array<Connection>;
+};
+
+export type TemplateDataItem = {
+	id: string;
+	name: string;
+	computeValue: string;
+	type: string;
+};
+
+export type TemplateDataGeneralGroup = {
+	items: Array<TemplateDataItem>;
+}
+
+export type TemplateDataNodeGroup = TemplateDataGeneralGroup & {
+	nodeId: BlockId,
+	icon: ?string,
+	name: string,
+};
+
+export type TemplateDataTemplateGroup = TemplateDataGeneralGroup & {
+	type: $Values<typeof TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE>;
+};

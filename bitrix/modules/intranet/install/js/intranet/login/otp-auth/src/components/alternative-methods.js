@@ -11,6 +11,10 @@ export const AlternativeMethods = {
 			type: Boolean,
 			default: false,
 		},
+		canLoginByEmail: {
+			type: Boolean,
+			default: false,
+		},
 		isRecoveryCodesEnabled: {
 			type: Boolean,
 			default: false,
@@ -29,6 +33,11 @@ export const AlternativeMethods = {
 		{
 			this.$emit('show-sms');
 			this.sendAnalytics('choose_auth_type', 'sms');
+		},
+		showEmail()
+		{
+			this.$emit('show-email');
+			this.sendAnalytics('choose_auth_type', 'email');
 		},
 		showRecoveryCodes()
 		{
@@ -72,6 +81,10 @@ export const AlternativeMethods = {
 			</Headline>
 
 			<div class="intranet-island-otp-push-alternative-items__wrapper">
+				<div data-testid="bx-intranet-2fa-alternative-methods-email" v-if="canLoginByEmail" class="intranet-island-otp-push-alternative__item" @click="showEmail">
+					<i class="ui-icon-set --o-mail intranet-island-otp-push-alternative-item__icon"></i>
+					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_EMAIL') }}</span>
+				</div>
 				<div data-testid="bx-intranet-2fa-alternative-methods-sms" v-if="canLoginBySms" class="intranet-island-otp-push-alternative__item" @click="showSms">
 					<i class="ui-icon-set --o-sms intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS') }}</span>

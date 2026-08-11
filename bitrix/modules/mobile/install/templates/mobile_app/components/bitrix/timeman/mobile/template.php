@@ -17,9 +17,15 @@ $frame = \Bitrix\Main\Page\Frame::getInstance();
 $frame->setEnable();
 $frame->setUseAppCache();
 
+$mobileApp = CMobile::getInstance();
+$mobileApp->setIniScale(1);
+$mobileApp->setMaxScale(1);
+$mobileApp->setMinScale(1);
+$mobileApp->setUserScalable(false);
+
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
-\Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("version", "v1.3");
+\Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("version", "v1.4");
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("LanguageId", LANGUAGE_ID);
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->setExcludeImagePatterns(
 	array(

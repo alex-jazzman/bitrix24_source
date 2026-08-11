@@ -1,10 +1,11 @@
 import { ReinvitePopup } from './reinvite-popup';
-import { ReinvitePopupOptions, FormType } from './types';
+import { FormType } from './types';
+import { type ReinvitePopupOptions } from './types';
 import './style.css';
 
 export {
 	ReinvitePopup,
-	FormType
+	FormType,
 };
 
 export type {

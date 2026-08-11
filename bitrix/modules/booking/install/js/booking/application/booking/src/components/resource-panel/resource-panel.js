@@ -33,11 +33,19 @@ export const ResourcePanel = {
 	watch: {
 		scroll(value): void
 		{
+			this.applyScroll(value);
+		},
+	},
+	mounted(): void
+	{
+		this.applyScroll(this.scroll);
+	},
+	methods: {
+		applyScroll(value: number): void
+		{
 			this.$refs.container[this.inactiveScrollProperty] = 0;
 			this.$refs.container[this.scrollProperty] = value;
 		},
-	},
-	methods: {
 		handleScroll(): void
 		{
 			const scrollValue = this.$refs.container[this.scrollProperty];
@@ -53,7 +61,7 @@ export const ResourcePanel = {
 			<div class="booking-booking__resource-panel_resources">
 				<TransitionGroup name="booking-transition-resource">
 					<template v-for="resourceId of resourcesIds" :key="resourceId">
-						<Resource :resourceId="resourceId"/>
+						<Resource :resourceId="resourceId" :withScale="!isWeekMode"/>
 					</template>
 				</TransitionGroup>
 			</div>

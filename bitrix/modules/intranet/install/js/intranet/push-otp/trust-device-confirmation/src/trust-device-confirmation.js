@@ -74,6 +74,7 @@ export class TrustDeviceConfirmation extends EventEmitter
 					<div class="intranet-trust-device-confirmation-popup__content">
 						${this.#getDeviceItem()}
 						${this.#getExtensionSettings().canSendSms ? this.#getNumberItem() : ''}
+						${this.#getExtensionSettings().canSendEmail ? this.#getEmailItem() : ''}
 					</div>
 					${this.#getButtonsContainer()}
 				</div>
@@ -171,6 +172,30 @@ export class TrustDeviceConfirmation extends EventEmitter
 		});
 	}
 
+	#getEmailItem(): HTMLElement
+	{
+		return this.#cache.remember('emailItem', () => {
+			return Tag.render`
+				<div class="intranet-trust-device-confirmation-popup-content__item">
+					<div class="intranet-trust-device-confirmation-popup-content-item__icon-wrapper">
+						<i class="intranet-trust-device-confirmation-popup-content-item__icon --email"></i>
+					</div>
+					<div class="intranet-trust-device-confirmation-popup-content-item__text">
+						<div class="intranet-trust-device-confirmation-popup-content-item__title">
+							${Loc.getMessage('INTRANET_TRUST_DEVICE_CONFIRMATION_EMAIL_TITLE')}
+						</div>
+						<div data-testid="bx-intranet-trust-device-confirmation-popup-email-data" class="intranet-trust-device-confirmation-popup-content-item__description">
+							${this.#getEmail()}
+						</div>
+					</div>
+					<div data-testid="bx-intranet-trust-device-confirmation-popup-email-action" onclick="${this.#getEmailActionConfig().onclick}" class="intranet-trust-device-confirmation-popup-content-item__action ${this.#getEmailActionConfig().modifyClass}">
+						${this.#getEmailActionConfig().title}
+					</div>
+				</div>
+			`;
+		});
+	}
+
 	#getNumberActionConfig(): Object
 	{
 		return this.#cache.remember('numberActionConfig', () => {
@@ -211,6 +236,38 @@ export class TrustDeviceConfirmation extends EventEmitter
 	{
 		return this.#cache.remember('phoneNumber', () => {
 			return this.#getExtensionSettings().phoneNumber || Tag.render`<span class="--disabled-item">${Loc.getMessage('INTRANET_TRUST_DEVICE_CONFIRMATION_PHONE_NUMBER_NOT_SET')}</span>`;
+		});
+	}
+
+	#getEmailActionConfig(): Object
+	{
+		return this.#cache.remember('emailActionConfig', () => {
+			const provider = new EnablePushOtpProvider(this.#getExtensionSettings());
+			const onclick = () => {
+				provider.onlyEmailOtpChange().show();
+			};
+
+			if (!this.#getExtensionSettings().email)
+			{
+				return {
+					title: Loc.getMessage('INTRANET_TRUST_DEVICE_CONFIRMATION_ACTION_ADD'),
+					onclick,
+					modifyClass: '--action-blue',
+				};
+			}
+
+			return {
+				title: Loc.getMessage('INTRANET_TRUST_DEVICE_CONFIRMATION_ACTION_CHANGE'),
+				onclick,
+				modifyClass: '',
+			};
+		});
+	}
+
+	#getEmail(): string | HTMLElement
+	{
+		return this.#cache.remember('email', () => {
+			return this.#getExtensionSettings().email || Tag.render`<span class="--disabled-item">${Loc.getMessage('INTRANET_TRUST_DEVICE_CONFIRMATION_PHONE_NUMBER_NOT_SET')}</span>`;
 		});
 	}
 

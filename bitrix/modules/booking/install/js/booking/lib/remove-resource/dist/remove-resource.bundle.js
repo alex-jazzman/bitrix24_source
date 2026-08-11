@@ -198,5 +198,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.RemoveResource = RemoveResource;
 
-})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX, BX, BX.Booking.Const, BX.Booking, BX.Booking.Provider.Service, BX.Main, BX.UI.Dialogs);
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX, BX.UI.Notification, BX.Booking.Const, BX.Booking, BX.Booking.Provider.Service, BX.Main, BX.UI.Dialogs);
 //# sourceMappingURL=remove-resource.bundle.js.map

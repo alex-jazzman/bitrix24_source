@@ -1,6 +1,6 @@
 import {Loc} from 'main.core';
 
-import {FileStatus} from 'im.v2.const';
+import {FileStatus} from 'call.adapter.im-const';
 
 import type {BackgroundRestResult} from '../../types/rest';
 

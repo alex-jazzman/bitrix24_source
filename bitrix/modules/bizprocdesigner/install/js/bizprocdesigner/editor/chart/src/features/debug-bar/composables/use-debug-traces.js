@@ -1,6 +1,8 @@
 import { Loc } from 'main.core';
-import { ref, VueRefValue } from 'ui.vue3';
-import { DEBUG_BAR_ERROR_MESSAGES, DEBUG_BAR_CONFIG, debugBarApi } from '../../../entities/debug-bar';
+import { ref, type VueRefValue } from 'ui.vue3';
+
+import { debugBarApi } from '../../../entities/debug-bar/api';
+import { DEBUG_BAR_CONFIG, DEBUG_BAR_ERROR_MESSAGES } from '../../../entities/debug-bar/index.js';
 import { useToastStore } from '../../../shared/stores';
 import { handleResponseError } from '../../../shared/utils';
 

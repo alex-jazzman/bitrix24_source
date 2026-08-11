@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/selectorfield.bundle.css',
 	'js' => 'dist/selectorfield.bundle.js',
 	'rel' => [
-		'ui.form-elements.view',
 		'main.core',
 		'types.js',
+		'ui.form-elements.view',
 	],
 	'skip_core' => false,
 ];

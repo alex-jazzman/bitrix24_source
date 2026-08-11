@@ -110,6 +110,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2ChatMessageVoteSend: 'im.v2.Chat.Message.Vote.send',
 		imV2CopilotMessageRegenerate: 'im.v2.Copilot.Message.regenerate',
+		imV2CopilotDraftChatGet: 'im.v2.Copilot.DraftChat.get',
 
 		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
 		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',

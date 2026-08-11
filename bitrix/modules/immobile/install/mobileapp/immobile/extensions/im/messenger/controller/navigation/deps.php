@@ -34,6 +34,7 @@ return [
 		'./src/nested/opener',
 		'./src/nested/context',
 		'./src/nested/mutation-handler',
+		'./src/nested/deletion-watcher',
 		'./src/nested/tabs-config',
 		'./src/nested/open-filter/base',
 		'./src/nested/open-filter/projects-tariff-restriction',

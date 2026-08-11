@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, crm_integration_analytics, main_core_events, main_popup, ui_analytics, ui_buttons, ui_dialogs_messagebox, ui_forms, crm_categoryModel, ui_entitySelector) {
+(function (exports, main_core, crm_integration_analytics, main_core_events, main_popup, ui_buttons, ui_dialogs_messagebox, ui_forms, crm_categoryModel, ui_entitySelector) {
 	'use strict';
 
 	/**
@@ -432,18 +432,12 @@ this.BX = this.BX || {};
 
 					return;
 				}
-				const status = result.isCanceled ? crm_integration_analytics.Dictionary.STATUS_CANCEL : crm_integration_analytics.Dictionary.STATUS_SUCCESS;
-				this.#config.getActiveItems().forEach(item => {
-					this.#sendAnalyticsData(item.getEntityTypeId(), status);
-				});
+				result.isCanceled ? crm_integration_analytics.Dictionary.STATUS_CANCEL : crm_integration_analytics.Dictionary.STATUS_SUCCESS;
 			}).catch(error => {
 				if (error) {
 					// eslint-disable-next-line no-console
 					console.log('Convert error', error, this);
 				}
-				this.#config.getActiveItems().forEach(item => {
-					this.#sendAnalyticsData(item.getEntityTypeId(), crm_integration_analytics.Dictionary.STATUS_ERROR);
-				});
 			});
 		}
 		#request() {
@@ -471,7 +465,8 @@ this.BX = this.BX || {};
 						ENABLE_REDIRECT_TO_SHOW: this.isRedirectToDetailPageEnabled() ? 'Y' : 'N',
 						CONFIG: this.getConfig().externalize(),
 						CONTEXT: this.#data,
-						ORIGIN_URL: this.getOriginUrl()
+						ORIGIN_URL: this.getOriginUrl(),
+						ANALYTICS: this.#params.analytics
 					},
 					onsuccess: resolve,
 					onfailure: reject
@@ -490,10 +485,6 @@ this.BX = this.BX || {};
 				// pass error to next 'catch'
 				throw error;
 			});
-		}
-		#sendAnalyticsData(dstEntityTypeId, status) {
-			const builder = crm_integration_analytics.Builder.Entity.ConvertEvent.createDefault(this.#entityTypeId, dstEntityTypeId).setSection(this.#params.analytics.c_section).setSubSection(this.#params.analytics.c_sub_section).setElement(this.#params.analytics.c_element).setStatus(status);
-			ui_analytics.sendData(builder.buildData());
 		}
 		#filterExternalAnalytics(analytics) {
 			if (!main_core.Type.isPlainObject(analytics)) {
@@ -1202,5 +1193,5 @@ this.BX = this.BX || {};
 
 	exports.Conversion = Conversion;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Crm.Integration.Analytics, BX.Event, BX.Main, BX.UI.Analytics, BX.UI, BX.UI.Dialogs, BX, BX.Crm.Models, BX.UI.EntitySelector);
+})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Crm.Integration.Analytics, BX.Event, BX.Main, BX.UI, BX.UI.Dialogs, BX, BX.Crm.Models, BX.UI.EntitySelector);
 //# sourceMappingURL=conversion.bundle.js.map

@@ -1,15 +1,16 @@
-import './catalog-item.css';
-import { computed, ref, useTemplateRef, toValue } from 'ui.vue3';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
-import { DragBlock, useContextMenu } from 'ui.block-diagram';
 import { Type } from 'main.core';
-import type { DragData } from 'ui.block-diagram';
-import { createUniqueId } from '../../../../shared/utils';
-import type { Block } from '../../../../shared/types';
-import { getDragItemSlotName } from '../../utils';
-import type { GetDragItemSlotName } from '../../utils';
-import type { CatalogMenuItem } from '../../types';
+import { DragBlock, useContextMenu, type DragData } from 'ui.block-diagram';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { computed, ref, useTemplateRef, toValue } from 'ui.vue3';
+import { hint } from 'ui.vue3.directives.hint';
+
 import { BLOCK_TYPES } from '../../../../entities/blocks';
+import { type Block } from '../../../../shared/types';
+import { createUniqueId, getBackgroundImage } from '../../../../shared/utils';
+import { type CatalogMenuItem } from '../../types';
+import { getDragItemSlotName, type GetDragItemSlotName } from '../../utils';
+
+import './catalog-item.css';
 
 type CatalogItemSetup = {
 	preparedBlock: Block,
@@ -19,7 +20,6 @@ type CatalogItemSetup = {
 	getIconName: (name: ?string) => string,
 	getIconColor: (colorIndex: ?Number) => ?string;
 	isUrl: (value: string) => boolean,
-	getSafeUrl: (url: string) => string | null,
 	getBackgroundImage: (value: string) => Object,
 	onDragStart: (event: DragEvent) => void,
 	onDragEnd: (event: DragEvent) => void,
@@ -66,6 +66,7 @@ export const CatalogItem = {
 	},
 	directives: {
 		DragBlock,
+		hint,
 	},
 	props: {
 		/** @type CatalogMenuItem */
@@ -147,19 +148,6 @@ export const CatalogItem = {
 			return null;
 		}
 
-		function getBackgroundImage(url: string): Object
-		{
-			const safeUrl = getSafeUrl(url);
-			if (!safeUrl)
-			{
-				return {};
-			}
-
-			return {
-				'background-image': `url('${safeUrl}')`,
-			};
-		}
-
 		function getPreparedNewBlock(item: CatalogMenuItem): Block
 		{
 			const id = createUniqueId();
@@ -171,6 +159,7 @@ export const CatalogItem = {
 				properties = {},
 				returnProperties = [],
 				colorIndex,
+				contentBlockColor = null,
 				icon = DEFAULT_ICON_NAME,
 				hasAuxPorts = false,
 				defaultSettings: {
@@ -212,6 +201,7 @@ export const CatalogItem = {
 					title,
 					type,
 					shouldShowAuxPorts: hasAuxPorts === true,
+					...(contentBlockColor !== null ? { contentBlockColor } : {}),
 					...(frameColorName !== null ? { frameColorName } : {}),
 					...(frameTextAlign !== null ? { frameTextAlign } : {}),
 					...(frameSeparatorPosition !== null ? { frameSeparatorPosition } : {}),
@@ -235,26 +225,6 @@ export const CatalogItem = {
 			}
 
 			return value.startsWith('https://');
-		}
-
-		function getSafeUrl(url: string): string | null
-		{
-			if (!url || !Type.isString(url))
-			{
-				return null;
-			}
-
-			const trimmedUrl = url.trim();
-
-			const allowedProtocols = ['https://'];
-			const isSafeProtocol = allowedProtocols.some((protocol) => trimmedUrl.startsWith(protocol));
-
-			if (!isSafeProtocol)
-			{
-				return null;
-			}
-
-			return trimmedUrl;
 		}
 
 		function onDragStart(): void

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_const, im_v2_lib_localStorage, im_v2_lib_logger, main_core, im_v2_lib_sidebar, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_permission, im_v2_lib_feature, im_v2_component_entitySelector, ui_system_menu, im_v2_lib_analytics, im_v2_lib_chat, im_v2_lib_confirm, im_v2_lib_copilot, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_notifier, im_v2_lib_utils, im_v2_provider_service_chat, ui_vue3_directives_hint, im_v2_lib_counter, im_v2_lib_parser, im_v2_lib_collab, ui_icons, ui_viewer, ui_vue3_directives_lazyload, im_v2_lib_entityCreator, im_v2_component_elements_button, ui_notification, ui_label, im_v2_component_elements_avatar, im_v2_lib_textHighlighter, im_v2_lib_market, main_date, im_v2_lib_dateFormatter, im_v2_component_elements_chatTitle, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_lib_autoDelete, im_v2_lib_channel, ui_iconSet_api_vue, ui_iconSet_api_core, im_v2_component_elements_copilotRolesDialog, im_v2_lib_promo, ui_promoVideoPopup, im_v2_component_elements_popup, im_v2_lib_helpdesk, ui_manual, im_v2_component_elements_loader, im_v2_component_elements_searchInput, im_v2_provider_service_disk, im_v2_component_elements_player, im_v2_lib_call, im_v2_provider_service_message, im_public) {
+(function (exports, im_v2_const, im_v2_lib_localStorage, im_v2_lib_logger, main_core, im_v2_lib_sidebar, im_v2_application_core, im_v2_lib_rest, im_v2_lib_user, im_v2_lib_guest, im_v2_lib_permission, im_v2_lib_feature, im_v2_component_entitySelector, ui_system_menu, im_v2_lib_analytics, im_v2_lib_chat, im_v2_lib_confirm, im_v2_lib_copilot, im_v2_lib_layout, im_v2_lib_menu, im_v2_lib_notifier, im_v2_lib_utils, im_v2_provider_service_chat, ui_vue3_directives_hint, im_v2_lib_counter, im_v2_lib_parser, im_v2_lib_collab, ui_icons, ui_viewer, ui_vue3_directives_lazyload, im_v2_lib_entityCreator, im_v2_component_elements_button, ui_notification, ui_label, im_v2_component_elements_avatar, im_v2_lib_textHighlighter, im_v2_lib_market, main_date, im_v2_lib_dateFormatter, im_v2_component_elements_chatTitle, im_v2_component_elements_toggle, im_v2_component_elements_autoDelete, im_v2_lib_autoDelete, im_v2_lib_channel, ui_iconSet_api_vue, im_v2_provider_service_guestInvitation, ui_iconSet_api_core, im_v2_component_elements_copilotRolesDialog, im_v2_lib_promo, ui_promoVideoPopup, im_v2_component_elements_popup, im_v2_lib_helpdesk, ui_manual, im_v2_component_elements_loader, im_v2_component_elements_searchInput, im_v2_provider_service_disk, im_v2_component_elements_player, im_v2_lib_call, im_v2_provider_service_message, im_public) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -701,7 +701,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return false;
 		}
 		const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-		return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, dialogId);
+		const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, dialogId);
+		const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+		return canPerformActionByRole && canPerformActionByUserType;
+	}
+	function isGuestLinkCopyAllowed(dialogId) {
+		return im_v2_lib_guest.GuestManager.getInstance().isGuestLinkAvailable(dialogId);
 	}
 
 	let SharedLink$1 = class SharedLink {
@@ -712,24 +717,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.dialogId = dialogId;
 		}
 		getInitialQuery() {
-			if (!isSharedLinkCopyAllowed(this.dialogId)) {
-				return null;
-			}
-			return {
-				[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]: {
+			const query = {};
+			if (isSharedLinkCopyAllowed(this.dialogId)) {
+				query[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual] = {
 					dialogId: this.dialogId
-				}
-			};
+				};
+			}
+			if (isGuestLinkCopyAllowed(this.dialogId)) {
+				query[im_v2_const.RestMethod.imV2GuestLinkGenerate] = {
+					dialogId: this.dialogId
+				};
+			}
+			return query;
 		}
 		getResponseHandler() {
 			return response => {
-				if (!this.getInitialQuery()) {
-					return Promise.resolve();
+				const updateStorePromise = [];
+				if (!response) {
+					return Promise.all(updateStorePromise);
 				}
-				if (!response[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]) {
-					return Promise.reject(new Error('SidebarChat service error: no response'));
+				const individualResponse = response[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual];
+				if (individualResponse) {
+					updateStorePromise.push(this.updateModels(individualResponse));
 				}
-				return this.updateModels(response[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]);
+				const guestResponse = response[im_v2_const.RestMethod.imV2GuestLinkGenerate];
+				if (guestResponse) {
+					updateStorePromise.push(this.updateModels(guestResponse));
+				}
+				return Promise.all(updateStorePromise);
 			};
 		}
 		updateModels(resultData) {
@@ -1063,7 +1078,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (!this.isUser()) {
 				return null;
 			}
-			if (this.isBot()) {
+			if (this.isBot() || this.#isCurrentUserGuest() || this.isGuest()) {
 				return null;
 			}
 			const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.dialogId);
@@ -1083,8 +1098,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			if (this.isUser() && !hasCreateChatAccess) {
 				return null;
 			}
-			const hasAccessByRole = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, this.context.dialogId);
-			if (!hasAccessByRole) {
+			const canPerformActionByRole = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, this.context.dialogId);
+			const canPerformActionByUserType = this.permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+			if (!canPerformActionByRole || !canPerformActionByUserType) {
 				return null;
 			}
 			const title = this.isChannel() ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2');
@@ -1096,6 +1112,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					this.menuInstance.close();
 				}
 			};
+		}
+		#isCurrentUserGuest() {
+			return this.store.getters['users/isGuest'](this.getCurrentUserId());
 		}
 		async #deleteChat() {
 			await new im_v2_provider_service_chat.ChatService().deleteChat(this.context.dialogId);
@@ -1427,6 +1446,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			descriptionToShow() {
 				return this.expanded ? this.purifiedDescription : this.previewDescription;
 			},
+			copilotDescription() {
+				if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+					return this.$store.getters['copilot/getAgentName'];
+				}
+				return new im_v2_lib_copilot.CopilotManager().getAIModelName(this.dialogId);
+			},
 			descriptionByChatType() {
 				return {
 					[im_v2_const.ChatType.user]: () => main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
@@ -1435,7 +1460,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					[im_v2_const.ChatType.generalChannel]: () => main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 					[im_v2_const.ChatType.comment]: () => main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
 					[im_v2_const.ChatType.taskComments]: () => main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'),
-					[im_v2_const.ChatType.copilot]: () => new im_v2_lib_copilot.CopilotManager().getAIModelName(this.dialogId),
+					[im_v2_const.ChatType.copilot]: () => this.copilotDescription,
 					[im_v2_const.ChatType.collab]: () => im_v2_lib_collab.CollabManager.getSidebarChatTypeText(),
 					default: () => main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2')
 				};
@@ -2688,7 +2713,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.userList, this.dialogId);
 			},
 			canInviteMembers() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+				const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+				return canPerformActionByRole && canPerformActionByUserType;
 			},
 			usersInChatCount() {
 				return this.dialog.userCounter;
@@ -2776,9 +2804,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const MenuSectionCode = {
+		first: 'first',
+		second: 'second'
+	};
+	const SharedLinkMenuMode = {
+		full: 'full',
+		compact: 'compact'
+	};
+	const SharedLinkChangeType = {
+		shared: 'shared',
+		guest: 'guest'
+	};
 	class SharedLinkMenu extends im_v2_lib_menu.BaseMenu {
 		static events = {
-			onChangeSharedLink: 'onChangeSharedLink'
+			onChangeLink: 'onChangeLink'
 		};
 		constructor() {
 			super();
@@ -2787,32 +2827,103 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getMenuOptions() {
 			return {
 				...super.getMenuOptions(),
+				maxWidth: 262,
 				angle: false
 			};
 		}
 		getMenuItems() {
-			return [this.#getCopyItem(), this.#getChangeItem()];
+			if (this.context.mode === SharedLinkMenuMode.compact) {
+				return this.#getCompactMenuItems();
+			}
+			return this.#getFullMenuItems();
 		}
-		#getCopyItem() {
+		getMenuGroups() {
+			return [{
+				code: MenuSectionCode.first
+			}, {
+				code: MenuSectionCode.second
+			}];
+		}
+		#getCompactMenuItems() {
+			if (this.#shouldShowManageGuestItems()) {
+				return [this.#getCopySharedLinkItem(), this.#getCopyGuestLinkItem()];
+			}
+			return [this.#getCopySharedLinkItem()];
+		}
+		#getFullMenuItems() {
+			const firstGroupItems = [this.#getCopySharedLinkItem(), this.#getChangeSharedLinkItem()];
+			const secondGroupItems = [];
+			if (this.#shouldShowManageGuestItems()) {
+				secondGroupItems.unshift(this.#getCopyGuestLinkItem(), this.#getChangeGuestLinkItem());
+			}
+			return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(secondGroupItems, MenuSectionCode.second)];
+		}
+		#getCopySharedLinkItem() {
 			return {
-				title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_COPY_MENU'),
-				icon: ui_iconSet_api_core.Outline.COPY,
+				title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_COPY_MENU_MSGVER_1'),
+				icon: ui_iconSet_api_core.Outline.LINK,
 				onClick: () => {
-					void copySharedLink(this.context.url);
+					void copySharedLink(this.context.sharedLinkUrl);
+					if (this.context.mode === SharedLinkMenuMode.compact) {
+						im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopySharedLinkCompactMenu(this.context.dialogId);
+						return;
+					}
+					im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopySharedLinkMenu(this.context.dialogId);
 				}
 			};
 		}
-		#getChangeItem() {
+		#getChangeSharedLinkItem() {
 			return {
 				title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'),
 				icon: ui_iconSet_api_core.Outline.REFRESH,
 				design: ui_system_menu.MenuItemDesign.Alert,
 				onClick: () => {
-					this.emit(SharedLinkMenu.events.onChangeSharedLink, {
-						code: this.context.code
+					this.emit(SharedLinkMenu.events.onChangeLink, {
+						type: SharedLinkChangeType.shared,
+						code: this.context.sharedLinkCode
 					});
 				}
 			};
+		}
+		#getCopyGuestLinkItem() {
+			return {
+				title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_GUEST_LINK_COPY_MENU'),
+				icon: ui_iconSet_api_core.Outline.LINK,
+				onClick: () => {
+					void copySharedLink(this.context.guestLinkUrl);
+					if (this.context.mode === SharedLinkMenuMode.compact) {
+						im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopySharedLinkCompactMenu(this.context.dialogId);
+						return;
+					}
+					im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopySharedLinkMenu(this.context.dialogId);
+				}
+			};
+		}
+		#getChangeGuestLinkItem() {
+			return {
+				title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'),
+				icon: ui_iconSet_api_core.Outline.REFRESH,
+				design: ui_system_menu.MenuItemDesign.Alert,
+				onClick: async () => {
+					const confirmResult = await im_v2_lib_confirm.showUpdateGuestLinkConfirm();
+					if (!confirmResult) {
+						return;
+					}
+					this.emit(SharedLinkMenu.events.onChangeLink, {
+						type: SharedLinkChangeType.guest,
+						chatId: this.context.chatId
+					});
+				}
+			};
+		}
+		#shouldShowManageGuestItems() {
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatWithGuestsAvailable)) {
+				return false;
+			}
+			const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+			const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.manageGuestLink, this.context.dialogId);
+			const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.manageGuestLink);
+			return canPerformActionByRole && canPerformActionByUserType;
 		}
 	}
 
@@ -2836,7 +2947,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const ICON_SIZE = 20;
+	const CHANGE_LINK_ACTIONS = {
+		[SharedLinkChangeType.shared]: ({
+			code
+		}) => new SharedLinkService().regenerate(code),
+		[SharedLinkChangeType.guest]: ({
+			chatId
+		}) => new im_v2_provider_service_guestInvitation.GuestInvitationService().updateLink(chatId)
+	};
 
 	// @vue/component
 	const SharedLink = {
@@ -2857,33 +2975,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
-			ICON_SIZE: () => ICON_SIZE,
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
-			link() {
+			sharedLink() {
 				return this.$store.getters['sidebar/sharedLink/getChatInviteLink'](this.dialog.chatId);
 			},
+			guestLink() {
+				return this.$store.getters['sidebar/sharedLink/getGuestInviteLink'](this.dialog.chatId);
+			},
+			hasGuestLink() {
+				return Boolean(this.guestLink);
+			},
 			url() {
-				return this.link.url;
+				return this.sharedLink?.url ?? '';
 			}
 		},
 		created() {
 			this.contextMenuManager = new SharedLinkMenu();
-			this.contextMenuManager.subscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+			this.contextMenuManager.subscribe(SharedLinkMenu.events.onChangeLink, this.onChangeLink);
 		},
 		beforeUnmount() {
 			this.contextMenuManager.destroy();
-			this.contextMenuManager.unsubscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+			this.contextMenuManager.unsubscribe(SharedLinkMenu.events.onChangeLink, this.onChangeLink);
 		},
 		methods: {
 			async onChangeLink(event) {
+				const {
+					type,
+					...data
+				} = event.getData();
 				this.isLoading = true;
 				try {
-					const {
-						code
-					} = event.getData();
-					await new SharedLinkService().regenerate(code);
+					await CHANGE_LINK_ACTIONS[type](data);
 					im_v2_lib_notifier.Notifier.sharedLink.onChangeLinkComplete();
 				} catch {
 					im_v2_lib_notifier.Notifier.sharedLink.onChangeLinkError();
@@ -2891,26 +3015,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					this.isLoading = false;
 				}
 			},
-			copyLink() {
-				void copySharedLink(this.url);
+			onContainerClick() {
+				if (!this.hasGuestLink) {
+					void copySharedLink(this.url);
+					im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopySharedLink(this.dialogId);
+					return;
+				}
+				this.contextMenuManager.openMenu(this.buildMenuContext(SharedLinkMenuMode.compact), this.$refs['icon-menu']);
 			},
 			showMenuPopup() {
-				const context = {
-					url: this.url,
-					code: this.link.code
+				this.contextMenuManager.openMenu(this.buildMenuContext(SharedLinkMenuMode.full), this.$refs['icon-menu']);
+			},
+			buildMenuContext(mode) {
+				return {
+					dialogId: this.dialogId,
+					chatId: this.dialog.chatId,
+					mode,
+					sharedLinkUrl: this.sharedLink?.url,
+					sharedLinkCode: this.sharedLink?.code,
+					guestLinkUrl: this.guestLink?.url
 				};
-				this.contextMenuManager.openMenu(context, this.$refs['icon-menu']);
 			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
-		<div @click="copyLink" class="bx-im-sidebar-shared-link__container --ui-context-content-dark">
+		<div @click="onContainerClick" class="bx-im-sidebar-shared-link__container --ui-context-content-dark">
 			<BIcon
 				class="bx-im-sidebar-shared-link__icon"
 				:name="OutlineIcons.COPY"
-				:size="ICON_SIZE"
 			/>
 			<div class="bx-im-sidebar-shared-link__content">
 				<div class="bx-im-sidebar-shared-link__content_title">
@@ -2920,7 +3054,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							class="bx-im-sidebar-shared-link__icon_menu"
 							:class="{ '--disabled': isLoading }"
 							:name="OutlineIcons.MORE_L"
-							:size="ICON_SIZE"
 							:hoverable="true"
 							@click.stop="showMenuPopup"
 						/>
@@ -7338,6 +7471,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return [this.getMentionItem(), this.getSendItem(), this.getManagerItem(), this.getCallItem(), this.getProfileItem(), this.getOpenUserCalendarItem(), this.getKickItem()];
 		}
 		getManagerItem() {
+			if (this.isGuest()) {
+				return null;
+			}
 			const isOwner = this.context.user.id === this.context.dialog.ownerId;
 			const canChangeManagers = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.changeManagers, this.context.dialog.dialogId);
 			if (isOwner || !canChangeManagers) {
@@ -7372,7 +7508,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 		}
 		getOpenUserCalendarItem() {
-			if (this.isBot()) {
+			if (this.isBot() || this.isGuest() || this.isCurrentUserGuest()) {
 				return null;
 			}
 			const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.user.id);
@@ -7486,7 +7622,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			},
 			needAddButton() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const canPerformActionByRole = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+				const canPerformActionByUserType = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+				return canPerformActionByRole && canPerformActionByUserType;
 			},
 			needCopyLinkButton() {
 				if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.chatSharedLinkAvailable)) {
@@ -9203,5 +9341,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.EntitySelector, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.Viewer, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.Notification, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI.Manual, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.EntitySelector, BX.UI.System, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.UI.Viewer, BX.Vue3.Directives, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.Notification, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Service, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.UI.Manual, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib);
 //# sourceMappingURL=sidebar.bundle.js.map

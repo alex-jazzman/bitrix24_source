@@ -411,6 +411,25 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			<div class="ui-title-3">
 				<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE')) ?>
 			</div>
+			<div class="ui-form-row">
+				<div class="ui-form-label">
+					<span class="ui-ctl-label-text">
+						<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_FIELD_DAYS_BEFORE_CLOSE')) ?>
+					</span>
+				</div>
+				<div class="ui-form-content">
+					<div class="ui-ctl ui-ctl-textbox ui-ctl-w33">
+						<input
+							type="number"
+							min="<?= Bitrix\Crm\Field\CloseDate::MIN_DAYS_BEFORE_CLOSE ?>"
+							max="<?= Bitrix\Crm\Field\CloseDate::MAX_DAYS_BEFORE_CLOSE ?>"
+							name="daysBeforeClose"
+							class="ui-ctl-element ui-ctl-number"
+							value="<?= $component->getDaysBeforeClose() ?>"
+						/>
+					</div>
+				</div>
+			</div>
 			<?php
 			/*
 			echo $renderCheckbox(

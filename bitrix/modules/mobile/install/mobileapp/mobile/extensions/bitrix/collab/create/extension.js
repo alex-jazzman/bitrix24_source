@@ -762,7 +762,10 @@ jn.define('collab/create', (require, exports, module) => {
 
 		if (!isProjectsV2Enabled)
 		{
-			return CollabCreate.open(props, parentWidget);
+			return CollabCreate.open({
+				...props,
+				stage: CollabCreateStage.EDITING,
+			}, parentWidget);
 		}
 
 		return ProjectCreateManager.open({

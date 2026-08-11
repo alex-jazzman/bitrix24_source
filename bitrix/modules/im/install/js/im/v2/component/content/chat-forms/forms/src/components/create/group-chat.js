@@ -53,6 +53,7 @@ export const GroupChatCreation = {
 				manageUsersDelete: '',
 				manageUi: '',
 				manageMessages: '',
+				manageGuestInvites: '',
 			},
 		};
 	},
@@ -113,21 +114,9 @@ export const GroupChatCreation = {
 		{
 			this.settings.description = description;
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		onRightChange({ name, value }: { name: string, value: UserRoleItem })
 		{
-			this.rights.manageUsersAdd = newValue;
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUsersDelete = newValue;
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUi = newValue;
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.rights.manageMessages = newValue;
+			this.rights[name] = value;
 		},
 		async onCreateClick()
 		{
@@ -146,6 +135,7 @@ export const GroupChatCreation = {
 				manageUi: this.rights.manageUi,
 				manageMessages: this.rights.manageMessages,
 				messagesAutoDeleteDelay: this.settings.autoDeleteDelay,
+				manageGuestInvites: this.rights.manageGuestInvites,
 			}).catch(() => {
 				this.isCreating = false;
 			});
@@ -172,6 +162,7 @@ export const GroupChatCreation = {
 			MenuManager.getMenuById(PopupType.createChatManageUsersDeleteMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUiMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageMessagesMenu)?.close();
+			MenuManager.getMenuById(PopupType.createChatManageGuestInvitesMenu)?.close();
 		},
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
@@ -213,12 +204,14 @@ export const GroupChatCreation = {
 				manageUsersDelete,
 				manageUi,
 				manageMessages,
+				manageGuestInvites,
 			} = PermissionManager.getInstance().getDefaultRolesForActionGroups();
 
 			this.rights.manageUsersAdd = manageUsersAdd;
 			this.rights.manageUsersDelete = manageUsersDelete;
 			this.rights.manageUi = manageUi;
 			this.rights.manageMessages = manageMessages;
+			this.rights.manageGuestInvites = manageGuestInvites;
 		},
 		getChatService(): ChatService
 		{
@@ -264,13 +257,11 @@ export const GroupChatCreation = {
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageMessages="rights.manageMessages"
+				:manageGuestInvites="rights.manageGuestInvites"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
-			/> 
+				@rightChange="onRightChange"
+			/>
 		</div>
 		<ButtonPanel
 			:isCreating="isCreating"

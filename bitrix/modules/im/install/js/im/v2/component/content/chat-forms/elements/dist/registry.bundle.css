@@ -363,6 +363,10 @@
 	width: 260px;
 }
 
+.bx-im-chat-forms-sections-managers__container {
+	width: 80%;
+}
+
 .bx-im-chat-forms-sections-owner__container {
 	width: 80%;
 }
@@ -373,10 +377,6 @@
 
 .bx-im-chat-forms-sections-owner__container .ui-tag-selector-add-button-caption {
 	margin-left: 7px;
-}
-
-.bx-im-chat-forms-sections-managers__container {
-	width: 80%;
 }
 
 .bx-im-chat-forms-chat-settings__type-select {

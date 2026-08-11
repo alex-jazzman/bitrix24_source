@@ -154,7 +154,8 @@ export const BaseCollabNestedList = {
 				this.onCreationStatusChange,
 			);
 
-			if (this.isCreatingChat)
+			const isOwnChatTypeCreation = CreateChatManager.getInstance().getChatType() === this.creatableChatType;
+			if (this.isCreatingChat && isOwnChatTypeCreation)
 			{
 				CreateChatManager.getInstance().setCreationStatus(false);
 			}

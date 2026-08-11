@@ -5,6 +5,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { AhaMoment, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
 import { filterResultNavigator } from 'booking.lib.filter-result-navigator';
+
 import { CounterFloatingHintPopup } from './counter-floating-hint-popup';
 import { CounterFloatingLimitPopup } from './counter-floating-limit-popup';
 
@@ -47,15 +48,11 @@ export const CounterFloating = {
 			shownLimitAnimation: false,
 		};
 	},
-	created(): void
-	{
-		this.limitPopupTimeoutId = null;
-	},
 	computed: {
 		...mapGetters({
 			isMaxFilterDate: `${Model.Filter}/isMaxFilterDate`,
 			isMinFilterDate: `${Model.Filter}/isMinFilterDate`,
-			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			isWeekMode: `${Model.Interface}/isWeekMode`,
 		}),
 		filterCount(): string
 		{
@@ -63,6 +60,10 @@ export const CounterFloating = {
 				'#COUNT#': this.count,
 			});
 		},
+	},
+	created(): void
+	{
+		this.limitPopupTimeoutId = null;
 	},
 	mounted(): void
 	{
@@ -74,14 +75,19 @@ export const CounterFloating = {
 		}
 	},
 	methods: {
-		async setSelectedDateTs(nextSelectedDateTs: number): Promise<void>
+		async setSelectedPeriodStartTs(nextSelectedPeriodStartTs: number): Promise<void>
 		{
-			if (!nextSelectedDateTs)
+			if (!nextSelectedPeriodStartTs)
 			{
 				return;
 			}
 
-			await this.$store.dispatch(`${Model.Interface}/setSelectedDateTs`, nextSelectedDateTs);
+			await this.$store.dispatch(`${Model.Interface}/setSelectedDateTs`, nextSelectedPeriodStartTs);
+
+			if (this.isWeekMode)
+			{
+				await this.$store.dispatch(`${Model.Interface}/setSelectedFirstDayPeriodTs`, nextSelectedPeriodStartTs);
+			}
 		},
 		async previous(): void
 		{
@@ -96,7 +102,7 @@ export const CounterFloating = {
 			const previousDateTs = await filterResultNavigator.getPreviousFilterDateTs();
 			if (previousDateTs)
 			{
-				await this.setSelectedDateTs(previousDateTs);
+				await this.setSelectedPeriodStartTs(previousDateTs);
 			}
 		},
 		async next(): void
@@ -112,7 +118,7 @@ export const CounterFloating = {
 			const nextFilterDateTs = await filterResultNavigator.getNextFilterDateTs();
 			if (nextFilterDateTs)
 			{
-				await this.setSelectedDateTs(nextFilterDateTs);
+				await this.setSelectedPeriodStartTs(nextFilterDateTs);
 			}
 		},
 		showLimitPopup(): void

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, main_core, ui_vue3_vuex, booking_const) {
+(function (exports, main_core, ui_vue3_vuex, booking_const, booking_lib_utils) {
 	'use strict';
 
 	/* eslint-disable no-param-reassign */
@@ -48,11 +48,33 @@ this.BX.Booking = this.BX.Booking || {};
 				},
 				/** @function filter/isMaxFilterDate */
 				isMaxFilterDate: (state, getters, rootState, rootGetters) => {
-					return state.datesCount?.maxDate?.length > 0 && rootGetters[`${booking_const.Model.Interface}/selectedDateTs`] >= new Date(state.datesCount.maxDate).setHours(0, 0, 0, 0);
+					const selectedDateTs = rootGetters[`${booking_const.Model.Interface}/selectedDateTs`];
+					const offset = rootGetters[`${booking_const.Model.Interface}/offset`];
+					if (state.datesCount?.maxDate?.length <= 0) {
+						return false;
+					}
+					const maxDateTs = new Date(state.datesCount.maxDate).setHours(0, 0, 0, 0);
+					if (rootGetters[`${booking_const.Model.Interface}/isWeekMode`]) {
+						const selectedFirstDayPeriodTs = rootGetters[`${booking_const.Model.Interface}/selectedFirstDayPeriodTs`];
+						const firstWeekDay = rootGetters[`${booking_const.Model.Interface}/firstWeekDay`];
+						return selectedFirstDayPeriodTs + offset >= booking_lib_utils.Utils.time.getWeekStartTs(maxDateTs, firstWeekDay);
+					}
+					return selectedDateTs + offset >= maxDateTs;
 				},
 				/** @function filter/isMinFilterDate */
 				isMinFilterDate: (state, getters, rootState, rootGetters) => {
-					return state.datesCount?.minDate?.length > 0 && rootGetters[`${booking_const.Model.Interface}/selectedDateTs`] <= new Date(state.datesCount.minDate).setHours(0, 0, 0, 0);
+					const selectedDateTs = rootGetters[`${booking_const.Model.Interface}/selectedDateTs`];
+					const offset = rootGetters[`${booking_const.Model.Interface}/offset`];
+					if (state.datesCount?.minDate?.length <= 0) {
+						return false;
+					}
+					const minDateTs = new Date(state.datesCount.minDate).setHours(0, 0, 0, 0);
+					if (rootGetters[`${booking_const.Model.Interface}/isWeekMode`]) {
+						const selectedFirstDayPeriodTs = rootGetters[`${booking_const.Model.Interface}/selectedFirstDayPeriodTs`];
+						const firstWeekDay = rootGetters[`${booking_const.Model.Interface}/firstWeekDay`];
+						return selectedFirstDayPeriodTs + offset <= booking_lib_utils.Utils.time.getWeekStartTs(minDateTs, firstWeekDay);
+					}
+					return selectedDateTs + offset <= minDateTs;
 				},
 				/** @function filter/fetchingNextDate */
 				fetchingNextDate: state => state.fetchingNextDate,
@@ -231,4 +253,4 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Filter = Filter;
 
-})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const);
+})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking);

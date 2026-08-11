@@ -1,9 +1,11 @@
 import { defineStore } from 'ui.vue3.pinia';
+import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
 
 type AppState = {
 	isShowRightPanel: boolean;
 	isShownPreviewPanel: boolean;
 	isShownDebugBar: boolean;
+	isDataInspectorPanelShown: boolean;
 };
 
 export const useAppStore = defineStore('bizprocdesigner-app-store', {
@@ -11,6 +13,7 @@ export const useAppStore = defineStore('bizprocdesigner-app-store', {
 		isShownRightPanel: false,
 		isShownPreviewPanel: false,
 		isShownDebugBar: false,
+		isDataInspectorPanelShown: true,
 	}),
 	actions:
 	{
@@ -20,8 +23,10 @@ export const useAppStore = defineStore('bizprocdesigner-app-store', {
 		},
 		hideRightPanel(): void
 		{
+			this.isDataInspectorPanelShown = false;
 			this.isShownRightPanel = false;
 			this.isShownPreviewPanel = false;
+			useNodeDataInspectorStore().resetDataInspector();
 		},
 		setShowPreviewPanel(isShow: boolean): void
 		{
@@ -30,10 +35,6 @@ export const useAppStore = defineStore('bizprocdesigner-app-store', {
 		showPreviewPanel(): void
 		{
 			this.isShownPreviewPanel = true;
-		},
-		hidePreviewPanel(): void
-		{
-			this.isShownPreviewPanel = false;
 		},
 		showDebugBar(): void
 		{
@@ -46,6 +47,10 @@ export const useAppStore = defineStore('bizprocdesigner-app-store', {
 		toggleDebugBar(): void
 		{
 			this.isShownDebugBar = !this.isShownDebugBar;
+		},
+		toggleDataInspectorPanel(): void
+		{
+			this.isDataInspectorPanelShown = !this.isDataInspectorPanelShown;
 		},
 		setDebugEnabled(value): void
 		{

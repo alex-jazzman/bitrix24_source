@@ -168,7 +168,7 @@
 	justify-content: center;
 	background-color: var(--ui-color-primary-alt);
 	border-radius: var(--ui-border-radius-circle);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='11' height='8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.105 5.022L8.858.33l1.439 1.446-6.17 6.116-.022-.022-.022.022L.309 4.24l1.438-1.447 2.358 2.23z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='8' fill='none' viewBox='0 0 11 8'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M4.105 5.022 8.858.33l1.439 1.446-6.17 6.116-.022-.022-.022.022L.309 4.24l1.438-1.447z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: center center;
 }

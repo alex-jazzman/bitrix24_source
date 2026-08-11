@@ -29,7 +29,7 @@ export class PromoManager
 
 	constructor()
 	{
-		const { promoList } = Core.getApplicationData();
+		const { promoList = [] } = Core.getApplicationData();
 		Logger.warn('PromoManager: promoList', promoList);
 		this.#init(promoList);
 	}

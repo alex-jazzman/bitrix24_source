@@ -94,6 +94,20 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 	};
 
 	/**
+	 * @desc Render order of assistant buttons; lower value — earlier in the row.
+	 *       Used by AssistantButtonManager to sort buttons that arrive at different times
+	 *       (e.g. market joins after async REST resolves).
+	 */
+	const ASSISTANT_BUTTON_PRIORITY = Object.freeze({
+		[AssistantButtonType.reasoning]: 10,
+		[AssistantButtonType.menu]: 20,
+		[AssistantButtonType.mcp]: 30,
+		[AssistantButtonType.search]: 40,
+		[AssistantButtonType.agent]: 50,
+		[AssistantButtonType.market]: 100,
+	});
+
+	/**
 	 * @param {string} type
 	 */
 	function buildTestId(type)
@@ -108,5 +122,6 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/const
 		SearchModeButton,
 		AgentButton,
 		MarketButton,
+		ASSISTANT_BUTTON_PRIORITY,
 	};
 });

@@ -85,6 +85,8 @@ class mobile extends CModule
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'mobile', 'CMobileEvent', 'PullOnGetDependentModule');
 		$eventManager->registerEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
 		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', 'MobileApplication', 'OnApplicationsBuildList', 100, "modules/mobile/classes/general/mobile_event.php");
+		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationsBuildList', 100, 'modules/mobile/lib/Auth/MobileGuestApplication.php');
+		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationScopeError');
 		$eventManager->registerEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
 		$eventManager->registerEventHandler('mobile', 'onMobileMenuStructureBuilt', 'mobile', 'CMobileEvent', 'onMobileMenuBuilt');
 		$eventManager->registerEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
@@ -100,6 +102,8 @@ class mobile extends CModule
 		UnRegisterModuleDependences("main", "OnApplicationsBuildList", "main", 'MobileApplication', "OnApplicationsBuildList", 100, "modules/mobile/classes/general/mobile_event.php");
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('main', 'OnApplicationsBuildList', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationsBuildList', 'modules/mobile/lib/Auth/MobileGuestApplication.php');
+		$eventManager->unRegisterEventHandler('main', 'onApplicationScopeError', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationScopeError');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'mobile', '\Bitrix\Mobile\Rest', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
 		$eventManager->unRegisterEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');

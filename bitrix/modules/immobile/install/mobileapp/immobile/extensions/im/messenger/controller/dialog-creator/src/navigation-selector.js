@@ -138,7 +138,14 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						dataLoader: () => {
 							const chatService = new ChatService();
 
-							return chatService.createCopilot(fields);
+							return chatService.createCopilot(fields).then((result) => {
+								if (result.chatId > 0)
+								{
+									AnalyticsService.getInstance().sendCreateCopilotDialog({ chatId: result.chatId });
+								}
+
+								return result;
+							});
 						},
 					});
 				}, CREATE_COPILOT_DEBOUNCE_DELAY, this, true),

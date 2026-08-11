@@ -198,7 +198,7 @@ export class MainMenu extends RecentMenu
 			return null;
 		}
 
-		if (this.isBot())
+		if (this.isBot() || this.#isCurrentUserGuest() || this.isGuest())
 		{
 			return null;
 		}
@@ -227,8 +227,12 @@ export class MainMenu extends RecentMenu
 			return null;
 		}
 
-		const hasAccessByRole = this.permissionManager.canPerformActionByRole(ActionByRole.extend, this.context.dialogId);
-		if (!hasAccessByRole)
+		const canPerformActionByRole = this.permissionManager.canPerformActionByRole(
+			ActionByRole.extend,
+			this.context.dialogId,
+		);
+		const canPerformActionByUserType = this.permissionManager.canPerformActionByUserType(ActionByUserType.extend);
+		if (!canPerformActionByRole || !canPerformActionByUserType)
 		{
 			return null;
 		}
@@ -245,6 +249,11 @@ export class MainMenu extends RecentMenu
 				this.menuInstance.close();
 			},
 		};
+	}
+
+	#isCurrentUserGuest(): boolean
+	{
+		return this.store.getters['users/isGuest'](this.getCurrentUserId());
 	}
 
 	async #deleteChat(): Promise<void>

@@ -15,8 +15,9 @@ export async function tryToResendWithMessage(params): Promise<boolean>
 		return false;
 	}
 
-	if (messageItem.shouldConfirmStateChange(params))
+	if (await messageItem.shouldConfirmStateChange(params))
 	{
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
 		const { isCancelled } = await confirmStateChange();
 		if (isCancelled)
 		{

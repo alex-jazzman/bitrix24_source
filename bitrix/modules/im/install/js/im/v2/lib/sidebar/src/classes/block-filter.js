@@ -1,11 +1,10 @@
 import { Core } from 'im.v2.application.core';
-import { ChatType, PlacementType, SidebarMainPanelBlock } from 'im.v2.const';
+import { ChatType, PlacementType, SidebarMainPanelBlock, type SidebarMainPanelBlockType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { MarketManager } from 'im.v2.lib.market';
 
-import type { ImModelChat } from 'im.v2.model';
-import type { SidebarMainPanelBlockType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
 
 export class BlockFilter
 {
@@ -43,6 +42,12 @@ export class BlockFilter
 			blocksSet.delete(SidebarMainPanelBlock.tariffLimit);
 		}
 
+		if (this.#isGuest())
+		{
+			blocksSet.delete(SidebarMainPanelBlock.taskList);
+			blocksSet.delete(SidebarMainPanelBlock.meetingList);
+		}
+
 		return [...blocksSet];
 	}
 
@@ -67,5 +72,10 @@ export class BlockFilter
 		}
 
 		return Core.getStore().getters['sidebar/hasHistoryLimit'](this.#chat.chatId);
+	}
+
+	#isGuest(): boolean
+	{
+		return Core.getStore().getters['users/isGuest'](Core.getUserId());
 	}
 }

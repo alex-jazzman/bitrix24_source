@@ -2,9 +2,11 @@
  * @module user-profile
  */
 jn.define('user-profile', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const { Loc } = require('loc');
-	const { TabType, closeIcon } = require('user-profile/const');
+	const { Feature } = require('feature');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
+	const { TabType } = require('user-profile/const');
 	const { NotifyManager } = require('notify-manager');
 	const {
 		getInitialTabs,
@@ -32,9 +34,8 @@ jn.define('user-profile', (require, exports, module) => {
 				modal: true,
 				leftButtons: [
 					{
-						svg: {
-							content: closeIcon,
-						},
+						type: Icon.CHEVRON_DOWN.getIconName(),
+						color: Color.base4.toHex(),
 						isCloseButton: true,
 					},
 				],
@@ -64,9 +65,8 @@ jn.define('user-profile', (require, exports, module) => {
 						modal: true,
 						leftButtons: [
 							{
-								svg: {
-									content: closeIcon,
-								},
+								type: Icon.CHEVRON_DOWN.getIconName(),
+								color: Color.base4.toHex(),
 								isCloseButton: true,
 							},
 						],
@@ -155,6 +155,11 @@ jn.define('user-profile', (require, exports, module) => {
 			analyticsSection = '',
 		} = {})
 		{
+			if (env.modulesData?.mobile?.isGuest === true)
+			{
+				return null;
+			}
+
 			if (UserProfile.isOpening)
 			{
 				return null;

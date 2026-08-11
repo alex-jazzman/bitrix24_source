@@ -1,9 +1,10 @@
 import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
 import {Logger} from './logger'
-import { CallType, CallEvent, CallState, CallEngine, RoomType } from './engine';
+import { CallType, CallEvent, CallState, RoomType } from './types';
+import { getPrimary } from './engine-registry';
 import {Hardware} from '../call_hardware';
-import Util from '../util'
+import { getLogMessage, getTimeForLog, isConsoleLogsEnabled } from '../log-helpers';
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 
 /**
@@ -43,7 +44,7 @@ export class AbstractCall
 		this.state = BX.prop.getString(params, "state", CallState.Idle);
 
 		this.ready = false;
-		this.userId = CallEngine.getCurrentUserId();
+		this.userId = getPrimary().getCurrentUserId();
 		this.userData = Type.isPlainObject(params.userData) ? params.userData : {};
 
 		this.initiatorId = params.initiatorId || '';
@@ -125,9 +126,9 @@ export class AbstractCall
 		}
 
 		this.logToken = logToken;
-		if (CallEngine.getLogService() && this.logToken)
+		if (getPrimary().getLogService() && this.logToken)
 		{
-			this.logger = new Logger(CallEngine.getLogService(), this.logToken);
+			this.logger = new Logger(getPrimary().getLogService(), this.logToken);
 		}
 	}
 
@@ -242,15 +243,15 @@ export class AbstractCall
 
 	log()
 	{
-		let text = Util.getLogMessage.apply(null, arguments);
+		let text = getLogMessage.apply(null, arguments);
 
 		if (DesktopApi.isDesktop())
 		{
 			DesktopApi.writeToLogFile(BX.message('USER_ID') + '.video.log', text.substr(3));
 		}
-		if ((CallEngine.debugFlag || Util.isConsoleLogsEnabled()) && console)
+		if ((getPrimary()?.debugFlag || isConsoleLogsEnabled()) && console)
 		{
-			let a = ['Call log [' + Util.getTimeForLog() + ']: '];
+			let a = ['Call log [' + getTimeForLog() + ']: '];
 			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 		}
 		if (this.logger)
@@ -289,7 +290,7 @@ export class AbstractCall
 		{
 			case CallCommonRecordState.Started:
 			{
-				if (!Util.isCommonRecordStateInactive(state))
+				if (![CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(state))
 				{
 					return false;
 				}

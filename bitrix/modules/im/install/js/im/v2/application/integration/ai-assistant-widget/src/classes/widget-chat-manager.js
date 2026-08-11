@@ -10,6 +10,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { NotifierShowMessageAction } from 'im.v2.lib.message-notifier';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { CopilotChatService, CopilotRecentService } from 'im.v2.provider.service.copilot';
+import { SendingService } from 'im.v2.provider.service.sending';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
 export class WidgetChatManager extends EventEmitter
@@ -180,6 +181,10 @@ export class WidgetChatManager extends EventEmitter
 	async createNewChat(): Promise<string>
 	{
 		const newDialogId = await this.#copilotChatService.createDefaultChat();
+
+		Analytics.getInstance().copilot.onCreateChatFromWidget(newDialogId);
+		Analytics.getInstance().ignoreNextChatOpen(newDialogId);
+
 		this.#setCurrentDialogId(newDialogId);
 		this.#saveDialogId(newDialogId);
 		void this.#store.dispatch('copilot/setWidgetDialogId', newDialogId);
@@ -254,6 +259,16 @@ export class WidgetChatManager extends EventEmitter
 	{
 		this.#setCurrentDialogId(null);
 		void this.#store.dispatch('copilot/setWidgetDialogId', '');
+	}
+
+	sendSuggestion(text: string): void
+	{
+		if (!text || !this.#currentDialogId)
+		{
+			return;
+		}
+
+		void SendingService.getInstance().sendMessage({ text, dialogId: this.#currentDialogId });
 	}
 
 	setRecentDraftText(dialogId?: string): void

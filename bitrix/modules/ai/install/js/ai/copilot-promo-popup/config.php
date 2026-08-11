@@ -28,11 +28,11 @@ return [
 	'css' => 'dist/copilot-promo-popup.bundle.css',
 	'js' => 'dist/copilot-promo-popup.bundle.js',
 	'rel' => [
-		'ui.promo-video-popup',
+		'main.core',
 		'ui.buttons',
 		'ui.icon-set.api.core',
 		'ui.icon-set.main',
-		'main.core',
+		'ui.promo-video-popup',
 	],
 	'skip_core' => false,
 	'settings' => [

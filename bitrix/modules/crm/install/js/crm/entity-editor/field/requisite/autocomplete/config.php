@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -19,7 +20,7 @@ return array(
 		'ui.dropdown',
 		'ui.feedback.form',
 		'ui.forms',
-		'ui.notification.center',
+		'ui.notification',
 	],
 	'skip_core' => false,
 );

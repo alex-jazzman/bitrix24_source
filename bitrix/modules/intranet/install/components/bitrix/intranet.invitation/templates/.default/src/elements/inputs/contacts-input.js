@@ -3,6 +3,12 @@ import { Input, InputDesign } from 'ui.system.input';
 export class ContactsInput
 {
 	#input: Input;
+	#dataTestId: string;
+
+	constructor(dataTestId: string = 'invite-page-contact-input')
+	{
+		this.#dataTestId = dataTestId;
+	}
 
 	getInput(): Input
 	{
@@ -13,10 +19,22 @@ export class ContactsInput
 			onBlur: this.#validateContactsInput.bind(this),
 			onInput: this.#onInput.bind(this),
 			onClear: this.#onClear.bind(this),
-			dataTestId: 'invite-page-contact-input',
+			dataTestId: this.#dataTestId,
 		});
 
 		return this.#input;
+	}
+
+	render(): HTMLElement
+	{
+		const wrapper = this.getInput().render();
+		const container = wrapper.querySelector('.ui-system-input-container');
+		const containerId = `${this.#dataTestId}-container`;
+
+		container?.setAttribute('id', containerId);
+		container?.setAttribute('data-test-id', containerId);
+
+		return wrapper;
 	}
 
 	getValue(): Object

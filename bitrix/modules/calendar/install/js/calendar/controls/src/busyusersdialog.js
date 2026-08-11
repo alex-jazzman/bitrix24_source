@@ -31,6 +31,7 @@ export class BusyUsersDialog extends EventEmitter
 		;
 
 		this.dialog = new MessageBox({
+			useAirDesign: true,
 			title: Loc.getMessage('EC_BUSY_USERS_TITLE'),
 			message: Text.encode(message),
 			buttons: this.getButtons(),

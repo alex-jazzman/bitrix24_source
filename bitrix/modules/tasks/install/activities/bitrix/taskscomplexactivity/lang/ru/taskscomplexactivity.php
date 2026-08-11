@@ -1,0 +1,3 @@
+<?php
+
+$MESS['TASKS_NODE_FILTER_METADATA_ENTITY_TASK'] = 'Задача';

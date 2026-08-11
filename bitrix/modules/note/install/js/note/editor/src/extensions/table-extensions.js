@@ -2,6 +2,13 @@ import { TableKit, TableCell, TableHeader, Table } from '@tiptap/extension-table
 import { columnResizing, tableEditing } from 'prosemirror-tables';
 import { parseEnrichedAssetCell } from './attachments';
 import { parseAllEnrichedAssets, parseAttrs, ASSET_TYPE_TO_NODE } from './attachments/enriched-asset-parser';
+import { INLINE_ASSET_NODE_TYPES } from './attachments/note-asset-parser';
+
+// A table cell holds block content, so an inline asset node (image) must be wrapped in a paragraph.
+function wrapAssetForCell(node)
+{
+	return INLINE_ASSET_NODE_TYPES.has(node?.type) ? { type: 'paragraph', content: [node] } : node;
+}
 
 function buildCellChildren(cell, h, cellNodeType)
 {
@@ -13,7 +20,7 @@ function buildCellChildren(cell, h, cellNodeType)
 	const singleAsset = parseEnrichedAssetCell(rawText);
 	if (singleAsset)
 	{
-		return [singleAsset];
+		return [wrapAssetForCell(singleAsset)];
 	}
 
 	// Mixed content: scan for enriched assets within the cell text
@@ -53,7 +60,7 @@ function buildCellChildren(cell, h, cellNodeType)
 		const nodeType = ASSET_TYPE_TO_NODE[attrs.type];
 		if (nodeType)
 		{
-			children.push({
+			children.push(wrapAssetForCell({
 				type: nodeType,
 				attrs: {
 					fileId: Number(attrs.fileId),
@@ -62,7 +69,7 @@ function buildCellChildren(cell, h, cellNodeType)
 					size: attrs.size ? Number(attrs.size) : null,
 					mimeType: attrs.mimeType ?? null,
 				},
-			});
+			}));
 		}
 
 		lastEnd = end;

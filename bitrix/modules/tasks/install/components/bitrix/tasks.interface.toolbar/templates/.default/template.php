@@ -78,9 +78,19 @@ $pathToList = (new TaskPathMaker(
 $tasksChatUri = null;
 if ($showChatButton)
 {
-	$tasksChatUri = (new \Bitrix\Main\Web\Uri($pathToList))->addParams([
-		View::STATE_PARAMETER => View::CHAT->value,
-	])->getUri();
+	if ((int)$arParams['GROUP_ID'] > 0)
+	{
+		$tasksChatUri = (new \Bitrix\Main\Web\Uri('/online/'))->addParams([
+			'IM_COLLAB' => 'sg' . (int)$arParams['GROUP_ID'],
+			'IM_RECENT_TYPE' => 'tasksTask',
+		])->getUri();
+	}
+	else
+	{
+		$tasksChatUri = (new \Bitrix\Main\Web\Uri($pathToList))->addParams([
+			View::STATE_PARAMETER => View::CHAT->value,
+		])->getUri();
+	}
 }
 
 

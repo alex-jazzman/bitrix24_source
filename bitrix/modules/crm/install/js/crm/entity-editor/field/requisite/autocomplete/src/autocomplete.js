@@ -6,7 +6,7 @@ import 'ui.common';
 import 'ui.dropdown';
 import 'ui.buttons';
 import 'ui.forms';
-import 'ui.notification.center';
+import 'ui.notification';
 import 'main.loader';
 import {DetailSearch as DetailSearchPlacement} from "crm.placement.detailsearch"
 import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox"

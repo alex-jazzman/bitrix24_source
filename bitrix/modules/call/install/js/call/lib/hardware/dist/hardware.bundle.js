@@ -1,321 +1,332 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,main_core_events,im_v2_lib_desktopApi) {
+(function (exports, main_core, main_core_events) {
 	'use strict';
 
 	const lsKey = {
-	  defaultMicrophone: 'bx-im-settings-default-microphone',
-	  defaultCamera: 'bx-im-settings-default-camera',
-	  defaultSpeaker: 'bx-im-settings-default-speaker'
+		defaultMicrophone: 'bx-im-settings-default-microphone',
+		defaultCamera: 'bx-im-settings-default-camera',
+		defaultSpeaker: 'bx-im-settings-default-speaker'
 	};
 	const Events = {
-	  initialized: 'initialized',
-	  deviceChanged: 'deviceChange'
+		initialized: 'initialized',
+		deviceChanged: 'deviceChange'
 	};
 	class HardwareManager extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    this.Events = Events;
-	    this.setEventNamespace('BX.Call.HardwareManager');
-	    this.initialized = false;
-	    this._currentDeviceList = [];
-	    this.updating = false;
-	  }
-	  init() {
-	    if (this.initialized) {
-	      return Promise.resolve();
-	    }
-	    if (this.initPromise) {
-	      return this.initPromise;
-	    }
-	    this._checkPermissions();
-	    this.initPromise = new Promise((resolve, reject) => {
-	      this.enumerateDevices().then(deviceList => {
-	        this._currentDeviceList = this.filterDeviceList(deviceList);
-	        navigator.mediaDevices.addEventListener('devicechange', BX.debounce(this.onNavigatorDeviceChanged.bind(this), 500));
-	        this.initialized = true;
-	        this.initPromise = null;
-	        this.emit(Events.initialized, {});
-	        resolve();
-	      }).catch(e => {
-	        this.initPromise = null;
-	        reject(e);
-	      });
-	    });
-	    return this.initPromise;
-	  }
-	  async _checkPermissions() {
-	    const cameraPermission = await navigator.permissions.query({
-	      name: 'camera'
-	    });
-	    const microphonePermission = await navigator.permissions.query({
-	      name: 'microphone'
-	    });
-	    cameraPermission.onchange = status => {
-	      this.getCurrentDeviceList();
-	    };
-	    microphonePermission.onchange = status => {
-	      this.getCurrentDeviceList();
-	    };
-	    return {
-	      cameraPermission,
-	      microphonePermission
-	    };
-	  }
-	  async getUserMedia(constraints) {
-	    return new Promise((resolve, reject) => {
-	      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-	        const error = new Error("NO_WEBRTC");
-	        error.code = "NO_WEBRTC";
-	        throw error;
-	      }
-	      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-	        resolve(stream);
-	      }).catch(err => {
-	        console.error(err);
-	        reject(err);
-	      });
-	    });
-	  }
-	  async enumerateDevices() {
-	    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-	      const error = new Error("NO_WEBRTC");
-	      error.code = "NO_WEBRTC";
-	      throw error;
-	    }
-	    try {
-	      const devices = await navigator.mediaDevices.enumerateDevices();
-	      return devices;
-	    } catch (e) {
-	      throw e;
-	    }
-	  }
-	  get cameraList() {
-	    return this._getDeviceMap('videoinput');
-	  }
-	  get microphoneList() {
-	    return this._getDeviceMap('audioinput');
-	  }
-	  get audioOutputList() {
-	    return this._getDeviceMap('audiooutput');
-	  }
-	  get defaultMicrophone() {
-	    let microphoneId = localStorage ? localStorage.getItem(lsKey.defaultMicrophone) : '';
-	    if ((!microphoneId || !this.microphoneList[microphoneId]) && Object.keys(this.microphoneList).length) {
-	      // previous solution with ternary operator
-	      // has been replaced with two separate conditions
-	      // because some systems / browsers don't create a duplicate for the default audio device
-	      if (Object.keys(this.microphoneList).includes('default')) {
-	        microphoneId = this.getDefaultDeviceIdByGroupId(this.getDeviceGroupIdByDeviceId('default', 'audioinput'), 'audioinput');
-	      }
-	      if (!microphoneId) {
-	        microphoneId = Object.keys(this.microphoneList)[0];
-	      }
-	      return microphoneId;
-	    }
-	    return this.microphoneList[microphoneId] ? microphoneId : '';
-	  }
-	  set defaultMicrophone(microphoneId) {
-	    if (localStorage) {
-	      localStorage.setItem(lsKey.defaultMicrophone, microphoneId);
-	    }
-	  }
-	  get defaultCamera() {
-	    const cameraId = localStorage ? localStorage.getItem(lsKey.defaultCamera) : '';
-	    if ((!cameraId || !this.cameraList[cameraId]) && Object.keys(this.cameraList).length) {
-	      return Object.keys(this.cameraList)[0];
-	    }
-	    return this.cameraList[cameraId] ? cameraId : '';
-	  }
-	  set defaultCamera(cameraId) {
-	    if (localStorage) {
-	      localStorage.setItem(lsKey.defaultCamera, cameraId);
-	    }
-	  }
-	  get defaultSpeaker() {
-	    let speakerId = localStorage ? localStorage.getItem(lsKey.defaultSpeaker) : '';
-	    if ((!speakerId || this.audioOutputList[speakerId]) && Object.keys(this.audioOutputList).length) {
-	      speakerId = Object.keys(this.audioOutputList).includes('default') ? this.getDefaultDeviceIdByGroupId(this.getDeviceGroupIdByDeviceId('default', 'audiooutput'), 'audiooutput') : Object.keys(this.audioOutputList)[0];
-	      return speakerId;
-	    }
-	    return this.audioOutputList[speakerId] ? speakerId : '';
-	  }
-	  set defaultSpeaker(speakerId) {
-	    if (localStorage) {
-	      localStorage.setItem(lsKey.defaultSpeaker, speakerId);
-	    }
-	  }
-	  hasCamera() {
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    return Object.keys(this.cameraList).length > 0;
-	  }
-	  hasMicrophone() {
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    return Object.keys(this.microphoneList).length > 0;
-	  }
-	  getMicrophoneList() {
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    return Object.values(this._currentDeviceList).filter(deviceInfo => deviceInfo.kind === 'audioinput' && deviceInfo.deviceId !== 'default');
-	  }
-	  getCameraList() {
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    return Object.values(this._currentDeviceList).filter(deviceInfo => deviceInfo.kind == 'videoinput');
-	  }
-	  getSpeakerList() {
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    return Object.values(this._currentDeviceList).filter(deviceInfo => deviceInfo.kind === 'audiooutput' && deviceInfo.deviceId !== 'default');
-	  }
-	  canSelectSpeaker() {
-	    return 'setSinkId' in HTMLMediaElement.prototype;
-	  }
-	  updateDeviceList(e) {
-	    if (this.updating) {
-	      return;
-	    }
-	    this.updating = true;
-	    let removedDevices = this._currentDeviceList;
-	    let addedDevices = [];
-	    const shouldSkipDeviceChangedEvent = this._currentDeviceList.every(deviceInfo => deviceInfo.deviceId == '' && deviceInfo.label == '');
-	    this.enumerateDevices().then(devices => {
-	      devices = this.filterDeviceList(devices);
-	      devices.forEach(deviceInfo => {
-	        const index = removedDevices.findIndex(dev => dev.kind === deviceInfo.kind && dev.deviceId === deviceInfo.deviceId && dev.groupId === deviceInfo.groupId);
-	        if (index != -1) {
-	          // device found in previous version
-	          removedDevices.splice(index, 1);
-	        } else {
-	          addedDevices.push(deviceInfo);
-	        }
-	      });
-	      this._currentDeviceList = devices;
-	      if (!shouldSkipDeviceChangedEvent) {
-	        this.emit(Events.deviceChanged, {
-	          added: addedDevices,
-	          removed: removedDevices
-	        });
-	      }
-	      this.updating = false;
-	    });
-	  }
-	  filterDeviceList(browserDeviceList) {
-	    return browserDeviceList.filter(device => {
-	      switch (device.kind) {
-	        case 'audioinput':
-	          return device.deviceId !== 'communications' && !this.isDeviceInBlackList(device);
-	        case 'audiooutput':
-	          return device.deviceId !== 'communications' && !this.isDeviceInBlackList(device);
-	        default:
-	          return true;
-	      }
-	    });
-	  }
-	  isDeviceInBlackList(device) {
-	    const deviceBlackList = ['(virtual)', 'zoomaudiodevice', 'microsoft teams audio', 'bitrixaudio'];
-	    let result = false;
-	    deviceBlackList.forEach(item => {
-	      if (device.label.toLowerCase().includes(item)) {
-	        result = true;
-	        return false;
-	      }
-	    });
-	    return result;
-	  }
-	  onNavigatorDeviceChanged(e) {
-	    if (!this.initialized) {
-	      return;
-	    }
-	    this.updateDeviceList();
-	  }
-	  _getDeviceMap(deviceKind) {
-	    let result = {};
-	    if (!this.initialized) {
-	      throw new Error('HardwareManager is not initialized yet');
-	    }
-	    for (let i = 0; i < this._currentDeviceList.length; i++) {
-	      if (this._currentDeviceList[i].kind == deviceKind) {
-	        result[this._currentDeviceList[i].deviceId] = this._currentDeviceList[i].label;
-	      }
-	    }
-	    return result;
-	  }
-	  getDefaultDeviceIdByGroupId(groupId, deviceKind) {
-	    let deviceId;
-	    this._currentDeviceList.forEach(device => {
-	      if (device.groupId === groupId && device.deviceId !== 'default' && device.kind === deviceKind) {
-	        deviceId = device.deviceId;
-	        return false;
-	      }
-	    });
-	    return deviceId;
-	  }
-	  getDeviceGroupIdByDeviceId(deviceId, deviceKind) {
-	    let groupId;
-	    this._currentDeviceList.forEach(device => {
-	      if (device.deviceId === deviceId && device.kind === deviceKind) {
-	        groupId = device.groupId;
-	        return false;
-	      }
-	    });
-	    return groupId;
-	  }
-	  removeDevicesByDefaultGroup(devices) {
-	    let resultDeviceList = devices;
-	    devices.forEach(device => {
-	      if (device.deviceId === 'default') {
-	        resultDeviceList = resultDeviceList.filter(item => item.kind !== device.kind || item.groupId !== device.groupId);
-	      }
-	    });
-	    return resultDeviceList;
-	  }
-	  getCurrentDeviceList() {
-	    return new Promise((resolve, reject) => {
-	      this.enumerateDevices().then(deviceList => {
-	        this._currentDeviceList = this.filterDeviceList(deviceList);
-	        resolve(this._currentDeviceList, deviceList);
-	      });
-	    });
-	  }
-	  getRemovedUsedDevices(devices, currentDevices) {
-	    return devices.filter(device => {
-	      switch (device.kind) {
-	        case 'audioinput':
-	          return device.deviceId === currentDevices.microphoneId;
-	        case 'audiooutput':
-	          return device.deviceId === currentDevices.speakerId;
-	        case 'videoinput':
-	          return device.deviceId === currentDevices.cameraId;
-	        default:
-	          return false;
-	      }
-	    });
-	  }
-	  async checkMicrophonePermission() {
-	    if (!navigator.permissions) {
-	      return;
-	    }
-	    const micPermissions = await navigator.permissions.query({
-	      name: 'microphone'
-	    });
-	    if (micPermissions.state === 'denied') {
-	      const error = new Error('Permission denied');
-	      error.code = 'NotAllowedError';
-	      throw error;
-	    }
-	  }
+		Events = Events;
+		initialized = false;
+		updating = false;
+		initPromise = null;
+		#currentDeviceList = [];
+		constructor() {
+			super();
+			this.setEventNamespace('BX.Call.HardwareManager');
+		}
+		init() {
+			if (this.initialized) {
+				return Promise.resolve();
+			}
+			if (this.initPromise) {
+				return this.initPromise;
+			}
+			void this.checkPermissions();
+			this.initPromise = new Promise((resolve, reject) => {
+				this.enumerateDevices().then(deviceList => {
+					this.#currentDeviceList = this.filterDeviceList(deviceList);
+					navigator.mediaDevices.addEventListener('devicechange',
+					BX.debounce(this.onNavigatorDeviceChanged.bind(this), 500));
+					this.initialized = true;
+					this.initPromise = null;
+					this.emit(Events.initialized, {});
+					resolve();
+				}).catch(e => {
+					this.initPromise = null;
+					reject(e);
+				});
+			});
+			return this.initPromise;
+		}
+		async checkPermissions() {
+			const cameraPermission = await navigator.permissions.query({
+				name: 'camera'
+			});
+			const microphonePermission = await navigator.permissions.query({
+				name: 'microphone'
+			});
+			cameraPermission.onchange = () => {
+				this.getCurrentDeviceList();
+			};
+			microphonePermission.onchange = () => {
+				this.getCurrentDeviceList();
+			};
+			return {
+				cameraPermission,
+				microphonePermission
+			};
+		}
+		async getUserMedia(constraints) {
+			if (!navigator.mediaDevices?.getUserMedia) {
+				const error = new Error('NO_WEBRTC');
+				error.code = 'NO_WEBRTC';
+				throw error;
+			}
+			const attemptGetUserMedia = async mediaConstraints => {
+				const stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+				if (this.initialized) {
+					void this.updateDeviceList();
+				}
+				return stream;
+			};
+			try {
+				return await attemptGetUserMedia(constraints);
+			} catch (err) {
+				if (err instanceof Error && err.name === 'OverconstrainedError') {
+					const relaxed = this.#relaxExactToIdeal(constraints, err.constraint);
+					if (relaxed !== constraints) {
+						console.warn(`[Hardware] OverconstrainedError on "${err.constraint}", retrying with ideal`);
+						return attemptGetUserMedia(relaxed);
+					}
+				}
+				throw err;
+			}
+		}
+		#relaxExactToIdeal(constraints, constraintName) {
+			let changed = false;
+			const relax = trackConstraints => {
+				if (!trackConstraints || !main_core.Type.isObject(trackConstraints)) {
+					return trackConstraints;
+				}
+				const prop = trackConstraints[constraintName];
+				if (prop && main_core.Type.isObject(prop) && 'exact' in prop) {
+					changed = true;
+					const {
+						exact,
+						...rest
+					} = prop;
+					return {
+						...trackConstraints,
+						[constraintName]: {
+							...rest,
+							ideal: exact
+						}
+					};
+				}
+				return trackConstraints;
+			};
+			const result = {
+				...constraints,
+				audio: relax(constraints.audio),
+				video: relax(constraints.video)
+			};
+			return changed ? result : constraints;
+		}
+		async enumerateDevices() {
+			if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+				const error = new Error('NO_WEBRTC');
+				error.code = 'NO_WEBRTC';
+				throw error;
+			}
+			return navigator.mediaDevices.enumerateDevices();
+		}
+		get cameraList() {
+			return this.#getDeviceMap('videoinput');
+		}
+		get microphoneList() {
+			return this.#getDeviceMap('audioinput');
+		}
+		get audioOutputList() {
+			return this.#getDeviceMap('audiooutput');
+		}
+		get defaultMicrophone() {
+			let microphoneId = localStorage?.getItem(lsKey.defaultMicrophone) ?? '';
+			if ((!microphoneId || !this.microphoneList[microphoneId]) && Object.keys(this.microphoneList).length > 0) {
+				if (Object.keys(this.microphoneList).includes('default')) {
+					microphoneId = this.getDefaultDeviceIdByGroupId(this.getDeviceGroupIdByDeviceId('default', 'audioinput'), 'audioinput') ?? '';
+				}
+				if (!microphoneId) {
+					microphoneId = Object.keys(this.microphoneList)[0];
+				}
+				return microphoneId;
+			}
+			return this.microphoneList[microphoneId] ? microphoneId : '';
+		}
+		set defaultMicrophone(microphoneId) {
+			if (localStorage) {
+				localStorage.setItem(lsKey.defaultMicrophone, microphoneId);
+			}
+		}
+		get defaultCamera() {
+			const cameraId = localStorage?.getItem(lsKey.defaultCamera) ?? '';
+			if ((!cameraId || !this.cameraList[cameraId]) && Object.keys(this.cameraList).length > 0) {
+				return Object.keys(this.cameraList)[0];
+			}
+			return this.cameraList[cameraId] ? cameraId : '';
+		}
+		set defaultCamera(cameraId) {
+			if (localStorage) {
+				localStorage.setItem(lsKey.defaultCamera, cameraId);
+			}
+		}
+		get defaultSpeaker() {
+			let speakerId = localStorage?.getItem(lsKey.defaultSpeaker) ?? '';
+			const audioOutputList = this.audioOutputList;
+			const outputDeviceIds = Object.keys(audioOutputList);
+			const speakerNotFound = !speakerId || !(speakerId in audioOutputList);
+			if (speakerNotFound && outputDeviceIds.length > 0) {
+				if (outputDeviceIds.includes('default')) {
+					const groupId = this.getDeviceGroupIdByDeviceId('default', 'audiooutput');
+					speakerId = this.getDefaultDeviceIdByGroupId(groupId, 'audiooutput') ?? '';
+				} else {
+					speakerId = outputDeviceIds[0];
+				}
+				return speakerId;
+			}
+			return speakerId in audioOutputList ? speakerId : '';
+		}
+		set defaultSpeaker(speakerId) {
+			if (localStorage) {
+				localStorage.setItem(lsKey.defaultSpeaker, speakerId);
+			}
+		}
+		hasCamera() {
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			return Object.keys(this.cameraList).length > 0;
+		}
+		hasMicrophone() {
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			return Object.keys(this.microphoneList).length > 0;
+		}
+		getMicrophoneList() {
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			return Object.values(this.#currentDeviceList).filter(deviceInfo => deviceInfo.kind === 'audioinput' && deviceInfo.deviceId !== 'default');
+		}
+		getCameraList() {
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			return Object.values(this.#currentDeviceList).filter(deviceInfo => deviceInfo.kind === 'videoinput');
+		}
+		getSpeakerList() {
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			return Object.values(this.#currentDeviceList).filter(deviceInfo => deviceInfo.kind === 'audiooutput' && deviceInfo.deviceId !== 'default');
+		}
+		canSelectSpeaker() {
+			return 'setSinkId' in HTMLMediaElement.prototype;
+		}
+		async updateDeviceList() {
+			if (this.updating) {
+				return;
+			}
+			this.updating = true;
+			const removedDevices = this.#currentDeviceList;
+			const addedDevices = [];
+			const shouldSkipDeviceChangedEvent = this.#currentDeviceList.every(deviceInfo => deviceInfo.deviceId === '' && deviceInfo.label === '');
+			try {
+				const devices = await this.enumerateDevices();
+				const filteredDevices = this.filterDeviceList(devices);
+				filteredDevices.forEach(deviceInfo => {
+					const index = removedDevices.findIndex(dev => dev.kind === deviceInfo.kind && dev.deviceId === deviceInfo.deviceId && dev.groupId === deviceInfo.groupId);
+					if (index === -1) {
+						addedDevices.push(deviceInfo);
+					} else {
+						removedDevices.splice(index, 1);
+					}
+				});
+				this.#currentDeviceList = filteredDevices;
+				if (!shouldSkipDeviceChangedEvent) {
+					this.emit(Events.deviceChanged, {
+						added: addedDevices,
+						removed: removedDevices
+					});
+				}
+			} finally {
+				this.updating = false;
+			}
+		}
+		filterDeviceList(browserDeviceList) {
+			return browserDeviceList.filter(device => {
+				switch (device.kind) {
+					case 'audioinput':
+						return device.deviceId !== 'communications' && !this.isDeviceInBlackList(device);
+					case 'audiooutput':
+						return device.deviceId !== 'communications' && !this.isDeviceInBlackList(device);
+					default:
+						return true;
+				}
+			});
+		}
+		isDeviceInBlackList(device) {
+			const deviceBlackList = ['(virtual)', 'zoomaudiodevice', 'microsoft teams audio', 'bitrixaudio'];
+			return deviceBlackList.some(item => device.label.toLowerCase().includes(item));
+		}
+		onNavigatorDeviceChanged() {
+			if (!this.initialized) {
+				return;
+			}
+			void this.updateDeviceList();
+		}
+		#getDeviceMap(deviceKind) {
+			const result = {};
+			if (!this.initialized) {
+				throw new Error('HardwareManager is not initialized yet');
+			}
+			for (let i = 0; i < this.#currentDeviceList.length; i++) {
+				if (this.#currentDeviceList[i].kind === deviceKind) {
+					result[this.#currentDeviceList[i].deviceId] = this.#currentDeviceList[i].label;
+				}
+			}
+			return result;
+		}
+		getDefaultDeviceIdByGroupId(groupId, deviceKind) {
+			return this.#currentDeviceList.find(device => device.groupId === groupId && device.deviceId !== 'default' && device.kind === deviceKind)?.deviceId;
+		}
+		getDeviceGroupIdByDeviceId(deviceId, deviceKind) {
+			return this.#currentDeviceList.find(device => device.deviceId === deviceId && device.kind === deviceKind)?.groupId;
+		}
+		async getCurrentDeviceList() {
+			const deviceList = await this.enumerateDevices();
+			this.#currentDeviceList = this.filterDeviceList(deviceList);
+			return this.#currentDeviceList;
+		}
+		getRemovedUsedDevices(devices, currentDevices) {
+			return devices.filter(device => {
+				switch (device.kind) {
+					case 'audioinput':
+						return device.deviceId === currentDevices.microphoneId;
+					case 'audiooutput':
+						return device.deviceId === currentDevices.speakerId;
+					case 'videoinput':
+						return device.deviceId === currentDevices.cameraId;
+					default:
+						return false;
+				}
+			});
+		}
+		async checkMicrophonePermission() {
+			if (!navigator.permissions) {
+				return;
+			}
+			const micPermissions = await navigator.permissions.query({
+				name: 'microphone'
+			});
+			if (micPermissions.state === 'denied') {
+				const error = new Error('Permission denied');
+				error.code = 'NotAllowedError';
+				throw error;
+			}
+		}
 	}
 
 	exports.HardwareManager = HardwareManager;
 
-}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Event,BX.Messenger.v2.Lib));
+})(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX.Event);
 //# sourceMappingURL=hardware.bundle.js.map

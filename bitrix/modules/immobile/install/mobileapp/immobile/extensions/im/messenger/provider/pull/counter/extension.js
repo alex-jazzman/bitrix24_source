@@ -472,12 +472,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const { chatId } = params;
-
-			await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([chatId])
-				.catch((error) => {
-					logger.error('handleChatDelete: deleteCountersByChatIdList error', error);
-				});
+			await this.#deleteCountersWithDescendants(params.chatId, 'handleChatDelete');
 		}
 
 		async handleChatHide(params, extra, command)
@@ -548,9 +543,31 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([chatId])
+			await this.#deleteCountersWithDescendants(chatId, 'handleChatUserLeave');
+		}
+
+		/**
+		 * Deletes the chat's counter together with the counters of all its descendants.
+		 *
+		 * A project chat carries child counters (counter.parentChatId === chatId). When
+		 * the user is removed from / the project chat is deleted, those child counters
+		 * must be cleared too — otherwise a child's unread counter hangs with no chat.
+		 * For a chat without children getDescendantChatIds is empty, so this is a no-op
+		 * beyond the chat itself.
+		 *
+		 * @private
+		 * @param {number} chatId
+		 * @param {string} context — caller name for logging
+		 * @return {Promise<void>}
+		 */
+		async #deleteCountersWithDescendants(chatId, context)
+		{
+			const descendantIds = this.store.getters['counterModel/getDescendantChatIds'](chatId);
+			const chatIdList = [chatId, ...descendantIds];
+
+			await serviceLocator.get('counters-update-system').deleteCountersByChatIdList(chatIdList)
 				.catch((error) => {
-					logger.error('handleChatUserLeave: deleteCountersByChatIdList error', error);
+					logger.error(`${context}: deleteCountersByChatIdList error`, error);
 				});
 		}
 

@@ -2,7 +2,7 @@ import { Type, Loc } from 'main.core';
 import { SetupTemplate, type SetupTemplateData } from 'bizproc.setup-template';
 
 import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from '../constants';
-import { StartAgentResponse } from '../types';
+import type { StartAgentResponse } from '../types';
 
 import type {
 	RestartActionParams,

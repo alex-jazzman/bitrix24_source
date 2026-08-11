@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/filter.bundle.js',
 	'rel' => [
 		'booking.const',
+		'booking.lib.utils',
 		'main.core',
 		'ui.vue3.vuex',
 	],

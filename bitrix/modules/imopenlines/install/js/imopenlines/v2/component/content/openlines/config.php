@@ -28,6 +28,7 @@ return [
 		'imopenlines.v2.const',
 		'imopenlines.v2.css.tokens',
 		'imopenlines.v2.lib.queue',
+		'imopenlines.v2.lib.quick-command',
 		'imopenlines.v2.lib.quick-reply',
 		'imopenlines.v2.lib.toolbar-buttons',
 		'imopenlines.v2.lib.utils',
@@ -40,7 +41,9 @@ return [
 		'ui.icon-set.api.vue',
 		'ui.system.chip.vue',
 		'ui.system.input.vue',
+		'ui.system.menu',
 		'ui.vue3.components.button',
+		'ui.vue3.directives.hint',
 	],
 	'settings' => [
 		'salesHubUrl' => '/saleshub/app/',
@@ -53,6 +56,8 @@ return [
 			'st[c_sub_section]' => 'web',
 			'st[type]' => 'delivery_payment',
 		],
+		'marketplaceBotsUrl' => '/marketplace/category/chat_bots/',
+		'marketplaceAppsUrl' => '/marketplace/category/im/',
 	],
 	'skip_core' => false,
 ];

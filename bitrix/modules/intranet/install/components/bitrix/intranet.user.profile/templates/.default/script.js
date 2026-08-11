@@ -40,7 +40,7 @@
 			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === 'Y';
 			this.personalMobile = params.personalMobile;
 			this.personalPhoto = params.personalPhoto;
-			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
+			this.isCurrentUserAdmin = params.isCurrentUserAdmin === 'Y';
 			this.avatarUri = BX.type.isNotEmptyString(params.photo) ? params.photo : null;
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
 			this.actionsAvailability = params.actionsAvailability;
@@ -424,21 +424,41 @@
 					className: 'menu-popup-no-icon',
 					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						if (this.transferToIntranet)
-						{
-							this.transferToIntranet.destroy();
-							this.transferToIntranet = null;
-						}
-						const data = {
+						this.showTransferToIntranetPopup({
 							userType: this.isCollaber ? 'collaber' : 'extranet',
 							userName: this.userFullName,
 							userPhoto: this.userPhoto,
 							componentName: this.componentName,
 							signedParameters: this.signedParameters,
 							rootDepartment: this.rootDepartment,
-						};
-						this.transferToIntranet = new BX.Intranet.TransferToIntranetPopup(data);
-						this.transferToIntranet.show();
+						});
+					}, this),
+				});
+			}
+
+			if (
+				this.isCloud
+				&& this.canEditProfile
+				&& this.isCurrentUserAdmin
+				&& !this.isOwnProfile
+				&& this.userStatus === 'integrator'
+			)
+			{
+				menuItems.push({
+					text: BX.message('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
+						BX.proxy_context.popupWindow.close();
+						this.showTransferToIntranetPopup({
+							userType: 'integrator',
+							userId: this.userId,
+							userName: this.userFullName,
+							userPhoto: this.userPhoto,
+							componentName: this.componentName,
+							signedParameters: this.signedParameters,
+							runActionName: 'intranet.v2.User.removeIntegratorRights',
+							rootDepartment: this.rootDepartment,
+						});
 					}, this),
 				});
 			}
@@ -533,6 +553,18 @@
 					},
 				);
 			}
+		},
+
+		showTransferToIntranetPopup(data)
+		{
+			if (this.transferToIntranet)
+			{
+				this.transferToIntranet.destroy();
+				this.transferToIntranet = null;
+			}
+
+			this.transferToIntranet = new BX.Intranet.TransferToIntranetPopup(data);
+			this.transferToIntranet.show();
 		},
 
 		showConfirmPopup(text, confirmCallback, confirmText = null, declineText = null, action = null, title = null)

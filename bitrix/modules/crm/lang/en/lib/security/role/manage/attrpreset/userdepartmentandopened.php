@@ -6,4 +6,6 @@ $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_F"] = "User dept. subdepartment's item
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_INHERIT"] = "Inherit";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_INHERIT_MSGVER_1"] = "Inherit";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_O"] = "All items marked as \"Available to everyone\"";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_ST"] = "User team and subteam's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_T"] = "User team's items";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_X_MSGVER_1"] = "All items";

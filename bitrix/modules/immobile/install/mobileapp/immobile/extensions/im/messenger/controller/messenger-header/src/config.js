@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 		searchButton,
 		notificationButton,
 		moreButton,
+		vibecodeButton,
 		nestedSearchButton,
 		nestedFilterButton,
 		nestedMoreButton,
@@ -16,6 +17,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const chatsConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			searchButton,
 			notificationButton,
@@ -25,6 +27,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const copilotConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			searchButton,
 			notificationButton,
@@ -34,6 +37,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const channelConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			notificationButton,
 			moreButton,
@@ -42,6 +46,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const collabConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			notificationButton,
 			moreButton,
@@ -50,6 +55,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const openLinesConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			notificationButton,
 			moreButton,
@@ -58,6 +64,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 
 	/** @type {HeaderButtonsConfig} */
 	const taskConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			searchButton,
 			notificationButton,
@@ -100,6 +107,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 	};
 
 	const personalFolderConfig = {
+		leftButtons: [vibecodeButton],
 		rightButtons: [
 			searchButton,
 			notificationButton,

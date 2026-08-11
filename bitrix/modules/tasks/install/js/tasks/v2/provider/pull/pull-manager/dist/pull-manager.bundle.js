@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports, main_core, pull_queuemanager, tasks_v2_const, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_resultService, ui_vue3_vuex, main_core_events, tasks_v2_provider_service_relationService, tasks_v2_provider_service_groupService, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService, tasks_v2_provider_service_viewersService) {
+(function (exports, main_core, pull_queuemanager, tasks_v2_const, tasks_v2_core, tasks_v2_provider_service_fileService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_resultService, ui_vue3_vuex, main_core_events, tasks_v2_application_taskCard, tasks_v2_lib_idUtils, tasks_v2_provider_service_relationService, tasks_v2_provider_service_groupService, tasks_v2_provider_service_flowService, tasks_v2_provider_service_userService, tasks_v2_provider_service_viewersService) {
 	'use strict';
 
 	class BasePullHandler {
@@ -17,6 +17,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		}
 		getDelayedMap() {
 			return {};
+		}
+		isFromAi(data) {
+			return data?.FROM_AI === true;
 		}
 	}
 
@@ -230,6 +233,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				task_view: this.#handleTaskViewed,
 				task_remove: this.#handleTaskDeleted,
 				default_deadline_changed: this.#handleDefaultDeadlineChanged,
+				task_regular_template_add: this.#handleTaskRegularTemplateAdded,
 				task_timer_stop: this.#handleStopOfTimer
 			};
 		}
@@ -267,11 +271,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return;
 			}
 			const task = mapPushToModel(data.TASK_ID, data.AFTER);
-			const {
-				TaskFullCard
-			} = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
-			if (data.USER_ID === this.#currentUserId && TaskFullCard.isOpened(task.id)) {
-				return;
+			if (!this.isFromAi(data) && data.USER_ID === this.#currentUserId) {
+				const {
+					TaskFullCard
+				} = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
+				if (TaskFullCard.isOpened(task.id)) {
+					return;
+				}
 			}
 			this.#pushedTasks[task.id] = {
 				...this.#pushedTasks[task.id],
@@ -312,6 +318,25 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			deadlineUserOption
 		}) => {
 			void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, deadlineUserOption);
+		};
+		#handleTaskRegularTemplateAdded = data => {
+			const templateId = data.templateId;
+			BX.UI.Notification.Center.notify({
+				id: main_core.Text.getRandom(),
+				content: main_core.Loc.getMessage('TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_CREATED'),
+				useAirDesign: true,
+				actions: [{
+					title: main_core.Loc.getMessage('TASKS_V2_NOTIFY_REPLICATE_TEMPLATE_OPEN'),
+					events: {
+						click: (clickEvent, balloon) => {
+							balloon.close();
+							tasks_v2_application_taskCard.TaskCard.showFullCard({
+								taskId: tasks_v2_lib_idUtils.idUtils.boxTemplate(templateId)
+							});
+						}
+					}
+				}]
+			});
 		};
 		#handleStopOfTimer = async data => {
 			if (!data.taskId || !tasks_v2_provider_service_taskService.taskService.hasStoreTask(data.taskId)) {
@@ -462,5 +487,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.PullManager = PullManager;
 
-})(this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}, BX, BX.Pull, BX.Tasks.V2.Const, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Vuex, BX.Event, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
+})(this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}, BX, BX.Pull, BX.Tasks.V2.Const, BX.Tasks.V2, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Vuex, BX.Event, BX.Tasks.V2.Application, BX.Tasks.V2.Lib, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service);
 //# sourceMappingURL=pull-manager.bundle.js.map

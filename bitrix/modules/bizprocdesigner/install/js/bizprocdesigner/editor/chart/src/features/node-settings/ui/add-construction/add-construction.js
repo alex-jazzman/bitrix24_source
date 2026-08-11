@@ -1,13 +1,11 @@
-import './style.css';
-
-import { MenuManager, type MenuItem } from 'main.popup';
-import { BIcon } from 'ui.icon-set.api.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { mapActions, mapState } from 'ui.vue3.pinia';
 
+import { PORT_TYPES } from '../../../../shared/constants';
+import { CONSTRUCTION_TYPES, useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 
-// eslint-disable-next-line no-unused-vars
-import { CONSTRUCTION_TYPES, useNodeSettingsStore, type TRuleCard } from '../../../../entities/node-settings';
+import './style.css';
 
 // @vue/component
 export const AddConstruction = {
@@ -21,106 +19,126 @@ export const AddConstruction = {
 			type: [Object, null],
 			default: null,
 		},
-		position:
-		{
-			type: [Number, undefined],
-			default: undefined,
-		},
 	},
-	setup(): { getMessage: () => string; }
+	setup(): { getMessage: () => string; iconSet: Outline }
 	{
 		const { getMessage } = useLoc();
 
-		return { getMessage };
+		return {
+			getMessage,
+			iconSet: Outline,
+		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'currentSettingsItems']),
+		actions(): Array
+		{
+			return [
+				{
+					id: CONSTRUCTION_TYPES.CONDITION.IF_CONDITION,
+					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONDITION_TOOLBAR_ITEM'),
+					dataset: { testId: 'complexNodeRuleSettingsToolbarItemConstructionIf' },
+					className: 'condition',
+				},
+				{
+					id: CONSTRUCTION_TYPES.ACTION,
+					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_TOOLBAR_ITEM'),
+					dataset: { testId: 'complexNodeRuleSettingsToolbarItemConstructionAction' },
+					className: 'action',
+				},
+				...(
+					this.nodeSettings.filterSupported
+					&& this.currentRule?.type === PORT_TYPES.input
+						? [{
+							id: CONSTRUCTION_TYPES.FILTER,
+							text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_TOOLBAR_ITEM'),
+							dataset: { testId: 'complexNodeRuleSettingsToolbarItemConstructionFilter' },
+							className: 'filter',
+						}]
+						: []
+				),
+				{
+					id: CONSTRUCTION_TYPES.OUTPUT,
+					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_TOOLBAR_ITEM'),
+					dataset: { testId: 'complexNodeRuleSettingsToolbarItemConstructionOutput' },
+					className: 'output',
+				},
+			];
+		},
+		conditionsTypes(): Set<string>
+		{
+			return new Set(Object.values(CONSTRUCTION_TYPES.CONDITION));
+		},
 	},
 	methods:
 	{
 		...mapActions(useNodeSettingsStore, ['addConstruction', 'addRuleCard']),
-		onShowMenu(): void
+		onAddConstruction(actionId: string): void
 		{
-			this.menu = MenuManager.create(
-				'constructions-menu',
-				this.$refs.constructionsMenu,
-				this.getMenuItems(),
-				{
-					closeByEsc: true,
-					autoHide: true,
-					cacheable: false,
-					offsetLeft: -50,
-					offsetTop: 7,
-				},
-			);
-			this.menu.show();
-		},
-		getMenuItems(): Array<MenuItem>
-		{
-			return [
-				{
-					id: CONSTRUCTION_TYPES.AND_CONDITION,
-					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BOOLEAN_MENU_ITEM'),
-					onclick: this.onClickMenuItem,
-					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionAnd' },
-					disabled: this.isIfConditionNotExist(this.ruleCard),
-				},
-				{
-					id: CONSTRUCTION_TYPES.IF_CONDITION,
-					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONDITION_MENU_ITEM'),
-					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionIf' },
-					onclick: this.onClickMenuItem,
-				},
-				{
-					id: CONSTRUCTION_TYPES.ACTION,
-					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_MENU_ITEM'),
-					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionAction' },
-					onclick: this.onClickMenuItem,
-					disabled: this.nodeSettings.actions.size === 0,
-				},
-				{
-					id: CONSTRUCTION_TYPES.OUTPUT,
-					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_MENU_ITEM'),
-					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionOutput' },
-					onclick: this.onClickMenuItem,
-				},
-			];
-		},
-		onClickMenuItem(...args): void
-		{
-			const [, menuItem] = args;
-			const ruleCard = this.ruleCard ?? this.addRuleCard();
-			this.addConstruction(ruleCard, menuItem.id, this.position);
-			this.menu.close();
-		},
-		isIfConditionNotExist(ruleCard: TRuleCard): boolean
-		{
-			if (!ruleCard)
+			if (
+				actionId === CONSTRUCTION_TYPES.CONDITION.IF_CONDITION
+				|| actionId === CONSTRUCTION_TYPES.FILTER
+			)
 			{
-				return true;
+				const ruleCard = this.addRuleCard();
+				this.addConstruction(ruleCard, actionId);
+
+				return;
 			}
 
-			return ruleCard.constructions.every((construction) => {
-				return construction.type === CONSTRUCTION_TYPES.ACTION;
-			});
+			const rule = this.currentSettingsItems.get(this.currentRule.id);
+			const lastRuleCard = rule.ruleCards[rule.ruleCards.length - 1];
+			let isNotExists = false;
+			let isSiblingExists = false;
+			if (actionId === CONSTRUCTION_TYPES.ACTION)
+			{
+				isSiblingExists = lastRuleCard?.constructions.some((c) => {
+					return this.conditionsTypes.has(c.type);
+				});
+				isNotExists = lastRuleCard?.constructions.every((c) => {
+					return c.type !== CONSTRUCTION_TYPES.ACTION;
+				});
+			}
+			else
+			{
+				isSiblingExists = lastRuleCard?.constructions.some((c) => {
+					return c.type === CONSTRUCTION_TYPES.ACTION;
+				});
+				isNotExists = lastRuleCard?.constructions.every((c) => {
+					return c.type !== CONSTRUCTION_TYPES.OUTPUT;
+				});
+			}
+
+			if (isSiblingExists && isNotExists)
+			{
+				this.addConstruction(lastRuleCard, actionId);
+
+				return;
+			}
+
+			const ruleCard = this.addRuleCard();
+			this.addConstruction(ruleCard, actionId);
 		},
 	},
 	template: `
 		<div
-			class="editor-chart-node-settings-add-construction"
-			@click="onShowMenu"
+			class="editor-chart-node-settings-add-construction-toolbar"
+			:data-test-id="$testId('complexNodeRuleSettingsAddConstructionToolbar')"
 		>
-			<BIcon
-				name="plus-m"
-				:size="20"
-				color="#828b95"
-			/>
-			<span ref="constructionsMenu">
-				<slot>
-					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_CONSTRUCTION_LABEL') }}
-				</slot>
-			</span>
+			<div
+				v-for="action in actions"
+				class="editor-chart-node-settings-add-construction-toolbar__item"
+				:class="'--' + action.className"
+				:key="action.id"
+				@click="onAddConstruction(action.id)"
+			>
+				<BIcon
+					:name="iconSet.PLUS_M"
+					:size="20"
+				/>
+				<span>{{ action.text }}</span>
+			</div>
 		</div>
 	`,
 };

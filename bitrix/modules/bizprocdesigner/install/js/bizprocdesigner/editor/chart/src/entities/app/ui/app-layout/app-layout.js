@@ -1,10 +1,15 @@
+import { useFeature } from '../../../../shared/composables';
+
 import './app-layout.css';
-import { useBlockDiagram } from 'ui.block-diagram';
-import { useFeature, useLoc } from '../../../../shared/composables';
 
 const SETTINGS_PANEL_CLASSNAMES = {
 	base: 'editor-chart-app-layout__settings',
 	withPreviewPanel: '--with-preview-panel',
+};
+
+const SETTINGS_DATA_INSPECTOR_PANEL_CLASSNAMES = {
+	base: 'editor-chart-app-layout__settings-data-inspector',
+	shifted: '--shifted',
 };
 
 const TOP_RIGHT_TOOLBAR_CLASSNAMES = {
@@ -28,6 +33,10 @@ export const AppLayout = {
 	name: 'AppLayout',
 	props: {
 		showSettings: {
+			type: Boolean,
+			default: false,
+		},
+		isDataInspectorPanelShown: {
 			type: Boolean,
 			default: false,
 		},
@@ -74,6 +83,12 @@ export const AppLayout = {
 				[SETTINGS_PANEL_CLASSNAMES.withPreviewPanel]: this.showPreviewPanel,
 			};
 		},
+		settingsDataInspectorClassNames(): { [string]: boolean }
+		{
+			return {
+				[SETTINGS_DATA_INSPECTOR_PANEL_CLASSNAMES.base]: true,
+			};
+		},
 		debugBarStyle(): { [string]: string }
 		{
 			const CATALOG_WIDTH_COLLAPSED = 54;
@@ -95,10 +110,14 @@ export const AppLayout = {
 			const { isFeatureAvailable } = useFeature();
 
 			return isFeatureAvailable('debugBar');
-		}
+		},
 	},
 	template: `
 		<div class="editor-chart-app-layout">
+			<transition name="fade-skeleton">
+				<slot name="skeleton" />
+			</transition>
+
 			<section class="editor-chart-app-layout__header">
 				<slot name="header"/>
 			</section>
@@ -137,6 +156,21 @@ export const AppLayout = {
 						<slot name="settings"/>
 					</section>
 				</transition>
+
+				<transition-group name="fade-inspector-panel">
+					<template v-if="showSettings && isDataInspectorPanelShown">
+						<section
+							:class="settingsDataInspectorClassNames"
+							key="data-inspector-section"
+						>
+							<slot name="settings-data-inspector"/>
+						</section>
+						<div
+							class="editor-chart-app-layout__settings-data-inspector-overlay"
+							key="data-inspector-overlay"
+						></div>
+					</template>
+				</transition-group>
 
 				<transition name="fade-preview-panel">
 					<section

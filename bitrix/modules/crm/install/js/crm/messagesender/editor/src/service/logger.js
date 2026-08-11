@@ -39,7 +39,6 @@ export class Logger
 	}
 }
 
-// default logger
 export const logger = new Logger({
 	prefix: 'crm.messagesender.editor: ',
 });

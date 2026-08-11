@@ -51,7 +51,6 @@ const signalingWaitReplyPeriod = 10000;
 const pingPeriod = 5000;
 const backendPingPeriod = 25000;
 const reinvitePeriod = 5500;
-
 /**
  * Implements Call interface
  * Public methods:
@@ -86,6 +85,8 @@ export class PlainCall extends AbstractCall
 	constructor(params)
 	{
 		super(params)
+
+		this.invitePeriod = params.invitePeriod > 0 ? params.invitePeriod : Util.getCallInvitePeriod();
 
 		this.callFromMobile = params.callFromMobile;
 		this.state = params.state || '';
@@ -2547,7 +2548,7 @@ class Peer
 		this.callingTimeout = setTimeout(function ()
 		{
 			this.onInviteTimeout(true);
-		}.bind(this), 30000);
+		}.bind(this), this.call.invitePeriod);
 		this.updateCalculatedState();
 	};
 

@@ -1,5 +1,7 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+
 import { AiAssistantCreateChatButton } from 'im.v2.component.list.container.ai-assistant';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import '../css/header.css';
 
@@ -22,6 +24,11 @@ export const CopilotWidgetListHeader = {
 		},
 	},
 	methods: {
+		createChat()
+		{
+			Analytics.getInstance().aiAssistant.onChatCreateClick();
+			this.$emit('createChat');
+		},
 		loc(phrase: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phrase);
@@ -35,7 +42,7 @@ export const CopilotWidgetListHeader = {
 			<div class="bx-im-copilot-widget-header__actions">
 				<AiAssistantCreateChatButton
 					:isCreating="isCreating"
-					@newChat="$emit('createChat')"
+					@newChat="createChat"
 				/>
 				<div
 					class="bx-im-copilot-widget-header__close"

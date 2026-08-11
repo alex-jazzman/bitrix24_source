@@ -97,7 +97,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/links/src/content', (require,
 		{
 			return [...map]
 				.map(([_, value]) => (value))
-				.sort((a, b) => new Date(b.dateCreate).getTime() - new Date(a.dateCreate).getTime())
+				.sort((a, b) => b.id - a.id)
 				.map((data) => new SidebarTabListItemModel(data));
 		}
 

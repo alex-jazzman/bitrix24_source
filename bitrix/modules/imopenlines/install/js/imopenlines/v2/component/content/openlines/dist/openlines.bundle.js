@@ -3,8 +3,77 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports, imopenlines_v2_css_tokens, im_v2_lib_logger, im_public, imopenlines_v2_provider_service, im_v2_component_content_elements, im_v2_component_dialog_chat, im_v2_lib_menu, im_v2_const, imopenlines_v2_lib_queue, im_v2_application_core, im_v2_component_elements_button, imopenlines_v2_const, ui_vue3_components_button, im_v2_component_elements_popup, ui_entitySelector, im_v2_component_search, ui_iconSet_api_vue, im_v2_lib_layout, im_v2_component_textarea, imopenlines_v2_lib_toolbarButtons, imopenlines_v2_lib_utils, im_v2_component_elements_loader, ui_system_input_vue, im_v2_lib_utils, main_core, imopenlines_v2_lib_quickReply, im_v2_component_elements_scrollWithGradient, main_popup, ui_system_chip_vue, im_v2_lib_directives, ui_iconSet_api_core, main_core_events, im_v2_lib_theme) {
+(function (exports, imopenlines_v2_css_tokens, im_v2_lib_logger, im_public, imopenlines_v2_provider_service, im_v2_application_core, im_v2_component_content_elements, im_v2_component_dialog_chat, im_v2_const, im_v2_lib_menu, imopenlines_v2_const, imopenlines_v2_lib_queue, main_core, ui_iconSet_api_core, im_v2_component_elements_popup, ui_entitySelector, im_v2_component_elements_button, im_v2_component_search, ui_iconSet_api_vue, ui_system_menu, imopenlines_v2_lib_quickReply, ui_vue3_components_button, im_v2_lib_layout, im_v2_component_textarea, imopenlines_v2_lib_toolbarButtons, imopenlines_v2_lib_utils, im_v2_component_elements_loader, ui_system_input_vue, im_v2_lib_utils, ui_vue3_directives_hint, imopenlines_v2_lib_quickCommand, im_v2_component_elements_scrollWithGradient, main_popup, ui_system_chip_vue, im_v2_lib_directives, main_core_events, im_v2_lib_theme) {
 	'use strict';
+
+	const MenuSectionCode$1 = {
+		};
+	class OpenLinesMessageMenu extends im_v2_lib_menu.MessageMenu {
+		getMenuItems() {
+			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getCopyFileItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getPinItem(), this.getEditItem(), this.getSaveAsQuickReplyItem(), this.getMultiDialogItem()];
+			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
+		}
+		getMenuGroups() {
+			return [{
+				code: MenuSectionCode$1.first
+			}, {
+				code: MenuSectionCode$1.second
+			}];
+		}
+		getSaveAsQuickReplyItem() {
+			if (this.isDeletedMessage() || this.context.text.trim().length === 0) {
+				return null;
+			}
+			return {
+				icon: ui_iconSet_api_core.Outline.STRESS,
+				title: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY'),
+				onClick: () => {
+					const quickReplyService = new imopenlines_v2_provider_service.QuickReplyService();
+					void quickReplyService.saveFromMessage({
+						dialogId: this.context.dialogId,
+						messageId: this.context.id
+					}).then(reply => {
+						if (!reply) {
+							return;
+						}
+						BX.UI.Notification.Center.notify({
+							content: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY_SUCCESS')
+						});
+					});
+				}
+			};
+		}
+		getMultiDialogItem() {
+			const dialogId = this.context.dialogId;
+			if (!this.#canShowMultiDialogMenu(dialogId)) {
+				return null;
+			}
+			return {
+				icon: ui_iconSet_api_core.Outline.MESSAGES_MULTI,
+				title: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_MULTI_DIALOG'),
+				onClick: () => {
+					const messageService = new imopenlines_v2_provider_service.MessageService();
+					void messageService.addSession(this.context.dialogId, this.context.id);
+				}
+			};
+		}
+		#isMultiDialog(dialogId) {
+			const currentSession = im_v2_application_core.Core.getStore().getters['openLines/currentSession/getByDialogId'](dialogId);
+			return Boolean(currentSession?.multidialog);
+		}
+		#isNetworkConnector(dialogId) {
+			const currentConnector = im_v2_application_core.Core.getStore().getters['openLines/connector/getByDialogId'](dialogId);
+			return currentConnector?.connectorId === imopenlines_v2_const.Connector.network;
+		}
+		#isMessageFromClient() {
+			const author = im_v2_application_core.Core.getStore().getters['users/get'](this.context.authorId);
+			return author?.type === im_v2_const.UserType.extranet;
+		}
+		#canShowMultiDialogMenu(dialogId) {
+			return !this.isDeletedMessage() && this.#isMultiDialog(dialogId) && this.#isNetworkConnector(dialogId) && this.#isMessageFromClient();
+		}
+	}
 
 	const QUEUE_ID_PREFIX = 'queue';
 
@@ -258,7 +327,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID$3 = 'imol-chat-transfer-popup';
+	const POPUP_ID$5 = 'imol-chat-transfer-popup';
 
 	// @vue/component
 	const ChatTransfer = {
@@ -287,7 +356,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		},
 		emits: ['close'],
 		computed: {
-			POPUP_ID: () => POPUP_ID$3,
+			POPUP_ID: () => POPUP_ID$5,
 			config() {
 				return {
 					titleBar: this.$Bitrix.Loc.getMessage('IMOL_CONTENT_BUTTON_TRANSFER'),
@@ -311,6 +380,399 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		>
 			<ChatTransferContent :dialogId="dialogId" @close="$emit('close')"/>
 		</MessengerPopup>
+	`
+	};
+
+	const MenuSectionCode = {
+		spam: 'spam'
+	};
+	class OpenLinesHeaderMenu {
+		#context;
+		openMenu(context, bindElement) {
+			this.#context = context;
+			if (this.menu) {
+				this.menu.destroy();
+				this.menu = null;
+			}
+			this.menu = new ui_system_menu.Menu({
+				id: 'imol-header-menu',
+				className: 'openlines-header-menu',
+				items: this.#getMenuItems(),
+				sections: this.#getMenuSections(),
+				closeOnItemClick: true,
+				autoHide: true
+			});
+			this.menu.show(bindElement);
+		}
+		destroy() {
+			if (this.menu) {
+				this.menu.destroy();
+				this.menu = null;
+			}
+		}
+		#getMenuItems() {
+			return [this.#getPinItem(), this.#getInterceptItem(), this.#getSaveToCrmItem(), this.#getOpenLeadItem(), this.#getOpenContactItem(), this.#getOpenCompanyItem(), this.#getOpenDealItem(), this.#getHistoryItem(), this.#getMarkSpamItem()];
+		}
+		#getMenuSections() {
+			return [{
+				code: MenuSectionCode.spam
+			}];
+		}
+		#getPinItem() {
+			const session = this.#getSession();
+			if (!session || session.isClosed) {
+				return null;
+			}
+			if (!this.#isOwner()) {
+				return null;
+			}
+			const isPinned = session.pinned;
+			return {
+				title: isPinned ? main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_UNPIN') : main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_PIN'),
+				icon: isPinned ? ui_iconSet_api_core.Outline.UNPIN : ui_iconSet_api_core.Outline.PIN,
+				onClick: () => {
+					const pinService = new imopenlines_v2_provider_service.PinService();
+					if (isPinned) {
+						void pinService.unpinChat(this.#context.dialogId);
+					} else {
+						void pinService.pinChat(this.#context.dialogId);
+					}
+				}
+			};
+		}
+		#getInterceptItem() {
+			const session = this.#getSession();
+			if (!session || session.isClosed) {
+				return null;
+			}
+			if (!this.#hasAnotherOwner()) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_INTERCEPT'),
+				icon: ui_iconSet_api_core.Outline.ADD_PERSON,
+				onClick: () => {
+					void new imopenlines_v2_provider_service.InterceptService().interceptDialog(this.#context.dialogId).then(() => {
+						imopenlines_v2_lib_quickReply.QuickReplyManager.getInstance().resetCache(this.#context.dialogId);
+					});
+				}
+			};
+		}
+		#getSaveToCrmItem() {
+			if (!this.#isOwner()) {
+				return null;
+			}
+			const crm = this.#getCrm();
+			if (!crm || crm.crmEnabled) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_SAVE_CRM'),
+				icon: ui_iconSet_api_core.Outline.CRM,
+				onClick: () => {
+					void new imopenlines_v2_provider_service.CrmService().saveToCrm(this.#context.dialogId);
+				}
+			};
+		}
+		#getOpenLeadItem() {
+			const crm = this.#getCrm();
+			if (!crm || !crm.leadId) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_OPEN_LEAD'),
+				icon: ui_iconSet_api_core.Outline.LEAD,
+				onClick: () => {
+					BX.SidePanel.Instance.open(`/crm/lead/details/${crm.leadId}/`);
+				}
+			};
+		}
+		#getOpenContactItem() {
+			const crm = this.#getCrm();
+			if (!crm || !crm.contactId) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_OPEN_CONTACT'),
+				icon: ui_iconSet_api_core.Outline.PERSON,
+				onClick: () => {
+					BX.SidePanel.Instance.open(`/crm/contact/details/${crm.contactId}/`);
+				}
+			};
+		}
+		#getOpenCompanyItem() {
+			const crm = this.#getCrm();
+			if (!crm || !crm.companyId) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_OPEN_COMPANY'),
+				icon: ui_iconSet_api_core.Outline.COMPANY,
+				onClick: () => {
+					BX.SidePanel.Instance.open(`/crm/company/details/${crm.companyId}/`);
+				}
+			};
+		}
+		#getOpenDealItem() {
+			const crm = this.#getCrm();
+			if (!crm || !crm.dealId) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_OPEN_DEAL'),
+				icon: ui_iconSet_api_core.Outline.HANDSHAKE,
+				onClick: () => {
+					BX.SidePanel.Instance.open(`/crm/deal/details/${crm.dealId}/`);
+				}
+			};
+		}
+		#getHistoryItem() {
+			const session = this.#getSession();
+			if (!session || !session.id) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_HISTORY'),
+				icon: ui_iconSet_api_core.Outline.CLOCK_BACK,
+				onClick: () => {
+					void im_public.Messenger.openLinesHistory(`imol|${session.id}`);
+				}
+			};
+		}
+		#getMarkSpamItem() {
+			const session = this.#getSession();
+			if (!session || session.isClosed) {
+				return null;
+			}
+			const isOperator = im_v2_application_core.Core.getUserId() === session.operatorId;
+			const isNewSession = session.status === imopenlines_v2_const.StatusGroup.new;
+			if (!isOperator && !isNewSession) {
+				return null;
+			}
+			if (!isOperator && !this.#context.isQueueTypeAll) {
+				return null;
+			}
+			return {
+				title: main_core.Loc.getMessage('IMOL_CONTENT_HEADER_BUTTON_SPAM'),
+				icon: ui_iconSet_api_core.Outline.STOP_HAND,
+				sectionCode: MenuSectionCode.spam,
+				onClick: () => {
+					void new imopenlines_v2_provider_service.FinishService().markSpamChat(this.#context.dialogId);
+				}
+			};
+		}
+		#getDialog() {
+			return im_v2_application_core.Core.getStore().getters['chats/get'](this.#context.dialogId, true);
+		}
+		#getSession() {
+			const dialog = this.#getDialog();
+			if (!dialog) {
+				return null;
+			}
+			return im_v2_application_core.Core.getStore().getters['openLines/sessions/getByChatId'](dialog.chatId, true);
+		}
+		#getCrm() {
+			return im_v2_application_core.Core.getStore().getters['openLines/crm/getByDialogId'](this.#context.dialogId, true);
+		}
+		#isOwner() {
+			const userId = im_v2_application_core.Core.getUserId();
+			if (this.#getDialog()?.ownerId === userId) {
+				return true;
+			}
+			return this.#getSession()?.operatorId === userId;
+		}
+		#hasAnotherOwner() {
+			const userId = im_v2_application_core.Core.getUserId();
+			const ownerId = this.#getDialog()?.ownerId ?? 0;
+			if (ownerId > 0 && ownerId !== userId) {
+				return true;
+			}
+
+			// The dialog is held by a chat-bot (no human owner) — allow taking it over from the bot.
+			const session = this.#getSession();
+			return Boolean(session?.operatorIsBot) && session.operatorId > 0 && session.operatorId !== userId;
+		}
+	}
+
+	// @vue/component
+	const OpenLinesHeader = {
+		name: 'OpenLinesHeader',
+		components: {
+			ChatHeader: im_v2_component_content_elements.ChatHeader,
+			ChatTransfer
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			isQueueTypeAll: {
+				type: Boolean,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showChatTransferPopup: false
+			};
+		},
+		computed: {
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			session() {
+				return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
+			},
+			isClosed() {
+				return this.session ? this.session.isClosed : false;
+			},
+			isOwner() {
+				const userId = im_v2_application_core.Core.getUserId();
+				if (this.dialog?.ownerId === userId) {
+					return true;
+				}
+				return this.session?.operatorId === userId;
+			}
+		},
+		mounted() {
+			this.headerMenu = new OpenLinesHeaderMenu();
+		},
+		beforeUnmount() {
+			this.headerMenu?.destroy();
+		},
+		methods: {
+			onFinish() {
+				return this.getFinishService().finishChat(this.dialogId);
+			},
+			onClickHeaderMenu(event) {
+				this.headerMenu.openMenu({
+					dialogId: this.dialogId,
+					isQueueTypeAll: this.isQueueTypeAll
+				}, event.currentTarget);
+			},
+			openChatTransferPopup() {
+				this.showChatTransferPopup = true;
+			},
+			getFinishService() {
+				if (!this.finishService) {
+					this.finishService = new imopenlines_v2_provider_service.FinishService();
+				}
+				return this.finishService;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-imol-header-button_container">
+			<ChatHeader
+				:dialogId="dialogId"
+				:withCallButton="false"
+				:withSearchButton="true"
+			>
+				<template v-if="!isClosed" #before-actions>
+					<ul class="bx-imol-header-button_container-list">
+						<li class="bx-imol-header-button_container-item">
+							<button
+								:title="loc('IMOL_CONTENT_HEADER_BUTTON_MORE')"
+								class="bx-imol-header-button__icon-container"
+								@click="onClickHeaderMenu"
+							>
+								<i class="bx-imol-header-button__icon fa-solid fa-ellipsis fa-lg"></i>
+							</button>
+						</li>
+						<template v-if="isOwner">
+							<li class="bx-imol-header-button_container-item">
+								<button
+									:title="loc('IMOL_CONTENT_HEADER_BUTTON_FINISH')"
+									class="bx-imol-header-button__icon-container"
+									@click="onFinish"
+								>
+									<i class="bx-imol-header-button__icon fa-regular fa-circle-check fa-lg"></i>
+								</button>
+							</li>
+							<li class="bx-imol-header-button_container-item">
+								<button
+									:title="loc('IMOL_CONTENT_BUTTON_TRANSFER')"
+									:class="{'--active': showChatTransferPopup}"
+									class="bx-imol-header-button__icon-container"
+									@click="openChatTransferPopup"
+									ref="transfer-chat"
+								>
+									<i class="bx-imol-header-button__icon fa-solid fa-arrows-turn-right fa-lg"></i>
+								</button>
+							</li>
+						</template>
+					</ul>
+				</template>
+			</ChatHeader>
+			<ChatTransfer
+				:bindElement="$refs['transfer-chat'] || {}"
+				:dialogId="dialogId"
+				:showPopup="showChatTransferPopup"
+				:popupConfig="{offsetTop: 15, offsetLeft: -300}"
+				@close="showChatTransferPopup = false"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const BlockedPanel = {
+		name: 'BlockedPanel',
+		components: {
+			UiButton: ui_vue3_components_button.Button
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			ButtonSize: () => ui_vue3_components_button.ButtonSize,
+			AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			session() {
+				return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
+			},
+			blockReasonText() {
+				if (this.session?.blockReason === 'USER') {
+					return this.loc('IM_OL_CHAT_BLOCK_USER');
+				}
+				return this.loc('IM_OL_CHAT_BLOCK_DEFAULT');
+			}
+		},
+		methods: {
+			markSpam() {
+				return this.getFinishService().markSpamChat(this.dialogId);
+			},
+			getFinishService() {
+				if (!this.finishService) {
+					this.finishService = new imopenlines_v2_provider_service.FinishService();
+				}
+				return this.finishService;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-imol-textarea_blocked-panel">
+			<p class="bx-imol-textarea_blocked-text">{{ blockReasonText }}</p>
+			<ul class="bx-imol-textarea_join-panel-list-button">
+				<li class="bx-imol-textarea_join-panel-item-button">
+					<UiButton
+						:size="ButtonSize.LARGE"
+						:style="AirButtonStyle.FILLED_ALERT"
+						:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_CLOSE')"
+						@click="markSpam"
+					/>
+				</li>
+			</ul>
+		</div>
 	`
 	};
 
@@ -408,7 +870,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const JoinPanel = {
 		name: 'JoinPanel',
 		components: {
-			UiButton: ui_vue3_components_button.Button
+			UiButton: ui_vue3_components_button.Button,
+			ChatTransfer
 		},
 		props: {
 			dialogId: {
@@ -422,25 +885,47 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			isClosed: {
 				type: Boolean,
 				required: true
+			},
+			hasSession: {
+				type: Boolean,
+				required: true
 			}
+		},
+		data() {
+			return {
+				showChatTransferPopup: false
+			};
 		},
 		computed: {
 			ButtonSize: () => ui_vue3_components_button.ButtonSize,
 			AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle,
 			textStartJoinButtons() {
 				return this.isClosed ? this.loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_START') : this.loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_JOIN_BUTTON');
+			},
+			canTransfer() {
+				return this.hasSession && !this.isClosed;
 			}
 		},
 		methods: {
-			handleDialogAccess() {
+			async handleDialogAccess() {
 				if (this.isClosed) {
 					return this.getStartService().startDialog(this.dialogId);
 				}
-				return this.getJoinService().joinToDialog(this.dialogId);
+				await this.getJoinService().joinToDialog(this.dialogId);
+				imopenlines_v2_lib_quickReply.QuickReplyManager.getInstance().resetCache(this.dialogId);
+			},
+			answerDialog() {
+				return this.getAnswerService().requestAnswer(this.dialogId);
 			},
 			closeDialog() {
 				void im_public.Messenger.openLines();
 				im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
+			},
+			getAnswerService() {
+				if (!this.answerService) {
+					this.answerService = new imopenlines_v2_provider_service.AnswerService();
+				}
+				return this.answerService;
 			},
 			getStartService() {
 				if (!this.startService) {
@@ -454,18 +939,37 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				}
 				return this.joinService;
 			},
+			openChatTransferPopup() {
+				this.showChatTransferPopup = true;
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
+			<li v-if="isNewSession && !isClosed" class="bx-imol-textarea_join-panel-item-button">
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.FILLED"
+					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_ANSWER')"
+					@click="answerDialog"
+				/>
+			</li>
 			<li v-if="!isNewSession" class="bx-imol-textarea_join-panel-item-button">
 				<UiButton
 					:size="ButtonSize.LARGE"
 					:style="AirButtonStyle.FILLED"
 					:text=textStartJoinButtons
 					@click="handleDialogAccess"
+				/>
+			</li>
+			<li v-if="canTransfer" class="bx-imol-textarea_join-panel-item-button" ref="transfer-chat">
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.OUTLINE"
+					:text="loc('IMOL_CONTENT_BUTTON_TRANSFER')"
+					@click="openChatTransferPopup"
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button">
@@ -477,6 +981,14 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				/>
 			</li>
 		</ul>
+		<ChatTransfer
+			v-if="canTransfer"
+			:bindElement="$refs['transfer-chat'] || {}"
+			:dialogId="dialogId"
+			:showPopup="showChatTransferPopup"
+			:popupConfig="{offsetTop: -700, offsetLeft: 0}"
+			@close="showChatTransferPopup = false"
+		/>
 	`
 	};
 
@@ -521,180 +1033,17 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		},
 		template: `
 		<div class="bx-imol-textarea_join-panel-container">
-			<ChatControlPanel v-if="(isNewSession && isOperator) || isQueueTypeAll" :dialogId="dialogId" :isQueueTypeAll="isQueueTypeAll"/>
-			<JoinPanel v-else :dialogId="dialogId" :isClosed="isClosed" :isNewSession="isNewSession"/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const OpenLinesHeader = {
-		name: 'OpenLinesHeader',
-		components: {
-			ChatHeader: im_v2_component_content_elements.ChatHeader,
-			ChatTransfer
-		},
-		props: {
-			dialogId: {
-				type: String,
-				required: true
-			},
-			isQueueTypeAll: {
-				type: Boolean,
-				required: true
-			}
-		},
-		data() {
-			return {
-				showChatTransferPopup: false
-			};
-		},
-		computed: {
-			dialog() {
-				return this.$store.getters['chats/get'](this.dialogId, true);
-			},
-			session() {
-				return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
-			},
-			isPinned() {
-				return this.session ? this.session.pinned : false;
-			},
-			isClosed() {
-				return this.session ? this.session.isClosed : false;
-			},
-			isOwner() {
-				const ownerId = this.dialog.ownerId;
-				if (!ownerId) {
-					return false;
-				}
-				const userId = im_v2_application_core.Core.getUserId();
-				return ownerId === userId;
-			},
-			isNewSession() {
-				if (!this.session) {
-					return false;
-				}
-				return this.session.status === imopenlines_v2_const.StatusGroup.new;
-			},
-			isOperator() {
-				const userId = im_v2_application_core.Core.getUserId();
-				return userId === this.session.operatorId;
-			},
-			textForPinButton() {
-				return this.isPinned ? this.loc('IMOL_CONTENT_HEADER_BUTTON_UNPIN') : this.loc('IMOL_CONTENT_HEADER_BUTTON_PIN');
-			},
-			classIconButtonPin() {
-				return this.isPinned ? 'fa-link-slash' : 'fa-link';
-			}
-		},
-		methods: {
-			onMarkSpam() {
-				return this.getFinishService().markSpamChat(this.dialogId);
-			},
-			onFinish() {
-				return this.getFinishService().finishChat(this.dialogId);
-			},
-			onPin() {
-				if (this.isPinned) {
-					return this.getPinService().unpinChat(this.dialogId);
-				}
-				return this.getPinService().pinChat(this.dialogId);
-			},
-			onIntercept() {
-				return this.getInterceptService().interceptDialog(this.dialogId);
-			},
-			openChatTransferPopup() {
-				this.showChatTransferPopup = true;
-			},
-			getFinishService() {
-				if (!this.finishService) {
-					this.finishService = new imopenlines_v2_provider_service.FinishService();
-				}
-				return this.finishService;
-			},
-			getPinService() {
-				if (!this.pinService) {
-					this.pinService = new imopenlines_v2_provider_service.PinService();
-				}
-				return this.pinService;
-			},
-			getInterceptService() {
-				if (!this.interceptService) {
-					this.interceptService = new imopenlines_v2_provider_service.InterceptService();
-				}
-				return this.interceptService;
-			},
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<div class="bx-imol-header-button_container">
-			<ChatHeader
+			<ChatControlPanel
+				v-if="(isNewSession && isOperator) || isQueueTypeAll"
 				:dialogId="dialogId"
-				:withCallButton="false"
-				:withSearchButton="true"
-			>
-				<template v-if="!isClosed" #before-actions>
-					<ul v-if="isOperator || isNewSession" class="bx-imol-header-button_container-list">
-						<li v-if="isOperator || isQueueTypeAll" class="bx-imol-header-button_container-item">
-							<button
-								:title="loc('IMOL_CONTENT_HEADER_BUTTON_SPAM')"
-								class="bx-imol-header-button__icon-container"
-								@click="onMarkSpam"
-							>
-								<i class="bx-imol-header-button__icon fa-solid fa-triangle-exclamation fa-lg"></i>
-							</button>
-						</li>
-						<template v-if="isOwner">
-							<li class="bx-imol-header-button_container-item">
-								<button
-									:title="loc('IMOL_CONTENT_HEADER_BUTTON_FINISH')"
-									class="bx-imol-header-button__icon-container"
-									@click="onFinish"
-								>
-									<i class="bx-imol-header-button__icon fa-regular fa-circle-check fa-lg"></i>
-								</button>
-							</li>
-							<li class="bx-imol-header-button_container-item">
-								<button
-									:title="textForPinButton"
-									class="bx-imol-header-button__icon-container"
-									@click="onPin"
-								>
-									<i class="bx-imol-header-button__icon fa-solid fa-lg" :class="classIconButtonPin"></i>
-								</button>
-							</li>
-							<li class="bx-imol-header-button_container-item">
-								<button
-									:title="loc('IMOL_CONTENT_BUTTON_TRANSFER')"
-									:class="{'--active': showChatTransferPopup}"
-									class="bx-imol-header-button__icon-container"
-									@click="openChatTransferPopup"
-									ref="transfer-chat"
-								>
-									<i class="bx-imol-header-button__icon fa-solid fa-arrows-turn-right fa-lg"></i>
-								</button>
-							</li>
-						</template>
-					</ul>
-					<div v-else class="bx-imol-header-button_container-item">
-						<button
-							:title="loc('IMOL_CONTENT_HEADER_BUTTON_INTERCEPT')"
-							class="bx-imol-header-button__icon-container"
-							@click="onIntercept"
-						>
-							<i class="bx-imol-header-button__icon fa-solid fa-arrows-left-right fa-xl"></i>
-						</button>
-					</div>
-				</template>
-			</ChatHeader>
-			<ChatTransfer
-				:bindElement="$refs['transfer-chat'] || {}"
+				:isQueueTypeAll="isQueueTypeAll"
+			/>
+			<JoinPanel
+				v-else
 				:dialogId="dialogId"
-				:showPopup="showChatTransferPopup"
-				:popupConfig="{offsetTop: 15, offsetLeft: -300}"
-				@close="showChatTransferPopup = false"
+				:isClosed="isClosed"
+				:isNewSession="isNewSession"
+				:hasSession="Boolean(session)"
 			/>
 		</div>
 	`
@@ -745,8 +1094,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID$2 = 'imol-crm-form-popup';
-	const POPUP_CLASSNAME$2 = 'bx-imol-crm-form-popup__container';
+	const POPUP_ID$4 = 'imol-crm-form-popup';
+	const POPUP_CLASSNAME$4 = 'bx-imol-crm-form-popup__container';
 
 	// @vue/component
 	const CrmFormPopup = {
@@ -773,7 +1122,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			};
 		},
 		computed: {
-			POPUP_ID: () => POPUP_ID$2,
+			POPUP_ID: () => POPUP_ID$4,
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			list() {
 				if (this.searchQuery === '') {
@@ -790,7 +1139,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			popupConfig() {
 				return {
 					bindElement: this.bindElement,
-					className: POPUP_CLASSNAME$2,
+					className: POPUP_CLASSNAME$4,
 					width: 500,
 					height: 216,
 					overlay: false,
@@ -930,6 +1279,230 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			:forms="forms"
 			@selectForm="onSelectForm"
 			@close="onPopupClose"
+		/>
+	`
+	};
+
+	const POPUP_ID$3 = 'imol-quick-command-popup';
+	const POPUP_CLASSNAME$3 = 'bx-imol-quick-command-popup__container';
+	const TITLE_ID = 'imol-quick-command-popup__title';
+
+	// @vue/component
+	const QuickCommandPopup = {
+		name: 'QuickCommandPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['selectCommand', 'close'],
+		data() {
+			return {
+				focusedIndex: 0
+			};
+		},
+		computed: {
+			POPUP_ID: () => POPUP_ID$3,
+			TITLE_ID: () => TITLE_ID,
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			commandsWithDescription() {
+				const plainCommandItems = Object.values(imopenlines_v2_lib_quickCommand.QuickCommand);
+				return plainCommandItems.filter(command => command.descriptionCode);
+			},
+			hintsConfig() {
+				return {
+					html: [this.loc('IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_POPUP_HINT_NAVIGATE'), this.loc('IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_POPUP_HINT_SELECT'), this.loc('IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_POPUP_HINT_CLOSE')].join('<br>'),
+					position: 'top'
+				};
+			},
+			popupConfig() {
+				return {
+					bindElement: this.bindElement,
+					className: POPUP_CLASSNAME$3,
+					width: 550,
+					overlay: false,
+					closeIcon: false,
+					autoHide: true,
+					borderRadius: '20px',
+					bindOptions: {
+						position: 'top'
+					},
+					angle: {
+						offset: 35,
+						position: 'bottom'
+					},
+					animation: 'fading'
+				};
+			}
+		},
+		mounted() {
+			requestAnimationFrame(() => {
+				this.$refs.commandItem?.[this.focusedIndex]?.focus();
+			});
+		},
+		beforeUnmount() {
+			const leaveEvent = new MouseEvent('mouseleave');
+			this.$refs.hintIcon?.dispatchEvent(leaveEvent);
+		},
+		methods: {
+			focusItem(index) {
+				this.focusedIndex = index;
+				this.$refs.commandItem[index]?.focus();
+			},
+			focusNextItem(currentIndex) {
+				const items = this.$refs.commandItem ?? [];
+				if (items.length === 0) {
+					return;
+				}
+				const nextIndex = (currentIndex + 1) % items.length;
+				this.focusItem(nextIndex);
+			},
+			focusPreviousItem(currentIndex) {
+				const items = this.$refs.commandItem ?? [];
+				if (items.length === 0) {
+					return;
+				}
+				const previousIndex = (currentIndex - 1 + items.length) % items.length;
+				this.focusItem(previousIndex);
+			},
+			selectItem(commandItem) {
+				this.$emit('selectCommand', `${commandItem.command} `, {
+					replace: !commandItem.keepText,
+					withNewLine: commandItem.keepText ?? false
+				});
+			},
+			updateFocusedIndex(index) {
+				this.focusedIndex = index;
+			},
+			handleKeydown(event, commandItem, index) {
+				const selectItemKeys = ['Enter', 'NumpadEnter', 'Space'];
+				if (im_v2_lib_utils.Utils.key.isCombination(event, selectItemKeys)) {
+					event.preventDefault();
+					this.selectItem(commandItem);
+					return;
+				}
+				const focusOnPreviousItemKeys = ['ArrowUp', 'Numpad8', 'Shift+Tab'];
+				if (im_v2_lib_utils.Utils.key.isCombination(event, focusOnPreviousItemKeys)) {
+					event.preventDefault();
+					this.focusPreviousItem(index);
+					return;
+				}
+				const focusOnNextItemKeys = ['ArrowDown', 'Numpad2', 'Tab'];
+				if (im_v2_lib_utils.Utils.key.isCombination(event, focusOnNextItemKeys)) {
+					event.preventDefault();
+					this.focusNextItem(index);
+				}
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<MessengerPopup
+			:config="popupConfig"
+			:id="POPUP_ID"
+			@close="$emit('close')"
+		>
+			<div class="bx-imol-quick-command-popup__header">
+				<span :id="TITLE_ID">{{ loc('IMOL_CONTENT_TEXTAREA_QUICK_COMMAND_POPUP_TITLE') }}</span>
+				<div class="bx-imol-quick-command-popup__header-actions">
+					<span ref="hintIcon" v-hint="hintsConfig" class="bx-imol-quick-command-popup__hint-icon">
+						<BIcon :name="OutlineIcons.QUESTION" />
+					</span>
+					<div class="bx-imol-quick-command-popup__close" @click="$emit('close')">
+						<BIcon :name="OutlineIcons.CROSS_L" />
+					</div>
+				</div>
+			</div>
+			<div
+				class="bx-imol-quick-command-popup__list"
+				role="menu"
+				:aria-labelledby="TITLE_ID"
+			>
+				<div
+					v-for="(commandItem, index) in commandsWithDescription"
+					:key="commandItem.id"
+					:tabindex="index === focusedIndex ? 0 : -1"
+					ref="commandItem"
+					role="menuitem"
+					class="bx-imol-quick-command-popup__item"
+					@click="selectItem(commandItem)"
+					@focus="updateFocusedIndex(index)"
+					@keydown="handleKeydown($event, commandItem, index)"
+				>
+					<span class="bx-imol-quick-command-popup__item-command">{{ commandItem.command }}</span>
+					<span
+						class="bx-imol-quick-command-popup__item-description --ellipsis"
+						:title="loc(commandItem.descriptionCode)"
+					>
+						{{ loc(commandItem.descriptionCode) }}
+					</span>
+				</div>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	// @vue/component
+	const QuickCommand = {
+		name: 'QuickCommand',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			QuickCommandPopup
+		},
+		emits: ['selectCommand'],
+		data() {
+			return {
+				selectorElement: null,
+				showPopup: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline
+		},
+		mounted() {
+			this.selectorElement = this.$refs.quickCommandButton;
+		},
+		methods: {
+			togglePopup() {
+				this.showPopup = !this.showPopup;
+			},
+			closePopup() {
+				this.showPopup = false;
+			},
+			selectCommandAndClosePopup(text, options) {
+				this.closePopup();
+				this.$nextTick(() => {
+					this.$emit('selectCommand', text, options);
+				});
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<span ref="quickCommandButton">
+			<BIcon
+				:name="OutlineIcons.COMMANDS"
+				:title="loc('IMOL_CONTENT_TEXTAREA_QUICK_COMMAND')"
+				class="bx-imol-textarea-icon"
+				:class="{ '--active': showPopup }"
+				@click="togglePopup"
+			/>
+		</span>
+		<QuickCommandPopup
+			v-if="showPopup"
+			:bindElement="selectorElement"
+			@selectCommand="selectCommandAndClosePopup"
+			@close="closePopup"
 		/>
 	`
 	};
@@ -1078,13 +1651,15 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 					:key="reply.id"
 					:class="{ '--highlighted': reply.id === highlightedId }"
 					class="bx-imol-quick-reply-popup__item"
+					data-testid="quick-reply-list-item"
 					@click="$emit('select', reply)"
 				>
-					<span class="bx-imol-quick-reply-popup__item-text --ellipsis">{{ reply.text }}</span>
+					<span class="bx-imol-quick-reply-popup__item-text --ellipsis">{{ reply.name || reply.text }}</span>
 					<BIcon
 						v-if="reply.canEdit"
 						:name="OutlineIcons.EDIT_L"
 						class="bx-imol-quick-reply-popup__item-edit"
+						data-testid="quick-reply-list-item-edit"
 						@click.stop="$emit('edit', reply)"
 					/>
 				</div>
@@ -1363,8 +1938,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID$1 = 'imol-quick-reply-popup';
-	const POPUP_CLASSNAME$1 = 'bx-imol-quick-reply-popup__container';
+	const POPUP_ID$2 = 'imol-quick-reply-popup';
+	const POPUP_CLASSNAME$2 = 'bx-imol-quick-reply-popup__container';
 
 	// @vue/component
 	const QuickReplyPopup = {
@@ -1436,17 +2011,20 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		},
 		emits: ['close', 'select', 'queryChange', 'loadNextPage', 'filter', 'save', 'successHide', 'replyAdd', 'replyEdit', 'formClose'],
 		computed: {
-			POPUP_ID: () => POPUP_ID$1,
+			POPUP_ID: () => POPUP_ID$2,
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			popupConfig() {
 				return {
 					bindElement: this.bindElement,
-					className: POPUP_CLASSNAME$1,
+					className: POPUP_CLASSNAME$2,
 					width: 450,
 					height: 350,
 					overlay: false,
 					closeIcon: false,
 					autoHide: true,
+					focusTrap: {
+						restoreFocus: false
+					},
 					borderRadius: '20px',
 					bindOptions: {
 						position: 'top'
@@ -1569,7 +2147,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 						return false;
 					}
 					if (hasFilledQuery) {
-						return reply.text.toLowerCase().includes(query);
+						return (reply.name || '').toLowerCase().includes(query) || (reply.text || '').toLowerCase().includes(query);
 					}
 					return true;
 				});
@@ -1614,6 +2192,15 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				this.isPopupOpen = false;
 				this.isFormOpen = false;
 				this.editingReply = null;
+				this.highlightedReplyId = 0;
+				this.resetSearchState();
+			},
+			resetSearchState() {
+				if (this.filter.searchQuery === '') {
+					return;
+				}
+				this.filter.searchQuery = '';
+				void this.quickReplyManager.search(this.dialogId, '');
 			},
 			async loadInitial() {
 				await imopenlines_v2_lib_utils.runActionWithLoading(this, 'isInitialLoading', () => {
@@ -1636,6 +2223,9 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				this.runServerSearch(query);
 			},
 			async serverSearch(query) {
+				if (!this.isPopupOpen) {
+					return;
+				}
 				await this.quickReplyManager.search(this.dialogId, query);
 			},
 			async onSave(data) {
@@ -1673,6 +2263,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				this.quickReplyManager.selectReply(this.dialogId, reply);
 				this.$emit('selectReply', reply.text);
 				this.isPopupOpen = false;
+				this.highlightedReplyId = 0;
+				this.resetSearchState();
 			},
 			onSuccessHide() {
 				this.highlightedReplyId = 0;
@@ -1694,6 +2286,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				:class="{ '--active': isPopupOpen }"
 				:title="loc('IMOL_CONTENT_TEXTAREA_QUICK_REPLY')"
 				class="bx-imol-textarea-icon"
+				data-testid="quick-reply-toggle"
 				@click="togglePopup"
 			/>
 		</span>
@@ -1726,9 +2319,9 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const settings = main_core.Extension.getSettings('imopenlines.v2.component.content.openlines');
-	const SALES_HUB_URL = settings.get('salesHubUrl');
-	const SALES_CENTER_PARAMS = settings.get('salesCenterParams');
+	const settings$1 = main_core.Extension.getSettings('imopenlines.v2.component.content.openlines');
+	const SALES_HUB_URL = settings$1.get('salesHubUrl');
+	const SALES_CENTER_PARAMS = settings$1.get('salesCenterParams');
 
 	// @vue/component
 	const SalesCenter = {
@@ -1789,8 +2382,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID = 'imol-silent-mode-popup';
-	const POPUP_CLASSNAME = 'bx-imol-silent-mode-popup__container';
+	const POPUP_ID$1 = 'imol-silent-mode-popup';
+	const POPUP_CLASSNAME$1 = 'bx-imol-silent-mode-popup__container';
 
 	// @vue/component
 	const SilentModePopup = {
@@ -1806,11 +2399,11 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		},
 		emits: ['close'],
 		computed: {
-			POPUP_ID: () => POPUP_ID,
+			POPUP_ID: () => POPUP_ID$1,
 			popupConfig() {
 				return {
 					bindElement: this.bindElement,
-					className: POPUP_CLASSNAME,
+					className: POPUP_CLASSNAME$1,
 					offsetTop: -5,
 					width: 340,
 					overlay: false,
@@ -1956,6 +2549,133 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
+	const POPUP_ID = 'imol-marketplace-links-popup';
+	const POPUP_CLASSNAME = 'bx-imol-marketplace-links-popup__container';
+	const settings = main_core.Extension.getSettings('imopenlines.v2.component.content.openlines');
+	const BOTS_CATEGORY_URL = settings.get('marketplaceBotsUrl');
+	const APPS_CATEGORY_URL = settings.get('marketplaceAppsUrl');
+	// @vue/component
+	const MarketplaceLinksPopup = {
+		name: 'MarketplaceLinksPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['close'],
+		computed: {
+			POPUP_ID: () => POPUP_ID,
+			items() {
+				return [{
+					title: this.loc('IMOL_CONTENT_TEXTAREA_MARKETPLACE_BOTS'),
+					url: BOTS_CATEGORY_URL
+				}, {
+					title: this.loc('IMOL_CONTENT_TEXTAREA_MARKETPLACE_APPS'),
+					url: APPS_CATEGORY_URL
+				}];
+			},
+			popupConfig() {
+				return {
+					bindElement: this.bindElement,
+					className: POPUP_CLASSNAME,
+					offsetTop: -5,
+					offsetLeft: 14,
+					width: 260,
+					overlay: false,
+					autoHide: true,
+					bindOptions: {
+						position: 'top'
+					},
+					angle: {
+						offset: 14,
+						position: 'bottom'
+					},
+					animation: 'fading'
+				};
+			}
+		},
+		methods: {
+			openLinkInSlider(item) {
+				BX.SidePanel.Instance.open(item.url);
+				this.$emit('close');
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<MessengerPopup
+			:config="popupConfig"
+			:id="POPUP_ID"
+			@close="$emit('close')"
+		>
+			<div class="bx-imol-marketplace-links-popup__list">
+				<div
+					v-for="item in items"
+					:key="item.url"
+					class="bx-imol-marketplace-links-popup__item"
+					:title="item.title"
+					@click="openLinkInSlider(item)"
+				>
+					{{ item.title }}
+				</div>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	// @vue/component
+	const MarketplaceLinks = {
+		name: 'MarketplaceLinks',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			MarketplaceLinksPopup
+		},
+		data() {
+			return {
+				selectorElement: null,
+				isPopupOpen: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline
+		},
+		mounted() {
+			this.selectorElement = this.$refs.marketplaceLinksButton;
+		},
+		methods: {
+			togglePopup() {
+				this.isPopupOpen = !this.isPopupOpen;
+			},
+			onPopupClose() {
+				this.isPopupOpen = false;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<span ref="marketplaceLinksButton">
+			<BIcon
+				:name="OutlineIcons.BROWSER"
+				:class="{ '--active': isPopupOpen }"
+				:title="loc('IMOL_CONTENT_TEXTAREA_MARKETPLACE')"
+				class="bx-imol-textarea-icon"
+				@click="togglePopup"
+			/>
+		</span>
+		<MarketplaceLinksPopup
+			v-if="isPopupOpen"
+			:bindElement="selectorElement"
+			@close="onPopupClose"
+		/>
+	`
+	};
+
 	// @vue/component
 	const ToolbarButtons = {
 		name: 'ToolbarButtons',
@@ -1963,7 +2683,9 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			SilentMode,
 			SalesCenter,
 			CrmForm,
-			QuickReply
+			QuickReply,
+			MarketplaceLinks,
+			QuickCommand
 		},
 		props: {
 			dialogId: {
@@ -2010,16 +2732,13 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			},
 			onQuickReplySelect(text) {
 				im_public.Messenger.textarea.insertText(this.chatId, text);
+			},
+			onQuickCommandSelect(text, options) {
+				im_public.Messenger.textarea.insertText(this.chatId, text, options);
 			}
 		},
 		template: `
 		<div class="bx-imol-textarea-buttons">
-			<SilentMode
-				:isActive="isSilentModeActive"
-				:isLoading="isSilentModeLoading"
-				:dialogId="dialogId"
-				@toggle="onSilentModeToggle"
-			/>
 			<CrmForm
 				:forms="crmForms"
 				:isLoading="isCrmFormsLoading"
@@ -2030,7 +2749,15 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				:dialogId="dialogId"
 				@selectReply="onQuickReplySelect"
 			/>
+			<QuickCommand @selectCommand="onQuickCommandSelect" />
+			<SilentMode
+				:isActive="isSilentModeActive"
+				:isLoading="isSilentModeLoading"
+				:dialogId="dialogId"
+				@toggle="onSilentModeToggle"
+			/>
 			<SalesCenter :dialogId="dialogId" />
+			<MarketplaceLinks />
 		</div>
 	`
 	};
@@ -2048,8 +2775,18 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				default: ''
 			}
 		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
 		template: `
-		<ChatTextarea :dialogId="dialogId" :key="dialogId">
+		<ChatTextarea
+			:dialogId="dialogId"
+			:key="dialogId"
+			:placeholder="this.loc('IMOL_CONTENT_TEXTAREA_PLACEHOLDER')"
+			:withCopilot="false"
+		>
 			<template #bottom-panel-buttons>
 				<ToolbarButtons :dialogId="dialogId" />
 			</template>
@@ -2057,80 +2794,14 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	const MenuSectionCode = {
-		};
-	class OpenLinesMessageMenu extends im_v2_lib_menu.MessageMenu {
-		getMenuItems() {
-			const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getPinItem(), this.getEditItem(), this.getSaveAsQuickReplyItem(), this.getMultiDialogItem()];
-			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
-			return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(secondGroupItems, MenuSectionCode.second)];
-		}
-		getMenuGroups() {
-			return [{
-				code: MenuSectionCode.first
-			}, {
-				code: MenuSectionCode.second
-			}];
-		}
-		getSaveAsQuickReplyItem() {
-			if (this.isDeletedMessage() || this.context.text.trim().length === 0) {
-				return null;
-			}
-			return {
-				icon: ui_iconSet_api_core.Outline.STRESS,
-				title: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY'),
-				onClick: () => {
-					const quickReplyService = new imopenlines_v2_provider_service.QuickReplyService();
-					quickReplyService.saveFromMessage({
-						dialogId: this.context.dialogId,
-						messageId: this.context.id
-					}).then(reply => {
-						if (!reply) {
-							return;
-						}
-						BX.UI.Notification.Center.notify({
-							content: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY_SUCCESS')
-						});
-					});
-				}
-			};
-		}
-		getMultiDialogItem() {
-			const dialogId = this.context.dialogId;
-			if (!this.#canShowMultiDialogMenu(dialogId)) {
-				return null;
-			}
-			return {
-				icon: ui_iconSet_api_core.Outline.MESSAGES_MULTI,
-				title: main_core.Loc.getMessage('IMOL_DIALOG_CHAT_MENU_MULTI_DIALOG'),
-				onClick: () => {
-					const messageService = new imopenlines_v2_provider_service.MessageService();
-					void messageService.addSession(this.context.dialogId, this.context.id);
-				}
-			};
-		}
-		#isMultiDialog(dialogId) {
-			const currentSession = im_v2_application_core.Core.getStore().getters['openLines/currentSession/getByDialogId'](dialogId);
-			return Boolean(currentSession?.multidialog);
-		}
-		#isNetworkConnector(dialogId) {
-			const currentConnector = im_v2_application_core.Core.getStore().getters['openLines/connector/getByDialogId'](dialogId);
-			return currentConnector?.connectorId === imopenlines_v2_const.Connector.network;
-		}
-		#isSupport24(dialogId) {
-			return im_v2_application_core.Core.getStore().getters['users/bots/isSupport'](dialogId);
-		}
-		#canShowMultiDialogMenu(dialogId) {
-			return !this.isDeletedMessage() && this.#isMultiDialog(dialogId) && this.#isNetworkConnector(dialogId) && this.#isSupport24(dialogId);
-		}
-	}
-
 	// @vue/component
 	const OpenLinesContent$1 = {
 		name: 'OpenLinesContent',
 		components: {
 			BaseChatContent: im_v2_component_content_elements.BaseChatContent,
+			BlockedPanel,
 			JoinPanelContainer,
+			ChatControlPanel,
 			OpenLinesHeader,
 			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
 			OpenLinesTextarea
@@ -2152,6 +2823,35 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			},
 			isQueueTypeAll() {
 				return this.queueType === imopenlines_v2_lib_queue.QueueType.all;
+			},
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			sessionByChat() {
+				return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
+			},
+			isNewSession() {
+				return this.sessionByChat?.status === imopenlines_v2_const.StatusGroup.new;
+			},
+			isSessionOperator() {
+				return im_v2_application_core.Core.getUserId() === this.sessionByChat?.operatorId;
+			},
+			isClosed() {
+				return this.sessionByChat?.isClosed ?? false;
+			},
+			isSessionBlocked() {
+				const blockDate = this.sessionByChat?.blockDate;
+				if (!blockDate) {
+					return false;
+				}
+				const blockDateTime = new Date(Number(blockDate) * 1000);
+				return blockDateTime < new Date();
+			},
+			shouldShowBlockedPanel() {
+				return this.isSessionBlocked;
+			},
+			shouldShowControlPanel() {
+				return !this.isSessionBlocked && this.isNewSession && (this.isSessionOperator || this.isQueueTypeAll);
 			}
 		},
 		created() {
@@ -2174,7 +2874,11 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				<OpenLinesHeader :dialogId="dialogId" :key="dialogId" :isQueueTypeAll="isQueueTypeAll" />
 			</template>
 			<template #textarea="{ onTextareaMount }">
-				<OpenLinesTextarea :dialogId="dialogId" @mounted="onTextareaMount"/>
+				<div v-if="shouldShowBlockedPanel || shouldShowControlPanel" class="bx-imol-textarea_action-buttons-panel">
+					<BlockedPanel v-if="shouldShowBlockedPanel" :dialogId="dialogId"/>
+					<ChatControlPanel v-else :dialogId="dialogId" :isQueueTypeAll="isQueueTypeAll"/>
+				</div>
+				<OpenLinesTextarea v-else :dialogId="dialogId" @mounted="onTextareaMount"/>
 			</template>
 			<template #join-panel>
 				<JoinPanelContainer :dialogId="dialogId" :isQueueTypeAll="isQueueTypeAll"/>
@@ -2312,5 +3016,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.OpenLinesContent = OpenLinesContent;
 
-})(this.BX.OpenLines.v2.Component.Content = this.BX.OpenLines.v2.Component.Content || {}, BX.OpenLines.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.OpenLines.v2.Provider.Service, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.OpenLines.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.OpenLines.v2.Const, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.UI.EntitySelector, BX.Messenger.v2.Component, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.OpenLines.v2.Lib, BX.OpenLines.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.System.Input.Vue, BX.Messenger.v2.Lib, BX, BX.OpenLines.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.UI.System.Chip.Vue, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Event, BX.Messenger.v2.Lib);
+})(this.BX.OpenLines.v2.Component.Content = this.BX.OpenLines.v2.Component.Content || {}, BX.OpenLines.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.OpenLines.v2.Provider.Service, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.OpenLines.v2.Const, BX.OpenLines.v2.Lib, BX, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.UI.EntitySelector, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component, BX.UI.IconSet, BX.UI.System, BX.OpenLines.v2.Lib, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.OpenLines.v2.Lib, BX.OpenLines.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI.System.Input.Vue, BX.Messenger.v2.Lib, BX.Vue3.Directives, BX.OpenLines.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.UI.System.Chip.Vue, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Lib);
 //# sourceMappingURL=openlines.bundle.js.map

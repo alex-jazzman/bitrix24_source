@@ -192,8 +192,8 @@ a.note-document-card__collection-link,
 	height: 14px;
 	background-color: currentColor;
 	/* SVG is loaded as a mask so we can recolor it via currentColor; shared with note.sidebar to avoid duplicating the asset */
-	-webkit-mask: url('/bitrix/js/note/sidebar/src/images/collection.svg') center / 14px 14px no-repeat;
-	        mask: url('/bitrix/js/note/sidebar/src/images/collection.svg') center / 14px 14px no-repeat;
+	-webkit-mask: url('/bitrix/js/note/ui/assets/images/collection.svg') center / 14px 14px no-repeat;
+	        mask: url('/bitrix/js/note/ui/assets/images/collection.svg') center / 14px 14px no-repeat;
 }
 
 .note-document-card__collection-link {

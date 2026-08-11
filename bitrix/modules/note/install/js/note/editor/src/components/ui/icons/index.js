@@ -5,6 +5,11 @@ export {
 	AlignRightIcon,
 } from './align';
 export {
+	ImageAlignLeftIcon,
+	ImageAlignCenterIcon,
+	ImageAlignRightIcon,
+} from './image-align';
+export {
 	BoldIcon,
 	ItalicIcon,
 	UnderlineIcon,

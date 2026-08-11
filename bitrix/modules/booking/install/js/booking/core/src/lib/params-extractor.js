@@ -1,6 +1,6 @@
-import type { EnabledFeatures } from 'booking.model.interface';
+import { type EnabledFeatures } from 'booking.model.interface';
 
-import type { BookingParams } from '../types';
+import { type BookingParams } from '../types';
 
 const featuresMap = Object.freeze({
 	booking: 'booking',
@@ -10,6 +10,8 @@ const featuresMap = Object.freeze({
 	booking_multi: 'bookingMulti',
 	booking_crm_slider: 'bookingCrmSlider',
 	booking_notifications_settings: 'bookingNotificationsSettings',
+	booking_notifications_ai_call: 'bookingNotificationsAiCall',
+	booking_long: 'bookingLong',
 });
 
 export function extractFeatures({ features }: BookingParams): EnabledFeatures
@@ -22,6 +24,8 @@ export function extractFeatures({ features }: BookingParams): EnabledFeatures
 		bookingCrmSlider: false,
 		bookingMulti: false,
 		bookingNotificationsSettings: false,
+		bookingNotificationsAiCall: false,
+		bookingLong: false,
 	};
 
 	for (const feature of features)

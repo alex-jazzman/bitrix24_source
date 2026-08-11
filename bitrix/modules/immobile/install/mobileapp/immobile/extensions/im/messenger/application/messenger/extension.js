@@ -31,6 +31,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { Refresher } = require('im/messenger/application/lib/refresher');
 	const { PlanLimitsUpdater } = require('im/messenger/application/lib/plan-limits-updater');
 	const { DialogManager } = require('im/messenger/application/lib/dialog-manager');
+	const { ChatDeletionManager } = require('im/messenger/application/lib/chat-deletion-manager');
 	const { PushManager } = require('im/messenger/application/lib/push-manager');
 	const { StoreEventHandler } = require('im/messenger/application/lib/event-handler/store');
 	const { ExternalEventHandler } = require('im/messenger/application/lib/event-handler/external');
@@ -44,6 +45,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { MessengerIconLoader } = require('im/messenger/assets/icon');
 	const { MessageQueueRequestManager } = require('im/messenger/application/lib/message-queue-request-manager');
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
+	const { PerfPoint } = require('debug/prism');
 
 	const mobileRevision = 25; // sync with im/lib/revision.php. TODO: move value to some config?
 
@@ -83,6 +85,9 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		async init()
 		{
 			this.logger.log('init');
+
+			this.initPerfPoint = new PerfPoint('messenger-init', 'startup').start();
+			serviceLocator.add('messenger-init-perf-point', this.initPerfPoint);
 
 			await this.initBeforeViewLoaded();
 			await waitViewLoaded();
@@ -218,6 +223,9 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			this.recentManager = new RecentManager();
 			serviceLocator.add('recent-manager', this.recentManager);
+
+			this.chatDeletionManager = new ChatDeletionManager();
+			serviceLocator.add('chat-deletion-manager', this.chatDeletionManager);
 		}
 
 		initNavigationManager()
@@ -327,6 +335,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			const currentTabId = await this.navigationManager.getActiveTab();
 			this.headerManager.redrawRightButtonsIfNeeded(currentTabId);
+			this.headerManager.redrawLeftButtonsIfNeeded(currentTabId);
 			this.tabCounters.update();
 		}
 

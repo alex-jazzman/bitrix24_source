@@ -1,4 +1,7 @@
-html { width:100%; height: 100%; }
+html {
+	width:100%;
+	height: 100%;
+}
 
 body
 {
@@ -72,7 +75,7 @@ a.search-icon { width: 12px; height: 12px;}
 a.feedback-icon { width: 14px; height: 10px;}
 
 #banner { margin:0 auto; width:878px; height: 153px;  position: relative; }
-#banner-layout { height: 142px;  table-layout: fixed; }
+#banner-layout { height: 142px;  table-layout: fixed; border-spacing: 0; }
 #banner-overlay { height: 153px; position: absolute; width:437px; left:0; top: 0;}
 #banner-image { padding:0; width: 437px; vertical-align: top;}
 #banner-image div { width: 437px; height: 142px; overflow: hidden;}

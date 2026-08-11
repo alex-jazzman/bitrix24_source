@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityContentBlockColor;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
@@ -29,7 +30,8 @@ $arActivityDescription =
 		->setNodeType(ActivityNodeType::SERVICE->value)
 		->setExcluded(\Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'N')
 		->setGroups([ ActivityGroup::WORKFLOW->value ])
-		->setColorIndex(ActivityColorIndex::ORANGE->value)
+		->setColorIndex(ActivityColorIndex::SETTINGS->value)
+		->setContentBlockColor(ActivityContentBlockColor::DEFAULT->value)
 		->setIcon(Outline::SETTINGS->name)
 		->set('SORT', 100)
 		->toArray()

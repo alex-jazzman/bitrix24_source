@@ -7,6 +7,7 @@ import { DocumentChildrenComponent } from './document-children';
 import { Type } from 'main.core';
 import 'ui.notification';
 import { markRaw } from 'ui.vue3';
+import { NoteAnalytics } from 'note.analytics';
 import { copyTextToClipboard } from '../../utils/clipboard';
 
 export const NoteDocumentPageComponent = {
@@ -210,6 +211,8 @@ export const NoteDocumentPageComponent = {
 		},
 		openChildDocument(child: Object): void
 		{
+			// Navigation to another document from within the editor.
+			NoteAnalytics.documentViewed('document');
 			this.$router.push({ name: 'document', params: { id: child.id } });
 		},
 		openAncestorDocument(documentId: number): void
@@ -220,6 +223,8 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
+			// Breadcrumb navigation to another (ancestor) document from within the editor.
+			NoteAnalytics.documentViewed('document');
 			this.$router.push({ name: 'document', params: { id } });
 		},
 		openCollection(collectionId: number): void
@@ -230,6 +235,7 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
+			NoteAnalytics.collectionViewed('context_menu');
 			this.$router.push({ name: 'workspace', params: { id } });
 		},
 		openRoot(routeName: string): void
@@ -280,6 +286,21 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
+			if (payload.type === 'collection')
+			{
+				// Same in-place navigation as openCollection() (child-document collection links):
+				// workspace is a flat list page, no heading-anchor scroll semantics, so hash is ignored.
+				const id = Number(payload.id);
+				if (!Number.isInteger(id) || id <= 0)
+				{
+					return;
+				}
+
+				this.$router.push({ name: 'workspace', params: { id } });
+
+				return;
+			}
+
 			if (payload.type !== 'document')
 			{
 				return;
@@ -314,6 +335,9 @@ export const NoteDocumentPageComponent = {
 				target.hash = `#${hash}`;
 			}
 
+			// Navigation to another document via internal link / mention.
+			NoteAnalytics.documentViewed('document');
+
 			this.$router.push(target);
 		},
 		buildDocumentLink(): string
@@ -336,7 +360,9 @@ export const NoteDocumentPageComponent = {
 				return;
 			}
 
-			if (await copyTextToClipboard(url))
+			const success = await copyTextToClipboard(url);
+			NoteAnalytics.documentLinkCopied(Boolean(success));
+			if (success)
 			{
 				BX.UI.Notification.Center.notify({
 					content: this.messages.copyLinkDone,

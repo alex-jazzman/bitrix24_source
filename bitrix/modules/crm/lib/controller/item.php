@@ -164,7 +164,14 @@ class Item extends Base
 			}
 		}
 
-		if (!$this->validateFilter($parameters['filter'], $allowedFields))
+		$allowedFilterFields = $allowedFields;
+		$allowedSortFields = $allowedFields;
+		if (($index = array_search('CONTACT_IDS', $allowedSortFields, true)) !== false)
+		{
+			unset($allowedSortFields[$index]);
+		}
+
+		if (!$this->validateFilter($parameters['filter'], $allowedFilterFields))
 		{
 			return null;
 		}
@@ -174,10 +181,15 @@ class Item extends Base
 			$parameters['filter']['OBSERVERS.USER_ID'] = is_null($parameters['filter']['OBSERVERS']) ? null : (array)$parameters['filter']['OBSERVERS'];
 			unset($parameters['filter']['OBSERVERS']);
 		}
-		if ($hasContactIdsField && !empty($parameters['filter']['CONTACT_IDS']))
+
+		$contactIdsFilterFieldVariants = ['CONTACT_IDS', '@CONTACT_IDS', '!@CONTACT_IDS'];
+		foreach ($contactIdsFilterFieldVariants as $contactIdsFilterFieldVariant)
 		{
-			$parameters['filter']['CONTACT_BINDINGS.CONTACT_ID'] = (array)$parameters['filter']['CONTACT_IDS'];
-			unset($parameters['filter']['CONTACT_IDS']);
+			if ($hasContactIdsField && !empty($parameters['filter'][$contactIdsFilterFieldVariant]))
+			{
+				$parameters['filter']['CONTACT_BINDINGS.CONTACT_ID'] = (array)$parameters['filter'][$contactIdsFilterFieldVariant];
+				unset($parameters['filter'][$contactIdsFilterFieldVariant]);
+			}
 		}
 
 		// @todo ***recurring need?
@@ -190,7 +202,7 @@ class Item extends Base
 				Converter::TO_UPPER | Converter::VALUES
 			);
 
-			if (!$this->validateOrder($parameters['order'], $allowedFields))
+			if (!$this->validateOrder($parameters['order'], $allowedSortFields))
 			{
 				return null;
 			}
@@ -475,12 +487,14 @@ class Item extends Base
 		}
 
 		$operation = $factory->getAddOperation($item);
-		if (
-			$this->getScope() === static::SCOPE_REST
-			&& !RestSettings::getCurrent()?->isRequiredUserFieldCheckEnabled()
-		)
+		if ($this->getScope() === static::SCOPE_REST)
 		{
-			$operation->disableCheckRequiredUserFields();
+			if (!RestSettings::getCurrent()?->isRequiredUserFieldCheckEnabled())
+			{
+				$operation->disableCheckRequiredUserFields();
+			}
+
+			$operation->getContext()->setAnalytics(['c_section' => Dictionary::SECTION_REST]);
 		}
 
 		$result = $operation->launch();
@@ -816,6 +830,11 @@ class Item extends Base
 		if (isset($params['ANALYTICS_CONFIG']) && is_array($params['ANALYTICS_CONFIG']))
 		{
 			$editorConfig['ANALYTICS_CONFIG'] = $params['ANALYTICS_CONFIG'];
+		}
+
+		if (isset($params['POST_FORM_ANALYTICS_DATA']['data']) && is_array($params['POST_FORM_ANALYTICS_DATA']['data']))
+		{
+			$editorConfig['COMPONENT_AJAX_DATA']['POST_FORM_ANALYTICS'] = $params['POST_FORM_ANALYTICS_DATA']['data'];
 		}
 
 		$disabledOptions = [

@@ -1,17 +1,17 @@
 import { Type } from 'main.core';
-import { Utils as MessengerUtils } from 'im.lib.utils';
-import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { Utils } from 'call.adapter.utils';
+import { DesktopApi } from 'call.adapter.desktop-api';
 
 export class BackgroundDialog
 {
 	static isAvailable()
 	{
-		return MessengerUtils.platform.getDesktopVersion() >= 52;
+		return Utils.platform.getDesktopVersion() >= 52;
 	}
 
 	static isMaskAvailable()
 	{
-		return MessengerUtils.platform.isDesktopFeatureEnabled('mask');
+		return Utils.platform.isDesktopFeatureEnabled('mask');
 	}
 
 	static open(options)
@@ -23,39 +23,41 @@ export class BackgroundDialog
 		{
 			if (window.BX.Helper)
 			{
-				window.BX.Helper.show("redirect=detail&code=12398124");
+				window.BX.Helper.show('redirect=detail&code=12398124');
 			}
 
 			return false;
 		}
 
-		const html =
-			`<div id="bx-desktop-loader" class="bx-desktop-loader-wrap">
-				<div class="bx-desktop-loader">
-					<svg class="bx-desktop-loader-circular" viewBox="25 25 50 50">
-						<circle class="bx-desktop-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
-					</svg>
-				</div>
-			</div>
-			<div id="placeholder"></div>`
+		const html = `
+			<div id="bx-desktop-loader" class="bx-desktop-loader-wrap">
+							<div class="bx-desktop-loader">
+								<svg class="bx-desktop-loader-circular" viewBox="25 25 50 50">
+									<circle class="bx-desktop-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+								</svg>
+							</div>
+						</div>
+						<div id="placeholder"></div>
+		`
 		;
 
-		const js = `BX.Runtime.loadExtension("call.component.v2.call-background").then(function(exports) {
-				BX.Vue3.BitrixVue.createApp({
-					components: {CallBackground: exports.CallBackground},
-					template: '<CallBackground tab="${tab}"/>',
-				}).mount("#placeholder");
-			});`;
+		const js = `
+			BX.Runtime.loadExtension("call.component.v2.call-background").then(function(exports) {
+										BX.Vue3.BitrixVue.createApp({
+											components: {CallBackground: exports.CallBackground},
+											template: '<CallBackground tab="${tab}"/>',
+										}).mount("#placeholder");
+									});
+		`;
 
-		DesktopApi.createWindow("callBackground", (controller) =>
-		{
+		DesktopApi.createWindow('callBackground', (controller) => {
 			const title = this.isMaskAvailable() ? BX.message('BXD_CALL_BG_MASK_TITLE') : BX.message('BXD_CALL_BG_TITLE');
-			controller.SetProperty("title", title);
-			controller.SetProperty("clientSize", {Width: 943, Height: 670});
-			controller.SetProperty("minClientSize", {Width: 943, Height: 670});
-			controller.SetProperty("backgroundColor", "#2B3038");
-			controller.ExecuteCommand("center");
-			controller.ExecuteCommand("html.load", DesktopApi.prepareHtml(html, js));
+			controller.SetProperty('title', title);
+			controller.SetProperty('clientSize', { Width: 943, Height: 670 });
+			controller.SetProperty('minClientSize', { Width: 943, Height: 670 });
+			controller.SetProperty('backgroundColor', '#2B3038');
+			controller.ExecuteCommand('center');
+			controller.ExecuteCommand('html.load', DesktopApi.prepareHtml(html, js));
 		});
 
 		return true;

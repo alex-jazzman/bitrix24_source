@@ -60,6 +60,8 @@ $arResult = [
 		'social' => ToolsManager::getInstance()->checkAvailabilityByToolId('team_work')
 	],
 	'SETTINGS_PATH' => \Bitrix\Intranet\Portal::getInstance()->getSettings()->getSettingsUrl(),
+	'SHOW_SETTINGS_BUTTON' => ($arParams['SHOW_SETTINGS_BUTTON'] ?? 'Y') === 'Y'
+		&& $activePreset->getCode() !== 'collab',
 ];
 
 if ($arResult["IS_EXTRANET"] === false && count($defaultItems) > 0)

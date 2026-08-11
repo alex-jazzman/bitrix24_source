@@ -3,6 +3,9 @@ import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { ChipDesign, ChipSize, Chip } from 'ui.system.chip.vue';
 
 import { McpSelector } from 'aiassistant.mcp-selector';
+
+import { Analytics } from 'im.v2.lib.analytics';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelCopilotMcpAuth } from 'im.v2.model';
 
 import { ToolbarHint } from './toolbar-hint';
@@ -33,6 +36,10 @@ export const CopilotMcpIntegration = {
 		OutlineIcons: () => OutlineIcons,
 		ChipDesign: () => ChipDesign,
 		ChipSize: () => ChipSize,
+		isAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.aiAssistantMcpSelectorAvailable);
+		},
 		mcpAuth(): ?ImModelCopilotMcpAuth
 		{
 			return this.$store.getters['copilot/chats/getMcpAuth'](this.dialogId);
@@ -91,6 +98,7 @@ export const CopilotMcpIntegration = {
 	methods: {
 		toggle()
 		{
+			Analytics.getInstance().copilot.onMcpIntegrationClick(this.dialogId);
 			if (this.isSelectorOpened)
 			{
 				this.getSelector().hide();
@@ -119,6 +127,7 @@ export const CopilotMcpIntegration = {
 
 			this.selector = new McpSelector({
 				context: COPILOT_ANALYTICS_CONTEXT,
+				dialogId: this.dialogId,
 				targetNode: this.$refs.chip.$el,
 				dialogOptions: {
 					popupOptions: {
@@ -175,6 +184,7 @@ export const CopilotMcpIntegration = {
 	},
 	template: `
 		<ToolbarHint
+			v-if="isAvailable"
 			:hintEnabled="isHintEnabled"
 			:text="hintText"
 		>

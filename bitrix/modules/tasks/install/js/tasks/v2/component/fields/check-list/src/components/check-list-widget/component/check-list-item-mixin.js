@@ -256,7 +256,7 @@ export const CheckListItemMixin = {
 		{
 			this.$emit('removeItem', this.id);
 		},
-		async complete(isComplete: boolean): void
+		async complete(isComplete: boolean, persist: boolean = true): void
 		{
 			if (this.canToggle === false)
 			{
@@ -280,7 +280,7 @@ export const CheckListItemMixin = {
 				this.updateCheckList(this.id, { isComplete });
 				listParents.forEach((fields: Partial<CheckListModel>, id: string | number) => {
 					this.updateCheckList(id, fields);
-					if (this.isPreview && this.isEdit)
+					if (persist && this.isPreview && this.isEdit)
 					{
 						this.saveCompleteState(id, fields.isComplete);
 					}
@@ -292,7 +292,7 @@ export const CheckListItemMixin = {
 				callback: completionCallback,
 			});
 
-			if (this.isPreview && this.isEdit)
+			if (persist && this.isPreview && this.isEdit)
 			{
 				this.saveCompleteState(this.id, isComplete);
 			}

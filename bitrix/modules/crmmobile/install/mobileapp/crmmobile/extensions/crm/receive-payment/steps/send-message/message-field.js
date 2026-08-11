@@ -107,10 +107,14 @@ jn.define('crm/receive-payment/steps/send-message/message-field', (require, expo
 
 			if (this.currentSenderCode === SenderCodes.SMS_PROVIDER)
 			{
-				return this.state.value.replaceAll(
-					'#LINK#',
-					`[color=${AppTheme.colors.accentMainLinks}]${this.orderPublicUrl}[/color][color=${AppTheme.colors.base4}]xxxxx[/color]`,
-				);
+				return this.state.value
+					.replaceAll(
+						/\[placeholder[^\]]*](.*?)\[\/placeholder]/gs,
+						`[color=${AppTheme.colors.accentMainLinks}]$1[/color]`,
+					).replaceAll(
+						'#LINK#',
+						`[color=${AppTheme.colors.accentMainLinks}]${this.orderPublicUrl}[/color][color=${AppTheme.colors.base4}]xxxxx[/color]`,
+					);
 			}
 
 			return '';

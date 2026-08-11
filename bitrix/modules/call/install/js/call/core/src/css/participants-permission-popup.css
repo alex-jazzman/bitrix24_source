@@ -1,4 +1,5 @@
 :root{
+	--call-participants-permission-popup__width: 335px;
 	--call-participants-permission-popup__fallback-background-color: #012548;
 	--call-participants-permission-popup__text-letter-spacing: var(--call-view__letter-spacing);
 	--call-participants-permission-popup__top-list-item-text-color: var(--ui-color-palette-gray-03);
@@ -15,6 +16,7 @@
 }
 
 .bx-call-participants-permission-popup {
+	width: var(--call-participants-permission-popup__width);
 	border-radius: 18px;
 	padding: 12px 10px;
 	letter-spacing: -0.05px;

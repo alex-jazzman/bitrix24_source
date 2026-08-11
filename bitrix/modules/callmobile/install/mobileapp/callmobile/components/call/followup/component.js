@@ -7,7 +7,7 @@
 		Icon,
 		Ellipsize,
 	} = require('ui-system/form/buttons/button');
-	const { Avatar, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const { AvatarShape } = require('ui-system/blocks/avatar');
 	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { Entry } = require('tasks/entry');
 	const { EfficiencyRow } = require('call:followup/efficiency-row');
@@ -17,25 +17,24 @@
 	const { getScoreColor, getTimeInSeconds, formatTimeRange, getFullDuration, formatDateForFollowup } = require('call:followup/util');
 	const { Color, Indent } = require('tokens');
 	const { Alert } = require('alert');
-	const { Loc } = require('loc');
 	const { BottomSheet } = require('bottom-sheet');
 		const DialogOpener = () => {
-				try
-				{
-						const { DialogOpener } = require('im/messenger/api/dialog-opener');
+			try
+			{
+				const { DialogOpener } = require('im/messenger/api/dialog-opener');
 
-						return DialogOpener;
-				}
-				catch (e)
-				{
-						console.log(e, 'DialogOpener not found');
+				return DialogOpener;
+			}
+			catch (e)
+			{
+				console.log(e, 'DialogOpener not found');
 
-						return null;
-				}
+				return null;
+			}
 		};
 
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, DialogType, EventType } = require('call/const');
+	const { Analytics } = require('call/const');
 
 	const icons = {
 		crossIcon: '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.614216 8.60998C0.399428 8.82477 0.399428 9.17301 0.614216 9.3878C0.829004 9.60259 1.17725 9.60259 1.39203 9.3878L5.00297 5.77686L8.61432 9.38822C8.82911 9.603 9.17735 9.603 9.39214 9.38822C9.60693 9.17343 9.60693 8.82519 9.39214 8.6104L5.78079 4.99904L9.3917 1.38813C9.60649 1.17334 9.60649 0.825098 9.3917 0.61031C9.17691 0.395522 8.82867 0.395522 8.61388 0.61031L5.00297 4.22123L1.39254 0.610793C1.17775 0.396004 0.829508 0.396004 0.614719 0.610793C0.399931 0.825581 0.399931 1.17382 0.614719 1.38861L4.22515 4.99905L0.614216 8.60998Z" fill="#FF5752"/></svg>',
@@ -136,7 +135,7 @@
 			return Text({
 				style: { fontSize: 19, color: Color.base0.toHex(), fontWeight: '500', marginBottom: 20 },
 				text: title,
-			})
+			});
 		}
 
 		renderSubtitle(text)
@@ -163,7 +162,7 @@
 					style: { fontSize: 15, color: isChecked ? Color.base2.toHex() : '#909090', fontWeight: '400' },
 					text,
 				}),
-			)
+			);
 		}
 
 		renderHeader()
@@ -172,14 +171,12 @@
 			const score = aiOutcome?.evaluation?.efficiencyValue ?? aiOutcome?.overview?.efficiencyValue;
 			const date = new Date(this.state.result.call.startDate);
 
-			const entities = Object.values(this.state.users).map((user) => (
-				{
-					id: user.id,
-					name: user.name,
-					testId: `AvatarStackItem-${user.id}`,
-					uri: user.avatar,
-				})
-			);
+			const entities = Object.values(this.state.users).map((user) => ({
+				id: user.id,
+				name: user.name,
+				testId: `AvatarStackItem-${user.id}`,
+				uri: user.avatar,
+			}));
 
 			return View(
 				{
@@ -228,7 +225,7 @@
 							}),
 							Text({
 								style: { fontSize: 15, color: Color.base1.toHex(), fontWeight: '600', marginRight: 5 },
-								text: `${BX.message(`CALL_COMPONENT_EFFICIENCY_${score < 50 ? 0 : score}`)}`,
+								text: String(BX.message(`CALL_COMPONENT_EFFICIENCY_${score < 50 ? 0 : score}`)),
 							}),
 						),
 						View(
@@ -294,7 +291,7 @@
 									width: '100%',
 									marginTop: 15,
 									height: 40,
-								}
+								},
 							},
 
 							View(
@@ -324,8 +321,8 @@
 									design: ButtonDesign.OUTLINE,
 									ellipsize: Ellipsize.END,
 								}),
-							)
-						)
+							),
+						),
 					),
 				),
 			);
@@ -336,7 +333,7 @@
 			const component = new ParticipantsList({ users: this.state.users });
 			const bottomSheet = new BottomSheet({ component })
 				.setBackgroundColor(Color.bgContentPrimary.toHex())
-				.setTopPosition(100)
+				.setTopPosition(100);
 
 			bottomSheet.open();
 		}
@@ -344,11 +341,15 @@
 		prepareEfficiencyViews()
 		{
 			const aiOutcome = this.state?.result?.aiOutcome;
-			if (!aiOutcome) return [];
+			if (!aiOutcome)
+			{
+				return [];
+			}
 
 			if (aiOutcome.version === 1)
 			{
 				const efficiency = aiOutcome.overview?.efficiency;
+
 				return Object.entries(efficiency ?? {})
 					.filter(([key, value]) => key !== 'type')
 					.map(([key, value]) => (
@@ -359,6 +360,7 @@
 			if (aiOutcome.version >= 2)
 			{
 				const efficiency = aiOutcome.evaluation;
+
 				return Object.entries(efficiency ?? {})
 					.filter(([key, value]) => key !== 'efficiencyValue')
 					.map(([key, item]) => (
@@ -390,7 +392,7 @@
 					},
 					onLayout: (params) => {
 						this.positions['efficiency'] = { y: params.y, height: params.height };
-					}
+					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')),
 				View(
@@ -408,7 +410,7 @@
 							style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400' },
 							text: `${BX.message('CALL_COMPONENT_MEETING_TYPE')} — ${meetingType}. ${BX.message(`CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_${score < 75 ? 0 : score}`)}`,
 						}),
-					)
+					),
 				),
 				...efficiencyViews,
 			);
@@ -441,7 +443,7 @@
 						this.summaryBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_AGREEMENTS'), {
 							...this.tabs.get(BX.message('CALL_COMPONENT_AGREEMENTS')),
-							ref: this.summaryBlockRef
+							ref: this.summaryBlockRef,
 						});
 					},
 					onLayout: (params) => {
@@ -449,7 +451,7 @@
 					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_AGREEMENTS')),
-				hasContent ? this.renderSummaryContent(agreements, tasks, meetings, actionItems) : this.renderEmptyState()
+				hasContent ? this.renderSummaryContent(agreements, tasks, meetings, actionItems) : this.renderEmptyState(),
 			);
 		}
 
@@ -459,12 +461,12 @@
 				{
 					style: {
 						marginTop: 18,
-					}
+					},
 				},
 				BBCodeText({
 					style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400' },
 					value: BX.message('CALL_COMPONENT_EMPTY_AGREEMENTS'),
-				})
+				}),
 			);
 		}
 
@@ -488,7 +490,7 @@
 					}),
 					View(
 						{
-							style: { marginTop: 14 }
+							style: { marginTop: 14 },
 						},
 						Button({
 							testId: 'Button',
@@ -517,7 +519,7 @@
 					}),
 					View(
 						{
-							style: { marginTop: 14 }
+							style: { marginTop: 14 },
 						},
 						Button({
 							testId: 'Button',
@@ -546,7 +548,7 @@
 					}),
 					View(
 						{
-							style: { marginTop: 14 }
+							style: { marginTop: 14 },
 						},
 						Button({
 							testId: 'Button',
@@ -599,7 +601,7 @@
 						display: 'flex',
 						flexDirection: 'row',
 						marginTop: 18,
-					}
+					},
 				},
 				View(
 					{
@@ -608,8 +610,8 @@
 							height: '100%',
 							backgroundColor: color,
 							marginRight: 14,
-						}
-					}
+						},
+					},
 				),
 				View(
 					{},
@@ -632,7 +634,7 @@
 					},
 					onLayout: (params) => {
 						this.positions['about'] = { y: params.y, height: params.height };
-					}
+					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_ABOUT')),
 				BBCodeText({
@@ -654,7 +656,7 @@
 						value: item.detailedInsight,
 					}),
 				)
-			))
+			));
 		}
 
 		renderNewInsightsView(insights)
@@ -663,7 +665,7 @@
 				{},
 				View(
 					{
-						style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }
+						style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
 					},
 					Text({
 						style: { fontSize: 15, color: '#909090', fontWeight: '400' },
@@ -682,7 +684,7 @@
 						isWide: true,
 					})
 				)),
-			)
+			);
 
 			return View(
 				{},
@@ -709,8 +711,8 @@
 							value: item.detailedInsight,
 						}),
 					)
-				))
-			)
+				)),
+			);
 		}
 
 		renderStrengthsAndWeaknesses(insights)
@@ -733,7 +735,7 @@
 								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
 								value: `${item.strengthTitle ?? ''}. ${item.strengthExplanation ?? ''}`.trim(),
 							})
-						))
+						)),
 					),
 				),
 				insights?.meetingWeaknesses?.length > 0 && View(
@@ -750,15 +752,15 @@
 								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
 								value: `${item.weaknessTitle ?? ''}. ${item.weaknessExplanation ?? ''}`.trim(),
 							})
-						))
+						)),
 					),
-					...recommendationFields.map((field) =>
-							insights?.[field] && BBCodeText({
-								onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
-								style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
-								value: `${insights?.[field] ?? ''}`,
-							})
-					)
+					...recommendationFields.map((field) => (
+						insights?.[field] && BBCodeText({
+							onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
+							style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
+							value: String(insights?.[field] ?? ''),
+						})
+					)),
 				),
 				insights?.finalRecommendations && View(
 					{},
@@ -769,12 +771,11 @@
 					BBCodeText({
 						onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
 						style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400', marginTop: 15 },
-						value: `${insights?.finalRecommendations ?? ''}`,
+						value: String(insights?.finalRecommendations ?? ''),
 					}),
-				)
-			)
+				),
+			);
 		}
-
 
 		renderAnalysis(insights, speakerEvaluationAvailable)
 		{
@@ -854,7 +855,9 @@
 						},
 						Text({
 							style: { fontSize: 15, color: '#007bff' },
-							text: `${item.start} - ${item.end}`,
+							text: item.end && item.start
+								? `${item.start} - ${item.end}`
+								: item.start || '',
 						}),
 						Text({
 							style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '500' },
@@ -884,10 +887,13 @@
 					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_SUMMARY')),
-				trackUrl && new Audioplayer({
-					ref: (ref) => this.summaryPlayerRef = ref,
+				trackUrl && (this.summaryPlayer ??= new Audioplayer({
+					ref: (ref) => {
+						this.summaryPlayerRef = ref;
+					},
 					trackUrl,
-				}),
+					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE'),
+				})),
 				BBCodeText({
 					onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
 					style: { fontSize: 15, padding: 15, paddingBottom: 0, color: Color.base2.toHex(), fontWeight: '500' },
@@ -947,21 +953,20 @@
 				)
 			));
 
-
 			const timeLine = View(
 				{
 					style: {
 						padding: 15,
 					},
 				},
-				...summaryViews
-			)
+				...summaryViews,
+			);
 
 			return View(
 				{
 					style: {
 						...styles.container,
-						height: 'auto'
+						height: 'auto',
 					},
 					ref: (ref) => {
 						this.transcribationBlockRef = ref;
@@ -969,15 +974,18 @@
 					},
 					onLayout: (params) => {
 						this.positions['transcribation'] = { y: params.y, height: params.height };
-					}
+					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_TRANSCRIPTIONS')),
-					trackUrl && new Audioplayer({
-					ref: (ref) => this.transcribationPlayerRef = ref,
+				trackUrl && (this.transcribationPlayer ??= new Audioplayer({
+					ref: (ref) => {
+						this.transcribationPlayerRef = ref;
+					},
 					trackUrl,
-				}),
+					trackTitle: BX.message('CALL_COMPONENT_FOLLOWUP_AUDIO_TITLE'),
+				})),
 				timeLine,
-			)
+			);
 		}
 
 		scrollFeed(ref)
@@ -994,18 +1002,19 @@
 					this.setState({
 						result: { ...response.data.result },
 					});
+
+					const callUuid = response.data.result?.call?.uuid;
+					const analytics = new AnalyticsEvent()
+						.setTool(Analytics.AnalyticsTool.im)
+						.setCategory(Analytics.AnalyticsCategory.callFollowup)
+						.setEvent(Analytics.AnalyticsEvent.openSlider)
+						.setP5(`callId_${callUuid}`);
+
+					analytics.send();
 				})
 				.catch((error) => {
 					Alert.alert(error);
 				});
-
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.AnalyticsTool.im)
-				.setCategory(Analytics.AnalyticsCategory.callFollowup)
-				.setEvent(Analytics.AnalyticsEvent.openSlider)
-				.setP5(`callId_${callId}`);
-
-			analytics.send();
 		}
 
 		getUsersData()
@@ -1046,18 +1055,17 @@
 
 			if (!this.viewedTabs.includes(this.activeTab))
 			{
-				const callId = BX.componentParameters.get('callId');
+				const callUuid = this.state.result?.call?.uuid;
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.AnalyticsTool.im)
 					.setCategory(Analytics.AnalyticsCategory.callFollowup)
 					.setEvent(Analytics.AnalyticsEvent.openTab)
 					.setType(Analytics.AnalyticsType[activeName])
-					.setP5(`callId_${callId}`);
+					.setP5(`callId_${callUuid}`);
 
 				this.viewedTabs.push(this.activeTab);
 
 				analytics.send();
-
 			}
 		}
 
@@ -1102,6 +1110,7 @@
 						{
 							return;
 						}
+
 						return View(
 							{
 								style: { marginRight: 10 },
@@ -1117,9 +1126,9 @@
 								design: isActive ? ButtonDesign.OUTLINE : ButtonDesign.OUTLINE_NO_ACCENT,
 								ellipsize: Ellipsize.END,
 							}),
-						)
-					})
-				)
+						);
+					}),
+				),
 			);
 
 			const feed = ScrollView(
@@ -1151,17 +1160,18 @@
 								activeTabName = name;
 							}
 						}
+
 						if (activeTabName)
 						{
 							this.setActiveTab(activeTabName);
 						}
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							minHeight: device.screen.height,
-						}
+						},
 					},
 					this.renderHeader(),
 					this.renderAgreement(),
@@ -1170,14 +1180,14 @@
 					shouldRenderAnalysis && this.renderAnalysis(insights, insightsData.speakerEvaluationAvailable),
 					this.renderResume(trackUrl),
 					this.renderTranscribation(trackUrl),
-				)
+				),
 			);
 
 			const FollowUp = View(
 				{
 					style: {
 						paddingBottom: 100,
-					}
+					},
 				},
 				tabs,
 				feed,

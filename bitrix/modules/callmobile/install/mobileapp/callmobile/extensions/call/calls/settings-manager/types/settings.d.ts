@@ -5,5 +5,7 @@ export type CallSettingsType = {
 	plainCallCloudRecordingEnabled?: boolean,
 	optionsForTestingEnabled?: boolean,
 	mobileCallUIVisibilityTimer?: number,
+	gridViewEnabled?: boolean,
 	callBalancerUrl?: string,
+	callInvitePeriod?: number,
 };

@@ -161,87 +161,89 @@ export const ReplicationFinish = {
 		},
 	},
 	template: `
-		<div class="tasks-field-replication-section">
-			<TextMd tag="div" className="tasks-field-replication-row">
-				<span class="tasks-field-replication-secondary">
-					{{ loc('TASKS_V2_REPLICATION_FINISH') }}
-				</span>
-			</TextMd>
-			<div>
-				<div class="tasks-field-replication-sheet__stack">
-					<div
-						class="tasks-replication-sheet-action-row --selectable"
-						:class="{'--active': isRowActive(ReplicationRepeatTill.Endless)}"
-						@click.self="repeatTill = ReplicationRepeatTill.Endless"
-					>
-						<UiRadio
-							tag="label"
-							v-model="repeatTill"
-							:value="ReplicationRepeatTill.Endless"
-							inputName="tasks-replication-sheet-finish-type"
-						/>
-						<TextXs className="tasks-replication-sheet-action-row__text">
-							{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}
-						</TextXs>
-					</div>
-					<div
-						class="tasks-replication-sheet-action-row --selectable"
-						:class="{'--active': isRowActive(ReplicationRepeatTill.Times)}"
-						@click.self="repeatTill = ReplicationRepeatTill.Times"
-					>
-						<UiRadio
-							tag="label"
-							v-model="repeatTill"
-							:value="ReplicationRepeatTill.Times"
-							inputName="tasks-replication-sheet-finish-type"
-						/>
-						<RichLoc
-							class="tasks-field-replication-row"
-							:text="loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')"
-							placeholder="[count/]"
+		<div class="tasks-field-replication-settings">
+			<div class="tasks-field-replication-section">
+				<TextMd tag="div" className="tasks-field-replication-row" style="margin-bottom: 14px;">
+					<span class="tasks-field-replication-secondary">
+						{{ loc('TASKS_V2_REPLICATION_FINISH_MSGVER_1') }}
+					</span>
+				</TextMd>
+				<div>
+					<div class="tasks-field-replication-sheet__stack">
+						<div
+							class="tasks-replication-sheet-action-row --selectable"
+							:class="{'--active': isRowActive(ReplicationRepeatTill.Endless)}"
+							@click.self="repeatTill = ReplicationRepeatTill.Endless"
 						>
-							<template #count>
-								<BInput
-									:modelValue="String(replicateParams.times ?? '')"
-									:size="InputSize.Sm"
-									:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
-									:disabled="!isRowActive(ReplicationRepeatTill.Times)"
-									style="max-width: 4em; padding-bottom: 0;"
-									@blur="updateTimes($event.target.value)"
-								/>
-							</template>
-						</RichLoc>
-					</div>
-					<div
-						class="tasks-replication-sheet-action-row --selectable"
-						:class="{'--active': isRowActive(ReplicationRepeatTill.Date)}"
-						@click.self="repeatTill = ReplicationRepeatTill.Date"
-					>
-						<UiRadio
-							tag="label"
-							v-model="repeatTill"
-							:value="ReplicationRepeatTill.Date"
-							inputName="tasks-replication-sheet-finish-type"
-						/>
-						<TextXs className="tasks-replication-sheet-action-row__text">
-							{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}
-						</TextXs>
-						<HoverPill
-							:readonly="!isRowActive(ReplicationRepeatTill.Date)"
-							textOnly
-							noOffset
-							ref="datepickerFinishOpener"
-							@click="handleClickDatepickerFinishOpener"
+							<UiRadio
+								tag="label"
+								v-model="repeatTill"
+								:value="ReplicationRepeatTill.Endless"
+								inputName="tasks-replication-sheet-finish-type"
+							/>
+							<TextXs className="tasks-replication-sheet-action-row__text">
+								{{ loc('TASKS_V2_REPLICATION_FINISH_HAND') }}
+							</TextXs>
+						</div>
+						<div
+							class="tasks-replication-sheet-action-row --selectable"
+							:class="{'--active': isRowActive(ReplicationRepeatTill.Times)}"
+							@click.self="repeatTill = ReplicationRepeatTill.Times"
 						>
-							<span class="tasks-field-replication-link">{{ endDateLabel }}</span>
-						</HoverPill>
-						<ReplicationDatepicker
-							v-if="isDatepickerOpened"
-							:dateTs="endDateTs"
-							:bindElement="$refs.datepickerFinishOpener.$el"
-							@update:dateTs="updateEndDate"
-							@close="isDatepickerOpened = false"
-						/>
+							<UiRadio
+								tag="label"
+								v-model="repeatTill"
+								:value="ReplicationRepeatTill.Times"
+								inputName="tasks-replication-sheet-finish-type"
+							/>
+							<RichLoc
+								class="tasks-field-replication-row"
+								:text="loc('TASKS_V2_REPLICATION_AFTER_COUNT_REPETITIONS')"
+								placeholder="[count/]"
+							>
+								<template #count>
+									<BInput
+										:modelValue="String(replicateParams.times ?? '')"
+										:size="InputSize.Sm"
+										:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
+										:disabled="!isRowActive(ReplicationRepeatTill.Times)"
+										style="max-width: 4em; padding-bottom: 0;"
+										@blur="updateTimes($event.target.value)"
+									/>
+								</template>
+							</RichLoc>
+						</div>
+						<div
+							class="tasks-replication-sheet-action-row --selectable"
+							:class="{'--active': isRowActive(ReplicationRepeatTill.Date)}"
+							@click.self="repeatTill = ReplicationRepeatTill.Date"
+						>
+							<UiRadio
+								tag="label"
+								v-model="repeatTill"
+								:value="ReplicationRepeatTill.Date"
+								inputName="tasks-replication-sheet-finish-type"
+							/>
+							<TextXs className="tasks-replication-sheet-action-row__text">
+								{{ loc('TASKS_V2_REPLICATION_FINISH_DATE') }}
+							</TextXs>
+							<HoverPill
+								:readonly="!isRowActive(ReplicationRepeatTill.Date)"
+								textOnly
+								noOffset
+								ref="datepickerFinishOpener"
+								@click="handleClickDatepickerFinishOpener"
+							>
+								<span class="tasks-field-replication-link">{{ endDateLabel }}</span>
+							</HoverPill>
+							<ReplicationDatepicker
+								v-if="isDatepickerOpened"
+								:dateTs="endDateTs"
+								:bindElement="$refs.datepickerFinishOpener.$el"
+								@update:dateTs="updateEndDate"
+								@close="isDatepickerOpened = false"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

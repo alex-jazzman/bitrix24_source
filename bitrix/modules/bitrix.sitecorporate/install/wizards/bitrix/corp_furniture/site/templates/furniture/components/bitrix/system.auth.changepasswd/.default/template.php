@@ -10,6 +10,7 @@ ShowMessage($arParams["~AUTH_RESULT"]);
 <? endif ?>
 <input type="hidden" name="AUTH_FORM" value="Y">
 <input type="hidden" name="TYPE" value="CHANGE_PWD">
+<?= bitrix_sessid_post(); ?>
 <div class="field">
 	<label class="field-title"><?=GetMessage("AUTH_LOGIN")?><span class="starrequired">*</span></label>
 	<div class="form-input"><input type="text" name="USER_LOGIN" maxlength="50" value="<?=$arResult["LAST_LOGIN"]?>" /></div>

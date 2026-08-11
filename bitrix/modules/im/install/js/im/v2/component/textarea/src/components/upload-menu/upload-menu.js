@@ -32,8 +32,7 @@ const DOCUMENT_SIGN_SLIDER_URL = '/sign/doc/0/?chat_id=';
 // @vue/component
 export const UploadMenu = {
 	components: { BIcon, MessengerMenu, MenuItem, DiskPopup },
-	props:
-	{
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
@@ -47,8 +46,7 @@ export const UploadMenu = {
 			showDiskPopup: false,
 		};
 	},
-	computed:
-	{
+	computed: {
 		OutlineIcons: () => OutlineIcons,
 		ICON_SIZE: () => ICON_SIZE,
 		menuItems(): UploadMenuItem[]
@@ -63,36 +61,37 @@ export const UploadMenu = {
 					icon: MenuItemIcon.b24,
 					title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
 					clickHandler: this.onSelectFromB24,
+					showCondition: () => !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.task,
 					title: this.loc('IM_TEXTAREA_SELECT_TASK'),
 					clickHandler: this.onCreateTaskClick,
-					showCondition: () => !this.isCopilotChat,
+					showCondition: () => !this.isCopilotChat && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.meeting,
 					title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
 					clickHandler: this.onCreateMeetingClick,
-					showCondition: () => !this.isCopilotChat,
+					showCondition: () => !this.isCopilotChat && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.calendarSlot,
 					title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
 					clickHandler: this.onCreateCalendarSlotClick,
-					showCondition: () => this.isCalendarSlotAvailable,
+					showCondition: () => this.isCalendarSlotAvailable && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.documentSign,
 					title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
 					clickHandler: this.onCreateDocumentSignClick,
-					showCondition: () => this.isDocumentSignAvailable,
+					showCondition: () => this.isDocumentSignAvailable && !this.isGuest,
 				},
 				{
 					icon: MenuItemIcon.vote,
 					title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
 					clickHandler: this.onCreateVoteClick,
-					showCondition: () => this.isVoteCreationAvailable,
+					showCondition: () => this.isVoteCreationAvailable && !this.isGuest,
 				},
 			];
 		},
@@ -167,6 +166,10 @@ export const UploadMenu = {
 			}
 
 			return Color.gray40;
+		},
+		isGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](Core.getUserId());
 		},
 	},
 	methods:

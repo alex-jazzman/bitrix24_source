@@ -1,10 +1,11 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { Event } from 'main.core';
 
-import { BusySlot as BusySlotType, DateFormat, DraggedElementKind, Grid, Model } from 'booking.const';
+import { BusySlot as BusySlotType, DateFormat, DraggedElementKind, Model } from 'booking.const';
 import { cellService } from 'booking.lib.cell';
 import { SlotRanges } from 'booking.lib.slot-ranges';
 import { Duration } from 'booking.lib.duration';
+import { gridTokens, GridTokenKey } from 'booking.lib.grid';
 
 import { type ResourceModel } from 'booking.model.resources';
 import { type Cell, type HoveredPlacementSlot } from 'booking.model.interface';
@@ -44,6 +45,7 @@ export const WeekGridCell = {
 			hoveredPlacementSlot: `${Model.Interface}/hoveredPlacementSlot`,
 			isHoveredPlacementSlotFixed: `${Model.Interface}/isHoveredPlacementSlotFixed`,
 			offset: `${Model.Interface}/offset`,
+			zoom: `${Model.Interface}/zoom`,
 			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			resizedBookingId: `${Model.Interface}/resizedBookingId`,
@@ -98,7 +100,7 @@ export const WeekGridCell = {
 		},
 		isCreationAvailable(): boolean
 		{
-			return weekCellService.isCreationAvailable({ resourceId: this.resourceId });
+			return weekCellService.isCreationAvailableForSlotSize(this.slotSize);
 		},
 		slotSize(): number
 		{
@@ -331,7 +333,7 @@ export const WeekGridCell = {
 		{
 			const rect = this.$el.getBoundingClientRect();
 			const offsetX = event.clientX - rect.left;
-			const hour = Math.floor(offsetX / Grid.SizeElement.WeekHourWidth);
+			const hour = Math.floor(offsetX / (gridTokens.get(GridTokenKey.WeekHourWidth) * this.zoom));
 
 			return Math.max(0, Math.min(23, hour));
 		},

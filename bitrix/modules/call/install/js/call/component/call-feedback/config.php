@@ -9,12 +9,12 @@ return [
 	'js' => 'dist/call-feedback.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'im.lib.logger',
+		'main.popup',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
-		'ui.vue',
 		'ui.forms',
-		'main.popup',
-		'im.lib.logger',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

@@ -48,6 +48,13 @@ return [
 						'className' => '\\Bitrix\\Note\\Internal\\Integration\\UI\\EntitySelector\\CollectionProvider',
 					],
 				],
+				[
+					'entityId' => 'note-document',
+					'provider' => [
+						'moduleId' => 'note',
+						'className' => '\\Bitrix\\Note\\Internal\\Integration\\UI\\EntitySelector\\DocumentProvider',
+					],
+				],
 			],
 		],
 		'readonly' => true,

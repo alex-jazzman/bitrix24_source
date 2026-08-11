@@ -1,8 +1,14 @@
 type InternalNoteLink =
 	| { type: 'document', id: number, hash?: string }
+	| { type: 'collection', id: number, hash?: string }
 	| { type: 'anchor', hash: string };
 
-const DOCUMENT_PATH_PATTERN = /^\/note\/document\/(\d+)\/?$/;
+// `/note` prefix is optional: the SPA is mounted on base `/note/`, so `/document/{id}/` and
+// `/note/document/{id}/` denote the same internal document link (user-typed short form must not reload).
+const DOCUMENT_PATH_PATTERN = /^(?:\/note)?\/document\/(\d+)\/?$/;
+// Real collection route is `/workspace/{id}/` (app/src/router/routes.js); `/collection/{id}/` is a
+// dead route that never existed but is already saved in some documents, so it's kept as a legacy alias.
+const COLLECTION_PATH_PATTERN = /^(?:\/note)?\/(?:workspace|collection)\/(\d+)\/?$/;
 
 function resolveCurrentOrigin(): string | null
 {
@@ -87,19 +93,33 @@ export function parseInternalNoteLink(href: mixed, origin?: string | null): Inte
 		return null;
 	}
 
-	const match = DOCUMENT_PATH_PATTERN.exec(pathname);
-	if (!match)
+	const documentMatch = DOCUMENT_PATH_PATTERN.exec(pathname);
+	if (documentMatch)
 	{
-		return null;
+		const id = Number(documentMatch[1]);
+		if (!Number.isInteger(id) || id <= 0)
+		{
+			return null;
+		}
+
+		const hash = extractHash(href);
+
+		return hash === '' ? { type: 'document', id } : { type: 'document', id, hash };
 	}
 
-	const id = Number(match[1]);
-	if (!Number.isInteger(id) || id <= 0)
+	const collectionMatch = COLLECTION_PATH_PATTERN.exec(pathname);
+	if (collectionMatch)
 	{
-		return null;
+		const id = Number(collectionMatch[1]);
+		if (!Number.isInteger(id) || id <= 0)
+		{
+			return null;
+		}
+
+		const hash = extractHash(href);
+
+		return hash === '' ? { type: 'collection', id } : { type: 'collection', id, hash };
 	}
 
-	const hash = extractHash(href);
-
-	return hash === '' ? { type: 'document', id } : { type: 'document', id, hash };
+	return null;
 }

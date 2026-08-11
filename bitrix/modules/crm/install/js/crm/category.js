@@ -32,6 +32,12 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 		{
 			return this._entityId;
 		},
+		getCurrentCategoryId: function()
+		{
+			const currentCategoryId = this._settings?.currentCategoryId;
+
+			return BX.type.isNumber(currentCategoryId) ? currentCategoryId : -1;
+		},
 		getMessage: function(name)
 		{
 			return BX.prop.getString(BX.Crm.DealCategoryChanger.messages, name, name);
@@ -242,12 +248,17 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 				menuItem.menuWindow.close();
 			}
 
-			this.startRequest(BX.prop.getInteger(menuItem, 'id', 0));
+			this.startRequest(menuItem?.id ?? 0);
 		},
 		// endregion
 
 		startRequest(categoryId)
 		{
+			if (categoryId === this.getCurrentCategoryId())
+			{
+				return;
+			}
+
 			if (this.getEntityId() <= 0)
 			{
 				const editorGuid = BX.prop.getString(this._settings, 'editorGuid', '');

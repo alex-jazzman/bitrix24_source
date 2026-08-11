@@ -35,6 +35,7 @@ export class CategoryChanger
 	#categories: CategoryModel[];
 	#editorGuid: ?string = null;
 	#labelTemplate: string;
+	#menuId: string;
 	#logger: Logger;
 	#isProgress: boolean = false;
 
@@ -46,6 +47,7 @@ export class CategoryChanger
 		this.#categories = categories;
 		this.#editorGuid = editorGuid;
 		this.#labelTemplate = Type.isStringFilled(labelTemplate) ? labelTemplate : '#CATEGORY#';
+		this.#menuId = `item-category-changer-${this.#entityTypeId}-${this.#id}`;
 
 		this.#logger = logger;
 
@@ -103,7 +105,7 @@ export class CategoryChanger
 	#onCategorySelectorClick(event: BaseEvent): void
 	{
 		const items: MenuItemOptions[] = [];
-		for (const category of this.#getAllCategoriesExceptCurrent())
+		for (const category of this.#categories)
 		{
 			items.push({
 				text: category.getName(),
@@ -112,7 +114,7 @@ export class CategoryChanger
 		}
 
 		MenuManager.show({
-			id: `item-category-changer-${this.#entityTypeId}-${this.#id}`,
+			id: this.#menuId,
 			bindElement: event.target,
 			items,
 		});
@@ -120,6 +122,13 @@ export class CategoryChanger
 
 	#onCategorySelect(wantCategoryId: number): void
 	{
+		if (wantCategoryId === this.#categoryId)
+		{
+			MenuManager.destroy(this.#menuId);
+
+			return;
+		}
+
 		if (this.#isProgress)
 		{
 			return;
@@ -268,8 +277,4 @@ export class CategoryChanger
 		return this.#categories.find((category) => category.getId() === this.#categoryId);
 	}
 
-	#getAllCategoriesExceptCurrent(): CategoryModel[]
-	{
-		return this.#categories.filter((category) => category.getId() !== this.#categoryId);
-	}
 }

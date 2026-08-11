@@ -22,6 +22,7 @@ use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\FieldRepository;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
@@ -939,7 +940,7 @@ class CAllCrmLead
 			array('CCrmLead', '__AfterPrepareSql')
 		);
 
-		return $lb->Prepare($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $arOptions);
+		return self::applyQueryResultDecorator($lb->Prepare($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $arOptions));
 	}
 
 	public static function CreateListBuilder(array $arFieldOptions = null)
@@ -1391,7 +1392,7 @@ class CAllCrmLead
 
 		$obRes = $DB->Query($sSql);
 		$obRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields(self::$sUFEntityID));
-		return $obRes;
+		return self::applyQueryResultDecorator($obRes);
 	}
 
 	public static function GetByID($ID, $bCheckPerms = true)
@@ -2029,10 +2030,15 @@ class CAllCrmLead
 		return $ID;
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * Method will be removed soon
+	 */
 	static public function BuildEntityAttr($userID, $arAttr = array())
 	{
 		$userID = (int)$userID;
-		$arResult = array("U{$userID}");
+		$arResult = [];
 		if(isset($arAttr['OPENED']) && $arAttr['OPENED'] == 'Y')
 		{
 			$arResult[] = 'O';
@@ -2052,13 +2058,13 @@ class CAllCrmLead
 			}
 		}
 
-		$arUserAttr = Bitrix\Crm\Service\Container::getInstance()
+		$userBasedEntityAttributes = Bitrix\Crm\Service\Container::getInstance()
 			->getUserPermissions($userID)
 			->getAttributesProvider()
 			->getEntityAttributes()
 		;
 
-		return array_merge($arResult, $arUserAttr['INTRANET']);
+		return array_merge($arResult, $userBasedEntityAttributes);
 	}
 
 	static public function RebuildEntityAccessAttrs($IDs)
@@ -5150,5 +5156,45 @@ class CAllCrmLead
 	public function getLastError(): string
 	{
 		return (string)$this->LAST_ERROR;
+	}
+
+	private static function applyQueryResultDecorator(mixed $result)
+	{
+		if (!$result instanceof \CDBResult)
+		{
+			return $result;
+		}
+
+		return new class($result) extends \CDBResult
+		{
+			protected function AfterFetch(&$res)
+			{
+				parent::AfterFetch($res);
+
+				$moneyFields = [
+					'OPPORTUNITY' => 'CURRENCY_ID',
+					'OPPORTUNITY_ACCOUNT' => 'ACCOUNT_CURRENCY_ID',
+				];
+
+				foreach ($moneyFields as $fieldName => $currencyFieldName)
+				{
+					if (!isset($res[$fieldName]) || $res[$fieldName] === '')
+					{
+						continue;
+					}
+
+					$res[$fieldName] = FieldRepository::getMoneyFieldScaleFetchModifier(
+						$res[$fieldName],
+						$res,
+						$currencyFieldName
+					);
+				}
+
+				if (isset($res['EXCH_RATE']) && $res['EXCH_RATE'] !== '')
+				{
+					$res['EXCH_RATE'] = number_format((float)$res['EXCH_RATE'], 2, '.', '');
+				}
+			}
+		};
 	}
 }

@@ -525,7 +525,10 @@ this.BX.Booking = this.BX.Booking || {};
 				entities: [{
 					id: booking_const.EntitySelectorEntity.Resource,
 					dynamicLoad: true,
-					dynamicSearch: true
+					dynamicSearch: true,
+					options: {
+						shortSlotsOnly: true
+					}
 				}],
 				searchOptions: {
 					allowCreateItem: false

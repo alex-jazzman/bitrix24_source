@@ -19,6 +19,10 @@ export const ActivationTopBtn = {
 			type: Object,
 			required: true,
 		},
+		size: {
+			type: Number,
+			default: 18,
+		},
 	},
 	emits: ['changeActivation'],
 	setup(): ActivationTopBtnSetup
@@ -38,6 +42,7 @@ export const ActivationTopBtn = {
 	template: `
 		<IconButton
 			:icon-name="activationIcon"
+			:size="size"
 			@click="$emit('changeActivation')"
 		/>
 	`,

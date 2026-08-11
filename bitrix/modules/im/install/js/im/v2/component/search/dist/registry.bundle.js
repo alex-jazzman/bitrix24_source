@@ -856,7 +856,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 	const EntitySearchConfig = {
 		[EntitySearchType.addToChat]: {
-			exclude: [im_v2_lib_search.EntitySearch.chats]
+			exclude: [im_v2_lib_search.EntitySearch.chats],
+			excludeGuests: true
 		},
 		[EntitySearchType.messageForward]: {
 			exclude: []

@@ -20,6 +20,7 @@ return [
 			'commands' => [
 				\Bitrix\Bizproc\Cli\NodesExport::class,
 				\Bitrix\Bizproc\Cli\AiAgentGenerate::class,
+				\Bitrix\Bizproc\Cli\AiAgentReverse::class,
 				\Bitrix\Bizproc\Cli\AiAgentActivities::class,
 			],
 		],
@@ -40,6 +41,9 @@ return [
 	],
 	'services' => [
 		'value' => [
+			\Bitrix\Bizproc\Public\Service\AiAgent\RegionAvailabilityServiceInterface::class => [
+				'className' => \Bitrix\Bizproc\Public\Service\AiAgent\RegionAvailabilityService::class,
+			],
 			'bizproc.service.schedulerService' => [
 				'className' => '\\CBPSchedulerService',
 			],

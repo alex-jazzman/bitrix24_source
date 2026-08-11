@@ -1,6 +1,7 @@
-import { createUniqueId } from '../../../shared/utils';
-import type { ActivityData, Block } from '../../../shared/types';
 import { Type } from 'main.core';
+
+import { type ActivityData, type Block } from '../../../shared/types';
+import { createUniqueId } from '../../../shared/utils/index.js';
 
 type ActivityId = string;
 type ActivityIds = Set<ActivityId>;

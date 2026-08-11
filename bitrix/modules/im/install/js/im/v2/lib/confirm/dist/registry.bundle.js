@@ -156,6 +156,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return chat.type === im_v2_const.ChatType.collab;
 	};
 
+	const showUpdateGuestLinkConfirm = () => {
+		return showTwoButtonConfirm({
+			title: main_core.Loc.getMessage('IM_LIB_CONFIRM_UPDATE_GUEST_LINK_TITLE'),
+			text: main_core.Loc.getMessage('IM_LIB_CONFIRM_UPDATE_GUEST_LINK_TEXT'),
+			firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_UPDATE_GUEST_LINK_CONFIRM')
+		});
+	};
+
 	const showExitUpdateChatConfirm = dialogId => {
 		const {
 			title,
@@ -14238,19 +14246,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		});
 	};
 
-	const showKickUserConfirm = dialogId => {
+	const showKickUserConfirm = (dialogId, userId) => {
 		const {
 			title,
 			text,
 			firstButtonCaption
-		} = getPhrases(dialogId);
+		} = getPhrases(dialogId, userId);
 		return showTwoButtonConfirm({
 			title,
 			text,
 			firstButtonCaption
 		});
 	};
-	const getPhrases = dialogId => {
+	const getPhrases = (dialogId, userId) => {
 		if (isCollab(dialogId)) {
 			return {
 				title: im_v2_lib_collab.CollabManager.getKickConfirmTitleText(),
@@ -14262,6 +14270,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		if (isChannel) {
 			return {
 				text: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_CHANNEL_KICK'),
+				firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES')
+			};
+		}
+		const isGuest = im_v2_application_core.Core.getStore().getters['users/isGuest'](userId);
+		if (isGuest) {
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_CONFIRM_GUEST_KICK_TITLE'),
+				text: main_core.Loc.getMessage('IM_LIB_CONFIRM_GUEST_KICK_TEXT'),
 				firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES')
 			};
 		}
@@ -14310,6 +14326,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showNotificationsModeSwitchConfirm = showNotificationsModeSwitchConfirm;
 	exports.showStickerPackDeleteConfirm = showStickerPackDeleteConfirm;
 	exports.showStickerPackUnlinkConfirm = showStickerPackUnlinkConfirm;
+	exports.showUpdateGuestLinkConfirm = showUpdateGuestLinkConfirm;
 
 })(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Dialogs);
 //# sourceMappingURL=registry.bundle.js.map

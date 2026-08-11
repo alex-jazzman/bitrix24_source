@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/copilot-chat.bundle.js',
 	'rel' => [
 		'ai.copilot-chat.ui',
-		'main.core.events',
 		'main.core',
+		'main.core.events',
 		'pull.client',
 	],
 	'skip_core' => false,

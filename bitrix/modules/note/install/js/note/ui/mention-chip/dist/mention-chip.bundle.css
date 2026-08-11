@@ -1,0 +1,227 @@
+/* The atom wrapper carries transparent horizontal padding so the browser draws its native
+ * caret at the wrapper's box edge with a visible gap from the pill — instead of the caret
+ * hugging the pill's edge. inline-block gives the caret a clean box edge to sit at.
+ * NOTE: which SIDE of the atom the caret lands on at a soft-wrap boundary is browser-owned
+ * caret affinity — not controllable via CSS (inline vs inline-block makes no difference) nor
+ * via decorations. Left as a known limitation of inline contenteditable=false atoms. */
+/* max-width:100% caps the atom to its containing block (block/table-cell), not to
+ * its own shrink-to-fit content width — otherwise the chip's own `100%` resolves
+ * against a content-sized wrapper and never shrinks, so it overflows a narrow
+ * column instead of ellipsizing. */
+[data-type="note-mention"] {
+	display: inline-block;
+	vertical-align: baseline;
+	padding: 0 3px;
+	max-width: 100%;
+}
+
+.note-mention-chip {
+	display: inline-flex;
+	align-items: baseline;
+	vertical-align: baseline;
+	position: relative;
+
+	gap: 0.3em;
+	padding: 0 6px 0 7px;
+	border-radius: 0.16em;
+
+	background-color: color-mix(in srgb, var(--mention-chip-color, var(--ui-color-accent-main-primary)) 7%, var(--ui-color-bg-content-primary, #fff));
+
+	font-size: 1em;
+	font-weight: 400;
+	line-height: 1.35;
+	white-space: nowrap;
+	max-width: min(24ch, 100%);
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+	color: var(--ui-color-base-1);
+
+	margin: 1px 0;
+}
+
+.note-mention-chip::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0.06em;
+	bottom: 0.06em;
+	width: 2.5px;
+	border-radius: 2px 0 0 2px;
+	background: var(--mention-chip-color, var(--ui-color-accent-main-primary));
+}
+
+.note-mention-chip:hover {
+	background-color: color-mix(in srgb, var(--mention-chip-color, var(--ui-color-accent-main-primary)) 13%, var(--ui-color-bg-content-primary, #fff));
+}
+
+.note-mention-chip__icon,
+.note-mention-chip__icon-wrap {
+	display: inline-flex;
+	align-items: center;
+	align-self: center;
+	flex-shrink: 0;
+	/* em so the icon scales with the chip font-size (e.g. inside a heading). */
+	width: 1em;
+	height: 1em;
+	color: var(--mention-chip-color, var(--ui-color-accent-main-primary));
+	font-size: 1em;
+}
+
+/* BIcon glyphs use mask-image coloured via --ui-icon-set__icon-color, not `color`.
+ * mask-size:135% scales the glyph art to fill the 16px box, compensating ui-icon-set outline inner padding;
+ * box stays 16px so doc/task icons align with the collection icon. */
+.note-mention-chip__icon,
+.note-mention-chip__icon-wrap .ui-icon-set {
+	--ui-icon-set__icon-color: var(--mention-chip-color, var(--ui-color-accent-main-primary));
+	/* Drive the BIcon glyph box in em (BIcon's :size prop is intentionally omitted so
+	 * this var wins) — the icon scales with the chip font-size. */
+	--ui-icon-set__icon-size: 1em;
+	-webkit-mask-size: 135%;
+	mask-size: 135%;
+}
+
+/* Custom SVG icon via mask-image (collection type).
+ * mask-image URL is injected inline via :style binding; the glyph asset lives once in
+ * note.ui.assets and its URL is imported from there. Color follows --mention-chip-color. */
+.note-mention-chip__svg-icon {
+	display: inline-flex;
+	align-self: center;
+	flex-shrink: 0;
+	/* em so the mask glyph scales with the chip font-size. */
+	width: 1em;
+	height: 1em;
+	background-color: var(--mention-chip-color, var(--ui-color-accent-main-primary));
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+}
+
+/* Avatar container (user type): 18px circle, matches design spec. */
+.note-mention-chip__avatar {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	align-self: center;
+	/* em so the avatar scales with the chip font-size (e.g. inside a heading). */
+	width: 1.125em;
+	height: 1.125em;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+/* AvatarRound sizes its circle, initials and userpic entirely off --ui-avatar-size.
+ * The JS omits the `size` option so this em value (not a fixed px) drives it. */
+.note-mention-chip__avatar .ui-avatar {
+	--ui-avatar-size: 1.125em;
+}
+
+/* AvatarRound base circle coloured with accent token for readable initials on blue.
+ * Specificity raised to 0,3,0 to win over upstream .ui-avatar.--base .ui-avatar-base (0,3,0 tie → source order). */
+.note-mention-chip__avatar .ui-avatar.--base .ui-avatar-base {
+	fill: var(--mention-chip-color, var(--ui-color-accent-main-primary));
+}
+
+/* Userpic avatars: the coloured base circle sits behind a circle-masked <image>. At the
+ * mask's anti-aliased edge the image is ~1px semi-transparent, so the base colour bleeds
+ * through as a rim — invisible at 18px but a visible pixelated ring once the chip scales up
+ * in a heading. The --userpic modifier is set in JS when a userpic is present; hide the base
+ * there. Initials avatars keep the coloured circle as their background. */
+.note-mention-chip__avatar--userpic .ui-avatar-base {
+	display: none;
+}
+
+/* White initials on the blue circle for contrast in both themes. */
+.note-mention-chip__avatar .ui-avatar__text {
+	color: var(--ui-color-base-white-fixed, #fff);
+}
+
+/* Pending: neutral placeholder circle for user. */
+.note-mention-chip__avatar-placeholder {
+	display: inline-block;
+	width: 1.125em;
+	height: 1.125em;
+	border-radius: 50%;
+	background-color: var(--ui-color-base-30);
+	flex-shrink: 0;
+	align-self: center;
+}
+
+/* Label: inherits base-1 from chip; declared explicitly to override any upstream text colour.
+ * min-width:0 lets the label shrink below its content width (flex default is auto)
+ * so it ellipsizes when the chip is squeezed by a narrow container. */
+.note-mention-chip__label {
+	min-width: 0;
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+/* ── Pending state ── */
+.note-mention-chip--pending {
+	cursor: default;
+}
+
+.note-mention-chip--pending:hover {
+	/* No hover effect while pending. */
+	background-color: color-mix(in srgb, var(--mention-chip-color, var(--ui-color-accent-main-primary)) 7%, var(--ui-color-bg-content-primary, #fff));
+}
+
+/* Static, faint skeleton placeholder.
+ * The element keeps a full text line-box (line-height 1.35) + a zero-width-space
+ * baseline (::before) so the chip height and vertical alignment stay identical to
+ * the resolved text label (no jump on resolve). The VISIBLE bar is a shorter,
+ * vertically-centered ::after, so we can make it thinner without changing layout. */
+.note-mention-chip__label--shimmer {
+	position: relative;
+	display: inline-block;
+	width: 7ch;
+	line-height: 1.35;
+}
+
+.note-mention-chip__label--shimmer::before {
+	content: '\200B';
+}
+
+.note-mention-chip__label--shimmer::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	height: 0.7em;
+	border-radius: 4px;
+	background-color: var(--ui-color-base-50);
+	opacity: 0.12;
+}
+
+/* ── Unavailable state ── */
+/* WHY: neutral grey for unresolvable entities; strip and bg follow the overridden --mention-chip-color. */
+.note-mention-chip--unavailable {
+	--mention-chip-color: var(--ui-color-base-50);
+	background-color: color-mix(in srgb, var(--mention-chip-color) 7%, var(--ui-color-bg-content-primary, #fff));
+	cursor: default;
+}
+
+.note-mention-chip--unavailable:hover {
+	background-color: color-mix(in srgb, var(--mention-chip-color) 7%, var(--ui-color-bg-content-primary, #fff));
+}
+
+.note-mention-chip--unavailable .note-mention-chip__label {
+	color: var(--ui-color-text-secondary);
+}
+
+/* ── Mobile adaptations ──
+ * On mobile: only cap width on narrow viewports; the mention stays a single
+ * line (inherits desktop white-space: nowrap + ellipsis), never wrapping.
+ */
+/* @chef-ignore */
+html.note-mobile .note-mention-chip {
+	max-width: min(calc(100vw - var(--note-popup-gutter, 40px)), 100%);
+}

@@ -121,7 +121,7 @@ foreach ($arResult['USERS'] as $arUser)
 							case "WORK_PHONE":
 							case "WORK_FAX":
 							case "XML_ID":
-								?><div class="bx-user-post"><?=GetMessage("INTR_ISBN_TPL_USER_PROPERTY_".$field)?>: <?=htmlspecialcharsbx($arUser[$field])?></div><?
+								?><div class="bx-user-post"><?=GetMessage("INTR_ISBN_TPL_USER_PROPERTY_".$field.($field === "PERSONAL_COUNTRY" ? "_MSGVER_1" : ""))?>: <?=htmlspecialcharsbx($arUser[$field])?></div><?
 								break;
 							case "PERSONAL_PROFESSION":
 							case "WORK_POSITION":

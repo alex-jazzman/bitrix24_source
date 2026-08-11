@@ -1,4 +1,3 @@
-import { Type } from 'main.core';
 import { MenuOptions } from 'main.popup';
 import {
 	SplitButton as UIButtonSplit,
@@ -238,8 +237,48 @@ export const ButtonDropdown = {
 			};
 		},
 	},
+	watch: {
+		isMenuShown(newVal): void
+		{
+			const opener = this.$refs.opener;
+			const hostPopupNode = opener?.closest?.('.popup-window');
+			const hostPopup = hostPopupNode
+				? window.BX?.Main?.PopupManager?.getPopupById(hostPopupNode.id)
+				: null;
+			if (!hostPopup)
+			{
+				return;
+			}
+
+			if (newVal)
+			{
+				const count = (hostPopup._tmAutoHideSuspendCount ?? 0) + 1;
+				hostPopup._tmAutoHideSuspendCount = count;
+				if (count === 1)
+				{
+					hostPopup.setAutoHide(false);
+				}
+			}
+			else
+			{
+				const count = Math.max(0, (hostPopup._tmAutoHideSuspendCount ?? 0) - 1);
+				hostPopup._tmAutoHideSuspendCount = count;
+				if (count === 0)
+				{
+					hostPopup.setAutoHide(true);
+				}
+			}
+		},
+	},
 	mounted(): void
 	{},
+	beforeUnmount(): void
+	{
+		if (this.isMenuShown)
+		{
+			this.isMenuShown = false;
+		}
+	},
 	updated(): void
 	{},
 	methods: {

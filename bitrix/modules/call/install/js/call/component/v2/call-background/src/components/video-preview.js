@@ -1,4 +1,4 @@
-import {Logger} from 'im.v2.lib.logger';
+import {Logger} from 'call.adapter.logger';
 
 const VIDEO_CONSTRAINT_WIDTH = 1280;
 const VIDEO_CONSTRAINT_HEIGHT = 720;

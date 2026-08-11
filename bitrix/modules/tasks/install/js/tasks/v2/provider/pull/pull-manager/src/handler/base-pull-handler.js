@@ -17,4 +17,9 @@ export class BasePullHandler
 	{
 		return {};
 	}
+
+	isFromAi(data: { FROM_AI?: boolean }): boolean
+	{
+		return data?.FROM_AI === true;
+	}
 }

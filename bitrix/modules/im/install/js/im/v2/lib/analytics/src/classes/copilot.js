@@ -1,4 +1,4 @@
-import { Text } from 'main.core';
+import { Text, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
@@ -25,16 +25,31 @@ export class Copilot
 {
 	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
 
-	onCreateChat(chatId: number): void
+	onCreateChat(dialogId: string): void
 	{
-		sendData({
-			event: AnalyticsEvent.createNewChat,
-			tool: AnalyticsTool.ai,
-			category: AnalyticsCategory.chatOperations,
-			c_section: AnalyticsSection.copilotTab,
-			type: AnalyticsType.ai,
-			p3: CopilotChatType.private,
-			p5: `chatId_${chatId}`,
+		if (!Type.isStringFilled(dialogId))
+		{
+			return;
+		}
+
+		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+
+		this.#sendCreateChatData({
+			dialogId,
+			context: `${currentLayout}_tab`,
+		});
+	}
+
+	onCreateChatFromWidget(dialogId: string): void
+	{
+		if (!Type.isStringFilled(dialogId))
+		{
+			return;
+		}
+
+		this.#sendCreateChatData({
+			dialogId,
+			context: AnalyticsSection.miniChat,
 		});
 	}
 
@@ -52,12 +67,13 @@ export class Copilot
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 		const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
+		const currentLayout = Core.getStore().getters['application/getLayout'].name;
 
 		sendData({
 			event: AnalyticsEvent.openChat,
 			tool: AnalyticsTool.ai,
 			category: AnalyticsCategory.chatOperations,
-			c_section: AnalyticsSection.copilotTab,
+			c_section: `${currentLayout}_tab`,
 			type: AnalyticsType.ai,
 			p3: copilotChatType,
 			p5: `chatId_${dialog.chatId}`,
@@ -138,6 +154,40 @@ export class Copilot
 		}
 
 		sendData(params);
+	}
+
+	onMcpIntegrationClick(dialogId: string): void
+	{
+		const dialog = Core.getStore().getters['chats/get'](dialogId);
+		if (!dialog)
+		{
+			return;
+		}
+
+		const chatType = getChatType(dialog);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.copilot,
+			event: AnalyticsEvent.clickMcpIntegrations,
+			c_section: AnalyticsSection.chatTextarea,
+			p1: `chatType_${chatType}`,
+		});
+	}
+
+	#sendCreateChatData({ dialogId, context }: { dialogId: string, context: string }): void
+	{
+		const dialog = Core.getStore().getters['chats/get'](dialogId);
+
+		sendData({
+			event: AnalyticsEvent.createNewChat,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			c_section: context,
+			type: AnalyticsType.ai,
+			p3: CopilotChatType.private,
+			p5: `chatId_${dialog.chatId}`,
+		});
 	}
 
 	#sendDataForCopilotCreation(params: { c_sub_section: string }): void

@@ -55,7 +55,7 @@ $buttons = [
 		'TYPE' => 'save',
 		'ONCLICK' => 'BX.BIConnector.ExternalConnectionForm.Instance.onClickSave(); return false;',
 		'ID' => 'connection-button-save',
-		'CAPTION' => $arResult['SOURCE_FIELDS']['id'] ? null : Loc::getMessage('EXTERNAL_CONNECTION_SAVE'),
+		'CAPTION' => empty($arResult['SOURCE_FIELDS']['id']) ? Loc::getMessage('EXTERNAL_CONNECTION_SAVE') : null,
 	],
 	'cancel'
 ];

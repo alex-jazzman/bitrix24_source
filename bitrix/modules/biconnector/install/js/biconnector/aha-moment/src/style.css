@@ -53,6 +53,15 @@
 	box-sizing: border-box;
 }
 
+.biconnector-aha-moment__inner--compact {
+	padding: 12px 22px 12px 12px;
+}
+
+.biconnector-aha-moment__inner--compact .biconnector-aha-moment__content {
+	padding: 0 0 0 8px;
+	gap: 6px;
+}
+
 .biconnector-aha-moment__logo-block {
 	position: relative;
 	z-index: 1;

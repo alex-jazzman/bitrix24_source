@@ -172,6 +172,7 @@ $MESS["CONFIG_OTP_SECURITY_SWITCH_OFF_INFO"] = "Notice that unchecking this opti
 <br/><br/>They will still have to use OTP when logging in to Bitrix24.
 <br/><br/>You can disable two-step authentication in a respective user profile.";
 $MESS["CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY"] = "Phone number format: default country";
+$MESS["CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY_MSGVER_1"] = "Phone number format: default country/region";
 $MESS["CONFIG_SAVE"] = "Save";
 $MESS["CONFIG_SAVE_SUCCESSFULLY"] = "Settings have been updated successfully";
 $MESS["CONFIG_SEND_OTP_PUSH"] = "Send chat and push notifications about authentication attempt, <br>also include the sign in code (only for time-based OTP)";

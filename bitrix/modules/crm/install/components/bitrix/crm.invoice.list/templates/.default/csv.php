@@ -12,6 +12,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 $isStExport = (isset($arResult['STEXPORT_MODE']) && $arResult['STEXPORT_MODE'] === 'Y');
 $isStExportFirstPage = (isset($arResult['STEXPORT_IS_FIRST_PAGE']) && $arResult['STEXPORT_IS_FIRST_PAGE'] === 'Y');
+$isExportProductFields = (
+	isset($arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'])
+	&& $arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'] === 'Y'
+);
 
 if ((!is_array($arResult['INVOICE']) || count($arResult['INVOICE']) <= 0) && (!$isStExport || $isStExportFirstPage))
 {
@@ -27,12 +31,12 @@ else
 	}
 
 	// Special logic for ENTITIES_LINKS headers: expand in 3 columns
-	$showProductRows = false;
+	$showEntityLinks = false;
 	foreach ($arResult['SELECTED_HEADERS'] as $headerID)
 	{
 		if (isset($arHeaders[$headerID]) && $headerID === 'ENTITIES_LINKS')
 		{
-			$showProductRows = true;
+			$showEntityLinks = true;
 		}
 	}
 
@@ -59,6 +63,12 @@ else
 				echo '"'.$arHead['name'].'";';
 			}
 		}
+		if ($isExportProductFields)
+		{
+			echo '"', GetMessage('CRM_COLUMN_PRODUCT_NAME'), '";';
+			echo '"', GetMessage('CRM_COLUMN_PRODUCT_PRICE'), '";';
+			echo '"', GetMessage('CRM_COLUMN_PRODUCT_QUANTITY'), '";';
+		}
 		echo "\n";
 	}
 
@@ -71,13 +81,13 @@ else
 	unset($personTypeId);
 	foreach ($arResult['INVOICE'] as $i => &$arInvoice)
 	{
-		// Serialize each product row as invoice with single product
-		$productRows = $showProductRows && isset($arInvoice['PRODUCT_ROWS']) ? $arInvoice['PRODUCT_ROWS'] : array();
-		if (count($productRows) == 0)
-		{
-			// Invoice has no product rows (or they are not displayed) - we have to create dummy for next loop by product rows only
-			$productRows[] = array();
-		}
+		// Serialize each product row as invoice with single product;
+		// fallback to a single empty row so the invoice is still rendered when there are no products
+		$hasProducts = !empty($arInvoice['PRODUCT_ROWS']);
+		$productRows = ($showEntityLinks || $isExportProductFields) && $hasProducts
+			? $arInvoice['PRODUCT_ROWS']
+			: [[]]
+		;
 		$invoiceData = array();
 		$personTypeId = $arInvoice['PERSON_TYPE_ID'];
 		foreach ($productRows as $productRow)
@@ -97,6 +107,11 @@ else
 					echo ($arInvoice['DEAL_TITLE'] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($arInvoice['DEAL_TITLE'])).'";' : ';';
 					echo ($arInvoice['COMPANY_TITLE'] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($arInvoice['COMPANY_TITLE'])).'";' : ';';
 					echo ($arInvoice['CONTACT_FORMATTED_NAME'] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($arInvoice['CONTACT_FORMATTED_NAME'])).'";' : ';';
+					continue;
+				}
+				if ($isExportProductFields && $headerID === 'PRICE')
+				{
+					echo '"', CCrmProductRow::ResolveExportRowSum($productRow, $arInvoice['PRICE'] ?? ''), '";';
 					continue;
 				}
 
@@ -156,6 +171,15 @@ else
 				{
 					echo ($invoiceData[$headerID] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($invoiceData[$headerID])).'";' : ';';
 				}
+			}
+			if ($isExportProductFields)
+			{
+				$productName = isset($productRow['PRODUCT_NAME'])
+					? str_replace('"', '""', htmlspecialcharsback($productRow['PRODUCT_NAME']))
+					: '';
+				echo '"', $productName, '";';
+				echo '"', CCrmProductRow::GetPrice($productRow, ''), '";';
+				echo '"', CCrmProductRow::GetQuantity($productRow, ''), '";';
 			}
 			echo "\n";
 		}

@@ -1,6 +1,7 @@
 import { MoveableBlock, PORT_POSITION } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
-import type { MenuItemOptions } from 'ui.vue3.components.menu';
+import { type MenuItemOptions } from 'ui.vue3.components.menu';
+
 import { IconDivider, IconButton } from '../../../../shared/ui';
 import { PORT_TYPES } from '../../../../shared/constants';
 import {
@@ -11,6 +12,8 @@ import {
 	PortInout,
 	BlockContent,
 	BLOCK_LAYOUT_SLOT_NAMES,
+	parseItemsFromBlocksJson,
+	shouldAnimateBlock,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
@@ -19,13 +22,19 @@ import {
 } from '../../../../features/blocks';
 import { BlockLayoutWidget } from '../block-layout/block-layout';
 import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
-import type { Block } from '../../../../shared/types';
+import { useLoc } from '../../../../shared/composables';
+import { type Block } from '../../../../shared/types';
 
 import { BlockMediator } from '../../lib';
 
-type BlockSimpleSetup = {
+import './block-service.css';
+
+const SETUP_TEMPLATE_ACTIVITY = 'SetupTemplateActivity';
+
+type BlockServiceSetup = {
 	iconSet: { [string]: string };
 	blockMediator: BlockMediator;
+	getMessage: Function;
 };
 
 type Props = {
@@ -58,20 +67,50 @@ export const BlockService = {
 			required: true,
 		},
 	},
-	setup(props: Props): BlockSimpleSetup
+	setup(props: Props): BlockServiceSetup
 	{
+		const { getMessage } = useLoc();
+
 		return {
 			iconSet: Outline,
 			portTypes: PORT_TYPES,
 			portPosition: PORT_POSITION,
 			blockMediator: new BlockMediator(),
 			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
+			getMessage,
+			shouldAnimateBlock,
 		};
 	},
 	computed: {
 		contextMenuItems(): Array<MenuItemOptions>
 		{
 			return this.blockMediator.getCommonBlockMenuOptions(this.block);
+		},
+		isSetupTemplateActivity(): boolean
+		{
+			return this.block.activity?.Type === SETUP_TEMPLATE_ACTIVITY;
+		},
+		constantsCount(): number
+		{
+			if (!this.isSetupTemplateActivity)
+			{
+				return 0;
+			}
+
+			const items = parseItemsFromBlocksJson(this.block.activity?.Properties?.blocks);
+
+			return items.filter((item) => item?.itemType === 'constant').length;
+		},
+		hasConstants(): boolean
+		{
+			return this.constantsCount > 0;
+		},
+		constantsLabel(): string
+		{
+			return this.getMessage(
+				'BIZPROCDESIGNER_EDITOR_BLOCK_SERVICE_CONSTANTS_COUNT',
+				{ '#count#': this.constantsCount },
+			);
 		},
 	},
 	template: `
@@ -80,7 +119,7 @@ export const BlockService = {
 				<BlockContainer
 					:block="block"
 					:width="260"
-					:height="96"
+					:height="isSetupTemplateActivity ? 162 : 96"
 					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:hoverable="!isMakeNewConnection"
@@ -145,6 +184,8 @@ export const BlockService = {
 													:iconName="block.node.icon"
 													:iconColorIndex="block.node.colorIndex"
 													:deactivated="!isBlockActivated"
+													:blockId="block.id"
+													:animate="shouldAnimateBlock(block)"
 												/>
 											</template>
 										</BlockHeader>
@@ -155,8 +196,17 @@ export const BlockService = {
 							<template #[blockLayoutSlotNames.DEFAULT]>
 								<BlockContent
 									:colorIndex="block.node.colorIndex"
+									:contentBlockColor="block.node.contentBlockColor"
 									:deactivated="!isBlockActivated"
-								/>
+									:class="{ 'editor-chart-block-service__content--large': isSetupTemplateActivity }"
+								>
+									<span
+										v-if="hasConstants"
+										class="editor-chart-block-service__constants-label"
+									>
+										{{ constantsLabel }}
+									</span>
+								</BlockContent>
 							</template>
 
 							<template #[blockLayoutSlotNames.STATUS]>

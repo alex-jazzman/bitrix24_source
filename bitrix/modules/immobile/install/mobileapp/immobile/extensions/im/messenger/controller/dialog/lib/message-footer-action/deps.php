@@ -9,6 +9,8 @@ return [
 		'tokens',
 		'utils/function',
 		'im:messenger/const',
+		'im:messenger/lib/feature',
+		'im:messenger/lib/params',
 		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/selector/forward',
 		'im:messenger/lib/di/service-locator',

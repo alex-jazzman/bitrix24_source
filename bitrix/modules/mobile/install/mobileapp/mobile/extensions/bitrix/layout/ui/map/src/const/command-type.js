@@ -20,6 +20,7 @@ jn.define('layout/ui/map/src/const/command-type', (require, exports, module) => 
 		DISABLE_CLUSTERING: 'disableClustering',
 		UPDATE_CLUSTER_ICON: 'updateClusterIcon',
 		UPDATE_SETTINGS: 'updateSettings',
+		SET_GRAYSCALE: 'setGrayscale',
 	};
 
 	module.exports = {

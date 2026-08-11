@@ -45,7 +45,7 @@ $userProp = [];
 
 foreach ($userFieldsList as $name)
 {
-	$userFieldsNameList[$name] = Loc::getMessage('INTRANET_USER_LIST_PARAMS_FIELD_'.$name);
+	$userFieldsNameList[$name] = Loc::getMessage('INTRANET_USER_LIST_PARAMS_FIELD_'.$name.(in_array($name, ['PERSONAL_COUNTRY', 'WORK_COUNTRY'], true) ? '_MSGVER_1' : ''));
 }
 
 $userPropertiesList = $USER_FIELD_MANAGER->getUserFields('USER', 0, LANGUAGE_ID);

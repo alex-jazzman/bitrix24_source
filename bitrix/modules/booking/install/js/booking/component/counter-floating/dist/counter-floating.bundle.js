@@ -155,20 +155,20 @@ this.BX.Booking = this.BX.Booking || {};
 				shownLimitAnimation: false
 			};
 		},
-		created() {
-			this.limitPopupTimeoutId = null;
-		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
 				isMaxFilterDate: `${booking_const.Model.Filter}/isMaxFilterDate`,
 				isMinFilterDate: `${booking_const.Model.Filter}/isMinFilterDate`,
-				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`
+				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`
 			}),
 			filterCount() {
 				return main_core.Loc.getMessagePlural('BOOKING_BOOKING_FILTER_COUNTER_FLOATING_COUNT', this.count, {
 					'#COUNT#': this.count
 				});
 			}
+		},
+		created() {
+			this.limitPopupTimeoutId = null;
 		},
 		mounted() {
 			if (this.count > 0 && this.$refs.container && booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.SearchNavigation)) {
@@ -178,11 +178,14 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		methods: {
-			async setSelectedDateTs(nextSelectedDateTs) {
-				if (!nextSelectedDateTs) {
+			async setSelectedPeriodStartTs(nextSelectedPeriodStartTs) {
+				if (!nextSelectedPeriodStartTs) {
 					return;
 				}
-				await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, nextSelectedDateTs);
+				await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, nextSelectedPeriodStartTs);
+				if (this.isWeekMode) {
+					await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedFirstDayPeriodTs`, nextSelectedPeriodStartTs);
+				}
 			},
 			async previous() {
 				if (this.isMinFilterDate) {
@@ -192,7 +195,7 @@ this.BX.Booking = this.BX.Booking || {};
 				}
 				const previousDateTs = await booking_lib_filterResultNavigator.filterResultNavigator.getPreviousFilterDateTs();
 				if (previousDateTs) {
-					await this.setSelectedDateTs(previousDateTs);
+					await this.setSelectedPeriodStartTs(previousDateTs);
 				}
 			},
 			async next() {
@@ -203,7 +206,7 @@ this.BX.Booking = this.BX.Booking || {};
 				}
 				const nextFilterDateTs = await booking_lib_filterResultNavigator.filterResultNavigator.getNextFilterDateTs();
 				if (nextFilterDateTs) {
-					await this.setSelectedDateTs(nextFilterDateTs);
+					await this.setSelectedPeriodStartTs(nextFilterDateTs);
 				}
 			},
 			showLimitPopup() {

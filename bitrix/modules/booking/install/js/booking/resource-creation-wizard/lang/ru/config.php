@@ -53,7 +53,6 @@ $MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_SELECTOR_CUSTOM'] = 'Свой вариан
 $MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_1'] = 'дней';
 $MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_2'] = 'часов';
 $MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_3'] = 'минут';
-$MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'] = 'Длительность записи пока может быть не больше 12 часов';
 $MESS['BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_MINUTES'] = 'Если запись дольше часа, введите часы и минуты в отдельные поля';
 
 $MESS['BRCW_NOTIFICATION_CARD_BASE_INFO_TITLE'] = 'Сообщение клиенту о записи';

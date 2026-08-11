@@ -1,0 +1,7304 @@
+import { Browser, Dom, Runtime, Text, Type, Loc } from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
+import {Popup} from 'main.popup';
+import {DesktopApi} from 'im.v2.lib.desktop-api';
+
+import {UserModel, UserRegistry} from './user-registry'
+import * as Buttons from './buttons';
+import {
+	BackgroundDialog,
+	Hardware,
+	EndpointDirection,
+	UserState,
+	Util,
+	CallAI,
+	CopilotNotify,
+	CopilotNotifyType,
+	MediaRenderer,
+	UnsupportedBrowserFeatures,
+	CallCommonRecordState,
+	CallCommonRecordType,
+	CallCloudRecord,
+} from 'call.core';
+import {CallUserMobile, MobileMenu, MobileSlider, UserSelectorMobile} from './mobile';
+import {CallUser} from './call-user';
+import {FloorRequest} from './floor-request';
+import {NotificationManager} from './notifications';
+import {DeviceSelector} from './device-selector';
+import { PictureInPictureWindow } from './picture-in-picture-window';
+import {UserSelector} from './user-selector';
+import { checkAndEncodeURI } from './tools';
+
+import { PromoManager } from 'im.v2.lib.promo';
+import { AhaMomentNotify } from './aha-moment-notify';
+
+import './css/view.css';
+import { CloudRecordInfoPopup } from './cloud-record-info-popup';
+import { CommonRecordMenuPopup } from './common-record-menu-popup';
+import { ConfirmModal } from './confirm-modal';
+import { Analytics } from 'call.lib.analytics';
+
+import { TalkingService } from './talking-service';
+
+import { CallSettingsManager } from 'call.lib.settings-manager';
+import {
+	ViewEvent,
+	ViewLayout,
+	ViewUiState,
+	ViewSize,
+	ViewRoomState,
+	ViewRecordSource,
+} from 'call.mapping';
+import { PipCoordinator } from 'call.feature.pip';
+
+const Layouts = ViewLayout;
+const UiState = ViewUiState;
+const Size = ViewSize;
+const RoomState = ViewRoomState;
+const EventName = ViewEvent;
+
+const RerenderReason = {
+	VideoEnabled: 'videoEnabled',
+	VideoDisabled: 'videoDisabled',
+	UserDisconnected: 'userDisconnected',
+	VoiceStarted: 'voiceStarted',
+};
+
+const SwapType = {
+	Direct: 'direct',
+	Replace: 'replace',
+};
+
+const beginingPosition = -1;
+const newUserPosition = 999;
+const addButtonPosition = 1001;
+
+const MIN_WIDTH = 250;
+
+const SIDE_USER_WIDTH = 160; // keep in sync with .bx-messenger-videocall-user-block .bx-messenger-videocall-user width
+const SIDE_USER_HEIGHT = 90; // keep in sync with .bx-messenger-videocall-user height
+
+const MAX_USERS_PER_PAGE = 19;
+const MIN_GRID_USER_WIDTH = 180;
+const MIN_GRID_USER_HEIGHT = 100;
+
+const CHANGE_VIDEO_RERENDER_DELAY = 3000;
+const WAITING_VIDEO_DELAY = 3000;
+
+const CALLCONTROL_PROMO_ID = 'call:callcontrol-notify-promo:07052025:all';
+const CLOUD_RECORD_PROMO_ID = 'call:cloud-record-info-popup:09092025:all';
+
+type ViewOptions = {
+	title: ?string,
+	container: HTMLElement,
+	baseZIndex: number,
+	cameraId: string,
+	microphoneId: string,
+	showChatButtons: boolean,
+	showUsersButton: boolean,
+	showShareButton: boolean,
+	showRecordButton: boolean,
+	showDocumentButton: boolean,
+	showButtonPanel: boolean,
+	broadcastingMode: boolean,
+	broadcastingPresenters: number[],
+	language: string,
+	userData: {},
+	userLimit: number,
+	isIntranetOrExtranet: boolean,
+	mediaSelectionBlocked: boolean,
+	blockedButtons: string[],
+	hiddenButtons: string[],
+	hiddenTopButtons: string[],
+	uiState: string,
+	layout: string,
+	userStates: {},
+	showAddUserButtonInList?: boolean,
+	isCopilotFeaturesEnabled: boolean,
+	isCopilotActive: boolean,
+	isWindowFocus?: boolean,
+	isVideoconf: boolean,
+}
+
+export class View
+{
+	centralUser: CallUser
+	callMenu: ?MobileMenu
+	participantsMenu: ?MobileMenu
+	pinnedUser: ?CallUser
+	userMenu: ?MobileMenu
+	userRegistry: UserRegistry
+	users: { [key: number]: CallUser; }
+	screenUsers: { [key: number]: CallUser; }
+
+	#commonRecord;
+	#confirmModal;
+
+	constructor(config: ViewOptions)
+	{
+		this.destroyed = false;
+		this.title = config.title;
+		this.container = config.container;
+		this.baseZIndex = config.baseZIndex;
+		this.cameraId = config.cameraId;
+		this.microphoneId = config.microphoneId;
+
+		this.speakerId = '';
+		this.speakerMuted = false;
+		this.externalSpeakerManagement = (config.externalSpeakerManagement === true);
+		this.showChatButtons = (config.showChatButtons === true);
+		this.showUsersButton = (config.showUsersButton === true);
+		this.showShareButton = (config.showShareButton !== false);
+		this.showRecordButton = (config.showRecordButton !== false);
+		this.showDocumentButton = (config.showDocumentButton !== false);
+		this.showCopilotButton = (config.showCopilotButton !== false);
+		this.showButtonPanel = (config.showButtonPanel !== false);
+		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
+		this.preferInitialWindowPlacementPictureInPicture = true;
+
+		this.limitation = null;
+		this.activeUsers = new Set();
+		this.rerenderTimeout = null;
+		this.waitingForUserMediaTimeouts = new Map();
+		this.rerenderQueue = new Map();
+
+		this.broadcastingMode = BX.prop.getBoolean(config, "broadcastingMode", false);
+		this.broadcastingPresenters = BX.prop.getArray(config, "broadcastingPresenters", []);
+
+		this.currentPage = 1;
+		this.pagesCount = 1;
+
+		this.usersPerPage = 0; // initializes after rendering and on resize
+
+		this.language = config.language || '';
+
+		this.lastPosition = 1;
+
+		this.userData = {};
+		if (config.userData)
+		{
+			this.updateUserData(config.userData);
+		}
+		this.userLimit = config.userLimit || 1;
+		this.userId = BX.message('USER_ID');
+		this.isIntranetOrExtranet = BX.prop.getBoolean(config, "isIntranetOrExtranet", true);
+		this.users = {}; // Call participants. The key is the user id.
+		this.screenUsers = {}; // Screen sharing participants. The key is the user id.
+		this.userRegistry = new UserRegistry();
+		this.talkingService = new TalkingService();
+
+		this.userRegistry.subscribe('changed', this.talkingService.refreshQueue);
+
+		let localUserModel = new UserModel({
+			id: this.userId,
+			state: BX.prop.getString(config, "localUserState", UserState.Connected),
+			localUser: true,
+			order: beginingPosition,
+			name: this.userData[this.userId] ? this.userData[this.userId].name : '',
+			avatar: this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '',
+		});
+
+		if (this.userId)
+		{
+			this.userRegistry.push(localUserModel);
+		}
+
+		this.cache = new Map();
+
+		this.localUser = new CallUser({
+			parentContainer: this.container,
+			userModel: localUserModel,
+			allowBackgroundItem: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
+			allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
+			onUserRename: this._onUserRename.bind(this),
+			onUserRenameInputFocus: this._onUserRenameInputFocus.bind(this),
+			onUserRenameInputBlur: this._onUserRenameInputBlur.bind(this),
+			onClick: this._onUserClick.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
+			onPin: this._onUserPin.bind(this),
+			onUnPin: this._onUserUnPin.bind(this),
+		});
+
+		this.centralUser = this.localUser; //show local user until someone is connected
+		this.centralUserMobile = null;
+		this.pinnedUser = null;
+		this.presenterId = null;
+
+		this.localUserReceivedStats = false;
+
+		this.returnToGridAfterScreenStopped = false;
+
+		this.mediaSelectionBlocked = (config.mediaSelectionBlocked === true);
+
+		this.visible = false;
+		this.elements = {
+			root: null,
+			wrap: null,
+			watermark: null,
+			container: null,
+			overlay: null,
+			topPanel: null,
+			bottom: null,
+			notificationPanel: null,
+			panel: null,
+			audioContainer: null,
+			screenAudioContainer: null,
+			audio: {
+				// userId: <audio> for this user's stream
+			},
+			screenAudio: {
+				// userId: <audio> for this user's stream
+			},
+			center: null,
+			localUserMobile: null,
+			userBlock: null,
+			ear: {
+				left: null,
+				right: null
+			},
+			userList: {
+				container: null,
+				addButton: null
+			},
+			userSelectorContainer: null,
+			pinnedUserContainer: null,
+			renameSlider: {
+				input: null,
+				button: null
+			},
+			pageNavigatorLeft: null,
+			pageNavigatorLeftCounter: null,
+			pageNavigatorRight: null,
+			pageNavigatorRightCounter: null,
+		};
+
+		this.buttons = {
+			title: null,
+			grid: null,
+			add: null,
+			share: null,
+			record: null,
+			document: null,
+			copilot: null,
+			microphone: null,
+			camera: null,
+			speaker: null,
+			screen: null,
+			mobileMenu: null,
+			chat: null,
+			users: null,
+			history: null,
+			hangup: null,
+			fullscreen: null,
+			overlay: null,
+			status: null,
+			returnToCall: null,
+			recordStatus: null,
+			participants: null,
+			participantsMobile: null,
+			watermark: null,
+			hd: null,
+			protected: null,
+			more: null,
+			hangupOptions: null,
+		};
+
+		this.previousTopButtonList = [];
+		this.needToRerenderTopButtonList = false;
+		this.previousButtonList = [];
+		this.needToRerenderButtonList = false;
+
+		this.size = Size.Full;
+		this.maxWidth = null;
+		this.isMuted = Hardware.isMicrophoneMuted;
+		this.isCameraOn = Hardware.isCameraOn;
+		this.isFullScreen = false;
+		this.isUserBlockFolded = false;
+
+		this.commonRecordState = this.getDefaultCommonRecordState();
+
+		this.blockedButtons = {};
+		let configBlockedButtons = BX.prop.getArray(config, "blockedButtons", []);
+		configBlockedButtons.forEach(buttonCode => this.blockedButtons[buttonCode] = true);
+
+		this.hiddenButtons = {};
+		this.overflownButtons = {};
+		if (!this.showUsersButton)
+		{
+			this.hiddenButtons['users'] = true;
+		}
+		let configHiddenButtons = BX.prop.getArray(config, "hiddenButtons", []);
+		configHiddenButtons.forEach(buttonCode => this.hiddenButtons[buttonCode] = true);
+
+		this.hiddenTopButtons = {};
+		let configHiddenTopButtons = BX.prop.getArray(config, "hiddenTopButtons", []);
+		configHiddenTopButtons.forEach(buttonCode => this.hiddenTopButtons[buttonCode] = true);
+
+		this.uiState = config.uiState || UiState.Calling;
+		this.layout = config.layout || Layouts.Centered;
+		this.whiteSpaceInUserGrid = 0;
+		this.roomState = RoomState.None;
+
+		this.eventEmitter = new EventEmitter(this, 'BX.Call.View');
+
+		this.scrollInterval = 0;
+
+		// Event handlers
+		this._onFullScreenChangeHandler = this._onFullScreenChange.bind(this);
+		//this._onResizeHandler = BX.throttle(this._onResize.bind(this), 500);
+		this._onResizeHandler = this._onResize.bind(this);
+		this._onOrientationChangeHandler = BX.debounce(this._onOrientationChange.bind(this), 500);
+		this._onKeyDownHandler = this._onKeyDown.bind(this);
+		this._onKeyUpHandler = this._onKeyUp.bind(this);
+
+		this._onAddUser = BX.throttle(() => {
+			if (this.destroyed)
+			{
+				return;
+			}
+
+			this.updateUserList();
+			this.updateButtons();
+			this.updateUserButtons();
+			this.muteSpeaker(this.speakerMuted);
+		}, 500);
+
+		this._onUserStateUpdated = BX.throttle((skippedElementsList) => {
+			if (this.destroyed)
+			{
+				return;
+			}
+
+			this.updateUserList();
+			this.updateButtons(skippedElementsList);
+			this.updateUserButtons();
+		}, 500);
+
+		this.resizeObserver = new BX.ResizeObserver(this._onResizeHandler);
+		this.intersectionObserver = null;
+
+		// timers
+		this.switchPresenterTimeout = 0;
+
+		this.deviceSelector = null;
+		this.userSelector = null;
+		this.pinnedUserContainer = null;
+
+		this.renameSlider = null;
+
+		this.userSize = {width: 0, height: 0};
+
+		this.hintManager = BX.UI.Hint.createInstance({
+			popupParameters: {
+				targetContainer: document.body,
+				className: 'bx-messenger-videocall-panel-item-hotkey-hint',
+				bindOptions: {forceBindPosition: true},
+				angle: false
+			}
+		});
+
+		this.hotKey = {
+			all: Util.isDesktop(),
+			microphone: true,
+			microphoneSpace: true,
+			camera: true,
+			screen: true,
+			record: true,
+			speaker: true,
+			chat: true,
+			users: true,
+			floorRequest: true,
+			muteSpeaker: true,
+			grid: true,
+		};
+		this.hotKeyTemporaryBlock = 0;
+
+		this._isPreparing = false;
+		this._videoRerenderDelay = 0;
+
+		this.isWindowFocus = config.isWindowFocus || false;
+		this._isActivePiPFromController = false;
+
+		const pipUpdateButtons = () => {
+			if (this.pictureInPictureCallWindow)
+			{
+				this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+			}
+		};
+
+		this.pipCoordinator = new PipCoordinator({
+			togglePip: (active) => this.toggleStatePictureInPictureCallWindow(active),
+			isScreenSharing: () => this.hasCurrentUserScreenSharing(),
+			isFolded: () => this.size === View.Size.Folded,
+			isVideoconf: () => this.isVideoconf,
+			updateButtons: pipUpdateButtons,
+			isConnected: () => this.uiState === UiState.Connected,
+			isShown: () => this.visible,
+			isMacDesktop: DesktopApi.isDesktop() && Browser.isMac(),
+		});
+
+		this.init();
+		this.subscribeEvents(config);
+		if (Type.isPlainObject(config.userStates))
+		{
+			this.appendUsers(config.userStates);
+		}
+
+		/*this.resizeCalled = 0;
+		this.reportResizeCalled = BX.debounce(function()
+		{
+			console.log('resizeCalled ' + this.resizeCalled + ' times');
+			this.resizeCalled = 0;
+		}.bind(this), 100)*/
+
+		this.hideEarTimer = null;
+
+		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled || false;
+		this.isCopilotActive = config.isCopilotActive || false;
+		this.copilotNotify = null;
+
+		this.ahaMomentNotify = null;
+
+		this.pictureInPictureCallWindow = null;
+
+		this.floorRequestNotifications = [];
+		this.currentPiPUserId = null;
+
+		this.isVideoconf = config.isVideoconf || false;
+
+		this.needToShowCallcontrolPromo = this.isVideoconf ? false : PromoManager.getInstance().needToShow(CALLCONTROL_PROMO_ID);
+
+		this.#commonRecord = {
+			infoPopup: null,
+			menuPopup: null,
+			notify: null,
+		};
+
+		this.#confirmModal = null;
+	};
+
+	get enableAutoPip()
+	{
+		return this.pipCoordinator?.enableAutoPip ?? false;
+	}
+
+	isHidden()
+	{
+		return this.pipCoordinator?.isHidden() ?? false;
+	}
+
+	openArticle(articleCode)
+	{
+		const infoHelper = BX.UI.InfoHelper;
+
+		if (infoHelper.isOpen())
+		{
+			infoHelper.close()
+		}
+
+		infoHelper.show(articleCode);
+	}
+
+	onClickButtonWithLimit(limitObj, handle)
+	{
+		const {enabled, articleCode} = limitObj;
+
+		if (enabled && typeof handle === "function") {
+			handle()
+
+			return;
+		}
+
+		if (!enabled && articleCode) {
+			if (this.size === View.Size.Folded)
+			{
+				this._onBodyClick();
+			}
+
+			this.openArticle(articleCode)
+		}
+	}
+
+	getLimitation()
+	{
+		this.limitation = Util.getCallFeatures();
+	}
+
+	getLimitationByType(type)
+	{
+		const defaultLimitation = {enable: true};
+
+		const currentLimitation = this.limitation?.[`call_${type}`];
+
+		if (!currentLimitation) {
+			return defaultLimitation;
+		}
+
+		return {
+			enabled: currentLimitation.enable,
+			articleCode: currentLimitation.articleCode
+		}
+	}
+
+	getBackgroundLimitation()
+	{
+		return this.getLimitationByType('background')
+	}
+
+	getBackgroundBlurLimitation()
+	{
+		return this.getLimitationByType('background_blur')
+	}
+
+	getRecordLimitation()
+	{
+		return this.getLimitationByType('record')
+	}
+
+	getScreenSharingLimitation()
+	{
+		return this.getLimitationByType('screen_sharing')
+	}
+
+	isDesktopCall()
+	{
+		return DesktopApi.isDesktop();
+	}
+	checkAvailableBackgroundImage()
+	{
+		if (!this.isDesktopCall())
+		{
+			return;
+		}
+
+		const {id: backgroundId} = DesktopApi.getBackgroundImage();
+
+		if (!backgroundId || backgroundId === 'none') {
+			DesktopApi.setCallBackground('none', 'none')
+		}
+	}
+
+	toggleVisibilityEar()
+	{
+		if (this.hideEarTimer)
+		{
+			clearTimeout(this.hideEarTimer);
+			this.hideEarTimer = null;
+		}
+
+		Dom.addClass(this.elements.root, 'on-mouse-move');
+		this.elements.ear.top?.classList.add("force-visible");
+		this.elements.ear.bottom?.classList.add("force-visible");
+		this.elements.pageNavigatorLeft?.classList.add("force-visible");
+		this.elements.pageNavigatorRight?.classList.add("force-visible");
+
+		this.hideEarTimer = setTimeout(() =>
+		{
+			Dom.removeClass(this.elements.root, 'on-mouse-move');
+			this.elements.ear.top?.classList.remove("force-visible");
+			this.elements.ear.bottom?.classList.remove("force-visible");
+			this.elements.pageNavigatorLeft?.classList.remove("force-visible");
+			this.elements.pageNavigatorRight?.classList.remove("force-visible");
+		}, 5000);
+	}
+
+	init()
+	{
+		this.getLimitation();
+		this.checkAvailableBackgroundImage();
+
+		if (this.isFullScreenSupported())
+		{
+			if (Browser.isChrome() || Browser.isSafari())
+			{
+				window.addEventListener("fullscreenchange", this._onFullScreenChangeHandler);
+				window.addEventListener("webkitfullscreenchange", this._onFullScreenChangeHandler);
+			}
+			else if (Browser.isFirefox())
+			{
+				window.addEventListener("mozfullscreenchange", this._onFullScreenChangeHandler);
+			}
+		}
+		if (Browser.isMobile())
+		{
+			document.documentElement.style.setProperty('--view-height', window.innerHeight + 'px');
+			window.addEventListener("orientationchange", this._onOrientationChangeHandler);
+		}
+
+		this.elements.audioContainer = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-audio-container"}
+		});
+
+		this.elements.screenAudioContainer = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-audio-container"}
+		});
+
+		if (!this.externalSpeakerManagement)
+		{
+			if (Hardware.initialized)
+			{
+				this.setSpeakerId(Hardware.defaultSpeaker);
+			}
+			else
+			{
+				Hardware.subscribe(Hardware.Events.initialized, function ()
+				{
+					this.setSpeakerId(Hardware.defaultSpeaker);
+				}.bind(this))
+			}
+		}
+
+		Hardware.subscribe(Hardware.Events.onChangeMicrophoneMuted, this.setMuted);
+		Hardware.subscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
+
+		window.addEventListener("keydown", this._onKeyDownHandler);
+		window.addEventListener("keyup", this._onKeyUpHandler);
+
+		this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
+		document.addEventListener('mousemove', this.onMouseMoveHandler);
+
+		this.keyModifierForCss = Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
+
+		this.container.appendChild(this.elements.audioContainer);
+		this.container.appendChild(this.elements.screenAudioContainer);
+
+		this.pipCoordinator.start();
+	};
+
+	get isActivePiPFromController()
+	{
+		return this._isActivePiPFromController;
+	}
+
+	set isActivePiPFromController(isActive)
+	{
+		this._isActivePiPFromController = isActive;
+	}
+
+	get isPreparing()
+	{
+		return this._isPreparing;
+	};
+
+	set isPreparing(isPreparing)
+	{
+		this._isPreparing = !!isPreparing;
+	};
+
+	// for testing different delay values
+	get videoRerenderDelay()
+	{
+		return this._videoRerenderDelay > 0 ? this._videoRerenderDelay : CHANGE_VIDEO_RERENDER_DELAY;
+	};
+
+	set videoRerenderDelay(videoRerenderDelay)
+	{
+		this._videoRerenderDelay = videoRerenderDelay;
+	};
+
+	subscribeEvents(config)
+	{
+		for (let event in EventName)
+		{
+			if (EventName.hasOwnProperty(event) && Type.isFunction(config[event]))
+			{
+				this.setCallback(event, config[event]);
+			}
+		}
+	};
+
+	setCallback(name, cb)
+	{
+		if (Type.isFunction(cb) && EventName.hasOwnProperty(name))
+		{
+			this.eventEmitter.subscribe(name, function (event)
+			{
+				cb(event.data);
+			});
+		}
+	};
+
+	subscribe(eventName, listener)
+	{
+		return this.eventEmitter.subscribe(eventName, listener);
+	};
+
+	unsubscribe(eventName, listener)
+	{
+		return this.eventEmitter.unsubscribe(eventName, listener);
+	};
+
+	getNextPosition()
+	{
+		return this.lastPosition++;
+	};
+
+	/**
+	 * @param {object} userStates {userId -> state}
+	 */
+	appendUsers(userStates)
+	{
+		if (!Type.isPlainObject(userStates))
+		{
+			return;
+		}
+
+		let userIds = Object.keys(userStates);
+		for (let i = 0; i < userIds.length; i++)
+		{
+			let userId = userIds[i];
+			this.addUser(userId, userStates[userId] ? userStates[userId] : UserState.Idle);
+		}
+	};
+
+	setCentralUser(userId): void
+	{
+		if (this.centralUser.id == userId)
+		{
+			return;
+		}
+
+		if (!this.users[userId] && userId != this.userId)
+		{
+			return;
+		}
+
+		const previousCentralUser = this.centralUser;
+		this.centralUser = (userId == this.userId ? this.localUser : this.users[userId]);
+		if (this.layout === Layouts.Centered || this.layout === Layouts.Mobile)
+		{
+			if (this.layout === Layouts.Mobile)
+			{
+				previousCentralUser.dismount();
+			}
+
+			this.updateUserList();
+
+			if (previousCentralUser.id != this.centralUser.id)
+			{
+				this.eventEmitter.emit(EventName.onHasMainStream, {
+					userId: this.centralUser.id,
+				});
+			}
+		}
+
+		if (this.layout === Layouts.Mobile)
+		{
+			if (this.centralUserMobile)
+			{
+				this.centralUserMobile.setUserModel(this.userRegistry.get(userId));
+			}
+			else
+			{
+				this.centralUserMobile = new CallUserMobile({
+					userModel: this.userRegistry.get(userId),
+					onClick: () => this.showUserMenu(this.centralUser.id)
+				})
+				this.centralUserMobile.mount(this.elements.pinnedUserContainer);
+			}
+		}
+
+		this.userRegistry.get(previousCentralUser.id).centralUser = false;
+		this.userRegistry.get(this.centralUser.id).centralUser = true;
+
+		this.eventEmitter.emit(EventName.onSetCentralUser, {
+			userId: userId,
+			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
+		})
+
+		this.talkingService.refreshQueue();
+	};
+
+	getLeftUser(userId): ?number
+	{
+		let candidateUserId = null;
+		const keys = [...this.userRegistry.users.keys()];
+		const index = keys.indexOf(userId);
+
+		if (index === -1)
+		{
+			return candidateUserId;
+		}
+
+		const userModels = [...this.userRegistry.users.values()].slice(0, index);
+		const totalUserModels = userModels.length;
+
+		for (let i = totalUserModels - 1; i >= 0; i--)
+		{
+			const userModel = userModels[i];
+			if (!userModel.localUser && userModel.state === UserState.Connected)
+			{
+				candidateUserId = userModel.id;
+				break;
+			}
+		}
+
+		return candidateUserId;
+	}
+
+	getRightUser(userId): ?number
+	{
+		let candidateUserId = null;
+		const keys = [...this.userRegistry.users.keys()];
+		const index = keys.indexOf(userId);
+
+		if (index === -1)
+		{
+			return candidateUserId;
+		}
+
+		const userModels = [...this.userRegistry.users.values()].slice(index + 1);
+		const totalUserModels = userModels.length;
+
+		for (let i = 0; i < totalUserModels; i++)
+		{
+			const userModel = userModels[i];
+
+			if (!userModel.localUser && userModel.state === UserState.Connected)
+			{
+				candidateUserId = userModel.id;
+				break;
+			}
+		}
+
+		return candidateUserId;
+	}
+
+	getUserCount()
+	{
+		return Object.keys(this.users).length;
+	};
+
+	getConnectedUserCount(withYou)
+	{
+		let count = this.getConnectedUsers().length;
+
+		if (withYou)
+		{
+			const userId = parseInt(this.userId);
+			if (!this.broadcastingMode || this.broadcastingPresenters.includes(userId))
+			{
+				count += 1;
+			}
+		}
+
+		return count;
+	};
+
+	getUsersWithVideo(): Array
+	{
+		if (this.cache.has('usersWithVideo'))
+		{
+			return this.cache.get('usersWithVideo');
+		}
+
+		const users = Object.keys(this.users);
+		const result = [];
+
+		users.forEach((userId) => {
+			if (this.users[userId].hasVideo())
+			{
+				result.push(userId);
+			}
+		});
+
+		this.cache.set('usersWithVideo', result);
+
+		return result;
+	}
+
+	getConnectedUsers(): Array
+	{
+		if (this.cache.has('currentConnectedUser'))
+		{
+			return this.cache.get('currentConnectedUser');
+		}
+
+		const result = [];
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (userModel.id != this.userId && userModel.state === UserState.Connected)
+			{
+				result.push(userModel.id);
+			}
+		});
+
+		this.cache.set('previousConnectedUserCount', 0);
+		this.cache.set('currentConnectedUser', result);
+
+		return result;
+	}
+
+	getDisplayedUsers(): Array
+	{
+		const result = [];
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (
+				userModel.id != this.userId
+				&& ((userModel.id != this.centralUser.id && this.layout === Layouts.Centered) || this.layout !== Layouts.Centered)
+				&& ([UserState.Connected, UserState.Connecting, UserState.Calling].includes(userModel.state))
+			)
+			{
+				result.push(userModel.id);
+			}
+		});
+
+		return result;
+	}
+
+	getActiveUsers(): Array
+	{
+		if (this.cache.has('activeUsers'))
+		{
+			return this.cache.get('activeUsers');
+		}
+
+		const result = [];
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (this.isUserHasActiveState(userModel) && Object.hasOwn(this.users, userModel.id))
+			{
+				result.push(userModel.id);
+			}
+		});
+
+		this.cache.set('activeUsers', result);
+
+		return result;
+	}
+
+	getUsersWithCamera(): Array
+	{
+		// since we don't receive streams from inactive pages
+		// we can't use this.getUsersWithVideo() to get number of users with video
+		return [...this.userRegistry.users.values()].filter((userModel) => {
+			return userModel.id != this.userId
+				&& userModel.cameraState
+				&& this.isUserHasActiveState(userModel)
+				&& userModel.state !== UserState.Calling;
+		});
+	}
+
+	hasUserWithScreenSharing(): Boolean
+	{
+		return [...this.userRegistry.users.values()].some((userModel) => userModel.screenState);
+	}
+
+	hasCurrentUserScreenSharing(): Boolean
+	{
+		const currentUser = this.userRegistry.get(this.userId);
+
+		if (currentUser)
+		{
+			return currentUser.screenState;
+		}
+
+		return false;
+	}
+
+	getPresenterUserId(): ?number
+	{
+		let currentPresenterId = this.presenterId || 0;
+		if (!this.getConnectedUserCount())
+		{
+			return null;
+		}
+
+		if (currentPresenterId == this.localUser.id)
+		{
+			currentPresenterId = 0;
+		}
+
+		const currentPresenterModel = this.userRegistry.get(currentPresenterId);
+
+		// 1. Current user, who is sharing screen has top priority
+		if (currentPresenterModel?.screenState === true)
+		{
+			return currentPresenterId;
+		}
+
+		// 2. If current user is not sharing screen, but someone is sharing - he should become presenter
+		const users = Object.keys(this.users);
+		for (const userId of users)
+		{
+			if (Object.hasOwn(this.users, userId) && this.userRegistry.get(userId).screenState === true)
+			{
+				return parseInt(userId, 10);
+			}
+		}
+
+		// 3. If current user is talking, or stopped talking less then one second ago - he should stay presenter
+		if (currentPresenterModel && currentPresenterModel.wasTalkingAgo() < 1000)
+		{
+			return currentPresenterId;
+		}
+
+		// 4. Return currently talking user
+		let minTalkingAgo = Infinity;
+		let minTalkingAgoUserId = 0;
+		for (const userId of users)
+		{
+			if (!Object.hasOwn(this.users, userId))
+			{
+				continue;
+			}
+
+			const userWasTalkingAgo = this.userRegistry.get(userId).wasTalkingAgo();
+			if (userWasTalkingAgo < 1000)
+			{
+				return parseInt(userId, 10);
+			}
+
+			if (userWasTalkingAgo < minTalkingAgo)
+			{
+				minTalkingAgo = userWasTalkingAgo;
+				minTalkingAgoUserId = parseInt(userId, 10);
+			}
+		}
+
+		// Return last talking user or current user in center
+		return minTalkingAgoUserId || this.centralUser.id;
+	}
+
+	switchPresenter(presenterId)
+	{
+		const currentPresenterId = this.presenterId || 0;
+		const newPresenterId = presenterId || this.getPresenterUserId();
+
+		if (!newPresenterId)
+		{
+			return;
+		}
+
+		this.presenterId = newPresenterId;
+
+		if (currentPresenterId)
+		{
+			this.userRegistry.get(currentPresenterId).presenter = false;
+		}
+		this.userRegistry.get(newPresenterId).presenter = true;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser());
+		}
+
+		if (this.pinnedUser === null)
+		{
+			this.setCentralUser(newPresenterId);
+		}
+		else if (currentPresenterId !== newPresenterId)
+		{
+			this.eventEmitter.emit(EventName.onHasMainStream, {
+				userId: this.centralUser.id,
+				otherUsers: [currentPresenterId],
+			});
+		}
+	}
+
+	switchPresenterDeferred()
+	{
+		clearTimeout(this.switchPresenterTimeout);
+		this.switchPresenterTimeout = setTimeout(this.switchPresenter.bind(this), 1000);
+	};
+
+	cancelSwitchPresenter()
+	{
+		clearTimeout(this.switchPresenterTimeout);
+	};
+
+	setUiState(uiState)
+	{
+		if (this.uiState == uiState)
+		{
+			return;
+		}
+
+		this.uiState = uiState;
+		if (this.uiState == UiState.Error && this.elements.container)
+		{
+			Dom.clean(this.elements.container);
+			this.elements.container.appendChild(this.elements.overlay);
+		}
+		if (!this.elements.root)
+		{
+			return;
+		}
+		this.updateButtons();
+	};
+
+	setLayout(newLayout)
+	{
+		if (newLayout == this.layout)
+		{
+			return;
+		}
+
+		this.layout = newLayout;
+
+		if (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)
+		{
+			this.elements.root.classList.remove("bx-messenger-videocall-grid");
+			this.elements.root.classList.add("bx-messenger-videocall-centered");
+			this.centralUser.mount(this.elements.center);
+			this.elements.container.appendChild(this.elements.userBlock);
+
+			if (this.layout != Layouts.Mobile)
+			{
+				this.elements.userBlock.appendChild(this.elements.userList.container);
+			}
+
+			if (this.layout === Layouts.Centered)
+			{
+				this.eventEmitter.emit(EventName.onHasMainStream, {
+					userId: this.centralUser.id,
+				});
+			}
+
+			this.centralUser.playVideo();
+			//this.centralUser.updateAvatarWidth();
+		}
+
+		if (this.layout === Layouts.Grid)
+		{
+			this.elements.root.classList.remove('bx-messenger-videocall-centered');
+			this.elements.root.classList.add('bx-messenger-videocall-grid');
+
+			this.elements.container.appendChild(this.elements.userList.container);
+			this.elements.container.removeChild(this.elements.userBlock);
+
+			this.centralUser.dismount();
+
+			if (this.isFullScreen && this.buttons.participants)
+			{
+				this.buttons.participants.update({
+					foldButtonState: Buttons.ParticipantsButton.FoldButtonState.Hidden,
+				});
+			}
+			this.unpinUser();
+		}
+
+		if (this.layout === Layouts.Centered && this.isFullScreen)
+		{
+			this.setUserBlockFolded(true);
+		}
+
+		this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", (this.layout == Layouts.Mobile));
+
+		this.updateUserList();
+		this.toggleEars();
+		this.updateButtons();
+
+		this.talkingService.refreshQueue();
+
+		this.eventEmitter.emit(EventName.onLayoutChange, {
+			layout: this.layout
+		});
+	};
+
+	setRoomState(roomState)
+	{
+		if (this.roomState === roomState)
+		{
+			return;
+		}
+		this.roomState = roomState;
+		if (this.buttons.microphone)
+		{
+			this.buttons.microphone.setSideIcon(this.getMicrophoneSideIcon(this.roomState));
+		}
+	}
+
+	getMicrophoneSideIcon(roomState)
+	{
+		switch (roomState)
+		{
+			case RoomState.Speaker:
+				return 'ellipsis';
+			case RoomState.NonSpeaker:
+				return 'pointer';
+			case RoomState.None:
+			default:
+				return null;
+		}
+	}
+
+	setCurrentPage(pageNumber)
+	{
+		if (pageNumber < 1 || pageNumber > this.pagesCount || pageNumber == this.currentPage)
+		{
+			return;
+		}
+		this.currentPage = pageNumber;
+
+		this.recalculateUsersPerPage()
+		if (this.elements.root)
+		{
+			this.elements.pageNavigatorLeftCounter.innerHTML = (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount;
+			this.elements.pageNavigatorRightCounter.innerHTML = (this.currentPage + 1) + '&nbsp;/&nbsp;' + this.pagesCount;
+		}
+		if (!(this.layout === Layouts.Grid || this.layout === Layouts.Centered))
+		{
+			return;
+		}
+
+		this.renderUserList(true);
+		this.toggleEars();
+		this.talkingService.refreshQueue();
+	};
+
+	calculateUsersPerPage()
+	{
+		if (!this.elements.userList)
+		{
+			return 1000;
+		}
+
+		const containerSize = this.elements.userList.container.getBoundingClientRect();
+		let columns = Math.floor(containerSize.width / MIN_GRID_USER_WIDTH) || 1;
+		let rows = Math.floor(containerSize.height / MIN_GRID_USER_HEIGHT) || 1;
+
+		if (this.layout === Layouts.Centered)
+		{
+			const rowsWithoutGap = Math.floor(containerSize.height / SIDE_USER_HEIGHT) || 1;
+			const rowGap = 6;
+
+			this.whiteSpaceInUserGrid = containerSize.height - rowsWithoutGap * SIDE_USER_HEIGHT + (rowsWithoutGap - 1) * rowGap;
+
+			columns = 1;
+			rows = this.whiteSpaceInUserGrid < 0 ? rowsWithoutGap - 1 : rowsWithoutGap;
+		}
+
+		let usersPerPage = columns * rows - 1;
+
+		if (this.userId == this.centralUser.id && this.layout === Layouts.Centered)
+		{
+			usersPerPage += 1;
+		}
+
+		if (!usersPerPage)
+		{
+			return 1000;
+		}
+
+		if (usersPerPage >= MAX_USERS_PER_PAGE)
+		{
+			// check if the last row should be filled up
+			const elementSize = Util.findBestElementSize(
+				containerSize.width,
+				containerSize.height,
+				MAX_USERS_PER_PAGE + 1,
+				MIN_GRID_USER_WIDTH,
+				MIN_GRID_USER_HEIGHT,
+			);
+			// console.log('Optimal element size: width '+elementSize.width+' height '+elementSize.height);
+			columns = Math.floor(containerSize.width / elementSize.width);
+			rows = Math.floor(containerSize.height / elementSize.height);
+			usersPerPage = columns * rows - 1;
+		}
+
+		return usersPerPage;
+	}
+
+	calculatePagesCount(usersPerPage)
+	{
+		const pages = Math.ceil((this.getDisplayedUsers().length) / usersPerPage);
+		return pages > 0 ? pages : 1;
+	};
+
+	recalculateUsersPerPage()
+	{
+		this.usersPerPage = this.calculateUsersPerPage();
+
+		if (this.currentPage < this.pagesCount && this.layout === Layouts.Centered && this.whiteSpaceInUserGrid > 0)
+		{
+			this.usersPerPage = this.usersPerPage + 1;
+		}
+	}
+
+	recalculatePages()
+	{
+		this.usersPerPage = this.calculateUsersPerPage();
+		this.pagesCount = this.calculatePagesCount(this.usersPerPage);
+
+		if (this.currentPage > this.pagesCount)
+		{
+			this.currentPage = this.pagesCount;
+		}
+
+		this.recalculateUsersPerPage();
+
+		if (this.elements.root)
+		{
+			this.elements.pageNavigatorLeftCounter.innerHTML = (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount;
+			this.elements.pageNavigatorRightCounter.innerHTML = (this.currentPage + 1) + '&nbsp;/&nbsp;' + this.pagesCount;
+		}
+	};
+
+	/**
+	 * Returns page number, where the user is displayed, or 0 if user is not found
+	 * @param {int} userId Id of the user
+	 * @return {int}
+	 */
+	findUsersPage(userId)
+	{
+		if (userId == this.userId || this.usersPerPage === 0)
+		{
+			return 0;
+		}
+		const displayedUsers = this.getDisplayedUsers();
+		let userPosition = 0;
+
+		for (let i = 0; i < displayedUsers.length; i++)
+		{
+			if (displayedUsers[i] == userId)
+			{
+				userPosition = i + 1;
+				break;
+			}
+		}
+
+		return (userPosition ? Math.ceil(userPosition / this.usersPerPage) : 0);
+	};
+
+	setCameraId(cameraId)
+	{
+		if (this.cameraId == cameraId)
+		{
+			return;
+		}
+
+		if (this.localUser.stream && this.localUser.stream.getVideoTracks().length > 0)
+		{
+			throw new Error("Can not set camera id while having active stream")
+		}
+		this.cameraId = cameraId;
+	};
+
+	setMicrophoneId(microphoneId)
+	{
+		if (this.microphoneId == microphoneId)
+		{
+			return;
+		}
+
+		if (this.localUser.stream && this.localUser.stream.getAudioTracks().length > 0)
+		{
+			throw new Error("Can not set microphone id while having active stream")
+		}
+		this.microphoneId = microphoneId;
+	};
+
+	setMicrophoneLevel(level)
+	{
+		this.microphoneLevel = level;
+		this.buttons.microphone?.setLevel(level);
+	};
+
+	setCameraState = (event) =>
+	{
+		if (this.isCameraOn == event.data.isCameraOn)
+		{
+			return;
+		}
+
+		this.isCameraOn = event.data.isCameraOn;
+
+		if (this.buttons.camera)
+		{
+			if (this.isCameraOn)
+			{
+				this.buttons.camera.enable();
+			}
+			else
+			{
+				this.buttons.camera.disable();
+			}
+		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+	};
+
+	setMuted = (event) =>
+	{
+		if (this.isMuted == event.data.isMicrophoneMuted)
+		{
+			return;
+		}
+
+		this.isMuted = event.data.isMicrophoneMuted
+
+		if (this.buttons.microphone)
+		{
+			if (this.isMuted)
+			{
+				this.buttons.microphone.disable();
+			}
+			else
+			{
+				this.buttons.microphone.enable();
+			}
+		}
+		this.userRegistry.get(this.userId).microphoneState = !this.isMuted;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+	};
+
+	setLocalUserId(userId)
+	{
+		if (userId == this.userId)
+		{
+			return;
+		}
+
+		this.userId = parseInt(userId);
+		this.localUser.userModel.id = this.userId;
+		this.localUser.userModel.name = this.userData[this.userId] ? this.userData[this.userId].name : '';
+		this.localUser.userModel.avatar = this.userData[this.userId] ? checkAndEncodeURI(this.userData[this.userId].avatar_hr) : '';
+
+		this.userRegistry.push(this.localUser.userModel);
+	};
+
+	setUserBlockFolded(isUserBlockFolded)
+	{
+		this.isUserBlockFolded = isUserBlockFolded;
+
+		this.elements.userBlock?.classList.toggle("folded", this.isUserBlockFolded);
+		this.elements.root?.classList.toggle("bx-messenger-videocall-userblock-folded", this.isUserBlockFolded);
+		if (this.isUserBlockFolded)
+		{
+			if (this.buttons.participants && this.layout == Layouts.Centered)
+			{
+				this.buttons.participants.update({
+					foldButtonState: Buttons.ParticipantsButton.FoldButtonState.Unfold
+				});
+			}
+		}
+		else
+		{
+			if (this.buttons.participants)
+			{
+				this.buttons.participants.update({
+					foldButtonState: (this.isFullScreen && this.layout == Layouts.Centered) ? Buttons.ParticipantsButton.FoldButtonState.Fold : Buttons.ParticipantsButton.FoldButtonState.Hidden
+				});
+			}
+		}
+	};
+
+	addUser(userId, state, direction)
+	{
+		userId = Number(userId);
+		if (this.users[userId])
+		{
+			return;
+		}
+
+		state = state || UserState.Idle;
+		if (!direction)
+		{
+			if (this.broadcastingPresenters.length > 0 && !this.broadcastingPresenters.includes(userId))
+			{
+				direction = EndpointDirection.RecvOnly;
+			}
+			else
+			{
+				direction = EndpointDirection.SendRecv
+			}
+		}
+
+		let userModel = new UserModel({
+			id: userId,
+			name: this.userData[userId] ? this.userData[userId].name : '',
+			avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
+			state: state,
+			order: state == UserState.Connected ? this.getNextPosition() : newUserPosition,
+			direction: direction,
+		});
+
+		this.userRegistry.push(userModel);
+
+		this.users[userId] = new CallUser({
+			userModel,
+			parentContainer: this.container,
+			allowPinButton: this.getConnectedUserCount() > 1,
+			externalSpeakerManagement: this.externalSpeakerManagement,
+			onClick: this._onUserClick.bind(this),
+			onPin: this._onUserPin.bind(this),
+			onUnPin: this._onUserUnPin.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
+			onAudioElementCreated: this.externalSpeakerManagement
+				? (audioElement) => {
+					Dom.append(this.elements.audio[userId], this.elements.audioContainer);
+					this.eventEmitter.emit(EventName.onAudioElementCreated, {
+						userId,
+						audioElement,
+					});
+				}
+				: null,
+			onAudioPlay: this.externalSpeakerManagement
+				? (audioElement) => {
+					this.eventEmitter.emit(EventName.onAudioPlay, {
+						userId,
+						audioElement,
+					});
+				}
+				: null,
+		});
+		userModel.subscribe('changed', this.talkingService.watchTalking);
+
+		this.screenUsers[userId] = new CallUser({
+			parentContainer: this.container,
+			userModel: userModel,
+			allowPinButton: false,
+			screenSharingUser: true,
+		});
+
+		if (this.elements.root && state !== UserState.Idle)
+		{
+			if (state === UserState.Connected)
+			{
+				this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
+				this.cache.delete('currentConnectedUser');
+				this.cache.delete('activeUsers');
+			}
+
+			this._onAddUser();
+		}
+	};
+
+	setUserDirection(userId, direction)
+	{
+		const user = this.userRegistry.get(userId);
+		if (!user || user.direction == direction)
+		{
+			return;
+		}
+
+		user.direction = direction;
+		this.updateUserList();
+	};
+
+	setLocalUserDirection(direction)
+	{
+		if (this.localUser.userModel.direction != direction)
+		{
+			this.localUser.userModel.direction = direction;
+			this.updateUserList();
+		}
+	};
+
+	setUserState(userId, newState)
+	{
+		const user = this.userRegistry.get(userId);
+		if (!user || user.state === newState)
+		{
+			return;
+		}
+
+		if ((user.state === UserState.Connected || newState === UserState.Connected))
+		{
+			this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
+			this.cache.delete('currentConnectedUser');
+			this.cache.delete('activeUsers');
+		}
+
+		user.state = newState;
+
+		if (newState == UserState.Idle && user.screenState)
+		{
+			user.prevScreenState = user.screenState;
+		}
+
+		if (newState === UserState.Connected && this.uiState === UiState.Calling)
+		{
+			this.setUiState(UiState.Connected);
+		}
+
+		// maybe switch central user
+		if (this.centralUser.id == this.userId && newState == UserState.Connected)
+		{
+			this.setCentralUser(userId);
+		}
+		else if (userId == this.centralUser.id)
+		{
+			if (newState == UserState.Connecting || newState == UserState.Failed)
+			{
+				this.centralUser.blurVideo();
+			}
+			else if (newState == UserState.Connected)
+			{
+				this.centralUser.blurVideo(false);
+			}
+			else if (newState == UserState.Idle)
+			{
+				const usersWithVideo = this.getUsersWithVideo();
+				const connectedUsers = this.getConnectedUsers();
+
+				if (connectedUsers.length === 0)
+				{
+					this.setCentralUser(this.userId);
+				}
+				else if (usersWithVideo.length > 0)
+				{
+					this.setCentralUser(usersWithVideo[0]);
+				}
+				else //if (connectedUsers.length > 0)
+				{
+					this.setCentralUser(connectedUsers[0]);
+				}
+			}
+		}
+
+		if (newState === UserState.Connected)
+		{
+			const timer = setTimeout(() => {
+				this.waitingForUserMediaTimeouts.delete(userId);
+			}, WAITING_VIDEO_DELAY);
+			this.waitingForUserMediaTimeouts.set(userId, timer);
+
+			if (user.prevScreenState && String(userId) !== String(this.userId))
+			{
+				this.setUserScreenState(userId, user.prevScreenState);
+				user.prevScreenState = false;
+			}
+		}
+		else if (newState === UserState.Idle)
+		{
+			if (this.isVideoconf && this.pictureInPictureCallWindow && Number(this.currentPiPUserId) === Number(userId))
+			{
+				this.currentPiPUserId = null;
+				this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser(this.centralUser.id));
+			}
+			this.setUserFloorRequestState(userId, false);
+			this.setUserPermissionToSpeakState(userId, false);
+			clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
+			this.waitingForUserMediaTimeouts.delete(userId);
+			this.rerenderQueue.set(userId, {
+				userId,
+				reason: RerenderReason.UserDisconnected,
+			});
+		}
+
+		if (newState == UserState.Connected && user.order == newUserPosition)
+		{
+			user.order = this.getNextPosition();
+		}
+		else if (newState == UserState.Idle)
+		{
+			// reset user position to add them in the end after they reconnect
+			user.prevOrder = user.order;
+			user.order = newUserPosition;
+			user.prevCameraState = user.cameraState;
+			user.cameraState = false;
+		}
+
+		if (userId == this.localUser.id)
+		{
+			this.localUser.userModel.cameraState = this.localUser.hasCameraVideo();
+		}
+
+		const skippedElementsList = userId === this.localUser.id ? [] : ['panel'];
+
+		if (userId == this.presenterId && newState !== UserState.Connected)
+		{
+			this.switchPresenter();
+		}
+
+		this._onUserStateUpdated(skippedElementsList);
+	};
+
+	setTitle(title)
+	{
+		this.title = title;
+	};
+
+	getUserTalking(userId)
+	{
+		const user = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return false;
+		}
+
+		return !!user.talking;
+	}
+
+	setUserTalking(userId, talking): void
+	{
+		const user = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		user.talking = talking;
+
+		if (userId == this.userId)
+		{
+			return;
+		}
+
+		if (userId == this.presenterId && !talking)
+		{
+			this.switchPresenterDeferred();
+		}
+		else
+		{
+			this.switchPresenter();
+		}
+	}
+
+	setUserStats(userId, stats, mediaServerId): void
+	{
+		this.pictureInPictureCallWindow?.setStats(userId, stats);
+
+		if (userId == this.localUser.id)
+		{
+			this.localUser.showStats(stats, mediaServerId);
+			this.localUserReceivedStats = true;
+			this.updateButtons();
+
+			return;
+		}
+
+		if (this.users[userId]?.isMounted())
+		{
+			this.users[userId].showStats(stats, mediaServerId);
+		}
+
+		if (this.screenUsers[userId]?.isMounted())
+		{
+			this.screenUsers[userId].showStats(stats, mediaServerId);
+		}
+	}
+
+	setTrackSubscriptionFailed(data)
+	{
+		if (this.users[data.participant.userId])
+		{
+			if(data.participant.userId && data.track){
+				this.users[data.participant.userId].showTrackSubscriptionFailed(data.track);
+			}
+		}
+	}
+
+	setUserMicrophoneState(userId, isMicrophoneOn)
+	{
+		const user = this.userRegistry.get(userId);
+		if (user)
+		{
+			user.microphoneState = isMicrophoneOn;
+		}
+	};
+
+	setUserCameraState(userId, cameraState)
+	{
+		const user = this.userRegistry.get(userId);
+		if (user)
+		{
+			user.cameraState = cameraState;
+		}
+	};
+
+	setUserVideoPaused(userId, videoPaused)
+	{
+		const user = this.userRegistry.get(userId);
+		if (user)
+		{
+			user.videoPaused = videoPaused;
+			user.cameraState = !videoPaused;
+
+			if (!user.videoPaused !== videoPaused)
+			{
+				return;
+			}
+
+			videoPaused
+				? this.updateRerenderQueue(userId, RerenderReason.VideoDisabled)
+				: this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+		}
+	};
+
+	getUserFloorRequestState(userId)
+	{
+		const user = this.userRegistry.get(userId);
+
+		return user && user.floorRequestState;
+	};
+
+	setUserFloorRequestState(userId, userFloorRequestState)
+	{
+		const user: UserModel = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		if (user.floorRequestState != userFloorRequestState)
+		{
+			const userState = user?.state;
+			const userActive = (userState !== UserState.Idle
+				&& userState !== UserState.Declined
+				&& userState !== UserState.Unavailable
+				&& userState !== UserState.Busy
+			);
+			if (userFloorRequestState && !userActive)
+			{
+				return
+			}
+
+			user.floorRequestState = userFloorRequestState;
+
+			this.updateFloorRequestNotifications(user, userFloorRequestState);
+
+			if (userFloorRequestState)
+			{
+				this.showFloorRequestNotification(userId);
+			}
+		}
+
+		if (userId == this.userId)
+		{
+			this.setButtonActive('floorRequest', userFloorRequestState);
+		}
+	};
+
+	setUserPermissionToSpeakState(userId, permissionToSpeakState)
+	{
+		const user: UserModel = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		if (user.permissionToSpeak !== permissionToSpeakState)
+		{
+			const userState = user?.state;
+			const userActive = (userState !== UserState.Idle
+				&& userState !== UserState.Declined
+				&& userState !== UserState.Unavailable
+				&& userState !== UserState.Busy
+			);
+			if (!userActive)
+			{
+				return;
+			}
+
+			user.permissionToSpeak = permissionToSpeakState;
+		}
+	};
+
+	setAllUserPermissionToSpeakState(permissionToSpeakState)
+	{
+		this.userRegistry.users.forEach((userModel) => {userModel.permissionToSpeak = permissionToSpeakState});
+	};
+
+	pinUser(userId): void
+	{
+		if (!(userId in this.users) && userId !== Number(this.userId))
+		{
+			console.error(`User ${userId} is not known`);
+
+			return;
+		}
+
+		if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id))
+		{
+			this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+		}
+		this.pinnedUser = this.users[userId] || this.localUser;
+		this.userRegistry.get(this.pinnedUser.userModel.id).pinned = true;
+		this.setCentralUser(userId);
+		this.eventEmitter.emit(EventName.onUserPinned, { userId });
+
+		this.eventEmitter.emit(EventName.onHasMainStream, {
+			userId: this.centralUser.id,
+			otherUsers: [...this.activeUsers],
+		});
+	}
+
+	unpinUser(): void
+	{
+		if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id))
+		{
+			this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+		}
+		this.pinnedUser = null;
+
+		this.eventEmitter.emit(EventName.onUserPinned, {
+			userId: null,
+		});
+
+		this.eventEmitter.emit(EventName.onHasMainStream, {
+			userId: null,
+			otherUsers: [...this.activeUsers],
+		});
+		this.switchPresenterDeferred();
+	}
+
+	updateFloorRequestNotifications(userModel, floorRequestState)
+	{
+		const indexFloorRequestInList = this.floorRequestNotifications.findIndex(req => req.userModel.id === userModel.id);
+		const hasFloorRequestInList = indexFloorRequestInList !== -1;
+		const currentUser = this.users[userModel.id];
+		const currentUserData = {
+			userModel,
+			avatarBackgroundColor: currentUser?.avatarBackground || Util.getAvatarBackground(),
+		}
+
+		if (floorRequestState && !hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.push(currentUserData);
+		}
+
+		if (!floorRequestState && hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.splice(indexFloorRequestInList, 1);
+		}
+
+		this.pictureInPictureCallWindow?.updateFloorRequestState(currentUserData);
+	}
+
+	showFloorRequestNotification(userId)
+	{
+		const userModel: ?UserModel = this.userRegistry.get(userId);
+		if (!userModel)
+		{
+			return;
+		}
+
+		let notification = FloorRequest.create({
+			userModel,
+			onAllowSpeakPermissionClicked: (_userModel) => {
+				this._onAllowSpeakPermissionClickedHandler(_userModel);
+			},
+			onDisallowSpeakPermissionClicked: (_userModel) => {
+				this._onDisallowSpeakPermissionClickedHandler(_userModel);
+			},
+		});
+
+		notification.mount(this.elements.notificationPanel);
+		NotificationManager.Instance.addNotification(notification);
+	};
+
+	updateFloorRequestNotification()
+	{
+		if (!NotificationManager?.Instance.notifications.length)
+		{
+			return;
+		}
+
+		NotificationManager.Instance.notifications.forEach(notification =>
+		{
+			notification.updatePermissionButtonState();
+		});
+	}
+
+	_onAllowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.setUserPermissionToSpeakState(_userModel.id, true);
+		this.eventEmitter.emit(EventName.onAllowSpeakPermission, {
+			userId: _userModel.id
+		});
+	}
+
+	_onDisallowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.eventEmitter.emit(EventName.onDisallowSpeakPermission, {
+			userId: _userModel.id
+		});
+	}
+
+	setUserScreenState(userId, screenState)
+	{
+		const user: ?UserModel = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		user.screenState = screenState;
+		if (userId != this.userId)
+		{
+			if (screenState === true && this.layout === View.Layout.Grid)
+			{
+				this.setLayout(Layouts.Centered);
+				this.returnToGridAfterScreenStopped = true;
+			}
+			if (screenState === false
+				&& this.layout === Layouts.Centered
+				&& !this.hasUserWithScreenSharing()
+				&& !this.pinnedUser
+				&& this.returnToGridAfterScreenStopped)
+			{
+				this.returnToGridAfterScreenStopped = false;
+				this.setLayout(Layouts.Grid);
+			}
+
+			const newPresenterId = screenState ? userId : null;
+
+			this.switchPresenter(newPresenterId);
+		}
+	};
+
+	flipLocalVideo(flipVideo)
+	{
+		this.localUser.flipVideo = !!flipVideo;
+	}
+
+	setLocalStream(streamData)
+	{
+		const mediaRenderer = streamData.mediaRenderer;
+		const mediaStream = streamData.stream;
+		const flipVideo = streamData.flipVideo;
+
+		if (mediaRenderer) // for Bitrix calls
+		{
+			this.localUser.videoRenderer = mediaRenderer;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, mediaRenderer);
+		}
+		else
+		{
+			const videoTrack = mediaStream.getVideoTracks().length > 0 ? mediaStream.getVideoTracks()[0] : null;
+			this.localUser.videoTrack = videoTrack;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+				kind: 'video',
+				track: videoTrack,
+			}));
+		}
+
+		if (!Type.isUndefined(flipVideo))
+		{
+			this.flipLocalVideo(flipVideo);
+		}
+		this.localUser.userModel.cameraState = this.localUser.hasCameraVideo();
+
+		const videoTracks = mediaStream?.getVideoTracks();
+		if (videoTracks?.length > 0)
+		{
+			const videoTrackSettings = videoTracks[0].getSettings();
+			this.cameraId = videoTrackSettings.deviceId || '';
+		}
+		else if (!mediaRenderer)
+		{
+			this.cameraId = '';
+		}
+
+		const audioTracks = mediaStream?.getAudioTracks();
+		if (audioTracks?.length > 0)
+		{
+			const audioTrackSettings = audioTracks[0].getSettings();
+			this.microphoneId = audioTrackSettings.deviceId || '';
+		}
+
+		/*if(!this.localUser.hasVideo())
+		{
+			return false;
+		}*/
+
+		if (this.layout !== Layouts.Grid && this.centralUser.id == this.userId)
+		{
+			if (mediaRenderer) // for Bitrix ca;ls
+			{
+				this.centralUser.videoRenderer = mediaRenderer;
+			}
+			else if (videoTracks.length > 0 || Object.keys(this.users).length === 0)
+			{
+				this.centralUser.videoTrack = videoTracks[0];
+			}
+			else
+			{
+				this.setCentralUser(Object.keys(this.users)[0]);
+			}
+		}
+		else
+		{
+			this.updateUserList();
+		}
+
+		this.updateButtons()
+	};
+
+	setLocalStreamVideoTrack(videoTrack)
+	{
+		this.localStreamVideoTrack = videoTrack;
+
+		this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+			kind: 'sharing',
+			track: videoTrack,
+		}));
+	}
+
+	setSpeakerId(speakerId)
+	{
+		if (this.speakerId === speakerId && this.speakerId !== undefined)
+		{
+			return;
+		}
+
+		if (!('setSinkId' in HTMLMediaElement.prototype))
+		{
+			console.error("Speaker selection is not supported");
+		}
+
+		this.speakerId = speakerId;
+		for (const userId in this.elements.audio)
+		{
+			this.elements.audio[userId].setSinkId(this.speakerId);
+		}
+
+		for (const userId in this.elements.screenAudio)
+		{
+			this.elements.screenAudio[userId].setSinkId(this.speakerId);
+		}
+	};
+
+	muteSpeaker(mute): void
+	{
+		this.speakerMuted = Boolean(mute);
+		const volume = this.speakerMuted ? 0 : 1
+
+		for (const userId in this.elements.audio)
+		{
+			this.elements.audio[userId].volume = volume;
+		}
+
+		for (const userId in this.elements.screenAudio)
+		{
+			this.elements.screenAudio[userId].volume = volume;
+		}
+
+		if (!this.buttons.speaker)
+		{
+			return;
+		}
+
+		if (this.speakerMuted)
+		{
+			this.buttons.speaker.disable();
+			this.buttons.speaker.hideArrow()
+		}
+		else
+		{
+			this.buttons.speaker.enable();
+			if (Hardware.canSelectSpeaker())
+			{
+				this.buttons.speaker.showArrow()
+			}
+		}
+	};
+
+	updateRerenderQueue(userId, reason)
+	{
+		if (!this.users[userId])
+		{
+			throw Error("User " + userId + " is not a part of this call");
+		}
+
+		if (reason === RerenderReason.VideoEnabled)
+		{
+			if (this.rerenderQueue.get(userId)?.reason === RerenderReason.VideoDisabled)
+			{
+				this.rerenderQueue.delete(userId);
+				if (!this.rerenderQueue.size)
+				{
+					clearTimeout(this.rerenderTimeout);
+					this.rerenderTimeout = null;
+				}
+			}
+			else
+			{
+				if (this.waitingForUserMediaTimeouts.has(userId))
+				{
+					clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
+					this.waitingForUserMediaTimeouts.delete(userId);
+					this.rerenderQueue.set(userId, {
+						userId,
+						reason: RerenderReason.VideoEnabled,
+					});
+					this.renderUserList();
+				}
+				else
+				{
+					if (!this.rerenderTimeout)
+					{
+						this.rerenderTimeout = setTimeout(() => {
+							this.renderUserList();
+						}, this.videoRerenderDelay);
+					}
+					this.rerenderQueue.set(userId, {
+						userId,
+						reason: RerenderReason.VideoEnabled,
+					});
+				}
+			}
+		}
+		else if (reason === RerenderReason.VideoDisabled)
+		{
+			if (this.rerenderQueue.get(userId)?.reason === RerenderReason.VideoEnabled)
+			{
+				this.rerenderQueue.delete(userId);
+				if (!this.rerenderQueue.size)
+				{
+					clearTimeout(this.rerenderTimeout);
+					this.rerenderTimeout = null;
+				}
+			}
+			else
+			{
+				if (!this.rerenderTimeout)
+				{
+					this.rerenderTimeout = setTimeout(() =>
+					{
+						this.renderUserList();
+					}, this.videoRerenderDelay);
+				}
+
+				this.rerenderQueue.set(userId, {
+					userId,
+					reason: RerenderReason.VideoDisabled,
+				});
+			}
+		}
+	}
+
+	trackAvailabilityChanged(userId, kind, available)
+	{
+		const user = this.users[userId];
+		if (!user)
+		{
+			console.warn(`User ${userId} is not a part of this call`);
+
+			return;
+		}
+
+		const userModel = this.userRegistry.get(userId);
+
+		if (kind === 'video' && available)
+		{
+			userModel.cameraState = true;
+			this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+		}
+		else if (kind === 'video' && !available)
+		{
+			userModel.cameraState = false;
+			this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
+		}
+	}
+
+	setVideoRenderer(userId: number, mediaRenderer: MediaRenderer): void
+	{
+		const user: CallUser = this.users[userId];
+		if (!user)
+		{
+			throw Error(`User ${userId} is not a part of this call`);
+		}
+
+		this.cache.delete('usersWithVideo');
+
+		const userModel: UserModel = this.userRegistry.get(userId);
+		const userHasCameraVideo: boolean = userModel.cameraState;
+
+		if (!('render' in mediaRenderer) || !Type.isFunction(mediaRenderer.render))
+		{
+			throw Error('mediaRenderer should have method render');
+		}
+
+		if (!('kind' in mediaRenderer) || (mediaRenderer.kind !== 'video' && mediaRenderer.kind !== 'sharing'))
+		{
+			throw Error('mediaRenderer should be of video kind');
+		}
+
+		user.videoRenderer = mediaRenderer;
+		this.pictureInPictureCallWindow?.setVideoRenderer(userId, mediaRenderer);
+
+		if (mediaRenderer.stream && mediaRenderer.kind === 'video' && !userHasCameraVideo)
+		{
+			userModel.cameraState = true;
+			this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+		}
+		else if (!mediaRenderer.stream && mediaRenderer.kind === 'video' && userHasCameraVideo)
+		{
+			userModel.cameraState = false;
+			this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
+		}
+
+		if (this.centralUser.id == userId)
+		{
+			this.eventEmitter.emit(EventName.onHasMainStream, {
+				userId: this.centralUser.id,
+			});
+		}
+	}
+
+	setUserMedia(userId, kind, track)
+	{
+		const user = this.users[userId];
+
+		if (!user)
+		{
+			return;
+		}
+
+		switch (kind)
+		{
+			case 'audio':
+				if (!this.elements.audio[userId])
+				{
+					this.elements.audio[userId] = Dom.create('audio');
+					if (this.externalSpeakerManagement)
+					{
+						this.elements.audio[userId].playsInline = true;
+					}
+					else
+					{
+						Dom.append(this.elements.audio[userId], this.elements.audioContainer);
+					}
+					user.audioElement = this.elements.audio[userId];
+				}
+
+				this.elements.audio[userId].volume = this.speakerMuted ? 0 : 1;
+				user.audioTrack = track;
+
+				// todo: Check this logic later. For now it's disabled
+				// to avoid conflicts with another render RerenderReason.VideoEnabled
+				// this.rerenderQueue.set(userId, {
+				// 	userId,
+				// 	reason: RerenderReason.VoiceStarted,
+				// });
+				// this.renderUserList();
+				break;
+
+			case 'sharingAudio':
+				if (!this.elements.screenAudio[userId])
+				{
+					this.elements.screenAudio[userId] = Dom.create('audio');
+					Dom.append(this.elements.screenAudio[userId], this.elements.audioContainer);
+					user.screenAudioElement = this.elements.screenAudio[userId];
+				}
+
+				this.elements.screenAudio[userId].volume = this.speakerMuted ? 0 : 1;
+				user.screenAudioTrack = track;
+
+				break;
+
+			case 'video':
+				user.videoTrack = track;
+				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					track,
+					kind: 'video',
+				}));
+				break;
+
+			case 'screen':
+				this.screenUsers[userId].videoTrack = track;
+				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					track,
+					kind: 'sharing',
+				}));
+				this.updateUserList();
+				this.setUserScreenState(userId, track !== null);
+				break;
+
+			default:
+		}
+	}
+
+	removeScreenUsers()
+	{
+		for (let userId in this.screenUsers)
+		{
+			this.screenUsers[userId].videoTrack = null;
+		}
+		this.updateUserList();
+	};
+
+	setBadNetworkIndicator(userId, badNetworkIndicator)
+	{
+		if (this.users[userId])
+		{
+			this.users[userId].badNetworkIndicator = badNetworkIndicator;
+		}
+	}
+
+	setUserHasConnectionProblem(userId, hasConnectionProblem)
+	{
+		if (this.users[userId])
+		{
+			this.users[userId].hasConnectionProblem = hasConnectionProblem;
+		}
+	};
+
+	setUserConnectionQuality(userId, connectionQuality)
+	{
+		if (this.users[userId])
+		{
+			this.users[userId].connectionQuality = connectionQuality;
+		}
+
+		if (this.localUser.id === userId)
+		{
+			this.localUser.connectionQuality = connectionQuality;
+		}
+	};
+
+	applyIncomingVideoConstraints(activeUsers, inactiveUsers)
+	{
+		let users = [];
+		let videoWidth = this.userSize.width;
+
+		if (this.layout === Layouts.Grid)
+		{
+			users = activeUsers.map((userId) => {
+				return { userId, videoWidth };
+			});
+		}
+		else if (this.layout === Layouts.Centered)
+		{
+			const containerSize = this.elements.center.getBoundingClientRect();
+			users = [];
+
+			activeUsers.forEach((userId) => {
+				videoWidth = this.centralUser.id == userId ? Math.floor(containerSize.width) : SIDE_USER_WIDTH;
+
+				users.push({ userId, videoWidth });
+			});
+		}
+		this.toggleSubscribingVideoInRenderUserList(users, true);
+
+		users = inactiveUsers.map((userId) => {
+			return { userId };
+		});
+		this.toggleSubscribingVideoInRenderUserList(users, false);
+	}
+
+	getDefaultCommonRecordState()
+	{
+		return {
+			state: CallCommonRecordState.Stopped,
+			type: CallCommonRecordType.None,
+			userId: 0,
+			date: {
+				start: null,
+				pause: [],
+			},
+		};
+	}
+
+	setCommonRecordState(commonRecordState)
+	{
+		this.commonRecordState = commonRecordState;
+
+		if (this.buttons.recordStatus)
+		{
+			this.buttons.recordStatus.update(this.commonRecordState);
+		}
+
+		if (this.commonRecordState.userId != this.userId)
+		{
+			if ([CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state))
+			{
+				this.unblockButtons(['record']);
+			}
+			else
+			{
+				this.blockButtons(['record']);
+			}
+		}
+
+		if (this.elements.topPanel)
+		{
+			if ([CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state))
+			{
+				delete (this.elements.topPanel.dataset.recordState);
+			}
+			else
+			{
+				this.elements.topPanel.dataset.recordState = commonRecordState.state;
+			}
+		}
+	};
+
+	show()
+	{
+		if (!this.elements.root)
+		{
+			this.render();
+		}
+		this.container.appendChild(this.elements.root);
+
+		if (this.layout !== Layouts.Mobile)
+		{
+			this.startIntersectionObserver();
+		}
+		this.updateButtons();
+		this.updateUserList();
+
+		this.resumeVideo();
+		this.toggleEars();
+		this.visible = true;
+
+		this.eventEmitter.emit(EventName.onShow);
+
+		// We specifically disable the face improve feature to improve call quality.
+		this.disableFaceImprove();
+		this.checkPanelOverflow();
+	};
+
+	hide()
+	{
+		this.closeCopilotNotify();
+		this.clearCallcontrolPromo();
+		if (this.overflownButtonsPopup)
+		{
+			this.overflownButtonsPopup.close();
+		}
+		Dom.remove(this.elements.root);
+		this.visible = false;
+	};
+
+	startIntersectionObserver()
+	{
+		if (!('IntersectionObserver' in window))
+		{
+			return;
+		}
+
+		this.intersectionObserver = new IntersectionObserver(
+			this._onIntersectionChange.bind(this),
+			{
+				root: this.elements.userList.container,
+				threshold: 0.5
+			}
+		);
+	};
+
+	/**
+	 * @param {CallUser} callUser
+	 */
+	observeIntersections(callUser)
+	{
+		if (this.intersectionObserver && callUser.elements.root)
+		{
+			this.intersectionObserver.observe(callUser.elements.root);
+		}
+	};
+
+	/**
+	 * @param {CallUser} callUser
+	 */
+	unobserveIntersections(callUser)
+	{
+		if (this.intersectionObserver && callUser.elements.root)
+		{
+			this.intersectionObserver.unobserve(callUser.elements.root);
+		}
+	};
+
+	showDeviceSelector(bindElement)
+	{
+		if (this.deviceSelector)
+		{
+			return;
+		}
+
+		this.deviceSelector = new DeviceSelector({
+			viewElement: this.container,
+			parentElement: bindElement,
+			zIndex: this.baseZIndex + 500,
+			microphoneEnabled: !Hardware.isMicrophoneMuted,
+			microphoneId: this.microphoneId || Hardware.defaultMicrophone,
+			cameraEnabled: Hardware.isCameraOn,
+			cameraId: this.cameraId,
+			speakerEnabled: !this.speakerMuted,
+			speakerId: this.speakerId,
+			noiseSuppressionVisible: CallSettingsManager.noiseSuppressionEnabled ?? false,
+			allowNoiseSuppression: Hardware.enableNoiseSuppression,
+			faceImproveEnabled: Util.isDesktop() && DesktopApi.isDesktop() && DesktopApi.getCameraSmoothingStatus(),
+			allowFaceImprove: false,
+			allowBackground: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
+			allowMask: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
+			allowAdvancedSettings: typeof (BXIM) !== 'undefined' && this.isIntranetOrExtranet,
+			switchCameraBlocked: this.blockedButtons['camera'],
+			switchMicrophoneBlocked: this.blockedButtons['microphone'],
+			events: {
+				[DeviceSelector.Events.onMicrophoneSelect]: this._onMicrophoneSelected.bind(this),
+				[DeviceSelector.Events.onMicrophoneSwitch]: this._onMicrophoneButtonClick.bind(this),
+				[DeviceSelector.Events.onCameraSelect]: this._onCameraSelected.bind(this),
+				[DeviceSelector.Events.onCameraSwitch]: this._onCameraButtonClick.bind(this),
+				[DeviceSelector.Events.onSpeakerSelect]: this._onSpeakerSelected.bind(this),
+				[DeviceSelector.Events.onSpeakerSwitch]: this._onSpeakerButtonClick.bind(this),
+				[DeviceSelector.Events.onChangeNoiseSuppression]: this._onChangeNoiseSuppression.bind(this),
+				[DeviceSelector.Events.onChangeMicAutoParams]: this._onChangeMicAutoParams.bind(this),
+				[DeviceSelector.Events.onChangeFaceImprove]: this._onChangeFaceImprove.bind(this),
+				[DeviceSelector.Events.onChangeVideoQuality]: this._onChangeVideoQuality.bind(this),
+				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
+				[DeviceSelector.Events.onDestroy]: () => {
+					this.buttons?.microphone.elements.arrow?.classList.remove('rotate');
+					this.buttons?.camera.elements.arrow?.classList.remove('rotate');
+					this.deviceSelector = null;
+				},
+				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
+			}
+		});
+		this.deviceSelector.show();
+	};
+
+	showCallMenu()
+	{
+		let menuItems = [
+			{
+				text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
+				iconClass: "hand",
+				onClick: this._onMobileCallMenuFloorRequestClick.bind(this)
+			},
+			{
+				text: BX.message("IM_M_CALL_MOBILE_MENU_PARTICIPANTS_LIST"),
+				iconClass: "participants",
+				onClick: this._onMobileCallMenShowParticipantsClick.bind(this)
+			},
+			// TODO:
+			/*{
+				text: "Add participant",
+				iconClass: "add-participant",
+				onClick: function() {}
+			},*/
+
+			/*{ //DEBUG: mobile audio
+				text: "Enable audio",
+				iconClass: "",
+				onClick: function() {
+					for (var userId in this.elements.audio)
+					{
+						if (this.users[userId].stream)
+						{
+							console.log('user ' + userId + ' stream found, trying to play');
+							this.elements.audio[userId].srcObject = this.users[userId].stream;
+							this.elements.audio[userId].play();
+						}
+					}
+					this.callMenu.close();
+				}.bind(this)
+			},*/
+			{
+				text: BX.message("IM_M_CALL_MOBILE_MENU_COPY_INVITE"),
+				iconClass: "add-participant",
+				onClick: this._onMobileCallMenuCopyInviteClick.bind(this)
+
+			},
+			!this.isIntranetOrExtranet
+				?
+				{
+					text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
+					iconClass: "change-name",
+					onClick: () =>
+					{
+						this.callMenu.close();
+						setTimeout(this.showRenameSlider.bind(this), 100);
+					}
+				}
+				:
+				null,
+			{
+				separator: true,
+			},
+			{
+				text: BX.message("IM_M_CALL_MOBILE_MENU_CANCEL"),
+				enabled: false,
+				onClick: this._onMobileCallMenuCancelClick.bind(this)
+			}
+		];
+
+		this.callMenu = new MobileMenu({
+			parent: this.elements.root,
+			items: menuItems,
+			onClose: () => this.callMenu.destroy(),
+			onDestroy: () => this.callMenu = null,
+		});
+
+		this.callMenu.show();
+	};
+
+	showUserMenu(userId)
+	{
+		const userModel: ?UserModel = this.userRegistry.get(userId);
+		if (!userModel)
+		{
+			return false;
+		}
+
+		let pinItem = null;
+		if (this.pinnedUser && this.pinnedUser.id == userId)
+		{
+			pinItem = {
+				text: BX.message("IM_M_CALL_MOBILE_MENU_UNPIN"),
+				iconClass: "unpin",
+				onClick: () =>
+				{
+					this.userMenu.close();
+					this.unpinUser();
+				}
+			};
+		}
+		else if (this.userId != userId)
+		{
+			pinItem = {
+				text: BX.message("IM_M_CALL_MOBILE_MENU_PIN"),
+				iconClass: "pin",
+				onClick: () =>
+				{
+					this.userMenu.close();
+					this.pinUser(userId);
+				}
+			};
+		}
+
+		let menuItems = [
+			{
+				userModel: userModel,
+				enabled: false
+			},
+			{
+				separator: true,
+			},
+			pinItem,
+			this.userId == userId && !this.isIntranetOrExtranet
+				?
+				{
+					text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
+					iconClass: "change-name",
+					onClick: () =>
+					{
+						this.userMenu.close();
+						setTimeout(this.showRenameSlider.bind(this), 100)
+					}
+				}
+				:
+				null,
+			/*{
+				text: BX.message("IM_M_CALL_MOBILE_MENU_WRITE_TO_PRIVATE_CHAT"),
+				iconClass: "private-chat",
+				onClick: function()
+				{
+					this.userMenu.close();
+					this.eventEmitter.emit(EventName.onButtonClick, {
+
+					})
+				}.bind(this)
+			},*/
+			/*{
+				// TODO:
+				text: "Remove user",
+				iconClass: "remove-user"
+			},*/
+			{
+				separator: true
+			},
+			{
+				text: BX.message("IM_M_CALL_MOBILE_MENU_CANCEL"),
+				enabled: false,
+				onClick: () => this.userMenu.close(),
+			}
+		];
+
+		this.userMenu = new MobileMenu({
+			parent: this.elements.root,
+			items: menuItems,
+			onClose: () => this.userMenu.destroy(),
+			onDestroy: () => this.userMenu = null,
+		});
+		this.userMenu.show();
+	};
+
+	showParticipantsMenu()
+	{
+		if (this.participantsMenu)
+		{
+			return;
+		}
+
+		const menuItems = [{
+			userModel: this.localUser.userModel,
+			showSubMenu: true,
+			onClick: () => {
+				this.participantsMenu.close();
+				this.showUserMenu(this.localUser.userModel.id);
+			},
+		}];
+
+		[...this.userRegistry.users.values()].forEach((userModel: UserModel) => {
+			if (userModel.localUser || userModel.state !== UserState.Connected)
+			{
+				return;
+			}
+
+			if (menuItems.length > 0)
+			{
+				menuItems.push({
+					separator: true,
+				});
+			}
+
+			menuItems.push({
+				userModel,
+				showSubMenu: true,
+				onClick: () => {
+					this.participantsMenu.close();
+					this.showUserMenu(userModel.id);
+				},
+			});
+		});
+
+		if (menuItems.length === 0)
+		{
+			return false;
+		}
+
+		this.participantsMenu = new MobileMenu({
+			parent: this.elements.root,
+			items: menuItems,
+			header: BX.message('IM_M_CALL_PARTICIPANTS').replace('#COUNT#', this.getConnectedUserCount(true)),
+			largeIcons: true,
+
+			onClose: () => {
+				this.participantsMenu.destroy();
+			},
+			onDestroy: () => {
+				this.participantsMenu = null;
+			},
+		});
+
+		this.participantsMenu.show();
+
+		return true;
+	}
+
+	/**
+	 * @param {Object} params
+	 * @param {string} params.text
+	 * @param {string} [params.subText]
+	 */
+	showMessage(params)
+	{
+		const statusNode = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide' },
+		});
+
+		if (Type.isStringFilled(params.text))
+		{
+			const textNode = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-status-text' },
+				text: params.text,
+			});
+			Dom.append(textNode, statusNode);
+		}
+
+		this.#showErrorLayout(statusNode);
+	}
+
+	hideMessage()
+	{
+		this.elements.overlay.textContent = '';
+	}
+
+	renderSelfTestCallLayout()
+	{
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					text: Loc.getMessage('CALL_CONNECTED_ERROR'),
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RUN_SELF_TEST'),
+					events: {
+						click: () => {
+							Util.startSelfTest();
+						},
+					},
+				}),
+			],
+		});
+
+		this.#showErrorLayout(errorContainer);
+	}
+
+	renderReloadPageLayout()
+	{
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					html: Loc.getMessage('CALL_SECURITY_KEY_CHANGED', { '[break]': '<br/>' }),
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RELOAD_PAGE'),
+					events: {
+						click: () => {
+							this.destroy();
+							location.reload();
+						},
+					},
+				}),
+			],
+		});
+
+		this.#showErrorLayout(errorContainer);
+	}
+
+	#showErrorLayout(content)
+	{
+		if (!this.elements.root)
+		{
+			this.render();
+			Dom.append(this.elements.root, this.container);
+		}
+
+		if (this.elements.overlay.childElementCount)
+		{
+			Dom.clean(this.elements.overlay);
+		}
+
+		Dom.append(content, this.elements.overlay);
+	}
+
+	/**
+	 * @param {Object} params
+	 * @param {string} params.text
+	 * @param {string} [params.subText]
+	 */
+	showFatalError(params)
+	{
+		this.showMessage(params);
+		this.#prepareErrorState();
+	}
+
+	showSecurityKeyError()
+	{
+		this.renderReloadPageLayout();
+		this.#prepareErrorState();
+	}
+
+	showSelfTest()
+	{
+		this.renderSelfTestCallLayout();
+		this.#prepareErrorState();
+	}
+
+	#prepareErrorState()
+	{
+		this.setUiState(UiState.Error);
+		// in some cases video elements may still be shown on the error screen, let's hide them
+		Dom.style(this.elements.userList.container, 'display', 'none');
+	}
+
+	close()
+	{
+		if (this.buttons.recordStatus)
+		{
+			this.buttons.recordStatus.stopViewUpdate();
+		}
+		this.commonRecordState = this.getDefaultCommonRecordState();
+
+		if (this.elements.root)
+		{
+			BX.remove(this.elements.root);
+		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.toggleStatePictureInPictureCallWindow(false)
+		}
+
+		this.visible = false;
+		this.eventEmitter.emit(EventName.onClose);
+
+		this.clearCallcontrolPromo();
+	};
+
+	setSize(size)
+	{
+		if (this.size == size)
+		{
+			return;
+		}
+
+		this.size = size;
+
+		if (this.size == Size.Folded)
+		{
+			this.clearCallcontrolPromo();
+
+			if (this.overflownButtonsPopup)
+			{
+				this.overflownButtonsPopup.close();
+			}
+			if (this.elements.panel)
+			{
+				this.elements.panel.classList.add('bx-messenger-videocall-panel-folded');
+			}
+			Dom.remove(this.elements.container);
+			Dom.remove(this.elements.topPanel);
+			this.elements.root.style.removeProperty('max-width');
+			this.updateButtons();
+		}
+		else
+		{
+			if (this.elements.panel)
+			{
+				this.elements.panel.classList.remove('bx-messenger-videocall-panel-folded');
+			}
+			this.elements.wrap.appendChild(this.elements.topPanel);
+			this.elements.wrap.appendChild(this.elements.container);
+			if (this.maxWidth > 0)
+			{
+				this.elements.root.style.maxWidth = Math.max(this.maxWidth, MIN_WIDTH) + 'px';
+			}
+			this.updateButtons();
+			this.updateUserList();
+			this.resumeVideo();
+		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+	};
+
+	isButtonBlocked(buttonName)
+	{
+		switch (buttonName)
+		{
+			case 'camera':
+				return this.#isCameraButtonBlocked();
+			case 'chat':
+				return !this.showChatButtons || this.blockedButtons[buttonName] === true;
+			case 'microphone':
+				return !Util.havePermissionToBroadcast('mic');
+			case 'floorRequest':
+				return (this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true;
+			case 'screen':
+				return !this.showShareButton || (!this.isScreenSharingSupported() || this.isFullScreen) || this.blockedButtons[buttonName] === true || !Util.havePermissionToBroadcast('screenshare');
+			case 'users':
+				return !this.showUsersButton || this.blockedButtons[buttonName] === true;
+			case 'record':
+				return !this.showRecordButton || this.blockedButtons[buttonName] === true;
+			case 'document':
+				return !this.showDocumentButton || this.blockedButtons[buttonName] === true;
+			case 'copilot':
+				return !this.showCopilotButton || this.blockedButtons[buttonName] === true;
+			default:
+				return this.blockedButtons[buttonName] === true;
+		}
+	};
+
+	isButtonHidden(buttonName)
+	{
+		return this.hiddenButtons[buttonName] === true;
+	};
+
+	showButton(buttonCode)
+	{
+		this.showButtons([buttonCode]);
+	};
+
+	hideButton(buttonCode)
+	{
+		this.hideButtons([buttonCode]);
+	};
+
+	#isCameraButtonBlocked(): Boolean
+	{
+		const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
+		const isForceBlock = this.blockedButtons.camera === true;
+		const noCamPermission = !Util.havePermissionToBroadcast('cam');
+		const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
+		const hasStream = this.localUser.hasVideo() || this.localUser.hasAudio();
+
+
+		return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting;
+	}
+
+	/**
+	 * @return {bool} Returns true if buttons update is required
+	 */
+	checkPanelOverflow()
+	{
+		const delta = this.elements.panel.scrollWidth - this.elements.panel.offsetWidth;
+		const mediumButtonMinWidth = (this.layout === Layouts.Mobile)
+			? 60
+			: 66; // todo: move to constants maybe? or maybe even calculate dynamically somehow?
+		if (delta > 0)
+		{
+			let countOfButtonsToHide = Math.ceil(delta / mediumButtonMinWidth) + 1;
+
+			const buttons = this.getButtonList();
+
+			for (let i = buttons.length - 1; i >= 0; i--)
+			{
+				if (buttons[i] === 'hangupOptions' || buttons[i] === 'hangup' || buttons[i] === 'close' || buttons[i] === 'more')
+				{
+					continue;
+				}
+
+				this.overflownButtons[buttons[i]] = true;
+				countOfButtonsToHide -= 1;
+				if (!countOfButtonsToHide)
+				{
+					break;
+				}
+			}
+			return true;
+		}
+		else
+		{
+			const hiddenButtonsCount = Object.keys(this.overflownButtons).length;
+			if (hiddenButtonsCount > 0)
+			{
+				const unusedPanelSpace = this.calculateUnusedPanelSpace();
+				if (unusedPanelSpace > 320)
+				{
+					let countOfButtonsToShow = Math.min(Math.floor(unusedPanelSpace / mediumButtonMinWidth), hiddenButtonsCount);
+					let buttonsLeftHidden = hiddenButtonsCount - countOfButtonsToShow;
+					if (buttonsLeftHidden === 1)
+					{
+						countOfButtonsToShow += 1;
+					}
+
+					if (countOfButtonsToShow == hiddenButtonsCount)
+					{
+						// show all buttons;
+						this.overflownButtons = {};
+					}
+					else
+					{
+						for (let i = 0; i < countOfButtonsToShow; i++)
+						{
+							delete this.overflownButtons[Object.keys(this.overflownButtons)[0]]
+						}
+					}
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	/**
+	 * @param {string[]} buttons Array of buttons names to show
+	 */
+	showButtons(buttons)
+	{
+		if (!Type.isArray(buttons))
+		{
+			console.error("buttons should be array")
+		}
+
+		buttons.forEach((buttonName) =>
+		{
+			if (this.hiddenButtons.hasOwnProperty(buttonName))
+			{
+				delete this.hiddenButtons[buttonName];
+			}
+		})
+
+		this.updateButtons();
+	};
+
+	/**
+	 * @param {string[]} buttons Array of buttons names to hide
+	 */
+	hideButtons(buttons)
+	{
+		if (!Type.isArray(buttons))
+		{
+			console.error("buttons should be array")
+		}
+
+		buttons.forEach((buttonName) => this.hiddenButtons[buttonName] = true);
+		this.updateButtons();
+	};
+
+	blockAddUser()
+	{
+		this.blockButtons(['add']);
+		if (this.elements.userList.addButton)
+		{
+			Dom.remove(this.elements.userList.addButton);
+		}
+	};
+
+	unblockAddUser()
+	{
+		this.unblockButtons(['add']);
+
+		this.updateButtons();
+	};
+
+	blockUsersButton()
+	{
+		this.blockButtons(['users']);
+
+		this.updateButtons();
+	};
+
+	unblockUsersButton()
+	{
+		this.unblockButtons(['users']);
+
+		this.updateButtons();
+	};
+
+	blockSwitchCamera()
+	{
+		this.blockButtons(['camera']);
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.toggleCameraAvailability(false);
+		}
+	};
+
+	unblockSwitchCamera()
+	{
+		this.unblockButtons(['camera']);
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.toggleCameraAvailability(true);
+		}
+	};
+
+	blockSwitchMicrophone()
+	{
+		this.blockButtons(['microphone']);
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.toggleMicrophoneAvailability(false);
+		}
+	};
+
+	unblockSwitchMicrophone()
+	{
+		this.unblockButtons(['microphone']);
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.toggleMicrophoneAvailability(true);
+		}
+	};
+
+	blockScreenSharing()
+	{
+		this.blockButtons(['screen']);
+	};
+
+	blockHistoryButton()
+	{
+		this.blockButtons(['history']);
+	};
+
+	/**
+	 * @param {string[]} buttons Array of buttons names to block
+	 */
+
+	blockButtons(buttons)
+	{
+		if (!Type.isArray(buttons))
+		{
+			console.error("buttons should be array ")
+		}
+
+		buttons.forEach((buttonName) =>
+		{
+			this.blockedButtons[buttonName] = true;
+			if (this.buttons[buttonName])
+			{
+				this.buttons[buttonName].setBlocked(true);
+			}
+		})
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
+		}
+	};
+
+	/**
+	 * @param {string[]} buttons Array of buttons names to unblock
+	 */
+	unblockButtons(buttons)
+	{
+		if (!Type.isArray(buttons))
+		{
+			console.error("buttons should be array")
+		}
+
+		buttons.forEach((buttonName) =>
+		{
+			delete this.blockedButtons[buttonName];
+			if (this.buttons[buttonName])
+			{
+				this.buttons[buttonName].setBlocked(this.isButtonBlocked(buttonName));
+			}
+		});
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
+		}
+	};
+
+	disableMediaSelection()
+	{
+		this.mediaSelectionBlocked = true;
+	};
+
+	enableMediaSelection()
+	{
+		this.mediaSelectionBlocked = false;
+		if (this.buttons.microphone && this.isMediaSelectionAllowed())
+		{
+			this.buttons.microphone.showArrow();
+		}
+		if (this.buttons.camera && this.isMediaSelectionAllowed())
+		{
+			this.buttons.camera.showArrow();
+		}
+	};
+
+	isMediaSelectionAllowed()
+	{
+		return this.layout != Layouts.Mobile && (this.uiState == UiState.Preparing || this.uiState == UiState.Connected) && !this.mediaSelectionBlocked && !this.isFullScreen;
+	};
+
+	getButtonList(): Array
+	{
+		let result = [];
+
+		if (this.uiState === UiState.Error)
+		{
+			result.push('close');
+		}
+
+		if (this.uiState === UiState.Initializing)
+		{
+			result.push('hangup');
+		}
+
+		if (this.size === Size.Folded)
+		{
+			result.push('title', 'spacer', 'returnToCall', 'hangup');
+		}
+
+		if (result.length > 0)
+		{
+			this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+			this.previousButtonList = result;
+
+			return result;
+		}
+
+		result.push('microphone', 'camera');
+
+		if (this.layout != Layouts.Mobile)
+		{
+			result.push('speaker');
+		}
+		else
+		{
+			result.push('mobileMenu');
+		}
+		const bottomCenterMenuIsVisible = this.uiState === UiState.Initializing
+			|| this.uiState === UiState.Calling
+			|| this.uiState === UiState.Connected
+			|| this.uiState === UiState.Error;
+
+		if (bottomCenterMenuIsVisible)
+		{
+			result.push('chat');
+		}
+
+		if (this.layout !== Layouts.Mobile)
+		{
+			result.push('users');
+		}
+
+		if (this.layout != Layouts.Mobile && bottomCenterMenuIsVisible)
+		{
+			result.push('floorRequest', 'screen', 'record', 'document');
+		}
+
+		if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled && bottomCenterMenuIsVisible)
+		{
+			result.push('copilot');
+		}
+
+		result = result.filter((buttonCode) => {
+			return !Object.prototype.hasOwnProperty.call(this.hiddenButtons, buttonCode)
+				&& !Object.prototype.hasOwnProperty.call(this.overflownButtons, buttonCode);
+		});
+
+		if (Object.keys(this.overflownButtons).length > 0 && bottomCenterMenuIsVisible)
+		{
+			result.push('more');
+		}
+
+		if (this.uiState == UiState.Preparing)
+		{
+			result.push('close');
+		}
+		else
+		{
+			result.push('hangup');
+		}
+
+		if (
+			!Object.prototype.hasOwnProperty.call(this.hiddenButtons, 'hangupOptions')
+			&& this.isIntranetOrExtranet
+		)
+		{
+			result.push('hangupOptions');
+		}
+
+		this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+		this.previousButtonList = result;
+
+		return result;
+	}
+
+	getTopButtonList()
+	{
+		let result = [];
+
+		if (this.layout == Layouts.Mobile)
+		{
+			return ['participantsMobile'];
+		}
+		result.push('watermark');
+		result.push('protected');
+		result.push('recordStatus');
+		result.push('spacer');
+
+		let separatorNeeded = false;
+		if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile)
+		{
+			result.push('grid');
+		}
+
+		if (this.uiState != UiState.Preparing && this.isFullScreenSupported() && this.layout != Layouts.Mobile)
+		{
+			result.push('fullscreen');
+		}
+
+		if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile)
+		{
+			result.push('feedback');
+		}
+
+		if (
+			this.uiState === UiState.Connected
+			&& this.layout != Layouts.Mobile
+			&& Util.canControlChangeSettings()
+			&& Util.isUserControlFeatureEnabled()
+		)
+		{
+			result.push('callcontrol');
+		}
+
+		if (this.uiState != UiState.Preparing)
+		{
+			if (separatorNeeded)
+			{
+				result.push('separator');
+			}
+			result.push('participants');
+		}
+
+		let previousButtonCode = '';
+		result = result.filter((buttonCode) =>
+		{
+			if (previousButtonCode === 'spacer' && buttonCode === 'separator')
+			{
+				return true;
+			}
+
+			previousButtonCode = buttonCode;
+
+			return !this.hiddenTopButtons.hasOwnProperty(buttonCode);
+		});
+
+		this.needToRerenderTopButtonList = this.previousTopButtonList.toString() !== result.toString();
+		this.previousTopButtonList = result;
+
+		return result;
+	};
+
+	render()
+	{
+		this.elements.root = Dom.create("div", {
+			props: {className: "bx-messenger-videocall bx-messenger-videocall-scope"},
+			children: [
+				this.elements.wrap = Dom.create("div", {
+					props: {className: `bx-messenger-videocall-wrap ${this.isCopilotActive ? 'bx-messenger-videocall-wrap-with-copilot' : ''}`},
+					children: [
+						this.elements.container = Dom.create("div", {
+							props: {className: "bx-messenger-videocall-inner"},
+							children: [
+								this.elements.center = Dom.create("div", {
+									props: {className: "bx-messenger-videocall-central-user"},
+									events: {
+										touchstart: this._onCenterTouchStart.bind(this),
+										touchend: this._onCenterTouchEnd.bind(this),
+									}
+								}),
+								this.elements.pageNavigatorLeft = Dom.create("div", {
+									props: {className: "bx-messenger-videocall-page-navigator left"},
+									children: [
+										this.elements.pageNavigatorLeftCounter = Dom.create("div", {
+											props: {className: "bx-messenger-videocall-page-navigator-counter left"},
+											html: (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount
+										}),
+										Dom.create("div", {
+											props: {className: "bx-messenger-videocall-page-navigator-icon left"}
+										}),
+									],
+									events: {
+										click: this._onLeftPageNavigatorClick.bind(this)
+									}
+								}),
+								this.elements.pageNavigatorRight = Dom.create("div", {
+									props: {className: "bx-messenger-videocall-page-navigator right"},
+									children: [
+										this.elements.pageNavigatorRightCounter = Dom.create("div", {
+											props: {className: "bx-messenger-videocall-page-navigator-counter right"},
+											html: (this.currentPage + 1) + '&nbsp;/&nbsp;' + this.pagesCount
+										}),
+										Dom.create("div", {
+											props: {className: "bx-messenger-videocall-page-navigator-icon right"}
+										})
+									],
+									events: {
+										click: this._onRightPageNavigatorClick.bind(this)
+									}
+								}),
+							]
+						}),
+						this.elements.topPanel = Dom.create("div", {
+							props: {className: "bx-messenger-videocall-top-panel"},
+						}),
+						this.elements.notificationPanel = Dom.create("div", {
+							props: {className: "bx-messenger-videocall-notification-panel"},
+						}),
+						this.elements.bottom = Dom.create("div", {
+							props: {className: "bx-messenger-videocall-bottom"},
+							children: [
+								this.elements.userSelectorContainer = Dom.create("div", {
+									props: {className: "bx-messenger-videocall-bottom-user-selector-container"}
+								}),
+								this.elements.pinnedUserContainer = Dom.create("div", {
+									props: {className: "bx-messenger-videocall-bottom-pinned-user-container"}
+								}),
+							]
+						}),
+					]
+				}),
+			],
+			events: {
+				click: this._onBodyClick.bind(this)
+			}
+		});
+
+		this.talkingService.init({
+			root: this.elements.root,
+		});
+		this.talkingService.refreshQueue();
+
+		if (this.showButtonPanel)
+		{
+			this.elements.panel = Dom.create("div", {
+				props: {className: "bx-messenger-videocall-panel"},
+			});
+			this.elements.bottom.appendChild(this.elements.panel);
+		}
+		else
+		{
+			this.elements.root.classList.add("bx-messenger-videocall-no-button-panel");
+		}
+
+		if (this.layout == Layouts.Mobile)
+		{
+			this.userSelector = new UserSelectorMobile({
+				userRegistry: this.userRegistry
+			});
+			this.userSelector.mount(this.elements.userSelectorContainer);
+
+			this.elements.ear.left = Dom.create("div", {
+				props: {
+					className: "bx-messenger-videocall-mobile-ear left"
+				},
+				events: {
+					click: this._onLeftEarClick.bind(this)
+				}
+			});
+			this.elements.ear.right = Dom.create("div", {
+				props: {
+					className: "bx-messenger-videocall-mobile-ear right"
+				},
+				events: {
+					click: this._onRightEarClick.bind(this)
+				}
+			});
+			this.elements.localUserMobile = Dom.create("div", {
+				props: {className: "bx-messenger-videocall-local-user-mobile"}
+			});
+
+			if (window.innerHeight < window.innerWidth)
+			{
+				this.elements.root.classList.add("orientation-landscape");
+			}
+
+			this.elements.wrap.appendChild(this.elements.ear.left);
+			this.elements.wrap.appendChild(this.elements.ear.right);
+			this.elements.wrap.appendChild(this.elements.localUserMobile);
+		}
+
+		this.centralUser.mount(this.elements.center);
+
+		this.elements.overlay = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-overlay"}
+		});
+
+		this.elements.userBlock = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-user-block"},
+			children: [
+				this.elements.ear.top = Dom.create("div", {
+					props: {className: "bx-messenger-videocall-ear bx-messenger-videocall-ear-top"},
+					children: [
+						Dom.create("div", {
+							props: {className: "bx-messenger-videocall-ear-icon"}
+						})
+					],
+					events: {
+						click: this._onTopPageNavigatorClick.bind(this)
+					}
+				}),
+				this.elements.ear.bottom = Dom.create("div", {
+					props: {className: "bx-messenger-videocall-ear bx-messenger-videocall-ear-bottom"},
+					children: [
+						Dom.create("div", {
+							props: {className: "bx-messenger-videocall-ear-icon"}
+						})
+					],
+					events: {
+						click: this._onBottomPageNavigatorClick.bind(this)
+					}
+				})
+			]
+		});
+
+		this.elements.userList.container = Dom.create("div", {
+			props: {
+				className: "bx-messenger-videocall-user-list"
+			},
+			events: {
+				scroll: Runtime.debounce(this.toggleEars.bind(this), 300),
+				wheel: (e) => this.elements.userList.container.scrollTop += e.deltaY
+			}
+		});
+
+		this.elements.userList.addButton = Dom.create("div", {
+			props: {className: "bx-messenger-videocall-user-add"},
+			children: [
+				Dom.create("div", {
+					props: {className: "bx-messenger-videocall-user-add-inner"}
+				})
+			],
+			style: {
+				order: addButtonPosition
+			},
+			events: {
+				click: this._onAddButtonClick.bind(this)
+			}
+		});
+
+		if (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)
+		{
+			this.centralUser.mount(this.elements.center);
+			this.eventEmitter.emit(EventName.onHasMainStream, {
+				userId: this.centralUser.id,
+				otherUsers: [...this.activeUsers],
+			});
+			this.elements.root.classList.add('bx-messenger-videocall-centered');
+			if (this.layout !== Layouts.Mobile)
+			{
+				this.elements.container.appendChild(this.elements.userBlock);
+			}
+		}
+		if (this.layout == Layouts.Grid)
+		{
+			this.elements.root.classList.add("bx-messenger-videocall-grid");
+		}
+		if (this.layout == Layouts.Mobile)
+		{
+			this.elements.root.classList.add("bx-messenger-videocall-fullscreen-mobile");
+		}
+
+		this.resizeObserver.observe(this.elements.root);
+		this.resizeObserver.observe(this.container);
+		return this.elements.root;
+	};
+
+	toggleSubscribingVideoInRenderUserList(participants, showVideo)
+	{
+		if (participants.length > 0)
+		{
+			this.eventEmitter.emit(EventName.onToggleSubscribe, { participants, showVideo });
+		}
+	}
+
+	getOrderingRules(): Object
+	{
+		const rules = {
+			[RerenderReason.VideoEnabled]: [],
+			[RerenderReason.VideoDisabled]: [],
+			[RerenderReason.VoiceStarted]: [],
+			[RerenderReason.UserDisconnected]: null,
+		};
+
+		this.rerenderQueue.forEach((el) => {
+			switch (el.reason)
+			{
+				case RerenderReason.UserDisconnected:
+					rules[el.reason] = {
+						id: el.userId,
+						order: this.userRegistry.get(el.userId).prevOrder,
+					};
+					break;
+
+				case RerenderReason.VideoEnabled:
+				case RerenderReason.VideoDisabled:
+				case RerenderReason.VoiceStarted:
+					rules[el.reason].push({
+						id: el.userId,
+						order: this.userRegistry.get(el.userId).order,
+					});
+					break;
+
+				default:
+			}
+		});
+
+		this.rerenderQueue.clear();
+		rules[RerenderReason.VideoEnabled].sort((a, b) => a.order - b.order);
+		rules[RerenderReason.VideoDisabled].sort((a, b) => a.order - b.order);
+
+		return rules;
+	}
+
+	applyOrderChanges(changes): void
+	{
+		if (!Type.isArray(changes))
+		{
+			return;
+		}
+
+		changes.forEach((change) => {
+			if (change.type === SwapType.Direct)
+			{
+				change.to.userModel.order = change.to.order;
+				this.cache.delete('activeUsers');
+			}
+			else if (change.type === SwapType.Replace && change.to && change.from)
+			{
+				change.to.userModel.order = change.from.order;
+				change.to.userModel.prevOrder = 0;
+				change.from.userModel.order = change.to.order;
+				this.cache.delete('activeUsers');
+			}
+		});
+	}
+
+	isUserHasActiveState(userModel)
+	{
+		return (userModel.state !== UserState.Idle
+			&& userModel.state !== UserState.Declined
+			&& userModel.state !== UserState.Unavailable
+			&& userModel.state !== UserState.Busy
+			&& userModel.direction !== EndpointDirection.RecvOnly
+		);
+	};
+
+	processVoiceRules(rules, params): void
+	{
+		if (rules[RerenderReason.VoiceStarted].length === 0)
+		{
+			return;
+		}
+
+		params.activeUsers = this.getActiveUsers();
+		const firstPageUsers = params.activeUsers.slice(0, this.usersPerPage).reverse();
+		let firstPageUsersStartIndex = 0;
+
+		rules[RerenderReason.VoiceStarted].forEach((rule) => {
+			const fromUser = this.userRegistry.get(rule.id);
+
+			if (firstPageUsers.includes(fromUser))
+			{
+				return;
+			}
+
+			let toUser;
+
+			for (; firstPageUsersStartIndex < firstPageUsers.length; firstPageUsersStartIndex++)
+			{
+				toUser = this.userRegistry.get(firstPageUsers[firstPageUsersStartIndex]);
+				if (toUser.wasTalkingAgo() > 60 * 1000)
+				{
+					break;
+				}
+
+				toUser = null;
+			}
+
+			if (toUser)
+			{
+				// todo: looks not optimal
+				for (let i = 0; i < rules[RerenderReason.VideoDisabled].length; i++)
+				{
+					if (rules[RerenderReason.VideoDisabled][i].id === rule.id)
+					{
+						rules[RerenderReason.VideoDisabled].splice(i, 1);
+						break;
+					}
+				}
+
+				params.orderChanges.push({
+					type: SwapType.Replace,
+					to: {
+						userModel: fromUser,
+						order: fromUser.order,
+					},
+					from: {
+						userModel: toUser,
+						order: toUser.order,
+					},
+				});
+			}
+		});
+
+		this.applyOrderChanges(params.orderChanges);
+		params.orderChanges.length = 0;
+	}
+
+	processVideoRules(rules, params): void
+	{
+		const diffBetweenChanges = rules[RerenderReason.VideoEnabled].length - rules[RerenderReason.VideoDisabled].length;
+		const lessChangesField = diffBetweenChanges > 0
+			? RerenderReason.VideoDisabled
+			: RerenderReason.VideoEnabled;
+		const moreChangesField = diffBetweenChanges > 0
+			? RerenderReason.VideoEnabled
+			: RerenderReason.VideoDisabled;
+
+		if (rules[RerenderReason.VideoEnabled].length > 0 && rules[RerenderReason.VideoDisabled].length > 0)
+		{
+			rules[lessChangesField].forEach((el, index) => {
+				const toUser = this.userRegistry.get(el.id);
+				const fromUser = this.userRegistry.get(rules[moreChangesField][index].id);
+
+				params.orderChanges.push({
+					type: SwapType.Replace,
+					to: {
+						userModel: fromUser,
+						order: fromUser.order,
+					},
+					from: {
+						userModel: toUser,
+						order: toUser.order,
+					},
+				});
+			});
+		}
+
+		this.applyOrderChanges(params.orderChanges);
+		params.orderChanges.length = 0;
+
+		if (diffBetweenChanges === 0)
+		{
+			rules[RerenderReason.VideoEnabled].length = 0;
+			rules[RerenderReason.VideoDisabled].length = 0;
+		}
+		else
+		{
+			rules[moreChangesField].splice(0, rules[moreChangesField].length - Math.abs(diffBetweenChanges));
+			rules[lessChangesField].length = 0;
+
+			if (moreChangesField === RerenderReason.VideoEnabled)
+			{
+				rules[moreChangesField].forEach((el) => {
+					params.orderChanges.push({
+						type: SwapType.Replace,
+						from: {
+							userModel: this.userRegistry.get(el.id),
+							order: this.userRegistry.get(el.id).order,
+						},
+					});
+					params.incompleteSwaps.push(params.orderChanges.length);
+				});
+			}
+		}
+	}
+
+	processDisconnectRules(rules, params): void
+	{
+		if (!rules[RerenderReason.UserDisconnected])
+		{
+			return;
+		}
+
+		const userModel = this.userRegistry.get(rules[RerenderReason.UserDisconnected].id);
+
+		if (userModel.prevCameraState)
+		{
+			params.disconnectedUserHadVideo = true;
+		}
+	}
+
+	completeVideoEnableSwap(userModel: UserModel, params: any): void
+	{
+		const swapRemains: number = params.incompleteSwaps.length;
+
+		if (userModel.state === UserState.Calling)
+		{
+			return;
+		}
+
+		const userAlreadyProcessed = params.usersToKeepActive.includes(userModel.id);
+
+		if (params.usersWithEnabledVideo.includes(userModel.id) && !userAlreadyProcessed)
+		{
+			params.incompleteSwaps.shift();
+			params.usersToKeepActive.push(userModel.id);
+		}
+		else if (!userModel.cameraState)
+		{
+			const index: number = params.incompleteSwaps[swapRemains - 1] - 1;
+			const userEnabledVideo: number = params.orderChanges[index].from.userModel.id;
+			const currenUserFromCurrentPage: boolean = params.possibleActiveUsers?.includes(userModel.id);
+			const changedUserFromCurrentPage: boolean = params.possibleActiveUsers?.includes(userEnabledVideo);
+
+			params.orderChanges[index].to = {
+				userModel,
+				order: userModel.order,
+			};
+
+			if (currenUserFromCurrentPage && !changedUserFromCurrentPage)
+			{
+				params.currentPageUsers--;
+				params.usersToDeactivate++;
+			}
+			else if (changedUserFromCurrentPage && !currenUserFromCurrentPage)
+			{
+				params.usersToForceDeactivation.push(userEnabledVideo);
+			}
+			else if (currenUserFromCurrentPage && changedUserFromCurrentPage)
+			{
+				params.usersToKeepActive.push(userEnabledVideo);
+			}
+
+			params.incompleteSwaps.pop();
+		}
+	}
+
+	completeVideoDisabledSwap(rules, params): void
+	{
+		let usersProcessed = 0;
+
+		rules[RerenderReason.VideoDisabled].forEach((el) => {
+			const userWithoutVideo = this.userRegistry.get(el.id);
+			const userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
+			const userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / this.usersPerPage);
+			const skipUsers = (userWithoutVideoPage - 1) * this.usersPerPage;
+			const numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
+			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - usersProcessed];
+			// we should add '&& (userWithoutVideo.wasTalkingAgo() <= 60 * 1000)' below
+			// to prevent speaking users swap
+			const canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
+
+			if (canCompleteVideoSwap && (numberOfUsersWithVideoForSwap - usersProcessed >= 0))
+			{
+				usersProcessed++;
+				params.orderChanges.push({
+					type: SwapType.Replace,
+					to: {
+						userModel: userWithoutVideo,
+						order: userWithoutVideo.order,
+					},
+					from: {
+						userModel: userToSwap,
+						order: userToSwap.order,
+					},
+				});
+
+				const userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
+				const userToSwapPage = Math.ceil((userToSwapIndex + 1) / this.usersPerPage);
+
+				if (userWithoutVideoPage === this.currentPage && userToSwapPage > this.currentPage)
+				{
+					params.usersToKeepActive.push(userToSwap.id);
+					params.usersToForceDeactivation.push(el.id);
+					params.usersToDeactivate++;
+				}
+				else if (userToSwapPage === this.currentPage && userToSwapPage > userWithoutVideoPage)
+				{
+					params.usersToKeepActive.push(el.id);
+					params.usersToForceDeactivation.push(userToSwap.id);
+					params.usersToDeactivate++;
+				}
+			}
+		});
+
+		this.applyOrderChanges(params.orderChanges);
+	}
+
+	calculateUserActive(userId: number, currentStatus: boolean, userSkipped: boolean, params: any): boolean
+	{
+		if (params.usersWithEnabledVideo.includes(userId) && !userSkipped && !params.possibleActiveUsers.includes(userId))
+		{
+			params.currentPageUsers++;
+			params.usersToDeactivate--;
+
+			return true;
+		}
+
+		if (params.currentPageUsers + params.usersToDeactivate > this.usersPerPage)
+		{
+			params.currentPageUsers--;
+
+			return false;
+		}
+
+		return currentStatus;
+	}
+
+	completeDisconnectSwap(rules, params): void
+	{
+		const disconnectedUser = rules[RerenderReason.UserDisconnected];
+		if (!disconnectedUser)
+		{
+			return;
+		}
+
+		const lowerOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[0])?.order;
+		const higherOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[params.possibleActiveUsers.length - 1])?.order;
+		let disconnectedUserFromCurrentPage = false;
+
+		if (this.currentPage === 1)
+		{
+			disconnectedUserFromCurrentPage = disconnectedUser.order < lowerOrderOnCurrentPage
+				|| (disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage);
+		}
+		else
+		{
+			const skipUsers = (this.currentPage - 2) * this.usersPerPage;
+			const activeUsersFromPreviousPage = params.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
+			const lastActiveUserFromPreviousPage = this.userRegistry.get(activeUsersFromPreviousPage[activeUsersFromPreviousPage.length - 1]);
+			disconnectedUserFromCurrentPage = (disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage)
+				|| (disconnectedUser.order < lowerOrderOnCurrentPage && disconnectedUser.order > lastActiveUserFromPreviousPage?.order);
+		}
+
+		const userToSwap = params.disconnectedUserHadVideo
+			? params.usersWithVideo[params.usersWithVideo.length - 1]
+			: this.userRegistry.get(params.activeUsers[params.activeUsers.length - 1]);
+
+		if (!userToSwap || userToSwap.order <= disconnectedUser.order)
+		{
+			return;
+		}
+
+		params.orderChanges.push({
+			type: SwapType.Direct,
+			to: {
+				userModel: userToSwap,
+				order: disconnectedUser.order,
+			},
+		});
+
+		if (
+			this.currentPage !== this.pagesCount
+			&& disconnectedUserFromCurrentPage
+			&& !params.possibleActiveUsers.includes(userToSwap.id)
+		)
+		{
+			params.usersToKeepActive.push(userToSwap.id);
+			params.usersToDeactivate++;
+		}
+
+		this.applyOrderChanges(params.orderChanges);
+	}
+
+	renderAddUserButtonInList()
+	{
+		const showAdd = this.showAddUserButtonInList && this.layout == Layouts.Centered && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1 && !this.isFullScreen && this.elements.userList.addButton;
+
+		if (showAdd)
+		{
+			this.elements.userList.container.appendChild(this.elements.userList.addButton);
+			return;
+		}
+
+		Dom.remove(this.elements.userList.addButton);
+	};
+
+	renderUserList(pageChange)
+	{
+		clearTimeout(this.rerenderTimeout);
+		this.rerenderTimeout = null;
+		const prevActiveUsers = new Set(this.activeUsers);
+
+		this.activeUsers.clear();
+
+		const showLocalUser = this.shouldShowLocalUser();
+		let userCount = 0;
+		let skipUsers = 0;
+		let skippedUsers = 0;
+		let renderedUsers = 0;
+
+		const orderingRules = this.getOrderingRules();
+		const orderingParams = {
+			usersWithVideo: [],
+			usersWithEnabledVideo: [],
+			usersWithDisabledVideo: [],
+			possibleActiveUsers: null,
+			usersToKeepActive: [],
+			usersToForceDeactivation: [],
+			currentPageUsers: 0,
+			orderChanges: [],
+			incompleteSwaps: [],
+			disconnectedUserHadVideo: false,
+			usersToDeactivate: 0,
+			videoDisabledProceed: false,
+		};
+
+		if ((this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.pagesCount > 1)
+		{
+			skipUsers = (this.currentPage - 1) * this.usersPerPage;
+		}
+
+		// this.processVoiceRules(orderingRules, orderingParams); // not ready to use
+		this.processVideoRules(orderingRules, orderingParams);
+		this.processDisconnectRules(orderingRules, orderingParams);
+		orderingParams.usersWithEnabledVideo = orderingRules[RerenderReason.VideoEnabled].map((el) => el.id);
+		orderingParams.usersWithDisabledVideo = orderingRules[RerenderReason.VideoDisabled].map((el) => el.id);
+
+		orderingParams.activeUsers = this.getActiveUsers();
+		orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
+		orderingParams.usersWithVideo = this.getUsersWithCamera();
+
+		this.completeVideoDisabledSwap(orderingRules, orderingParams);
+		this.completeDisconnectSwap(orderingRules, orderingParams);
+
+		orderingParams.activeUsers = this.getActiveUsers();
+		orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
+
+		const userModels: UserModel[] = [...this.userRegistry.users.values()];
+		for (const userModel: UserModel of userModels)
+		{
+			const userId = userModel.id;
+			if (!this.users.hasOwnProperty(userId))
+			{
+				continue;
+			}
+
+			const user: CallUser = this.users[userId];
+			const screenUser: CallUser = this.screenUsers[userId];
+			if (userId == this.centralUser.id && (this.layout === Layouts.Centered || this.layout === Layouts.Mobile))
+			{
+				if (this.layout === Layouts.Centered)
+				{
+					this.activeUsers.add(userId);
+					if (orderingParams.usersWithEnabledVideo.includes(userId) && prevActiveUsers.has(userId))
+					{
+						prevActiveUsers.delete(userId);
+					}
+				}
+				this.unobserveIntersections(user);
+				if (screenUser.hasVideo())
+				{
+					screenUser.mount(this.elements.center);
+					screenUser.visible = true;
+					user.mount(this.elements.userList.container);
+				}
+				else
+				{
+					user.visible = true;
+					user.mount(this.elements.center);
+					screenUser.dismount();
+				}
+
+				continue;
+			}
+			let userActive = this.isUserHasActiveState(userModel);
+			let userSkipped = false;
+
+			if (userActive && skipUsers > 0 && skippedUsers < skipUsers)
+			{
+				// skip users on previous pages
+				skippedUsers++;
+				userActive = false;
+				userSkipped = true;
+			}
+
+			if (userActive && this.layout === Layouts.Grid && this.usersPerPage > 0 && renderedUsers < this.usersPerPage)
+			{
+				orderingParams.currentPageUsers++;
+			}
+
+			if (this.layout === Layouts.Grid)
+			{
+				if (orderingRules[RerenderReason.VideoEnabled].length > 0)
+				{
+					if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length > 0)
+					{
+						const previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
+						const index: number = orderingParams.incompleteSwaps[previousIncompleteSwaps - 1] - 1;
+						const userEnabledVideo = orderingParams.orderChanges[index].from;
+						const currentUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userModel.id);
+						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
+
+						// code below should be wrapped in condition like
+						// !(this.currentPage === 1 && userModel.wasTalkingAgo() <= 60 * 1000))
+						// to prevent speaking users swap
+						this.completeVideoEnableSwap(userModel, orderingParams);
+						const swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
+
+						if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id))
+						{
+							userActive = false;
+						}
+						else if (swapCompleted && ((!userSkipped && !currentUserFromCurrentPage) || (userSkipped && changedUserFromCurrentPage)))
+						{
+							userActive = true;
+						}
+					}
+
+					if (orderingParams.usersToDeactivate)
+					{
+						userActive = this.calculateUserActive(userModel.id, userActive, userSkipped, orderingParams);
+					}
+
+					if (orderingParams.usersToForceDeactivation.includes(userModel.id))
+					{
+						userActive = false;
+					}
+				}
+				else if (orderingRules[RerenderReason.VideoDisabled].length > 0)
+				{
+					if (orderingParams.usersToKeepActive.includes(userModel.id))
+					{
+						userActive = true;
+						orderingParams.usersToDeactivate--;
+					}
+					else if (orderingParams.usersToForceDeactivation.includes(userModel.id)
+						|| (orderingParams.currentPageUsers + orderingParams.usersToDeactivate > this.usersPerPage)
+					)
+					{
+						userActive = false;
+						orderingParams.currentPageUsers--;
+					}
+				}
+				else if (orderingRules[RerenderReason.UserDisconnected])
+				{
+					if (orderingParams.usersToKeepActive.includes(userModel.id))
+					{
+						userActive = true;
+						orderingParams.usersToDeactivate--;
+					}
+					else if (orderingParams.currentPageUsers + orderingParams.usersToDeactivate > this.usersPerPage)
+					{
+						userActive = false;
+						orderingParams.currentPageUsers--;
+					}
+				}
+			}
+
+			if (userActive && (this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage)
+			{
+				// skip users on following pages
+				userActive = false;
+			}
+
+			if (userActive)
+			{
+				this.activeUsers.add(userId);
+				if (orderingParams.usersWithEnabledVideo.includes(userId) && prevActiveUsers.has(userId))
+				{
+					prevActiveUsers.delete(userId);
+				}
+			}
+
+			if (!userActive)
+			{
+				user.dismount();
+				this.unobserveIntersections(user);
+				screenUser.dismount();
+				continue;
+			}
+
+			if (screenUser.hasVideo())
+			{
+				screenUser.mount(this.elements.userList.container);
+				userCount++;
+			}
+			else
+			{
+				screenUser.dismount();
+			}
+			user.mount(this.elements.userList.container);
+			if (!this.isPreparing)
+			{
+				this.observeIntersections(user);
+			}
+			renderedUsers++;
+			userCount++;
+		}
+
+		this.applyOrderChanges(orderingParams.orderChanges);
+
+		if (showLocalUser)
+		{
+			if (this.layout == Layouts.Centered && this.userId == this.centralUser.id || this.layout == Layouts.Mobile)
+			{
+				// this.unobserveIntersections(this.localUser);
+				this.localUser.mount(this.elements.center, true);
+				this.localUser.visible = true;
+			}
+			else
+			{
+				// using force true to always move self to the end of the list
+				this.localUser.mount(this.elements.userList.container);
+				if (this.layout == Layouts.Centered && this.intersectionObserver)
+				{
+					// this.observeIntersections(this.localUser);
+				}
+				else
+				{
+					this.localUser.visible = true;
+				}
+			}
+
+			userCount++;
+		}
+		else
+		{
+			this.localUser.dismount();
+			// this.unobserveIntersections(this.localUser);
+		}
+
+		const prevUserWidth = this.userSize.width;
+
+		if (this.layout === Layouts.Grid)
+		{
+			this.updateGridUserSize(userCount);
+		}
+		else
+		{
+			this.elements.userList.container.classList.add("bx-messenger-videocall-user-list-small");
+			this.elements.userList.container.style.removeProperty('--avatar-size');
+			this.elements.userList.container.style.removeProperty('--avatar-text-size');
+			this.updateCentralUserAvatarSize();
+		}
+
+		this.renderAddUserButtonInList();
+
+		this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", (this.elements.userList.container.childElementCount === 0));
+		this.localUser.updatePanelDeferred();
+
+		const { usersToActivate, usersToDeactivate } = this.#getUserChangesAfterRendering(prevActiveUsers, prevUserWidth);
+
+		this.applyIncomingVideoConstraints(usersToActivate, usersToDeactivate);
+	}
+
+	#getUserChangesAfterRendering(
+		prevActiveUsers: Set<number>,
+		prevVideoWidth: number,
+	): {
+		usersToActivate: number[],
+		usersToDeactivate: number[]
+	}
+	{
+		const usersToDeactivate = [];
+		const activeUsers = new Set(this.activeUsers);
+		const videoWidth = this.userSize.width;
+
+		if (this.currentPiPUserId && !activeUsers.has(this.currentPiPUserId))
+		{
+			activeUsers.add(this.currentPiPUserId);
+		}
+
+		prevActiveUsers.forEach((userId) => {
+			if (activeUsers.has(userId))
+			{
+				if (videoWidth === prevVideoWidth)
+				{
+					activeUsers.delete(userId);
+				}
+			}
+			else
+			{
+				usersToDeactivate.push(userId);
+			}
+		});
+
+		const usersToActivate = [...activeUsers];
+
+		return { usersToActivate, usersToDeactivate };
+	}
+
+	shouldShowLocalUser()
+	{
+		return (
+			this.localUser.userModel.state != UserState.Idle
+			&& this.localUser.userModel.direction != EndpointDirection.RecvOnly
+		);
+	};
+
+	updateGridUserSize(userCount)
+	{
+		const containerSize = this.elements.userList.container.getBoundingClientRect();
+		this.userSize = Util.findBestElementSize(
+			containerSize.width,
+			containerSize.height,
+			userCount,
+			MIN_GRID_USER_WIDTH,
+			MIN_GRID_USER_HEIGHT
+		);
+
+		//Change the size to make it possible to make indents between users
+		let rows = Math.floor(containerSize.height / MIN_GRID_USER_HEIGHT) || 1;
+		this.userSize.width -= 5 * rows;
+		this.userSize.height -= 2.75 * rows;
+		const avatarSize = Math.round(this.userSize.height * 0.45);
+		const avatarTextSize = Math.round(avatarSize * 0.45);
+		this.elements.userList.container.style.setProperty('--grid-user-width', this.userSize.width + 'px');
+		this.elements.userList.container.style.setProperty('--grid-user-height', this.userSize.height + 'px');
+		this.elements.userList.container.style.setProperty('--avatar-size', avatarSize + 'px');
+		this.elements.userList.container.style.setProperty('--avatar-text-size', avatarTextSize + 'px');
+		if (this.userSize.width < 220)
+		{
+			this.elements.userList.container.classList.add("bx-messenger-videocall-user-list-small");
+		}
+		else
+		{
+			this.elements.userList.container.classList.remove("bx-messenger-videocall-user-list-small");
+		}
+	};
+
+	updateCentralUserAvatarSize()
+	{
+		let containerSize;
+		let avatarSize;
+		if (this.layout == Layouts.Mobile)
+		{
+			containerSize = this.elements.root.getBoundingClientRect();
+			avatarSize = Math.round(containerSize.width * 0.55);
+		}
+		else if (this.layout == Layouts.Centered)
+		{
+			containerSize = this.elements.center.getBoundingClientRect();
+			avatarSize = Math.min(Math.round(containerSize.height * 0.45), Math.round(containerSize.width * 0.45));
+			this.centralUser.setIncomingVideoConstraints(Math.floor(containerSize.width), Math.floor(containerSize.height));
+		}
+		const avatarTextSize = Math.round(avatarSize * 0.45);
+		this.elements.center.style.setProperty('--avatar-size', avatarSize + 'px');
+		this.elements.center.style.setProperty('--avatar-text-size', avatarTextSize + 'px');
+	};
+
+	renderButtons(buttons, rerender): HTMLElement
+	{
+		let panelInner, left, center, right;
+
+		if (rerender)
+		{
+			panelInner = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner' },
+			});
+		}
+
+		if (this.layout === Layouts.Mobile || this.size === Size.Folded)
+		{
+			left = panelInner;
+			center = panelInner;
+			right = panelInner;
+		}
+		else if (rerender)
+		{
+			left = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-left' },
+			});
+			center = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-center' },
+			});
+			right = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-right' },
+			});
+			Dom.append(left, panelInner);
+			Dom.append(center, panelInner);
+			Dom.append(right, panelInner);
+		}
+
+		for (let i = 0; i < buttons.length; i++)
+		{
+			switch (buttons[i])
+			{
+				case 'title':
+					if (this.buttons.title)
+					{
+						this.buttons.title.update({
+							text: this.title,
+							isGroupCall: Object.keys(this.users).length > 1,
+						});
+					}
+					else
+					{
+						this.buttons.title = new Buttons.TitleButton({
+							text: this.title,
+							isGroupCall: Object.keys(this.users).length > 1,
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.title.render(), left);
+					}
+					break;
+				/*case "grid":
+					this.buttons.grid = new SimpleButton({
+						class: "grid",
+						text: BX.message("IM_M_CALL_BTN_GRID"),
+						onClick: this._onGridButtonClick.bind(this)
+					});
+					panelInner.appendChild(this.buttons.grid.render());
+					break;*/
+				/*case "add":
+					this.buttons.add = new SimpleButton({
+						class: "add",
+						text: BX.message("IM_M_CALL_BTN_ADD"),
+						onClick: this._onAddButtonClick.bind(this)
+					});
+					leftSubPanel.appendChild(this.buttons.add.render());
+					break;*/
+				case 'share':
+					if (rerender)
+					{
+						this.buttons.share = new Buttons.SimpleButton({
+							class: 'share',
+							text: BX.message('IM_M_CALL_BTN_LINK'),
+							onClick: this._onShareButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.share.render(), center);
+					}
+					break;
+				case 'microphone':
+					if (this.buttons.microphone)
+					{
+						this.buttons.microphone.setBlocked(this.isButtonBlocked('microphone'));
+					}
+					else
+					{
+						this.buttons.microphone = new Buttons.DeviceButton({
+							class: 'microphone',
+							text: BX.message('IM_M_CALL_BTN_MIC'),
+							enabled: !Hardware.isMicrophoneMuted,
+							arrowHidden: this.layout === Layouts.Mobile,
+							arrowEnabled: this.isMediaSelectionAllowed(),
+							showPointer: true, //todo
+							blocked: this.isButtonBlocked('microphone'),
+							showLevel: true,
+							sideIcon: this.getMicrophoneSideIcon(this.roomState),
+							onClick: this._onMicrophoneButtonClick.bind(this),
+							onArrowClick: this._onMicrophoneArrowClick.bind(this),
+							onSideIconClick: this._onMicrophoneSideIconClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => Hardware.isMicrophoneMuted ? `${BX.message('IM_SPACE_HOTKEY')}\\A${' '}${this.keyModifierForCss} + A${' '}` : `${this.keyModifierForCss} + A`,
+								},
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.microphone.render(), left);
+					}
+					break;
+				case 'camera':
+					if (this.buttons.camera)
+					{
+						this.buttons.camera.setBlocked(this.isButtonBlocked('camera'));
+					}
+					else
+					{
+						this.buttons.camera = new Buttons.DeviceButton({
+							class: 'camera',
+							text: BX.message('IM_M_CALL_BTN_CAMERA'),
+							enabled: Hardware.isCameraOn,
+							arrowHidden: this.layout === Layouts.Mobile,
+							arrowEnabled: this.isMediaSelectionAllowed(),
+							blocked: this.isButtonBlocked('camera'),
+							onClick: this._onCameraButtonClick.bind(this),
+							onArrowClick: this._onCameraArrowClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + V`,
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.camera.render(), left);
+					}
+					break;
+				case 'screen':
+					if (this.buttons.screen)
+					{
+						this.buttons.screen.setBlocked(this.isButtonBlocked('screen'));
+					}
+					else
+					{
+						this.buttons.screen = new Buttons.SimpleButton({
+							class: 'screen',
+							backgroundClass: 'bx-messenger-videocall-panel-background-screen',
+							text: BX.message('IM_M_CALL_BTN_SCREEN'),
+							blocked: this.isButtonBlocked('screen'),
+							onClick: this._onScreenButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + S`,
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.screen.render(), center);
+					}
+					break;
+				case 'record':
+					if (this.buttons.record)
+					{
+						this.buttons.record.setBlocked(this.isButtonBlocked('record'));
+					}
+					else
+					{
+						this.buttons.record = new Buttons.SimpleButton({
+							class: 'record',
+							backgroundClass: 'bx-messenger-videocall-panel-background-record',
+							text: Loc.getMessage('IM_M_CALL_BTN_RECORD'),
+							blocked: this.isButtonBlocked('record'),
+							onClick: this.#onCommonRecordClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + R`,
+								},
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.record.render(), center);
+					}
+
+					break;
+				case 'document':
+					if (this.buttons.document)
+					{
+						this.buttons.document.setBlocked(this.isButtonBlocked('document'));
+					}
+					else
+					{
+						this.buttons.document = new Buttons.SimpleButton({
+							class: 'document',
+							backgroundClass: 'bx-messenger-videocall-panel-background-document',
+							text: BX.message('IM_M_CALL_BTN_DOCUMENT'),
+							blocked: this.isButtonBlocked('document'),
+							onClick: this._onDocumentButtonClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.document.render(), center);
+					}
+					break;
+				case 'copilot':
+					if (this.buttons.copilot)
+					{
+						this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
+						this.buttons.copilot.setActive(this.isCopilotActive);
+					}
+					else
+					{
+						this.buttons.copilot = new Buttons.SimpleButton({
+							class: 'copilot',
+							backgroundClass: 'bx-messenger-videocall-panel-background-copilot',
+							text: BX.message('CALL_BUTTON_COPILOT_TITLE'),
+							blocked: this.isButtonBlocked('copilot'),
+							onClick: this._onCopilotButtonClick.bind(this),
+							isComingSoon: !this.isCopilotFeaturesEnabled,
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => this.isCopilotActive
+										? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2')
+										: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT'),
+								},
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.copilot.render(), center);
+					}
+					break;
+				case 'returnToCall':
+					if (rerender)
+					{
+						this.buttons.returnToCall = new Buttons.SimpleButton({
+							class: 'returnToCall',
+							text: BX.message('IM_M_CALL_BTN_RETURN_TO_CALL'),
+							onClick: this._onBodyClick.bind(this),
+						});
+						Dom.append(this.buttons.returnToCall.render(), right);
+					}
+					break;
+				case 'hangup':
+					if (rerender)
+					{
+						this.buttons.hangup = new Buttons.SimpleButton({
+							class: 'hangup',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+							text: Object.keys(this.users).length > 1 ? BX.message('IM_M_CALL_BTN_DISCONNECT') : BX.message('IM_M_CALL_BTN_HANGUP'),
+							onClick: this._onHangupButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.hangup.render(), right);
+					}
+					break;
+				case 'hangupOptions':
+					if (rerender)
+					{
+						this.buttons.hangupOptions = new Buttons.SimpleButton({
+							class: 'hangup-options',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup-options',
+							onClick: this._onHangupOptionsButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.hangupOptions.render(), right);
+					}
+					break;
+				case 'close':
+					if (rerender)
+					{
+						this.buttons.close = new Buttons.SimpleButton({
+							class: 'close',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+							text: BX.message('IM_M_CALL_BTN_CLOSE'),
+							onClick: this._onCloseButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.close.render(), right);
+					}
+					break;
+				case 'speaker':
+					/*this.buttons.speaker = new Buttons.DeviceButton({
+						class: "speaker",
+						text: BX.message("IM_M_CALL_BTN_SPEAKER"),
+						enabled: !this.speakerMuted,
+						arrowEnabled: Hardware.canSelectSpeaker() && this.isMediaSelectionAllowed(),
+						onClick: this._onSpeakerButtonClick.bind(this),
+						onArrowClick: this._onSpeakerArrowClick.bind(this)
+					});
+					rightSubPanel.appendChild(this.buttons.speaker.render());*/
+					break;
+				case 'mobileMenu':
+					if (rerender)
+					{
+						if (!this.buttons.mobileMenu)
+						{
+							this.buttons.mobileMenu = new Buttons.SimpleButton({
+								class: 'sandwich',
+								text: BX.message('IM_M_CALL_BTN_MENU'),
+								onClick: this._onMobileMenuButtonClick.bind(this),
+							});
+						}
+						Dom.append(this.buttons.mobileMenu.render(), center);
+					}
+					break;
+				case 'chat':
+					if (this.buttons.chat)
+					{
+						this.buttons.chat.setBlocked(this.isButtonBlocked('chat'));
+					}
+					else
+					{
+						this.buttons.chat = new Buttons.SimpleButton({
+							class: 'chat',
+							backgroundClass: 'bx-messenger-videocall-panel-background-chat',
+							text: BX.message('IM_M_CALL_BTN_CHAT'),
+							blocked: this.isButtonBlocked('chat'),
+							onClick: this._onChatButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + C`,
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.chat.render(), center);
+					}
+					break;
+				case 'floorRequest':
+					if (!this.buttons.floorRequest)
+					{
+						this.buttons.floorRequest = new Buttons.SimpleButton({
+							class: 'floor-request',
+							backgroundClass: 'bx-messenger-videocall-panel-background-floor-request',
+							text: BX.message('IM_M_CALL_BTN_WANT_TO_SAY'),
+							blocked: this.isButtonBlocked('floorRequest'),
+							onClick: this._onFloorRequestButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + H`,
+								}
+							} : {}),
+						});
+					}
+					else
+					{
+						this.buttons.floorRequest.setBlocked(this.isButtonBlocked('floorRequest'));
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.floorRequest.render(), center);
+					}
+					break;
+				case 'more':
+					if (rerender)
+					{
+						if (!this.buttons.more)
+						{
+							this.buttons.more = new Buttons.SimpleButton({
+								class: 'more',
+								onClick: this._onMoreButtonClick.bind(this),
+							});
+						}
+						Dom.append(this.buttons.more.render(), center);
+					}
+					break;
+				case 'spacer':
+					if (rerender)
+					{
+						panelInner.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-panel-spacer' },
+						}));
+					}
+					break;
+				/*case "history":
+					this.buttons.history = new Buttons.SimpleButton({
+						class: "history",
+						text: BX.message("IM_M_CALL_BTN_HISTORY"),
+						onClick: this._onHistoryButtonClick.bind(this)
+					});
+					rightSubPanel.appendChild(this.buttons.history.render());
+					break;*/
+			}
+		}
+
+		return panelInner;
+	}
+
+	renderTopButtons(buttons, rerender): void
+	{
+		for (let i = 0; i < buttons.length; i++)
+		{
+			switch (buttons[i])
+			{
+				case 'watermark':
+					if (!this.buttons.waterMark)
+					{
+						this.buttons.waterMark = new Buttons.WaterMarkButton({
+							language: this.language,
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.waterMark.render(), this.elements.topPanel);
+					}
+					break;
+				case 'protected':
+					if (!this.buttons.protected)
+					{
+						this.buttons.protected = new Buttons.TopFramelessButton({
+							iconClass: 'protected',
+							textClass: 'protected',
+							text: BX.message('IM_M_CALL_PROTECTED').toLowerCase(),
+							tooltip: {
+								width: '384px',
+								position: 'bottom',
+								getText: () => BX.message('IM_M_CALL_PROTECTED_HINT'),
+							}
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.protected.render(), this.elements.topPanel);
+					}
+					break;
+				case 'recordStatus':
+					if (this.buttons.recordStatus)
+					{
+						this.buttons.recordStatus.updateView();
+					}
+					else
+					{
+						this.buttons.recordStatus = new Buttons.RecordStatusButton({
+							userId: this.userId,
+							commonRecordState: this.commonRecordState,
+							tooltip: {
+								position: 'bottom',
+								getText: () => {
+									const userData = this.userData[this.commonRecordState.userId];
+
+									if (!userData)
+									{
+										return '';
+									}
+
+									const recordingUserName = Text.encode(userData.name);
+									const gender = userData.gender || 'M';
+
+									return Loc.getMessage(`CALL_COMMON_RECORD_INITIATOR_HINT_${gender}`).replace('#USER_NAME#', recordingUserName);
+								},
+							},
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.recordStatus.render(), this.elements.topPanel);
+					}
+					break;
+				case 'grid':
+					if (this.buttons.grid)
+					{
+						this.buttons.grid.update({
+							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE_MSGVER_1'),
+						});
+					}
+					else
+					{
+						this.buttons.grid = new Buttons.TopButton({
+							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE_MSGVER_1'),
+							onClick: this._onGridButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'bottom',
+									getText: () => `${this.keyModifierForCss} + W`
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.grid.render(), this.elements.topPanel);
+					}
+					break;
+				case 'fullscreen':
+					if (this.buttons.fullscreen)
+					{
+						this.buttons.fullscreen.update({
+							iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+							text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE'),
+						});
+					}
+					else
+					{
+						this.buttons.fullscreen = new Buttons.TopButton({
+							iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+							text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE'),
+							onClick: this._onFullScreenButtonClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.fullscreen.render(), this.elements.topPanel);
+					}
+					break;
+				case 'feedback':
+					if (!this.buttons.feedback)
+					{
+						this.buttons.feedback = new Buttons.TopButton({
+							iconClass: 'feedback',
+							text: BX.message('IM_OL_COMMENT_HEAD_BUTTON_VOTE'),
+							onClick: this._onFeedbackButtonClick.bind(this)
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.feedback.render(), this.elements.topPanel);
+					}
+					break;
+				case 'callcontrol':
+					if (!this.buttons.callcontrol)
+					{
+						this.buttons.callcontrol = new Buttons.TopButton({
+							iconClass: 'callcontrol',
+							text: BX.message('CALL_CALLCONTROL_BUTTON_LABEL'),
+							onClick: this._onCallcontrolButtonClick.bind(this)
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.callcontrol.render(), this.elements.topPanel);
+					}
+					break;
+				case 'participants':
+					let foldButtonState = Buttons.ParticipantsButton.FoldButtonState.Hidden;
+
+					if (this.isFullScreen && this.layout === Layouts.Centered)
+					{
+						foldButtonState = this.isUserBlockFolded
+							? Buttons.ParticipantsButton.FoldButtonState.Unfold
+							: Buttons.ParticipantsButton.FoldButtonState.Fold;
+					}
+					else if (this.showUsersButton)
+					{
+						foldButtonState = Buttons.ParticipantsButton.FoldButtonState.Active;
+					}
+
+					if (this.buttons.participants)
+					{
+						this.buttons.participants.update({
+							foldButtonState,
+							allowAdding: !this.isButtonBlocked('add'),
+							count: this.getConnectedUserCount(true),
+						});
+					}
+					else
+					{
+						this.buttons.participants = new Buttons.ParticipantsButton({
+							foldButtonState,
+							allowAdding: !this.isButtonBlocked('add'),
+							count: this.getConnectedUserCount(true),
+							onListClick: this._onParticipantsButtonListClick.bind(this),
+							onAddClick: this._onAddButtonClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.participants.render(), this.elements.topPanel);
+					}
+					break;
+				case 'participantsMobile':
+					if (!this.buttons.participantsMobile)
+					{
+						this.buttons.participantsMobile = new Buttons.ParticipantsButtonMobile({
+							count: this.getConnectedUserCount(true),
+							onClick: this._onParticipantsButtonMobileListClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.participantsMobile.render(), this.elements.topPanel);
+					}
+					break;
+				case 'separator':
+					if (rerender)
+					{
+						this.elements.topPanel.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-top-separator' },
+						}));
+					}
+					break;
+				case 'spacer':
+					if (rerender)
+					{
+						this.elements.topPanel.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-top-panel-spacer' },
+						}));
+					}
+					break;
+			}
+		}
+	}
+
+	updateCopilotState(isActive)
+	{
+		this.isCopilotActive = isActive;
+
+		this.setButtonActive('copilot', this.isCopilotActive);
+
+		if (this.elements.wrap)
+		{
+			this.elements.wrap.classList[this.isCopilotActive ? 'add' : 'remove']('bx-messenger-videocall-wrap-with-copilot')
+		}
+	}
+
+	updateCopilotFeatureState(isEnabled)
+	{
+		this.isCopilotFeaturesEnabled = isEnabled;
+
+		if (!this.buttons.copilot)
+		{
+			return;
+		}
+
+		this.buttons.copilot.setIsComingSoon(!this.isCopilotFeaturesEnabled);
+	}
+
+	showCopilotNotify(callId = 0, errorCode = '')
+	{
+		const notifyType = errorCode
+			? null
+			: CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED'];
+
+		if (notifyType)
+		{
+			this.#openCopilotNotify(notifyType, callId);
+		}
+	}
+
+	closeCopilotNotify()
+	{
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.close();
+			this.copilotNotify = null;
+		}
+	}
+
+	showCopilotResultNotify()
+	{
+		this.#openCopilotNotify(CopilotNotifyType.COPILOT_RESULT);
+	}
+
+	showCopilotErrorNotify(errorType)
+	{
+		const notifyType = CopilotNotifyType[errorType];
+		this.#openCopilotNotify(notifyType);
+	}
+
+	createCopilotNotify(notifyType, callId)
+	{
+		if (!this.buttons.copilot)
+		{
+			return null;
+		}
+
+		return new CopilotNotify({
+			type: notifyType,
+			bindElement: this.buttons.copilot.elements.root,
+			targetContainer: this.elements.root,
+			onClose: () => {
+				this.copilotNotify = null;
+			},
+			callId,
+		});
+	}
+
+	#openCopilotNotify(notifyType, callId = 0)
+	{
+		this.closeCopilotNotify();
+
+		this.copilotNotify = this.createCopilotNotify(notifyType, callId);
+
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.show();
+		}
+	}
+
+	createAhaMomentNotifyCallcontrol()
+	{
+		if (!this.buttons.callcontrol)
+		{
+			return;
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.ahaMomentNotifyCallcontrol.show();
+			return this.ahaMomentNotifyCallcontrol;
+		}
+
+		this.ahaMomentNotifyCallcontrol = new AhaMomentNotify({
+			notifyTitle: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TITLE"),
+			notifyText: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TEXT"),
+			bindElement: this.buttons.callcontrol.elements.root,
+			promoId: CALLCONTROL_PROMO_ID,
+			targetContainer: this.elements.root,
+			onClose: () => {
+				this.needToShowCallcontrolPromo = false;
+				this.ahaMomentNotifyCallcontrol = null;
+			}
+		});
+
+		this.ahaMomentNotifyCallcontrol.show();
+
+		return this.ahaMomentNotifyCallcontrol;
+	}
+
+	calculateUnusedPanelSpace(buttonList)
+	{
+		if (!buttonList)
+		{
+			buttonList = this.getButtonList();
+		}
+
+		let totalButtonWidth = 0;
+		for (let i = 0; i < buttonList.length; i++)
+		{
+			const button = this.buttons[buttonList[i]];
+			if (!button)
+			{
+				continue;
+			}
+			const buttonWidth = button.elements.root ? button.elements.root.getBoundingClientRect().width : 0;
+			totalButtonWidth += buttonWidth;
+		}
+
+		return this.elements.panel.scrollWidth - totalButtonWidth - 32;
+	};
+
+
+	setWindowFocusState(isActive)
+	{
+		if (isActive === this.isWindowFocus)
+		{
+			return;
+		}
+
+		this.isWindowFocus = isActive;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+	}
+
+	getPictureInPictureCallWindowGetButtonsList()
+	{
+		const buttonsList = ["microphone", "camera"];
+
+		if (this.getButtonActive('screen'))
+		{
+			buttonsList.push("stop-screen");
+		}
+
+		const isViewHidden = this.isHidden();
+
+		if (this.size === View.Size.Folded || isViewHidden)
+		{
+			buttonsList.push("returnToCall");
+		}
+
+		// if (this.getButtonList().includes('copilot'))
+		// {
+		// 	buttonsList.push("copilot");
+		// }
+
+		return buttonsList;
+	}
+
+	getPictureInPictureCallWindowUser(targetUserId = null)
+	{
+		const isNotMe = (id) => id != null && +id !== +this.userId;
+
+		const currentUserId =
+			targetUserId
+			?? (isNotMe(this.presenterId) ? this.presenterId : null)
+			?? (isNotMe(this.centralUser?.userModel.id) ? this.centralUser?.userModel.id : null)
+			?? this.getAnyOtherUserId();
+
+		const isLocalUser = +this.userId === +currentUserId;
+		const currentUser = isLocalUser ? this.localUser : this.users[currentUserId];
+
+		const isCurrentPiPUser = !!this.currentPiPUserId && currentUserId === this.currentPiPUserId;
+
+		if (isCurrentPiPUser)
+		{
+			return;
+		}
+
+		if (!this.activeUsers.has(currentUserId) && !isLocalUser)
+		{
+			this.toggleSubscribingVideoInRenderUserList([{ userId: currentUserId }], true);
+		}
+
+		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.has(this.currentPiPUserId))
+		{
+			this.toggleSubscribingVideoInRenderUserList([{ userId: this.currentPiPUserId }], false);
+		}
+
+		this.currentPiPUserId = currentUserId;
+
+		const modifiedCurrentUser =  {
+			userModel: this.userRegistry.get(currentUserId),
+			avatarBackground: currentUser.avatarBackground,
+			videoRenderer: currentUser.videoRenderer,
+			previewRenderer: currentUser.previewRenderer,
+		};
+
+		if (currentUser.videoTrack)
+		{
+			modifiedCurrentUser.videoRenderer = new MediaRenderer({
+				kind: 'video',
+				track: currentUser.videoTrack,
+			});
+		}
+
+		if (!isLocalUser && this.screenUsers[currentUserId]?.videoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.screenUsers[currentUserId].videoTrack,
+			});
+		}
+
+		if (isLocalUser && this.localStreamVideoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.localStreamVideoTrack,
+			});
+		}
+
+		return modifiedCurrentUser;
+	}
+
+	getAnyOtherUserId(): number
+	{
+		const myId = String(this.userId);
+
+		const anyActiveUser = [...this.activeUsers].find((id) => String(id) !== myId);
+		if (anyActiveUser)
+		{
+			return anyActiveUser;
+		}
+
+		const users = this.users || {};
+
+		const anyOtherUser = Object.keys(users).find(id => String(id) !== myId);
+		if (anyOtherUser)
+		{
+			return anyOtherUser;
+		}
+
+		return this.userId;
+	}
+
+	getBlockedButtonsListPictureInPictureCallWindow()
+	{
+		const blockedButtons = [];
+
+		if (this.isButtonBlocked('camera'))
+		{
+			blockedButtons.push('camera');
+		}
+
+		if (this.isButtonBlocked('microphone'))
+		{
+			blockedButtons.push('microphone');
+		}
+
+		if (this.isButtonBlocked('screen'))
+		{
+			blockedButtons.push('screen');
+		}
+
+		return blockedButtons;
+	}
+
+
+	_onPiPClose() : void
+	{
+		this.eventEmitter.emit(EventName.onPiPClose);
+	}
+
+	toggleStatePictureInPictureCallWindow(isActive)
+	{
+		const isPiPAvailable = UnsupportedBrowserFeatures.isPiPAvailable;
+		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled())
+		{
+			this.pictureInPictureCallWindow = new PictureInPictureWindow({
+				currentUser: this.getPictureInPictureCallWindowUser(),
+				isCopilotFeaturesEnabled: this.isCopilotFeaturesEnabled,
+				buttons: this.getPictureInPictureCallWindowGetButtonsList(),
+				blockedButtons: this.getBlockedButtonsListPictureInPictureCallWindow(),
+				allowPinButton: false,
+				allowBackgroundItem: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
+				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
+				preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
+				floorRequestNotifications: this.floorRequestNotifications,
+				hardwareState: Hardware,
+				Buttons,
+				CallUser,
+				FloorRequest,
+				onClose: (isProgrammaticClose) =>
+				{
+					this.pictureInPictureCallWindow = null;
+					this.currentPiPUserId = null;
+					this._onPiPClose();
+				},
+				onButtonClick: ({ buttonName, event }) =>
+				{
+					switch (buttonName)
+					{
+						case "microphone":
+							this._onMicrophoneButtonClick(event);
+							break;
+						case "camera":
+							this._onCameraButtonClick(event);
+							break;
+						case "returnToCall":
+							this.eventEmitter.emit(EventName.onPiPBodyClick);
+							break;
+						case "stop-screen":
+							this._onScreenButtonClick(event);
+							break;
+						default:
+							break;
+					}
+				}
+			});
+			this.pictureInPictureCallWindow.checkAvailableAndCreate()
+				.then(() => {
+					this.preferInitialWindowPlacementPictureInPicture = false;
+				});
+		}
+
+		if (!isActive && this.pictureInPictureCallWindow)
+		{
+			this.pipCoordinator?.deactivate();
+			this.pictureInPictureCallWindow.close();
+		}
+	}
+
+	setButtonActive(buttonName, isActive)
+	{
+		if (!this.buttons[buttonName])
+		{
+			return;
+		}
+
+		this.buttons[buttonName].setActive(isActive);
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+
+	};
+
+	getButtonActive(buttonName)
+	{
+		if (!this.buttons || !this.buttons[buttonName])
+		{
+			return false;
+		}
+
+		return this.buttons[buttonName].isActive;
+	};
+
+	setButtonCounter(buttonName, counter)
+	{
+		if (!this.buttons[buttonName])
+		{
+			return;
+		}
+
+		this.buttons[buttonName].setCounter(counter);
+	};
+
+	updateUserList()
+	{
+		if (this.layout == Layouts.Mobile)
+		{
+			if (this.localUser != this.centralUser)
+			{
+				if (this.localUser.hasVideo())
+				{
+					this.localUser.mount(this.elements.localUserMobile);
+					this.localUser.visible = true;
+				}
+				else
+				{
+					this.localUser.dismount();
+				}
+
+				this.centralUser.mount(this.elements.center);
+				this.eventEmitter.emit(EventName.onHasMainStream, {
+					userId: this.centralUser.id,
+					otherUsers: [...this.activeUsers],
+				});
+				this.centralUser.visible = true;
+			}
+			return;
+		}
+		/* if (this.layout == Layouts.Grid && this.size == Size.Full)
+		{
+			this.recalculatePages();
+		} */
+
+		if ((this.layout == Layouts.Grid || this.layout == Layouts.Centered) && this.size == Size.Full)
+		{
+			this.recalculatePages();
+		}
+
+		this.renderUserList();
+
+		if (this.layout == Layouts.Centered)
+		{
+			if (!this.elements.userList.container.parentElement)
+			{
+				this.elements.userBlock.appendChild(this.elements.userList.container);
+			}
+			//this.centralUser.setFullSize(this.elements.userList.container.childElementCount === 0);
+
+		}
+		else if (this.layout == Layouts.Grid)
+		{
+			if (!this.elements.userList.container.parentElement)
+			{
+				this.elements.container.appendChild(this.elements.userList.container);
+			}
+		}
+		this.toggleEars();
+	};
+
+	showOverflownButtonsPopup()
+	{
+		if (this.overflownButtonsPopup)
+		{
+			this.overflownButtonsPopup.show();
+			return;
+		}
+
+		const bindElement = this.buttons.more && this.buttons.more.elements.root ? this.buttons.more.elements.root : this.elements.panel;
+
+		this.overflownButtonsPopup = new Popup({
+			id: 'bx-call-buttons-popup',
+			bindElement,
+			targetContainer: this.elements.root,
+			content: this.renderButtons(Object.keys(this.overflownButtons), true),
+			cacheable: false,
+			closeIcon: false,
+			autoHide: true,
+			overlay: {backgroundColor: 'white', opacity: 0},
+			bindOptions: {
+				position: 'top'
+			},
+			angle: {position: 'bottom', offset: 49},
+			className: 'bx-call-buttons-popup',
+			contentBackground: 'unset',
+			events: {
+				onPopupDestroy: () =>
+				{
+					this.overflownButtonsPopup = null;
+					this.buttons.more.setActive(false);
+				},
+			}
+		});
+		this.overflownButtonsPopup.show();
+	}
+
+	resumeVideo()
+	{
+		for (let userId in this.users)
+		{
+			const user = this.users[userId];
+			user.playVideo()
+			const screenUser = this.screenUsers[userId];
+			screenUser.playVideo();
+		}
+		this.localUser.playVideo();
+	};
+
+	updateUserButtons()
+	{
+		const currentConnectedUserCount = this.getConnectedUserCount();
+		const previousConnectedUserCount = this.cache.get('previousConnectedUserCount');
+
+		if (currentConnectedUserCount > 1 && previousConnectedUserCount > 1)
+		{
+			return;
+		}
+
+		for (let userId in this.users)
+		{
+			if (this.users.hasOwnProperty(userId))
+			{
+				this.users[userId].allowPinButton = currentConnectedUserCount > 1;
+			}
+		}
+	};
+
+	updateButtons(skippedElementsList = [])
+	{
+		if (!this.elements.panel)
+		{
+			return;
+		}
+
+		if (!skippedElementsList.includes('panel'))
+		{
+			const buttonList = this.getButtonList();
+			if (this.needToRerenderButtonList)
+			{
+				Dom.clean(this.elements.panel);
+				Dom.append(this.renderButtons(buttonList, this.needToRerenderButtonList), this.elements.panel);
+				this.needToRerenderButtonList = false;
+			}
+			else
+			{
+				this.renderButtons(buttonList);
+			}
+		}
+
+		if (this.elements.topPanel)
+		{
+			const topButtonList = this.getTopButtonList();
+			if (this.needToRerenderTopButtonList)
+			{
+				Dom.clean(this.elements.topPanel);
+			}
+			this.renderTopButtons(topButtonList, this.needToRerenderTopButtonList);
+			this.needToRerenderTopButtonList = false;
+		}
+
+		if (this.buttons.participantsMobile)
+		{
+			this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
+		}
+
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
+
+		if (this.needToShowCallcontrolPromo)
+		{
+			this.showCallcontrolPromoPopupTimeout = setTimeout(() =>
+			{
+				if (this.size !== View.Size.Folded)
+				{
+					this.createAhaMomentNotifyCallcontrol();
+				}
+			}, 1500);
+		}
+
+		this.renderAddUserButtonInList();
+
+		if (this.pictureInPictureCallWindow)
+		{
+			const blockedButtons = this.getBlockedButtonsListPictureInPictureCallWindow();
+			this.pictureInPictureCallWindow.syncBlockButtons(blockedButtons);
+		}
+	}
+
+	updateUserData(userData)
+	{
+		for (let userId in userData)
+		{
+			if (!this.userData[userId])
+			{
+				this.userData[userId] = {
+					name: '',
+					avatar_hr: '',
+					gender: 'M',
+				};
+			}
+
+			if (userData[userId].name)
+			{
+				this.userData[userId].name = userData[userId].name;
+			}
+
+			if (userData[userId].avatar_hr)
+			{
+				this.userData[userId].avatar_hr = Util.isAvatarBlank(userData[userId].avatar_hr) ? '' : userData[userId].avatar_hr;
+			}
+			else if (userData[userId].avatar)
+			{
+				this.userData[userId].avatar_hr = Util.isAvatarBlank(userData[userId].avatar) ? '' : userData[userId].avatar;
+			}
+
+			if (userData[userId].gender)
+			{
+				this.userData[userId].gender = userData[userId].gender === 'F' ? 'F' : 'M';
+			}
+
+			const userModel = this.userRegistry.get(userId);
+			if (userModel)
+			{
+				userModel.name = this.userData[userId].name;
+				userModel.avatar = checkAndEncodeURI(this.userData[userId].avatar_hr);
+			}
+		}
+	};
+
+	isScreenSharingSupported()
+	{
+		return navigator.mediaDevices && typeof (navigator.mediaDevices.getDisplayMedia) === "function" || typeof (BXDesktopSystem) !== "undefined";
+	};
+
+	isRecordingHotKeySupported()
+	{
+		return typeof (BXDesktopSystem) !== "undefined" && BXDesktopSystem.ApiVersion() >= 60;
+	};
+
+	isFullScreenSupported()
+	{
+		if (BX.browser.IsChrome() || BX.browser.IsSafari())
+		{
+			return document.webkitFullscreenEnabled === true;
+		}
+		else if (BX.browser.IsFirefox())
+		{
+			return document.fullscreenEnabled === true;
+		}
+		else
+		{
+			return false;
+		}
+	};
+
+	toggleEars()
+	{
+		this.toggleTopEar();
+		this.toggleBottomEar();
+
+		if (this.layout == Layouts.Grid && this.pagesCount > 1 && this.currentPage > 1)
+		{
+			this.elements.pageNavigatorLeft.classList.add("active");
+		}
+		else
+		{
+			this.elements.pageNavigatorLeft.classList.remove("active");
+		}
+
+		if (this.layout == Layouts.Grid && this.pagesCount > 1 && this.currentPage < this.pagesCount)
+		{
+			this.elements.pageNavigatorRight.classList.add("active");
+		}
+		else
+		{
+			this.elements.pageNavigatorRight.classList.remove("active");
+		}
+	};
+
+	toggleTopEar()
+	{
+		if (
+			this.layout !== Layouts.Grid &&
+			this.pagesCount > 1
+		)
+		{
+			this.elements.ear.top.classList.add("active");
+		}
+		else
+		{
+			this.elements.ear.top.classList.remove("active");
+		}
+	};
+
+	toggleBottomEar()
+	{
+		if (
+			this.layout !== Layouts.Grid &&
+			this.pagesCount > 1
+		)
+		{
+			this.elements.ear.bottom.classList.add("active");
+		}
+		else
+		{
+			this.elements.ear.bottom.classList.remove("active");
+		}
+	};
+
+	scrollUserListUp()
+	{
+		this.stopScroll();
+		this.scrollInterval = setInterval(
+			() => this.elements.userList.container.scrollTop -= 10,
+			20
+		);
+	};
+
+	scrollUserListDown()
+	{
+		this.stopScroll();
+		this.scrollInterval = setInterval(
+			() => this.elements.userList.container.scrollTop += 10,
+			20
+		);
+	};
+
+	stopScroll()
+	{
+		if (this.scrollInterval)
+		{
+			clearInterval(this.scrollInterval);
+			this.scrollInterval = 0;
+		}
+	};
+
+	toggleRenameSliderInputLoader()
+	{
+		this.elements.renameSlider.button.classList.add('ui-btn-wait');
+	};
+
+	setHotKeyTemporaryBlock(isActive, force)
+	{
+		if (!!isActive)
+		{
+			this.hotKeyTemporaryBlock++;
+		}
+		else
+		{
+
+			this.hotKeyTemporaryBlock--;
+			if (this.hotKeyTemporaryBlock < 0 || force)
+			{
+				this.hotKeyTemporaryBlock = 0;
+			}
+		}
+	}
+
+	setHotKeyActive(name, isActive)
+	{
+		if (typeof this.hotKey[name] === 'undefined')
+		{
+			return;
+		}
+
+		this.hotKey[name] = !!isActive;
+	};
+
+	isHotKeyActive(name)
+	{
+		if (!this.hotKey['all'])
+		{
+			return false;
+		}
+
+		if (this.hotKeyTemporaryBlock > 0)
+		{
+			return false;
+		}
+
+		if (this.isButtonHidden(name))
+		{
+			return false;
+		}
+
+		if (this.isButtonBlocked(name))
+		{
+			return false;
+		}
+
+		return !!this.hotKey[name];
+	}
+
+	showCommonRecordMenuPopup(isDesktopRecord = false) {
+		if (this.#commonRecord.menuPopup)
+		{
+			this.#commonRecord.menuPopup.close();
+
+			return;
+		}
+
+		const popupType = [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state) ? 'kind' : 'control';
+
+		this.#commonRecord.menuPopup = new CommonRecordMenuPopup({
+			state: this.commonRecordState.state,
+			popupType,
+			isDesktopRecord,
+			targetContainer: this.elements.root,
+			onStart: (kind) => {
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Started,
+					kind,
+				});
+			},
+			onStop: () => {
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Stopped,
+				});
+			},
+			onPause: () => {
+				let commonRecordState;
+
+				if (this.commonRecordState.state === CallCommonRecordState.Paused)
+				{
+					this.commonRecordState.state = CallCommonRecordState.Started;
+					commonRecordState = CallCommonRecordState.Resumed;
+				}
+				else
+				{
+					this.commonRecordState.state = CallCommonRecordState.Paused;
+					commonRecordState = this.commonRecordState.state;
+				}
+
+				this.buttons.recordStatus.update(this.commonRecordState);
+
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: commonRecordState,
+				});
+			},
+			onDestroy: () => {
+				if (!CallCloudRecord.serviceEnabled)
+				{
+					return;
+				}
+
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Destroyed,
+				});
+			},
+			onClose: () => {
+				this.#commonRecord.menuPopup = null;
+			},
+
+		});
+
+		this.#commonRecord.menuPopup.toggle();
+	}
+
+	showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId)
+	{
+		if (this.#commonRecord.infoPopup)
+		{
+			this.#commonRecord.infoPopup.close();
+
+			return;
+		}
+
+		this.#commonRecord.infoPopup = new CloudRecordInfoPopup({
+			isCloudRecordFeaturesEnabled,
+			callId,
+			targetContainer: this.elements.root,
+			onClose: () => {
+				this.#commonRecord.infoPopup = null;
+			},
+			turnOn: () => {
+				this.showCommonRecordMenuPopup();
+			},
+		});
+
+		this.#commonRecord.infoPopup.toggle();
+	}
+
+	showCommonRecordStartNotify(userId, state = CallCommonRecordState.Started)
+	{
+		if (this.#commonRecord.notify)
+		{
+			this.#commonRecord.notify.close();
+			this.#commonRecord.notify = null;
+		}
+
+		const userModel = this.userRegistry.get(userId);
+		const userGender = userModel && userModel.data.gender ? userModel.data.gender.toUpperCase() : 'M';
+
+		this.#commonRecord.notify = BX.UI.Notification.Center.notify({
+			position: 'top-right',
+			autoHideDelay: 8000,
+			closeButton: true,
+			render() {
+				return Dom.create('div', {
+					props: {
+						className: 'ui-notification-balloon-content call-cloud-record-notify',
+					},
+					children: [
+						Dom.create('div', {
+							props: {
+								className: 'ui-notification-balloon-message',
+							},
+							children: [
+								Dom.create('div', {
+									props: {
+										className: 'call-cloud-record-notify__icon',
+									},
+								}),
+								Dom.create('div', {
+									props: {
+										className: 'call-cloud-record-notify__message',
+									},
+									text: Loc.getMessage(`CALL_CLOUD_RECORD_NOTIFY_${state.toUpperCase()}_${userGender}`, {
+										'#INITIATOR_NAME#': userModel?.data?.name || '',
+									}),
+								}),
+							],
+						}),
+						Dom.create('div', {
+							props: {
+								className: 'ui-notification-balloon-actions',
+							},
+						}),
+						this.getCloseButton(),
+					],
+				});
+			},
+		});
+	}
+
+	closeCommonRecordPopups()
+	{
+		if (this.#commonRecord.menuPopup)
+		{
+			this.#commonRecord.menuPopup.close();
+			this.#commonRecord.menuPopup = null;
+		}
+
+		if (this.#commonRecord.infoPopup)
+		{
+			this.#commonRecord.infoPopup.close();
+			this.#commonRecord.infoPopup = null;
+		}
+
+		if (this.#commonRecord.notify)
+		{
+			this.#commonRecord.notify.close();
+			this.#commonRecord.notify = null;
+		}
+	}
+
+	/**
+	 * @param { Object } params
+	 * @param { string } params.title
+	 * @param { string } params.message
+	 * @param { string } params.yesButtonText
+	 * @param { string } params.noButtonText
+	 * @returns {Promise}
+	 */
+	showConfirmModal(params)
+	{
+		if (this.#confirmModal)
+		{
+			this.#confirmModal.close();
+			this.#confirmModal = null;
+		}
+
+		return new Promise((resolve) => {
+			let isResolved = false;
+
+			const resolveOnce = (choice) => {
+				if (isResolved)
+				{
+					return;
+				}
+				isResolved = true;
+				resolve(choice);
+			};
+
+			this.#confirmModal = new ConfirmModal({
+				...params,
+				targetContainer: this.elements.root,
+				onClose: () => {
+					this.#confirmModal = null;
+					resolveOnce('close');
+				},
+				onClickYesButton: () => resolveOnce('yes'),
+				onClickNoButton: () => resolveOnce('no'),
+			});
+
+			this.#confirmModal.show();
+		});
+	}
+
+	showCommonRecordStartModal()
+	{
+		this.showConfirmModal({
+			title: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_TITLE'),
+			message: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_MESSAGE'),
+			yesButtonText: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_RESUME_BUTTON'),
+		});
+	}
+
+	showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId)
+	{
+		// TODO: Remove once PromoManager is available for conferences
+		if (this.isVideoconf)
+		{
+			return;
+		}
+
+		const promoRequired = PromoManager.getInstance().needToShow(CLOUD_RECORD_PROMO_ID);
+
+		if (promoRequired)
+		{
+			this.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
+			PromoManager.getInstance().markAsWatched(CLOUD_RECORD_PROMO_ID);
+		}
+	}
+
+	// event handlers
+
+	_onBodyClick()
+	{
+		this.eventEmitter.emit(EventName.onBodyClick);
+	};
+
+	_onCenterTouchStart(e)
+	{
+		this.centerTouchX = e.pageX;
+	};
+
+	_onCenterTouchEnd(e)
+	{
+		const delta = e.pageX - this.centerTouchX;
+
+		if (delta > 100)
+		{
+			this.pinUser(this.getRightUser(this.centralUser.id));
+			e.preventDefault();
+		}
+		if (delta < -100)
+		{
+			this.pinUser(this.getLeftUser(this.centralUser.id));
+			e.preventDefault();
+		}
+	};
+
+	_onFullScreenChange()
+	{
+		if ('webkitFullscreenElement' in document)
+		{
+			this.isFullScreen = (Boolean(document.webkitFullscreenElement));
+		}
+		else if ('fullscreenElement' in document)
+		{
+			this.isFullScreen = (Boolean(document.fullscreenElement));
+		}
+		else
+		{
+			return;
+		}
+
+		// safari workaround
+		setTimeout(() => {
+			if (!this.elements.root)
+			{
+				return;
+			}
+
+			this.eventEmitter.emit(EventName.onFullScreenChange, {
+				isFullScreen: this.isFullScreen,
+			});
+
+			if (this.isFullScreen)
+			{
+				Dom.addClass(this.elements.root, 'bx-messenger-videocall-fullscreen');
+			}
+			else
+			{
+				Dom.removeClass(this.elements.root, 'bx-messenger-videocall-fullscreen');
+			}
+
+			this.updateUserList();
+			this.updateButtons();
+			this.setUserBlockFolded(this.isFullScreen);
+		}, 0);
+	}
+
+	_onIntersectionChange(entries)
+	{
+		let t = {};
+		entries.forEach(function (intersectionEntry)
+		{
+			t[intersectionEntry.target.dataset.userId] = intersectionEntry.isIntersecting;
+		});
+		for (let userId in t)
+		{
+			if (this.users[userId])
+			{
+				this.users[userId].visible = t[userId];
+			}
+			if (userId == this.localUser.id)
+			{
+				this.localUser.visible = t[userId];
+			}
+		}
+	};
+
+	_onResize()
+	{
+		// this.resizeCalled++;
+		// this.reportResizeCalled();
+
+		if (!this.elements.root)
+		{
+			return;
+		}
+		if (this.centralUser)
+		{
+			//this.centralUser.updateAvatarWidth();
+		}
+		if (BX.browser.IsMobile())
+		{
+			document.documentElement.style.setProperty('--view-height', window.innerHeight + 'px');
+		}
+		if (this.layout == Layouts.Grid || this.layout == Layouts.Centered)
+		{
+			this.updateUserList();
+		}
+		else
+		{
+			this.updateCentralUserAvatarSize();
+			this.toggleEars();
+		}
+
+		const rootDimensions = this.elements.root.getBoundingClientRect()
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-450", rootDimensions.width < 450);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-550", rootDimensions.width < 550);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-650", rootDimensions.width < 650);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-700", rootDimensions.width < 700);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-850", rootDimensions.width < 850);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-900", rootDimensions.width < 900);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-1050", rootDimensions.width < 1050);
+
+		/*if (this.maxWidth === 0)
+		{
+			this.elements.root.style.maxWidth = this.container.clientWidth + 'px';
+		}*/
+
+		if (this.checkPanelOverflow())
+		{
+			this.updateButtons();
+			if (this.overflownButtonsPopup && !Object.keys(this.overflownButtons).length)
+			{
+				this.overflownButtonsPopup.close();
+			}
+		}
+	};
+
+	_onOrientationChange()
+	{
+		if (!this.elements.root)
+		{
+			return;
+		}
+		if (window.innerHeight > window.innerWidth)
+		{
+			this.elements.root.classList.remove("orientation-landscape");
+		}
+		else
+		{
+			this.elements.root.classList.add("orientation-landscape");
+		}
+	};
+
+
+
+	_destroyHotKeyHint()
+	{
+		if (!Util.isDesktop())
+		{
+			return;
+		}
+
+		if (!this.hintManager.popup)
+		{
+			return;
+		}
+
+		// we need to destroy, not .hide for onShow event handler (see method _showHotKeyHint).
+		this.hintManager.hide();
+		this.hintManager.popup.destroy();
+		this.hintManager.popup = null;
+	}
+
+	_onKeyDown(e)
+	{
+		if (!Util.isDesktop())
+		{
+			return;
+		}
+		if (!(e.shiftKey && (e.ctrlKey || e.metaKey)) && !(e.code === 'Space'))
+		{
+			return;
+		}
+		if (event.repeat)
+		{
+			return;
+		}
+
+		const callMinimized = this.size === View.Size.Folded;
+
+		if (
+			e.code === 'KeyA'
+			&& this.isHotKeyActive('microphone')
+		)
+		{
+			e.preventDefault();
+			if (this.deviceSelector)
+			{
+				this.deviceSelector.destroy();
+			}
+			this._onMicrophoneButtonClick(e);
+		}
+		else if (
+			e.code === 'Space' && Hardware.isMicrophoneMuted
+			&& this.isHotKeyActive('microphoneSpace')
+		)
+		{
+			if (!callMinimized)
+			{
+				e.preventDefault();
+				this.pushToTalk = true;
+				this.microphoneHotkeyTimerId = setTimeout(function ()
+				{
+					if (this.deviceSelector)
+					{
+						this.deviceSelector.destroy();
+					}
+					this._onMicrophoneButtonClick(e);
+				}.bind(this), 100);
+			}
+		}
+		else if (
+			e.code === 'KeyS'
+			&& this.isHotKeyActive('screen')
+		)
+		{
+			e.preventDefault();
+			this._onScreenButtonClick(e);
+		}
+		else if (
+			e.code === 'KeyV'
+			&& this.isHotKeyActive('camera')
+		)
+		{
+			e.preventDefault();
+			if (this.deviceSelector)
+			{
+				this.deviceSelector.destroy();
+			}
+			this._onCameraButtonClick(e);
+		}
+		else if (
+			e.code === 'KeyU'
+			&& this.isHotKeyActive('users')
+		)
+		{
+			e.preventDefault();
+			this._onUsersButtonClick(e);
+		}
+		else if (
+			e.code === 'KeyR'
+			&& this.isRecordingHotKeySupported()
+			&& this.isHotKeyActive('record')
+		)
+		{
+			e.preventDefault();
+			this.#onCommonRecordHotkey();
+		}
+		else if (
+			e.code === 'KeyH'
+			&& this.isHotKeyActive('floorRequest')
+		)
+		{
+			e.preventDefault();
+			this._onFloorRequestButtonClick(e);
+		}
+		else if (
+			e.code === 'KeyC'
+			&& this.isHotKeyActive('chat')
+		)
+		{
+			e.preventDefault();
+			if (callMinimized)
+			{
+				this._onBodyClick(e);
+			}
+			else
+			{
+				this._onChatButtonClick(e);
+				this._destroyHotKeyHint();
+			}
+		}
+		else if (
+			e.code === 'KeyM'
+			&& this.isHotKeyActive('muteSpeaker')
+		)
+		{
+			e.preventDefault();
+			this.eventEmitter.emit(EventName.onButtonClick, {
+				buttonName: "toggleSpeaker",
+				speakerMuted: this.speakerMuted,
+				fromHotKey: true,
+			});
+		}
+		else if (
+			e.code === 'KeyW'
+			&& this.isHotKeyActive('grid')
+		)
+		{
+			e.preventDefault();
+			this.setLayout(this.layout == Layouts.Centered ? Layouts.Grid : Layouts.Centered);
+		}
+	};
+
+	_onKeyUp(e)
+	{
+		if (!Util.isDesktop())
+		{
+			return;
+		}
+
+		clearTimeout(this.microphoneHotkeyTimerId);
+		if (this.pushToTalk && !Hardware.isMicrophoneMuted && e.code === 'Space')
+		{
+			e.preventDefault();
+			this.pushToTalk = false;
+			if (this.deviceSelector)
+			{
+				this.deviceSelector.destroy();
+			}
+			this._onMicrophoneButtonClick(e);
+		}
+	};
+
+	_onUserClick(event)
+	{
+		const userId = event.userId;
+
+		if (userId == this.centralUser.id && this.layout !== Layouts.Grid && this.isFullScreen)
+		{
+			Dom.toggleClass(this.elements.root, 'bx-messenger-videocall-hidden-panels');
+		}
+		else if (this.layout === Layouts.Centered && userId != this.centralUser.id)
+		{
+			this.pinUser(userId);
+		}
+		else
+		{
+			(this.pinnedUser && this.pinnedUser.id === userId) ? this._onUserUnPin() : this._onUserPin({userId});
+		}
+
+		this.eventEmitter.emit(EventName.onUserClick, {
+			userId,
+			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream,
+			layout: this.layout,
+		});
+	}
+
+	_onUserRename(newName)
+	{
+		this.eventEmitter.emit(EventName.onUserRename, {newName: newName});
+	};
+
+	_onUserRenameInputFocus()
+	{
+		this.setHotKeyTemporaryBlock(true);
+	};
+
+	_onUserRenameInputBlur()
+	{
+		this.setHotKeyTemporaryBlock(false);
+	};
+
+	_onUserPin(e)
+	{
+		if (this.layout == Layouts.Grid)
+		{
+			this.setLayout(Layouts.Centered)
+		}
+		this.pinUser(e.userId);
+	};
+
+	_onUserUnPin(): void
+	{
+		if (this.layout === Layouts.Centered)
+		{
+			this.setLayout(Layouts.Grid);
+		}
+		else
+		{
+			this.unpinUser();
+		}
+	}
+
+	_onTurnOffParticipantMic(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantMic, {
+			userId: e.userId
+		});
+	};
+
+	_onTurnOffParticipantCam(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantCam, {
+			userId: e.userId
+		});
+	};
+
+	_onTurnOffParticipantScreenshare(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantScreenshare, {
+			userId: e.userId
+		});
+	};
+
+	#onCommonRecordClick()
+	{
+		const limitObj = this.getRecordLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			this.eventEmitter.emit(EventName.onButtonClick, {
+				buttonName: 'record',
+			});
+		});
+	}
+
+	#onCommonRecordHotkey() {
+		const limitObj = this.getRecordLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			const state = [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state)
+				? CallCommonRecordState.Started
+				: CallCommonRecordState.Stopped;
+
+			this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+				state,
+				hotkey: true,
+			});
+		});
+	}
+
+	_onDocumentButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'document',
+			node: e.target
+		});
+	};
+
+	_onCopilotButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'copilot',
+			node: e.target
+		});
+	};
+
+	_onGridButtonClick()
+	{
+		this.setLayout(this.layout == Layouts.Centered ? Layouts.Grid : Layouts.Centered);
+	};
+
+	_onAddButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "inviteUser",
+			node: e.currentTarget
+		});
+	};
+
+	_onShareButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "share",
+			node: e.currentTarget
+		});
+	};
+
+	_onMicrophoneButtonClick(e)
+	{
+		if (this.isButtonBlocked('microphone'))
+		{
+			return;
+		}
+		if ("stopPropagation" in e)
+		{
+			e.stopPropagation();
+		}
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "toggleMute",
+			muted: !Hardware.isMicrophoneMuted
+		});
+	};
+
+	_onMicrophoneArrowClick(e)
+	{
+		e.stopPropagation();
+		this.showDeviceSelector(e.currentTarget);
+	};
+
+	_onMicrophoneSideIconClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "microphoneSideIcon",
+		});
+	};
+
+	_onMicrophoneSelected(e)
+	{
+		this.eventEmitter.emit(EventName.onReplaceMicrophone, {
+			deviceId: e.data.deviceId
+		});
+	};
+
+	_onCameraButtonClick(e)
+	{
+		if (this.isButtonBlocked('camera'))
+		{
+			return;
+		}
+		if ("stopPropagation" in e)
+		{
+			e.stopPropagation();
+		}
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "toggleVideo",
+			video: !Hardware.isCameraOn
+		});
+	};
+
+	_onCameraArrowClick(e)
+	{
+		e.stopPropagation();
+		this.showDeviceSelector(e.currentTarget);
+	};
+
+	_onCameraSelected(e)
+	{
+		this.eventEmitter.emit(EventName.onReplaceCamera, {
+			deviceId: e.data.deviceId
+		});
+	};
+
+	_onSpeakerButtonClick()
+	{
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "toggleSpeaker",
+			speakerMuted: this.speakerMuted
+		});
+	};
+
+	_onChangeNoiseSuppression(e)
+	{
+		this.eventEmitter.emit(EventName.onChangeNoiseSuppression, e.data);
+	};
+
+	_onChangeMicAutoParams(e)
+	{
+		this.eventEmitter.emit(EventName.onChangeMicAutoParams, e.data);
+	};
+
+	_onChangeFaceImprove(e)
+	{
+		this.eventEmitter.emit(EventName.onChangeFaceImprove, e.data);
+	}
+
+	_onChangeVideoQuality(e)
+	{
+		this.eventEmitter.emit(EventName.onChangeVideoQuality, e.data);
+	};
+
+	disableFaceImprove()
+	{
+		if (
+			Util.isDesktop()
+			&& DesktopApi.isDesktop()
+			&& DesktopApi.getCameraSmoothingStatus()
+		)
+		{
+			this.eventEmitter.emit(EventName.onChangeFaceImprove, {
+				faceImproveEnabled: false
+			});
+		}
+	}
+
+	_onSpeakerSelected(e)
+	{
+		if (!this.externalSpeakerManagement)
+		{
+			this.setSpeakerId(e.data.deviceId);
+		}
+
+		this.eventEmitter.emit(EventName.onReplaceSpeaker, {
+			deviceId: e.data.deviceId
+		});
+	};
+
+	confirmSpeakerSelection(deviceId)
+	{
+		this.speakerId = deviceId;
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.confirmSpeakerSelection(deviceId);
+		}
+	}
+
+	_onScreenButtonClick(e)
+	{
+		e.stopPropagation();
+
+		const limitObj = this.getScreenSharingLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			this.eventEmitter.emit(EventName.onButtonClick, {
+				buttonName: 'toggleScreenSharing',
+				node: e.target
+			});
+		})
+	};
+
+	_onChatButtonClick(e)
+	{
+		this.hintManager.hide();
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'showChat',
+			node: e.target
+		});
+	};
+
+	_onUsersButtonClick(e)
+	{
+		this.hintManager.hide();
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'toggleUsers',
+			node: e.target
+		});
+	};
+
+	_onMobileMenuButtonClick(e)
+	{
+		e.stopPropagation();
+		this.showCallMenu();
+	};
+
+	_onFloorRequestButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'floorRequest',
+			node: e.target
+		});
+	};
+
+	_onMoreButtonClick(e)
+	{
+		e.stopPropagation();
+		if (this.overflownButtonsPopup)
+		{
+			this.overflownButtonsPopup.close();
+			this.buttons.more.setActive(false);
+		}
+		else
+		{
+			this.showOverflownButtonsPopup();
+			this.buttons.more.setActive(true);
+		}
+	};
+
+	_onHistoryButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'showHistory',
+			node: e.target
+		});
+	};
+
+	_onHangupButtonClick(e)
+	{
+		e.stopPropagation();
+		this.clearNewLogicRules();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'hangup',
+			node: e.target
+		});
+	};
+
+	_onHangupOptionsButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'hangupOptions',
+			node: e.target
+		});
+	};
+
+	_onCloseButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'close',
+			node: e.target
+		});
+	};
+
+	_onFullScreenButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'fullscreen',
+			node: e.target
+		});
+	};
+
+	_onFeedbackButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'feedback',
+			node: e.target
+		});
+	}
+
+	_onCallcontrolButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'callcontrol',
+			node: e.target
+		});
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			PromoManager.getInstance().markAsWatched(CALLCONTROL_PROMO_ID);
+		}
+
+		this.clearCallcontrolPromo();
+	}
+
+	_onParticipantsButtonListClick(event)
+	{
+		if (!this.isButtonBlocked('users'))
+		{
+			this._onUsersButtonClick(event);
+			return;
+		}
+
+		if (!this.isFullScreen)
+		{
+			return;
+		}
+
+		this.setUserBlockFolded(!this.isUserBlockFolded);
+	};
+
+	_onParticipantsListButtonClick(e)
+	{
+		e.stopPropagation();
+
+		const viewEvent = new BaseEvent({
+			data: {
+				buttonName: 'participantsList',
+				node: e.target
+			},
+			compatData: ['participantsList', e.target],
+		});
+		this.eventEmitter.emit(EventName.onButtonClick, viewEvent);
+
+		if (viewEvent.isDefaultPrevented())
+		{
+			return;
+		}
+
+		UserSelector.create({
+			parentElement: e.currentTarget,
+			zIndex: this.baseZIndex + 500,
+			userList: Object.values(this.users),
+			current: this.centralUser.id,
+			onSelect: (userId) => this.setCentralUser(userId)
+		}).show();
+	};
+
+	_onParticipantsButtonMobileListClick()
+	{
+		this.showParticipantsMenu();
+	};
+
+	_onMobileCallMenuFloorRequestClick()
+	{
+		this.callMenu.close();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'floorRequest',
+		});
+	};
+
+	_onMobileCallMenShowParticipantsClick()
+	{
+		this.callMenu.close();
+		this.showParticipantsMenu();
+	};
+
+	_onMobileCallMenuCopyInviteClick()
+	{
+		this.callMenu.close();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: "share",
+			node: null
+		})
+	};
+
+	showRenameSlider()
+	{
+		if (!this.renameSlider)
+		{
+			this.renameSlider = new MobileSlider({
+				parent: this.elements.root,
+				content: this.renderRenameSlider(),
+				onClose: () => this.renameSlider.destroy(),
+				onDestroy: () => this.renameSlider = null,
+			});
+		}
+
+		this.renameSlider.show();
+		setTimeout(
+			() =>
+			{
+				this.elements.renameSlider.input.focus();
+				this.elements.renameSlider.input.select();
+			},
+			400
+		);
+	};
+
+	renderRenameSlider()
+	{
+		return Dom.create("div", {
+			props: {
+				className: "bx-videocall-mobile-rename-slider-wrap"
+			},
+			children: [
+				Dom.create("div", {
+					props: {
+						className: "bx-videocall-mobile-rename-slider-title"
+					},
+					text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME")
+				}),
+				this.elements.renameSlider.input = Dom.create("input", {
+					props: {
+						className: "bx-videocall-mobile-rename-slider-input"
+					},
+					attrs: {
+						type: "text",
+						value: this.localUser.userModel.name
+					}
+				}),
+				this.elements.renameSlider.button = Dom.create("button", {
+					props: {
+						className: "bx-videocall-mobile-rename-slider-button ui-btn ui-btn-md ui-btn-primary"
+					},
+					text: BX.message("IM_M_CALL_MOBILE_RENAME_CONFIRM"),
+					events: {
+						click: this._onMobileUserRename.bind(this)
+					}
+				})
+			]
+		});
+	};
+
+	_onMobileUserRename(event)
+	{
+		event.stopPropagation();
+
+		const inputValue = this.elements.renameSlider.input.value;
+		const newName = inputValue.trim();
+		let needToUpdate = true;
+		if (newName === this.localUser.userModel.name || newName === '')
+		{
+			needToUpdate = false;
+		}
+
+		if (needToUpdate)
+		{
+			this.toggleRenameSliderInputLoader();
+			this._onUserRename(newName)
+		}
+		else
+		{
+			this.renameSlider.close();
+		}
+	};
+
+	_onMobileCallMenuCancelClick()
+	{
+		this.callMenu.close();
+	};
+
+	_onLeftEarClick()
+	{
+		this.pinUser(this.getLeftUser(this.centralUser.id));
+	};
+
+	_onRightEarClick()
+	{
+		this.pinUser(this.getRightUser(this.centralUser.id));
+	};
+
+	_onLeftPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage - 1)
+	};
+
+	_onRightPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage + 1)
+	};
+
+	_onTopPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage !== 1 ? this.currentPage - 1 : this.pagesCount);
+	};
+
+	_onBottomPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage !== this.pagesCount ? this.currentPage + 1 : 1);
+	};
+
+	setMaxWidth(maxWidth)
+	{
+		if (this.maxWidth !== maxWidth)
+		{
+			const MAX_WIDTH_SPEAKER_MODE = 650;
+			if (maxWidth < MAX_WIDTH_SPEAKER_MODE
+				&& (!this.maxWidth || this.maxWidth > MAX_WIDTH_SPEAKER_MODE)
+				&& this.layout === Layouts.Centered
+			)
+			{
+				this.setLayout(Layouts.Grid)
+			}
+
+			const animateUnsetProperty = this.maxWidth === null;
+			this.maxWidth = maxWidth;
+			if (this.size !== View.Size.Folded)
+			{
+				this._applyMaxWidth(animateUnsetProperty);
+			}
+		}
+	};
+
+	removeMaxWidth()
+	{
+		this.setMaxWidth(null);
+	}
+
+	_applyMaxWidth(animateUnsetProperty)
+	{
+		const containerDimensions = this.container.getBoundingClientRect();
+		if (this.maxWidth !== null)
+		{
+			if (!this.elements.root.style.maxWidth && animateUnsetProperty)
+			{
+				this.elements.root.style.maxWidth = containerDimensions.width + 'px';
+			}
+			setTimeout(
+				() => this.elements.root.style.maxWidth = Math.max(this.maxWidth, MIN_WIDTH) + 'px',
+				0,
+			);
+		}
+		else
+		{
+			this.elements.root.style.maxWidth = containerDimensions.width + 'px';
+			this.elements.root.addEventListener('transitionend',
+				() => this.elements.root.style.removeProperty('max-width'),
+				{once: true},
+			)
+		}
+	};
+
+	releaseLocalMedia()
+	{
+		this.localUser.releaseStream();
+
+		if (this.centralUser.id == this.userId)
+		{
+			this.centralUser.releaseStream();
+		}
+	};
+
+	clearNewLogicRules()
+	{
+		clearTimeout(this.rerenderTimeout);
+		this.rerenderTimeout = null;
+		this.waitingForUserMediaTimeouts.forEach(timeout => clearTimeout(timeout));
+		this.waitingForUserMediaTimeouts.clear();
+		this.rerenderQueue.clear();
+	}
+
+	clearCallcontrolPromo()
+	{
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.needToShowCallcontrolPromo = false;
+			this.ahaMomentNotifyCallcontrol.close();
+			this.ahaMomentNotifyCallcontrol = null;
+		}
+
+	}
+
+	resetTalkingUsers()
+	{
+		this.userRegistry.users.forEach((userModel) => {
+			if (!userModel.localUser && userModel.talking)
+			{
+				this.setUserTalking(userModel.id, false);
+			}
+		});
+	}
+
+	destroy()
+	{
+		this.destroyed = true;
+
+		this.closeCopilotNotify();
+		this.closeCommonRecordPopups();
+
+		if (this.overflownButtonsPopup)
+		{
+			this.overflownButtonsPopup.close();
+		}
+
+		this.preferInitialWindowPlacementPictureInPicture = true;
+
+		if (this.elements.root)
+		{
+			Dom.remove(this.elements.root);
+			this.elements.root = null;
+		}
+		this.visible = false;
+
+		this.clearNewLogicRules();
+
+		window.removeEventListener("webkitfullscreenchange", this._onFullScreenChangeHandler);
+		window.removeEventListener("mozfullscreenchange", this._onFullScreenChangeHandler);
+		window.removeEventListener("orientationchange", this._onOrientationChangeHandler);
+		window.removeEventListener("keydown", this._onKeyDownHandler);
+		window.removeEventListener("keyup", this._onKeyUpHandler);
+
+		document.removeEventListener('mousemove', this.onMouseMoveHandler);
+
+		this.resizeObserver.disconnect();
+		this.resizeObserver = null;
+		if (this.intersectionObserver)
+		{
+			this.intersectionObserver.disconnect();
+			this.intersectionObserver = null;
+		}
+		for (let userId in this.users)
+		{
+			if (this.users.hasOwnProperty(userId))
+			{
+				this.users[userId].userModel.unsubscribe('changed', this.talkingService.watchTalking);
+				this.users[userId].destroy();
+			}
+		}
+		this.userData = null;
+		this.centralUser.userModel.unsubscribe('changed', this.talkingService.watchTalking);
+		this.userRegistry.unsubscribe('changed', this.talkingService.refreshQueue);
+		this.talkingService.destroy();
+		this.centralUser.destroy();
+		this.hintManager.hide();
+		this.hintManager = null;
+
+		clearTimeout(this.switchPresenterTimeout);
+
+		if (this.buttons.recordStatus)
+		{
+			this.buttons.recordStatus.stopViewUpdate();
+		}
+		this.commonRecordState = this.getDefaultCommonRecordState();
+		this.buttons = null;
+
+		this.eventEmitter.emit(EventName.onDestroy);
+		this.eventEmitter.unsubscribeAll();
+
+		Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.setMuted);
+		Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
+
+		this.clearCallcontrolPromo();
+
+		this.pipCoordinator?.stop();
+		this.pipCoordinator = null;
+
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.destroy();
+		}
+	};
+
+	static Event = ViewEvent;
+	static Layout = ViewLayout;
+	static UiState = ViewUiState;
+	static Size = ViewSize;
+	static RoomState = ViewRoomState;
+	static RecordSource = ViewRecordSource;
+	static DeviceSelector = DeviceSelector;
+	static NotificationManager = NotificationManager;
+	static MIN_WIDTH = MIN_WIDTH;
+}

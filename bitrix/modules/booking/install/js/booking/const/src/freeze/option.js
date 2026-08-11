@@ -20,4 +20,5 @@ export const Option = Object.freeze({
 	AhaCyclePopup: 'aha_cycle_popup',
 	AhaSearchNavigation: 'aha_search_navigation',
 	AhaIntegrationMapsYa: 'aha_integration_maps_ya',
+	AhaWeekView: 'aha_week_view',
 });

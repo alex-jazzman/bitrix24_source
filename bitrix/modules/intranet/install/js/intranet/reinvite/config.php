@@ -10,9 +10,10 @@ return array(
 		'dist/reinvite-popup.bundle.js'
 	),
 	'rel' => [
-		'main.popup',
-		'ui.buttons',
 		'main.core',
+		'main.popup',
+		'phone_number',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 );

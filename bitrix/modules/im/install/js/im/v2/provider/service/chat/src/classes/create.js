@@ -133,6 +133,7 @@ export class CreateService
 				manageUsersAdd: chatConfig.manageUsersAdd,
 				manageUsersDelete: chatConfig.manageUsersDelete,
 				manageMessages: chatConfig.manageMessages,
+				manageGuestInvites: chatConfig.manageGuestInvites,
 			},
 		});
 	}

@@ -20,7 +20,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 1.4;
-	max-height: calc(1.4 * var(--ui-font-size-sm));
+	max-height: 1lh;
 }
 
 .bizproc-ai-agents-two-lines-height {
@@ -30,7 +30,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 1.4;
-	max-height: calc(1.4 * var(--ui-font-size-sm) * 2);
+	max-height: 2lh;
 }
 
 /* endregion */
@@ -55,9 +55,7 @@
 }
 
 .agent-grid_user-photo {
-	height: -webkit-fit-content;
 	height: fit-content;
-	width: -webkit-fit-content;
 	width: fit-content;
 	display: flex;
 	cursor: pointer;
@@ -263,10 +261,8 @@
 	color: var(--ui-color-base-70);
 	letter-spacing: var(--ui-text-letter-spacing-neg-3);
 	text-decoration: underline;
-	-webkit-text-decoration-style: dashed;
-	        text-decoration-style: dashed;
-	-webkit-text-decoration-color: var(--ui-color-base-30);
-	        text-decoration-color: var(--ui-color-base-30);
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-base-30);
 	cursor: pointer;
 	transition: .2s;
 }
@@ -278,9 +274,7 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 .main-grid-cell-content a.agent-grid-chat-link:hover,
 .agent-grid-chat-link:hover {
 	color: var(--ui-color-base-50);
-	-webkit-text-decoration-style: var(--ui-text-decoration-style-dashed);
 	text-decoration-style: var(--ui-text-decoration-style-dashed);
-	-webkit-text-decoration-color: var(--ui-color-base-50);
 	text-decoration-color: var(--ui-color-base-50);
 }
 
@@ -398,6 +392,27 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 
 /* endregion */
 
+/* region Delete Popup */
+.bizproc-ai-agents__delete-popup {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-bottom: 8px;
+}
+
+.bizproc-ai-agents__delete-popup-text {
+	color: var(--ui-color-base-2);
+	line-height: 1.4;
+}
+
+.bizproc-ai-agents__delete-popup-checkbox.ui-ctl {
+	width: auto;
+	align-self: flex-start;
+	margin-bottom: 4px;
+}
+
+/* endregion */
+
 /* region Launch Control Field */
 
 .launch-control-field-date
@@ -455,7 +470,7 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 .launch-control-field-rag-files-statuses.process .main-grid-rag-status-icon {
 	width: 20px !important;
 	height: 20px !important;
-	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAKKADAAQAAAABAAAAKAAAAAB65masAAAEzklEQVRYCe2YTWhcVRTHz52PtJM0/Yi01bbGFhEUKxRURISqKLipuNBIRbpxIaEgEkxbiovORiR+Loogijt1Ybd14UYQIQouLCh1oV2oNW3VRjp1WpPJzPX3v88HnfcxmUwmipAz3Ln33HfPOf8559xz7xuzVVr1wH/rAdez+Uk/hOy95uwO+lvob6DfQCuatyvwFxifYfw148/sFXcZfsm0dICTfgsG92HpIdp6xkVrWSH0Aife04y5mI/GJ+HfBugMfdfUPUB5rGBPAGYffQEQEYDIY0W4q1hVE8D19BsBq3UlxlobA/6AVW/ZcVdjblHqDuBRv9kW7EUMbkWjjMpDAvMdc58C+ht7zdXbrD3jh23E7uT5g7TH/pGRnGN8Hi0H8ObZNpkMZnGAR/woCp+nbUFeIZSBT2gnUqAyDISpw34b/UFkHr9Gxzl8O24vu9N5YprvDPCovw7PHUbx1gDM2aw17V17vbPSXIMTfjug3kfXKGsU8hn077c33M95MlqUTws2ycMRFDbpf+X7pZ7Bycqb7hd0HSAltFFke5SYnLCqV85mUj7AQ34MCSV6i/Yb31OA+z1Ty1ImlXcFe4qoxCBvsrodylORDVChNbsfJa3QivZqX8DFKCKQL6Bb9tXGTbmeQdkAW/YIa1uhOZsmkS9myC5vaspNE5n3UKIaqo03nqUwDXDCV4B2FyLN0Br2cZZgX+YckTH7E3AqP0/jRZ1EbZQGWLDdrNCmUHi/JLFn2yT6yUy5S6j7giYcI1h9NKk+C+BOFrX4COS3SYEV4D9EZ3TaFGxvUr8eJOl6JrRzzYbsh+TDvvMF+zxslmjD7EnqT3tQNxLln24kVfdXUqDvvMLsyUOd2852JfVnASwj0GR5T9ejpIEu+cvY1CVD5a2N0iFW7ROpQP9b1LD7bACLZVqC0gAddd3bGtaVE2tXjt3ISZVDWSFWWVGJKXNGrs2R6+O0dxSYol2kzaQ9mAXwPMuiOli3G/uIJFvVGNk+C7gS/bZuAHr7KQBUHXR2W7bWPs7uIPuuALAcamEq79MenLPvMX81gGzym57zyseVoTFfJNvX2jwAVWaOhci12UoDPO7mWKYTRMW6xO+7u02in8wuGwzAKgBscnV1zifVpwFqxbydCh5ULhY5m6Mre1J2eby85zmrGlhYg7V14R0npTMbYPTGdQoFygmdy3sBOZyS7nWi6ku20zYH7ym0FZvj1Erln9RnA9STIfsKBbUA0hEK445Y9ev0aFkkcDVe8gskj+zr3DqS/1KfD7Dq5gF4EhU1epWdCrvtYYv+UegNY9UPEtLtBFXnRoGxtz3W8TUidbSkLE/4EX7lA4RZCa1LhD5nGJ/u+rXzI/JtmtfWCheROTQN0IqMyvw9Ikd0oMUBSvggoR0Mf3VU4LS7o9v2gv1IkZjBB7P2jmu02VEoL9gwzzcBZpAmnzXDp8U2rNnZlEybgojpDqDWVv0ASm+n8NwMF19oI7Ay7PDIAk3jOLdjQFqvDadiUuTnDHD25mwKmbqWugcYSymP6nYrgHYEozpxBEQA4r4E1Aa8gGksrslpuyEA6xjS2EzcLx1gLPmsL/PWrH8cNmF+GM/osqTEl6cEog5fh7tk99gf9qSTZ1dp1QP/Ow/8DZi6ZYVCGKwtAAAAAElFTkSuQmCC) no-repeat 0 0;
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAKKADAAQAAAABAAAAKAAAAAB65masAAAEzklEQVRYCe2YTWhcVRTHz52PtJM0/Yi01bbGFhEUKxRURISqKLipuNBIRbpxIaEgEkxbiovORiR+Loogijt1Ybd14UYQIQouLCh1oV2oNW3VRjp1WpPJzPX3v88HnfcxmUwmipAz3Ln33HfPOf8559xz7xuzVVr1wH/rAdez+Uk/hOy95uwO+lvob6DfQCuatyvwFxifYfw148/sFXcZfsm0dICTfgsG92HpIdp6xkVrWSH0Aife04y5mI/GJ+HfBugMfdfUPUB5rGBPAGYffQEQEYDIY0W4q1hVE8D19BsBq3UlxlobA/6AVW/ZcVdjblHqDuBRv9kW7EUMbkWjjMpDAvMdc58C+ht7zdXbrD3jh23E7uT5g7TH/pGRnGN8Hi0H8ObZNpkMZnGAR/woCp+nbUFeIZSBT2gnUqAyDISpw34b/UFkHr9Gxzl8O24vu9N5YprvDPCovw7PHUbx1gDM2aw17V17vbPSXIMTfjug3kfXKGsU8hn077c33M95MlqUTws2ycMRFDbpf+X7pZ7Bycqb7hd0HSAltFFke5SYnLCqV85mUj7AQ34MCSV6i/Yb31OA+z1Ty1ImlXcFe4qoxCBvsrodylORDVChNbsfJa3QivZqX8DFKCKQL6Bb9tXGTbmeQdkAW/YIa1uhOZsmkS9myC5vaspNE5n3UKIaqo03nqUwDXDCV4B2FyLN0Br2cZZgX+YckTH7E3AqP0/jRZ1EbZQGWLDdrNCmUHi/JLFn2yT6yUy5S6j7giYcI1h9NKk+C+BOFrX4COS3SYEV4D9EZ3TaFGxvUr8eJOl6JrRzzYbsh+TDvvMF+zxslmjD7EnqT3tQNxLln24kVfdXUqDvvMLsyUOd2852JfVnASwj0GR5T9ejpIEu+cvY1CVD5a2N0iFW7ROpQP9b1LD7bACLZVqC0gAddd3bGtaVE2tXjt3ISZVDWSFWWVGJKXNGrs2R6+O0dxSYol2kzaQ9mAXwPMuiOli3G/uIJFvVGNk+C7gS/bZuAHr7KQBUHXR2W7bWPs7uIPuuALAcamEq79MenLPvMX81gGzym57zyseVoTFfJNvX2jwAVWaOhci12UoDPO7mWKYTRMW6xO+7u02in8wuGwzAKgBscnV1zifVpwFqxbydCh5ULhY5m6Mre1J2eby85zmrGlhYg7V14R0npTMbYPTGdQoFygmdy3sBOZyS7nWi6ku20zYH7ym0FZvj1Erln9RnA9STIfsKBbUA0hEK445Y9ev0aFkkcDVe8gskj+zr3DqS/1KfD7Dq5gF4EhU1epWdCrvtYYv+UegNY9UPEtLtBFXnRoGxtz3W8TUidbSkLE/4EX7lA4RZCa1LhD5nGJ/u+rXzI/JtmtfWCheROTQN0IqMyvw9Ikd0oMUBSvggoR0Mf3VU4LS7o9v2gv1IkZjBB7P2jmu02VEoL9gwzzcBZpAmnzXDp8U2rNnZlEybgojpDqDWVv0ASm+n8NwMF19oI7Ay7PDIAk3jOLdjQFqvDadiUuTnDHD25mwKmbqWugcYSymP6nYrgHYEozpxBEQA4r4E1Aa8gGksrslpuyEA6xjS2EzcLx1gLPmsL/PWrH8cNmF+GM/osqTEl6cEog5fh7tk99gf9qSTZ1dp1QP/Ow/8DZi6ZYVCGKwtAAAAAElFTkSuQmCC") no-repeat 0 0;
 	background-size: 100%;
 	transition: opacity 0.2s linear;
 	position: relative;
@@ -470,7 +485,8 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 .launch-control-field-rag-files-statuses.cross .main-grid-rag-status-icon {
 	position: relative;
 	display: inline-block;
-	mask: var(--o-ui-icon-set__path_cross-l) -5px no-repeat;
+	-webkit-mask: var(--o-ui-icon-set__path_cross-l) -5px no-repeat;
+	        mask: var(--o-ui-icon-set__path_cross-l) -5px no-repeat;
 	vertical-align: middle;
 	background-color: var(--ui-color-text-alert);
 }

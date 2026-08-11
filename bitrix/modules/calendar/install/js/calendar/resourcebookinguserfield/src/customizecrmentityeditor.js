@@ -465,6 +465,42 @@ export let customizeCrmEntityEditor = function(CrmConfigurator)
 		);
 		//endregion
 
+		//region Checkbox Tooltip
+		if (this.tooltipConfigurator)
+		{
+			const tooltipCheckbox = BX.Tag.render`
+				<input type="checkbox">
+			`;
+
+			const tooltipCaption = BX.Tag.render`
+				<span>
+					${this.tooltipConfigurator.getCaption()}
+				</span>
+			`;
+
+			const tooltipCheckboxWrapper = BX.Tag.render`
+				<div class="calendar-resourcebook-content-block-option">
+					${tooltipCheckbox}
+					${tooltipCaption}
+				</div>
+			`;
+
+			const content = BX.Tag.render`
+				<div class="calendar-resourcebook-content-block-option" style="width: 100%;">
+					<div style="width: 100%;">
+						${tooltipCheckboxWrapper}
+						${this.tooltipConfigurator.getInput().prepareLayout()}
+					</div>
+				</div>
+			`;
+
+			this.additionaOptionsWrap.appendChild(content);
+
+			this.tooltipConfigurator.setCheckBox(tooltipCheckbox);
+			this.tooltipConfigurator.getInput().adjustVisibility();
+		}
+		//endregion
+
 		this._innerWrapper.appendChild(
 			BX.create(
 				"div",
@@ -563,6 +599,16 @@ export let customizeCrmEntityEditor = function(CrmConfigurator)
 				showAlways: this._showAlwaysCheckBox.checked,
 				multiple: true
 			};
+
+		if (this.tooltipConfigurator)
+		{
+			if (!this.tooltipConfigurator.validateInputText())
+			{
+				return;
+			}
+
+			params['HELP_MESSAGE'] = this.tooltipConfigurator.getTooltip();
+		}
 
 		if(this._field)
 		{

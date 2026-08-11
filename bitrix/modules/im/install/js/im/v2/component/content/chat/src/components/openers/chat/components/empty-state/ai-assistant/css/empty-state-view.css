@@ -1,0 +1,37 @@
+.bx-im-ai-assistant-empty-state-view__scope {
+	--bx-im-ai-assistant-empty-state-view-align-items: stretch;
+	--bx-im-ai-assistant-empty-state-view-gap: 0;
+
+	--bx-im-ai-assistant-empty-state-view-title-text-align: start;
+	--bx-im-ai-assistant-empty-state-view-title-margin-bottom: 0;
+}
+
+.bx-im-ai-assistant-empty-state-view {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+	align-items: var(--bx-im-ai-assistant-empty-state-view-align-items);
+	gap: var(--bx-im-ai-assistant-empty-state-view-gap);
+}
+
+.bx-im-ai-assistant-empty-state-view__title {
+	margin: 0 0 var(--bx-im-ai-assistant-empty-state-view-title-margin-bottom);
+	font-family: var(--im-font-family-system);
+	font-weight: 600;
+	font-size: var(--im-font-size-4xl);
+	color: var(--ui-color-base-white-fixed);
+	text-align: var(--bx-im-ai-assistant-empty-state-view-title-text-align);
+}
+
+.bx-im-ai-assistant-empty-state-view__textarea {
+	width: 100%;
+	margin-bottom: 16px;
+}
+
+.bx-im-ai-assistant-empty-state-view__suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inset-2xs2);
+	width: 100%;
+}

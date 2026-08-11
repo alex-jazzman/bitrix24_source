@@ -12,6 +12,19 @@
 	place-items: center;
 }
 
+.editor-chart-block-icon__icon,
+.editor-chart-block-icon__lottie {
+	grid-area: 1 / 1;
+}
+
+.editor-chart-block-icon__lottie {
+	pointer-events: none;
+}
+
+.editor-chart-block-icon.--lottie-playing .editor-chart-block-icon__icon {
+	visibility: hidden;
+}
+
 .editor-chart-block-icon.--deactivated {
 	background-color: var(--designer-bp-grey-bg);
 }
@@ -46,6 +59,10 @@
 
 .editor-chart-block-icon.--background-color-8 {
 	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
+}
+
+.editor-chart-block-icon.--background-color-9 {
+	background-color: var(--designer-bp-settings-bg);
 }
 
 .editor-chart-block-icon.--deactivated .editor-chart-block-icon__icon {

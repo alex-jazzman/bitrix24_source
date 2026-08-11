@@ -614,6 +614,144 @@
 		justify-content: center;
 	}
 }
+.bx-im-content-ai-assistant-empty-state__container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	padding: 10%;
+	box-sizing: border-box;
+}
+
+.bx-im-content-ai-assistant-empty-state__container .bx-im-ai-assistant-empty-state-view__scope {
+	--bx-im-ai-assistant-empty-state-view-align-items: center;
+	--bx-im-ai-assistant-empty-state-view-title-text-align: center;
+	--bx-im-ai-assistant-empty-state-view-title-margin-bottom: 24px;
+
+	max-width: 640px;
+}
+
+.bx-im-ai-assistant-empty-state-view__scope {
+	--bx-im-ai-assistant-empty-state-view-align-items: stretch;
+	--bx-im-ai-assistant-empty-state-view-gap: 0;
+
+	--bx-im-ai-assistant-empty-state-view-title-text-align: start;
+	--bx-im-ai-assistant-empty-state-view-title-margin-bottom: 0;
+}
+
+.bx-im-ai-assistant-empty-state-view {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+	align-items: var(--bx-im-ai-assistant-empty-state-view-align-items);
+	gap: var(--bx-im-ai-assistant-empty-state-view-gap);
+}
+
+.bx-im-ai-assistant-empty-state-view__title {
+	margin: 0 0 var(--bx-im-ai-assistant-empty-state-view-title-margin-bottom);
+	font-family: var(--im-font-family-system);
+	font-weight: 600;
+	font-size: var(--im-font-size-4xl);
+	color: var(--ui-color-base-white-fixed);
+	text-align: var(--bx-im-ai-assistant-empty-state-view-title-text-align);
+}
+
+.bx-im-ai-assistant-empty-state-view__textarea {
+	width: 100%;
+	margin-bottom: 16px;
+}
+
+.bx-im-ai-assistant-empty-state-view__suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inset-2xs2);
+	width: 100%;
+}
+
+.bx-im-ai-assistant-suggestion {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	border: 0;
+	min-width: 0;
+	cursor: pointer;
+	white-space: nowrap;
+	font-family: var(--im-font-family-system);
+
+	transition: background-color .15s ease, color .15s ease;
+}
+
+.bx-im-ai-assistant-suggestion.--overlay {
+	--bx-im-ai-assistant-suggestion-height: 28px;
+
+	height: var(--bx-im-ai-assistant-suggestion-height);
+	padding: 0 var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-pill);
+
+	background-color: var(--ui-color-chat-overall-overlay);
+	color: var(--ui-color-base-white-fixed);
+	box-shadow:
+		var(--ui-box-shadow-chips-default-x)
+		var(--ui-box-shadow-chips-default-y)
+		1px
+		var(--ui-box-shadow-chips-default-spread)
+		var(--ui-box-shadow-chips-default-color);
+
+	font-size: var(--im-font-size-md);
+	font-weight: 400;
+	line-height: var(--bx-im-ai-assistant-suggestion-height);
+}
+
+.bx-im-ai-assistant-suggestion.--overlay:hover {
+	background-color: var(--ui-color-chat-overall-overlay);
+	background-image: linear-gradient(
+		var(--ui-color-bg-state-hover-default),
+		var(--ui-color-bg-state-hover-default)
+	);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bx-im-ai-assistant-suggestion.--gradient {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-pill);
+
+	background: linear-gradient(
+		251deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 14.06%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 48.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 98.35%
+	);
+	box-shadow: none;
+
+	font-size: var(--im-font-size-xs);
+	font-weight: 500;
+	line-height: 15px;
+}
+
+.bx-im-ai-assistant-suggestion.--gradient .bx-im-ai-assistant-suggestion__text {
+	display: inline-block;
+
+	background-image: linear-gradient(
+		251deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.bx-im-ai-assistant-suggestion.--gradient:hover {
+	filter: brightness(0.97);
+}
+
 .bx-im-content-copilot-empty-state__container {
 	--im-content-copilot-empty-state__background-color_container: rgba(var(--im-color-palette-gray-90-rgb), 0.1);
 	--im-content-copilot-empty-state__font-color_text: var(--im-color-palette-white-base);

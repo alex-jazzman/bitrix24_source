@@ -10,9 +10,17 @@ BX.ready(function(){
 				if (placeholderVote)
 				{
 					BX.cleanNode(placeholderVote);
-					placeholderVote.appendChild(
-						BX.MessengerCommon.linesVoteHeadNodes(params.sessionId, params.voteValue, true)
-					);
+					var voteChild;
+					if (typeof BX.MessengerCommon !== "undefined")
+					{
+						voteChild = BX.MessengerCommon.linesVoteHeadNodes(params.sessionId, params.voteValue, true);
+					}
+					else
+					{
+						voteChild = BX.Dom.create("span", {attrs: {className: "bx-im-lines-rating"}});
+						voteChild.innerHTML = '<span class="bx-im-lines-rating-selected" style="width: ' + (params.voteValue * 20) + '%"></span>';
+					}
+					placeholderVote.appendChild(voteChild);
 				}
 			}
 
@@ -22,9 +30,24 @@ BX.ready(function(){
 				if (placeholderComment)
 				{
 					BX.cleanNode(placeholderComment);
-					placeholderComment.appendChild(
-						BX.MessengerCommon.linesCommentHeadNodes(params.sessionId, params.commentValue, true, "statistics")
-					);
+					var commentChild;
+					// MessengerCommon.linesCommentHeadNodes synchronously dereferences BXIM.messenger;
+					// fall back to a local render on pages without a messenger bootstrap.
+					if (typeof BX.MessengerCommon !== "undefined" && BX.MessengerCommon.BXIM && BX.MessengerCommon.BXIM.messenger)
+					{
+						commentChild = BX.MessengerCommon.linesCommentHeadNodes(params.sessionId, params.commentValue, true, "statistics");
+					}
+					else
+					{
+						commentChild = BX.Dom.create("span", {
+							props: {className: "bx-messenger-content-item-vote-comment-not-edit"},
+							html: (params.commentValue ? String(params.commentValue).replace(/\n/gi, '<br />') : '')
+						});
+					}
+					if (commentChild)
+					{
+						placeholderComment.appendChild(commentChild);
+					}
 				}
 			}
 		}

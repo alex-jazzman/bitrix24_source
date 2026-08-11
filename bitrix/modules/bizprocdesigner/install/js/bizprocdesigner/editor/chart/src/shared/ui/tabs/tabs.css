@@ -1,0 +1,24 @@
+.editor-chart-tabs {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin: 0;
+	padding: 0;
+}
+
+.editor-chart-tabs_tab {
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-3);
+	padding-bottom: 12px;
+	border-bottom: 2px solid transparent;
+	list-style-type: none;
+	cursor: pointer;
+}
+
+.editor-chart-tabs_tab.--selected {
+	border-bottom-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-0);
+	font-weight: var(--ui-font-weight-medium);
+}

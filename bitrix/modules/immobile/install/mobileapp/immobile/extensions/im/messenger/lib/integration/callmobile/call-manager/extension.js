@@ -2,6 +2,7 @@
  * @module im/messenger/lib/integration/callmobile/call-manager
  */
 jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { AnalyticsEvent } = require('analytics');
 
 	const {
@@ -39,17 +40,55 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.chatDataProvider = new ChatDataProvider();
 
+			/** @type {DialogId|null} */
+			this.activeCallDialogId = null;
+
 			this.bindMethods();
 		}
 
 		bindMethods()
 		{
 			this.messengerInitHandler = this.messengerInitHandler.bind(this);
+			this.onCallActive = this.onCallActive.bind(this);
+			this.onCallInactive = this.onCallInactive.bind(this);
 		}
 
 		subscribeMessengerInitEvent()
 		{
 			this.messengerInitService.onInit(this.messengerInitHandler);
+			BX.addCustomEvent(EventType.call.active, this.onCallActive);
+			BX.addCustomEvent(EventType.call.inactive, this.onCallInactive);
+		}
+
+		/**
+		 * @param {object} call
+		 * @return {void}
+		 */
+		onCallActive(call)
+		{
+			this.activeCallDialogId = String(call.associatedEntity.id);
+		}
+
+		/**
+		 * @return {void}
+		 */
+		onCallInactive()
+		{
+			this.activeCallDialogId = null;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {boolean}
+		 */
+		hasActiveCallInDialog(dialogId)
+		{
+			if (Type.isNil(this.activeCallDialogId))
+			{
+				return false;
+			}
+
+			return this.activeCallDialogId === String(dialogId);
 		}
 
 		/**

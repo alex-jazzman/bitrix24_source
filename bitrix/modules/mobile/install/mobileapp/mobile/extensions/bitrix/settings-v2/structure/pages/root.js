@@ -77,6 +77,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_SYNC'),
 						icon: Icon.REFRESH,
 						nextPage: SettingsPageId.SYNC,
+						prefilter: () => env.modulesData?.mobile?.isGuest !== true,
 					}),
 					createLink({
 						id: 'memory',
@@ -124,6 +125,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 								title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_FEEDBACK'),
 							});
 						},
+						prefilter: () => env.modulesData?.mobile?.isGuest !== true,
 					}),
 					createLink({
 						id: 'debug',

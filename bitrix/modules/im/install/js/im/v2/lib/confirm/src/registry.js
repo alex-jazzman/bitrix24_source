@@ -1,5 +1,6 @@
 export { showDeleteChatConfirm } from './chat/chat-delete';
 export { showLeaveChatConfirm } from './chat/chat-leave';
+export { showUpdateGuestLinkConfirm } from './chat/chat-invitation.js';
 export { showExitUpdateChatConfirm } from './chat-forms/chat-forms';
 export { showDesktopRestartConfirm, showDesktopConfirm, showDesktopDeleteConfirm } from './desktop/desktop';
 export { showDeleteChannelPostConfirm, showDeleteMessagesConfirm } from './message/message-delete';

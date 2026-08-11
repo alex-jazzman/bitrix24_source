@@ -1,20 +1,19 @@
 .editor-chart-node-settings-rule-card {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	border-radius: 12px;
-	padding: 18px;
 	margin: 18px 0;
+	background: var(--ui-color-base-8);
+	border-radius: 12px;
+	padding: 12px 18px 18px 18px;
 }
 
 .editor-chart-node-settings-rule-card__top {
 	display: flex;
-	align-items: center;
+	gap: 10px;
 }
 
-.editor-chart-node-settings-rule-card__top_delimeter {
-	width: 1px;
-	height: 11px;
-	margin: 0 4px;
-	background: var(--ui-color-palette-gray-50);
+.editor-chart-node-settings-rule-card__top_title {
+	font-size: 15px;
+	line-height: 19px;
+	color: var(--ui-color-base-4);
 }
 
 .editor-chart-node-settings-rule-card__dnd-icon {
@@ -23,4 +22,48 @@
 
 .editor-chart-node-settings-rule-card__dnd-icon:active {
 	cursor: grabbing;
+}
+
+.editor-chart-node-settings-rule-card__group {
+	padding: 18px;
+	border: 1px solid;
+	border-radius: 10px;
+	margin-top: 12px;
+}
+
+.editor-chart-node-settings-rule-card__group.--conditions {
+	border: 1px solid var(--ui-color-designer-bp-rules-blue-stroke);
+	background: var(--ui-color-designer-bp-rules-blue-bg);
+}
+
+.editor-chart-node-settings-rule-card__group.--actions {
+	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+}
+
+.editor-chart-node-settings-rule-card__group.--outputs {
+	border: 1px solid var(--ui-color-palette-gray-30);
+	background: var(--ui-color-palette-gray-02);
+}
+
+.editor-chart-node-settings-rule-card__group.--filters {
+	border: 1px solid var(--ui-color-accent-main-warning);
+	background: var(--ui-color-accent-soft-orange-3);
+}
+
+.editor-chart-node-settings-rule-card__group_add-construction-btn {
+	cursor: pointer;
+	font-size: var(--ui-font-size-md);
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-rule-card__group.--conditions .editor-chart-node-settings-rule-card__group_add-construction-btn {
+	color: #3391ff;
+	--ui-icon-set__icon-color: #3391ff;
+}
+
+.editor-chart-node-settings-rule-card__group.--actions .editor-chart-node-settings-rule-card__group_add-construction-btn {
+	color: var(--ui-color-green-50);
+	--ui-icon-set__icon-color: var(--ui-color-green-50);
 }

@@ -15,48 +15,10 @@ export const ReplicationSettingsDay = {
 	},
 	inject: {
 		replicateParams: {},
+		isTemplate: {},
 	},
 	emits: ['update'],
 	computed: {
-		period(): string
-		{
-			return markRaw(ReplicationPeriod.Daily);
-		},
-		useInterval: {
-			get(): boolean
-			{
-				return true;
-			},
-			set(useInterval: boolean): void
-			{
-				if (!useInterval)
-				{
-					return;
-				}
-
-				this.$emit('update', { everyDay: this.interval });
-			},
-		},
-		interval: {
-			get(): number
-			{
-				return this.replicateParams.everyDay || 1;
-			},
-			set(value: number): void
-			{
-				this.$emit('update', { everyDay: value });
-			},
-		},
-		hintText(): string
-		{
-			return Loc.getMessagePlural(
-				'TASKS_V2_REPLICATION_SETTINGS_DAY_HINT',
-				this.interval,
-				{
-					'#COUNT#': this.interval,
-				},
-			);
-		},
 		monthPeriod(): string
 		{
 			return markRaw(ReplicationPeriod.Monthly);
@@ -95,21 +57,7 @@ export const ReplicationSettingsDay = {
 	template: `
 		<div class="tasks-replication-sheet-replication-settings-day tasks-field-replication-sheet__stack">
 			<ReplicationInterval
-				v-model:useInterval="useInterval"
-				v-model:interval="interval"
-				:period
-				controlType="radio"
-				inputName="tasks-replication-sheet-daily-interval-type"
-			>
-				<template #hint>
-					<QuestionMark
-						class="tasks-replication-sheet-action-row__hint"
-						:hintText
-						:hintMaxWidth="260"
-					/>
-				</template>
-			</ReplicationInterval>
-			<ReplicationInterval
+				v-if="isTemplate"
 				v-model:useInterval="useMonthInterval"
 				v-model:interval="monthInterval"
 				:period="monthPeriod"

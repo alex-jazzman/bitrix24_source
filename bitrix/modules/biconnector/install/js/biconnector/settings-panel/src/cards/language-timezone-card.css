@@ -1,0 +1,27 @@
+.biconnector-settings-lang-tz__info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.biconnector-settings-lang-tz__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+.biconnector-settings-lang-tz__label {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3);
+	width: 88px;
+	flex-shrink: 0;
+}
+
+.biconnector-settings-lang-tz__value {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-1);
+}

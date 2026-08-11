@@ -1,38 +1,32 @@
-import { Loc, Event, Tag, Type } from 'main.core';
+import { Loc, Tag, Type } from 'main.core';
+import { Button } from 'ui.buttons';
 import { sendData } from 'ui.analytics';
 import { Builder } from 'crm.integration.analytics';
+import { bindHelpdeskLink, showDisableOldInvoicesConfirmation } from './sunset-actions';
 
 export type OldInvoiceReadonlyAlertContentOptions = {
-	lastTimeShownField: string,
-	lastTimeShownOptionName: string,
+	isAdmin: boolean,
 };
 
 export default class OldInvoiceReadonlyAlertContent
 {
 	#alertContainer: HTMLElement;
-	#lastTimeShownField: string;
-	#lastTimeShownOptionName: string;
+	#isAdmin: boolean;
 
 	constructor(alertContainer: HTMLElement, options: OldInvoiceReadonlyAlertContentOptions)
 	{
-		if (!Type.isString(options.lastTimeShownField))
+		if (!Type.isBoolean(options.isAdmin))
 		{
-			throw new TypeError('OldCardLayout.DisableAlert: \'lastTimeShownField\' must be string');
-		}
-
-		if (!Type.isString(options.lastTimeShownOptionName))
-		{
-			throw new TypeError('OldCardLayout.DisableAlert: \'lastTimeShownOptionName\' must be string');
+			throw new TypeError('OldCardLayout.DisableAlert: \'isAdmin\' must be boolean');
 		}
 
 		this.#alertContainer = alertContainer;
-		this.#lastTimeShownField = options.lastTimeShownField;
-		this.#lastTimeShownOptionName = options.lastTimeShownOptionName;
+		this.#isAdmin = options.isAdmin;
 	}
 
 	createNode(): HTMLElement
 	{
-		const { root, closeButton } = Tag.render`
+		const { root, buttonContainer } = Tag.render`
 			<div class="crm-old-layout-disable-alert">
 				<div class="crm-old-layout-left-part">
 					<span class="crm-old-layout-icon"></span>
@@ -44,32 +38,33 @@ export default class OldInvoiceReadonlyAlertContent
 					<p class="crm-old-layout-text ui-typography-text-md">
 						${this.#getText()}
 					</p>
+					<div class="crm-old-layout-buttons" ref="buttonContainer"></div>
 				</div>
-				<button class="crm-old-layout-close-button" ref="closeButton">
-				</button>
 			</div>
 		`;
 
-		const aboutLink = root.querySelector('.crm-old-layout-helpdesk-link');
-		Event.bind(aboutLink, 'click', () => {
-			top.BX.Helper.show('redirect=detail&code=14795982');
+		bindHelpdeskLink(root, () => {
 			sendData(Builder.OldEntityView.OldInvoiceReadonly.ClickEvent.buildData());
 		});
 
-		Event.bind(closeButton, 'click', () => {
-			const currentTimeInMs = Date.now();
-			const currentTimeInS = Math.round(currentTimeInMs / 1000);
-
-			BX.userOptions.save(
-				'crm',
-				this.#lastTimeShownField,
-				this.#lastTimeShownOptionName,
-				currentTimeInS,
-			);
-			this.#alertContainer.remove();
-
-			sendData(Builder.OldEntityView.OldInvoiceReadonly.CloseEvent.buildData());
-		});
+		if (this.#isAdmin)
+		{
+			const enableNewButton = new Button({
+				text: Loc.getMessage('CRM_OLD_INVOICE_SUNSET_BUTTON_TEXT'),
+				useAirDesign: true,
+				style: Button.AirStyle.OUTLINE,
+				size: Button.Size.SMALL,
+				onclick: () => {
+					showDisableOldInvoicesConfirmation({
+						message: Loc.getMessage('CRM_OLD_INVOICE_SUNSET_READONLY_CONFIRM_MESSAGE'),
+						confirmText: Loc.getMessage('CRM_OLD_INVOICE_SUNSET_CONFIRM_OK'),
+						cancelText: Loc.getMessage('CRM_OLD_INVOICE_SUNSET_CONFIRM_CANCEL'),
+						errorText: Loc.getMessage('CRM_OLD_INVOICE_SUNSET_ERROR'),
+					});
+				},
+			});
+			enableNewButton.renderTo(buttonContainer);
+		}
 
 		sendData(Builder.OldEntityView.OldInvoiceReadonly.ViewEvent.buildData());
 
@@ -78,17 +73,15 @@ export default class OldInvoiceReadonlyAlertContent
 
 	#getTitleText(): string
 	{
-		return Loc.getMessage('CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TITLE');
+		return Loc.getMessage('CRM_OLD_INVOICE_SUNSET_READONLY_TITLE');
 	}
 
 	#getText(): string
 	{
-		const helpdeskLink = '<a class="crm-old-layout-helpdesk-link">';
-
 		return Loc.getMessage(
-			'CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TEXT',
+			'CRM_OLD_INVOICE_SUNSET_READONLY_TEXT',
 			{
-				'[helpdeskLink]': helpdeskLink,
+				'[helpdeskLink]': '<a class="crm-old-layout-helpdesk-link">',
 				'[/helpdeskLink]': '</a>',
 			},
 		);

@@ -1,0 +1,1 @@
+{"version":3,"file":"call-lib-view-contract.bundle.js","sources":["../src/index.ts"],"sourcesContent":["// TODO: [call-ts] to think about replace\nexport const CallViewName = 'CallView';\n\nexport type { CallView } from './call-view-port';\n"],"names":["CallViewName"],"mappings":";;;;;;;CAAA;AACO,OAAMA,YAAY,GAAG;;;;;;;;"}

@@ -247,6 +247,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const DialogUtil = {
+		isTempAiAssistantDialogId(dialogId) {
+			return main_core.Type.isString(dialogId) && dialogId.startsWith(im_v2_const.TempAiAssistantPrefix);
+		},
+		buildTempAiAssistantDialogId() {
+			return `${im_v2_const.TempAiAssistantPrefix}-${TextUtil.getUuidV4()}`;
+		},
 		isDialogId(dialogId) {
 			const pattern = new RegExp(`^(?:${im_v2_const.DialogIdChatPrefix})?\\d+$`);
 			return pattern.test(dialogId);

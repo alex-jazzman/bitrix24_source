@@ -322,6 +322,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				if (main_core.Type.isArrayFilled(data.userFields)) {
 					data.userFields = tasks_v2_component_fields_userFields.userFieldsManager.prepareUserFieldsForTaskFromTemplate(data.userFields, tasks_v2_core.Core.getParams().taskUserFieldScheme);
 				}
+				data.replicate = false;
+				data.replicateParams = null;
 				tasks_v2_provider_service_taskService.taskService.extractTask(data, false);
 				if (data.checklist?.length > 0) {
 					await tasks_v2_provider_service_checkListService.checkListService.load(taskId);
@@ -351,22 +353,58 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				return [0, new Error(error.errors?.[0]?.message)];
 			}
 		}
+		async addFromExistingTask(taskId) {
+			return this.#addTemplate(tasks_v2_const.Endpoint.TemplateAddFromExistingTask, {
+				task: {
+					id: taskId
+				}
+			});
+		}
+		async addFromTaskEntity(task) {
+			const [id, error] = await this.#addTemplate(tasks_v2_const.Endpoint.TemplateAddFromTaskEntity, {
+				task: tasks_v2_provider_service_taskService.TaskMappers.mapModelToDto(task)
+			});
+			if (!error && task.checklist?.length > 0) {
+				void tasks_v2_provider_service_checkListService.checkListService.save(id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](task.checklist));
+			}
+			return [id, error];
+		}
+		async #addTemplate(endpoint, payload) {
+			try {
+				const data = await tasks_v2_lib_apiClient.apiClient.post(endpoint, payload);
+				data.id = tasks_v2_lib_idUtils.idUtils.boxTemplate(data.id);
+				tasks_v2_provider_service_taskService.taskService.extractTask({
+					...data,
+					rights: mapRights(data.rights)
+				});
+				main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TemplateAdded, {
+					template: tasks_v2_provider_service_taskService.taskService.getStoreTask(data.id),
+					initialTemplate: null
+				});
+				if (data.containsRelatedTasks) {
+					void tasks_v2_provider_service_relationService.relatedTasksService.list(data.id, true);
+				}
+				return [data.id, null];
+			} catch (error) {
+				console.error(endpoint, error);
+				return [0, new Error(error.errors?.[0]?.message)];
+			}
+		}
 		async update(id, fields) {
 			const templateBefore = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
-			if (!tasks_v2_provider_service_taskService.taskService.hasChanges(templateBefore, fields)) {
-				return {};
-			}
 			tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
 			if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
 				return {};
 			}
-			main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TemplateBeforeUpdate, {
-				template: tasks_v2_provider_service_taskService.taskService.getStoreTask(id),
-				fields: {
-					id,
-					...fields
-				}
-			});
+			if (tasks_v2_provider_service_taskService.taskService.hasChanges(templateBefore, fields)) {
+				main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TemplateBeforeUpdate, {
+					template: tasks_v2_provider_service_taskService.taskService.getStoreTask(id),
+					fields: {
+						id,
+						...fields
+					}
+				});
+			}
 			return this.#updateDebounced(id, fields, templateBefore);
 		}
 		async delete(id) {

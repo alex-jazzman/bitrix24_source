@@ -104,6 +104,8 @@ $arWorkflowParameters = $_POST['arWorkflowParameters'];
 $arWorkflowVariables = $_POST['arWorkflowVariables'];
 $arWorkflowConstants = $_POST['arWorkflowConstants'];
 
+$hideEditorComment = ($_POST['options']['hideEditorComment'] ?? '') === 'Y';
+
 $arErrors = [];
 $bShowId = false;
 
@@ -168,7 +170,10 @@ if (!empty($_POST["save"]) && check_bitrix_sessid())
 		}
 
 		$arCurrentActivity["Properties"]["Title"] = $currentRequest["title"];
-		$arCurrentActivity["Properties"]["EditorComment"] = $currentRequest["activity_editor_comment"];
+		if (!$hideEditorComment)
+		{
+			$arCurrentActivity["Properties"]["EditorComment"] = $currentRequest["activity_editor_comment"];
+		}
 		$arCurrentActivity["Name"] = $currentRequest["activity_id"];
 		$arCurrentActivity['Activated'] = $isActivated === 'N' ? 'N' : 'Y';
 		?>
@@ -215,7 +220,6 @@ $arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowT
 <?php $tableID = "tbl-activity-".randString(5); ?>
 <table class="adm-detail-content-table edit-table" id="<?= $tableID ?>">
 <?php
-
 
 $brokenLinks = [];
 if (!empty($_POST["postback"]))
@@ -280,7 +284,7 @@ function ShowBrokenLinkDetail(element)
 		</div>
 	<?php endif ?>
 <tr>
-	<td align="right" width="25%"><?= GetMessage("BIZPROC_AS_ACT_TITLE") ?></td>
+	<td align="right" width="25%"><?= GetMessage("BIZPROC_AS_ACT_TITLE_MSGVER_1") ?></td>
 	<td width="75%">
 		<table width="100%">
 			<tr>
@@ -290,9 +294,11 @@ function ShowBrokenLinkDetail(element)
 				<td width="5%">
 					[<a href="javascript:void(0)" onclick="HideShowId()" title="<?= GetMessage("BP_ACT_SET_ID_SHOWHIDE_1") ?>"><?= GetMessage("BP_ACT_SET_ID") ?></a>]
 				</td>
+				<?php if (!$hideEditorComment): ?>
 				<td width="5%">
-					[<a href="javascript:void(0)" onclick="HideShowId('id_activity_comment')" title="<?= GetMessage("BP_ACT_SET_COMMENT_SHOWHIDE_1") ?>"><?= GetMessage("BP_ACT_SET_COMMENT") ?></a>]
+					[<a href="javascript:void(0)" onclick="HideShowId('id_activity_comment')" title="<?= GetMessage("BP_ACT_SET_COMMENT_SHOWHIDE_MSGVER_1") ?>"><?= GetMessage("BP_ACT_SET_COMMENT_MSGVER_1") ?></a>]
 				</td>
+				<?php endif ?>
 			</tr>
 		</table>
 	</td>
@@ -301,10 +307,12 @@ function ShowBrokenLinkDetail(element)
 	<td align="right" width="25%"><?= GetMessage("BP_ACT_SET_ID_ROW_1") ?></td>
 	<td width="75%"><input type="text" name="activity_id" value="<?= htmlspecialcharsbx($activity_id) ?>" size="50"></td>
 </tr>
+<?php if (!$hideEditorComment): ?>
 <tr <?php if(empty($editorComment)): ?>style="display:none"<?php endif ?> id="id_activity_comment">
-	<td align="right" width="25%"><?= GetMessage("BP_ACT_SET_COMMENT_ROW") ?></td>
+	<td align="right" width="25%"><?= GetMessage("BP_ACT_SET_COMMENT_ROW_MSGVER_1") ?></td>
 	<td width="75%"><textarea cols="70" rows="3" name="activity_editor_comment"><?= htmlspecialcharsbx($editorComment) ?></textarea></td>
 </tr>
+<?php endif ?>
 
 <?php
 

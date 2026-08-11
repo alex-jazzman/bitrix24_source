@@ -74,3 +74,5 @@ $MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CHANNEL_NAME"] = "Активный з
 $MESS["CALLMOBILE_MESSAGE_VPN_IS_ACTIVE"] = "Отключите VPN. С ним качество звонка может быть хуже";
 $MESS["CALLMOBILE_MESSAGE_SWITCH_BP_DEVICE"] = "Чтобы переключиться на динамик телефона, отключите наушники";
 $MESS["CALLMOBILE_MESSAGE_POOR_CONNECTION_HINT"] = "Ваше соединение нестабильно. Попробуйте подключиться к другой сети";
+$MESS["MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED"] = "Чтобы присоединиться к этому звонку, перейдите в веб-версию Битрикс24";
+$MESS["MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED_UPDATE"] = "Чтобы присоединиться к этому звонку, обновите приложение или перейдите в веб-версию Битрикс24";

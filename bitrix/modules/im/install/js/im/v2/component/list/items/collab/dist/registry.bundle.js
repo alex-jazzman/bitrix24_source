@@ -130,6 +130,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
+			data-test-id="im_container-recent__unread-list"
 		>
 			<template #empty-state>
 				<RecentEmptyState 
@@ -466,7 +467,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			destroyCreateChatManager() {
 				im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.creationStatusChange, this.onCreationStatusChange);
-				if (this.isCreatingChat) {
+				const isOwnChatTypeCreation = im_v2_lib_createChat.CreateChatManager.getInstance().getChatType() === this.creatableChatType;
+				if (this.isCreatingChat && isOwnChatTypeCreation) {
 					im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 				}
 			},
@@ -839,6 +841,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
+			data-test-id="im_container-recent__unread-list"
 		>
 			<template #before-list>
 				<slot name="fixed-chats"></slot>

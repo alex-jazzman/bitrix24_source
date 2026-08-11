@@ -4,6 +4,7 @@ import { LegacyOtp } from './components/legacy-otp';
 import { PushOtp } from './components/push-otp';
 import { AlternativeMethods } from './components/alternative-methods';
 import { Sms } from './components/sms';
+import { Email } from './components/email';
 import { RecoveryCodes } from './components/recovery-codes';
 import { RecoverAccess } from './components/recover-access';
 import { ApplicationOfflineCode } from './components/application-offline-code';
@@ -19,6 +20,7 @@ export const Main = {
 		AlternativeMethods,
 		ApplicationOfflineCode,
 		Sms,
+		Email,
 		RecoveryCodes,
 		RecoverAccess,
 		Captcha,
@@ -39,6 +41,10 @@ export const Main = {
 		authOtpHelpLink: {
 			type: String,
 			default: '',
+		},
+		helpButtonConfigByStep: {
+			type: Object,
+			default: () => ({}),
 		},
 		authLoginUrl: {
 			type: String,
@@ -64,11 +70,23 @@ export const Main = {
 			type: Boolean,
 			default: false,
 		},
+		canLoginByEmail: {
+			type: Boolean,
+			default: false,
+		},
 		isRecoveryCodesEnabled: {
 			type: Boolean,
 			default: false,
 		},
 		maskedUserAuthPhoneNumber: {
+			type: String,
+			default: '',
+		},
+		maskedUserAuthEmail: {
+			type: String,
+			default: '',
+		},
+		recoveryCodesHelpLink: {
 			type: String,
 			default: '',
 		},
@@ -85,10 +103,6 @@ export const Main = {
 			default: '',
 		},
 		currentStep: {
-			type: String,
-			default: '',
-		},
-		recoveryCodesHelpLink: {
 			type: String,
 			default: '',
 		},
@@ -126,7 +140,7 @@ export const Main = {
 			isWaiting: false,
 			errorMessage: this.errorMessageText,
 			currentAuthStep: currentStep,
-			isAlternativeMethodsAvailable: (this.canLoginBySms || this.isRecoveryCodesEnabled),
+			isAlternativeMethodsAvailable: (this.canLoginBySms || this.canLoginByEmail || this.isRecoveryCodesEnabled),
 			pullClient: null,
 			pendingOtpCode: null,
 		};
@@ -139,12 +153,29 @@ export const Main = {
 				push: 'PushOtp',
 				alternative: 'AlternativeMethods',
 				sms: 'Sms',
+				email: 'Email',
 				recoveryCodes: 'RecoveryCodes',
 				recoverAccess: 'RecoverAccess',
 				applicationOfflineCode: 'ApplicationOfflineCode',
 			};
 
 			return components[this.currentAuthStep] || 'LegacyOtp';
+		},
+		currentHelpButtonConfig(): ?Object
+		{
+			const helpButtonConfig = this.helpButtonConfigByStep?.[this.currentAuthStep];
+
+			if (!helpButtonConfig)
+			{
+				return null;
+			}
+
+			if (helpButtonConfig.articleId)
+			{
+				return helpButtonConfig;
+			}
+
+			return null;
 		},
 	},
 	created()
@@ -177,6 +208,10 @@ export const Main = {
 		{
 			this.currentAuthStep = 'sms';
 		},
+		onShowEmail()
+		{
+			this.currentAuthStep = 'email';
+		},
 		onShowRecoveryCodes()
 		{
 			this.currentAuthStep = 'recoveryCodes';
@@ -200,6 +235,22 @@ export const Main = {
 		onClearErrors()
 		{
 			this.errorMessage = '';
+		},
+		onHelpButtonClick()
+		{
+			const articleId = this.currentHelpButtonConfig?.articleId;
+			const anchor = this.currentHelpButtonConfig?.anchor;
+
+			if (!articleId)
+			{
+				return;
+			}
+
+			const query = anchor
+				? `redirect=detail&code=${articleId}&anchor=${encodeURIComponent(anchor)}`
+				: `redirect=detail&code=${articleId}`;
+
+			BX.Helper.show(query);
 		},
 		initPushOtpSubscription()
 		{
@@ -286,8 +337,10 @@ export const Main = {
 		 :notShowLinks="notShowLinks"
 		 :isBitrix24="isBitrix24"
 		 :canLoginBySms="canLoginBySms"
+		 :canLoginByEmail="canLoginByEmail"
 		 :isRecoveryCodesEnabled="isRecoveryCodesEnabled"
 		 :maskedUserAuthPhoneNumber="maskedUserAuthPhoneNumber"
+		 :maskedUserAuthEmail="maskedUserAuthEmail"
 		 :userDevice="userDevice"
 		 :userData="userData"
 		 :accountChangeUrl="accountChangeUrl"
@@ -301,10 +354,19 @@ export const Main = {
 		 @back-to-push="onBackToPush"
 		 @back-to-legacy="onBackToLegacy"
 		 @show-sms="onShowSms"
+		 @show-email="onShowEmail"
 		 @show-recovery-codes="onShowRecoveryCodes"
 		 @show-recover-access="onShowRecoverAccess"
 		 @application-offline-code="onApplicationOfflineCode"
 		 @clear-errors="onClearErrors"
 		/>
+		<Teleport to=".intranet-body__footer-right" v-if="currentHelpButtonConfig">
+			<button type="button" class="intranet-help-widget intranet-page-base__help" @click="onHelpButtonClick">
+				<i class="ui-icon-set intranet-help-widget__icon"></i>
+				<span class="intranet-help-widget__text">
+					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_HELP') }}
+				</span>
+			</button>
+		</Teleport>
 	`,
 };

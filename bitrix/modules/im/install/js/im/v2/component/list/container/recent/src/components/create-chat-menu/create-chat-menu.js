@@ -6,7 +6,7 @@ import { Messenger } from 'im.public';
 import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
 import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
-import { PromoId, ChatType, ActionByUserType, SliderCode, type ChatTypeItem } from 'im.v2.const';
+import { PromoId, ChatType, ActionByUserType, CopilotRole, SliderCode, type ChatTypeItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
@@ -205,11 +205,21 @@ export const CreateChatMenu = {
 			}
 
 			this.showMenu = false;
+
+			if (FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable))
+			{
+				Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
+				void Messenger.openCopilot();
+
+				return;
+			}
+
 			this.isLoading = true;
 			try
 			{
 				const newDialogId = await this.getCopilotChatService().createDefaultChat();
-
+				Analytics.getInstance().ignoreNextChatOpen(newDialogId);
+				Analytics.getInstance().copilot.onCreateChat(newDialogId);
 				Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
 
 				this.isLoading = false;
@@ -237,6 +247,18 @@ export const CreateChatMenu = {
 		},
 		async onCopilotDialogSelectRole(role)
 		{
+			if (
+				FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable)
+				&& role.code === CopilotRole.universalCode
+			)
+			{
+				this.showMenu = false;
+				Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
+				void Messenger.openCopilot();
+
+				return;
+			}
+
 			await this.createCopilotChat(role.code);
 		},
 		async createCopilotChat(roleCode: string)
@@ -246,6 +268,9 @@ export const CreateChatMenu = {
 			try
 			{
 				const newDialogId = await this.getCopilotChatService().createChat({ roleCode });
+
+				Analytics.getInstance().copilot.onCreateChat(newDialogId);
+				Analytics.getInstance().ignoreNextChatOpen(newDialogId);
 
 				this.isLoading = false;
 				void Messenger.openChat(newDialogId);

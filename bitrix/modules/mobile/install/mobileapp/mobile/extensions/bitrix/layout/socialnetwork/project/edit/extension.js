@@ -7,6 +7,7 @@
 	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 	const { ProjectNameField } = require('layout/socialnetwork/project/fields/name');
 	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
+	const { guid } = require('utils/guid');
 
 	class ProjectEdit extends LayoutComponent
 	{
@@ -32,7 +33,7 @@
 			this.state = {
 				userId: props.userId,
 				userUploadedFilesFolder: props.userUploadedFilesFolder,
-				guid: this.getGuid(),
+				guid: guid(),
 				id: props.id,
 				name: props.name,
 				description: props.description,
@@ -63,15 +64,6 @@
 		get layoutWidget()
 		{
 			return this.props.layoutWidget;
-		}
-
-		getGuid()
-		{
-			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
-			};
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 		}
 
 		render()

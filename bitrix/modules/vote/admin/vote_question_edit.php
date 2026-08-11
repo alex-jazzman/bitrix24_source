@@ -438,7 +438,7 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
 			<td align="center" colspan="2"><?=InputType("radio","QUESTION_TYPE","text",$arQuestion["QUESTION_TYPE"],false)?>Text &nbsp;/&nbsp;<?=InputType("radio","QUESTION_TYPE","html",$arQuestion["QUESTION_TYPE"],false)?>HTML</td>
 		</tr>
 		<tr>
-			<td align="center" colspan="2"><textarea name="QUESTION" style="width:100%" rows="23"><?=$arQuestion["QUESTION"]?></textarea></td>
+			<td align="center" colspan="2"><textarea name="QUESTION" style="width:100%" rows="23"><?=htmlspecialcharsbx($arQuestion["QUESTION"])?></textarea></td>
 		</tr>
 	<?endif;?>
 

@@ -1,4 +1,5 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -19,14 +20,8 @@ if (CModule::IncludeModule('fileman'))
 	}
 }
 
-$userGroupID = "";
-$dbGroup = CGroup::GetList("", "", Array("STRING_ID" => "content_editor"));
-
-if($arGroup = $dbGroup -> Fetch())
-{
-	$userGroupID = (int)$arGroup["ID"];
-}
-else
+$userGroupID = CGroup::GetIDByCode("content_editor");
+if (!$userGroupID)
 {
 	$group = new CGroup;
 	$arFields = Array(

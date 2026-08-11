@@ -1,0 +1,261 @@
+.timeman-work-time-report-review-popup .popup-window-content,
+.timeman-work-time-report-popup .popup-window-content {
+	display: flex;
+}
+
+.tm-work-time-report {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding: var(--ui-space-stack-2xs, 4px) 0;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tm-work-time-report__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.tm-work-time-report__title-block {
+	display: flex;
+	gap: var(--ui-space-stack-3xs, 2px);
+	min-width: 0;
+	color: var(--ui-color-base-0, #000000);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tm-work-time-report__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 12px);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+}
+
+.tm-work-time-report__content::before {
+	content: '';
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	flex-shrink: 0;
+	align-self: stretch;
+	height: var(--ui-size-3xl, 32px);
+	margin-bottom: -44px;
+	background: linear-gradient(
+		180deg,
+		var(--ui-color-bg-content-primary, #FFFFFF) 0%,
+		rgba(255, 255, 255, 0.00) 50%
+	);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.tm-work-time-report__content.--scrolled::before {
+	opacity: 1;
+}
+
+.tm-work-time-report__content::after {
+	content: '';
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	flex-shrink: 0;
+	align-self: stretch;
+	height: var(--ui-size-3xl, 32px);
+	margin-top: -44px;
+	background: linear-gradient(
+		0deg,
+		var(--ui-color-bg-content-primary, #FFFFFF) 0%,
+		rgba(255, 255, 255, 0.00) 50%
+	);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.tm-work-time-report__content.--has-more::after {
+	opacity: 1;
+}
+
+.tm-work-time-report__content::-webkit-scrollbar {
+	width: 0;
+}
+
+.tm-work-time-report__footer {
+	display: flex;
+	justify-content: center;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding-top: var(--ui-space-stack-xs, 8px);
+}
+
+.tm-work-time-report__button-container {
+	z-index: 2;
+	display: flex;
+	justify-content: center;
+	position: sticky;
+	bottom: 0;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.00) 0%,
+		var(--ui-color-bg-content-primary, #FFFFFF) 50%
+	);
+}
+
+.tm-work-time-report__editor-title {
+	color: var(--ui-color-base-1, #535c69);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tm-work-time-report__editor {
+	position: relative;
+}
+
+.tm-work-time-report__editor-loader {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.55);
+	cursor: progress;
+}
+
+.tm-work-time-report__gpt-card-loader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100px;
+}
+
+.tm-work-time-report__people {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-xs2, 10px);
+	margin-bottom: 10px;
+}
+
+.tm-work-time-report__people-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-xs2, 10px);
+	font-size: var(--ui-font-size-lg, 15px);
+	color: var(--ui-color-base-1);
+}
+
+.tm-work-time-report__people-avatar {
+	--ui-icon-size: 24px;
+	flex-shrink: 0;
+}
+
+.tm-work-time-report-gpt-card {
+	width: 100%;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	padding: var(--ui-space-inset-md2, 18px);
+	border-radius: var(--ui-border-radius-md, 10px);
+	border: 1px solid var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2, #92AEFE);
+}
+
+.tm-work-time-report-gpt-card__title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.tm-work-time-report-gpt-card__title-icon {
+	--icon-size: 47px;
+	display: inline-block;
+	flex-shrink: 0;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	background: url("images/image/auto.png") no-repeat center;
+	background-size: 54px;
+}
+
+.tm-work-time-report-gpt-card__title-icon.--ai-report {
+	background: url("images/image/light-2.png") no-repeat center;
+	background-size: contain;
+}
+
+.tm-work-time-report-gpt-card__title-text {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tm-work-time-report-gpt-card__title-text.--ai-report {
+	background: radial-gradient(
+		278.71% 137.63% at 100% 5.43%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-7, #FF7438) 0%,
+		#FC83D4 23.89%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9D48FF) 53.14%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3F68FF) 78.23%,
+		#00A6FF 92.31%
+	);
+	-webkit-background-clip: text;
+	        background-clip: text;
+	color: transparent;
+}
+
+.tm-work-time-report-gpt-card__body {
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-lg, 1.5);
+	color: var(--ui-color-base-1, #333333);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.tm-work-time-report-gpt-card__in-progress {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding: var(--ui-space-stack-xs, 8px) 0;
+	color: var(--ui-color-base-2);
+}
+
+.tm-work-time-report-gpt-card__in-progress-text {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+
+}
+
+.tm-work-time-report-review__footer {
+	gap: var(--ui-space-inline-xs, 8px);
+	align-items: center;
+}
+
+.tm-work-time-report__comment {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.tm-work-time-report__footer-discuss-btn {
+	flex: 1;
+}
+
+.tm-work-time-report-review__like-readonly {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.tm-work-time-report-review__like-readonly.--approved {
+	--ui-icon-set__icon-color: var(--ui-color-primary-base, #2066b0);
+}
+
+.tm-work-time-report__comment {
+	padding: var(--ui-space-inset-xs, 8px);
+	border-radius: var(--ui-border-radius-sm, 8px);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-1, #333);
+	background: var(--ui-color-design-disabled-bg, #EDEEF0);
+}

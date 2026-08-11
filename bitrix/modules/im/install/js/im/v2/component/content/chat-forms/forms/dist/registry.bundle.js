@@ -85,17 +85,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onDescriptionChange(description) {
 				this.settings.description = description;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			async onCreateClick() {
 				this.isCreating = true;
@@ -240,10 +234,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageMessages="rights.manageMessages"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
+				@rightChange="onRightChange"
 			/>
 		</div>
 		<ButtonPanel
@@ -692,6 +683,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 			};
 		},
+		computed: {
+			ChatType: () => im_v2_const.ChatType
+		},
 		watch: {
 			chatTitle(newValue) {
 				im_v2_lib_createChat.CreateChatManager.getInstance().setChatTitle(newValue);
@@ -732,17 +726,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onDescriptionChange(description) {
 				this.settings.description = description;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			async onCreateClick() {
 				this.isCreating = true;
@@ -884,12 +872,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageMessages="rights.manageMessages"
+				:chatType="ChatType.collab"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
+				@rightChange="onRightChange"
 			/>
 		</div>
 		<ButtonPanel
@@ -939,6 +925,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
+			ChatType: () => im_v2_const.ChatType,
 			EmptyAvatarType: () => im_v2_component_elements_avatar.EmptyAvatarType
 		},
 		watch: {
@@ -974,17 +961,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onDescriptionChange(description) {
 				this.settings.description = description;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			onAvatarChange(newAvatarFile) {
 				this.avatarFile = newAvatarFile;
@@ -1141,12 +1122,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageMessages="rights.manageMessages"
+				:chatType="ChatType.videoconf"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
+				@rightChange="onRightChange"
 			/>
 		</div>
 		<ButtonPanel
@@ -1189,7 +1168,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageUsersAdd: '',
 					manageUsersDelete: '',
 					manageUi: '',
-					manageMessages: ''
+					manageMessages: '',
+					manageGuestInvites: ''
 				}
 			};
 		},
@@ -1235,17 +1215,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onDescriptionChange(description) {
 				this.settings.description = description;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			async onCreateClick() {
 				this.isCreating = true;
@@ -1263,7 +1237,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageUsersDelete: this.rights.manageUsersDelete,
 					manageUi: this.rights.manageUi,
 					manageMessages: this.rights.manageMessages,
-					messagesAutoDeleteDelay: this.settings.autoDeleteDelay
+					messagesAutoDeleteDelay: this.settings.autoDeleteDelay,
+					manageGuestInvites: this.rights.manageGuestInvites
 				}).catch(() => {
 					this.isCreating = false;
 				});
@@ -1286,6 +1261,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)?.close();
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)?.close();
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)?.close();
+				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageGuestInvitesMenu)?.close();
 			},
 			onLayoutChange(event) {
 				const {
@@ -1327,12 +1303,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageUsersAdd,
 					manageUsersDelete,
 					manageUi,
-					manageMessages
+					manageMessages,
+					manageGuestInvites
 				} = im_v2_lib_permission.PermissionManager.getInstance().getDefaultRolesForActionGroups();
 				this.rights.manageUsersAdd = manageUsersAdd;
 				this.rights.manageUsersDelete = manageUsersDelete;
 				this.rights.manageUi = manageUi;
 				this.rights.manageMessages = manageMessages;
+				this.rights.manageGuestInvites = manageGuestInvites;
 			},
 			getChatService() {
 				if (!this.chatService) {
@@ -1374,13 +1352,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageMessages="rights.manageMessages"
+				:manageGuestInvites="rights.manageGuestInvites"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
-			/> 
+				@rightChange="onRightChange"
+			/>
 		</div>
 		<ButtonPanel
 			:isCreating="isCreating"
@@ -1496,7 +1472,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageUsersAdd: '',
 					manageUsersDelete: '',
 					manageUi: '',
-					manageMessages: ''
+					manageMessages: '',
+					manageGuestInvites: ''
 				}
 			};
 		},
@@ -1507,6 +1484,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			chatId() {
 				return this.dialog.chatId;
+			},
+			chatType() {
+				return this.dialog.type;
 			},
 			collapsedUsers() {
 				if (!this.areUsersCollapsed) {
@@ -1545,17 +1525,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onManagersChange(managerIds) {
 				this.rights.managerIds = managerIds;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			onDescriptionChange(description) {
 				this.settings.description = description;
@@ -1571,6 +1545,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				this.rights.manageUi = this.dialog.permissions.manageUi;
 				this.rights.manageUsersAdd = this.dialog.permissions.manageUsersAdd;
 				this.rights.manageUsersDelete = this.dialog.permissions.manageUsersDelete;
+				this.rights.manageGuestInvites = this.dialog.permissions.manageGuestInvites;
 				this.settings.isAvailableInSearch = this.dialog.type === im_v2_const.ChatType.open;
 			},
 			async getMemberEntities() {
@@ -1603,7 +1578,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					manageUsersAdd: this.rights.manageUsersAdd,
 					manageUsersDelete: this.rights.manageUsersDelete,
 					manageUi: this.rights.manageUi,
-					manageMessages: this.rights.manageMessages
+					manageMessages: this.rights.manageMessages,
+					manageGuestInvites: this.rights.manageGuestInvites
 				}).catch(() => {
 					this.isUpdating = false;
 				});
@@ -1623,6 +1599,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)?.close();
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)?.close();
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)?.close();
+				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageGuestInvitesMenu)?.close();
 			},
 			getChatService() {
 				if (!this.chatService) {
@@ -1685,12 +1662,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:manageUsersDelete="rights.manageUsersDelete"
 					:manageUi="rights.manageUi"
 					:manageMessages="rights.manageMessages"
+					:manageGuestInvites="rights.manageGuestInvites"
+					:chatType="chatType"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>
@@ -1793,17 +1769,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onDescriptionChange(description) {
 				this.settings.description = description;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			onChatTypeChange(isAvailableInSearch) {
 				this.settings.isAvailableInSearch = isAvailableInSearch;
@@ -1945,10 +1915,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:manageMessages="rights.manageMessages"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>
@@ -2286,17 +2253,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			onManagersChange(managerIds) {
 				this.rights.managerIds = managerIds;
 			},
-			onManageUsersAddChange(newValue) {
-				this.rights.manageUsersAdd = newValue;
-			},
-			onManageUsersDeleteChange(newValue) {
-				this.rights.manageUsersDelete = newValue;
-			},
-			onManageUiChange(newValue) {
-				this.rights.manageUi = newValue;
-			},
-			onManageMessagesChange(newValue) {
-				this.rights.manageMessages = newValue;
+			onRightChange({
+				name,
+				value
+			}) {
+				this.rights[name] = value;
 			},
 			onDescriptionChange(description) {
 				this.settings.description = description;
@@ -2438,12 +2399,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:manageUsersDelete="rights.manageUsersDelete"
 					:manageUi="rights.manageUi"
 					:manageMessages="rights.manageMessages"
+					:chatType="ChatType.collab"
 					@ownerChange="onOwnerChange"
 					@managersChange="onManagersChange"
-					@manageUsersAddChange="onManageUsersAddChange"
-					@manageUsersDeleteChange="onManageUsersDeleteChange"
-					@manageUiChange="onManageUiChange"
-					@manageMessagesChange="onManageMessagesChange"
+					@rightChange="onRightChange"
 				/>
 			</template>
 		</div>

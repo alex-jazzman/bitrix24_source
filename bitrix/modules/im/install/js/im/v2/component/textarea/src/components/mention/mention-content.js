@@ -176,7 +176,17 @@ export const MentionPopupContent = {
 		},
 		needToShowAllParticipants(): boolean
 		{
-			return this.dialog.type !== ChatType.user;
+			if (this.dialog.type === ChatType.user)
+			{
+				return false;
+			}
+
+			if (this.dialog.type === ChatType.copilot)
+			{
+				return (new CopilotManager()).isGroupCopilotChat(this.dialogId);
+			}
+
+			return true;
 		},
 	},
 	watch:

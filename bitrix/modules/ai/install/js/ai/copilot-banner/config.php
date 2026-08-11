@@ -30,10 +30,10 @@ return [
 	'js' => 'dist/copilot-banner.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
-		'ui.icon-set.api.core',
-		'ui.hint',
 		'main.core.events',
+		'main.popup',
+		'ui.hint',
+		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 	'settings' => [

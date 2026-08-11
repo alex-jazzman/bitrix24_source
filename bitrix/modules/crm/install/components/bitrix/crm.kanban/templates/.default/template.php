@@ -16,7 +16,6 @@ use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Tour;
-use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -112,11 +111,6 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 $section = $arParams['EXTRA']['ANALYTICS']['c_section'] ?? null;
 $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 
-echo Tour\Permissions\AutomatedSolution::getInstance()
-	->setEntityTypeId($entityTypeId)
-	->build()
-;
-
 if ($entityTypeId === CCrmOwnerType::Lead || $entityTypeId === CCrmOwnerType::Deal)
 {
 	echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
@@ -131,15 +125,6 @@ if ($clientFieldsTour !== null)
 	;
 }
 unset($clientFieldsTour);
-
-$repeatSaleEntityTypeIds = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
-if (in_array($entityTypeId, $repeatSaleEntityTypeIds, true))
-{
-	print OnboardingPopup::getInstance()->setAnalytics([
-		'c_section' => $section,
-		'c_sub_section' => $subSection,
-	])->build();
-}
 
 if (defined('AIR_SITE_TEMPLATE'))
 {

@@ -103,11 +103,7 @@ else
 				if ($headerID === 'OPPORTUNITY')
 				{
 					// Special logic for OPPORTUNITY: replace it by product row sum if it specified
-					if($hasProducts):
-						?><td><?=round(CCrmProductRow::GetPrice($productRow) * CCrmProductRow::GetQuantity($productRow), 2)?></td><?
-					else:
-						?><td><?=isset($arDeal['OPPORTUNITY']) ? strval($arDeal['OPPORTUNITY']) : ''?></td><?
-					endif;
+					?><td><?=CCrmProductRow::ResolveExportRowSum($productRow, $arDeal['OPPORTUNITY'] ?? '')?></td><?
 
 					continue;
 				}

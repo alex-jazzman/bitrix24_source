@@ -211,7 +211,7 @@
 					this.syncInterface.showSyncButton();
 				}
 
-				if (this.util.userIsOwner() && !this.isCollabUser || this.isCollabCalendar)
+				if ((this.util.userIsOwner() && !this.util.isExtranetUser() && !this.isCollabUser) || this.isCollabCalendar)
 				{
 					this.sharingInterface = new BX.Calendar.Sharing.Interface({
 						buttonWrap: document.querySelector(`#${this.id}-sharing-container`),

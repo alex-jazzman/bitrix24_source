@@ -1,0 +1,6 @@
+<?php
+$MESS["TIMEMAN_GET_FULL_REPORT_ACTIVITY_DESCRIPTION"] = "Retrieves or sends the text of the work report for the specified period.";
+$MESS["TIMEMAN_GET_FULL_REPORT_ACTIVITY_NAME"] = "Get work report";
+$MESS["TIMEMAN_GET_FULL_REPORT_ACTIVITY_RETURN_REPORT_EXTENDED"] = "Extended report text";
+$MESS["TIMEMAN_GET_FULL_REPORT_ACTIVITY_RETURN_REPORT_TEXT"] = "Report text";
+$MESS["TIMEMAN_GET_FULL_REPORT_ACTIVITY_RETURN_TYPE"] = "Report type";

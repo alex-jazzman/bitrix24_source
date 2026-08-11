@@ -1,6 +1,6 @@
 module.exports = {
 	input: 'src/index.js',
 	output: 'dist/editor.bundle.js',
-	namespace: 'BX.Crm.MessageSender',
+	namespace: 'BX.Crm.MessageSender.Editor',
 	browserslist: true,
 };

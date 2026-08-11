@@ -1,4 +1,5 @@
 import { Tag, Dom, Type, Event, Runtime } from 'main.core';
+import './style.css';
 import {
 	Context,
 	ConditionGroup,

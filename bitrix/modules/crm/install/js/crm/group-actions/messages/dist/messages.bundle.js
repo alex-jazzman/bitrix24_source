@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_integration_analytics, main_core, main_core_events, main_popup, ui_entityCatalog, crm_autorun, ui_notification) {
+(function (exports, crm_integration_analytics, main_core, main_core_events, main_popup, ui_analytics, ui_entityCatalog, crm_autorun, ui_notification, crm_template_editor) {
 	'use strict';
 
 	async function fetchTemplates(entityTypeId, entityCategoryId) {
@@ -166,20 +166,24 @@ this.BX.Crm = this.BX.Crm || {};
 				categoryId: this.categoryId,
 				entityId: 0,
 				entityTypeId: this.entityTypeId,
-				onSelect: params => {
-					// this callback is called when templates placeholder is changed
-					createOrUpdatePlaceholder(this.templateParam.ORIGINAL_ID, this.entityTypeId, this.categoryId, {
-						id: params.id,
-						value: params.value,
-						entityType: params.entityType,
-						text: params.text
-					});
+				events: {
+					onUpdatePlaceholder: event => {
+						const {
+							filledPlaceholder
+						} = event.getData();
+						createOrUpdatePlaceholder(this.templateParam.ORIGINAL_ID, this.entityTypeId, this.categoryId, {
+							id: filledPlaceholder.PLACEHOLDER_ID,
+							value: filledPlaceholder.FIELD_NAME,
+							entityType: filledPlaceholder.FIELD_ENTITY_TYPE,
+							text: filledPlaceholder.FIELD_VALUE
+						});
+					}
 				}
 			};
 			const preview = this.templateParam.PREVIEW;
 			const placeholders = this.templateParam.PLACEHOLDERS || {};
 			const filledPlaceholders = this.templateParam.FILLED_PLACEHOLDERS || [];
-			editorInstance = new BX.Crm.Template.Editor(editorParams).setPlaceholders(placeholders).setFilledPlaceholders(filledPlaceholders);
+			editorInstance = new crm_template_editor.Editor(editorParams).setPlaceholders(placeholders).setFilledPlaceholders(filledPlaceholders);
 			editorInstance.setBody(preview);
 		},
 		unmounted() {
@@ -311,7 +315,7 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		#submitAnalytics() {
 			const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(this.#entityTypeId).setEvent(crm_integration_analytics.Dictionary.EVENT_WA_POPUP).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_LIST).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_POPUP_CLOSE).buildData();
-			BX.UI.Analytics.sendData(analyticsData);
+			ui_analytics.sendData(analyticsData);
 		}
 	}
 
@@ -469,7 +473,7 @@ this.BX.Crm = this.BX.Crm || {};
 				analyticsData = crm_integration_analytics.Builder.Communication.SendEvent.createDefault(this.#options.entityTypeId).setEvent(crm_integration_analytics.Dictionary.EVENT_WA_SEND).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_LIST).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_SEND).setContactsCount(this.#options.forAll ? 'all' : this.#options.selectedIds.length).setTemplateId(templateId);
 			}
 			if (analyticsData) {
-				BX.UI.Analytics.sendData(analyticsData.buildData());
+				ui_analytics.sendData(analyticsData.buildData());
 			}
 		}
 	}
@@ -477,5 +481,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.DEFAULT_PROVIDER = DEFAULT_PROVIDER;
 	exports.Messages = Messages;
 
-})(this.BX.Crm.GroupActions = this.BX.Crm.GroupActions || {}, BX.Crm.Integration.Analytics, BX, BX.Event, BX.Main, BX.UI, BX.Crm.Autorun, BX);
+})(this.BX.Crm.GroupActions = this.BX.Crm.GroupActions || {}, BX.Crm.Integration.Analytics, BX, BX.Event, BX.Main, BX.UI.Analytics, BX.UI, BX.Crm.Autorun, BX.UI.Notification, BX.Crm.Template);
 //# sourceMappingURL=messages.bundle.js.map

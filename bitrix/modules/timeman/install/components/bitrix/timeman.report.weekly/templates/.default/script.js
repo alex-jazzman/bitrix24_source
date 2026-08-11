@@ -50,6 +50,8 @@ function JCTimeManReport(id, params)
 
 	this.page = 0;
 
+	this.isReportsEnabled = (params.isReportsEnabled === true);
+
 	BX.ready(BX.delegate(this.Init, this));
 	BX.addCustomEvent('onWorkReportMarkChange', BX.proxy(this.UpdateCell,this));
 
@@ -671,12 +673,19 @@ JCTimeManReport.prototype.setData = function(data)
 	for(i=0;i<this.icons.length;i++)
 		this.icons[i].style.display = display;
 	this.PARTS.NAV.innerHTML = this.DATA.NAV;
-	var hashParams = this.getHashParams();
-	if (hashParams)
+
+	const hashParams = this.getHashParams();
+	if (this.isReportsEnabled && hashParams)
 	{
-		BX.StartSlider(hashParams.userId,hashParams.reportId);
-		window.location.hash = "";
-	 }
+		this.ShowNewReport(hashParams.userId, hashParams.reportId);
+		window.location.hash = '';
+	}
+	else if (hashParams)
+	{
+		BX.StartSlider(hashParams.userId, hashParams.reportId);
+		window.location.hash = '';
+	}
+
 	this.CheckOverdue();
 };
 
@@ -751,7 +760,6 @@ JCTimeManReport.prototype.UpdateCell = function(data)
 
 JCTimeManReport.prototype.ShowOverdue = function(data)
 {
-	var showFromHandler = BX.proxy(function(){BXTIMEMAN.ShowFormWeekly(data)},this);
 	var animation = new BX.fx({
 		start:0,
 		finish :22,
@@ -768,7 +776,14 @@ JCTimeManReport.prototype.ShowOverdue = function(data)
 		},
 		callback_complete:BX.proxy(function()
 		{
-			var showFormHandler = BX.proxy(function(){BXTIMEMAN.ShowFormWeekly(this.DATA.OVERDUE)},this);
+			const showFormHandler = (
+				!this.isReportsEnabled
+					? BX.proxy(function(){BXTIMEMAN.ShowFormWeekly(this.DATA.OVERDUE)},this)
+					: async () => {
+						const { WorkTimeReport } = await BX.Runtime.loadExtension('timeman.work-time-report');
+						(new WorkTimeReport()).open('weekly');
+					}
+			);
 			BX("bx-report-overdue").appendChild(
 				BX.create("SPAN",{
 					html: BX.message("JS_CORE_TMR_OVERDUE_REPORT")+" "
@@ -837,7 +852,7 @@ JCTimeManReport.prototype.setReportsData = function(data)
 					var userdata =	data[i];
 					/*if(!cell.bxentry)
 						this.arCellObjects[this.arCellObjects.length] = cell.bxentry = BX.delegate(this.ShowSlider,this);//new BX.JSTimeManReportFullForm(userdata,cell,this.SETTINGS.LANG);	*/
-						cell.onclick = this.ShowSlider;
+						cell.onclick = this.ShowSlider.bind(this, cell);
 						window.SLIDE[window.SLIDE.length] = {
 							oCell:cell,
 							report:userdata.ID,
@@ -871,25 +886,53 @@ JCTimeManReport.prototype.setReportsData = function(data)
 
 	BX.timeman.closeWait(this.DIV);
 }
-JCTimeManReport.prototype.ShowSlider = function()
+JCTimeManReport.prototype.ShowSlider = function(cell)
 {
 	for (i = 0; i < window.SLIDE.length; i++)
 	{
-		if (window.SLIDE[i].oCell == this)
+		if (window.SLIDE[i].oCell == cell)
 		{
-			BX.StartSlider(window.SLIDE[i].user_id,window.SLIDE[i].report);
-			break;
+			if ((this instanceof JCTimeManReport) && this.isReportsEnabled)
+			{
+				this.ShowNewReport(window.SLIDE[i].user_id, window.SLIDE[i].report);
+
+				break;
+			}
+			else
+			{
+				BX.StartSlider(window.SLIDE[i].user_id,window.SLIDE[i].report);
+
+				break;
+			}
 		}
-		else if(this instanceof JCTimeManReport)
+		else if (this instanceof JCTimeManReport)
 		{
-			var hashParams = this.getHashParams();
-			if (hashParams)
+			const hashParams = this.getHashParams();
+			if (this.isReportsEnabled && hashParams)
+			{
+				this.ShowNewReport(hashParams.userId, hashParams.reportId);
+
+				break;
+			}
+			else if (hashParams)
 			{
 				BX.StartSlider(hashParams.userId, hashParams.reportId);
+
 				break;
 			}
 		}
 	}
+}
+
+JCTimeManReport.prototype.ShowNewReport = function(userId, reportId)
+{
+	BX.Runtime.loadExtension('timeman.work-time-report')
+		.then(({ WorkTimeReportReview }) => {
+			(new WorkTimeReportReview()).open(
+				parseInt(userId, 10),
+				parseInt(reportId, 10),
+			);
+		});
 }
 /**************************************************************************/
 

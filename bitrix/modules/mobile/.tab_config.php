@@ -73,6 +73,11 @@ $config = [
 		'task' => 400,
 		'menu' => 1000,
 	],
+	'defaultGuestPreset' => [
+		'chat' => 100,
+		'call_list' => 200,
+		'menu' => 1000,
+	],
 	/** @see Bitrix\Mobile\Tab\Manager::migratePresetsByVersion */
 	'presetLegacy' => [
 		'currentVersion' => 1, // up version if you change legacy preset

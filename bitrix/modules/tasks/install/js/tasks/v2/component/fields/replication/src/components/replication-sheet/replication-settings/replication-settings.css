@@ -1,0 +1,16 @@
+.tasks-field-replication-repeat-select {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-field-replication-secondary {
+	margin-right: 16px;
+}
+
+.tasks-field-replication-period-select {
+	width: 160px;
+}
+
+.tasks-field-replication-period-select .ui-system-input {
+	padding-bottom: 0;
+}

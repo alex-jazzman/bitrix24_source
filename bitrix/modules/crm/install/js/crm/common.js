@@ -14367,7 +14367,7 @@ if(typeof BX.Crm.EntityEvent === "undefined")
 			};
 		},
 
-			unsubscribe(handler)
+		unsubscribe(handler)
 		{
 			if (BX.Crm.EntityEvent.handlers.has(handler))
 			{

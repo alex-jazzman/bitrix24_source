@@ -4,12 +4,15 @@ import Item from './item';
 import Backend from "../backend";
 import Options from "../options";
 import {MessageBox} from 'ui.dialogs.messagebox';
-import ItemUserFavorites from "./item-user-favorites";
-import ItemAdminShared from "./item-admin-shared";
+import {
+	ITEM_CODE_ADMIN_SHARED,
+	ITEM_CODE_USER_FAVORITES,
+	ITEM_CODE_USER_SELF,
+} from "./item-codes";
 
 export default class ItemUserSelf extends Item
 {
-	static code = 'self';
+	static code = ITEM_CODE_USER_SELF;
 
 	canDelete(): boolean
 	{
@@ -21,7 +24,7 @@ export default class ItemUserSelf extends Item
 		return Backend
 			.deleteSelfITem(this.getId())
 			.then(() => {
-				if (this.storage.indexOf(ItemUserFavorites.code) >= 0)
+				if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0)
 				{
 					Backend.deleteFavoritesItemMenu({id: this.getId()});
 				}
@@ -73,8 +76,8 @@ export default class ItemUserSelf extends Item
 						})
 						.then(() => {
 							this.showMessage(Loc.getMessage('MENU_ITEM_WAS_ADDED_TO_ALL'));
-							this.container.dataset.type = ItemAdminShared.code;
-							this.storage.push(ItemUserSelf.code);
+							this.container.dataset.type = ITEM_CODE_ADMIN_SHARED;
+							this.storage.push(ITEM_CODE_USER_SELF);
 							this.container.dataset.storage = this.storage.join(',');
 							EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
 						})
@@ -116,4 +119,3 @@ export default class ItemUserSelf extends Item
 		});
 	}
 }
-

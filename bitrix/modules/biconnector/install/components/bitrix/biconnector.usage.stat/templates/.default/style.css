@@ -13,13 +13,27 @@
 	margin: 0;
 	border: none;
 	border-bottom: 1px dashed;
-	color: #2066B0;
+	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
 	transition: 170ms linear all;
 }
 
 .biconnector-usage-stat-action-link:hover {
-	border-bottom-color: transparent;
+	border-bottom: 1px dashed;
+	text-decoration: none !important;
+}
+
+.biconnector-usage-stat-link {
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+	border: none;
+}
+
+.biconnector-usage-stat-link__icon {
+	display: inline-block;
+	vertical-align: top;
+	margin-right: 4px;
+	--ui-icon-set__icon-size: 18px;
 }
 
 .ui-page-slider-wrapper{
@@ -38,4 +52,8 @@
 
 .ui-btn-icon-reload.ui-btn-primary {
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-reload.svg);
+}
+
+.biconnector-usage-stat-load-level .ui-label-inner {
+	text-transform: uppercase;
 }

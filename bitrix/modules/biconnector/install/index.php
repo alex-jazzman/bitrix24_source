@@ -138,6 +138,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onExport');
 			$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onFinish');
 			$eventManager->registerEventHandler('rest', 'onBeforeApplicationUninstall', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onBeforeRestApplicationDelete');
+			$eventManager->registerEventHandler('biconnector', 'onAfterSupersetStatusChange', 'biconnector', '\Bitrix\BIConnector\Superset\MarketAccessManager', 'onAfterSupersetStatusChange');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'createServiceInstance');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'createServiceInstance');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'createServiceInstance');
@@ -266,6 +267,7 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationExport', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onExport');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onFinish');
 		$eventManager->unRegisterEventHandler('rest', 'onBeforeApplicationUninstall', 'biconnector', '\Bitrix\BiConnector\Configuration\Action', 'onBeforeRestApplicationDelete');
+		$eventManager->unRegisterEventHandler('biconnector', 'onAfterSupersetStatusChange', 'biconnector', '\Bitrix\BIConnector\Superset\MarketAccessManager', 'onAfterSupersetStatusChange');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'createServiceInstance');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'createServiceInstance');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'createServiceInstance');

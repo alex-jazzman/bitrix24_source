@@ -16,4 +16,9 @@ export const InviteNotifier = {
 			autoHideDelay: 2000,
 		});
 	},
+
+	onPartialError(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_INVITE_PARTIAL_ERROR'));
+	},
 };

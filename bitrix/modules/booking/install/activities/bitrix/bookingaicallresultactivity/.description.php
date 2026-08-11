@@ -25,7 +25,7 @@ $arActivityDescription = (new ActivityDescription(
 	->setExcluded(
 		!(
 			Loader::includeModule('booking')
-			&& Container::getAiCallMessageSender()->canUse()
+			&& Container::getAiCallAvailabilityService()->isAvailable()
 		)
 	)
 	->toArray()

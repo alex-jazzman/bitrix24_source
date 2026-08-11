@@ -4,6 +4,7 @@ import { Outline } from 'ui.icon-set.api.core';
 import { BIcon, Set as IconsSet } from 'ui.icon-set.api.vue';
 import { type PopupOptions } from 'main.popup';
 
+import { showUpdateGuestLinkConfirm } from 'im.v2.lib.confirm';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import './css/copy-invite-link.css';
@@ -13,6 +14,7 @@ export const CopyInviteLink = {
 	name: 'CopyInviteLink',
 	components: { UiButton, BIcon },
 	directives: { hint },
+	inject: ['enableAutoHide', 'disableAutoHide'],
 	props: {
 		dialogId: {
 			type: String,
@@ -52,7 +54,7 @@ export const CopyInviteLink = {
 		updateLinkHint(): { text: string, popupOptions: PopupOptions }
 		{
 			return {
-				text: this.loc('IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT'),
+				text: this.loc('IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT_MSGVER_1'),
 				popupOptions: {
 					width: 278,
 					bindOptions: {
@@ -73,6 +75,20 @@ export const CopyInviteLink = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
+		async confirmAndUpdateInviteLink()
+		{
+			this.disableAutoHide();
+			const confirmResult = await showUpdateGuestLinkConfirm();
+			if (!confirmResult)
+			{
+				this.enableAutoHide();
+
+				return;
+			}
+
+			this.enableAutoHide();
+			this.$emit('onUpdateInviteLink');
+		},
 	},
 	template: `
 		<div v-if="isInviteLinkAvailable" class="bx-im-copy-invite-link__invite-block --link">
@@ -92,7 +108,7 @@ export const CopyInviteLink = {
 				v-hint="updateLinkHint"
 				:class="{'--loading': isUpdatingInviteLink}"
 				class="bx-im-copy-invite-link__update-link_button"
-				@click="$emit('onUpdateInviteLink')"
+				@click="confirmAndUpdateInviteLink"
 			>
 				<BIcon :name="refreshIcon" :size="20" />
 			</button>

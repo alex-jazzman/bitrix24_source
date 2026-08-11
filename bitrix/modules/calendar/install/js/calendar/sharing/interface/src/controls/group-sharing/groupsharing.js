@@ -1,5 +1,7 @@
-import DialogNew from '../dialog-new';
+import { ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+
+import DialogNew from '../dialog-new';
 import GroupSharingButton from '../groupsharingbutton';
 
 export default class GroupSharing extends GroupSharingButton
@@ -26,26 +28,23 @@ export default class GroupSharing extends GroupSharingButton
 	 */
 	openDialog()
 	{
-		if (!this.newDialog)
-		{
-			this.newDialog = new DialogNew({
-				bindElement: this.bindElement,
-				sharingUrl: this.sharingUrl,
-				linkHash: this.linkHash,
-				sharingRule: this.sharingRule,
-				context: this.context,
-				calendarSettings: {
-					weekHolidays: this.calendarSettings.week_holidays,
-					weekStart: this.calendarSettings.week_start,
-					workTimeStart: this.calendarSettings.work_time_start,
-					workTimeEnd: this.calendarSettings.work_time_end,
-				},
-				userInfo: this.userInfo,
-				settingsCollapsed: this.sharingSettingsCollapsed,
-				sortJointLinksByFrequentUse: this.sortJointLinksByFrequentUse,
-				calendarContext: this.calendarContext,
-			});
-		}
+		this.newDialog ??= new DialogNew({
+			bindElement: this.bindElement,
+			sharingUrl: this.sharingUrl,
+			linkHash: this.linkHash,
+			sharingRule: this.sharingRule,
+			context: this.context,
+			calendarSettings: {
+				weekHolidays: this.calendarSettings.week_holidays,
+				weekStart: this.calendarSettings.week_start,
+				workTimeStart: this.calendarSettings.work_time_start,
+				workTimeEnd: this.calendarSettings.work_time_end,
+			},
+			userInfo: this.userInfo,
+			settingsCollapsed: this.sharingSettingsCollapsed,
+			sortJointLinksByFrequentUse: this.sortJointLinksByFrequentUse,
+			calendarContext: this.calendarContext,
+		});
 
 		if (!this.newDialog.isShown())
 		{
@@ -56,22 +55,19 @@ export default class GroupSharing extends GroupSharingButton
 	/**
 	 * @override
 	 */
-	enableSharing()
+	async enableSharing()
 	{
-		const event = 'Calendar.Sharing.copyLinkButton:onSharingEnabled';
-		const action = 'calendar.api.sharinggroupajax.enableSharing';
-		const data = { groupId: this.calendarContext.sharingObjectId };
+		const response = await ajax.runAction(
+			'calendar.api.sharinggroupajax.enableSharing',
+			{ data: { groupId: this.calendarContext.sharingObjectId } },
+		);
 
-		BX.ajax.runAction(action, { data })
-			.then((response) => {
-				EventEmitter.emit(
-					event,
-					{
-						isChecked: true,
-						url: response.data.url,
-					},
-				);
-			})
-		;
+		EventEmitter.emit(
+			'Calendar.Sharing.copyLinkButton:onSharingEnabled',
+			{
+				isChecked: true,
+				url: response.data.url,
+			},
+		);
 	}
 }

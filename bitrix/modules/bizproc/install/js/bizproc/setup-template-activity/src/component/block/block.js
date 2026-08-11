@@ -89,28 +89,37 @@ export const BlockComponent = {
 					class="bizproc-setuptemplateactivity-block__items"
 					data-draggable-container="true"
 				>
-					<div
+					<template
 						v-for="(item, itemIndex) in items"
 						:key="item.id"
-						class="bizproc-setuptemplateactivity-draggable-wrapper"
-						data-draggable-item="true"
 					>
 						<div
-							v-if="showDropPlaceholder(dnd, itemIndex)"
-							class="bizproc-setuptemplateactivity-drop-placeholder"
-						></div>
+							class="bizproc-setuptemplateactivity-draggable-wrapper"
+							data-draggable-item="true"
+						>
+							<div
+								v-if="showDropPlaceholder(dnd, itemIndex)"
+								class="bizproc-setuptemplateactivity-drop-placeholder"
+							></div>
+							<slot
+								name="item"
+								:item="item"
+								:itemIndex="itemIndex"
+							></slot>
+						</div>
 						<slot
-							name="item"
+							name="after-item"
 							:item="item"
 							:itemIndex="itemIndex"
 						></slot>
-					</div>
+					</template>
 					<div
 						v-if="showFinalDropPlaceholder(dnd)"
 						class="bizproc-setuptemplateactivity-drop-placeholder"
 					></div>
 				</div>
 			</DraggableContainer>
+			<slot name="before-footer"/>
 			<div class="bizproc-setuptemplateactivity-block__footer">
 				<div class="bizproc-setuptemplateactivity-block__footer-wrap">
 					<slot name="footer"/>

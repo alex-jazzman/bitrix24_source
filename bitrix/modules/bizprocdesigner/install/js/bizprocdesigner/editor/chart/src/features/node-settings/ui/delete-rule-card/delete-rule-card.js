@@ -1,11 +1,9 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
-
 import { mapActions } from 'ui.vue3.pinia';
 
-// eslint-disable-next-line no-unused-vars
-import { useNodeSettingsStore, type TRuleCard } from '../../../../entities/node-settings';
+import { useNodeSettingsStore } from '../../../../entities/node-settings';
+
+import './style.css';
 
 // @vue/component
 export const DeleteRuleCard = {

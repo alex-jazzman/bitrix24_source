@@ -20,7 +20,9 @@ export type ComplexNodeLoadSettingsPayload = {
 	title: string,
 	description: string,
 	rules: Record<Rule["portId"], Rule>,
-	actionDictionary: Record<string, ActionDictEntry>,
+	actions: Record<string, ActionDictEntry>,
+	fixedDocumentType: Array<string> | null,
+	filterSupported: boolean,
 }
 
 export const complexNodeApi = Object.freeze({

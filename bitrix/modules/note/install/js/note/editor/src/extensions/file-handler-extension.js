@@ -36,16 +36,21 @@ function insertAttachmentNode(editor: Object, payload: Object, position: number 
 	}
 
 	const newNode = schemaNodeType.create(attrs);
+	// Inline result (image) must be wrapped in a paragraph to be legal at the document root.
+	const paragraphType = editor?.state?.schema?.nodes?.paragraph;
+	const nodeToInsert = (newNode.isInline && paragraphType)
+		? paragraphType.create(null, newNode)
+		: newNode;
 	if (Type.isNumber(position))
 	{
-		editor.view.dispatch(editor.state.tr.insert(position, newNode));
+		editor.view.dispatch(editor.state.tr.insert(position, nodeToInsert));
 
-		return newNode.nodeSize;
+		return nodeToInsert.nodeSize;
 	}
 
-	editor.chain().focus().insertContent(newNode.toJSON()).run();
+	editor.chain().focus().insertContent(nodeToInsert.toJSON()).run();
 
-	return newNode.nodeSize;
+	return nodeToInsert.nodeSize;
 }
 
 async function uploadOne(

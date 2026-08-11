@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/dialog/lib/optimistic-chat-manager/text-field-handler', (require, exports, module) => {
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/controller/dialog/lib/loc');
+	const { OptimisticAssistantButtonManager } = require('im/messenger/controller/dialog/lib/optimistic-chat-manager/assistant-button-manager');
 
 	/**
 	 * @class TextFieldOptimisticHandler
@@ -32,7 +33,6 @@ jn.define('im/messenger/controller/dialog/lib/optimistic-chat-manager/text-field
 
 		#chatType;
 		#dialogLocator;
-		#assistantButtons;
 		#pendingText = '';
 		#changeTextHandler;
 
@@ -40,13 +40,11 @@ jn.define('im/messenger/controller/dialog/lib/optimistic-chat-manager/text-field
 		 * @param {Object} params
 		 * @param {string} params.chatType
 		 * @param {DialogLocator} params.dialogLocator
-		 * @param {AssistantButton[]} params.assistantButtons
 		 */
-		constructor({ chatType, dialogLocator, assistantButtons })
+		constructor({ chatType, dialogLocator })
 		{
 			this.#chatType = chatType;
 			this.#dialogLocator = dialogLocator;
-			this.#assistantButtons = assistantButtons;
 			this.#changeTextHandler = this.#onChangeText.bind(this);
 		}
 
@@ -99,7 +97,7 @@ jn.define('im/messenger/controller/dialog/lib/optimistic-chat-manager/text-field
 		{
 			const view = this.#dialogLocator.get('view');
 			view.setInputPlaceholder(Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT_V2'));
-			void view.showAssistantButtons(this.#assistantButtons);
+			void view.showAssistantButtons(OptimisticAssistantButtonManager.buildButtons(this.#chatType));
 			view.showTextField(true);
 			view.hideChatJoinButton();
 		}

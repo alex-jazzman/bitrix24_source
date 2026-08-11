@@ -11,6 +11,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 	const { PlainCallJwt } = require('call/calls/plain-jwt');
 	const { PlainCall } = require('call/calls/plain');
 	const { VoximplantCall } = require('call/calls/voximplant');
+	const { stuckCallFinishTracker } = require('call/calls/stuck-call-finish-tracker');
 
 
 	const blankAvatar = '/bitrix/js/im/images/blank.gif';
@@ -468,6 +469,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					video: isVideo,
 					autoAnswer: true,
 					ignoreCallTimeout: true,
+					isAlreadyInCall,
+					isActiveCallPlatformIsMobile,
 					provider,
 				}], 'calls');
 			}
@@ -693,6 +696,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					},
 					debug: config.debug === true,
 					scheme: BX.Call.Scheme.jwt,
+					invitePeriod: config.invitePeriod || CallSettingsManager.callInvitePeriod,
 				});
 
 				this.jwtCalls[call.uuid] = call;
@@ -815,6 +819,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 						connectionData: createCallResponse.connectionData,
 						isCopilotActive: callFields.RECORD_AUDIO,
 						scheme: BX.Call.Scheme.classic,
+						invitePeriod: config.invitePeriod || CallSettingsManager.callInvitePeriod,
 					});
 
 					this.legacyCalls[callFields.ID] = call;
@@ -1080,6 +1085,28 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			const callUuid = params.call?.UUID || params.call?.uuid;
 			const call = isLegacyCall ? this.legacyCalls[callId] : this.jwtCalls[callUuid];
 
+			// Cancel any pending stuck-call recovery finish for this call before
+			// dispatching: if the backend already finished the call, the engine
+			// will clean up the UI from this pull event, so a client-side
+			// CallManager.finish REST call (scheduled in the controller) is
+			// redundant. The controller may schedule recovery with any of three
+			// (callId, callUuid) shapes — CallStub passes (callId, null),
+			// PlainCallJwt passes (callId, callUuid), and the early auto-finish
+			// branch in util.js passes (null, callUuid) — so cancel all three
+			// key variants here.
+			if (command === 'Call::finish' && (callUuid || callId))
+			{
+				if (callUuid)
+				{
+					stuckCallFinishTracker.cancelPending(null, callUuid);
+				}
+				if (callId)
+				{
+					stuckCallFinishTracker.cancelPending(callId, null);
+				}
+				stuckCallFinishTracker.cancelPending(callId, callUuid);
+			}
+
 			const handlers = {
 				chatUserAdd: this.#onChatUserChange.bind(this),
 				chatUserLeave: this.#onChatUserChange.bind(this),
@@ -1194,7 +1221,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		#onLogTokenUpdate(params)
 		{
 			const call = this.jwtCalls[params.uuid];
-			call?.addLogToken(params.logToken);
+			if (!BX.type.isFunction(call?.addLogToken))
+			{
+				return;
+			}
+			call.addLogToken(params.logToken);
 		}
 
 		_onCallTokenUpdate(initial, params)
@@ -2813,6 +2844,12 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 
 			return value;
+		}
+
+		getIsLargeRoom(chatId)
+		{
+			const chatIds = BX.componentParameters.get('getBigRoomChats');
+			return chatIds.includes(chatId)
 		}
 
 		isConnectionStatsPoor(stats)

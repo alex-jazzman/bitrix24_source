@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_editor, note_search, note_shared, note_archive, note_workspace) {
+(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, note_analytics, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_editor, note_search, note_shared, note_archive, note_workspace) {
 	'use strict';
 
 	const NoteLayout = {
@@ -352,6 +352,9 @@ this.BX.Note = this.BX.Note || {};
 				if (!Number.isFinite(documentId) || documentId <= 0) {
 					return;
 				}
+
+				// Opening a document from the full search-results page.
+				note_analytics.NoteAnalytics.documentViewed('search_page');
 				this.$router.push({
 					name: ROUTE_NAME_DOCUMENT,
 					params: {
@@ -388,6 +391,7 @@ this.BX.Note = this.BX.Note || {};
 				if (!Number.isFinite(documentId) || documentId <= 0) {
 					return;
 				}
+				note_analytics.NoteAnalytics.documentViewed('docs_list');
 				this.$router.push({
 					name: ROUTE_NAME_DOCUMENT,
 					params: {
@@ -412,6 +416,7 @@ this.BX.Note = this.BX.Note || {};
 				if (!Number.isFinite(documentId) || documentId <= 0) {
 					return;
 				}
+				note_analytics.NoteAnalytics.documentViewed('docs_list');
 				this.$router.push({
 					name: ROUTE_NAME_DOCUMENT,
 					params: {
@@ -436,6 +441,7 @@ this.BX.Note = this.BX.Note || {};
 				if (!Number.isFinite(documentId) || documentId <= 0) {
 					return;
 				}
+				note_analytics.NoteAnalytics.documentViewed('docs_list');
 				this.$router.push({
 					name: ROUTE_NAME_DOCUMENT,
 					params: {
@@ -843,7 +849,7 @@ this.BX.Note = this.BX.Note || {};
 				emitAction: (name, payload) => this.#emitAction(name, payload),
 				getRouteDocumentContext: () => this.#routeDocumentContext,
 				reloadRouteDocumentContext: async () => {
-					await this.#syncRouteState(false);
+					await this.#syncRouteState(false, true);
 				},
 				routeNames: {
 					home: ROUTE_NAME_HOME,
@@ -929,8 +935,49 @@ this.BX.Note = this.BX.Note || {};
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.DOCUMENT_RENAMED, this.#handleDocRenamed);
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.COLLECTION_RENAMED, this.#handleCollectionRenamed);
 			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.DOCUMENT_CHILDREN_CHANGED, this.#handleChildrenChanged);
+			this.#trackWelcomeEntry();
 			void this.#bootstrap();
 			return this;
+		}
+
+		// welcome_points: one event per KB entry (mount runs once per entry, not per SPA re-render).
+		// The ?source scrub is deferred to #bootstrap (post router.isReady) — see #scrubWelcomeSourceFromUrl.
+		#trackWelcomeEntry() {
+			note_analytics.NoteAnalytics.welcomePoint(this.#resolveWelcomeSource());
+		}
+		#resolveWelcomeSource() {
+			const optionSource = this.#options?.welcomeSource;
+			if (main_core.Type.isStringFilled(optionSource)) {
+				return optionSource;
+			}
+			try {
+				const querySource = new URLSearchParams(window.location.search).get('source');
+				if (main_core.Type.isStringFilled(querySource)) {
+					return querySource;
+				}
+			} catch {
+				// ignore malformed location
+			}
+			return 'left_menu';
+		}
+
+		// Drop ?source= from the address bar once it has been read for analytics. It is a one-shot entry
+		// marker (e.g. the wiki post-import redirect), so leaving it would litter the URL and re-fire
+		// welcome_points on reload. Called after router.isReady() so vue-router has already written its
+		// initial history state; replaceState only rewrites the bar and triggers no navigation.
+		#scrubWelcomeSourceFromUrl() {
+			try {
+				const url = new URL(window.location.href);
+				if (!url.searchParams.has('source')) {
+					return;
+				}
+				url.searchParams.delete('source');
+				const query = url.searchParams.toString();
+				const cleaned = url.pathname + (query ? `?${query}` : '') + url.hash;
+				window.history.replaceState(window.history.state, '', cleaned);
+			} catch {
+				// ignore malformed location
+			}
 		}
 		destroy() {
 			this.#applyMobileClass(false);
@@ -1020,6 +1067,9 @@ this.BX.Note = this.BX.Note || {};
 		async #bootstrap() {
 			try {
 				await this.#router.isReady();
+				// After the router settled its initial navigation: scrubbing earlier races with
+				// vue-router rewriting history state from the URL it captured at boot (?source would return).
+				this.#scrubWelcomeSourceFromUrl();
 				await this.#applyWelcomeRedirect();
 				const hasInitialCollections = this.#hydrateFromInitialCollections();
 				this.#hydrateFromInitialSidebarContext();
@@ -1030,6 +1080,13 @@ this.BX.Note = this.BX.Note || {};
 				if (!main_core.Type.isFunction(this.#removeRouteAfterEach)) {
 					this.#removeRouteAfterEach = this.#router.afterEach((to, from) => {
 						this.#previousRouteName = String(from?.name || '');
+
+						// Hash-only navigation within the same document: skip resync so an anchor click
+						// doesn't refetch/remount the document. The editor scrolls via its own $route.hash watcher.
+						const sameRoute = to?.name === from?.name && String(to?.params?.id ?? '') === String(from?.params?.id ?? '');
+						if (sameRoute && to?.hash !== from?.hash) {
+							return;
+						}
 						void this.#syncRouteState(false);
 					});
 				}
@@ -1037,11 +1094,11 @@ this.BX.Note = this.BX.Note || {};
 				// sidebar/app keep local error handling
 			}
 		}
-		async #syncRouteState(withCollectionFallback = false) {
+		async #syncRouteState(withCollectionFallback = false, force = false) {
 			const syncId = ++this.#routeSyncId;
 			this.#applyImmediateSharedFlag();
 			this.#captureLastKnownCollectionFromRoute();
-			await this.#syncRouteDocumentContext(syncId);
+			await this.#syncRouteDocumentContext(syncId, force);
 			if (syncId !== this.#routeSyncId || !this.#sidebarFeature) {
 				return;
 			}
@@ -1098,12 +1155,21 @@ this.BX.Note = this.BX.Note || {};
 				this.#lastKnownCollectionTitle = String(collectionTitle);
 			}
 		}
-		async #syncRouteDocumentContext(syncId) {
+		async #syncRouteDocumentContext(syncId, force = false) {
 			if (!this.#router || !this.#routeDocumentResolver || !this.#routeDocumentContext) {
 				return;
 			}
 			const routeDocId = this.#extractRouteDocumentId(this.#router.currentRoute?.value);
 			if (this.#applyInitialRouteDocumentContext(routeDocId)) {
+				return;
+			}
+
+			// Idempotent guard: the same document is already loaded. A hash-only anchor click (or any
+			// spurious route resync where the afterEach hash guard didn't fire due to transient from/to
+			// state) must not refetch and remount an already-open document. `force` lets deliberate
+			// same-route reloads (restore-from-trash, sidebar reload) bypass this.
+			const current = this.#routeDocumentContext;
+			if (!force && routeDocId > 0 && Number(current.docId) === routeDocId && current.status === 'ready' && main_core.Type.isPlainObject(current.document)) {
 				return;
 			}
 			if (routeDocId <= 0) {
@@ -1601,7 +1667,7 @@ this.BX.Note = this.BX.Note || {};
 				if (currentDocId === restoredDocumentId) {
 					// Already on the restored document's page; the route stays the same,
 					// so refresh resolver state manually to flip the editor out of trashed mode.
-					void this.#syncRouteState(false);
+					void this.#syncRouteState(false, true);
 				} else {
 					void this.#router?.push?.({
 						name: ROUTE_NAME_DOCUMENT,
@@ -1704,5 +1770,5 @@ this.BX.Note = this.BX.Note || {};
 
 	exports.NoteApp = NoteApp;
 
-})(this.BX.Note.App = this.BX.Note.App || {}, BX, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Editor, BX.Note, BX.Note, BX.Note, BX.Note);
+})(this.BX.Note.App = this.BX.Note.App || {}, window, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.Note, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Editor, BX.Note, BX.Note, BX.Note, BX.Note);
 //# sourceMappingURL=app.bundle.js.map

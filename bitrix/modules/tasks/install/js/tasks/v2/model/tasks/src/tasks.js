@@ -15,7 +15,7 @@ const aliasFields = {
 	[TaskField.Placements]: new Set(['containsPlacements']),
 	[TaskField.Results]: new Set(['containsResults']),
 	[TaskField.Reminders]: new Set(['numberOfReminders']),
-	[TaskField.Replication]: new Set(['replicate']),
+	[TaskField.Replication]: new Set(['replicateParams']),
 };
 
 function getAliasField(fieldName: string): ?string

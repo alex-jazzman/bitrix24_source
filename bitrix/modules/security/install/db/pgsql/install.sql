@@ -79,6 +79,8 @@ CREATE TABLE b_sec_user (
   INITIAL_DATE timestamp,
   SKIP_MANDATORY char(1) NOT NULL DEFAULT 'N',
   DEACTIVATE_UNTIL timestamp,
+  EMAIL varchar(255),
+  DATE_SENT_EMAIL timestamp,
   PRIMARY KEY (USER_ID)
 );
 

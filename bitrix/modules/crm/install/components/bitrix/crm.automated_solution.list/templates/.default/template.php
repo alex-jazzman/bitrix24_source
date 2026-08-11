@@ -9,7 +9,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Tour\AutomatedSolution\Marketplace;
-use Bitrix\Crm\Tour\Permissions\AutomatedSolutionList;
 use Bitrix\Main\Localization\Loc;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -33,7 +32,6 @@ $this->getComponent()->addToolbar($this);
 
 \Bitrix\Main\Loader::includeModule('ui');
 
-echo AutomatedSolutionList::getInstance()->build();
 echo Marketplace::getInstance()->build();
 
 echo '<div class="crm-automated-solution-list-wrapper">';

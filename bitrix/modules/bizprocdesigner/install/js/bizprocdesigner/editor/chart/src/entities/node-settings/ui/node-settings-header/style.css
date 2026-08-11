@@ -1,0 +1,11 @@
+.editor-chart-node-settings-header {
+	font-size: 14px;
+	font-weight: var( --ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-palette-black-solid);
+	padding: 16px 24px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}

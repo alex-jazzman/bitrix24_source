@@ -1,13 +1,10 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useLoc } from '../../../../shared/composables';
 
-import { CONSTRUCTION_LABELS, GENERAL_CONSTRUCTION_TYPES, CONSTRUCTION_TYPES } from '../../constants/index';
+import { CONSTRUCTION_LABELS, CONSTRUCTION_TYPES } from '../../constants/index';
 
-// eslint-disable-next-line no-unused-vars
-import type { Construction, GeneralConstructionTypes } from '../../types';
+import './style.css';
 
 type RuleConstructionSetup = {
 	getMessage: () => string;
@@ -17,12 +14,6 @@ type RuleConstructionSetup = {
 const RULE_CONSTRUCTION_MODES = {
 	standard: 'standard',
 	expert: 'expert',
-};
-
-const ICON_COLORS = {
-	condition: '#b7d7ff',
-	action: '#4de39e',
-	output: '#d5d7db',
 };
 
 // @vue/component
@@ -35,11 +26,6 @@ export const RuleConstruction = {
 		construction:
 		{
 			type: Object,
-			required: true,
-		},
-		position:
-		{
-			type: Number,
 			required: true,
 		},
 		ruleCardId:
@@ -69,18 +55,25 @@ export const RuleConstruction = {
 	},
 	computed:
 	{
+		conditionSet(): Set<string>
+		{
+			return new Set(Object.values(CONSTRUCTION_TYPES.CONDITION));
+		},
 		constructionClassName(): { [key: string]: string; }
 		{
 			return {
-				'--condition': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES['condition:if'],
-				'--action': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES.action,
-				'--first': this.position === 0,
-				'--output': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES.output,
+				'--condition': this.conditionSet.has(this.construction.type),
+				'--action': CONSTRUCTION_TYPES.ACTION === this.construction.type,
+				'--filter': CONSTRUCTION_TYPES.FILTER === this.construction.type,
+				'--output': CONSTRUCTION_TYPES.OUTPUT === this.construction.type,
 			};
 		},
-		generalConstructionTypes(): GeneralConstructionTypes
+		expressionName(): string
 		{
-			return GENERAL_CONSTRUCTION_TYPES;
+			return this.conditionSet.has(this.construction.type)
+				? 'condition'
+				: this.construction.type
+			;
 		},
 		isBooleanType(): boolean
 		{
@@ -89,23 +82,9 @@ export const RuleConstruction = {
 		booleanTypes(): Array<$Values<typeof CONSTRUCTION_TYPES>>
 		{
 			return [
-				CONSTRUCTION_TYPES.AND_CONDITION,
-				CONSTRUCTION_TYPES.OR_CONDITION,
+				CONSTRUCTION_TYPES.CONDITION.AND_CONDITION,
+				CONSTRUCTION_TYPES.CONDITION.OR_CONDITION,
 			];
-		},
-		iconColor(): string
-		{
-			if (GENERAL_CONSTRUCTION_TYPES.action === this.generalConstructionTypes[this.construction.type])
-			{
-				return ICON_COLORS.action;
-			}
-
-			if (GENERAL_CONSTRUCTION_TYPES.output === this.generalConstructionTypes[this.construction.type])
-			{
-				return ICON_COLORS.output;
-			}
-
-			return ICON_COLORS.condition;
 		},
 		isExpertMode(): boolean
 		{
@@ -113,10 +92,24 @@ export const RuleConstruction = {
 		},
 		parsedMessage(): string
 		{
-			return this.construction.type === GENERAL_CONSTRUCTION_TYPES.action
+			return this.construction.type === CONSTRUCTION_TYPES.action
 				? this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_THEN')
 				: this.getMessage(CONSTRUCTION_LABELS[this.construction.type])
 			;
+		},
+		description(): string
+		{
+			if (this.conditionSet.has(this.construction.type))
+			{
+				return this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONDITION_DESCRIPTION');
+			}
+
+			const descriptions = {
+				[CONSTRUCTION_TYPES.ACTION]: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_DESCRIPTION'),
+				[CONSTRUCTION_TYPES.OUTPUT]: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_DESCRIPTION'),
+			};
+
+			return descriptions[this.construction.type];
 		},
 	},
 	template: `
@@ -127,7 +120,14 @@ export const RuleConstruction = {
 			:data-id="construction.id"
 			:data-rule-card-id="ruleCardId"
 		>
-			<div class="editor-chart-node-settings-rule-construction__operator">
+			<div class="editor-chart-node-settings-rule-construction__top">
+				<BIcon
+					:size="20"
+					color="#a8adb4"
+					class="editor-chart-node-settings-rule-construction__dnd-icon"
+					name="drag-m"
+					draggable="true"
+				/>
 				<slot
 					v-if="isBooleanType"
 					name="booleanTypeSwitcher"
@@ -138,31 +138,18 @@ export const RuleConstruction = {
 				>
 					{{ parsedMessage }}
 				</span>
+				<span class="editor-chart-node-settings-rule-construction__description">
+					{{ description }}
+				</span>
 				<slot
-					v-if="position > 0"
-					name="addConstructionButton"
+					name="deleteConstructionButton"
 				/>
 			</div>
-			<div class="editor-chart-node-settings-rule-construction__content">
-				<div class="editor-chart-node-settings-rule-construction__content_top">
-					<BIcon
-						:size="20"
-						:color="iconColor"
-						class="editor-chart-node-settings-rule-construction__dnd-icon"
-						name="drag-s"
-						draggable="true"
-					/>
-					<slot
-						name="deleteConstructionButton"
-						:iconColor="iconColor"
-					/>
-				</div>
-				<div class="editor-chart-node-settings-rule-construction__expression-form">
-					<slot
-						:name="generalConstructionTypes[construction.type]"
-						:isExpertMode="isExpertMode"
-					/>
-				</div>
+			<div class="editor-chart-node-settings-rule-construction__expression-form">
+				<slot
+					:name="expressionName"
+					:isExpertMode="isExpertMode"
+				/>
 			</div>
 		</div>
 	`,

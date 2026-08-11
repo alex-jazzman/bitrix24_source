@@ -15,13 +15,37 @@ export const CopilotTextarea = {
 		},
 		isFileUploadEnabled: {
 			type: Boolean,
-			required: true,
+			default: false,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
+		withDraft: {
+			type: Boolean,
+			default: true,
+		},
+		deferredDialogPromise: {
+			type: Object,
+			default: null,
 		},
 	},
 	computed: {
 		isToolbarButtonsEnabled(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+		},
+		isTempChat(): boolean
+		{
+			return this.$store.getters['copilot/chats/isTempChat'](this.dialogId);
+		},
+		hasUploadMenu(): boolean
+		{
+			return !this.isTempChat && this.isFileUploadEnabled;
+		},
+		hasWithMention(): boolean
+		{
+			return !this.isTempChat;
 		},
 	},
 	methods: {
@@ -36,8 +60,12 @@ export const CopilotTextarea = {
 			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
-			:withUploadMenu="isFileUploadEnabled"
+			:withUploadMenu="hasUploadMenu"
+			:withMention="hasWithMention"
 			:withSmileSelector="false"
+			:disabled="disabled"
+			:withDraft="withDraft"
+			:deferredDialogPromise="deferredDialogPromise"
 		>
 			<template #bottom-panel-buttons>
 				<ToolbarButtons

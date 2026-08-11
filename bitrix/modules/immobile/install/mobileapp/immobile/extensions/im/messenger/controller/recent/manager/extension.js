@@ -103,6 +103,8 @@ jn.define('im/messenger/controller/recent/manager', (require, exports, module) =
 
 			this.emit(EventType.recentManager.resumeController, recentId, controller, ROOT_PARENT_CHAT_ID);
 
+			controller?.reactivate();
+
 			return controller;
 		}
 

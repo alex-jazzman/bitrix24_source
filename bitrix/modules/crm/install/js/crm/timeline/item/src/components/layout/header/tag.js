@@ -1,5 +1,5 @@
 import { Dom, Text, Type } from 'main.core';
-import { Label } from 'ui.label';
+import { Label, LabelSize, LabelStyle } from 'ui.system.label';
 import { hint } from 'ui.vue3.directives.hint';
 
 import { Action } from '../../../action';
@@ -35,7 +35,6 @@ export const Tag = {
 			default: '',
 		},
 	},
-
 	computed:
 	{
 		className(): Object
@@ -47,15 +46,16 @@ export const Tag = {
 			};
 		},
 
-		tagTypeToLabelColorDict(): Object
+		tagTypeToLabelStyleDict(): Object
 		{
 			return {
-				[TagType.PRIMARY]: Label.Color.LIGHT_BLUE,
-				[TagType.SECONDARY]: Label.Color.LIGHT,
-				[TagType.LAVENDER]: Label.Color.LAVENDER,
-				[TagType.SUCCESS]: Label.Color.LIGHT_GREEN,
-				[TagType.WARNING]: Label.Color.LIGHT_YELLOW,
-				[TagType.FAILURE]: Label.Color.LIGHT_RED,
+				[TagType.PRIMARY]: LabelStyle.TINTED,
+				[TagType.SECONDARY]: LabelStyle.TINTED_NO_ACCENT,
+				[TagType.LAVENDER]: LabelStyle.TINTED_VIOLET,
+				[TagType.AI]: LabelStyle.TINTED_BITRIX_GPT,
+				[TagType.SUCCESS]: LabelStyle.TINTED_SUCCESS,
+				[TagType.WARNING]: LabelStyle.TINTED_WARNING,
+				[TagType.FAILURE]: LabelStyle.TINTED_ALERT,
 			};
 		},
 
@@ -81,12 +81,11 @@ export const Tag = {
 	},
 	methods:
 	{
-		getLabelColorFromTagType(tagType): String
+		getLabelStyleFromTagType(tagType): String
 		{
 			const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
-			const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
 
-			return labelColor || Label.Color.LIGHT;
+			return this.tagTypeToLabelStyleDict[lowerCaseTagType] || LabelStyle.TINTED_NO_ACCENT;
 		},
 
 		// eslint-disable-next-line consistent-return
@@ -99,11 +98,11 @@ export const Tag = {
 
 			const { title, type } = tagOptions;
 
-			const uppercaseTitle = title && Type.isString(title) ? title.toUpperCase() : '';
+			const labelText = title && Type.isString(title) ? title : '';
 			const label = new Label({
-				text: uppercaseTitle,
-				color: this.getLabelColorFromTagType(type),
-				fill: true,
+				value: labelText,
+				style: this.getLabelStyleFromTagType(type),
+				size: LabelSize.MD,
 			});
 
 			Dom.clean(this.tagContainerRef);
@@ -124,18 +123,12 @@ export const Tag = {
 
 	mounted(): void
 	{
-		this.renderTag({
-			title: this.title,
-			type: this.type,
-		});
+		this.renderTag({ title: this.title, type: this.type });
 	},
 
 	updated(): void
 	{
-		this.renderTag({
-			title: this.title,
-			type: this.type,
-		});
+		this.renderTag({ title: this.title, type: this.type });
 	},
 
 	template: `

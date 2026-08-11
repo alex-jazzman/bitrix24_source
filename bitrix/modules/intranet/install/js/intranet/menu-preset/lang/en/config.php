@@ -1,0 +1,19 @@
+<?php
+$MESS["MENU_PRESET_CRM_DESC1"] = "Automate sales";
+$MESS["MENU_PRESET_CRM_DESC2"] = "Improve conversion and communicate with customers";
+$MESS["MENU_PRESET_CRM_DESC11"] = "Sell more";
+$MESS["MENU_PRESET_CRM_TITLE"] = "CRM";
+$MESS["MENU_PRESET_DESC"] = "This will streamline your daily routine: the selected tool will show up first, and the menu will include only the required items. You can edit the menu any time you want.";
+$MESS["MENU_PRESET_SITES_DESC1"] = "Create sites that sell";
+$MESS["MENU_PRESET_SITES_DESC2"] = "Create sites and landing pages without leaving the CRM";
+$MESS["MENU_PRESET_SITES_TITLE"] = "Sites";
+$MESS["MENU_PRESET_SOCIAL_DESC1"] = "Communicate with colleagues";
+$MESS["MENU_PRESET_SOCIAL_DESC2"] = "Resolve issues in no time";
+$MESS["MENU_PRESET_SOCIAL_DESC11"] = "Communicate and work together";
+$MESS["MENU_PRESET_SOCIAL_TITLE1_1"] = "Teamwork";
+$MESS["MENU_PRESET_TASKS_DESC1"] = "Manage projects";
+$MESS["MENU_PRESET_TASKS_DESC2"] = "Watch deadlines and control performance";
+$MESS["MENU_PRESET_TASKS_DESC11"] = "Work together and stay on schedule";
+$MESS["MENU_PRESET_TASKS_TITLE"] = "Tasks";
+$MESS["MENU_PRESET_TASKS_TITLE1"] = "Tasks and projects";
+$MESS["MENU_PRESET_TITLE"] = "Select the tool your business uses most";

@@ -50,6 +50,16 @@ this.BX.Crm = this.BX.Crm || {};
 		setIsBeginCloseDatesEnabled(isBeginCloseDatesEnabled) {
 			this.data.isBeginCloseDatesEnabled = isBeginCloseDatesEnabled === true;
 		}
+		getDaysBeforeClose() {
+			return this.data.daysBeforeClose;
+		}
+		setDaysBeforeClose(daysBeforeClose) {
+			if (main_core.Type.isNil(daysBeforeClose) || daysBeforeClose === '') {
+				this.data.daysBeforeClose = null;
+				return;
+			}
+			this.data.daysBeforeClose = Number(daysBeforeClose);
+		}
 		getIsClientEnabled() {
 			return this.data.isBeginCloseDatesEnabled;
 		}

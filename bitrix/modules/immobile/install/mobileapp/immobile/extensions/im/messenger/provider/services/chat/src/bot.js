@@ -55,15 +55,17 @@ jn.define('im/messenger/provider/services/chat/bot', (require, exports, module) 
 
 		/**
 		 * @param {MCPAuth['id']} authId
+		 * @param {?DialogId} dialogId
 		 * @return {Promise<any>}
 		 */
-		async sendAiAssistantMCPSelection(authId)
+		async sendAiAssistantMCPSelection(authId, dialogId = null)
 		{
 			return runAction(
 				RestMethod.aiAssistantApiMCPHintSendSelectionHintOnce,
 				{
 					data: {
 						authId,
+						dialogId,
 					},
 				},
 			)

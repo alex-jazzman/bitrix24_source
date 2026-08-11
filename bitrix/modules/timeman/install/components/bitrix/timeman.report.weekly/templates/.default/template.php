@@ -12,7 +12,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
  * @global CUser $USER
  */
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'timeman.work-time-report']);
+
+if (\Bitrix\Main\Loader::includeModule('stafftrack'))
+{
+	\Bitrix\Main\UI\Extension::load(['stafftrack.checkin-onboarding-banner']);
+}
 
 $isAirTemplate = defined('AIR_SITE_TEMPLATE');
 if ($isAirTemplate)
@@ -244,7 +249,8 @@ window.BXTMREPORT = new JCTimeManReport('bx_tm_report', {
 	MONTHS: [<?for($i=1;$i<13;$i++){echo ($i==1 ? '' : ','),"'",CUtil::JSEscape(GetMessage('TMR_MONTH_'.$i)),"'";}?>],
 	DAYS: [<?for($i=1;$i<8;$i++){echo ($i==1 ? '' : ','),"'",CUtil::JSEscape(GetMessage('TMR_DAY_'.$i)),"'";}?>],
 	LANG: <?=CUtil::PhpToJsObject($arMess)?>,
-	SITE_ID: '<?=SITE_ID?>'
+	SITE_ID: '<?=SITE_ID?>',
+	isReportsEnabled: <?= $arResult['isReportsEnabled'] ? 'true' : 'false'; ?>,
 })</script>
 
 

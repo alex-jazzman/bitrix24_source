@@ -2,7 +2,6 @@
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
-use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
@@ -105,7 +104,7 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 
 		$passwordService->resetLoginAttempts($share);
 
-		$superset = new SupersetController(Integrator::getInstance());
+		$superset = new SupersetController();
 		$dashboard = $superset->getDashboardRepository()->getById($share->getDashboardId(), true);
 
 		if (!$dashboard)
@@ -266,7 +265,7 @@ class SupersetDashboardShareAjax extends \Bitrix\Main\Engine\Controller
 
 		$passwordService->resetLoginAttempts($share);
 
-		$superset = new SupersetController(Integrator::getInstance());
+		$superset = new SupersetController();
 		$dashboard = $superset->getDashboardRepository()->getById($share->getDashboardId(), true);
 
 		if (!$dashboard)

@@ -7,7 +7,7 @@
 	background: var(--ui-color-bg-content-secondary);
 	min-height: 40px;
 	max-height: 40px;
-	min-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
 }
 
 .booking-booking__intersection-settings:hover {
@@ -180,7 +180,7 @@
 .booking-booking__base-component.--week-mode .booking-booking__intersection-settings {
 	align-items: center;
 	justify-content: flex-start;
-	min-height: var(--booking-height-second-row-week-grid);
+	min-height: var(--booking-week-days-panel-height);
 	background: var(--ui-color-bg-content-primary);
 	border: none;
 	border-right: 1px solid var(--ui-color-base-7);

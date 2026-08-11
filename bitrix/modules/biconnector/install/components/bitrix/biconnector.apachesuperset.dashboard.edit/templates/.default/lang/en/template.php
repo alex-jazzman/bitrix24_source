@@ -1,4 +1,14 @@
 <?php
+$MESS["DASHBOARD_EDIT_AHA_TEXT"] = "Changing the dashboard name will also update it in BI Builder.";
+$MESS["DASHBOARD_EDIT_AHA_TITLE"] = "Important: name change";
+$MESS["DASHBOARD_EDIT_ATTACHED_CARD_DETACH"] = "Unregister";
+$MESS["DASHBOARD_EDIT_ATTACHED_CARD_TITLE"] = "This dashboard was registered in BI Builder.";
+$MESS["DASHBOARD_EDIT_ATTACH_CANCEL"] = "Cancel";
+$MESS["DASHBOARD_EDIT_ATTACH_CONFIRM"] = "Register";
+$MESS["DASHBOARD_EDIT_ATTACH_DIALOG_SUBTITLE"] = "These dashboards exist in BI Builder but not registered on this Bitrix24.";
+$MESS["DASHBOARD_EDIT_ATTACH_DIALOG_TITLE"] = "Unregistered dashboards";
+$MESS["DASHBOARD_EDIT_ATTACH_EMPTY_TITLE"] = "All dashboards are registered on this Bitrix24.";
+$MESS["DASHBOARD_EDIT_ATTACH_MENU_ITEM"] = "Register BI Builder dashboards";
 $MESS["DASHBOARD_EDIT_COVER"] = "Dashboard image:";
 $MESS["DASHBOARD_EDIT_COVER_CHANGE"] = "Change";
 $MESS["DASHBOARD_EDIT_COVER_HINT"] = "Recommended image aspect ratio: 16:9, maximum 10 MB.";
@@ -18,4 +28,5 @@ $MESS["DASHBOARD_EDIT_PERIOD"] = "Date range:";
 $MESS["DASHBOARD_EDIT_PERIOD_FROM"] = "Start date:";
 $MESS["DASHBOARD_EDIT_PERIOD_TO"] = "End date:";
 $MESS["DASHBOARD_EDIT_SAVE_RESPONSE_ERROR"] = "Could not get saved dashboard's data. Please try again.";
+$MESS["DASHBOARD_EDIT_TITLE_ATTACH_HINT"] = "Changing the dashboard name will also update it in BI Builder.";
 $MESS["DASHBOARD_EDIT_TOP_BLOCK"] = "Provide the dashboard name and select a cover image.";

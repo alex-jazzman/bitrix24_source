@@ -10,13 +10,13 @@ return [
 	'rel' => [
 		'call.lib.call-manager',
 		'im.public',
-		'im.v2.const',
-		'im.v2.lib.permission',
-		'main.core',
 		'im.v2.component.elements.button',
 		'im.v2.component.message.base',
 		'im.v2.component.message.elements',
+		'im.v2.const',
+		'im.v2.lib.permission',
 		'im.v2.lib.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

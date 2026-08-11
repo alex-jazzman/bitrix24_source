@@ -226,7 +226,9 @@ export class UserPlannerSelector extends EventEmitter
 			Dom.clean(this.DOM.videocallWrap);
 			Dom.removeClass(this.DOM.videocallWrap, 'calendar-videocall-hidden');
 
-			const items = Util.getCalendarContext().isCollabUser
+			const calendarContext = Util.getCalendarContext();
+
+			const items = calendarContext?.isCollabUser
 				? ['chat', 'videocall', 'task']
 				: ['chat', 'videocall', 'blog_post', 'task']
 			;
@@ -795,7 +797,7 @@ export class UserPlannerSelector extends EventEmitter
 			(response) => {
 				if (top.window.BXIM && response.data && response.data.chatId)
 				{
-					top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
+					top.window.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
 
 					return null;
 				}
@@ -805,6 +807,8 @@ export class UserPlannerSelector extends EventEmitter
 				return null;
 			},
 			(response) => {
+				console.error(response);
+
 				alert(Loc.getMessage('EC_CONFERENCE_ERROR'));
 
 				return null;

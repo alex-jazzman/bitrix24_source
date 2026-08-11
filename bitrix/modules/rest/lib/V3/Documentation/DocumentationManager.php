@@ -1,0 +1,970 @@
+<?php
+
+namespace Bitrix\Rest\V3\Documentation;
+
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Localization\LocalizableMessage;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Rest\V3\Attribute\Description;
+use Bitrix\Rest\V3\Attribute\ElementType;
+use Bitrix\Rest\V3\Attribute\Title;
+use Bitrix\Rest\V3\Documentation\Attributes\Deprecated;
+use Bitrix\Rest\V3\Documentation\Attributes\Hidden;
+use Bitrix\Rest\V3\Dto\Dto;
+use Bitrix\Rest\V3\Dto\DtoCollection;
+use Bitrix\Rest\V3\Dto\DtoField;
+use Bitrix\Rest\V3\Interaction\Request\Request;
+use Bitrix\Rest\V3\Interaction\Response\AddResponse;
+use Bitrix\Rest\V3\Interaction\Response\AggregateResponse;
+use Bitrix\Rest\V3\Interaction\Response\ArrayResponse;
+use Bitrix\Rest\V3\Interaction\Response\BooleanResponse;
+use Bitrix\Rest\V3\Interaction\Response\DeleteResponse;
+use Bitrix\Rest\V3\Interaction\Response\GetResponse;
+use Bitrix\Rest\V3\Interaction\Response\ListResponse;
+use Bitrix\Rest\V3\Interaction\Response\TailResponse;
+use Bitrix\Rest\V3\Interaction\Response\UpdateResponse;
+use Bitrix\Rest\V3\Schema\MethodDescription;
+use Bitrix\Rest\V3\Schema\TypeAliasRegistry;
+use Bitrix\Rest\V3\Schema\ControllerData;
+use Bitrix\Rest\V3\Schema\ModuleManager;
+use Bitrix\Rest\V3\Schema\SchemaManager;
+use Bitrix\Rest\V3\Structure\Aggregation\AggregationType;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionParameter;
+
+class DocumentationManager
+{
+	private SchemaManager $schemaManager;
+
+	private ModuleManager $moduleManager;
+
+	/** @var DtoExample[] */
+	private static array $dtoExamples = [];
+
+	/**
+	 * @var array<string, Dto>
+	 */
+	private static array $dtos = [];
+
+	/**
+	 * @var array<string, ReflectionClass>
+	 */
+	private static array $contollersReflections = [];
+
+	private const AVAILABLE_DEFAULT_RESPONSES = [
+		ArrayResponse::class,
+		GetResponse::class,
+		ListResponse::class,
+		AddResponse::class,
+		BooleanResponse::class,
+		DeleteResponse::class,
+		UpdateResponse::class,
+		AggregateResponse::class,
+	];
+
+	private array $formatTypes = [
+		'float' => ['type' => 'float'],
+		'array' => ['type' => 'array'],
+		'bool' => ['type' => 'boolean'],
+		'int' => ['type' => 'integer', 'format' => 'int64'],
+		'string' => ['type' => 'string'],
+		DateTime::class => ['type' => 'string', 'format' => 'date-time'],
+		Date::class => ['type' => 'string', 'format' => 'date'],
+	];
+
+	public function __construct(private readonly string $language)
+	{
+		$this->schemaManager = ServiceLocator::getInstance()->get(SchemaManager::class);
+		$this->moduleManager = ServiceLocator::getInstance()->get(ModuleManager::class);
+	}
+
+	/**
+	 * @throws ReflectionException
+	 */
+	public function generateDataForJson(): array
+	{
+		$dtoSchemas = [];
+
+		$file = [
+			'openapi' => '3.0.0',
+			'info' => [
+				'title' => 'Bitrix24 REST V3 API',
+				'version' => '1.0.0',
+			],
+			'servers' => [],
+			'tags' => [],
+			'paths' => [],
+			'components' => ['schemas' => $dtoSchemas],
+		];
+
+		$customModuleSchemas = $this->getCustomModuleSchemas();
+		$customModuleMethods = $this->getCustomModuleMethods();
+		$customModuleRoutes = $this->schemaManager->getRouteAliases();
+		$moduleControllers = $this->schemaManager->getControllersByModules();
+		$methodDescriptions = $this->schemaManager->getMethodDescriptions();
+
+		foreach ($moduleControllers as $moduleId => $controllers)
+		{
+			$file['tags'][] = [
+				'name' => $moduleId,
+				'description' => $moduleId . ' module methods',
+			];
+			/** @var ControllerData $controllerData */
+			foreach ($controllers as $controllerData)
+			{
+				if (!$controllerData->isEnabled())
+				{
+					continue;
+				}
+				if ($controllerData->dtoFqcn !== null)
+				{
+					$dto = $this->getDtoByClass($controllerData->dtoFqcn);
+					if ($dto === null)
+					{
+						continue;
+					}
+					$this->collectDtoSchemas($dto, $customModuleSchemas[$moduleId] ?? [], $dtoSchemas);
+				}
+
+				foreach ($controllerData->getMethods() as $controllerMethodDescription)
+				{
+					if (!$controllerMethodDescription->isEnabled)
+					{
+						continue;
+					}
+					if (isset($customModuleMethods[$controllerData->module][$controllerMethodDescription->actionUri]))
+					{
+						$methodData = $customModuleMethods[$controllerData->module][$controllerMethodDescription->actionUri];
+					}
+					else
+					{
+						if ($controllerMethodDescription->controllerFqcn !== $controllerData->controllerFqcn)
+						{
+							$controllerFqcn = $controllerMethodDescription->controllerFqcn;
+						}
+						else
+						{
+							$controllerFqcn = $controllerData->controllerFqcn;
+						}
+
+						$controller = $this->getControllerReflectionByClass($controllerFqcn);
+						if ($controller === null)
+						{
+							continue;
+						}
+
+						$reflectionMethod = $controller->getMethod($controllerMethodDescription->method . 'Action');
+						$returnType = $reflectionMethod->getReturnType()->getName();
+						if (!in_array($returnType, self::AVAILABLE_DEFAULT_RESPONSES, true))
+						{
+							foreach ($this->getExtraResponseProperties($returnType) as $extraResponseProperty)
+							{
+								if (is_subclass_of($extraResponseProperty, Dto::class))
+								{
+									$extraDto = $this->getDtoByClass($extraResponseProperty);
+									if ($extraDto !== null)
+									{
+										$this->collectDtoSchemas($extraDto, $customModuleSchemas[$moduleId] ?? [], $dtoSchemas);
+									}
+								}
+							}
+						}
+						$methodData = $this->getMethodData($reflectionMethod, $returnType, $controllerMethodDescription);
+						if ($methodData === null)
+						{
+							continue; // skip unknown return types
+						}
+					}
+					unset($methodDescriptions[$controllerMethodDescription->actionUri]);
+					$file['paths'][$this->getPathUri($controllerMethodDescription->actionUri)]['post'] = $methodData;
+					if (isset($methodData['requestBody']['content']['application/json']['schema']['properties']) && empty($methodData['requestBody']['content']['application/json']['schema']['properties']))
+					{
+						$file['paths'][$this->getPathUri($controllerMethodDescription->actionUri)]['get'] = $methodData;
+						unset($file['paths'][$this->getPathUri($controllerMethodDescription->actionUri)]['get']['requestBody']);
+					}
+				}
+			}
+		}
+
+		foreach ($methodDescriptions as $methodDescription)
+		{
+			if (isset($customModuleMethods[$methodDescription->module][$methodDescription->actionUri]))
+			{
+				$methodData = $customModuleMethods[$methodDescription->module][$methodDescription->actionUri];
+				$file['paths'][$this->getPathUri($methodDescription->actionUri)]['post'] = $methodData;
+				unset($methodDescriptions[$methodDescription->actionUri]);
+			}
+		}
+
+		foreach ($customModuleRoutes as $customRoute => $moduleRoute)
+		{
+			$moduleUri = $this->getPathUri($moduleRoute);
+
+			if (isset($file['paths'][$moduleUri]))
+			{
+				$file['paths'][$this->getPathUri($customRoute)] = $file['paths'][$moduleUri];
+			}
+		}
+
+		$file['components']['schemas'] = $dtoSchemas;
+
+		return $file;
+	}
+
+	private function collectDtoSchemas(Dto $dto, array $customSchemas, array &$dtoSchemas): void
+	{
+		$dtoSchemaName = TypeAliasRegistry::toPublicType($dto);
+		if (isset($dtoSchemas[$dtoSchemaName]))
+		{
+			return;
+		}
+
+		if (isset($customSchemas[$dtoSchemaName]))
+		{
+			$dtoSchemas[$dtoSchemaName] = $customSchemas[$dtoSchemaName];
+
+			return;
+		}
+
+		$dtoSchema = $this->getDtoProperties($dto);
+		$dtoSchemas[$dtoSchemaName] = $dtoSchema;
+		foreach ($dto->getFields() as $field)
+		{
+			$type = $field->getPropertyType();
+			if (is_subclass_of($type, Dto::class))
+			{
+				$dto = $this->getDtoByClass($type);
+				if ($dto === null)
+				{
+					continue;
+				}
+				$this->collectDtoSchemas($dto, $customSchemas, $dtoSchemas);
+			}
+			elseif ($type === DtoCollection::class && $field->getElementType() && is_subclass_of($field->getElementType(), Dto::class))
+			{
+				$dto = $this->getDtoByClass($field->getElementType());
+				$this->collectDtoSchemas($dto, $customSchemas, $dtoSchemas);
+			}
+		}
+	}
+
+	private function getCustomModuleSchemas(): array
+	{
+		$documentationSchemas = [];
+		$moduleConfigs = $this->moduleManager->getConfigs();
+		foreach ($moduleConfigs as $moduleId => $moduleConfig)
+		{
+			if (!empty($moduleConfig->documentation['schemas']) && is_array($moduleConfig->documentation['schemas']))
+			{
+				foreach ($moduleConfig->documentation['schemas'] as $schemaObject => $schemaClass)
+				{
+					if (is_subclass_of($schemaClass, SchemaProvider::class))
+					{
+						$class = new $schemaClass();
+						$documentationSchemas[$moduleId][$schemaObject] = $class->getDocumentation();
+					}
+				}
+			}
+		}
+
+		return $documentationSchemas;
+	}
+
+	private function getCustomModuleMethods(): array
+	{
+		$documentationMethods = [];
+		$moduleConfigs = $this->moduleManager->getConfigs();
+		foreach ($moduleConfigs as $moduleId => $moduleConfig)
+		{
+			if (!empty($moduleConfig->documentation['methods']) && is_array($moduleConfig->documentation['methods']))
+			{
+				foreach ($moduleConfig->documentation['methods'] as $methodUri => $methodDocumentationClass)
+				{
+					if (is_subclass_of($methodDocumentationClass, MethodProvider::class))
+					{
+						$class = new $methodDocumentationClass($this->language);
+						$documentationMethods[$moduleId][$methodUri] = $class->getDocumentation();
+					}
+				}
+			}
+		}
+
+		return $documentationMethods;
+	}
+
+	private function getMethodResponseSchema(string $returnTypeClass, ?Dto $dto): array
+	{
+		$getResponseByClass = function (string $responseClass) use ($dto) {
+			return match ($responseClass)
+			{
+				ArrayResponse::class => [
+					'type' => 'object',
+				],
+				GetResponse::class => [
+					'type' => 'object',
+					'properties' => $dto ? [
+						'item' => [
+							'$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($dto),
+						],
+					] : [],
+				],
+				ListResponse::class => call_user_func(function () use ($dto) {
+					$result = [
+						'type' => 'array',
+					];
+					if ($dto !== null)
+					{
+						$result['items'] = ['$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($dto)];
+					}
+
+					return $result;
+				}),
+				TailResponse::class => [
+					'type' => 'object',
+					'properties' => [
+						'items' => [
+							'type' => 'array',
+							'items' => $dto ? [
+								'$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($dto),
+							] : [],
+						],
+						'hasMore' => [
+							'type' => 'boolean',
+						],
+						'cursor' => [
+							'$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType(
+								$this->getDtoByClass(\Bitrix\Rest\V3\Interaction\Response\CursorResponseDto::class)
+							),
+						],
+					],
+				],
+				AddResponse::class => [
+					'type' => 'object',
+					'properties' => [
+						'id' => [
+							'type' => 'integer',
+							'format' => 'int64',
+						],
+					],
+				],
+				BooleanResponse::class, DeleteResponse::class, UpdateResponse::class => [
+					'type' => 'object',
+					'properties' => [
+						'result' => [
+							'type' => 'boolean',
+						],
+					],
+				],
+				AggregateResponse::class => [
+					'type' => 'object',
+					'properties' => [
+						'result' => [
+							'type' => 'object',
+							'properties' => $this->aggregateProperties(),
+						],
+					],
+				],
+				default => [],
+			};
+		};
+
+		$baseResponse = function (array $result = []) {
+			return [
+				'type' => 'object',
+				'properties' => [
+					'result' => $result,
+				],
+			];
+		};
+
+		if (in_array($returnTypeClass, self::AVAILABLE_DEFAULT_RESPONSES, true))
+		{
+			return $baseResponse($getResponseByClass($returnTypeClass));
+		}
+
+		if ($returnTypeClass === TailResponse::class)
+		{
+			return $baseResponse($getResponseByClass($returnTypeClass));
+		}
+
+		foreach (self::AVAILABLE_DEFAULT_RESPONSES as $responseClass)
+		{
+			if (is_subclass_of($returnTypeClass, $responseClass))
+			{
+				$base = $getResponseByClass($responseClass);
+
+				$extraProperties = $this->getExtraResponseProperties($returnTypeClass);
+
+				if (empty($extraProperties))
+				{
+					return $base;
+				}
+
+				foreach ($extraProperties as $extraPropertyName => $extraPropertyType)
+				{
+					if (is_subclass_of($extraPropertyType, Dto::class))
+					{
+						$extraProperty = $this->getDtoByClass($extraPropertyType);
+						if ($extraProperty === null)
+						{
+							continue;
+						}
+						$base['properties'][$extraPropertyName] = [
+							'$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($extraProperty),
+						];
+					}
+					elseif (isset($this->formatTypes[$extraPropertyType]))
+					{
+						$base['properties'][$extraPropertyName] = $this->formatTypes[$extraPropertyType];
+					}
+				}
+
+				return $baseResponse($base);
+			}
+		}
+
+		return $baseResponse();
+	}
+
+	private function getExtraResponseProperties(string $returnTypeClass): array
+	{
+		if (!class_exists($returnTypeClass))
+		{
+			return [];
+		}
+
+		$extras = [];
+		$reflection = new ReflectionClass($returnTypeClass);
+		foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property)
+		{
+			$type = $property->getType();
+
+			if (!($type instanceof ReflectionNamedType))
+			{
+				continue;
+			}
+
+			$extras[$property->getName()] = $type->getName();
+		}
+
+		return $extras;
+	}
+
+	private function aggregateProperties(): array
+	{
+		$aggregationProperties = [];
+		foreach (AggregationType::cases() as $aggregationType)
+		{
+			$aggregationProperties[$aggregationType->value] = [
+				'type' => 'object',
+			];
+		}
+
+		return $aggregationProperties;
+	}
+
+	private function getFieldTypeFormat(DtoField $field): array
+	{
+		if ($field->isMultiple())
+		{
+			$result = [
+				'type' => 'array',
+				'items' => $this->getFormatByType($field),
+			];
+		}
+		else
+		{
+			$result = $this->getFormatByType($field);
+		}
+
+		if ($field->getTitle() !== null)
+		{
+			$result['title'] = $field->getTitle() instanceof LocalizableMessage ? $field->getTitle()->localize($this->language) : $field->getTitle();
+		}
+
+		if ($field->getDescription() !== null)
+		{
+			$description = $field->getDescription() instanceof LocalizableMessage ? $field->getDescription()->localize($this->language) : $field->getDescription();
+			$result['description'] = trim($description);
+		}
+
+		return $result;
+	}
+
+	private function getFormatByType(DtoField $field): array
+	{
+		if (isset($this->formatTypes[$field->getPropertyType()]))
+		{
+			return $this->formatTypes[$field->getPropertyType()];
+		}
+
+		if ($field->getPropertyType() === DtoCollection::class)
+		{
+			return $this->getDtoCollectionProperty($field);
+		}
+
+		if (is_subclass_of($field->getPropertyType(), Dto::class))
+		{
+			$dto = $this->getDtoByClass($field->getPropertyType());
+
+			return ['$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($dto)];
+		}
+
+		if (is_subclass_of($field->getPropertyType(), \BackedEnum::class))
+		{
+			return $this->getBackedEnumFormat($field->getPropertyType());
+		}
+
+		return [];
+	}
+
+	private function getBackedEnumFormat(string $enumClass): array
+	{
+		$reflection = new \ReflectionEnum($enumClass);
+		$backingType = $reflection->getBackingType()?->getName() === 'int' ? 'integer' : 'string';
+
+		$values = [];
+		foreach ($enumClass::cases() as $case)
+		{
+			$values[] = $case->value;
+		}
+
+		return [
+			'type' => $backingType,
+			'enum' => $values,
+		];
+	}
+
+	private function getDtoCollectionProperty(DtoField $field): array
+	{
+		if ($field->getElementType())
+		{
+			$dto = $this->getDtoByClass($field->getElementType());
+
+			return [
+				'$ref' => '#/components/schemas/' . TypeAliasRegistry::toPublicType($dto),
+			];
+		}
+
+		return [];
+	}
+
+	private function getDtoProperties(Dto $dto): array
+	{
+		$result = [
+			'type' => 'object',
+			'properties' => [],
+		];
+
+		/** @var DtoField $field */
+		foreach ($dto->getFields() as $field)
+		{
+			$result['properties'][$field->getPropertyName()] = $this->getFieldTypeFormat($field);
+		}
+
+		return $result;
+	}
+
+	private function getRequestTypeProperties(ReflectionParameter $parameter): array
+	{
+		if (!$parameter->getType() instanceof ReflectionNamedType)
+		{
+			return [
+				'type' => 'unknown',
+			];
+		}
+
+		$result = $this->getPropertyTypeProperties($parameter->getType()->getName());
+
+		if ($parameter->isDefaultValueAvailable() && $parameter->getDefaultValue() !== null)
+		{
+			$result['example'] = $parameter->getDefaultValue();
+		}
+
+		return $result;
+	}
+
+	private function getPropertyTypeProperties(string $typeName): ?array
+	{
+		$primitive = match ($typeName)
+		{
+			'int' => [
+				'type' => 'integer',
+				'example' => 1,
+			],
+			'string' => [
+				'type' => 'string',
+				'example' => 'string',
+			],
+			'float' => [
+				'type' => 'float',
+				'example' => 1.0,
+			],
+			'bool' => [
+				'type' => 'boolean',
+				'example' => true,
+			],
+			'array' => [
+				'type' => 'array',
+			],
+			default => null,
+		};
+
+		if ($primitive !== null)
+		{
+			return $primitive;
+		}
+
+		if (is_subclass_of($typeName, \BackedEnum::class))
+		{
+			return $this->getBackedEnumFormat($typeName);
+		}
+
+		return null;
+	}
+
+	private function getExamplesByDtoClass(\ReflectionProperty $property, ?DtoExample $dtoExample, MethodDescription $methodDescription): array
+	{
+		return match ($property->getName())
+		{
+			'id' => [
+				'type' => 'integer',
+				'example' => 1,
+			],
+			'cursor' => [
+				'type' => 'object',
+				'example' => [
+					'field' => 'id',
+					'value' => 0,
+					'order' => 'ASC',
+				],
+			],
+			'filter' => call_user_func(function () use ($methodDescription) {
+				$result = [
+					'type' => 'array',
+				];
+				if ($methodDescription->method !== 'tail')
+				{
+					$result['example'] = [['id', '>=', 1], ['id', 1], ['id', 'in', [1, 2, 3]]];
+				}
+
+				return $result;
+			}),
+			'select' => call_user_func(function () use ($dtoExample) {
+				$result = [
+					'type' => 'array',
+					'items' => [
+						'type' => 'string',
+					],
+				];
+				if ($dtoExample !== null && $dtoExample->selectable !== [])
+				{
+					$result['example'] = $dtoExample->selectable;
+				}
+
+				return $result;
+			}),
+			'fields' => call_user_func(function () use ($methodDescription, $dtoExample) {
+				$result = [
+					'type' => 'object',
+				];
+
+				if ($dtoExample !== null && $dtoExample->editable !== [])
+				{
+					$result['properties'] = $dtoExample->editable;
+					if ($dtoExample->required !== [])
+					{
+						$result['required'] = $dtoExample->required;
+					}
+				}
+
+				return $result;
+			}),
+			'order' => call_user_func(function () use ($dtoExample) {
+				$result = [
+					'type' => 'object',
+				];
+				if ($dtoExample !== null && $dtoExample->sortable !== [])
+				{
+					$result['properties'] = $dtoExample->sortable;
+				}
+
+				return $result;
+			}),
+			'pagination' => [
+				'type' => 'object',
+				'properties' => [
+					'page' => ['type' => 'integer', 'example' => 2],
+					'limit' => ['type' => 'integer', 'example' => 20],
+					'offset' => ['type' => 'integer', 'example' => 0],
+				],
+			],
+			'aggregate' => [
+				'type' => 'object',
+				'properties' => [
+					'count' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+					'min' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+					'max' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+					'avg' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+					'sum' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+					'countDistinct' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['id']],
+				],
+			],
+			default => call_user_func(function () use ($methodDescription, $property) {
+				$propertyType = $this->getPropertyTypeProperties($property->getType()->getName());
+				if ($propertyType === null)
+				{
+					return ['type' => 'unknown'];
+				}
+
+				if ($property->getType()->getName() === 'array' && !empty($property->getAttributes(ElementType::class)))
+				{
+					$elementType = $property->getAttributes(ElementType::class)[0]->newInstance()->type;
+					$elementPropertyType = $this->getPropertyTypeProperties($elementType);
+					if ($elementPropertyType !== null)
+					{
+						unset($elementPropertyType['example']);
+						$propertyType['items'] = $elementPropertyType;
+					}
+				}
+
+				return $propertyType;
+			}),
+		};
+	}
+
+	private function processTitleAttribute(object $attribute, array $data): array
+	{
+		$message = $this->getLocalizedMessage($attribute->value);
+
+		return $message ? array_merge($data, ['summary' => $message]) : $data;
+	}
+
+	private function processDescriptionAttribute(object $attribute, array $data): array
+	{
+		$message = $this->getLocalizedMessage($attribute->value);
+
+		return $message ? array_merge($data, ['description' => $message]) : $data;
+	}
+
+	private function getLocalizedMessage($value): ?string
+	{
+		if ($value instanceof LocalizableMessage)
+		{
+			return $this->language ? $value->localize($this->language) : (string)$value;
+		}
+
+		return $value !== null ? trim((string)$value) : null;
+	}
+
+	/**
+	 * @throws ReflectionException
+	 */
+	private function getMethodData(ReflectionMethod $method, string $returnTypeClass, MethodDescription $methodDescription): ?array
+	{
+		$methodData = [];
+		foreach ($method->getAttributes() as $attribute)
+		{
+			$attributeName = $attribute->getName();
+			$attributeInstance = $attribute->newInstance();
+
+			$methodData = match ($attributeName)
+			{
+				Title::class => $this->processTitleAttribute($attributeInstance, $methodData),
+				Description::class => $this->processDescriptionAttribute($attributeInstance, $methodData),
+				Deprecated::class => array_merge($methodData, ['deprecated' => true]),
+				default => $methodData,
+			};
+		}
+
+		$methodData['tags'] = [$methodDescription->module];
+
+		$methodData['requestBody'] = [
+			'content' => [
+				'application/json' => [
+					'schema' => $this->getMethodRequestSchema($method, $methodDescription),
+				],
+			],
+		];
+
+		$dto = $this->getDtoByClass($methodDescription->dtoFqcn);
+
+		$methodData['responses'] = [
+			200 => [
+				'description' => 'Success response',
+				'content' => [
+					'application/json' => [
+						'schema' => $this->getMethodResponseSchema($returnTypeClass, $dto),
+					],
+				],
+			],
+		];
+
+		return $methodData;
+	}
+
+	private function getPathUri(string $actionUri): string
+	{
+		if (!str_starts_with($actionUri, '/'))
+		{
+			$actionUri = '/' . $actionUri;
+		}
+
+		return $actionUri;
+	}
+
+	private function getMethodRequestSchema(ReflectionMethod $method, MethodDescription $methodDescription): array
+	{
+		$properties = $requestRequiredProperties = [];
+		$parameters = $method->getParameters();
+
+		foreach ($parameters as $parameter)
+		{
+			if ($parameter->hasType())
+			{
+				if (!$parameter->getType()->isBuiltin())
+				{
+					$requestTypeReflection = new ReflectionClass($parameter->getType()->getName());
+					if ($requestTypeReflection->isSubclassOf(Request::class))
+					{
+						$dto = $methodDescription->dtoFqcn ? $methodDescription->dtoFqcn::create() : null;
+						foreach ($requestTypeReflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property)
+						{
+							$hiddenAttributes = $property->getAttributes(Hidden::class);
+							if (!empty($hiddenAttributes))
+							{
+								continue;
+							}
+							$dtoExample = $dto !== null ? $this->getDtoExample($dto, $methodDescription) : null;
+							$properties[$property->getName()] = $this->getExamplesByDtoClass($property, $dtoExample, $methodDescription);
+
+							if (!$property->getType()->allowsNull())
+							{
+								$requestRequiredProperties[] = $property->getName();
+							}
+						}
+					}
+				}
+				else
+				{
+					$properties[$parameter->getName()] = $this->getRequestTypeProperties($parameter);
+					if (!$parameter->getType()->allowsNull())
+					{
+						$requestRequiredProperties[] = $parameter->getName();
+					}
+				}
+			}
+		}
+
+		$baseRequestSchema = function (array $properties, array $required = []) {
+			$data = [
+				'type' => 'object',
+				'properties' => $properties,
+			];
+			if ($required)
+			{
+				$data['required'] = $required;
+			}
+
+			return $data;
+		};
+
+		return $baseRequestSchema($properties, $requestRequiredProperties);
+	}
+
+	private function getDtoExample(Dto $dto, MethodDescription $methodDescription): ?DtoExample
+	{
+		$selectable = $editable = $sortable = $required = [];
+
+		/** @var DtoField $dtoField */
+		foreach ($dto->getFields() as $dtoField)
+		{
+			if ($dtoField->getRelation() !== null)
+			{
+				continue;
+			}
+			$selectable[] = $dtoField->getPropertyName();
+
+			if ($dtoField->isSortable())
+			{
+				$sortable[$dtoField->getPropertyName()] = [
+					'type' => 'string',
+					'example' => 'ASC',
+				];
+			}
+
+			if (
+				$dtoField->getRequiredGroups() !== null &&
+				(
+					$dtoField->getRequiredGroups() === [] ||
+					in_array($methodDescription->method, $dtoField->getRequiredGroups(), true)
+				)
+			)
+			{
+				$required[] = $dtoField->getPropertyName();
+				$editable[$dtoField->getPropertyName()] = $this->getFormatByType($dtoField);
+			}
+
+			if (
+				!isset($editable[$dtoField->getPropertyName()]) &&
+				$dtoField->getEditableGroups() !== null &&
+				(
+					$dtoField->getEditableGroups() === [] ||
+					in_array($methodDescription->method, $dtoField->getEditableGroups(), true)
+				)
+			)
+			{
+				$editable[$dtoField->getPropertyName()] = $this->getFormatByType($dtoField);
+			}
+		}
+
+		return new DtoExample(get_class($dto), $selectable, $editable, $sortable, $required);
+	}
+
+	private function getDtoByClass(?string $dtoFqcn): ?Dto
+	{
+		if ($dtoFqcn === null)
+		{
+			return null;
+		}
+
+		if (!isset(self::$dtos[$dtoFqcn]))
+		{
+			try
+			{
+				$dto = $dtoFqcn::create();
+			}
+			catch (\Exception $e)
+			{
+				return null;
+			}
+
+			self::$dtos[$dtoFqcn] = $dto;
+		}
+
+		return self::$dtos[$dtoFqcn];
+	}
+
+	private function getControllerReflectionByClass(string $controllerFqcn): ?ReflectionClass
+	{
+		if (!isset(self::$contollersReflections[$controllerFqcn]))
+		{
+			try
+			{
+				$controllerReflection = new ReflectionClass($controllerFqcn);
+			}
+			catch (ReflectionException $e)
+			{
+				return null;
+			}
+
+			self::$contollersReflections[$controllerFqcn] = $controllerReflection;
+		}
+
+		return self::$contollersReflections[$controllerFqcn];
+	}
+}

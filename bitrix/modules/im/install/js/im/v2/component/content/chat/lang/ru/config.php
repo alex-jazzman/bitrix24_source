@@ -93,3 +93,5 @@ $MESS["IM_CONTENT_COPILOT_SEARCH_BUTTON"] = "Поиск";
 $MESS["IM_CONTENT_COPILOT_SEARCH_DISABLED_BY_ADMIN"] = "Администратор вашего портала ограничил возможность включать поиск в интернете";
 $MESS["IM_CONTENT_COPILOT_MODE_BUTTON_HINT"] = "Режим";
 $MESS["IM_CONTENT_COPILOT_AGENT_MODE_BUTTON"] = "Агент";
+
+$MESS["IM_CONTENT_AI_ASSISTANT_EMPTY_STATE_TITLE"] = "Привет! Чем могу помочь?";

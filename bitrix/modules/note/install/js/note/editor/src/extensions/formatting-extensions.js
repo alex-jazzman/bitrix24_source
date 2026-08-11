@@ -18,8 +18,102 @@ import { Typography } from '@tiptap/extension-typography';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import { Link } from '@tiptap/extension-link';
+import { InputRule } from '@tiptap/core';
 import { sanitizeUrl } from '../utils/url';
 import { Lexer } from 'marked';
+
+// Single `[text](url)` markdown link, not the `[[image ...]]` asset syntax (double bracket) —
+// the lookbehind rejects a `[` immediately before ours without consuming it (range.from must stay
+// exactly at the opening `[`, see @tiptap/core InputRule.ts `range.from = from - (match[0].length - text.length)`).
+// URL group stops at the first ')' or whitespace — full parenthesized URLs are handled on paste (P3.T2).
+const LINK_MD_INPUT_RULE = /(?<!\[)\[([^[\]\n]+)\]\(([^)\s]+)\)$/;
+
+function isInsideCodeBlock(state: Object): boolean
+{
+	const { $from } = state.selection;
+	for (let depth = $from.depth; depth >= 0; depth--)
+	{
+		if ($from.node(depth).type.name === 'codeBlock')
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function rangeHasLinkMark(state: Object, from: number, to: number): boolean
+{
+	const linkMarkType = state.schema.marks.link;
+
+	return state.doc.rangeHasMark(from, to, linkMarkType);
+}
+
+function rangeHasCodeMark(state: Object, from: number, to: number): boolean
+{
+	const codeMarkType = state.schema.marks.code;
+
+	return state.doc.rangeHasMark(from, to, codeMarkType);
+}
+
+const LinkWithInputRule = Link.extend({
+	// Base Link is inclusive when autolink is on, which makes typing at a link's end grow the link
+	// and traps the caret. Force non-inclusive: autolink still works via appendTransaction on whitespace.
+	inclusive()
+	{
+		return false;
+	},
+	// One-shot handoff to the floating popup: the range of a link just created by the markdown
+	// input rule. The popup consumes and clears it to suppress its own auto-open (see
+	// link-floating-popup.js syncVisibilityWithCaret) — a typing conversion is not an explicit
+	// "edit this link" interaction, so the popup must stay closed until the user clicks/re-enters.
+	addStorage()
+	{
+		return { suppressPopupRange: null };
+	},
+	addInputRules()
+	{
+		const extension = this;
+
+		return [
+			new InputRule({
+				find: LINK_MD_INPUT_RULE,
+				handler: ({ state, range, match }) => {
+					const text = match[1];
+					const raw = match[2];
+					if (!text)
+					{
+						return null;
+					}
+
+					const href = sanitizeUrl(raw);
+					if (!href)
+					{
+						return null;
+					}
+
+					// Code excludes 'link' in the schema (excludes: 'code link'), so letting this rule fire
+					// inside inline code would silently replace the code mark with a link.
+					if (
+						isInsideCodeBlock(state)
+						|| rangeHasLinkMark(state, range.from, range.to)
+						|| rangeHasCodeMark(state, range.from, range.to)
+					)
+					{
+						return null;
+					}
+
+					const { tr } = state;
+					const linkMarkType = state.schema.marks.link;
+					tr.insertText(text, range.from, range.to);
+					tr.addMark(range.from, range.from + text.length, linkMarkType.create({ href }));
+					tr.removeStoredMark(linkMarkType);
+					extension.storage.suppressPopupRange = { from: range.from, to: range.from + text.length };
+				},
+			}),
+		];
+	},
+});
 
 function ensureParagraphInlineTokens(tokens)
 {
@@ -169,7 +263,7 @@ export function createFormattingExtensions(): Object[]
 		Subscript,
 		Superscript,
 		Typography,
-		Link.configure({
+		LinkWithInputRule.configure({
 			openOnClick: false,
 			autolink: true,
 			enableClickSelection: false,

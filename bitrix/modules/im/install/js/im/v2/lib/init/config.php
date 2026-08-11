@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.call',
 		'im.v2.lib.counter',
 		'im.v2.lib.desktop',
+		'im.v2.lib.guest',
 		'im.v2.lib.logger',
 		'im.v2.lib.market',
 		'im.v2.lib.message-notifier',

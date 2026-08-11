@@ -6,6 +6,7 @@ $MESS["IMOL_OPERATOR_ERROR_USER_ID"] = "Указан не корректный �
 $MESS["IMOL_OPERATOR_ERROR_CHAT_ID"] = "Указан не корректный идентификатор чата";
 $MESS["IMOL_OPERATOR_ERROR_CHAT_TYPE"] = "Указанный чат не является открытой линией";
 $MESS["IMOL_OPERATOR_ERROR_ACCESS_DENIED"] = "Вы не можете открыть этот разговор, т.к. у вас недостаточно прав.";
+$MESS["IMOL_OPERATOR_ERROR_ANSWER_ALREADY_TAKEN"] = "Диалог уже принят другим оператором";
 $MESS["IMOL_OPERATOR_ERROR_CANT_SAVE_QUICK_ANSWER"] = "Ошибка сохранения быстрого ответа";
 $MESS["IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_VERSION_LOWER_THAN_REQUIRED"] = "Не удалось создать параллельный диалог, потому что у клиента не обновлен модуль «Чат-боты Битрикс24»";
 $MESS["IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_VERSION_LOWER_THAN_REQUIRED_MSGVER_1"] = "Не удалось создать параллельный диалог, потому что у клиента не обновлён модуль «Чат-боты Битрикс24»";

@@ -56,4 +56,5 @@ export type SkuResourcesEditorOptions = {
 	canBeEmpty: boolean;
 	editMode: boolean;
 	catalogSkuEntityOptions: CatalogSkuEntityOptions;
+	shortSlotsOnly?: boolean;
 }

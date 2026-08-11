@@ -1,7 +1,7 @@
 import { ajax, Loc } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Button, ButtonColor } from 'ui.buttons';
-import 'ui.notification.center';
+import 'ui.notification';
 
 export const Types: Readonly<string, string> = Object.freeze({
 	bitrix24: 'bitrix24',

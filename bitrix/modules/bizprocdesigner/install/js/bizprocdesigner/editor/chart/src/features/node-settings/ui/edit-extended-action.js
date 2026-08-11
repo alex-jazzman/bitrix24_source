@@ -1,29 +1,23 @@
-import { Type, ajax, Dom, Event } from 'main.core';
+import { Type, ajax, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { ValueSelector } from '../../../entities/common-node-settings';
 import { ref, inject } from 'ui.vue3';
 import { mapActions, mapState } from 'ui.vue3.pinia';
+
 import { diagramStore } from '../../../entities/blocks';
-
-import type {
-	ActivityData,
-	// eslint-disable-next-line no-unused-vars
-	DiagramTemplate,
-	Block, SettingsControls,
-} from '../../../shared/types';
-import { createUniqueId, deepEqual } from '../../../shared/utils';
-import { Loader } from '../../../shared/ui';
-import { usePropertyDialog } from '../../../shared/composables';
-
 import {
 	useNodeSettingsStore,
-	// eslint-disable-next-line no-unused-vars
-	type Construction,
-	ActionDictEntry,
-	evaluateActionExpressionDocumentType,
+	getConnectedBlocksContextForConstruction,
+	evaluateActionExpressionDocumentType, type ActionDictEntry,
 } from '../../../entities/node-settings';
-import { editorAPI } from '../../../shared/api';
 import { EVENT_NAMES } from '../../../entities/node-settings/constants/index';
+import { editorAPI } from '../../../shared/api';
+import { usePropertyDialog } from '../../../shared/composables';
+import { type ActivityData, type Block, type SettingsControls } from '../../../shared/types';
+import { Loader } from '../../../shared/ui';
+import { createUniqueId, deepEqual } from '../../../shared/utils';
+import { BxControl } from '../directives/bx-control';
+import { FormInputTracker } from '../directives/form-input-tracker';
+import { handleBpSelectorButtonClick } from '../utils/bp-selector-button';
 
 type StatusType = $Values<Status>;
 const Status: Record<string, StatusType> = Object.freeze({
@@ -75,41 +69,11 @@ type ExtractedFormData = {
 
 const CorrectDocumentTypeLength = 3;
 
-const formInputTrackerHandlers: WeakMap<HTMLElement, () => void> = new WeakMap();
-
-const vFormInputTracker = {
-	mounted(el: HTMLElement, binding: { value: () => void }): void
-	{
-		const handler = () => binding.value();
-		formInputTrackerHandlers.set(el, handler);
-		Event.bind(el, 'input', handler);
-	},
-	beforeUnmount(el: HTMLElement): void
-	{
-		const handler = formInputTrackerHandlers.get(el);
-		if (handler)
-		{
-			Event.unbind(el, 'input', handler);
-			formInputTrackerHandlers.delete(el);
-		}
-	},
-};
-
-const vBxControl = {
-	mounted(el: HTMLElement, binding: { value: HTMLElement | null }): void
-	{
-		if (binding.value)
-		{
-			Dom.append(binding.value, el);
-		}
-	},
-};
-
 // @vue/component
 export const EditExtendedAction = {
 	name: 'edit-extended-action',
 	components: { Loader },
-	directives: { FormInputTracker: vFormInputTracker, BxControl: vBxControl },
+	directives: { FormInputTracker, BxControl },
 	props: {
 		/** @type Construction */
 		construction: {
@@ -119,6 +83,11 @@ export const EditExtendedAction = {
 		actionId: {
 			type: String,
 			required: true,
+		},
+		actionMeta: {
+			type: [Object, null],
+			required: false,
+			default: null,
 		},
 		/** @type DiagramTemplate | null */
 		template: {
@@ -132,10 +101,16 @@ export const EditExtendedAction = {
 		/** @type ActivityData | null */
 		activityData: {
 			type: [Object, null],
-			required: true,
+			required: false,
+			default: null,
 		},
 		selectedDocument: {
 			type: [String, null],
+			required: false,
+			default: null,
+		},
+		ruleCard: {
+			type: [Object, null],
 			required: false,
 			default: null,
 		},
@@ -166,19 +141,29 @@ export const EditExtendedAction = {
 		};
 	},
 	computed: {
-		...mapState(useNodeSettingsStore, ['block', 'currentRule', 'nodeSettings']),
+		...mapState(useNodeSettingsStore, ['block', 'currentRule', 'nodeSettings', 'currentSettingsItems']),
 		Status: (): Status => Status,
 		action(): ?ActionDictEntry
 		{
-			return this.nodeSettings.actions.get(this.actionId);
+			return this.actionMeta ?? this.nodeSettings.actions.get(this.actionId);
 		},
 		propertiesDialogDocumentType(): Array<string>
 		{
 			return this.getPropertyDialogDocumentType(this.selectedDocument);
 		},
+		connectedBlocksContext(): Object
+		{
+			return getConnectedBlocksContextForConstruction(
+				this.block,
+				this.currentRule.id,
+				this.ruleCard,
+				this.construction,
+				this.currentSettingsItems,
+			);
+		},
 		connectedBlocks(): Array<Block>
 		{
-			return this.store.getAllBlockAncestors(this.block, this.currentRule.id);
+			return this.connectedBlocksContext.allBlocks;
 		},
 		isPropertiesDialogDocumentTypeReady(): boolean
 		{
@@ -281,7 +266,7 @@ export const EditExtendedAction = {
 			let activity: ActivityData = this.activityData;
 			if (!activity)
 			{
-				const defaultProps = Type.isPlainObject(this.action.properties)
+				const defaultProps = Type.isPlainObject(this.action?.properties)
 					? { ...this.action.properties }
 					: {}
 				;
@@ -291,7 +276,7 @@ export const EditExtendedAction = {
 					Type: this.actionId,
 					Activated: 'Y',
 					Properties: {
-						Title: this.action.title,
+						Title: this.action?.title ?? '',
 						...defaultProps,
 					},
 				};
@@ -300,7 +285,7 @@ export const EditExtendedAction = {
 			const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [], Name: 'Template' }];
 			compatibleTemplate[0].Children.push(
 				activity,
-				...this.store.getAllBlockAncestors(this.block, this.currentRule.id).map((b) => b.activity),
+				...this.connectedBlocks.map((block) => block.activity),
 			);
 
 			try
@@ -314,6 +299,7 @@ export const EditExtendedAction = {
 						workflowTemplate: JSON.stringify(compatibleTemplate),
 						workflowConstants: JSON.stringify(this.template?.CONSTANTS ?? {}),
 					},
+					options: { hideEditorComment: true },
 				});
 
 				if (this.isRenderCancelled(requestId))
@@ -339,6 +325,7 @@ export const EditExtendedAction = {
 							constants: this.template?.CONSTANTS ?? [],
 						},
 					});
+					formData.append('options[hideEditorComment]', 'Y');
 					await this.renderPropertyDialog(formData);
 				}
 
@@ -605,73 +592,13 @@ export const EditExtendedAction = {
 
 		onFormClick(event: MouseEvent): void
 		{
-			const { target } = event;
-			if (!target || !(target instanceof HTMLElement))
-			{
-				return;
-			}
-
-			if (this.isSelectorButton(target))
-			{
-				event.stopPropagation();
-
-				void this.showSelector(target);
-			}
-		},
-
-		isSelectorButton(element: HTMLElement): boolean
-		{
-			return element.getAttribute('data-role') === 'bp-selector-button';
-		},
-
-		async showSelector(targetElement: HTMLElement): Promise<void>
-		{
-			let inputElement = null;
-			const propsAttr = targetElement.getAttribute('data-bp-selector-props');
-
-			if (propsAttr)
-			{
-				const controlId = (JSON.parse(propsAttr))?.controlId ?? null;
-				if (controlId)
-				{
-					inputElement = this.settingsForm.querySelector(`#${CSS.escape(controlId)}`);
-				}
-			}
-
-			if (!inputElement)
-			{
-				inputElement = targetElement.closest('.field-row')?.querySelector('input[type="text"], textarea');
-			}
-
-			if (!inputElement)
-			{
-				return;
-			}
-
-			const selector = new ValueSelector(
-				this.store,
-				this.block,
-				this.currentRule.id,
-			);
-
-			try
-			{
-				const value = await selector.show(targetElement);
-				const beforePart = inputElement.value.slice(0, inputElement.selectionEnd || 0);
-				const middlePart = value;
-				const afterPart = inputElement.value.slice(inputElement.selectionEnd || 0);
-
-				inputElement.value = beforePart + middlePart + afterPart;
-				inputElement.selectionEnd = beforePart.length + middlePart.length;
-				inputElement.focus();
-
-				inputElement.dispatchEvent(new window.Event('change'));
-				this.onChange();
-			}
-			catch (error)
-			{
-				console.error(error);
-			}
+			handleBpSelectorButtonClick(event, {
+				form: this.settingsForm,
+				store: this.store,
+				block: this.block,
+				portId: this.currentRule.id,
+				onChange: () => this.onChange(),
+			});
 		},
 	},
 	template: `

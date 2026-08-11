@@ -401,12 +401,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 		}
 		refreshKey() {
 			this.refreshButton.setClocking();
-			main_core.ajax.runComponentAction('bitrix:biconnector.apachesuperset.setting', 'changeBiToken', {
-				mode: 'class'
-			}).then(response => {
+			main_core.ajax.runAction('biconnector.key.changeSupersetKey').then(response => {
 				const generatedKey = response.data;
 				if (main_core.Type.isStringFilled(generatedKey)) {
-					this.keyInput.value = main_core.Text.encode(generatedKey);
+					this._model.setField(this.getName(), generatedKey);
+					this.keyInput.value = generatedKey;
 					BX.UI.Notification.Center.notify({
 						content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'),
 						autoHideDelay: 2000
@@ -417,6 +416,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						autoHideDelay: 2000
 					});
 				}
+				this.refreshButton.setClocking(false);
+			}).catch(() => {
+				BX.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED'),
+					autoHideDelay: 2000
+				});
 				this.refreshButton.setClocking(false);
 			});
 		}

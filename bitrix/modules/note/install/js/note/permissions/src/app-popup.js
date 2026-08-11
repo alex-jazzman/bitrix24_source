@@ -423,6 +423,7 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 				id: 'department',
 				options: {
 					selectMode: 'usersAndDepartments',
+					allowSelectRootDepartment: true,
 				},
 			},
 		];

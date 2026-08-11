@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -94,21 +95,16 @@ class note extends CModule
 
 	public function InstallDB(): bool
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
-		$freshSchema = false;
-		$installSqlFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/install.sql';
-		if (is_file($installSqlFile))
+		$freshSchema = !Application::getConnection()->isTableExists('b_note_collection');
+
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($installSqlFile);
-			if ($errors !== false)
-			{
-				$APPLICATION->ThrowException(implode('<br>', $errors));
+			$APPLICATION->ThrowException(implode('<br>', $migrationResult->getErrorMessages()));
 
-				return false;
-			}
-
-			$freshSchema = true;
+			return false;
 		}
 
 		ModuleManager::registerModule($this->MODULE_ID);
@@ -122,83 +118,26 @@ class note extends CModule
 			}
 		}
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler(
-			'pull',
-			'onGetDependentModule',
-			$this->MODULE_ID,
-			'\Bitrix\Note\Internal\Integration\Pull\PullSchema',
-			'onGetDependentModule',
-		);
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			$this->MODULE_ID,
-			'\Bitrix\Note\Infrastructure\Connector\Mobile',
-			'onMobileMenuStructureBuilt',
-		);
-
 		$this->InstallTemplateRules();
-		$this->InstallAgents();
-
-		return true;
-	}
-
-	public function InstallAgents(): bool
-	{
-		\CAgent::AddAgent(
-			name: 'Bitrix\Note\Infrastructure\Agent\RecycleBin\RecycleBinCleanupAgent::run();',
-			module: 'note',
-			interval: 7200,
-			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
-		);
-
-		return true;
-	}
-
-	public function UnInstallAgents(): bool
-	{
-		\CAgent::RemoveModuleAgents($this->MODULE_ID);
 
 		return true;
 	}
 
 	public function UnInstallDB(array $arParams = []): bool
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
-		if (
-			(!array_key_exists('save_tables', $arParams) || $arParams['save_tables'] !== 'Y')
-			&& is_file(__DIR__ . '/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/uninstall.sql')
-		)
+		$dropTables = (($arParams['save_tables'] ?? 'N') !== 'Y');
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch(__DIR__ . '/db/' . \Bitrix\Main\Application::getConnection()->getType() . '/uninstall.sql');
-			if ($errors !== false)
-			{
-				$APPLICATION->ThrowException(implode('<br>', $errors));
+			$APPLICATION->ThrowException(implode('<br>', $migrationResult->getErrorMessages()));
 
-				return false;
-			}
+			return false;
 		}
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unregisterEventHandler(
-			'pull',
-			'onGetDependentModule',
-			$this->MODULE_ID,
-			'\Bitrix\Note\Internal\Integration\Pull\PullSchema',
-			'onGetDependentModule',
-		);
-		$eventManager->unregisterEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			$this->MODULE_ID,
-			'\Bitrix\Note\Infrastructure\Connector\Mobile',
-			'onMobileMenuStructureBuilt',
-		);
-
 		$this->UnInstallTemplateRules();
-		$this->UnInstallAgents();
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 

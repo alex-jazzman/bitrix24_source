@@ -11,11 +11,12 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
-	const { WidgetTitleParamsType } = require('im/messenger/const');
+	const { WidgetTitleParamsType, DialogType } = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatService } = require('im/messenger/provider/services/chat');
@@ -187,7 +188,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		{
 			return {
 				dialogId: this.dialogId,
-				title: this.dialogModel.name,
+				title: this.#getEditableTitle(),
 				description: this.dialogModel.description,
 				avatar: this.dialogModel.avatar,
 				type: this.dialogModel.type,
@@ -206,6 +207,22 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 						},
 					},
 			};
+		}
+
+		/**
+		 * @desc For a CoPilot chat use the same value as the header (agentName for the universal role),
+		 * not the hidden auto-generated dialog name.
+		 * @return {string}
+		 * @private
+		 */
+		#getEditableTitle()
+		{
+			if (this.dialogModel.type === DialogType.copilot)
+			{
+				return ChatTitle.createFromDialogId(this.dialogId).getTitle();
+			}
+
+			return this.dialogModel.name;
 		}
 
 		/**

@@ -13,6 +13,10 @@ export const ChangeActivationTopBtn = {
 			type: Object,
 			required: true,
 		},
+		size: {
+			type: Number,
+			default: 18,
+		},
 	},
 	methods: {
 		onChangeActivation(): void
@@ -30,6 +34,7 @@ export const ChangeActivationTopBtn = {
 	template: `
 		<ActivationTopBtn
 			:block="block"
+			:size="size"
 			@changeActivation="onChangeActivation"
 		/>
 	`,

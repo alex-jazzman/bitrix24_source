@@ -1,0 +1,11 @@
+{
+    "defaultTableName": "b_rest_event",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/images": "images/rest",
+        "install/js": "js"
+    },
+    "publicDirectoriesMapping": {
+        "install/public": ""
+    }
+}

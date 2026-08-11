@@ -23,6 +23,11 @@ export const DELIMITER_TYPES: Record<string, DelimiterType> = Object.freeze({
 	LINE: 'line',
 });
 
+export const EDITING_MODES = Object.freeze({
+	CREATE: 'create',
+	EDIT: 'edit',
+});
+
 export const CONSTANT_ID_PREFIX = 'SetupTemplateActivity_';
 
 export const PRESET_TITLE_ICONS = {

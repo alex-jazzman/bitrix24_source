@@ -20,6 +20,10 @@ export const ReasoningButton = {
 		OutlineIcons: () => OutlineIcons,
 		ChipDesign: () => ChipDesign,
 		ChipSize: () => ChipSize,
+		isTempChat(): boolean
+		{
+			return this.$store.getters['copilot/chats/isTempChat'](this.dialogId);
+		},
 		isActive(): boolean
 		{
 			return this.$store.getters['copilot/chats/isReasoningEnabled'](this.dialogId);
@@ -38,7 +42,7 @@ export const ReasoningButton = {
 		},
 		design(): string
 		{
-			if (!this.isReasoningAvailableInModel)
+			if (!this.isReasoningAvailableInModel || this.isTempChat)
 			{
 				return ChipDesign.Disabled;
 			}
@@ -65,6 +69,11 @@ export const ReasoningButton = {
 	watch: {
 		isReasoningAvailableInModel(isAvailable: boolean)
 		{
+			if (this.isTempChat)
+			{
+				return;
+			}
+
 			if (!isAvailable && this.isActive)
 			{
 				this.$store.dispatch('copilot/chats/toggleReasoning', this.dialogId);
@@ -74,7 +83,7 @@ export const ReasoningButton = {
 	methods: {
 		toggle()
 		{
-			if (!this.isReasoningAvailableInModel)
+			if (this.isTempChat || !this.isReasoningAvailableInModel)
 			{
 				return;
 			}

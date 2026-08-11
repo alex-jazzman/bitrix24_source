@@ -49,6 +49,18 @@ $arActivityDescription = (new ActivityDescription(
 				'NAME' => Loc::getMessage('BPCA1_DESCR_RESULT_EVENTS'),
 				'TYPE' => 'string',
 			],
+			'EVENTS_TITLES_LIST' => [
+				'NAME' => Loc::getMessage('BPCA1_DESCR_RESULT_TITLES_LIST'),
+				'TYPE' => \Bitrix\Bizproc\FieldType::TEXT,
+			],
+			'EVENTS_TITLES_BB_LIST' => [
+				'NAME' => Loc::getMessage('BPCA1_DESCR_RESULT_TITLES_BB_LIST'),
+				'TYPE' => \Bitrix\Bizproc\FieldType::TEXT,
+			],
+			'MeetingsTotalMinutes' => [
+				'NAME' => Loc::getMessage('BPCA1_DESCR_RESULT_MEETINGS_TOTAL_MINUTES'),
+				'TYPE' => \Bitrix\Bizproc\FieldType::INT,
+			],
 		],
 	)
 	->toArray()

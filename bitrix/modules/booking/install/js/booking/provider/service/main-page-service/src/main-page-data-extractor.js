@@ -1,4 +1,5 @@
 import { CrmEntity } from 'booking.const';
+import type { AiCallBannerMode } from 'booking.const';
 import { BookingMappers } from 'booking.provider.service.booking-service';
 import { ClientMappers } from 'booking.provider.service.client-service';
 import { ResourceMappers } from 'booking.provider.service.resources-service';
@@ -128,6 +129,11 @@ export class MainPageDataExtractor
 	getShouldShowWhatsAppEmergency(): boolean
 	{
 		return this.#response.shouldShowWhatsAppEmergency;
+	}
+
+	getAiCallBannerMode(): $Values<typeof AiCallBannerMode> | null
+	{
+		return this.#response.aiCallBannerMode ?? null;
 	}
 
 	getCatalogSkuEntityOptions(): CatalogSkuEntityOptions

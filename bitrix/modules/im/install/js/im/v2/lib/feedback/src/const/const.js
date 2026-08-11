@@ -1,9 +1,5 @@
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
-
 import { type FormEntryType } from '../types/types';
 
-const AI_ASSISTANT_FORM_ID = 'im.ai-assistant.feedback';
-const COPILOT_FORM_ID = 'im.copilot.feedback';
 const GENERAL_FORM_ID = 'im-v2-feedback';
 
 export const FormContext = {
@@ -13,15 +9,35 @@ export const FormContext = {
 	general: 'profile',
 };
 
-export const FormConfigAiAssistant = {
-	id: AI_ASSISTANT_FORM_ID,
-	forms: getAiAssistantForms(),
-};
+export const AiAssistantFormId = 'im.ai-assistant.feedback';
 
-export const FormConfigCopilot = {
-	id: COPILOT_FORM_ID,
-	forms: getCopilotForms(),
-};
+export const AiAssistantFormsV2: FormEntryType[] = [
+	{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
+	{ zones: ['ru', 'by', 'kz', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
+];
+
+export const AiAssistantFormsLegacy: FormEntryType[] = [
+	{ zones: ['es'], id: 838, lang: 'es', sec: 'm82wkx' },
+	{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
+	{ zones: ['de'], id: 836, lang: 'de', sec: 'frcsm3' },
+	{ zones: ['com.br'], id: 840, lang: 'com.br', sec: 'ufjnte' },
+	{ zones: ['ru', 'kz', 'by', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
+];
+
+export const CopilotFormId = 'im.copilot.feedback';
+
+export const CopilotFormsV2: FormEntryType[] = [
+	{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
+	{ zones: ['ru', 'by', 'kz', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
+];
+
+export const CopilotFormsLegacy: FormEntryType[] = [
+	{ zones: ['es'], id: 684, lang: 'es', sec: 'svvq1x' },
+	{ zones: ['en'], id: 686, lang: 'en', sec: 'tjwodz' },
+	{ zones: ['de'], id: 688, lang: 'de', sec: 'nrwksg' },
+	{ zones: ['com.br'], id: 690, lang: 'com.br', sec: 'kpte6m' },
+	{ zones: ['ru', 'by', 'kz'], id: 692, lang: 'ru', sec: 'jbujn0' },
+];
 
 export const FormConfigGeneral = {
 	id: GENERAL_FORM_ID,
@@ -30,41 +46,3 @@ export const FormConfigGeneral = {
 		{ zones: ['en'], id: 560, sec: '621lbr', lang: 'en' },
 	],
 };
-
-function getAiAssistantForms(): FormEntryType[]
-{
-	if (FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
-	{
-		return [
-			{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
-			{ zones: ['ru', 'by', 'kz', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
-		];
-	}
-
-	return [
-		{ zones: ['es'], id: 838, lang: 'es', sec: 'm82wkx' },
-		{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
-		{ zones: ['de'], id: 836, lang: 'de', sec: 'frcsm3' },
-		{ zones: ['com.br'], id: 840, lang: 'com.br', sec: 'ufjnte' },
-		{ zones: ['ru', 'kz', 'by', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
-	];
-}
-
-function getCopilotForms(): FormEntryType[]
-{
-	if (FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
-	{
-		return [
-			{ zones: ['en'], id: 834, lang: 'en', sec: 'qnauno' },
-			{ zones: ['ru', 'by', 'kz', 'uz'], id: 2982, lang: 'ru', sec: 'vqmcxn' },
-		];
-	}
-
-	return [
-		{ zones: ['es'], id: 684, lang: 'es', sec: 'svvq1x' },
-		{ zones: ['en'], id: 686, lang: 'en', sec: 'tjwodz' },
-		{ zones: ['de'], id: 688, lang: 'de', sec: 'nrwksg' },
-		{ zones: ['com.br'], id: 690, lang: 'com.br', sec: 'kpte6m' },
-		{ zones: ['ru', 'by', 'kz'], id: 692, lang: 'ru', sec: 'jbujn0' },
-	];
-}

@@ -3,6 +3,7 @@
 use Bitrix\Main;
 use Bitrix\Currency;
 use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\Uri;
 
 global $APPLICATION;
 set_time_limit(0);
@@ -258,7 +259,7 @@ while ($arCatalog_list = $db_catalog_list->Fetch())
 			if (is_array($arPictInfo))
 			{
 				if(mb_substr($arPictInfo["SRC"], 0, 1) == "/")
-					$strFile = $usedProtocol.$arAcc['SERVER_NAME'].CHTTP::urnEncode($arPictInfo["SRC"], 'utf-8');
+					$strFile = $usedProtocol.$arAcc['SERVER_NAME'] . Uri::urnEncode($arPictInfo["SRC"]);
 				else
 					$strFile = $arPictInfo["SRC"];
 				$strTmpOff.="<picture>".$strFile."</picture>\n";

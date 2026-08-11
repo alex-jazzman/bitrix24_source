@@ -43,6 +43,12 @@ export const AddUsersButton = {
 			Outline,
 		};
 	},
+	data(): Object
+	{
+		return {
+			intervalFreezingPopupParent: null,
+		};
+	},
 	computed: {
 		preselected(): ItemId[]
 		{
@@ -101,14 +107,21 @@ export const AddUsersButton = {
 				},
 				popupOptions: {
 					events: {
-						onClose: this.unfreeze,
+						onClose: () => {
+							clearInterval(this.intervalFreezingPopupParent);
+							this.unfreeze();
+						},
 					},
 				},
 			});
 
 			this.selector.selectItemsByIds(this.preselected);
 			this.selector.show(this.$el);
-			setTimeout(() => this.freeze());
+			this.freeze();
+			// TODO: fix unfreezing and closing of all popups when slider is opened on top
+			this.intervalFreezingPopupParent = setInterval(() => {
+				this.freeze();
+			}, 100);
 		},
 		update(): void
 		{

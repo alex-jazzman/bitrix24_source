@@ -46,7 +46,7 @@ CModule::AddAutoloadClasses(
 		"CSecurityRequirementsException" => "classes/general/requirements_exception.php",
 		"CBitrixXscan" => "classes/general/xscan.php",
 		"CBitrixXscanHtaccess" => "classes/general/xscan_htaccess.php",
-		"Bitrix\\Security\\XScanResults" => "lib/xscanresulttable.php",
-		"Bitrix\\Security\\XScanResult" => "lib/xscanresulttable.php",
+		"Bitrix\\Security\\XScanResults" => "lib/XScanResultTable.php",
+		"Bitrix\\Security\\XScanResult" => "lib/XScanResultTable.php",
 	)
 );

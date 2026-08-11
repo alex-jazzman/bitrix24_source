@@ -1232,15 +1232,17 @@ elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 	}
 	else
 	{
-		$analyticsConvertEvent = ConvertEvent::createDefault()
-			->setSrcEntityTypeId(CCrmOwnerType::Lead)
+		\Bitrix\Crm\Service\Container::getInstance()
+			->getContext()
+			->getAnalytics()
+			->setEvent(Dictionary::EVENT_ENTITY_CONVERT)
 			->setSection(Dictionary::SECTION_LEAD)
 			->setSubSection(Dictionary::SUB_SECTION_LIST)
 			->setElement(Dictionary::ELEMENT_GRID_GROUP_ACTIONS)
-			->setStatus(Dictionary::STATUS_SUCCESS);
-		$eventsContainer = new ConvertEventsContainer($analyticsConvertEvent);
+			->setP2(['from', Dictionary::getAnalyticsEntityType(CCrmOwnerType::Lead)])
+		;
 
-		$wizard = new LeadConversionWizard($currentEntityID, $config, $eventsContainer);
+		$wizard = new LeadConversionWizard($currentEntityID, $config);
 		if(!$enableUserFieldCheck)
 		{
 			$wizard->enableUserFieldCheck(false);
@@ -1251,10 +1253,7 @@ elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 		{
 			$errorText = $wizard->getErrorText();
 			$wizard->undo();
-			$eventsContainer->setErrorStatus();
 		}
-
-		$eventsContainer->submitEvents();
 
 		LeadConversionWizard::remove($currentEntityID);
 	}

@@ -41,6 +41,86 @@ describe('note-asset-parser', () => {
 			assert(result !== null);
 			assert(result.fileId === 42);
 		});
+
+		it('accepts up to 3 leading spaces', () => {
+			const result = parseNoteAssetSyntax('   [[image fileId=42]]\n', 0);
+			assert(result !== null);
+			assert(result.fileId === 42);
+		});
+
+		it('parses optional width attribute (percent)', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42 width=50]]\n', 0);
+			assert(result !== null);
+			assert(result.fileId === 42);
+			assert(result.width === 50);
+		});
+
+		it('clamps width over 100 (legacy px) down to 100', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42 width=420]]\n', 0);
+			assert(result !== null);
+			assert(result.width === 100);
+		});
+
+		it('width is null when omitted', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42]]\n', 0);
+			assert(result !== null);
+			assert(result.width === null);
+		});
+
+		it('parses optional align attribute', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42 align=left]]\n', 0);
+			assert(result !== null);
+			assert(result.align === 'left');
+		});
+
+		it('parses width and align together', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42 width=60 align=right]]\n', 0);
+			assert(result !== null);
+			assert(result.width === 60);
+			assert(result.align === 'right');
+		});
+
+		it('align is null when omitted', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42]]\n', 0);
+			assert(result !== null);
+			assert(result.align === null);
+		});
+
+		it('normalizes align=center to null (default, never serialized)', () => {
+			const result = parseNoteAssetSyntax('[[image fileId=42 align=center]]\n', 0);
+			assert(result !== null);
+			assert(result.align === null);
+		});
+	});
+
+	describe('parseNoteAssetSyntax — align rejection', () => {
+
+		it('rejects unknown align value', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 align=top]]\n', 0) === null);
+		});
+
+		it('rejects empty align value', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 align=]]\n', 0) === null);
+		});
+	});
+
+	describe('parseNoteAssetSyntax — width rejection', () => {
+
+		it('rejects zero width', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 width=0]]\n', 0) === null);
+		});
+
+		it('rejects negative width', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 width=-5]]\n', 0) === null);
+		});
+
+		it('rejects non-numeric width', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 width=abc]]\n', 0) === null);
+		});
+
+		it('rejects unknown attribute alongside fileId', () => {
+			assert(parseNoteAssetSyntax('[[image fileId=42 height=10]]\n', 0) === null);
+		});
 	});
 
 	describe('parseNoteAssetSyntax — rejection', () => {
@@ -100,6 +180,16 @@ describe('note-asset-parser', () => {
 		it('skips non-line-start [[ occurrences', () => {
 			// "x[[image fileId=1]]" should be skipped because previous char is not \n
 			assert(findNoteAssetStart('x[[image fileId=1]]') === -1);
+		});
+
+		it('tolerates up to 3 leading spaces and returns the line start', () => {
+			assert(findNoteAssetStart('   [[image fileId=1]]\n') === 0);
+			const src = 'hello\n  [[file fileId=2]]\n';
+			assert(findNoteAssetStart(src) === 6);
+		});
+
+		it('rejects 4+ leading spaces (indented code block)', () => {
+			assert(findNoteAssetStart('    [[image fileId=1]]\n') === -1);
 		});
 	});
 

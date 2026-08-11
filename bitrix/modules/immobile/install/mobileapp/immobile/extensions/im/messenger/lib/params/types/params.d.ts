@@ -47,6 +47,7 @@ declare type ImFeatures = {
 	isChatFoldersAvailable: boolean,
 	isAiAssistantFeedbackAvailable: boolean,
 	isAiAssistantRegenerateAvailable: boolean,
+	isCopilotDraftChatAvailable: boolean,
 }
 
 declare type UserInfo = {

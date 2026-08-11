@@ -2,7 +2,8 @@ import { Type } from 'main.core';
 import 'ui.layout-form';
 import { hint } from 'ui.vue3.directives.hint';
 
-import { Model } from 'booking.const';
+import { LimitFeatureId, Model } from 'booking.const';
+import { limit } from 'booking.lib.limit';
 import { normalizeSlotLength } from '../../../lib/slot-length';
 
 import './slot-length-precision-selection.css';
@@ -34,7 +35,7 @@ export const SlotLengthPrecisionSelection = {
 	methods: {
 		distributeInitialValue(): void
 		{
-			let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureAvailable);
+			let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureEnabled);
 
 			this.days = Math.floor(remainingMinutes / (24 * 60));
 			remainingMinutes %= 24 * 60;
@@ -48,7 +49,7 @@ export const SlotLengthPrecisionSelection = {
 		{
 			const totalMinutes = normalizeSlotLength(
 				this.days * 24 * 60 + this.hours * 60 + this.minutes,
-				this.isMultidayFeatureAvailable,
+				this.isMultidayFeatureEnabled,
 			);
 
 			this.applyTotalMinutes(totalMinutes);
@@ -130,25 +131,18 @@ export const SlotLengthPrecisionSelection = {
 				event.target.blur();
 			}
 		},
+		handleDaysClick(): void
+		{
+			if (!this.isMultidayFeatureEnabled)
+			{
+				void limit.show(LimitFeatureId.MultidayBooking);
+			}
+		},
 	},
 	computed: {
-		isMultidayFeatureAvailable(): boolean
+		isMultidayFeatureEnabled(): boolean
 		{
-			return this.$store.getters[`${Model.Interface}/isMultidayFeatureAvailable`];
-		},
-		hourHint(): Object | null
-		{
-			if (this.isMultidayFeatureAvailable)
-			{
-				return null;
-			}
-
-			return {
-				text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'),
-				popupOptions: {
-					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-				},
-			};
+			return this.$store.state[Model.Interface].enabledFeature.bookingLong;
 		},
 		minutesHint(): Object
 		{
@@ -165,17 +159,20 @@ export const SlotLengthPrecisionSelection = {
 			<div class="ui-form-row-inline">
 				<div
 					class="ui-form-row"
-					:class="{ '--disabled': !isMultidayFeatureAvailable }"
+					:class="{ '--disabled': !isMultidayFeatureEnabled }"
 				>
 					<div class="ui-form-content">
-						<div class="ui-form-row">
+						<div
+							class="ui-form-row resource-creation-wizard__form-slot-length-precision-days"
+							@click="handleDaysClick"
+						>
 							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
 								<input
 									:data-id="'brcw-resource-slot-length-precision-days'"
 									v-model="days"
 									type="text"
 									class="ui-ctl-element"
-									:disabled="!isMultidayFeatureAvailable"
+									:disabled="!isMultidayFeatureEnabled"
 									@blur="validateDays"
 									@keydown="handleEnterKey"
 								>
@@ -191,10 +188,7 @@ export const SlotLengthPrecisionSelection = {
 				<div class="ui-form-row">
 					<div class="ui-form-content">
 						<div class="ui-form-row">
-							<div 
-								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
-								v-hint="hourHint"
-							>
+							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
 								<input
 									:data-id="'brcw-resource-slot-length-precision-hours'"
 									v-model="hours"

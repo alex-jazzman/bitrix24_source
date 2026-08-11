@@ -490,9 +490,10 @@ $editProfileTask = false;
 $dbResult = CTask::GetList(Array(), Array("NAME" => "main_change_profile"));
 if ($arTask = $dbResult->Fetch())
 	$editProfileTask = $arTask["ID"];
+
 //Registered users group
-$dbResult = CGroup::GetList('', '', Array("STRING_ID" => "REGISTERED_USERS"));
-if (!$dbResult->Fetch())
+$groupID = CGroup::GetIDByCode("REGISTERED_USERS");
+if (!$groupID)
 {
 	$group = new CGroup;
 	$arFields = Array(
@@ -511,33 +512,8 @@ if (!$dbResult->Fetch())
 	}
 }
 
-$rsGroups = CGroup::GetList("c_sort", "desc", array("ACTIVE"=>"Y", "ADMIN"=>"N", "ANONYMOUS"=>"N"));
-if(!($rsGroups->Fetch()))
-{
-	$group = new CGroup;
-	$arFields = Array(
-		"ACTIVE"       => "Y",
-		"C_SORT"       => 100,
-		"NAME"         => GetMessage("REGISTERED_USERS"),
-		"DESCRIPTION"  => "",
-		);
-	$NEW_GROUP_ID = $group->Add($arFields);
-	COption::SetOptionString('main', 'new_user_registration_def_group', $NEW_GROUP_ID);
-
-	$rsTasks = CTask::GetList(array(), array("MODULE_ID"=>"main", "SYS"=>"Y", "BINDIG"=>"module","LETTER"=>"P"));
-	if($arTask = $rsTasks->Fetch())
-	{
-		CGroup::SetModulePermission($NEW_GROUP_ID, $arTask["MODULE_ID"], $arTask["ID"]);
-	}
-}
-
-$userGroupID = "";
-$dbGroup = CGroup::GetList('', '', Array("STRING_ID" => "sale_administrator"));
-if($arGroup = $dbGroup -> Fetch())
-{
-	$userGroupID = $arGroup["ID"];
-}
-else
+$userGroupID = CGroup::GetIDByCode("sale_administrator");
+if (!$userGroupID)
 {
 	$group = new CGroup;
 	$arFields = Array(
@@ -547,7 +523,7 @@ else
 		"DESCRIPTION"  => GetMessage("SALE_WIZARD_ADMIN_SALE_DESCR"),
 		"USER_ID"      => array(),
 		"STRING_ID"      => "sale_administrator",
-		);
+	);
 	$userGroupID = $group->Add($arFields);
 }
 
@@ -633,14 +609,8 @@ if (CModule::IncludeModule('fileman'))
 	}
 }
 
-$userGroupID = "";
-$dbGroup = CGroup::GetList('', '', Array("STRING_ID" => "content_editor"));
-
-if($arGroup = $dbGroup -> Fetch())
-{
-	$userGroupID = (int)$arGroup["ID"];
-}
-else
+$userGroupID = CGroup::GetIDByCode("content_editor");
+if (!$userGroupID)
 {
 	$group = new CGroup;
 	$arFields = Array(

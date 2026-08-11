@@ -1,0 +1,26 @@
+.editor-chart-filter-grid-view-dropdown {
+	--border-color: var(--ui-color-palette-gray-30);
+	--min-height: 34px;
+	padding: 0 10px 0 12px;
+	cursor: pointer;
+	width: 156px;
+	box-sizing: border-box;
+}
+
+.editor-chart-filter-grid-view-dropdown .ui-system-input-value {
+	--font-size: 14px;
+	--text-color: var(--ui-color-gray-90);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0;
+}
+
+.editor-chart-filter-grid-view-dropdown .ui-system-input-value::placeholder {
+	color: var(--ui-color-base-50);
+}
+
+.editor-chart-filter-grid-view-dropdown .ui-system-input-dropdown {
+	--icon-size: 18px;
+}

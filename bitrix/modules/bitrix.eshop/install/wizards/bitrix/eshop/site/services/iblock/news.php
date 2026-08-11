@@ -44,12 +44,10 @@ if($iblockID == false)
 			"1" => "X",
 			"2" => "R"
 		);
-	$by = "";
-	$order = "";
-	$dbGroup = CGroup::GetList('', '', Array("STRING_ID" => "content_editor"));
-	if($arGroup = $dbGroup -> Fetch())
+	$groupId = CGroup::GetIDByCode("content_editor");
+	if($groupId)
 	{
-		$permissions[$arGroup["ID"]] = 'W';
+		$permissions[$groupId] = 'W';
 	};
 	$iblockID = WizardServices::ImportIBlockFromXML(
 		$iblockXMLFile,

@@ -42,12 +42,18 @@ export const RecoverAccess = {
 		{
 			return this.store.isRequestSent;
 		},
+		canSendRequest(): boolean
+		{
+			return this.store.canSendRequest;
+		},
 	},
 	mounted()
 	{
 		sendOtpAnalytics({
 			event: 'restore_access_show',
 		});
+		this.store.setCanSendRequest(this.canSendRequestRecoverAccess);
+		this.loadStatus();
 	},
 	methods: {
 		showAlternatives()
@@ -60,6 +66,24 @@ export const RecoverAccess = {
 			{
 				this.$emit('back-to-push');
 			}
+		},
+		loadStatus(): void
+		{
+			Ajax.getRequestRecoverAccessStatus().then((response) => {
+				const status = response?.data ?? {};
+				this.store.setCanSendRequest(status.canSend === true);
+
+				if (status.isSent === true)
+				{
+					this.store.setRequestSent();
+				}
+				else
+				{
+					this.store.clearRequestSent();
+				}
+			}).catch(() => {
+				this.store.setCanSendRequest(this.canSendRequestRecoverAccess);
+			});
 		},
 		requestAccess(): void
 		{
@@ -92,7 +116,7 @@ export const RecoverAccess = {
 			<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
 		</div>
 		<div class="intranet-island-otp-recover-access__wrapper">
-			<template v-if="isRequestSent || !canSendRequestRecoverAccess">
+			<template v-if="isRequestSent || !canSendRequest">
 				<div class="intranet-island-otp-recover-access__icon --request-sent"></div>
 				<Headline size='lg' class="intranet-form-title">
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_SENT_TITLE') }}

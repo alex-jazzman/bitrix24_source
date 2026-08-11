@@ -1,3 +1,4 @@
+import type { AiCallBannerMode } from 'booking.const';
 import type { BookingDto } from 'booking.provider.service.booking-service';
 import type { CountersModel } from 'booking.model.counters';
 import type { ClientModel } from 'booking.model.clients';
@@ -22,6 +23,7 @@ export type MainPageGetResponse = {
 	counters: CountersModel,
 	isIntersectionForAll: boolean,
 	shouldShowWhatsAppEmergency: boolean,
+	aiCallBannerMode: $Values<typeof AiCallBannerMode> | null,
 	catalogSkuEntityOptions: CatalogSkuEntityOptions,
 	senders: NotificationsSenderModel[],
 };

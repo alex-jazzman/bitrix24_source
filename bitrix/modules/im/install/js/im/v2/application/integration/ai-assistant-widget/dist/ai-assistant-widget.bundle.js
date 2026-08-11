@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, im_v2_application_core, im_v2_lib_utils, main_core_events, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_logger, im_v2_lib_messageNotifier, im_v2_provider_service_chat, im_v2_provider_service_copilot, im_v2_lib_feature, im_v2_css_classes, im_v2_component_animation, im_v2_component_content_chat, im_v2_component_dialog_chat, im_v2_lib_theme, ui_iconSet_api_vue, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_container_aiAssistant, im_v2_component_list_items_copilot) {
+(function (exports, main_core, im_v2_css_tokens, im_v2_application_core, im_v2_lib_utils, main_core_events, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_logger, im_v2_lib_messageNotifier, im_v2_provider_service_chat, im_v2_provider_service_copilot, im_v2_provider_service_sending, im_v2_lib_feature, im_v2_css_classes, im_v2_lib_init, im_v2_component_animation, im_v2_component_content_chat, im_v2_component_dialog_chat, im_v2_lib_theme, ui_iconSet_api_vue, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_container_aiAssistant, im_v2_component_list_items_copilot) {
 	'use strict';
 
 	class WidgetChatManager extends main_core_events.EventEmitter {
@@ -111,6 +111,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		async createNewChat() {
 			const newDialogId = await this.#copilotChatService.createDefaultChat();
+			im_v2_lib_analytics.Analytics.getInstance().copilot.onCreateChatFromWidget(newDialogId);
+			im_v2_lib_analytics.Analytics.getInstance().ignoreNextChatOpen(newDialogId);
 			this.#setCurrentDialogId(newDialogId);
 			this.#saveDialogId(newDialogId);
 			void this.#store.dispatch('copilot/setWidgetDialogId', newDialogId);
@@ -159,6 +161,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		clearWidgetState() {
 			this.#setCurrentDialogId(null);
 			void this.#store.dispatch('copilot/setWidgetDialogId', '');
+		}
+		sendSuggestion(text) {
+			if (!text || !this.#currentDialogId) {
+				return;
+			}
+			void im_v2_provider_service_sending.SendingService.getInstance().sendMessage({
+				text,
+				dialogId: this.#currentDialogId
+			});
 		}
 		setRecentDraftText(dialogId) {
 			if (!dialogId) {
@@ -244,6 +255,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onMinimize() {
 				main_core_events.EventEmitter.emit(MINIMIZE_EVENT_NAME$1);
 			},
+			createChat() {
+				im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onChatCreateClick();
+				this.$emit('createChat');
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
@@ -273,7 +288,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div v-if="isInited && isCopilot2026Styles" class="bx-im-ai-assistant-chat-header__create-chat">
 				<AiAssistantCreateChatButton
 					:isCreating="isCreating"
-					@newChat="$emit('createChat')"
+					@newChat="createChat"
 				/>
 			</div>
 			<BIcon
@@ -289,12 +304,52 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const WidgetEmptyState = {
+		name: 'WidgetEmptyState',
+		components: {
+			AiAssistantEmptyStateView: im_v2_component_content_chat.AiAssistantEmptyStateView
+		},
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['selectSuggestion'],
+		computed: {
+			AiAssistantSuggestionDesign: () => im_v2_component_content_chat.AiAssistantSuggestionDesign,
+			suggestions() {
+				return this.$store.getters['copilot/getSuggests'];
+			}
+		},
+		methods: {
+			onSuggestionSelect({
+				text
+			}) {
+				this.$emit('selectSuggestion', text);
+			}
+		},
+		template: `
+		<div class="bx-im-ai-assistant-widget-empty-state --ui-context-content-light">
+			<AiAssistantEmptyStateView
+				:suggestions="suggestions"
+				:dialogId="dialogId"
+				:withTextArea="false"
+				:suggestionDesign="AiAssistantSuggestionDesign.gradient"
+				@selectSuggestion="onSuggestionSelect"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const CopilotWidgetChatContent = {
 		name: 'CopilotWidgetChatContent',
 		components: {
 			CopilotContent: im_v2_component_content_chat.CopilotContent,
 			ChatDialog: im_v2_component_dialog_chat.ChatDialog,
-			AiAssistantWidgetChatHeader
+			AiAssistantWidgetChatHeader,
+			WidgetEmptyState
 		},
 		props: {
 			dialogId: {
@@ -310,9 +365,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: false
 			}
 		},
-		emits: ['toggleList', 'createChat'],
+		emits: ['toggleList', 'createChat', 'selectSuggestion'],
 		computed: {
-			SpecialBackground: () => im_v2_lib_theme.SpecialBackground
+			SpecialBackground: () => im_v2_lib_theme.SpecialBackground,
+			isChatEmpty() {
+				if (!this.dialogId) {
+					return false;
+				}
+				const dialog = this.$store.getters['chats/get'](this.dialogId);
+				if (!dialog?.chatId || !dialog.inited) {
+					return false;
+				}
+				const messages = this.$store.getters['messages/getByChatId'](dialog.chatId);
+				return messages.length === 0;
+			}
 		},
 		template: `
 		<CopilotContent
@@ -330,7 +396,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/>
 			</template>
 			<template #dialog>
-				<div class="bx-im-ai-assistant-widget-dialog-context --ui-context-content-light">
+				<WidgetEmptyState v-if="isChatEmpty" :dialogId="dialogId" @selectSuggestion="$emit('selectSuggestion', $event)" />
+				<div v-else class="bx-im-ai-assistant-widget-dialog-context --ui-context-content-light">
 					<ChatDialog :dialogId="dialogId" :key="dialogId"/>
 				</div>
 			</template>
@@ -359,6 +426,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		methods: {
+			createChat() {
+				im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onChatCreateClick();
+				this.$emit('createChat');
+			},
 			loc(phrase) {
 				return this.$Bitrix.Loc.getMessage(phrase);
 			}
@@ -371,7 +442,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-copilot-widget-header__actions">
 				<AiAssistantCreateChatButton
 					:isCreating="isCreating"
-					@newChat="$emit('createChat')"
+					@newChat="createChat"
 				/>
 				<div
 					class="bx-im-copilot-widget-header__close"
@@ -438,11 +509,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: false
 			}
 		},
-		emits: ['select', 'createChat', 'recentVisibilityChanged'],
+		emits: ['select', 'createChat', 'recentVisibilityChanged', 'selectSuggestion'],
 		data() {
 			return {
 				isPanelOpen: false
 			};
+		},
+		mounted() {
+			im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onOpenMiniChat();
 		},
 		methods: {
 			togglePanel() {
@@ -472,12 +546,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div class="bx-im-ai-assistant-widget-layout__container">
 			<main class="bx-im-ai-assistant-widget-layout__content">
 				<CopilotWidgetChatContent
-					v-if="dialogId"
 					:dialogId="dialogId"
 					:withSidebar="false"
 					:isCreatingChat="isCreatingChat"
 					@toggleList="togglePanel"
 					@createChat="onCreateChat"
+					@selectSuggestion="$emit('selectSuggestion', $event)"
 				/>
 			</main>
 
@@ -545,6 +619,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		created() {
+			im_v2_lib_init.InitManager.init();
 			this.manager = WidgetChatManager.getInstance();
 			this.manager.subscribeNotifier();
 			this.manager.subscribe(WidgetChatManager.events.onDialogIdChange, this.onManagerDialogIdChange);
@@ -594,6 +669,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				} finally {
 					this.isCreatingChat = false;
 				}
+			},
+			selectSuggestion(text) {
+				WidgetChatManager.getInstance().sendSuggestion(text);
 			}
 		},
 		template: `
@@ -605,6 +683,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				@select="onChangeDialogId"
 				@createChat="onCreateChat"
 				@recentVisibilityChanged="onRecentVisibilityChange"
+				@selectSuggestion="selectSuggestion"
 			/>
 			<MartaWidgetChatContent
 				v-else
@@ -618,7 +697,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const APP_NAME = 'AiAssistantWidgetApplication';
 	class AiAssistantWidgetApplication {
 		#initPromise;
-		constructor() {
+		#params;
+		constructor(params = {}) {
+			this.#params = params;
 			this.#initPromise = this.#init();
 		}
 		ready() {
@@ -666,6 +747,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return null;
 		}
 		async #init() {
+			im_v2_application_core.Core.setApplicationData(this.#params);
 			await im_v2_application_core.Core.ready();
 			return this;
 		}
@@ -673,5 +755,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.AiAssistantWidgetApplication = AiAssistantWidgetApplication;
 
-})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Css, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List);
+})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX, BX.Messenger.v2.Css, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Css, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Component.Content, BX.Messenger.v2.Component.Dialog, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List);
 //# sourceMappingURL=ai-assistant-widget.bundle.js.map

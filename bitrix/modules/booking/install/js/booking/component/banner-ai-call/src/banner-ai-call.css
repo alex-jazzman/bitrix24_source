@@ -1,0 +1,211 @@
+.booking-banner__ai-call-popup {
+	position: relative;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 40px;
+	border-radius: 32px;
+	background: url("../images/background.svg") no-repeat top right;
+	background-size: contain;
+	color: var(--ui-color-base-1, #333);
+}
+
+.booking-banner__ai-call-popup::after {
+	content: '';
+	--ai-call-popup-zephyr-size: 280px;
+
+	z-index: 1;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	display: block;
+	width: var(--ai-call-popup-zephyr-size);
+	height: var(--ai-call-popup-zephyr-size);
+	background: url("../images/zephyr.png") no-repeat bottom right;
+	background-size: contain;
+	pointer-events: none;
+}
+
+.booking-banner__ai-call-popup_title {
+	margin-bottom: 12px;
+	font-size: var(--ui-font-size-5xl);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: var(--ui-color-base-0, #000);
+	padding-left: 45px;
+	background: url("../images/bitrixgpt.png") no-repeat left center;
+	background-size: 37px;
+}
+
+.booking-banner__ai-call-popup_subtitle {
+	margin-bottom: 28px;
+	font-size: var(--ui-font-size-xl, 17px);
+	line-height: var(--ui-font-line-height-sm, 23px);
+}
+
+.booking-banner__ai-call-popup_body {
+	flex: 1;
+	display: flex;
+}
+
+.booking-banner__ai-call-popup_info {
+	width: 50%;
+}
+
+.booking-banner__ai-call-popup_items {
+	display: flex;
+	flex-direction: column;
+	padding-left: 6px;
+}
+
+.booking-banner__ai-call-popup_item {
+	display: flex;
+	align-items: center;
+	margin-bottom: 19px;
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-2xs, 21px);
+}
+
+.booking-banner__ai-call-popup_item .ui-icon-set {
+	margin-right: 8px;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+
+.booking-banner__ai-call-popup_description {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin: 0 11px;
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-2xs, 15px);
+	opacity: var(--ui-opacity-50);
+}
+
+.booking-banner__ai-call-popup_description-icon {
+	flex-shrink: 0;
+	margin-top: 1px;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333);
+}
+
+.booking-banner__ai-call-popup_video-container {
+	width: 35%;
+	margin-left: 60px;
+	position: relative;
+}
+
+.booking-banner__ai-call-popup_video-container::before {
+	content: '';
+	--ai-call-popup-video-ia-size: 150px;
+
+	z-index: 1;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	display: block;
+	width: var(--ai-call-popup-video-ia-size);
+	height: var(--ai-call-popup-video-ia-size);
+	background: url("../images/bitrixgpt.png") no-repeat center;
+	background-size: contain;
+	pointer-events: none;
+	transform: translate(-11%, 40%);
+}
+
+.booking-banner__ai-call-popup_video {
+	width: 474px;
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.booking-banner__ai-call-popup_buttons {
+	display: flex;
+	gap: 12px;
+	margin-top: 10px;
+}
+
+.booking-banner__ai-call-popup_success {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 5px;
+	min-height: 52px;
+	font-size: var(--ui-font-size-xl, 16px);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs, 21px);
+	color: var(--ui-color-accent-main-success, #1BCE7B);
+}
+
+.booking-banner__ai-call-popup_success-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-success, #9dcf00);
+}
+
+.booking-banner__ai-call-popup_cross {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	position: absolute;
+	right: 14px;
+	top: 14px;
+	cursor: pointer;
+}
+
+.booking-banner__ai-call-popup_cross:hover {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+}
+
+/*animations*/
+.booking-banner__ai-call-popup_buttons {
+	opacity: 0;
+	transform: translateY(15px);
+	animation: 300ms ease 500ms booking-banner__ai-call-popup_fade-in forwards;
+}
+
+.booking-banner__ai-call-popup_title {
+	opacity: 0;
+	transform: translateY(-20px);
+	animation: 300ms ease 500ms booking-banner__ai-call-popup_fade-in forwards;
+}
+
+.booking-banner__ai-call-popup_subtitle {
+	opacity: 0;
+	animation: 300ms ease 500ms booking-banner__ai-call-popup_fade-in forwards;
+}
+
+.booking-banner__ai-call-popup_video {
+	opacity: 0;
+	transform: translate(80px, 15px) rotate(5deg);
+	animation: 300ms ease 500ms booking-banner__ai-call-popup_fade-in forwards;
+}
+
+.booking-banner__ai-call-popup_item {
+	opacity: 0;
+	transform: translateX(30px);
+	animation: 300ms ease booking-banner__ai-call-popup_fade-in forwards;
+}
+
+.booking-banner__ai-call-popup_item:nth-child(1) {
+	animation-delay: 1000ms;
+}
+
+.booking-banner__ai-call-popup_item:nth-child(2) {
+	animation-delay: 1020ms;
+}
+
+.booking-banner__ai-call-popup_item:nth-child(3) {
+	animation-delay: 1040ms;
+}
+
+.booking-banner__ai-call-popup_item:nth-child(4) {
+	animation-delay: 1060ms;
+}
+
+.booking-banner__ai-call-popup_description {
+	opacity: 0;
+	transform: translateY(15px);
+	animation: 300ms ease 1200ms booking-banner__ai-call-popup_fade-in forwards;
+}
+
+@keyframes booking-banner__ai-call-popup_fade-in {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

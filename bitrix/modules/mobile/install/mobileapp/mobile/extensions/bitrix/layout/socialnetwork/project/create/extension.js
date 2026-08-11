@@ -4,10 +4,11 @@
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { TrialFeatureActivation } = require('layout/socialnetwork/project/create/trial-feature-activation');
+	const { TrialFeatureActivation } = require('layout/socialnetwork/project/create/src/trial-feature-activation');
 	const { Notify } = require('notify');
 	const { RecipientSelector } = require('selector/recipient');
 	const { ProjectNameField } = require('layout/socialnetwork/project/fields/name');
+	const { guid } = require('utils/guid');
 
 	class ProjectCreate extends LayoutComponent
 	{
@@ -44,7 +45,7 @@
 				},
 				moderatorsData: [],
 				userUploadedFilesFolder: false,
-				guid: this.getGuid(),
+				guid: guid(),
 				name: '',
 				description: '',
 				avatarFileId: null,
@@ -67,15 +68,6 @@
 			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChanged.bind(this));
 		}
 
-		getGuid()
-		{
-			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
-			};
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-		}
-
 		componentDidMount()
 		{
 			Promise.allSettled([
@@ -83,10 +75,9 @@
 				this.getUploadedFilesFolder(),
 				this.getSubjects(),
 				this.getOwnerData(),
-			])
-				.then(() => this.setState({ showLoading: false }, () => this.nameFieldRef?.focus()))
-				.catch(console.error)
-			;
+			]).then(
+				() => this.setState({ showLoading: false }, () => this.nameFieldRef?.focus()),
+			).catch(console.error);
 		}
 
 		getAvatarDefaultTypes()

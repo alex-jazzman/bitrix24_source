@@ -7,10 +7,14 @@
 
 .node-settings-header {
 	padding: 9px 12px;
-	border-bottom: 1px solid var(--ui-color-palette-gray-10);
-	display: flex;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	display: none;
 	justify-content: space-between;
 	align-items: center;
+}
+
+.node-settings-panel.--setup-template-activity .node-settings-header {
+	display: flex;
 }
 
 .node-settings-title {
@@ -62,6 +66,8 @@
 .node-settings-content {
 	overflow-y: auto;
 	flex-grow: 1;
+	padding: 18px 18px 8px;
+	background: var(--ui-color-bg-content-secondary);
 }
 
 .node-settings-transition-enter-active {
@@ -136,28 +142,33 @@
 	transition: opacity 0.2s linear;
 }
 
-.node-settings-edit-caption {
-	font: 13px / 22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: var(--ui-color-palette-gray-50);
-}
-
-.node-settings-content #form-settings {
-	padding: 0 18px 8px 18px;
-}
-
-.node-settings-panel .node-settings-form__section-delimeter {
-	margin: 0 18px 7px 18px;
-}
-
-.node-settings-panel .node-settings-form__node-brief {
+.node-settings-form__controls {
 	display: flex;
-	margin: 8px 18px 8px 18px;
-	justify-content: space-between;
 	align-items: center;
+	justify-content: space-between;
+	padding: 16px 18px 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.node-settings-panel.--setup-template-activity .editor-chart-node-settings-header {
+	border: none;
+}
+
+.node-settings-form__controls .editor-chart-tabs_tab {
+	margin-bottom: -3px;
+}
+
+.node-settings-panel.--setup-template-activity .node-settings-form__controls,
+.node-settings-panel.--setup-template-activity .node-settings-form__section.--rules {
+	display: none;
 }
 
 .node-settings-edit-box {
-	margin-bottom: 16px;
+	margin-bottom: 13px;
+}
+
+.node-settings-edit-box:last-child {
+	margin-bottom: 0;
 }
 
 .node-settings-select-dotted {
@@ -217,13 +228,13 @@
 	content: '';
 	display: block;
 	flex: 1;
-	background: 0 8px url('./images/content-skeleton.svg') no-repeat;
+	background: 0 2px url('./images/content-skeleton.svg?v=2') no-repeat;
 	background-size: 100%;
 }
 
 .node-settings-panel.--loading .node-settings-footer {
-	height: 40px;
-	background: 18px 10px url('./images/buttons-skeleton.svg') no-repeat;
+	height: 38px;
+	background: 20px 16px url('./images/buttons-skeleton.svg?v=2') no-repeat;
 }
 
 .temp-block {
@@ -264,6 +275,7 @@
 	display: flex;
 	justify-content: flex-start;
 	gap: 12px;
+	align-items: center;
 }
 
 .node-settings-document-selector {
@@ -332,8 +344,9 @@
 }
 
 .node-settings-edit-caption {
-	font: 13px / 22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #A9ADB2;
+	margin-bottom: 5px;
+	color: var(--ui-color-design-outline-content-label);
+	font: var(--ui-font-size-sm)/ var(--ui-font-line-height-2xs) var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .node-settings-select-dotted {
@@ -484,7 +497,9 @@
 	position: relative;
 }
 
+/* @chef-ignore */
 .node-settings-panel .field-row div:has(.calendar-icon):has(select[name*="tz_"]),
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table .adm-detail-content-cell-r:has(.calendar-icon):has(select[name*="tz_"]) {
 	display: flex;
 	flex-direction: row;
@@ -493,14 +508,19 @@
 	align-items: flex-start;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table .adm-detail-content-cell-r:has(.calendar-icon):has(select[name*="tz_"]) > input[type="text"] {
 	margin-bottom: 0 !important;
 	max-width: 40%;
 }
+
+/* @chef-ignore */
 .node-settings-panel .field-row div:has(.calendar-icon):has(select[name*="tz_"]) > input[type="text"] {
 	margin-bottom: 0 !important;
 	max-width: 45%;
 }
+
+/* @chef-ignore */
 .node-settings-panel .field-row div:has(.calendar-icon):has(select[name*="tz_"]) > select[name*="tz_"] {
 	flex: 0 0 auto;
 	min-width: 150px;
@@ -508,6 +528,7 @@
 	margin-bottom: 0 !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table .adm-detail-content-cell-r:has(.calendar-icon):has(select[name*="tz_"]) > select[name*="tz_"] {
 	flex: 0 0 auto;
 	min-width: 150px;
@@ -515,6 +536,7 @@
 	margin-bottom: 0 !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table .adm-detail-content-cell-r:has(.calendar-icon):has(select[name*="tz_"]) > table {
 	flex: 1 1 100%;
 	width: 100%;
@@ -624,7 +646,7 @@
 .node-settings-panel input[type="button"][data-role="bp-selector-button"] {
 	position: absolute;
 	right: 8px;
-	top: 8px;
+	top: 6px;
 	transform: none;
 	min-width: 24px;
 	max-width: 24px;
@@ -837,10 +859,12 @@ select[name="delay_type"] {
 	opacity: 1 !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .ui-tile-selector-select-container:has(.ui-tile-selector-input[style*="display: block"]) {
 	padding-right: 28px !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .ui-tile-selector-select-container:has(.ui-tile-selector-input:not([style*="display: none"])) {
 	padding-right: 28px !important;
 }
@@ -922,10 +946,10 @@ select[name="delay_type"] {
 	margin: 0 !important;
 	padding: 9px 32px 9px 11px !important;
 	width: 100% !important;
-	min-height: var(--ui-field-size) !important;
+	min-height: 44px !important;
 	outline: none !important;
 	border: 1px solid rgb(var(--ui-field-color-border-default)) !important;
-	border-radius: var(--ui-border-radius-md) !important;
+	border-radius: var(--ui-border-radius-sm) !important;
 	background-color: var(--ui-color-palette-white-base) !important;
 	color: var(--ui-color-palette-black-base) !important;
 	vertical-align: middle !important;
@@ -1058,6 +1082,7 @@ select[name="delay_type"] {
 	min-height: 18px;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-cell-r:has(input[type="radio"] + label) {
 	padding: 9px 7px 9px 7px;
 	background: var(--ui-color-bg-content-secondary);
@@ -1109,6 +1134,7 @@ select[name="delay_type"] {
 	background-color: var(--ui-color-design-disabled-content);
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-cell-r:has(> input[type="radio"] + label) {
 	display: grid;
 	grid-template-columns: auto 1fr;
@@ -1120,16 +1146,19 @@ select[name="delay_type"] {
 	width: auto;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-cell-r:has(> input[type="radio"] + label) > input[type="radio"] {
 	margin: 0 !important;
 	grid-column: 1;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-cell-r:has(> input[type="radio"] + label) > label {
 	grid-column: 2;
 	margin: 0 !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-cell-r:has(> input[type="radio"] + label) > br {
 	display: none;
 }
@@ -1155,7 +1184,9 @@ select[name="delay_type"] {
 	background-color: var(--ui-color-palette-white-base) !important;
 	border: 1px solid rgba(0, 0, 0, 0.15) !important;
 	overflow-y: auto;
+	/* @chef-ignore */
 	scrollbar-width: thin;
+	/* @chef-ignore */
 	scrollbar-color: var(--ui-color-palette-gray-40) transparent;
 	background-image: none !important;
 	padding: 5px 0 0 5px;
@@ -1330,6 +1361,7 @@ tr[data-cid="StorageId"] span.ui-tag-selector-item-hidden {
 	display: none !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel td:has(label):not(.bizproc-setuptemplateactivity-wrap) {
 	padding: 8px 12px !important;
 	background-color: var(--ui-color-bg-content-secondary) !important;
@@ -1342,6 +1374,7 @@ tr[data-cid="StorageId"] span.ui-tag-selector-item-hidden {
 .bx-core-dialog-overlay,
 .node-settings-alert-text,
 span.ui-tag-selector-item-hidden,
+/* @chef-ignore */
 #bx-admin-prefix:has(.for-camp),
 tr[hidden=""],
 .node-settings-panel input#id_message_from + input[data-role="bp-selector-button"],
@@ -1362,11 +1395,13 @@ tr[hidden=""],
 	display: none !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table td[width="20"]:has(> .calendar-icon) {
 	max-width: 0 !important;
 	padding: 0 !important;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table .adm-detail-content-cell-r:has(.calendar-icon):has(select[name*="tz_"]) > .calendar-icon {
 	right: 283px;
 	top: 14px;
@@ -1397,6 +1432,7 @@ img.calendar-icon {
 	top: 21px;
 }
 
+/* @chef-ignore */
 .node-settings-panel .field-row div:has(.calendar-icon):has(select[name*="tz_"]) > .calendar-icon {
 	position: relative !important;
 	right: 24px;
@@ -1457,6 +1493,19 @@ table#fieldsContainer {
 	border-spacing: 0 8px !important;
 }
 
+.node-settings-panel .disk-user-field-panel-file-wrap {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	max-height: none;
+	margin-bottom: 10px;
+}
+
+.node-settings-panel .disk-user-field-panel-file-wrap .disk-user-field-panel-card-divider {
+	margin-right: 0;
+	height: 60px;
+}
+
 .node-settings-panel .disk-user-field-panel-card-box  {
 	margin-right: 0 !important;
 }
@@ -1470,6 +1519,7 @@ table#fieldsContainer {
 	column-gap: 10px;
 }
 
+/* @chef-ignore */
 .node-settings-panel .adm-detail-content-table tr > td[width="30"]:has(> select[name="merge_multiple_fields"]) {
 	width: 20% !important;
 }
@@ -1588,6 +1638,8 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 .node-settings-panel table#id_bwfiba_type_fieldcondition td.adm-detail-content-cell-r[width="60%"] a,
 .node-settings-panel table#id_bwfiba_type_mixedcondition td.adm-detail-content-cell-r[width="60%"] a {
 	background: none !important;
+	word-break: break-all;
+	box-decoration-break: clone;
 }
 
 .node-settings-panel tr.ai-node-bp-json-row div.node-settings-tabs button.node-settings-tab {
@@ -1654,6 +1706,10 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	font-size: 13px;
 }
 
+.node-settings-panel .ui-alert.ui-alert-warning.ui-alert-icon-info {
+	margin-top: 10px;
+}
+
 .bizprocdesigner-activity-broken-link-show-more{
 	border-bottom: 1px dashed rgba(145, 113, 30, .4);
 	cursor: pointer;
@@ -1670,8 +1726,103 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	word-break: break-word;
 }
 
+.node-settings-form__section.--rules {
+	margin-top: 19px;
+}
+
+.node-settings-form__section-header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 17px;
+}
+
+.node-settings-form__section-header-main {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	margin-bottom: 5px;
+}
+
+.node-settings-form__section-title {
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.node-settings-form__section-description {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	padding-left: 3px;
+}
+
 .bizproc-type-control-select-wide.--rounded {
 	border: 1px solid rgb(var(--ui-field-color-border-default));
 	border-radius: var(--ui-border-radius-md);
 	padding: 7px 32px 0 11px;
+}
+
+.node-settings-form__section {
+	padding: 12px 15px 21px 15px;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
+}
+
+.node-settings-form__general-form {
+	margin-left: 4px;
+}
+
+.node-settings-form__general-form textarea[name="title"] {
+	height: 34px !important;
+	min-height: 34px !important;
+	resize: none !important;
+	line-height: 16px !important;
+	padding-top: 7px !important;
+	padding-bottom: 7px !important;
+}
+
+.node-settings-content__rule {
+	padding: 18px;
+	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+}
+
+.node-settings-content__rule.--empty {
+	display: none;
+}
+
+.node-settings-content__rule_top {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding-bottom: 18px;
+	border-bottom: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+}
+
+.node-settings-content__rule_top-operator {
+	background: var(--ui-color-green-50);
+	font-weight: var(--ui-font-weight-medium);
+	padding: 4px 8px;
+	border-radius: var(--ui-border-radius-xs);
+	color: var(--ui-color-palette-white-base);
+}
+
+.node-settings-content__rule_top-description {
+	color: var(--ui-color-base-4);
+}
+
+.node-settings-content__rule .node-settings-form.bx-core-adm-dialog {
+	background: none;
+	margin-top: 13px;
+}
+
+.node-settings-content__rule .form-settings-rule {
+	margin-top: 18px;
 }

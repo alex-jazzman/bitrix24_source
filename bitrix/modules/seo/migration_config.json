@@ -1,0 +1,7 @@
+{
+    "defaultTableName": "b_seo_keywords",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

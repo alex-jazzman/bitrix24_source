@@ -1,4 +1,3 @@
-import Util from './util'
 import './css/floating-video.css'
 
 const Events = {
@@ -32,7 +31,7 @@ const AUDIO_HEIGHT = 70;
  * @param {function} [config.onButtonClick]
  * @constructor
  */
-class FloatingVideo
+export class FloatingVideo
 {
 	constructor(config)
 	{
@@ -40,7 +39,7 @@ class FloatingVideo
 		{
 			config = {};
 		}
-		this.stream = config.stream && Util.containsVideoTrack(config.stream) ? config.stream : null;
+		this.stream = config.stream instanceof MediaStream && config.stream.getVideoTracks().length > 0 ? config.stream : null;
 		this.audioMuted = config.audioMuted || false;
 
 		this.title = config.title || "";
@@ -99,7 +98,7 @@ class FloatingVideo
 
 	setStream(stream)
 	{
-		if (Util.containsVideoTrack(stream))
+		if (stream instanceof MediaStream && stream.getVideoTracks().length > 0)
 		{
 			this.stream = stream;
 		}

@@ -1,15 +1,14 @@
-import {Loc, Text, Tag} from 'main.core';
-import {EventEmitter, BaseEvent} from 'main.core.events';
-import {PopupManager} from 'main.popup'
+import {Loc} from 'main.core';
+import {EventEmitter} from 'main.core.events';
 import Item from './item';
 import Utils from '../utils';
 import Backend from '../backend';
 import Options from "../options";
-import ItemAdminShared from "./item-admin-shared";
+import { ITEM_CODE_ADMIN_SHARED, ITEM_CODE_USER_FAVORITES } from "./item-codes";
 
 export default class ItemUserFavorites extends Item
 {
-	static code = 'standard';
+	static code = ITEM_CODE_USER_FAVORITES;
 	static #currentPageInTopMenu = null;
 
 	canDelete(): boolean
@@ -71,8 +70,8 @@ export default class ItemUserFavorites extends Item
 						})
 						.then(() => {
 							this.showMessage(Loc.getMessage('MENU_ITEM_WAS_ADDED_TO_ALL'));
-							this.container.dataset.type = ItemAdminShared.code;
-							this.storage.push(ItemUserFavorites.code);
+							this.container.dataset.type = ITEM_CODE_ADMIN_SHARED;
+							this.storage.push(ITEM_CODE_USER_FAVORITES);
 							this.container.dataset.storage = this.storage.join(',');
 							EventEmitter.emit(this, Options.eventName('onItemConvert'), this);
 						})

@@ -6,4 +6,5 @@ export class TagType
 	static WARNING = 'warning';
 	static FAILURE = 'failure';
 	static LAVENDER = 'lavender';
+	static AI = 'ai';
 }

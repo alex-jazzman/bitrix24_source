@@ -89,6 +89,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	} = require('im/messenger/lib/element/dialog');
 
 	const { getLogger } = require('im/messenger/lib/logger');
+
 	const { MessageService } = require('im/messenger/provider/services/message');
 	const { MarkService } = require('im/messenger/provider/services/message/mark');
 	const { ChatService } = require('im/messenger/provider/services/chat');
@@ -156,7 +157,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { InputActionManager } = require('im/messenger/controller/dialog/lib/input-action');
 	const { MessageSender } = require('im/messenger/controller/dialog/lib/message-sender');
 	const { StickerManager } = require('im/messenger/controller/dialog/lib/sticker');
-	const { AssistantButtonManager, MarketButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
+	const { AssistantButtonManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { InputRecordManager } = require('im/messenger/controller/dialog/lib/input-record');
 	const { ClipboardImageManager } = require('im/messenger/controller/dialog/lib/clipboard-image');
 	const { SuggestsManager } = require('im/messenger/controller/dialog/lib/suggests-manager');
@@ -810,6 +811,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.transcriptManager?.subscribeStoreEvents();
 			this.reactionManager?.subscribeStoreEvents();
 			this.messagePlaybackManager?.subscribeStoreEvents();
+			this.suggestsManager?.subscribeStoreEvents();
 		}
 
 		/** @protected */
@@ -846,6 +848,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.reactionManager?.unsubscribeStoreEvents();
 			this.mentionManager?.unsubscribeStoreEvents();
 			this.messagePlaybackManager?.unsubscribeStoreEvents();
+			this.suggestsManager?.unsubscribeStoreEvents();
 		}
 
 		/** @private */
@@ -1021,6 +1024,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				this.assistantButtonManager = new AssistantButtonManager({
 					dialogLocator: this.locator,
+					dialogType: this.getDialogWidgetType(),
 				});
 			}
 
@@ -1167,9 +1171,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @param {DialogOpenOptions} options
 		 * @param {PageManager} parentWidget
+		 * @param {PerfPoint} [openPerfPoint]
 		 * @return {Promise<void>}
 		 */
-		async open(options, parentWidget = PageManager)
+		async open(options, parentWidget = PageManager, openPerfPoint = null)
 		{
 			const {
 				dialogId,
@@ -1185,6 +1190,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				onClose = () => {},
 			} = options;
 
+			this.openPerfPoint = openPerfPoint;
+
 			this.dialogId = dialogId;
 			this.onClose = onClose;
 
@@ -1195,6 +1202,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				if (!isCollabToolEnabled)
 				{
 					void CollabAccessService.openAccessDeniedBox();
+					this.openPerfPoint?.end();
 
 					return;
 				}
@@ -1228,6 +1236,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (isOpenlinesChat)
 			{
 				this.openWebDialog(options);
+				this.openPerfPoint?.end();
 
 				return;
 			}
@@ -1248,6 +1257,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				dialogLocator: this.locator,
 			});
 
+			this.openPerfPoint?.startPoint('load-messages-from-db');
 			const hasDialog = await this.loadDialogFromDb() || this.getChatId();
 			if (hasDialog)
 			{
@@ -1270,7 +1280,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			await this.loadApplicationSettingsFromDb();
 			await this.loadCommentFromDb();
-			this.firstDbPagePromise = this.loadHistoryMessagesFromDb();
+			this.firstDbPagePromise = this.loadHistoryMessagesFromDb()
+				.then((result) => {
+					this.openPerfPoint?.endPoint('load-messages-from-db');
+
+					return result;
+				})
+			;
 
 			let titleParams = null;
 			if (dialogTitleParams)
@@ -1288,10 +1304,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				}
 			}
 
+			this.openPerfPoint?.startPoint('create-widget');
 			await this.createWidget(titleParams, parentWidget)
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.createWidget error:`, error);
 				});
+			this.openPerfPoint?.endPoint('create-widget');
 
 			await this.executeAfterOpen(actionsAfterOpen)
 				.catch((error) => {
@@ -1353,7 +1371,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			const textFieldHandler = new TextFieldOptimisticHandler({
 				chatType: this.getDialogWidgetType(),
 				dialogLocator: this.locator,
-				assistantButtons: this.getAssistantButtons(),
 			});
 			this.optimisticChatManager = new OptimisticChatManager({
 				loadingPromise,
@@ -1441,6 +1458,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			await this.initComponents();
 			await this.initManagers();
+			void this.setAssistantButtons();
 
 			this.subscribeStoreEvents();
 			this.subscribeExternalEvents();
@@ -1876,6 +1894,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			await this.createView(widget);
 			await this.initComponents();
 			await this.initManagers();
+			void this.setAssistantButtons();
 			this.subscribeWidgetEvents(widget);
 			this.subscribeLifecycleEvents();
 			this.subscribeViewEvents();
@@ -1902,12 +1921,20 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				this.view.showMessageListLoader();
 			}
 
+			this.openPerfPoint?.startPoint('load-messages-from-server');
 			this.loadChatWithMessages()
-				.then(() => this.handleLoadChatWithMessages())
-				.catch((error) => this.handleLoadChatWithMessagesError(error))
+				.then(() => {
+					this.openPerfPoint?.endPoint('load-messages-from-server');
+					this.handleLoadChatWithMessages();
+				})
+				.catch((error) => {
+					this.openPerfPoint?.endPoint('load-messages-from-server', { error: error?.message });
+					this.handleLoadChatWithMessagesError(error);
+				})
 				.finally(() => {
 					this.handleMessageNotFoundError();
 					this.view.readDelayedMessageList();
+					this.openPerfPoint?.end();
 				})
 			;
 
@@ -2040,6 +2067,16 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (this.chatType === DialogType.comment)
 			{
 				const commentInfo = this.store.getters['commentModel/getCommentInfoByCommentChatId'](this.getChatId());
+
+				if (!Type.isNumber(commentInfo?.messageId) || commentInfo.messageId <= 0)
+				{
+					logger.warn(
+						`${this.constructor.name}.loadChatWithMessages: messageId is missing for comment chat, falling back to dialogId`,
+						{ chatId: this.getChatId(), commentInfo },
+					);
+
+					return this.chatService.loadCommentChatWithMessages(this.dialogId);
+				}
 
 				return this.chatService.loadCommentChatWithMessagesByPostId(commentInfo.messageId);
 			}
@@ -2560,7 +2597,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			});
 
 			this.textField.setPlaceholder();
-			this.textField.setAssistantButtons(this.getAssistantButtons());
 			this.textField.update();
 			this.showPromotion();
 		}
@@ -4090,6 +4126,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			shouldSendDeleteAnalytics = true,
 			shouldShowAlert = true,
 			deleteByCurrentUserFromMobile = false,
+			skipViewBack = false,
 		})
 		{
 			if (String(this.getDialogId()) !== String(dialogId))
@@ -4109,7 +4146,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			this.view.back();
+			// When navigation will close this screen via popTo (nested navigation),
+			// the emitter sets skipViewBack so we don't race it with our own back().
+			if (!skipViewBack)
+			{
+				this.view.back();
+			}
+
 			if (shouldShowAlert && !this.isChatDeletedByCurrentUserFromMobile)
 			{
 				this.showDeletionToast();
@@ -5348,19 +5391,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 		}
 
-		/**
-		 * @return {Array<AssistantButton>}
-		 */
-		getAssistantButtons()
+		setAssistantButtons()
 		{
-			const buttons = [];
-
-			if (Feature.isAssistantMarketButtonAvailable)
-			{
-				buttons.push({ ...MarketButton });
-			}
-
-			return buttons;
+			this.assistantButtonManager?.buildInitialButtons();
 		}
 
 		/**

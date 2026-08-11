@@ -1,16 +1,16 @@
+import { type JsonObject } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 import { ChatHeader } from 'im.v2.component.content.elements';
+import { type ImModelChat } from 'im.v2.model';
 
-import { StatusGroup } from 'imopenlines.v2.const';
-import { FinishService, PinService, InterceptService } from 'imopenlines.v2.provider.service';
+import { type ImolModelSession } from 'imopenlines.v2.model';
+import { FinishService } from 'imopenlines.v2.provider.service';
 
 import { ChatTransfer } from '../entity-selector/chat-transfer/chat-transfer';
+import { OpenLinesHeaderMenu } from './header-menu';
 
 import './css/header.css';
-
-import type { ImModelChat } from 'im.v2.model';
-import type { ImolModelSession } from 'imopenlines.v2.model';
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const OpenLinesHeader = {
@@ -43,75 +43,42 @@ export const OpenLinesHeader = {
 		{
 			return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
 		},
-		isPinned(): boolean
-		{
-			return this.session ? this.session.pinned : false;
-		},
 		isClosed(): boolean
 		{
 			return this.session ? this.session.isClosed : false;
 		},
 		isOwner(): boolean
 		{
-			const ownerId = this.dialog.ownerId;
-
-			if (!ownerId)
-			{
-				return false;
-			}
-
 			const userId = Core.getUserId();
 
-			return ownerId === userId;
-		},
-		isNewSession(): boolean
-		{
-			if (!this.session)
+			if (this.dialog?.ownerId === userId)
 			{
-				return false;
+				return true;
 			}
 
-			return this.session.status === StatusGroup.new;
+			return this.session?.operatorId === userId;
 		},
-		isOperator(): boolean
-		{
-			const userId = Core.getUserId();
-
-			return userId === this.session.operatorId;
-		},
-		textForPinButton(): string
-		{
-			return this.isPinned
-				? this.loc('IMOL_CONTENT_HEADER_BUTTON_UNPIN')
-				: this.loc('IMOL_CONTENT_HEADER_BUTTON_PIN');
-		},
-		classIconButtonPin(): string
-		{
-			return this.isPinned ? 'fa-link-slash' : 'fa-link';
-		},
+	},
+	mounted()
+	{
+		this.headerMenu = new OpenLinesHeaderMenu();
+	},
+	beforeUnmount()
+	{
+		this.headerMenu?.destroy();
 	},
 	methods:
 	{
-		onMarkSpam(): Promise
-		{
-			return this.getFinishService().markSpamChat(this.dialogId);
-		},
 		onFinish(): Promise
 		{
 			return this.getFinishService().finishChat(this.dialogId);
 		},
-		onPin(): Promise
+		onClickHeaderMenu(event): void
 		{
-			if (this.isPinned)
-			{
-				return this.getPinService().unpinChat(this.dialogId);
-			}
-
-			return this.getPinService().pinChat(this.dialogId);
-		},
-		onIntercept(): Promise
-		{
-			return this.getInterceptService().interceptDialog(this.dialogId);
+			this.headerMenu.openMenu(
+				{ dialogId: this.dialogId, isQueueTypeAll: this.isQueueTypeAll },
+				event.currentTarget,
+			);
 		},
 		openChatTransferPopup()
 		{
@@ -126,24 +93,6 @@ export const OpenLinesHeader = {
 
 			return this.finishService;
 		},
-		getPinService(): PinService
-		{
-			if (!this.pinService)
-			{
-				this.pinService = new PinService();
-			}
-
-			return this.pinService;
-		},
-		getInterceptService(): InterceptService
-		{
-			if (!this.interceptService)
-			{
-				this.interceptService = new InterceptService();
-			}
-
-			return this.interceptService;
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -157,14 +106,14 @@ export const OpenLinesHeader = {
 				:withSearchButton="true"
 			>
 				<template v-if="!isClosed" #before-actions>
-					<ul v-if="isOperator || isNewSession" class="bx-imol-header-button_container-list">
-						<li v-if="isOperator || isQueueTypeAll" class="bx-imol-header-button_container-item">
+					<ul class="bx-imol-header-button_container-list">
+						<li class="bx-imol-header-button_container-item">
 							<button
-								:title="loc('IMOL_CONTENT_HEADER_BUTTON_SPAM')"
+								:title="loc('IMOL_CONTENT_HEADER_BUTTON_MORE')"
 								class="bx-imol-header-button__icon-container"
-								@click="onMarkSpam"
+								@click="onClickHeaderMenu"
 							>
-								<i class="bx-imol-header-button__icon fa-solid fa-triangle-exclamation fa-lg"></i>
+								<i class="bx-imol-header-button__icon fa-solid fa-ellipsis fa-lg"></i>
 							</button>
 						</li>
 						<template v-if="isOwner">
@@ -175,15 +124,6 @@ export const OpenLinesHeader = {
 									@click="onFinish"
 								>
 									<i class="bx-imol-header-button__icon fa-regular fa-circle-check fa-lg"></i>
-								</button>
-							</li>
-							<li class="bx-imol-header-button_container-item">
-								<button
-									:title="textForPinButton"
-									class="bx-imol-header-button__icon-container"
-									@click="onPin"
-								>
-									<i class="bx-imol-header-button__icon fa-solid fa-lg" :class="classIconButtonPin"></i>
 								</button>
 							</li>
 							<li class="bx-imol-header-button_container-item">
@@ -199,15 +139,6 @@ export const OpenLinesHeader = {
 							</li>
 						</template>
 					</ul>
-					<div v-else class="bx-imol-header-button_container-item">
-						<button
-							:title="loc('IMOL_CONTENT_HEADER_BUTTON_INTERCEPT')"
-							class="bx-imol-header-button__icon-container"
-							@click="onIntercept"
-						>
-							<i class="bx-imol-header-button__icon fa-solid fa-arrows-left-right fa-xl"></i>
-						</button>
-					</div>
 				</template>
 			</ChatHeader>
 			<ChatTransfer

@@ -1,6 +1,6 @@
 .booking-booking-grid-left-panel-container {
 	position: relative;
-	min-width: var(--left-panel-width);
+	min-width: var(--booking-left-panel-width);
 }
 
 .booking-booking-grid-left-panel {

@@ -86,6 +86,7 @@ export class ChatsModel extends BuilderModel
 				manageUsersAdd: UserRole.none,
 				manageUsersDelete: UserRole.none,
 				manageMessages: UserRole.member,
+				manageGuestInvites: UserRole.none,
 			},
 			tariffRestrictions: {
 				isHistoryLimitExceeded: false,
@@ -415,7 +416,15 @@ export class ChatsModel extends BuilderModel
 				state.collection[payload.dialogId] = payload.fields;
 			},
 			update: (state: ChatState, payload) => {
-				state.collection[payload.dialogId] = { ...state.collection[payload.dialogId], ...payload.fields };
+				const existingItem = state.collection[payload.dialogId];
+				const updatedItem = { ...existingItem, ...payload.fields };
+				// permissions must be merged deeply: a partial update missing some keys
+				// (e.g. manageGuestInvites/manageSettings) must not overwrite the whole object
+				if (existingItem?.permissions && payload.fields.permissions)
+				{
+					updatedItem.permissions = { ...existingItem.permissions, ...payload.fields.permissions };
+				}
+				state.collection[payload.dialogId] = updatedItem;
 			},
 			delete: (state: ChatState, payload) => {
 				delete state.collection[payload.dialogId];

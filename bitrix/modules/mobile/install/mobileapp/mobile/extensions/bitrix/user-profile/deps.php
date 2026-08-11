@@ -2,20 +2,15 @@
 
 return [
 	'components' => [
-		'user-profile-tabs',
-		'intranet:user.list',
+		'user-profile-tabs', //@keep
+		'intranet:user.list', //@keep
 	],
 	'extensions' => [
-		'apptheme',
 		'assets/icons',
-		'error',
 		'feature',
 		'loc',
 		'notify-manager',
-		'require-lazy',
-		'toast',
-		'user-profile/analytics',
-		'user-profile/api',
+		'tokens',
 		'user-profile/const',
 		'user-profile/tabs-preparer',
 	],

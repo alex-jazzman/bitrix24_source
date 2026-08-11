@@ -222,7 +222,7 @@ export class RecentMenu extends BaseMenu
 
 	getOpenProfileItem(): ?MenuItemOptions
 	{
-		if (!this.isUser() || this.isBot())
+		if (!this.isUser() || this.isBot() || this.isCurrentUserGuest() || this.isGuest())
 		{
 			return null;
 		}
@@ -385,6 +385,21 @@ export class RecentMenu extends BaseMenu
 		return user.type === UserType.bot;
 	}
 
+	isGuest(): boolean
+	{
+		if (!this.isUser())
+		{
+			return false;
+		}
+
+		return this.store.getters['users/isGuest'](this.context.dialogId);
+	}
+
+	isCurrentUserGuest(): boolean
+	{
+		return this.store.getters['users/isGuest'](this.getCurrentUserId());
+	}
+
 	isChannel(): boolean
 	{
 		return ChannelManager.isChannel(this.context.dialogId);
@@ -489,8 +504,9 @@ export class RecentMenu extends BaseMenu
 		const isInvitation = this.#isInvitationActive();
 		const isFakeUser = recentItem.isFakeElement;
 		const isAiAssistantBot = this.store.getters['users/bots/isAiAssistant'](dialogId);
+		const isGuest = this.store.getters['users/isGuest'](Core.getUserId());
 
-		return !isInvitation && !isFakeUser && !isAiAssistantBot;
+		return !isInvitation && !isFakeUser && !isAiAssistantBot && !isGuest;
 	}
 
 	#getRecentItem(): ?ImModelRecentItem

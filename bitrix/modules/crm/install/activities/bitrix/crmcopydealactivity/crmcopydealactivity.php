@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
@@ -132,6 +133,13 @@ class CBPCrmCopyDealActivity extends CBPActivity
 		$fields['TITLE'] = $dealTitle;
 		$fields['ASSIGNED_BY_ID'] = $responsibles[0];
 		$fields['CONTACT_IDS'] = Crm\Binding\DealContactTable::getDealContactIDs($sourceDealId);
+
+		Crm\Service\Container::getInstance()
+			->getContext()
+			->getAnalytics()
+			->setCategory(Dictionary::CATEGORY_ROBOT_OPERATIONS)
+			->setType(Dictionary::TYPE_COPY_DEAL_ACTIVITY)
+		;
 
 		$entity = new \CCrmDeal(false);
 		$newDealId = $entity->Add(

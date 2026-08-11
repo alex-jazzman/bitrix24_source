@@ -3,7 +3,7 @@ import { Model } from 'booking.const';
 
 import { gridDay } from './grid-day';
 import { gridWeek } from './grid-week';
-import { GridBase } from './grid-base';
+import { type GridBase } from './grid-base';
 
 class GridFactory
 {

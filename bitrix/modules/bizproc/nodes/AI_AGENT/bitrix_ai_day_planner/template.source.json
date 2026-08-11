@@ -1,0 +1,2596 @@
+{
+    "name": "bitrix_ai_day_planner",
+    "title": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_NAME",
+    "description": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_DESC",
+    "wizard_title": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WIZARD_TITLE",
+    "wizard_description": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WIZARD_DESC",
+    "constants": {
+        "BotName": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_NAME",
+            "type": "string",
+            "required": true,
+            "default": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_NAME_DEFAULT###"
+        },
+        "BotAvatar": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_AVATAR",
+            "type": "file"
+        },
+        "ScheduleType": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_TYPE",
+            "type": "select",
+            "showInWizard": false,
+            "options": {
+                "daily": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_SCHEDULE_DAILY",
+                "weekly": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_SCHEDULE_WEEKLY"
+            },
+            "default": "daily"
+        },
+        "ScheduleInterval": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_INTERVAL",
+            "type": "select",
+            "showInWizard": false,
+            "default": "1"
+        },
+        "ScheduleWeekDays": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_WEEKDAYS",
+            "type": "select",
+            "multiple": true,
+            "showInWizard": false
+        },
+        "BossBotName": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOSS_BOT_NAME",
+            "type": "string",
+            "required": true,
+            "default": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOSS_BOT_NAME_DEFAULT###"
+        },
+        "BossBotAvatar": {
+            "label": "BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOSS_BOT_AVATAR",
+            "type": "file"
+        }
+    },
+    "flows": {
+        "setup": {
+            "trigger": "AiAgentStartTrigger",
+            "trigger_props": {
+                "_id": "A1001_0001_0001_0001"
+            },
+            "steps": [
+                "SetupTemplateActivity",
+                {
+                    "CreateStorageNode": {
+                        "_id": "A1001_0001_0001_0003",
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_STORAGE_TITLE###",
+                        "StorageDescription": "",
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "Mode": "Y",
+                        "SelectedFields": [
+                            {
+                                "code": "UserId",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_USER###",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "AiResult",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_RESULT###",
+                                "type": "text",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "CreatedAt",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_DATE###",
+                                "type": "datetime",
+                                "multiple": false,
+                                "mandatory": false
+                            }
+                        ]
+                    }
+                },
+                {
+                    "CreateStorageNode": {
+                        "_id": "A1001_0001_0001_0008",
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WELCOMES_STORAGE_TITLE###",
+                        "StorageDescription": "",
+                        "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                        "Mode": "Y",
+                        "SelectedFields": [
+                            {
+                                "code": "UserId",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WELCOMES_FIELD_USER###",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "BotKind",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WELCOMES_FIELD_BOT_KIND###",
+                                "type": "string",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "WelcomeSentAt",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WELCOMES_FIELD_DATE###",
+                                "type": "datetime",
+                                "multiple": false,
+                                "mandatory": false
+                            }
+                        ]
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A1001_0001_0001_0003",
+                                "field": "CreateErrorText",
+                                "operator": "empty",
+                                "value": ""
+                            }
+                        ],
+                        "true": [
+                            {
+                                "ImBotCreateBotActivity": {
+                                    "_id": "A1001_0001_0001_0004",
+                                    "botName": "{=Constant:BotName}",
+                                    "workPosition": "",
+                                    "botCode": "BOT_{=Workflow:TemplateId}",
+                                    "avatar": "{=Constant:BotAvatar}",
+                                    "avatarDiskFile": null
+                                }
+                            },
+                            {
+                                "ImBotCreateBotActivity": {
+                                    "_id": "A1001_0001_0001_0006",
+                                    "botName": "{=Constant:BossBotName}",
+                                    "workPosition": "",
+                                    "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                    "avatar": "{=Constant:BossBotAvatar}",
+                                    "avatarDiskFile": null
+                                }
+                            }
+                        ],
+                        "false": [
+                            {
+                                "IMNotifyActivity": {
+                                    "MessageSite": "###BITRIX_AI_DAY_PLANNER_STORAGEERROR###",
+                                    "MessageOut": "",
+                                    "MessageType": "4",
+                                    "MessageUserFrom": [
+                                        "{=A1001_0001_0001_0001:startedBy}"
+                                    ],
+                                    "MessageUserTo": [
+                                        "{=A1001_0001_0001_0001:startedBy}"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "scheduled_analysis": {
+            "trigger": "ScheduledTrigger",
+            "trigger_props": {
+                "_id": "A2001_0001_0001_0001",
+                "ScheduleType": "weekly",
+                "RunAt": "06:00",
+                "Interval": "1",
+                "WeekDays": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                ]
+            },
+            "steps": [
+                {
+                    "HumanResourcesGetAiReportUsersActivity": {
+                        "_id": "A2001_0001_0001_0020"
+                    }
+                },
+                {
+                    "ForEach": {
+                        "_id": "A2001_0001_0001_0010",
+                        "Variable": "{=A2001_0001_0001_0020:Users}",
+                        "steps": [
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A2001_0001_0001_0010",
+                                            "field": "Value",
+                                            "operator": "in",
+                                            "value": "{=A2001_0001_0001_0020:Heads}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "CalendarGetInform": {
+                                                "_id": "A2001_0001_0001_0002",
+                                                "CalendarUser": "{=A2001_0001_0001_0010:Value}",
+                                                "CalendarFrom": "{=System:Now}",
+                                                "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                                                "EventField": [
+                                                    "url"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A2001_0001_0001_0003",
+                                                "PARAM_USER_ID": "{=A2001_0001_0001_0010:Value}",
+                                                "MESSAGE_COUNT_LIMIT": 100,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 7,
+                                                "UserTaskRole": [
+                                                    "O",
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "description",
+                                                    "deadline",
+                                                    "originator",
+                                                    "responsible",
+                                                    "chat",
+                                                    "activityDate",
+                                                    "isOverdue",
+                                                    "url",
+                                                    "priority",
+                                                    "project"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3,
+                                                    6,
+                                                    7
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "ACTIVITY_DATE",
+                                                                "operator": ">",
+                                                                "value": "=dateadd({=System:Now},\"-7d\")"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A2001_0001_0001_0003",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 0
+                                                    },
+                                                    {
+                                                        "object": "A2001_0001_0001_0002",
+                                                        "field": "EventsCount",
+                                                        "operator": ">",
+                                                        "value": "0",
+                                                        "joiner": 1
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "AiAssistantAgentComplexActivity": {
+                                                            "_id": "A2001_0001_0001_0004",
+                                                            "_inner_id": "A2001_0001_0001_0098",
+                                                            "_inner_type": "AiAssistantAgentActivity",
+                                                            "mcpUser": "{=A2001_0001_0001_0010:Value}",
+                                                            "query": "###BITRIX_AI_DAY_PLANNER_QUERY###",
+                                                            "systemPrompt": "###BITRIX_AI_DAY_PLANNER_SYSTEMPROMPT###",
+                                                            "returnType": "text",
+                                                            "jsonSchema": "",
+                                                            "jsonPath": null,
+                                                            "usePseudonymizer": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "DeleteDataStorageActivity": {
+                                                            "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                            "DeleteMode": "multiple",
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "UserId",
+                                                                            "operator": "=",
+                                                                            "value": "{=A2001_0001_0001_0010:Value}"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "Condition": {
+                                                            "conditions": [
+                                                                {
+                                                                    "object": "A2001_0001_0001_0098",
+                                                                    "field": "errorMessage",
+                                                                    "operator": "!empty",
+                                                                    "value": "",
+                                                                    "joiner": 0
+                                                                }
+                                                            ],
+                                                            "true": [],
+                                                            "false": [
+                                                                {
+                                                                    "WriteDataStorageActivity": {
+                                                                        "StorageId": null,
+                                                                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                                        "RewriteMode": "newItem",
+                                                                        "IsExpanded": "Y",
+                                                                        "Author": "{=A2001_0001_0001_0010:Value}",
+                                                                        "FieldValue": {
+                                                                            "UserId": "{=A2001_0001_0001_0010:Value}",
+                                                                            "AiResult": "{=A2001_0001_0001_0098:aiResult}",
+                                                                            "CreatedAt": "{=System:Now}"
+                                                                        },
+                                                                        "Fields": {
+                                                                            "UserId": {
+                                                                                "Value": "{=A2001_0001_0001_0010:Value}",
+                                                                                "FieldName": "UserId"
+                                                                            },
+                                                                            "AiResult": {
+                                                                                "Value": "{=A2001_0001_0001_0098:aiResult}",
+                                                                                "FieldName": "AiResult"
+                                                                            },
+                                                                            "CreatedAt": {
+                                                                                "Value": "{=System:Now}",
+                                                                                "FieldName": "CreatedAt"
+                                                                            }
+                                                                        },
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A2001_0001_0001_0010:Value}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "false": []
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "CalendarGetInform": {
+                                                "_id": "A2001_0001_0001_0023",
+                                                "CalendarUser": "{=A2001_0001_0001_0010:Value}",
+                                                "CalendarFrom": "{=System:Now}",
+                                                "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                                                "EventField": [
+                                                    "url"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A2001_0001_0001_0021",
+                                                "PARAM_USER_ID": "{=A2001_0001_0001_0010:Value}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "DEADLINE",
+                                                                "operator": "<",
+                                                                "value": "{=System:Now}"
+                                                            },
+                                                            "AND"
+                                                        ],
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "ACTIVITY_DATE",
+                                                                "operator": ">",
+                                                                "value": "=dateadd({=System:Now},\"-7d\")"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A2001_0001_0001_0022",
+                                                "PARAM_USER_ID": "{=A2001_0001_0001_0010:Value}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "DEADLINE",
+                                                                "operator": ">",
+                                                                "value": "{=System:Now}"
+                                                            },
+                                                            "AND"
+                                                        ],
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "ACTIVITY_DATE",
+                                                                "operator": ">",
+                                                                "value": "=dateadd({=System:Now},\"-7d\")"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A2001_0001_0001_0021",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 0
+                                                    },
+                                                    {
+                                                        "object": "A2001_0001_0001_0022",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 1
+                                                    },
+                                                    {
+                                                        "object": "A2001_0001_0001_0023",
+                                                        "field": "EventsCount",
+                                                        "operator": ">",
+                                                        "value": "0",
+                                                        "joiner": 1
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "DeleteDataStorageActivity": {
+                                                            "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                            "DeleteMode": "multiple",
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "UserId",
+                                                                            "operator": "=",
+                                                                            "value": "{=A2001_0001_0001_0010:Value}"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "WriteDataStorageActivity": {
+                                                            "StorageId": null,
+                                                            "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                            "RewriteMode": "newItem",
+                                                            "IsExpanded": "Y",
+                                                            "Author": "{=A2001_0001_0001_0010:Value}",
+                                                            "FieldValue": {
+                                                                "UserId": "{=A2001_0001_0001_0010:Value}",
+                                                                "AiResult": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE###",
+                                                                "CreatedAt": "{=System:Now}"
+                                                            },
+                                                            "Fields": {
+                                                                "UserId": {
+                                                                    "Value": "{=A2001_0001_0001_0010:Value}",
+                                                                    "FieldName": "UserId"
+                                                                },
+                                                                "AiResult": {
+                                                                    "Value": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE###",
+                                                                    "FieldName": "AiResult"
+                                                                },
+                                                                "CreatedAt": {
+                                                                    "Value": "{=System:Now}",
+                                                                    "FieldName": "CreatedAt"
+                                                                }
+                                                            },
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "UserId",
+                                                                            "operator": "=",
+                                                                            "value": "{=A2001_0001_0001_0010:Value}"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "false": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "workday_start": {
+            "trigger": "StartWorkTimeTrigger",
+            "trigger_props": {
+                "_id": "A3001_0001_0001_0001"
+            },
+            "steps": [
+                {
+                    "ReadDataStorageActivity": {
+                        "_id": "A3001_0001_0001_0002",
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "AiResult",
+                            "CreatedAt"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "OutputFields": {
+                            "AiResult": {
+                                "Name": "AiResult",
+                                "FieldName": "AiResult",
+                                "Type": "string"
+                            },
+                            "CreatedAt": {
+                                "Name": "CreatedAt",
+                                "FieldName": "CreatedAt",
+                                "Type": "datetime"
+                            }
+                        }
+                    }
+                },
+                {
+                    "ReadDataStorageActivity": {
+                        "_id": "A3001_0001_0001_0050",
+                        "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "WelcomeSentAt"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ],
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "BotKind",
+                                        "operator": "=",
+                                        "value": "user"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "OutputFields": {
+                            "WelcomeSentAt": {
+                                "Name": "WelcomeSentAt",
+                                "FieldName": "WelcomeSentAt",
+                                "Type": "datetime"
+                            }
+                        }
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A3001_0001_0001_0002",
+                                "field": "AiResult",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            },
+                            {
+                                "object": "A3001_0001_0001_0002",
+                                "field": "CreatedAt",
+                                "operator": ">=",
+                                "value": "{=System:Date}",
+                                "joiner": 0
+                            }
+                        ],
+                        "true": [
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A3001_0001_0001_0050",
+                                            "field": "WelcomeSentAt",
+                                            "operator": "empty",
+                                            "value": "",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "ImBotMessageActivity": {
+                                                "botId": null,
+                                                "botCode": "BOT_{=Workflow:TemplateId}",
+                                                "recipient": [
+                                                    "{=A3001_0001_0001_0001:USER}"
+                                                ],
+                                                "chatId": null,
+                                                "message": "###BITRIX_AI_DAY_PLANNER_WELCOMEMESSAGE###",
+                                                "asError": "N",
+                                                "aiWarning": "N"
+                                            }
+                                        },
+                                        {
+                                            "WriteDataStorageActivity": {
+                                                "StorageId": null,
+                                                "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                                "RewriteMode": "newItem",
+                                                "IsExpanded": "Y",
+                                                "Author": "{=A3001_0001_0001_0001:USER}",
+                                                "FieldValue": {
+                                                    "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                    "BotKind": "user",
+                                                    "WelcomeSentAt": "{=System:Now}"
+                                                },
+                                                "Fields": {
+                                                    "UserId": {
+                                                        "Value": "{=A3001_0001_0001_0001:USER}",
+                                                        "FieldName": "UserId"
+                                                    },
+                                                    "BotKind": {
+                                                        "Value": "user",
+                                                        "FieldName": "BotKind"
+                                                    },
+                                                    "WelcomeSentAt": {
+                                                        "Value": "{=System:Now}",
+                                                        "FieldName": "WelcomeSentAt"
+                                                    }
+                                                },
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "UserId",
+                                                                "operator": "=",
+                                                                "value": "{=A3001_0001_0001_0001:USER}"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "false": []
+                                }
+                            },
+                            {
+                                "ImBotMessageActivity": {
+                                    "botId": null,
+                                    "botCode": "BOT_{=Workflow:TemplateId}",
+                                    "recipient": [
+                                        "{=A3001_0001_0001_0001:USER}"
+                                    ],
+                                    "chatId": null,
+                                    "message": "###BITRIX_AI_DAY_PLANNER_DAY_PLAN_FROM_STORAGE_MESSAGE###",
+                                    "asError": "N",
+                                    "aiWarning": "Y"
+                                }
+                            },
+                            {
+                                "HumanResourcesGetAiReportUsersActivity": {
+                                    "_id": "A3001_0001_0001_0030"
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A3001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A3001_0001_0001_0030:Heads}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "SaveDayPlanActivity": {
+                                                "_id": "A3001_0001_0001_0031",
+                                                "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                "PlanText": "{=A3001_0001_0001_0002:AiResult}",
+                                                "PlanType": "AI_DAY_PLAN"
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "SaveDayPlanActivity": {
+                                                "_id": "A3001_0001_0001_0032",
+                                                "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                "PlanText": "{=A3001_0001_0001_0002:AiResult}",
+                                                "PlanType": "ROBOT_DAY_PLAN"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "DeleteDataStorageActivity": {
+                                    "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                    "DeleteMode": "multiple",
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "UserId",
+                                                    "operator": "=",
+                                                    "value": "{=A3001_0001_0001_0001:USER}"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "false": [
+                            {
+                                "HumanResourcesGetAiReportUsersActivity": {
+                                    "_id": "A3001_0001_0001_0020"
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A3001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A3001_0001_0001_0020:Users}",
+                                            "joiner": 0
+                                        },
+                                        {
+                                            "object": "A3001_0001_0001_0050",
+                                            "field": "WelcomeSentAt",
+                                            "operator": "empty",
+                                            "value": "",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "ImBotMessageActivity": {
+                                                "botId": null,
+                                                "botCode": "BOT_{=Workflow:TemplateId}",
+                                                "recipient": [
+                                                    "{=A3001_0001_0001_0001:USER}"
+                                                ],
+                                                "chatId": null,
+                                                "message": "###BITRIX_AI_DAY_PLANNER_WELCOMEMESSAGE###",
+                                                "asError": "N",
+                                                "aiWarning": "N"
+                                            }
+                                        },
+                                        {
+                                            "WriteDataStorageActivity": {
+                                                "StorageId": null,
+                                                "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                                "RewriteMode": "newItem",
+                                                "IsExpanded": "Y",
+                                                "Author": "{=A3001_0001_0001_0001:USER}",
+                                                "FieldValue": {
+                                                    "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                    "BotKind": "user",
+                                                    "WelcomeSentAt": "{=System:Now}"
+                                                },
+                                                "Fields": {
+                                                    "UserId": {
+                                                        "Value": "{=A3001_0001_0001_0001:USER}",
+                                                        "FieldName": "UserId"
+                                                    },
+                                                    "BotKind": {
+                                                        "Value": "user",
+                                                        "FieldName": "BotKind"
+                                                    },
+                                                    "WelcomeSentAt": {
+                                                        "Value": "{=System:Now}",
+                                                        "FieldName": "WelcomeSentAt"
+                                                    }
+                                                },
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "UserId",
+                                                                "operator": "=",
+                                                                "value": "{=A3001_0001_0001_0001:USER}"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "false": []
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A3001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A3001_0001_0001_0020:Heads}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "CalendarGetInform": {
+                                                "_id": "A3001_0001_0001_0003",
+                                                "CalendarUser": "{=A3001_0001_0001_0001:USER}",
+                                                "CalendarFrom": "{=System:Now}",
+                                                "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                                                "EventField": [
+                                                    "url"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A3001_0001_0001_0004",
+                                                "PARAM_USER_ID": "{=A3001_0001_0001_0001:USER}",
+                                                "MESSAGE_COUNT_LIMIT": 100,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 7,
+                                                "UserTaskRole": [
+                                                    "O",
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "description",
+                                                    "deadline",
+                                                    "originator",
+                                                    "responsible",
+                                                    "chat",
+                                                    "activityDate",
+                                                    "isOverdue",
+                                                    "url",
+                                                    "priority",
+                                                    "project"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3,
+                                                    6,
+                                                    7
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "ACTIVITY_DATE",
+                                                                "operator": ">",
+                                                                "value": "=dateadd({=System:Now},\"-7d\")"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A3001_0001_0001_0004",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 0
+                                                    },
+                                                    {
+                                                        "object": "A3001_0001_0001_0003",
+                                                        "field": "EventsCount",
+                                                        "operator": ">",
+                                                        "value": "0",
+                                                        "joiner": 1
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "AiAssistantAgentComplexActivity": {
+                                                            "_id": "A3001_0001_0001_0005",
+                                                            "_inner_id": "A3001_0001_0001_0098",
+                                                            "_inner_type": "AiAssistantAgentActivity",
+                                                            "mcpUser": "{=A3001_0001_0001_0001:USER}",
+                                                            "query": "###BITRIX_AI_DAY_PLANNER_QUERY_WDS###",
+                                                            "systemPrompt": "###BITRIX_AI_DAY_PLANNER_SYSTEMPROMPT###",
+                                                            "returnType": "text",
+                                                            "jsonSchema": "",
+                                                            "jsonPath": null,
+                                                            "usePseudonymizer": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "Condition": {
+                                                            "conditions": [
+                                                                {
+                                                                    "object": "A3001_0001_0001_0098",
+                                                                    "field": "errorMessage",
+                                                                    "operator": "empty",
+                                                                    "value": ""
+                                                                }
+                                                            ],
+                                                            "true": [
+                                                                {
+                                                                    "ImBotMessageActivity": {
+                                                                        "botId": null,
+                                                                        "botCode": "BOT_{=Workflow:TemplateId}",
+                                                                        "recipient": [
+                                                                            "{=A3001_0001_0001_0001:USER}"
+                                                                        ],
+                                                                        "chatId": null,
+                                                                        "message": "###BITRIX_AI_DAY_PLANNER_DAY_PLAN_AI_MESSAGE###",
+                                                                        "asError": "N",
+                                                                        "aiWarning": "Y"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "SaveDayPlanActivity": {
+                                                                        "_id": "A3001_0001_0001_0033",
+                                                                        "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                        "PlanText": "{=A3001_0001_0001_0098:aiResult}",
+                                                                        "PlanType": "AI_DAY_PLAN"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "DeleteDataStorageActivity": {
+                                                                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                                        "DeleteMode": "multiple",
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "WriteDataStorageActivity": {
+                                                                        "StorageId": null,
+                                                                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                                        "RewriteMode": "newItem",
+                                                                        "IsExpanded": "Y",
+                                                                        "Author": "{=A3001_0001_0001_0001:USER}",
+                                                                        "FieldValue": {
+                                                                            "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                            "AiResult": "{=A3001_0001_0001_0098:aiResult}",
+                                                                            "CreatedAt": "{=System:Now}"
+                                                                        },
+                                                                        "Fields": {
+                                                                            "UserId": {
+                                                                                "Value": "{=A3001_0001_0001_0001:USER}",
+                                                                                "FieldName": "UserId"
+                                                                            },
+                                                                            "AiResult": {
+                                                                                "Value": "{=A3001_0001_0001_0098:aiResult}",
+                                                                                "FieldName": "AiResult"
+                                                                            },
+                                                                            "CreatedAt": {
+                                                                                "Value": "{=System:Now}",
+                                                                                "FieldName": "CreatedAt"
+                                                                            }
+                                                                        },
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "false": [
+                                                                {
+                                                                    "ImBotMessageActivity": {
+                                                                        "botId": null,
+                                                                        "botCode": "BOT_{=Workflow:TemplateId}",
+                                                                        "recipient": [
+                                                                            "{=A3001_0001_0001_0001:USER}"
+                                                                        ],
+                                                                        "chatId": null,
+                                                                        "message": "###BITRIX_AI_DAY_PLANNER_DAY_START_ERRORMESSAGE###",
+                                                                        "asError": "Y",
+                                                                        "aiWarning": "Y"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "SaveDayPlanActivity": {
+                                                                        "_id": "A3001_0001_0001_0037",
+                                                                        "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                        "PlanText": "###BITRIX_AI_DAY_PLANNER_DAY_START_ERRORMESSAGE###",
+                                                                        "PlanType": "AI_DAY_PLAN"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A3001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_NODATAMESSAGE###",
+                                                            "asError": "N",
+                                                            "aiWarning": "N"
+                                                        }
+                                                    },
+                                                    {
+                                                        "SaveDayPlanActivity": {
+                                                            "_id": "A3001_0001_0001_0035",
+                                                            "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                            "PlanText": "###BITRIX_AI_DAY_PLANNER_NODATA_PLAN###",
+                                                            "PlanType": "AI_DAY_PLAN"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A3001_0001_0001_0001",
+                                                        "field": "USER",
+                                                        "operator": "in",
+                                                        "value": "{=A3001_0001_0001_0020:Users}",
+                                                        "joiner": 0
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "CalendarGetInform": {
+                                                            "_id": "A3001_0001_0001_0023",
+                                                            "CalendarUser": "{=A3001_0001_0001_0001:USER}",
+                                                            "CalendarFrom": "{=System:Now}",
+                                                            "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                                                            "EventField": [
+                                                                "url"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "TasksGetInfoActivity": {
+                                                            "_id": "A3001_0001_0001_0021",
+                                                            "PARAM_USER_ID": "{=A3001_0001_0001_0001:USER}",
+                                                            "MESSAGE_COUNT_LIMIT": 0,
+                                                            "TaskLimit": 100,
+                                                            "MessagesDays": 0,
+                                                            "UserTaskRole": [
+                                                                "R"
+                                                            ],
+                                                            "TaskSelectField": [
+                                                                "url"
+                                                            ],
+                                                            "TaskStatusFilter": [
+                                                                1,
+                                                                2,
+                                                                3
+                                                            ],
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "DEADLINE",
+                                                                            "operator": "<",
+                                                                            "value": "{=System:Now}"
+                                                                        },
+                                                                        "AND"
+                                                                    ],
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "ACTIVITY_DATE",
+                                                                            "operator": ">",
+                                                                            "value": "=dateadd({=System:Now},\"-7d\")"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "TasksGetInfoActivity": {
+                                                            "_id": "A3001_0001_0001_0022",
+                                                            "PARAM_USER_ID": "{=A3001_0001_0001_0001:USER}",
+                                                            "MESSAGE_COUNT_LIMIT": 0,
+                                                            "TaskLimit": 100,
+                                                            "MessagesDays": 0,
+                                                            "UserTaskRole": [
+                                                                "R"
+                                                            ],
+                                                            "TaskSelectField": [
+                                                                "url"
+                                                            ],
+                                                            "TaskStatusFilter": [
+                                                                1,
+                                                                2,
+                                                                3
+                                                            ],
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "DEADLINE",
+                                                                            "operator": ">",
+                                                                            "value": "{=System:Now}"
+                                                                        },
+                                                                        "AND"
+                                                                    ],
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "ACTIVITY_DATE",
+                                                                            "operator": ">",
+                                                                            "value": "=dateadd({=System:Now},\"-7d\")"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "Condition": {
+                                                            "conditions": [
+                                                                {
+                                                                    "object": "A3001_0001_0001_0021",
+                                                                    "field": "COUNTER_TASKS_INFO",
+                                                                    "operator": ">",
+                                                                    "value": 0,
+                                                                    "joiner": 0
+                                                                },
+                                                                {
+                                                                    "object": "A3001_0001_0001_0022",
+                                                                    "field": "COUNTER_TASKS_INFO",
+                                                                    "operator": ">",
+                                                                    "value": 0,
+                                                                    "joiner": 1
+                                                                },
+                                                                {
+                                                                    "object": "A3001_0001_0001_0023",
+                                                                    "field": "EventsCount",
+                                                                    "operator": ">",
+                                                                    "value": "0",
+                                                                    "joiner": 1
+                                                                }
+                                                            ],
+                                                            "true": [
+                                                                {
+                                                                    "ImBotMessageActivity": {
+                                                                        "botId": null,
+                                                                        "botCode": "BOT_{=Workflow:TemplateId}",
+                                                                        "recipient": [
+                                                                            "{=A3001_0001_0001_0001:USER}"
+                                                                        ],
+                                                                        "chatId": null,
+                                                                        "message": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_DELIVERY_WDS###",
+                                                                        "asError": "N",
+                                                                        "aiWarning": "Y"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "SaveDayPlanActivity": {
+                                                                        "_id": "A3001_0001_0001_0034",
+                                                                        "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                        "PlanText": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE_WDS###",
+                                                                        "PlanType": "ROBOT_DAY_PLAN"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "DeleteDataStorageActivity": {
+                                                                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                                        "DeleteMode": "multiple",
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "WriteDataStorageActivity": {
+                                                                        "StorageId": null,
+                                                                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                                                                        "RewriteMode": "newItem",
+                                                                        "IsExpanded": "Y",
+                                                                        "Author": "{=A3001_0001_0001_0001:USER}",
+                                                                        "FieldValue": {
+                                                                            "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                            "AiResult": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE_WDS###",
+                                                                            "CreatedAt": "{=System:Now}"
+                                                                        },
+                                                                        "Fields": {
+                                                                            "UserId": {
+                                                                                "Value": "{=A3001_0001_0001_0001:USER}",
+                                                                                "FieldName": "UserId"
+                                                                            },
+                                                                            "AiResult": {
+                                                                                "Value": "###BITRIX_AI_DAY_PLANNER_USER_PLAN_MESSAGE_WDS###",
+                                                                                "FieldName": "AiResult"
+                                                                            },
+                                                                            "CreatedAt": {
+                                                                                "Value": "{=System:Now}",
+                                                                                "FieldName": "CreatedAt"
+                                                                            }
+                                                                        },
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "false": [
+                                                                {
+                                                                    "ImBotMessageActivity": {
+                                                                        "botId": null,
+                                                                        "botCode": "BOT_{=Workflow:TemplateId}",
+                                                                        "recipient": [
+                                                                            "{=A3001_0001_0001_0001:USER}"
+                                                                        ],
+                                                                        "chatId": null,
+                                                                        "message": "###BITRIX_AI_DAY_PLANNER_NODATAMESSAGE###",
+                                                                        "asError": "N",
+                                                                        "aiWarning": "N"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "SaveDayPlanActivity": {
+                                                                        "_id": "A3001_0001_0001_0036",
+                                                                        "UserId": "{=A3001_0001_0001_0001:USER}",
+                                                                        "PlanText": "###BITRIX_AI_DAY_PLANNER_NODATA_PLAN###",
+                                                                        "PlanType": "ROBOT_DAY_PLAN"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "false": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "workday_end": {
+            "trigger": "StopWorkTimeTrigger",
+            "trigger_props": {
+                "_id": "A6001_0001_0001_0001",
+                "IS_FIRST_STOP_FILTER": "Y"
+            },
+            "steps": [
+                {
+                    "HumanResourcesGetAiReportUsersActivity": {
+                        "_id": "A6001_0001_0001_0020"
+                    }
+                },
+                {
+                    "ReadDataStorageActivity": {
+                        "_id": "A6001_0001_0001_0050",
+                        "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "WelcomeSentAt"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A6001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ],
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "BotKind",
+                                        "operator": "=",
+                                        "value": "user"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "OutputFields": {
+                            "WelcomeSentAt": {
+                                "Name": "WelcomeSentAt",
+                                "FieldName": "WelcomeSentAt",
+                                "Type": "datetime"
+                            }
+                        }
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A6001_0001_0001_0001",
+                                "field": "USER",
+                                "operator": "in",
+                                "value": "{=A6001_0001_0001_0020:Users}",
+                                "joiner": 0
+                            },
+                            {
+                                "object": "A6001_0001_0001_0050",
+                                "field": "WelcomeSentAt",
+                                "operator": "empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "true": [
+                            {
+                                "ImBotMessageActivity": {
+                                    "botId": null,
+                                    "botCode": "BOT_{=Workflow:TemplateId}",
+                                    "recipient": [
+                                        "{=A6001_0001_0001_0001:USER}"
+                                    ],
+                                    "chatId": null,
+                                    "message": "###BITRIX_AI_DAY_PLANNER_WELCOMEMESSAGE###",
+                                    "asError": "N",
+                                    "aiWarning": "N"
+                                }
+                            },
+                            {
+                                "WriteDataStorageActivity": {
+                                    "StorageId": null,
+                                    "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                    "RewriteMode": "newItem",
+                                    "IsExpanded": "Y",
+                                    "Author": "{=A6001_0001_0001_0001:USER}",
+                                    "FieldValue": {
+                                        "UserId": "{=A6001_0001_0001_0001:USER}",
+                                        "BotKind": "user",
+                                        "WelcomeSentAt": "{=System:Now}"
+                                    },
+                                    "Fields": {
+                                        "UserId": {
+                                            "Value": "{=A6001_0001_0001_0001:USER}",
+                                            "FieldName": "UserId"
+                                        },
+                                        "BotKind": {
+                                            "Value": "user",
+                                            "FieldName": "BotKind"
+                                        },
+                                        "WelcomeSentAt": {
+                                            "Value": "{=System:Now}",
+                                            "FieldName": "WelcomeSentAt"
+                                        }
+                                    },
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "UserId",
+                                                    "operator": "=",
+                                                    "value": "{=A6001_0001_0001_0001:USER}"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "false": []
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A6001_0001_0001_0001",
+                                "field": "USER",
+                                "operator": "in",
+                                "value": "{=A6001_0001_0001_0020:Heads}",
+                                "joiner": 0
+                            }
+                        ],
+                        "true": [
+                            {
+                                "CalendarGetInform": {
+                                    "_id": "A6001_0001_0001_0006",
+                                    "CalendarUser": "{=A6001_0001_0001_0001:USER}",
+                                    "CalendarFrom": "{=System:Date}",
+                                    "CalendarTo": "{{=dateadd({=System:Date}, \"1d\")}}",
+                                    "EventField": [
+                                        "url"
+                                    ]
+                                }
+                            },
+                            {
+                                "TasksGetInfoActivity": {
+                                    "_id": "A6001_0001_0001_0007",
+                                    "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                    "MESSAGE_COUNT_LIMIT": 100,
+                                    "TaskLimit": 100,
+                                    "MessagesDays": 7,
+                                    "UserTaskRole": [
+                                        "O",
+                                        "R"
+                                    ],
+                                    "TaskSelectField": [
+                                        "description",
+                                        "status",
+                                        "deadline",
+                                        "originator",
+                                        "responsible",
+                                        "chat",
+                                        "activityDate",
+                                        "isOverdue",
+                                        "url",
+                                        "priority",
+                                        "project"
+                                    ],
+                                    "TaskStatusFilter": [
+                                        1,
+                                        2,
+                                        3,
+                                        6,
+                                        7
+                                    ],
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "ACTIVITY_DATE",
+                                                    "operator": ">",
+                                                    "value": "=dateadd({=System:Now},\"-7d\")"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "TasksGetInfoActivity": {
+                                    "_id": "A6001_0001_0001_0008",
+                                    "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                    "MESSAGE_COUNT_LIMIT": 50,
+                                    "TaskLimit": 100,
+                                    "MessagesDays": 1,
+                                    "UserTaskRole": [
+                                        "R"
+                                    ],
+                                    "TaskSelectField": [
+                                        "description",
+                                        "status",
+                                        "deadline",
+                                        "originator",
+                                        "responsible",
+                                        "chat",
+                                        "activityDate",
+                                        "url",
+                                        "priority",
+                                        "project"
+                                    ],
+                                    "TaskStatusFilter": [
+                                        5
+                                    ],
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "ACTIVITY_DATE",
+                                                    "operator": ">",
+                                                    "value": "=dateadd({=System:Now},\"-1d\")"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "TasksGetInfoActivity": {
+                                    "_id": "A6001_0001_0001_0009",
+                                    "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                    "MESSAGE_COUNT_LIMIT": 50,
+                                    "TaskLimit": 100,
+                                    "MessagesDays": 1,
+                                    "UserTaskRole": [
+                                        "O",
+                                        "R",
+                                        "A",
+                                        "U"
+                                    ],
+                                    "TaskSelectField": [
+                                        "description",
+                                        "status",
+                                        "deadline",
+                                        "originator",
+                                        "responsible",
+                                        "chat",
+                                        "activityDate",
+                                        "url",
+                                        "priority",
+                                        "project"
+                                    ],
+                                    "TaskStatusFilter": [
+                                        1,
+                                        2,
+                                        3,
+                                        6,
+                                        7
+                                    ],
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "ACTIVITY_DATE",
+                                                    "operator": ">",
+                                                    "value": "=dateadd({=System:Now},\"-1d\")"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A6001_0001_0001_0007",
+                                            "field": "COUNTER_TASKS_INFO",
+                                            "operator": ">",
+                                            "value": 0,
+                                            "joiner": 0
+                                        },
+                                        {
+                                            "object": "A6001_0001_0001_0008",
+                                            "field": "COUNTER_TASKS_INFO",
+                                            "operator": ">",
+                                            "value": 0,
+                                            "joiner": 1
+                                        },
+                                        {
+                                            "object": "A6001_0001_0001_0009",
+                                            "field": "COUNTER_TASKS_INFO",
+                                            "operator": ">",
+                                            "value": 0,
+                                            "joiner": 1
+                                        },
+                                        {
+                                            "object": "A6001_0001_0001_0006",
+                                            "field": "EventsCount",
+                                            "operator": ">",
+                                            "value": "0",
+                                            "joiner": 1
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "AiAssistantAgentComplexActivity": {
+                                                "_id": "A6001_0001_0001_0010",
+                                                "_inner_id": "A6001_0001_0001_0098",
+                                                "_inner_type": "AiAssistantAgentActivity",
+                                                "mcpUser": "{=A6001_0001_0001_0001:USER}",
+                                                "query": "###BITRIX_AI_DAY_PLANNER_ENDDAY_QUERY_FALLBACK###",
+                                                "systemPrompt": "###BITRIX_AI_DAY_PLANNER_ENDDAY_SYSTEMPROMPT###",
+                                                "returnType": "text",
+                                                "jsonSchema": "",
+                                                "jsonPath": null,
+                                                "usePseudonymizer": "Y"
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A6001_0001_0001_0098",
+                                                        "field": "aiResult",
+                                                        "operator": "!empty",
+                                                        "value": "",
+                                                        "joiner": 0
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A6001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_DAY_END_AI_MESSAGE###",
+                                                            "asError": "N",
+                                                            "aiWarning": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "SaveReportActivity": {
+                                                            "_id": "A6001_0001_0001_0012",
+                                                            "UserId": "{=A6001_0001_0001_0001:USER}",
+                                                            "ReportText": "{=A6001_0001_0001_0098:aiResult}",
+                                                            "ReportType": "AI_REPORT"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A6001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_DAY_END_ERRORMESSAGE###",
+                                                            "asError": "Y",
+                                                            "aiWarning": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "SaveReportActivity": {
+                                                            "_id": "A6001_0001_0001_0030",
+                                                            "UserId": "{=A6001_0001_0001_0001:USER}",
+                                                            "ReportText": "###BITRIX_AI_DAY_PLANNER_DAY_END_ERRORMESSAGE###",
+                                                            "ReportType": "AI_REPORT"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "ImBotMessageActivity": {
+                                                "botId": null,
+                                                "botCode": "BOT_{=Workflow:TemplateId}",
+                                                "recipient": [
+                                                    "{=A6001_0001_0001_0001:USER}"
+                                                ],
+                                                "chatId": null,
+                                                "message": "###BITRIX_AI_DAY_PLANNER_NODATA_ENDDAY_MESSAGE###",
+                                                "asError": "N",
+                                                "aiWarning": "N"
+                                            }
+                                        },
+                                        {
+                                            "SaveReportActivity": {
+                                                "_id": "A6001_0001_0001_0031",
+                                                "UserId": "{=A6001_0001_0001_0001:USER}",
+                                                "ReportText": "###BITRIX_AI_DAY_PLANNER_NODATA_ENDDAY_MESSAGE###",
+                                                "ReportType": "AI_REPORT"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "false": [
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A6001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A6001_0001_0001_0020:Users}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "CalendarGetInform": {
+                                                "_id": "A6001_0001_0001_0025",
+                                                "CalendarUser": "{=A6001_0001_0001_0001:USER}",
+                                                "CalendarFrom": "{=System:Date}",
+                                                "CalendarTo": "{{=dateadd({=System:Date}, \"1d\")}}",
+                                                "EventField": [
+                                                    "url"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A6001_0001_0001_0021",
+                                                "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "O"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "CREATED_DATE",
+                                                                "operator": ">",
+                                                                "value": "=settime({=System:Date}, 00, 00, 7200)"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A6001_0001_0001_0022",
+                                                "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    5,
+                                                    6,
+                                                    7
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "CLOSED_DATE",
+                                                                "operator": ">",
+                                                                "value": "=settime({=System:Date}, 00, 00, 7200)"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A6001_0001_0001_0023",
+                                                "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "O"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    5,
+                                                    6,
+                                                    7
+                                                ],
+                                                "ExcludeIfAlsoResponsible": "Y",
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "CLOSED_DATE",
+                                                                "operator": ">",
+                                                                "value": "=settime({=System:Date}, 00, 00, 7200)"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "TasksGetInfoActivity": {
+                                                "_id": "A6001_0001_0001_0024",
+                                                "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                                                "MESSAGE_COUNT_LIMIT": 0,
+                                                "TaskLimit": 100,
+                                                "MessagesDays": 0,
+                                                "UserTaskRole": [
+                                                    "R"
+                                                ],
+                                                "TaskSelectField": [
+                                                    "url"
+                                                ],
+                                                "TaskStatusFilter": [
+                                                    1,
+                                                    2,
+                                                    3
+                                                ],
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "ACTIVITY_DATE",
+                                                                "operator": ">",
+                                                                "value": "=dateadd({=System:Now},\"-7d\")"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A6001_0001_0001_0021",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 0
+                                                    },
+                                                    {
+                                                        "object": "A6001_0001_0001_0022",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 1
+                                                    },
+                                                    {
+                                                        "object": "A6001_0001_0001_0023",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 1
+                                                    },
+                                                    {
+                                                        "object": "A6001_0001_0001_0024",
+                                                        "field": "COUNTER_TASKS_INFO",
+                                                        "operator": ">",
+                                                        "value": 0,
+                                                        "joiner": 1
+                                                    },
+                                                    {
+                                                        "object": "A6001_0001_0001_0025",
+                                                        "field": "EventsCount",
+                                                        "operator": ">",
+                                                        "value": "0",
+                                                        "joiner": 1
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A6001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_USER_ENDDAY_DELIVERY_FALLBACK###",
+                                                            "asError": "N",
+                                                            "aiWarning": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "SaveReportActivity": {
+                                                            "_id": "A6001_0001_0001_0026",
+                                                            "UserId": "{=A6001_0001_0001_0001:USER}",
+                                                            "ReportText": "###BITRIX_AI_DAY_PLANNER_USER_ENDDAY_MESSAGE_FALLBACK###",
+                                                            "ReportType": "ROBOT_REPORT"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A6001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_NODATA_ENDDAY_MESSAGE###",
+                                                            "asError": "N",
+                                                            "aiWarning": "N"
+                                                        }
+                                                    },
+                                                    {
+                                                        "SaveReportActivity": {
+                                                            "_id": "A6001_0001_0001_0032",
+                                                            "UserId": "{=A6001_0001_0001_0001:USER}",
+                                                            "ReportText": "###BITRIX_AI_DAY_PLANNER_NODATA_ENDDAY_MESSAGE###",
+                                                            "ReportType": "ROBOT_REPORT"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "false": []
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "full_report_ready": {
+            "trigger": "FullReportReadyTrigger",
+            "trigger_props": {
+                "_id": "A7001_0001_0001_0001"
+            },
+            "steps": [
+                {
+                    "GetFullReportActivity": {
+                        "_id": "A7001_0001_0001_0002",
+                        "UserId": "{=A7001_0001_0001_0001:USER}"
+                    }
+                },
+                {
+                    "HumanResourcesGetAiReportUsersActivity": {
+                        "_id": "A7001_0001_0001_0003"
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A7001_0001_0001_0002",
+                                "field": "ReportExtended",
+                                "operator": "empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "true": [
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A7001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A7001_0001_0001_0003:Users}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A7001_0001_0001_0001",
+                                                        "field": "USER",
+                                                        "operator": "in",
+                                                        "value": "{=A7001_0001_0001_0003:Heads}",
+                                                        "joiner": 0
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "FillFullReportActivity": {
+                                                            "UserId": "{=A7001_0001_0001_0001:USER}",
+                                                            "ReportExtended": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_NODATA###",
+                                                            "Type": "AI_REPORT"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "FillFullReportActivity": {
+                                                            "UserId": "{=A7001_0001_0001_0001:USER}",
+                                                            "ReportExtended": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_NODATA###",
+                                                            "Type": "ROBOT_REPORT"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "false": []
+                                }
+                            }
+                        ],
+                        "false": [
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A7001_0001_0001_0001",
+                                            "field": "USER",
+                                            "operator": "in",
+                                            "value": "{=A7001_0001_0001_0003:Heads}",
+                                            "joiner": 0
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "AiAssistantAgentComplexActivity": {
+                                                "_id": "A7001_0001_0001_0004",
+                                                "_inner_id": "A7001_0001_0001_0098",
+                                                "_inner_type": "AiAssistantAgentActivity",
+                                                "mcpUser": "{=A7001_0001_0001_0001:USER}",
+                                                "query": "{=A7001_0001_0001_0002:ReportExtended}",
+                                                "systemPrompt": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_SYSTEMPROMPT###",
+                                                "returnType": "text",
+                                                "jsonSchema": "",
+                                                "jsonPath": null,
+                                                "usePseudonymizer": "Y"
+                                            }
+                                        },
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A7001_0001_0001_0098",
+                                                        "field": "aiResult",
+                                                        "operator": "!empty",
+                                                        "value": "",
+                                                        "joiner": 0
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "FillFullReportActivity": {
+                                                            "UserId": "{=A7001_0001_0001_0001:USER}",
+                                                            "ReportExtended": "{=A7001_0001_0001_0098:aiResult}",
+                                                            "Type": "AI_REPORT"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "GetUserActivity": {
+                                                            "_id": "A7001_0001_0001_0005",
+                                                            "UserType": "boss",
+                                                            "MaxLevel": "1",
+                                                            "UserParameter": [
+                                                                "{=A7001_0001_0001_0001:USER}"
+                                                            ],
+                                                            "SkipAbsent": "Y",
+                                                            "SkipTimeman": "N"
+                                                        }
+                                                    },
+                                                    {
+                                                        "ReadDataStorageActivity": {
+                                                            "_id": "A7001_0001_0001_0050",
+                                                            "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                                            "ReturnMode": "single",
+                                                            "ReturnFields": [],
+                                                            "ReturnFieldsByStorageCode": [
+                                                                "WelcomeSentAt"
+                                                            ],
+                                                            "DynamicFilterFields": {
+                                                                "items": [
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "UserId",
+                                                                            "operator": "=",
+                                                                            "value": "{=A7001_0001_0001_0005:GetUser}"
+                                                                        },
+                                                                        "AND"
+                                                                    ],
+                                                                    [
+                                                                        {
+                                                                            "object": "Document",
+                                                                            "field": "BotKind",
+                                                                            "operator": "=",
+                                                                            "value": "boss"
+                                                                        },
+                                                                        "AND"
+                                                                    ]
+                                                                ]
+                                                            },
+                                                            "OutputFields": {
+                                                                "WelcomeSentAt": {
+                                                                    "Name": "WelcomeSentAt",
+                                                                    "FieldName": "WelcomeSentAt",
+                                                                    "Type": "datetime"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "Condition": {
+                                                            "conditions": [
+                                                                {
+                                                                    "object": "A7001_0001_0001_0050",
+                                                                    "field": "WelcomeSentAt",
+                                                                    "operator": "empty",
+                                                                    "value": ""
+                                                                }
+                                                            ],
+                                                            "true": [
+                                                                {
+                                                                    "ImBotMessageActivity": {
+                                                                        "botId": null,
+                                                                        "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                                        "recipient": [
+                                                                            "{=A7001_0001_0001_0005:GetUser}"
+                                                                        ],
+                                                                        "chatId": null,
+                                                                        "message": "###BITRIX_AI_DAY_PLANNER_BOSSWELCOMEMESSAGE###",
+                                                                        "asError": "N",
+                                                                        "aiWarning": "N"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "WriteDataStorageActivity": {
+                                                                        "StorageId": null,
+                                                                        "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                                                        "RewriteMode": "newItem",
+                                                                        "IsExpanded": "Y",
+                                                                        "Author": "{=A7001_0001_0001_0005:GetUser}",
+                                                                        "FieldValue": {
+                                                                            "UserId": "{=A7001_0001_0001_0005:GetUser}",
+                                                                            "BotKind": "boss",
+                                                                            "WelcomeSentAt": "{=System:Now}"
+                                                                        },
+                                                                        "Fields": {
+                                                                            "UserId": {
+                                                                                "Value": "{=A7001_0001_0001_0005:GetUser}",
+                                                                                "FieldName": "UserId"
+                                                                            },
+                                                                            "BotKind": {
+                                                                                "Value": "boss",
+                                                                                "FieldName": "BotKind"
+                                                                            },
+                                                                            "WelcomeSentAt": {
+                                                                                "Value": "{=System:Now}",
+                                                                                "FieldName": "WelcomeSentAt"
+                                                                            }
+                                                                        },
+                                                                        "DynamicFilterFields": {
+                                                                            "items": [
+                                                                                [
+                                                                                    {
+                                                                                        "object": "Document",
+                                                                                        "field": "UserId",
+                                                                                        "operator": "=",
+                                                                                        "value": "{=A7001_0001_0001_0005:GetUser}"
+                                                                                    },
+                                                                                    "AND"
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "false": []
+                                                        }
+                                                    },
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A7001_0001_0001_0005:GetUser}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_ERRORMESSAGE###",
+                                                            "asError": "Y",
+                                                            "aiWarning": "Y"
+                                                        }
+                                                    },
+                                                    {
+                                                        "FillFullReportActivity": {
+                                                            "UserId": "{=A7001_0001_0001_0001:USER}",
+                                                            "ReportExtended": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_FAILED###",
+                                                            "Type": "AI_REPORT"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A7001_0001_0001_0001",
+                                                        "field": "USER",
+                                                        "operator": "in",
+                                                        "value": "{=A7001_0001_0001_0003:Users}",
+                                                        "joiner": 0
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "FillFullReportActivity": {
+                                                            "UserId": "{=A7001_0001_0001_0001:USER}",
+                                                            "ReportExtended": "{=A7001_0001_0001_0002:ReportExtended}",
+                                                            "Type": "ROBOT_REPORT"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "full_report_sent": {
+            "trigger": "FullReportSentTrigger",
+            "trigger_props": {
+                "_id": "A8001_0001_0001_0001"
+            },
+            "steps": [
+                {
+                    "HumanResourcesGetAiReportUsersActivity": {
+                        "_id": "A8001_0001_0001_0004"
+                    }
+                },
+                {
+                    "Condition": {
+                        "conditions": [
+                            {
+                                "object": "A8001_0001_0001_0001",
+                                "field": "USER",
+                                "operator": "in",
+                                "value": "{=A8001_0001_0001_0004:Users}",
+                                "joiner": 0
+                            }
+                        ],
+                        "true": [
+                            {
+                                "GetUserActivity": {
+                                    "_id": "A8001_0001_0001_0003",
+                                    "UserType": "boss",
+                                    "MaxLevel": "1",
+                                    "UserParameter": [
+                                        "{=A8001_0001_0001_0001:USER}"
+                                    ],
+                                    "SkipAbsent": "Y",
+                                    "SkipTimeman": "N"
+                                }
+                            },
+                            {
+                                "ReadDataStorageActivity": {
+                                    "_id": "A8001_0001_0001_0050",
+                                    "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                    "ReturnMode": "single",
+                                    "ReturnFields": [],
+                                    "ReturnFieldsByStorageCode": [
+                                        "WelcomeSentAt"
+                                    ],
+                                    "DynamicFilterFields": {
+                                        "items": [
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "UserId",
+                                                    "operator": "=",
+                                                    "value": "{=A8001_0001_0001_0003:GetUser}"
+                                                },
+                                                "AND"
+                                            ],
+                                            [
+                                                {
+                                                    "object": "Document",
+                                                    "field": "BotKind",
+                                                    "operator": "=",
+                                                    "value": "boss"
+                                                },
+                                                "AND"
+                                            ]
+                                        ]
+                                    },
+                                    "OutputFields": {
+                                        "WelcomeSentAt": {
+                                            "Name": "WelcomeSentAt",
+                                            "FieldName": "WelcomeSentAt",
+                                            "Type": "datetime"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A8001_0001_0001_0050",
+                                            "field": "WelcomeSentAt",
+                                            "operator": "empty",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "ImBotMessageActivity": {
+                                                "botId": null,
+                                                "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                "recipient": [
+                                                    "{=A8001_0001_0001_0003:GetUser}"
+                                                ],
+                                                "chatId": null,
+                                                "message": "###BITRIX_AI_DAY_PLANNER_BOSSWELCOMEMESSAGE###",
+                                                "asError": "N",
+                                                "aiWarning": "N"
+                                            }
+                                        },
+                                        {
+                                            "WriteDataStorageActivity": {
+                                                "StorageId": null,
+                                                "StorageCode": "DAY_PLANNER_WELCOMES_{=Workflow:TemplateId}",
+                                                "RewriteMode": "newItem",
+                                                "IsExpanded": "Y",
+                                                "Author": "{=A8001_0001_0001_0003:GetUser}",
+                                                "FieldValue": {
+                                                    "UserId": "{=A8001_0001_0001_0003:GetUser}",
+                                                    "BotKind": "boss",
+                                                    "WelcomeSentAt": "{=System:Now}"
+                                                },
+                                                "Fields": {
+                                                    "UserId": {
+                                                        "Value": "{=A8001_0001_0001_0003:GetUser}",
+                                                        "FieldName": "UserId"
+                                                    },
+                                                    "BotKind": {
+                                                        "Value": "boss",
+                                                        "FieldName": "BotKind"
+                                                    },
+                                                    "WelcomeSentAt": {
+                                                        "Value": "{=System:Now}",
+                                                        "FieldName": "WelcomeSentAt"
+                                                    }
+                                                },
+                                                "DynamicFilterFields": {
+                                                    "items": [
+                                                        [
+                                                            {
+                                                                "object": "Document",
+                                                                "field": "UserId",
+                                                                "operator": "=",
+                                                                "value": "{=A8001_0001_0001_0003:GetUser}"
+                                                            },
+                                                            "AND"
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "false": []
+                                }
+                            },
+                            {
+                                "Condition": {
+                                    "conditions": [
+                                        {
+                                            "object": "A8001_0001_0001_0001",
+                                            "field": "REPORT_EXTENDED",
+                                            "operator": "!empty",
+                                            "value": ""
+                                        }
+                                    ],
+                                    "true": [
+                                        {
+                                            "ImBotMessageActivity": {
+                                                "botId": null,
+                                                "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                "recipient": [
+                                                    "{=A8001_0001_0001_0003:GetUser}"
+                                                ],
+                                                "chatId": null,
+                                                "message": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_MESSAGE###",
+                                                "asError": "N",
+                                                "aiWarning": "Y"
+                                            }
+                                        }
+                                    ],
+                                    "false": [
+                                        {
+                                            "Condition": {
+                                                "conditions": [
+                                                    {
+                                                        "object": "A8001_0001_0001_0001",
+                                                        "field": "REPORT",
+                                                        "operator": "!empty",
+                                                        "value": ""
+                                                    }
+                                                ],
+                                                "true": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A8001_0001_0001_0003:GetUser}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_BASIC_MESSAGE###",
+                                                            "asError": "N",
+                                                            "aiWarning": "N"
+                                                        }
+                                                    }
+                                                ],
+                                                "false": [
+                                                    {
+                                                        "ImBotMessageActivity": {
+                                                            "botId": null,
+                                                            "botCode": "BOSSBOT_{=Workflow:TemplateId}",
+                                                            "recipient": [
+                                                                "{=A8001_0001_0001_0003:GetUser}"
+                                                            ],
+                                                            "chatId": null,
+                                                            "message": "###BITRIX_AI_DAY_PLANNER_FULLREPORT_SENT_EMPTY_MESSAGE###",
+                                                            "asError": "N",
+                                                            "aiWarning": "N"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "false": []
+                    }
+                }
+            ]
+        }
+    }
+}

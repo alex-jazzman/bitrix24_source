@@ -1,4 +1,5 @@
 <?php
+
 use Bitrix\Main\Localization\Loc;
 
 class messageservice extends \CModule
@@ -118,6 +119,7 @@ class messageservice extends \CModule
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
+		\CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/messageservice/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
 
 		return true;
 	}
@@ -125,6 +127,7 @@ class messageservice extends \CModule
 	public function UnInstallFiles()
 	{
 		\DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/messageservice/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js');
 
 		if (is_dir($p = $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/components/bitrix"))
 		{

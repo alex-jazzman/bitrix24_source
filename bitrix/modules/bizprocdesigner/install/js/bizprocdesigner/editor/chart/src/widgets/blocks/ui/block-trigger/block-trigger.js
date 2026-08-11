@@ -143,6 +143,7 @@ export const BlockTrigger = {
 													:iconName="block.node.icon"
 													:iconColorIndex="block.node.colorIndex"
 													:deactivated="!isBlockActivated"
+													:blockId="block.id"
 												/>
 											</template>
 										</BlockHeader>

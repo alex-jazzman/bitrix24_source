@@ -1,0 +1,957 @@
+<?php
+
+namespace Bitrix\Im\V2\Controller;
+
+use Bitrix\Im\Dialog;
+use Bitrix\Im\Recent;
+use Bitrix\Im\V2\Chat\ChannelChat;
+use Bitrix\Im\V2\Common\Normalizer;
+use Bitrix\Im\V2\Folder\Pin\PinService;
+use Bitrix\Im\V2\Chat\ChatError;
+use Bitrix\Im\V2\Chat\Add\ChatCreateFields;
+use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Im\V2\Controller\Chat\Dto\ChatCreateFieldsDto;
+use Bitrix\Im\V2\Controller\Chat\Dto\ChatUpdateFieldsDto;
+use Bitrix\Im\V2\Chat\CollabChat;
+use Bitrix\Im\V2\Chat\CommentChat;
+use Bitrix\Im\V2\Chat\Copilot\CopilotTitle;
+use Bitrix\Im\V2\Chat\CopilotChat;
+use Bitrix\Im\V2\Chat\ExternalChat;
+use Bitrix\Im\V2\Chat\GeneralChat;
+use Bitrix\Im\V2\Chat\GroupChat;
+use Bitrix\Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs;
+use Bitrix\Im\V2\Chat\OpenChannelChat;
+use Bitrix\Im\V2\Chat\OpenChat;
+use Bitrix\Im\V2\Chat\OpenCollabChat;
+use Bitrix\Im\V2\Chat\OpenLineChat;
+use Bitrix\Im\V2\Chat\Type\TypeRegistry;
+use Bitrix\Im\V2\Common\FormatConverter;
+use Bitrix\Im\V2\Controller\Filter\DiskQuickAccessGrantor;
+use Bitrix\Im\V2\Permission;
+use Bitrix\Im\V2\Chat\Update\UpdateFields;
+use Bitrix\Im\V2\Controller\Chat\Pin;
+use Bitrix\Im\V2\Controller\Filter\ChatTypeFilter;
+use Bitrix\Im\V2\Controller\Filter\CheckActionAccess;
+use Bitrix\Im\V2\Controller\Filter\CheckEntityAccess;
+use Bitrix\Im\V2\Controller\Filter\CheckFileAccess;
+use Bitrix\Im\V2\Controller\Filter\ExternalUserTypeFilter;
+use Bitrix\Im\V2\Controller\Filter\ExtendPullWatchPrefilter;
+use Bitrix\Im\V2\Entity\File\ChatAvatar;
+use Bitrix\Im\V2\Entity\User\User;
+use Bitrix\Im\V2\Entity\User\UserPopupItem;
+use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\Reading\Reader;
+use Bitrix\Im\V2\Reading\RecentReader;
+use Bitrix\Im\V2\Relation\AddUsersConfig;
+use Bitrix\Im\V2\Rest\RestAdapter;
+use Bitrix\Im\V2\Chat\Update\UpdateService;
+use Bitrix\Im\V2\Result;
+use Bitrix\Im\V2\SharingLink\ChatLink;
+use Bitrix\Im\V2\SharingLink\SharingLinkError;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\ActionFilter\Base;
+use Bitrix\Main\Engine\AutoWire\ExactParameter;
+use Bitrix\Main\Engine\CurrentUser;
+
+class Chat extends BaseController
+{
+	public function configureActions()
+	{
+		return [
+			'add' => [
+					'+prefilters' => [
+						new CheckFileAccess(
+							extractor: fn(array $args) => ($args['createFields'] ?? null)?->getAvatar()
+						),
+					],
+				],
+			'update' => [
+				'+prefilters' => [
+					new CheckFileAccess(
+						extractor: fn(array $args) => ($args['updateFields'] ?? null)?->getAvatar()
+					),
+					new CheckActionAccess(Permission\Action::Update),
+					new ChatTypeFilter([GroupChat::class]),
+				],
+			],
+			'delete' => [
+				'+prefilters' => [
+					new CheckActionAccess(Permission\Action::Delete),
+				],
+			],
+			'updateAvatar' => [
+				'+prefilters' => [
+					new CheckFileAccess(['avatar']),
+					new CheckActionAccess(Permission\Action::ChangeAvatar),
+				],
+			],
+			'setOwner' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeOwner),
+				]
+			],
+			'setTitle' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::Rename),
+				]
+			],
+			'setDescription' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeDescription),
+				]
+			],
+			'setColor' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeColor),
+				]
+			],
+			'setAvatarId' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeAvatar),
+					new CheckFileAccess(['avatarId']),
+				]
+			],
+			'setAvatar' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeAvatar),
+				]
+			],
+			'addUsers' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::Extend),
+				]
+			],
+			'deleteUser' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(
+						Permission\Action::Kick,
+						fn (Base $filter) => (int)($filter->getAction()->getArguments()['userId'] ?? 0)
+					),
+				]
+			],
+			'setManagers' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeManagers),
+				]
+			],
+			'addManagers' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeManagers),
+					new ChatTypeFilter([GroupChat::class]),
+				]
+			],
+			'deleteManagers' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeManagers),
+					new ChatTypeFilter([GroupChat::class]),
+				]
+			],
+			'setManageUsersAdd' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'setManageUsersDelete' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'setManageUI' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'setManageSettings' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'setMessagesAutoDeleteDelay' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeMessagesAutoDeleteDelay),
+				]
+			],
+			'setManageMessages' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'setManageGuestInvites' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
+			'load' => [
+				'+prefilters' => [
+					new ExtendPullWatchPrefilter(),
+					new DiskQuickAccessGrantor(),
+					new Filter\ExternalChatLoadedNotifier(),
+				],
+			],
+			'loadInContext' => [
+				'+prefilters' => [
+					new ExtendPullWatchPrefilter(),
+					new Filter\ExternalChatLoadedNotifier(),
+				],
+			],
+			'join' => [
+				'+prefilters' => [
+					new ChatTypeFilter([
+						OpenChat::class,
+						OpenLineChat::class,
+						GeneralChat::class,
+						OpenChannelChat::class,
+						CommentChat::class,
+						ExternalChat::class,
+						OpenCollabChat::class,
+					]),
+					new CheckActionAccess(Permission\GlobalAction::JoinChat),
+				],
+			],
+			'joinByCode' => [
+				'+prefilters' => [
+					new CheckActionAccess(Permission\GlobalAction::JoinChat),
+				],
+			],
+			'extendPullWatch' => [
+				'+prefilters' => [
+					new ChatTypeFilter([OpenChat::class, OpenLineChat::class, ChannelChat::class, OpenCollabChat::class]),
+				],
+			],
+			'pin' => [
+				'+prefilters' => [
+					new CheckActionAccess(Permission\Action::PinChat),
+				],
+			],
+			'sortPin' => [
+				'+prefilters' => [
+					new CheckActionAccess(Permission\Action::PinChat),
+				],
+			],
+			'unpin' => [
+				'-prefilters' => [
+					CheckEntityAccess::class,
+				],
+				'+prefilters' => [
+					new CheckActionAccess(Permission\Action::UnpinChat),
+				],
+			],
+			'read' => [
+				'-prefilters' => [
+					CheckEntityAccess::class,
+				],
+				'+prefilters' => [
+					new CheckActionAccess(Permission\Action::ReadChat),
+				],
+			],
+		];
+	}
+
+	public function getPrimaryAutoWiredParameter()
+	{
+		return new ExactParameter(
+			\Bitrix\Im\V2\Chat::class,
+			'chat',
+			function ($className, $id) {
+				return \Bitrix\Im\V2\Chat::getInstance((int)$id);
+			}
+		);
+	}
+
+	public function getAutoWiredParameters()
+	{
+		return array_merge(
+			parent::getAutoWiredParameters(),
+			[
+				new ExactParameter(
+					\Bitrix\Im\V2\Chat::class,
+					'chat',
+					function ($className, ChatLink $sharingLink) {
+						return $sharingLink->getEntity();
+					}
+				),
+				new ExactParameter(
+					ChatCreateFields::class,
+					'createFields',
+					function ($className, array $fields) {
+						$dto = ChatCreateFieldsDto::create($fields);
+
+						return ChatCreateFields::fromDto($dto);
+					}
+				),
+				new ExactParameter(
+					UpdateFields::class,
+					'updateFields',
+					function ($className, array $fields) {
+						$dto = ChatUpdateFieldsDto::create($fields);
+
+						return UpdateFields::fromDto($dto);
+					}
+				),
+			]
+		);
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.shallowLoad
+	 */
+	public function shallowLoadAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		return $this->toRestFormat($chat);
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.load
+	 */
+	public function loadAction(
+		\Bitrix\Im\V2\Chat $chat,
+		int $messageLimit = Chat\Message::DEFAULT_LIMIT,
+		int $pinLimit = Pin::DEFAULT_LIMIT,
+		string $ignoreMark = 'N'
+	): ?array
+	{
+		$result = $this->load($chat, $messageLimit, $pinLimit, $this->convertCharToBool($ignoreMark));
+
+		if (!empty($this->getErrors()))
+		{
+			return null;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.loadInContext
+	 */
+	public function loadInContextAction(
+		Message $message,
+		int $messageLimit = Chat\Message::DEFAULT_LIMIT,
+		int $pinLimit = Pin::DEFAULT_LIMIT
+	): ?array
+	{
+		$result = $this->load($message->getChat(), $messageLimit, $pinLimit, false, $message);
+
+		if (!empty($this->getErrors()))
+		{
+			return null;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.get
+	 */
+	public function getAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		return (new RestAdapter($chat))->toRestFormat(['POPUP_DATA_EXCLUDE' => [UserPopupItem::class]]);
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.listShared
+	 */
+	public function listSharedAction(array $filter, int $limit = self::DEFAULT_LIMIT, int $offset = 0): ?array
+	{
+		if (!isset($filter['userId']))
+		{
+			$this->addError(new ChatError(ChatError::USER_ID_EMPTY_ERROR));
+
+			return null;
+		}
+		$userId = (int)$filter['userId'];
+		$chats = \Bitrix\Im\V2\Chat::getSharedChatsWithUser($userId, $this->getLimit($limit), $offset);
+		\Bitrix\Im\V2\Chat::fillSelfRelations($chats);
+		$result = ['chats' => []];
+
+		foreach ($chats as $chat)
+		{
+			$result['chats'][] = $chat->toRestFormat(['CHAT_SHORT_FORMAT' => true, 'CHAT_WITH_DATE_MESSAGE' => true]);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.getDialogId
+	 * @internal
+	 */
+	public function getDialogIdAction(string $externalId): ?array
+	{
+		$chatId = Dialog::getChatId($externalId);
+
+		if ($chatId === false || $chatId === 0)
+		{
+			$this->addError(new ChatError(ChatError::NOT_FOUND));
+
+			return null;
+		}
+
+		return ['dialogId' => "chat{$chatId}"];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.read
+	 */
+	public function readAction(
+		CurrentUser $user,
+		\Bitrix\Im\V2\Chat $chat,
+		Reader $reader,
+		RecentReader $recentReader,
+		string $onlyRecent = 'N',
+	): ?array
+	{
+		$userId = (int)$user->getId();
+
+		$result =
+			$this->convertCharToBool($onlyRecent)
+				? $recentReader->read($userId, $chat->getId())
+				: $reader->readAllInChat($chat->getId(), $userId)
+		;
+
+		return $this->formReadResult($chat, $result);
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.readByType
+	 */
+	public function readByTypeAction(CurrentUser $user, Reader $reader, string $type): ?array
+	{
+		$userId = (int)$user->getId();
+		$normalizedType = FormatConverter::normalizeToUpperSnakeCase($type);
+		$types = ServiceLocator::getInstance()->get(TypeRegistry::class)->getAllByExtendedType($normalizedType);
+
+		foreach ($types as $typeItem)
+		{
+			$reader->readAllByType($typeItem, $userId);
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.readAll
+	 */
+	public function readAllAction(CurrentUser $user, Reader $reader): ?array
+	{
+		$reader->readAll((int)$user->getId());
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.unread
+	 */
+	public function unreadAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		Recent::unread($chat->getDialogId(), true);
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.startRecordVoice
+	 */
+	public function startRecordVoiceAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		$chat->startRecordVoice();
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.add
+	 */
+	public function addAction(ChatCreateFields $createFields): ?array
+	{
+		$result = ChatFactory::getInstance()->addChat($createFields->toArray());
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+			return null;
+		}
+
+		return $this->convertKeysToCamelCase($result->getResult());
+	}
+
+	//region Update Chat
+	/**
+	 * @restMethod im.v2.Chat.update
+	 */
+	public function updateAction(GroupChat $chat, UpdateFields $updateFields)
+	{
+		$updateService = new UpdateService($chat, $updateFields);
+
+		$result = $updateService->updateChat();
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getErrors()[0]);
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+
+	//region Delete Chat
+
+	/**
+	 * @restMethod im.v2.Chat.delete
+	 * @throws \Exception
+	 */
+	public function deleteAction(\Bitrix\Im\V2\Chat $chat)
+	{
+		$result = $chat->deleteChat();
+
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getErrors()[0]);
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+
+	//region Manage Users
+	/**
+	 * @restMethod im.v2.Chat.addUsers
+	 */
+	public function addUsersAction(\Bitrix\Im\V2\Chat $chat, array $userIds, ?string $hideHistory = null): ?array
+	{
+		$userIds = Normalizer::toUniquePositiveIntegers($userIds);
+		$hideHistoryBool = $hideHistory === null ? null : $this->convertCharToBool($hideHistory, true);
+		$chat->addUsers($userIds, new AddUsersConfig(hideHistory: $hideHistoryBool, skipAnalytics: false));
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.join
+	 */
+	public function joinAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		$chat->join();
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.joinByCode
+	 */
+	public function joinByCodeAction(ChatLink $sharingLink, CurrentUser $currentUser): ?array
+	{
+		if ($sharingLink->isRevoked())
+		{
+			$this->addError(new SharingLinkError(SharingLinkError::REVOKED));
+
+			return null;
+		}
+
+		$result = $sharingLink->apply((int)$currentUser->getId());
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return ['dialogId' => $sharingLink->getEntity()->getDialogId($currentUser->getId())];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.extendPullWatch
+	 */
+	public function extendPullWatchAction(\Bitrix\Im\V2\Chat $chat): ?array
+	{
+		if ($chat instanceof OpenChat || $chat instanceof OpenLineChat || $chat instanceof ChannelChat)
+		{
+			$chat->extendPullWatch();
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.deleteUser
+	 */
+	public function deleteUserAction(\Bitrix\Im\V2\Chat $chat, int $userId): ?array
+	{
+		$result = $chat->deleteUser($userId);
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+	//endregion
+
+	//region Manage UI
+	/**
+	 * @restMethod im.v2.Chat.setTitle
+	 */
+	public function setTitleAction(\Bitrix\Im\V2\Chat $chat, string $title)
+	{
+		$chat->setTitle($title);
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		if ($chat instanceof CopilotChat)
+		{
+			(new CopilotTitle($chat->getChatId()))->markAsCustom();
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setDescription
+	 */
+	public function setDescriptionAction(\Bitrix\Im\V2\Chat $chat, string $description)
+	{
+		$chat->setDescription($description);
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		CopilotChat::activateDraftIfNeeded($chat);
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setColor
+	 */
+	public function setColorAction(\Bitrix\Im\V2\Chat $chat, string $color)
+	{
+		$result = $chat->validateColor();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		$chat->setColor($color);
+		$result = $chat->save();
+
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		CopilotChat::activateDraftIfNeeded($chat);
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.updateAvatar
+	 */
+	public function updateAvatarAction(\Bitrix\Im\V2\Chat $chat, string $avatar)
+	{
+		$result = (new ChatAvatar($chat))->update($avatar);
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setAvatarId
+	 */
+	public function setAvatarIdAction(\Bitrix\Im\V2\Chat $chat, int $avatarId)
+	{
+		$result = (new ChatAvatar($chat))->update($avatarId);
+
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setAvatar
+	 */
+	public function setAvatarAction(\Bitrix\Im\V2\Chat $chat, string $avatarBase64)
+	{
+		$result = (new ChatAvatar($chat))->update($avatarBase64);
+
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return ['avatarId' => $result->getResult()];
+	}
+	//endregion
+
+	//region Manage Settings
+	/**
+	 * @restMethod im.v2.Chat.setMessagesAutoDeleteDelay
+	 */
+	public function setMessagesAutoDeleteDelayAction(\Bitrix\Im\V2\Chat $chat, int $hours)
+	{
+		$result = match (true)
+		{
+			$chat instanceof CollabChat => Message\Delete\DisappearService::disappearCollab($chat, $hours),
+			default => Message\Delete\DisappearService::disappearChat($chat, $hours),
+		};
+
+		/**
+		 * @var Result<MessagesAutoDeleteConfigs> $result
+		 */
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return [
+			'messagesAutoDeleteConfigs' => $result->getResult()?->showDefaultValues()?->toRestFormat() ?? [],
+		];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setOwner
+	 */
+	public function setOwnerAction(\Bitrix\Im\V2\Chat $chat, int $ownerId)
+	{
+		$chat->setAuthorId($ownerId);
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		$eventData = [
+			'chatId' => $chat->getChatId(),
+			'userIds' => [$ownerId],
+			'role' => \Bitrix\Im\V2\Chat::ROLE_OWNER,
+		];
+		$event = new \Bitrix\Main\Event('im', 'OnChangeUserRoles', $eventData);
+		$event->send();
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManagers
+	 */
+	public function setManagersAction(\Bitrix\Im\V2\Chat $chat, array $userIds)
+	{
+		$chat->setManagers($userIds);
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.addManagers
+	 */
+	public function addManagersAction(GroupChat $chat, array $userIds): ?array
+	{
+		$chat->addManagers($userIds);
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.deleteManagers
+	 */
+	public function deleteManagersAction(GroupChat $chat, array $userIds): ?array
+	{
+		$chat->deleteManagers($userIds);
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageUsersAdd
+	 */
+	public function setManageUsersAddAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageUsersAdd(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageUsersDelete
+	 */
+	public function setManageUsersDeleteAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageUsersDelete(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageUI
+	 */
+	public function setManageUIAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageUI(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageSettings
+	 */
+	public function setManageSettingsAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageSettings(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageMessages
+	 */
+	public function setManageMessagesAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageMessages(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.setManageGuestInvites
+	 */
+	public function setManageGuestInvitesAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageGuestInvites(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.pin
+	 */
+	public function pinAction(
+		\Bitrix\Im\V2\Chat $chat,
+		CurrentUser $user,
+		PinService $pinService,
+		?\Bitrix\Im\V2\Folder\Folder $folder = null,
+	): ?array
+	{
+		$result = $pinService->pinChat((int)$user->getId(), $chat, $folder);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.unpin
+	 */
+	public function unpinAction(
+		\Bitrix\Im\V2\Chat $chat,
+		CurrentUser $user,
+		PinService $pinService,
+		?\Bitrix\Im\V2\Folder\Folder $folder = null,
+	): ?array
+	{
+		$result = $pinService->unpinChat((int)$user->getId(), $chat, $folder);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod im.v2.Chat.sortPin
+	 */
+	public function sortPinAction(\Bitrix\Im\V2\Chat $chat, int $newPosition, CurrentUser $user): ?array
+	{
+		if ($newPosition <= 0 || $newPosition > Recent::getPinLimit())
+		{
+			$this->addError(new ChatError(ChatError::INVALID_PIN_POSITION));
+
+			return null;
+		}
+
+		Recent::sortPin($chat, $newPosition, $user->getId());
+
+		return ['result' => true];
+	}
+
+	//endregion
+	//endregion
+}

@@ -1,0 +1,58 @@
+.bx-im-bitrix-gpt-agent-promo__container {
+	display: flex;
+	align-items: stretch;
+	min-height: 122px;
+	color: var(--ui-color-base-0);
+}
+
+.bx-im-bitrix-gpt-agent-promo__image {
+	flex: 0 0 122px;
+	min-height: 122px;
+	background: url("images/bitrix-gpt-icon.png") center / 78px 78px no-repeat;
+}
+
+.bx-im-bitrix-gpt-agent-promo__content {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 6px;
+	padding: 12px 38px 16px 0;
+	min-width: 0;
+}
+
+.bx-im-bitrix-gpt-agent-promo__title {
+	color: var(--ui-color-base-0);
+}
+
+.bx-im-bitrix-gpt-agent-promo__text {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-bitrix-gpt-agent-promo__scope.popup-window .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.bx-im-bitrix-gpt-agent-promo__scope.popup-window .popup-window-angly-bottom {
+	bottom: -11px;
+	width: 36px;
+	height: 13px;
+}
+
+.bx-im-bitrix-gpt-agent-promo__scope.popup-window .popup-window-angly-top {
+	top: -11px;
+	width: 36px;
+	height: 13px;
+	transform: rotate(180deg);
+}
+
+.bx-im-bitrix-gpt-agent-promo__scope.popup-window .popup-window-angly--arrow {
+	top: 0;
+	left: 0;
+	width: 36px;
+	height: 13px;
+	box-shadow: none;
+	transform: none;
+	-webkit-mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%230056bf' d='M34.429 1c-6.116 0-11.822 12-16.423 12S7.767 1 1.583 1z'/%3E%3C/svg%3E") no-repeat center / 36px 13px;
+	mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%230056bf' d='M34.429 1c-6.116 0-11.822 12-16.423 12S7.767 1 1.583 1z'/%3E%3C/svg%3E") no-repeat center / 36px 13px;
+}

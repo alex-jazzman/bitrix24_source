@@ -15,7 +15,10 @@ $description = (new \Bitrix\Bizproc\Activity\ActivityDescription(
 	[\Bitrix\Bizproc\Activity\Enum\ActivityType::TRIGGER->value]
 ))
 	->setClass('ScheduledTrigger')
-	->setGroups([\Bitrix\Bizproc\Activity\Enum\ActivityGroup::STARTER->value])
+	->setGroups([
+		\Bitrix\Bizproc\Activity\Enum\ActivityGroup::STARTER->value,
+		\Bitrix\Bizproc\Activity\Enum\ActivityGroup::WORKFLOW->value,
+	])
 	->setIcon(\Bitrix\Ui\Public\Enum\IconSet\Outline::CALENDAR_WITH_SLOTS->name)
 	->setColorIndex(\Bitrix\Bizproc\Activity\Enum\ActivityColorIndex::GREY->value)
 ;

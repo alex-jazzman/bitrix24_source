@@ -80,6 +80,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 		getShouldShowWhatsAppEmergency() {
 			return this.#response.shouldShowWhatsAppEmergency;
 		}
+		getAiCallBannerMode() {
+			return this.#response.aiCallBannerMode ?? null;
+		}
 		getCatalogSkuEntityOptions() {
 			return this.#response.catalogSkuEntityOptions;
 		}
@@ -145,7 +148,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 			for (const dateTs of booking_lib_datePeriod.DatePeriod.getDates(datePeriod)) {
 				booking_lib_resourcesDateCache.resourcesDateCache.upsertIds(dateTs, favoriteIds);
 			}
-			await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, favoriteIds), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, favoriteIds), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.WaitList}/upsertMany`, extractor.getWaitListItems()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setShouldShowWhatsAppEmergency`, extractor.getShouldShowWhatsAppEmergency()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Notifications}/upsertManySenders`, extractor.getSenders())]);
+			await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, favoriteIds), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, favoriteIds), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.WaitList}/upsertMany`, extractor.getWaitListItems()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setShouldShowWhatsAppEmergency`, extractor.getShouldShowWhatsAppEmergency()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setAiCallBannerMode`, extractor.getAiCallBannerMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Notifications}/upsertManySenders`, extractor.getSenders())]);
 		}
 		async #requestDataForBooking(datePeriod) {
 			const bookingId = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/editingBookingId`];
@@ -190,6 +193,26 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 				return await new booking_lib_apiClient.ApiClient().get('MainPage.activateDemo');
 			} catch (error) {
 				console.error('BookingMainPageActivateDemoRequest: error', error);
+			}
+			return Promise.resolve(false);
+		}
+		async switchAllToAiCall() {
+			try {
+				await new booking_lib_apiClient.ApiClient().post('AiCallBanner.switchAllToAiCall', {});
+				const store = booking_core.Core.getStore();
+				store.dispatch(`${booking_const.Model.Resources}/setSenderCodeForAll`, booking_const.Communication.AiCall);
+				store.dispatch(`${booking_const.Model.ResourceTypes}/setSenderCodeForAll`, booking_const.Communication.AiCall);
+				return true;
+			} catch (error) {
+				console.error('BookingAiCallBannerSwitchAllToAiCallRequest: error', error);
+			}
+			return Promise.resolve(false);
+		}
+		async registerAiCallBannerShown() {
+			try {
+				return await new booking_lib_apiClient.ApiClient().post('AiCallBanner.registerShown');
+			} catch (error) {
+				console.error('BookingAiCallBannerRegisterShownRequest: error', error);
 			}
 			return Promise.resolve(false);
 		}

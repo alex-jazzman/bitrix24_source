@@ -1,5 +1,6 @@
 (() => {
 	const { ImageSelectField } = jn.require('layout/ui/fields/image-select');
+	const { guid } = jn.require('utils/guid');
 
 	class ProjectAvatarField extends LayoutComponent
 	{
@@ -54,13 +55,6 @@
 				return files;
 			}
 
-			const getGuid = function() {
-				const s4 = function() {
-					return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-				};
-				return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-			};
-
 			attachedFiles.forEach((file) => {
 				if (file.dataAttributes)
 				{
@@ -68,7 +62,7 @@
 				}
 				else
 				{
-					const taskId = `projectAvatar-${getGuid()}`;
+					const taskId = `projectAvatar-${guid()}`;
 					const extension = this.getExtension(file.name);
 
 					let fileName = file.name;

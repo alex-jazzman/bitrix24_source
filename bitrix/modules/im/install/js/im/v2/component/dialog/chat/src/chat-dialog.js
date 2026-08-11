@@ -4,6 +4,7 @@ import { PopupManager } from 'main.popup';
 
 import { PullStatus } from 'pull.vue3.status';
 
+import { GuestNamePopup } from 'im.v2.component.elements.guest-name-popup';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
 import { MessageList } from 'im.v2.component.message-list';
 import {
@@ -17,6 +18,7 @@ import {
 	AnchorType,
 	type ScrollToBottomEvent,
 } from 'im.v2.const';
+import { GuestManager } from 'im.v2.lib.guest';
 import { MessageAccessManager } from 'im.v2.lib.access';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
@@ -55,6 +57,7 @@ export const ChatDialog = {
 		FloatButtons,
 		PullStatus,
 		ForwardPopup,
+		GuestNamePopup,
 	},
 	props: {
 		dialogId: {
@@ -92,6 +95,7 @@ export const ChatDialog = {
 			messagesToRead: new Set(),
 			containerHeight: 0,
 			quoteButtonPosition: {},
+			shouldShowGuestNamePopup: false,
 		};
 	},
 	computed:
@@ -211,6 +215,7 @@ export const ChatDialog = {
 		await this.$nextTick();
 		this.containerHeight = this.$refs.container.clientHeight;
 
+		this.shouldShowGuestNamePopup = GuestManager.getInstance().getGuestNamePopupState();
 		this.getScrollManager().setContainer(this.getContainer());
 		if (this.dialogInited)
 		{
@@ -927,6 +932,11 @@ export const ChatDialog = {
 		{
 			return this.$Bitrix.eventEmitter;
 		},
+		closeGuestNamePopup(): void
+		{
+			this.shouldShowGuestNamePopup = false;
+			GuestManager.getInstance().setGuestNamePopupState(false);
+		},
 	},
 	template: `
 		<div class="bx-im-dialog-chat__block bx-im-dialog-chat__scope">
@@ -963,6 +973,11 @@ export const ChatDialog = {
 				:dialogId="dialogId"
 				:directForward="isChatOpenedInWidget"
 				@close="onCloseForwardPopup"
+			/>
+			<GuestNamePopup 
+				v-if="dialogInited && shouldShowGuestNamePopup" 
+				:dialogId="dialogId" 
+				@close="closeGuestNamePopup" 
 			/>
 			<QuoteButton
 				v-if="showQuoteButton"

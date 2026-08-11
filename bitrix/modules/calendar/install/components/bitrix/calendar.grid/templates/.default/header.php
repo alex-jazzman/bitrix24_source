@@ -93,6 +93,7 @@ if ($type === 'location' || !\CCalendar::isReadOnly($sectionList, $collabSection
 				'onclick' => new \Bitrix\UI\Buttons\JsHandler('openEventCreateSlider'),
 				'dataset' => [
 					'id' => 'calendar_add_btn',
+					'testid' => 'calendar-grid__create-button',
 				],
 			],
 			'menuButton' => [
@@ -129,6 +130,7 @@ if ($type === 'location' || !\CCalendar::isReadOnly($sectionList, $collabSection
 			'dataset' => [
 				'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD,
 				'id' => 'calendar_add_btn',
+				'testid' => 'calendar-grid__create-button',
 			],
 		]);
 	}

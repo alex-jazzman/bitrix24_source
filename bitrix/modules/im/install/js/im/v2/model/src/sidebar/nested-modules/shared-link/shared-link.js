@@ -12,6 +12,7 @@ type SharedLinkState = {
 
 const EntityType = {
 	chat: 'chat',
+	guestChat: 'guest_chat',
 };
 
 export class SharedLinkModel extends BuilderModel
@@ -47,6 +48,14 @@ export class SharedLinkModel extends BuilderModel
 
 				return Object.values(state.collection).find((link) => {
 					return link.entityId === entityId && link.entityType === EntityType.chat;
+				});
+			},
+			/** @function sidebar/sharedLink/getGuestInviteLink */
+			getGuestInviteLink: (state: SharedLinkState) => (chatId: number): ImModelSidebarSharedLinkItem => {
+				const entityId = chatId.toString();
+
+				return Object.values(state.collection).find((link) => {
+					return link.entityId === entityId && link.entityType === EntityType.guestChat;
 				});
 			},
 		};
@@ -90,11 +99,19 @@ export class SharedLinkModel extends BuilderModel
 				const { newLink } = payload;
 
 				const chatId = Number(newLink.entityId);
-				const currentLink = Core.getStore().getters['sidebar/sharedLink/getChatInviteLink'](chatId);
+
+				const getterByEntityType = {
+					[EntityType.guestChat]: 'sidebar/sharedLink/getGuestInviteLink',
+					[EntityType.chat]: 'sidebar/sharedLink/getChatInviteLink',
+				};
+				const currentLink = Core.getStore().getters[getterByEntityType[newLink.entityType]](chatId);
 
 				void Core.getStore().dispatch('sidebar/sharedLink/set', newLink);
 
-				store.commit('delete', { id: currentLink.id });
+				if (currentLink && currentLink.id !== newLink.id)
+				{
+					store.commit('delete', { id: currentLink.id });
+				}
 			},
 		};
 	}

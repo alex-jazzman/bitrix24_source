@@ -602,8 +602,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		computed: {
 			fields() {
 				if (this.isTemplate) {
-					const isEmpty = !this.task.startDatePlanAfter && !this.task.endDatePlanAfter;
-					if (isEmpty) {
+					if (this.isEmpty) {
 						return [{
 							title: datePlanMeta.title,
 							component: DatePlanContent
@@ -631,8 +630,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						}
 					}) => dateTs);
 				}
-				const isEmpty = !this.task.startPlanTs && !this.task.endPlanTs;
-				if (isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime)) {
+				if (this.isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime)) {
 					return [{
 						title: datePlanMeta.title,
 						component: DatePlanContent
@@ -656,6 +654,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					}
 				}) => dateTs);
 			},
+			isEmpty() {
+				if (this.isTemplate) {
+					return !this.task.startDatePlanAfter && !this.task.endDatePlanAfter;
+				}
+				return !this.task.startPlanTs && !this.task.endPlanTs;
+			},
 			readonly() {
 				return !this.task.rights.datePlan;
 			}
@@ -676,7 +680,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			@mouseleave="isHovered = false"
 		>
 			<FieldHoverButton
-				v-if="!readonly"
+				v-if="!readonly && !isEmpty"
 				:icon="Outline.EDIT_L"
 				:isVisible="isHovered"
 				@click="handleClick"

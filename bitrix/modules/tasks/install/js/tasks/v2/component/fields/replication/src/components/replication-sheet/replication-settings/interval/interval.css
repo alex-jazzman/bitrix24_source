@@ -1,3 +1,13 @@
 .tasks-field-replication-row-grow {
 	flex-grow: 1;
 }
+
+.task-field-replication-interval {
+	margin-right: 6px;
+	width: 3em;
+}
+
+.task-field-replication-interval .ui-system-input-container {
+	padding-inline: 2px;
+	text-align: center;
+}

@@ -7,13 +7,13 @@ import { CollabManager } from 'im.v2.lib.collab';
 
 import { showTwoButtonConfirm, type ConfirmParams } from '../base/base';
 
-export const showKickUserConfirm = (dialogId: string): Promise<boolean> => {
-	const { title, text, firstButtonCaption } = getPhrases(dialogId);
+export const showKickUserConfirm = (dialogId: string, userId: number): Promise<boolean> => {
+	const { title, text, firstButtonCaption } = getPhrases(dialogId, userId);
 
 	return showTwoButtonConfirm({ title, text, firstButtonCaption });
 };
 
-const getPhrases = (dialogId: string): ConfirmParams => {
+const getPhrases = (dialogId: string, userId: number): ConfirmParams => {
 	if (isCollab(dialogId))
 	{
 		return {
@@ -28,6 +28,16 @@ const getPhrases = (dialogId: string): ConfirmParams => {
 	{
 		return {
 			text: Loc.getMessage('IM_LIB_CONFIRM_USER_CHANNEL_KICK'),
+			firstButtonCaption: Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES'),
+		};
+	}
+
+	const isGuest = Core.getStore().getters['users/isGuest'](userId);
+	if (isGuest)
+	{
+		return {
+			title: Loc.getMessage('IM_LIB_CONFIRM_GUEST_KICK_TITLE'),
+			text: Loc.getMessage('IM_LIB_CONFIRM_GUEST_KICK_TEXT'),
 			firstButtonCaption: Loc.getMessage('IM_LIB_CONFIRM_USER_KICK_YES'),
 		};
 	}

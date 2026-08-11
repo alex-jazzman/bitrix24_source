@@ -1669,6 +1669,11 @@ this.BX.Booking = this.BX.Booking || {};
 				selected: []
 			};
 		},
+		computed: {
+			shortSlotsOnly() {
+				return Boolean(this.$store.state[booking_const.Model.SkuResourcesEditor].options.shortSlotsOnly);
+			}
+		},
 		created() {
 			this.createDialog();
 		},
@@ -1703,7 +1708,10 @@ this.BX.Booking = this.BX.Booking || {};
 					entities: [{
 						id: booking_const.EntitySelectorEntity.Resource,
 						dynamicLoad: true,
-						dynamicSearch: true
+						dynamicSearch: true,
+						options: {
+							shortSlotsOnly: this.shortSlotsOnly
+						}
 					}],
 					preselectedItems: this.resourcesIds.map(id => [booking_const.EntitySelectorEntity.Product, id]),
 					events: {

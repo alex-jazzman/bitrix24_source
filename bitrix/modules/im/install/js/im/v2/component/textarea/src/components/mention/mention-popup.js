@@ -4,6 +4,7 @@ import { type EventEmitter } from 'main.core.events';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
 import { ChatType, EventType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
 
 import { MentionPopupContent } from './mention-content';
@@ -53,7 +54,7 @@ export const MentionPopup = {
 		},
 		needToShowMentionPopup(): boolean
 		{
-			if (this.isCopilotType)
+			if (this.isCopilotType && !FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
 			{
 				return this.isGroupCopilotChat;
 			}

@@ -15,6 +15,7 @@ export function mapDtoToModel(groupDto: GroupDto): GroupModel
 		name: groupDto.name,
 		image: groupDto.image?.src,
 		type: groupDto.type,
+		isRestrictedView: groupDto.isRestrictedView,
 		stagesIds,
 	};
 }

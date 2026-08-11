@@ -47,14 +47,8 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	Object.defineProperty(exports, "CounterColor", {
-		enumerable: true,
-		get: function () { return ui_cnt.CounterColor; }
-	});
-	Object.defineProperty(exports, "CounterSize", {
-		enumerable: true,
-		get: function () { return ui_cnt.CounterSize; }
-	});
+	exports.CounterColor = ui_cnt.CounterColor;
+	exports.CounterSize = ui_cnt.CounterSize;
 	exports.Counter = Counter;
 
 })(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX.UI);

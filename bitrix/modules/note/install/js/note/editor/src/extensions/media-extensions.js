@@ -23,15 +23,18 @@ function createSafeImageExtension(): Object
 	});
 }
 
-export function createMediaExtensions(): Object[]
+export function createMediaExtensions(uploadService: Object | null = null): Object[]
 {
-	const SafeImage = createSafeImageExtension();
+	// SafeImage handles raw markdown `![](url)` images only; inline so they coexist with text in a
+	// paragraph and keep the lexer's inline image tokens schema-legal. imageAttachment/video are block.
+	const SafeImage = createSafeImageExtension().configure({ inline: true });
 
 	return [
 		SafeImage,
 		UploadAsset,
 		FileAttachment,
-		ImageAttachment,
+		// uploadService powers the in-place "replace image" action in the node-view overlay.
+		ImageAttachment.configure({ uploadService }),
 		Video,
 	];
 }

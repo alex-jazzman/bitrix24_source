@@ -36,6 +36,7 @@ export class Groups extends BuilderEntityModel<GroupsModelState, GroupModel>
 			url: '',
 			type: '',
 			stagesIds: [],
+			isRestrictedView: false,
 		};
 	}
 }

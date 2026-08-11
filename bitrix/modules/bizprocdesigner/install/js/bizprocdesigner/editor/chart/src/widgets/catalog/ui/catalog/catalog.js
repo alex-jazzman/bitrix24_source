@@ -12,6 +12,7 @@ import {
 	SearchResultsEmptyLabel,
 	useCatalogStore,
 	getDragItemSlotName,
+	CatalogItemTooltip,
 } from '../../../../entities/catalog';
 import type {
 	CatalogMenuGroup,
@@ -62,6 +63,7 @@ export const Catalog = {
 		ChangeFoundedCatalogGroup,
 		ChangeFoundedCatalogItem,
 		BackToGroupsBtn,
+		CatalogItemTooltip,
 	},
 	setup(): CatalogSetup
 	{
@@ -101,7 +103,7 @@ export const Catalog = {
 			</template>
 
 			<template #search>
-				<SearchCatalogItemsInput/>
+				<SearchCatalogItemsInput :focusable="isExpandedCatalog"/>
 			</template>
 
 			<template #content>
@@ -127,19 +129,24 @@ export const Catalog = {
 							</template>
 
 							<template #items>
-								<CatalogItem
+								<CatalogItemTooltip
 									v-for="item in group.items"
 									:key="item.id"
-									:item="item"
-									:active="highlightedItems.has(item.id) && isExpandedCatalog"
+									:title="item.title"
+									:subtitle="item.subtitle"
 								>
-									<template #[getDragItemSlotName(item.type)]="{ item }">
-										<slot
-											:name="getDragItemSlotName(item.type)"
-											:item="item"
-										/>
-									</template>
-								</CatalogItem>
+									<CatalogItem
+										:item="item"
+										:active="highlightedItems.has(item.id) && isExpandedCatalog"
+									>
+										<template #[getDragItemSlotName(item.type)]="{ item }">
+											<slot
+												:name="getDragItemSlotName(item.type)"
+												:item="item"
+											/>
+										</template>
+									</CatalogItem>
+								</CatalogItemTooltip>
 							</template>
 
 							<template #empty-label>
@@ -166,14 +173,19 @@ export const Catalog = {
 					</template>
 
 					<template #item="{ item }">
-						<ChangeFoundedCatalogItem :item="item">
-							<template #[getDragItemSlotName(item.type)]="{ item }">
-								<slot
-									:name="getDragItemSlotName(item.type)"
-									:item="item"
-								/>
-							</template>
-						</ChangeFoundedCatalogItem>
+						<CatalogItemTooltip
+							:title="item.title"
+							:subtitle="item.subtitle"
+						>
+							<ChangeFoundedCatalogItem :item="item">
+								<template #[getDragItemSlotName(item.type)]="{ item }">
+									<slot
+										:name="getDragItemSlotName(item.type)"
+										:item="item"
+									/>
+								</template>
+							</ChangeFoundedCatalogItem>
+						</CatalogItemTooltip>
 					</template>
 
 					<template #empty-label>

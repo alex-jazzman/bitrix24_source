@@ -76,6 +76,8 @@ class im extends \CModule
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
 		$eventManager->registerEventHandlerCompatible('rest', 'onRestCheckAuth', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestRestAuth', 'onRestCheckAuth', 50);
+		$eventManager->registerEventHandlerCompatible('main', 'OnApplicationsBuildList', 'main', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationsBuildList', 100, 'modules/im/lib/V2/Guest/Auth/GuestApplication.php'); // module 'main' + explicit path: handler must be loadable before im module is included
+		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationScopeError');
 		$eventManager->registerEventHandlerCompatible('main', 'OnAuthProvidersBuildList', 'im', '\Bitrix\Im\Access\ChatAuthProvider', 'getProviders');
 		$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserUpdate', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserUpdate');
 		$eventManager->registerEventHandlerCompatible( 'main', 'OnAfterUserDelete', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserDelete');
@@ -96,6 +98,7 @@ class im extends \CModule
 		\CAgent::AddAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Recent\Initializer::executeAgent() */
 		\CAgent::AddAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent() */
 		\CAgent::AddAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im', 'N', 3600); /** @see \Bitrix\Im\V2\EventLog\EventService::cleanAgent() */
+		\CAgent::AddAgent('\Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent() */
 
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
@@ -111,6 +114,7 @@ class im extends \CModule
 		$eventManager->registerEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
+		$eventManager->registerEventHandler('main', 'OnAfterSetOption_chat_with_guests_available', 'im', '\Bitrix\Im\V2\Guest\GuestLinkService', 'onChatWithGuestsOptionChanged');
 		$eventManager->registerEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
 		$eventManager->registerEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
 
@@ -171,7 +175,7 @@ class im extends \CModule
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/im", true, true);
 
 		// URL rewrite rules are only needed for bare box without bitrix24 and intranet.
-		// When intranet is installed, /guest/ and /online/ paths are routed via intranet routes.
+		// When intranet is installed, /online/ path is routed via intranet routes.
 		if (
 			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
 			&& !\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')
@@ -180,11 +184,6 @@ class im extends \CModule
 			$siteId = \CSite::GetDefSite();
 			if ($siteId)
 			{
-				\Bitrix\Main\UrlRewriter::add($siteId, [
-					"CONDITION" => "#^/guest/([a-zA-Z0-9]+)(/?)#",
-					"RULE" => "",
-					"PATH" => "/guest/index.php",
-				]);
 				\Bitrix\Main\UrlRewriter::add($siteId, [
 					"CONDITION" => "#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#",
 					"RULE" => "alias=\$1",
@@ -200,7 +199,6 @@ class im extends \CModule
 
 		$APPLICATION->setFileAccessPermission('/desktop_app/', ["*" => "R"]);
 		$APPLICATION->setFileAccessPermission('/online/', ["*" => "R"]);
-		$APPLICATION->setFileAccessPermission('/guest/', ["*" => "R"]);
 
 		return true;
 	}
@@ -238,14 +236,8 @@ class im extends \CModule
 		$default_site_id = \CSite::GetDefSite();
 		if ($default_site_id)
 		{
-			$guestFound = false;
 			$pubAppFound = false;
 
-			$arGuestTemplate = [
-				"SORT" => 10,
-				"CONDITION" => "CSite::InDir('/guest/')",
-				"TEMPLATE" => "im_guest",
-			];
 			$arPubTempalate = [
 				"SORT" => 100,
 				"CONDITION" => 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))',
@@ -256,11 +248,6 @@ class im extends \CModule
 			$dbTemplates = \CSite::GetTemplateList($default_site_id);
 			while ($template = $dbTemplates->Fetch())
 			{
-				if ($template["CONDITION"] === "CSite::InDir('/guest/')")
-				{
-					$guestFound = true;
-					$template = $arGuestTemplate;
-				}
 				if ($template["CONDITION"] == 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
 				{
 					$pubAppFound = true;
@@ -271,10 +258,6 @@ class im extends \CModule
 					"CONDITION" => $template['CONDITION'],
 					"TEMPLATE" => $template['TEMPLATE'],
 				];
-			}
-			if (!$guestFound)
-			{
-				$arFields["TEMPLATE"][] = $arGuestTemplate;
 			}
 			if (!$pubAppFound)
 			{
@@ -287,32 +270,6 @@ class im extends \CModule
 		}
 
 		return true;
-	}
-
-	function UnInstallTemplateRules()
-	{
-		$default_site_id = \CSite::GetDefSite();
-		if ($default_site_id)
-		{
-			$arFields = ["TEMPLATE" => []];
-			$dbTemplates = \CSite::GetTemplateList($default_site_id);
-			while ($template = $dbTemplates->Fetch())
-			{
-				if ($template["CONDITION"] === "CSite::InDir('/guest/')")
-				{
-					continue;
-				}
-				$arFields["TEMPLATE"][] = [
-					"SORT" => $template['SORT'],
-					"CONDITION" => $template['CONDITION'],
-					"TEMPLATE" => $template['TEMPLATE'],
-				];
-			}
-
-			$obSite = new \CSite;
-			$arFields["LID"] = $default_site_id;
-			$obSite->Update($default_site_id, $arFields);
-		}
 	}
 
 	function InstallUserFields()
@@ -412,7 +369,6 @@ class im extends \CModule
 			}
 
 			$this->UnInstallFiles();
-			$this->UnInstallTemplateRules();
 
 			$this->showUninstallUnstep(2);
 		}
@@ -466,6 +422,7 @@ class im extends \CModule
 		\CAgent::RemoveAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im');
 		\CAgent::RemoveAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im');
 		\CAgent::RemoveAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im');
+		\CAgent::RemoveAgent('\Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent();', 'im');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
@@ -488,6 +445,8 @@ class im extends \CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestRestAuth', 'onRestCheckAuth');
+		$eventManager->unRegisterEventHandler('main', 'OnApplicationsBuildList', 'main', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationsBuildList', 'modules/im/lib/V2/Guest/Auth/GuestApplication.php');
+		$eventManager->unRegisterEventHandler('main', 'onApplicationScopeError', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationScopeError');
 		$eventManager->unRegisterEventHandler('main', 'OnAuthProvidersBuildList', 'im', '\Bitrix\Im\Access\ChatAuthProvider', 'getProviders');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserDelete', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserDelete');
@@ -509,6 +468,7 @@ class im extends \CModule
 		$eventManager->unRegisterEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
+		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_chat_with_guests_available', 'im', '\Bitrix\Im\V2\Guest\GuestLinkService', 'onChatWithGuestsOptionChanged');
 		$eventManager->unRegisterEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
 		$eventManager->unRegisterEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
 
@@ -526,11 +486,8 @@ class im extends \CModule
 		\DeleteDirFilesEx('/desktop_app/');
 		\DeleteDirFilesEx('/bitrix/templates/desktop_app/');
 		\DeleteDirFilesEx('/bitrix/images/im/');
-		\DeleteDirFilesEx('/guest/');
-		\DeleteDirFilesEx('/bitrix/templates/im_guest/');
 
 		$APPLICATION->SetFileAccessPermission('/desktop_app/', array("*" => "D"));
-		$APPLICATION->SetFileAccessPermission('/guest/', array("*" => "D"));
 
 		return true;
 	}

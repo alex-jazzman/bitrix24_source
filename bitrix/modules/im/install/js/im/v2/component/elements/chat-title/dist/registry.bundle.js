@@ -12,6 +12,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		extranet: 'extranet',
 		network: 'network',
 		collaber: 'collaber',
+		guest: 'guest',
 		support24: 'support24'
 	};
 	const TitleIcons = {
@@ -151,13 +152,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.isCollaberChatOrUser) {
 					return DialogSpecialType.collaber;
 				}
+				if (this.isGuest) {
+					return DialogSpecialType.guest;
+				}
 				if (this.isNetwork) {
 					return DialogSpecialType.network;
 				}
 				return '';
 			},
 			isDialogSpecialTypeWithLeftIcon() {
-				if (this.isCollaberChatOrUser || this.isExtranet) {
+				if (this.isCollaberChatOrUser || this.isExtranet || this.isGuest) {
 					return false;
 				}
 				return main_core.Type.isStringFilled(this.dialogSpecialType);
@@ -222,6 +226,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return this.user.network;
 				}
 				return false;
+			},
+			isGuest() {
+				if (!this.isUser) {
+					return false;
+				}
+				return this.$store.getters['users/isGuest'](this.dialogId);
 			},
 			isAutoDeleteEnabled() {
 				if (!this.withAutoDelete) {

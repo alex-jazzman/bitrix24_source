@@ -50,3 +50,5 @@ $MESS["IM_CREATE_CHANNEL_MANAGE_USERS_ADD_HINT"] = "Выберите, кто с�
 $MESS["IM_CREATE_CHANNEL_MANAGE_USERS_DELETE_HINT"] = "Выберите, кто сможет исключать подписчиков";
 $MESS["IM_CREATE_CHANNEL_MANAGE_UI_HINT"] = "Выберите, кто сможет менять название и иконку канала";
 $MESS["IM_CREATE_CHANNEL_MANAGE_SENDING_HINT"] = "Выберите, кто сможет добавлять публикации в канал";
+$MESS["IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_GUEST_INVITES"] = "Кто может приглашать гостей в чат";
+$MESS["IM_CREATE_CHAT_MANAGE_GUEST_INVITES_HINT"] = "Выберите, кто сможет приглашать гостей в этот чат";

@@ -52,7 +52,12 @@ export const BlockHeader = {
 				</div>
 			</template>
 
-			<p class="editor-chart-block-header__title">{{ title || block.node?.title }}</p>
+			<div class="editor-chart-block-header__text">
+				<p class="editor-chart-block-header__title">{{ title || block.node?.title }}</p>
+				<div v-if="$slots.status" class="editor-chart-block-header__status">
+					<slot name="status"/>
+				</div>
+			</div>
 		</div>
 	`,
 };

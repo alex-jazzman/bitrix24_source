@@ -10,6 +10,22 @@ return [
 		],
 		'readonly' => true,
 	],
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\Call\\Controller',
+		],
+	],
+	'services' => [
+		'value' => [
+			\Bitrix\Call\Service\FollowUpReader::class => [
+				'className' => \Bitrix\Call\Service\FollowUpReader::class,
+			],
+			'call.followup.reader' => [
+				'className' => \Bitrix\Call\Service\FollowUpReader::class,
+			],
+		],
+		'readonly' => true,
+	],
 	'ui.entity-selector' => [
 		'value' => [
 			'entities' => [

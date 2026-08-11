@@ -13,6 +13,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			name: groupDto.name,
 			image: groupDto.image?.src,
 			type: groupDto.type,
+			isRestrictedView: groupDto.isRestrictedView,
 			stagesIds
 		};
 	}
@@ -187,6 +188,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			name: raw.name ?? '',
 			image: raw.image ?? null,
 			type: raw.type ?? null,
+			isRestrictedView: raw.isRestrictedView ?? null,
 			stages: main_core.Type.isArray(raw.stages) ? raw.stages.map(stage => createStageDto(stage)) : []
 		};
 	}

@@ -445,6 +445,11 @@ if($mode === 'CONVERT')
 		$wizard->setSliderEnabled(true);
 	}
 
+	if (isset($_POST['ANALYTICS']) && is_array($_POST['ANALYTICS']))
+	{
+		\Bitrix\Crm\Service\Container::getInstance()->getContext()->setAnalytics($_POST['ANALYTICS']);
+	}
+
 	if($wizard->execute())
 	{
 		__CrmQuoteShowEndJsonResonse(

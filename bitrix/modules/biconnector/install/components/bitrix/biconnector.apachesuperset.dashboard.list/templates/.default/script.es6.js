@@ -992,7 +992,7 @@ class SupersetDashboardGridManager
 		BX.SidePanel.Instance.open(
 			'/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php',
 			{
-				width: 790,
+				width: 600,
 				allowChangeHistory: false,
 				cacheable: false,
 				data: {

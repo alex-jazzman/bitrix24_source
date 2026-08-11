@@ -36,7 +36,7 @@ export class PageFactory
 			inviteType,
 			departmentControl,
 			departmentControlBlock: this.createDepartmentControlBlock(departmentControl),
-			inputsFactory: this.createInputRowFactory(inviteType),
+			inputsFactory: this.createInputRowFactory(inviteType, true),
 			showMassInviteButton,
 		});
 	}
@@ -172,10 +172,11 @@ export class PageFactory
 		});
 	}
 
-	createInputRowFactory(inviteType: InviteType): InputRowFactory
+	createInputRowFactory(inviteType?: InviteType, withProfileNameFields: boolean = false): InputRowFactory
 	{
 		return new InputRowFactory({
 			inviteType,
+			withProfileNameFields,
 		});
 	}
 

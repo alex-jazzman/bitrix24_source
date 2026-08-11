@@ -1,6 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
 import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
@@ -76,6 +77,11 @@ export const AiAssistantWidgetChatHeader = {
 		{
 			EventEmitter.emit(MINIMIZE_EVENT_NAME);
 		},
+		createChat()
+		{
+			Analytics.getInstance().aiAssistant.onChatCreateClick();
+			this.$emit('createChat');
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -106,7 +112,7 @@ export const AiAssistantWidgetChatHeader = {
 			<div v-if="isInited && isCopilot2026Styles" class="bx-im-ai-assistant-chat-header__create-chat">
 				<AiAssistantCreateChatButton
 					:isCreating="isCreating"
-					@newChat="$emit('createChat')"
+					@newChat="createChat"
 				/>
 			</div>
 			<BIcon

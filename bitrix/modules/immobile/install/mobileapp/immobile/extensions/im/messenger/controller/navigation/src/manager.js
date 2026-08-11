@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 	const { NestedNavigationContext } = require('im/messenger/controller/navigation/src/nested/context');
 	const { AsyncQueue, withTimeout } = require('im/messenger/lib/utils');
 	const { NestedMutationHandler } = require('im/messenger/controller/navigation/src/nested/mutation-handler');
+	const { NestedDeletionWatcher } = require('im/messenger/controller/navigation/src/nested/deletion-watcher');
 	const {
 		ProjectsTariffRestrictionFilter,
 	} = require('im/messenger/controller/navigation/src/nested/open-filter/projects-tariff-restriction');
@@ -193,7 +194,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 
 			try
 			{
-				const { widget } = await withTimeout(this.#opener.open(chatId), 2000);
+				const { widget } = await withTimeout(this.#opener.open(chatId, context.widgetCode), 2000);
 				context.widget = widget;
 			}
 			catch (error)
@@ -225,6 +226,11 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 			});
 
 			context.tabCounters = new NestedTabCounters(context.widget, context.chatId);
+
+			context.deletionWatcher = new NestedDeletionWatcher({
+				chatId: context.chatId,
+				widget: context.widget,
+			});
 
 			this.#nestedContexts.push(context);
 
@@ -336,6 +342,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 			{
 				headerManager.redrawGlobalTitle();
 				headerManager.redrawRightButtonsIfNeeded(recentManager.currentListId);
+				headerManager.redrawLeftButtonsIfNeeded(recentManager.currentListId);
 			}
 
 			context.destroy();
@@ -359,7 +366,9 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 		#handleGlobalTabChanged(currentTabId, previousTabId)
 		{
 			serviceLocator.get('recent-manager').setActiveRecent(currentTabId);
-			serviceLocator.get('messenger-header-manager').redrawRightButtonsIfNeeded(currentTabId);
+			const headerManager = serviceLocator.get('messenger-header-manager');
+			headerManager.redrawRightButtonsIfNeeded(currentTabId);
+			headerManager.redrawLeftButtonsIfNeeded(currentTabId);
 			BX.postComponentEvent(EventType.navigation.tabChanged, [{ currentTabId, previousTabId }]);
 		}
 

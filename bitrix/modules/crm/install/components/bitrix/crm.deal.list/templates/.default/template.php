@@ -24,7 +24,6 @@ use Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Loader;
@@ -1317,10 +1316,3 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 }
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();
-
-$analytics = [
-	'c_section' => Dictionary::SECTION_DEAL,
-	'c_sub_section' => Dictionary::SUB_SECTION_LIST,
-];
-
-print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();

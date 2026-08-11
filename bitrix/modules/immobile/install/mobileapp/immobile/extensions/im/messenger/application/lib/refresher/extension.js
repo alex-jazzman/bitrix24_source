@@ -35,6 +35,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 	class Refresher
 	{
 		static #instance;
+		#initPerfPoint;
 
 		/**
 		 * @return {Refresher}
@@ -253,6 +254,8 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 				mode,
 			} = params;
 
+			this.#initPerfPoint = serviceLocator.get('messenger-init-perf-point');
+
 			this.syncService?.stopBackgroundSync();
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
@@ -270,10 +273,21 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 			const methods = this.getInitRestMethods(shortMode, mode, activeRecent);
 			const options = this.#prepareActionOptions(activeRecent, mode);
 
+			this.#initPerfPoint?.startPoint('connection');
+
 			return this.#messengerInitService.runAction(methods, options)
-				.then(() => this.#afterRefresh())
-				.catch((response) => this.#afterRefreshError(response))
+				.then(() => {
+					this.#initPerfPoint?.endPoint('connection');
+
+					return this.#afterRefresh();
+				})
+				.catch((response) => {
+					this.#initPerfPoint?.endPoint('connection', { error: 'refresh error' });
+
+					return this.#afterRefreshError(response);
+				})
 				.finally(() => {
+					this.#initPerfPoint?.end();
 					MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 				});
 		}
@@ -324,11 +338,18 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 				return this.#ready();
 			}
 
+			this.#initPerfPoint?.startPoint('sync');
+
 			return this.syncService?.startSync()
-				.then(() => this.prewarmFavoriteReactionsCache())
+				.then(() => {
+					this.#initPerfPoint?.endPoint('sync');
+
+					return this.prewarmFavoriteReactionsCache();
+				})
 				.then(() => this.#ready())
 				.then(() => this.syncService?.startBackgroundSync())
 				.catch((error) => {
+					this.#initPerfPoint?.endPoint('sync', { error: error?.message });
 					this.logger.error('#afterRefresh error', error);
 					throw error;
 				})

@@ -13,7 +13,7 @@ jn.define('call:followup/efficiency-row', (require, exports, module) => {
 			this.state = {
 				avatarPath: props.avatarPath,
 				name: props.name,
-				score: props.score,
+				score: props.score ?? 0,
 				isWide: props.isWide,
 			};
 		}

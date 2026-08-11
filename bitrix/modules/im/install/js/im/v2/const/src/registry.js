@@ -1,6 +1,7 @@
 export { RestMethod } from './rest';
 export { EventType } from './events';
-export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment, DialogIdChatPrefix } from './chat';
+export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment, DialogIdChatPrefix, TempAiAssistantPrefix } from './chat';
+export { CopilotRole } from './copilot';
 export { FileStatus, FileType, FileIconType, FileViewerContext, AudioPlaybackRate, AudioPlaybackState, PlaylistScope } from './file';
 export {
 	MessageType,

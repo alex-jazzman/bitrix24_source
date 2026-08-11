@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/interface.bundle.js',
 	'rel' => [
 		'booking.const',
+		'booking.lib.grid',
 		'booking.lib.timezone',
 		'booking.lib.utils',
 		'main.core',

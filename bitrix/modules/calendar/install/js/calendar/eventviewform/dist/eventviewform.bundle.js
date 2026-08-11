@@ -1,43 +1,43 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,calendar_controls,calendar_planner,ui_vue3,calendar_util,calendar_entry,main_core,main_core_events,calendar_sectionmanager,viewer,main_date,calendar_entityrelation,ui_avatar) {
+(function (exports, calendar_util, main_core, calendar_entry, calendar_controls, main_core_events, calendar_planner, ui_vue3, ui_avatar, calendar_sectionmanager, viewer, main_date, calendar_entityrelation) {
 	'use strict';
 
 	const UserAvatar = {
-	  name: 'UserAvatar',
-	  props: {
-	    avatarSize: Number,
-	    user: {
-	      COLLAB_USER: Boolean,
-	      SHARING_USER: Boolean,
-	      EMAIL_USER: Boolean,
-	      AVATAR: String | null,
-	      DISPLAY_NAME: String
-	    }
-	  },
-	  methods: {
-	    renderAvatar() {
-	      new ui_avatar.AvatarRoundGuest({
-	        size: this.avatarSize,
-	        userName: this.user.DISPLAY_NAME,
-	        userpicPath: this.getAvatar(),
-	        baseColor: '#19cc45'
-	      }).renderTo(this.$refs.collabAvatar);
-	    },
-	    getAvatar() {
-	      if (this.user.AVATAR && this.user.AVATAR !== '/bitrix/images/1.gif') {
-	        return this.user.AVATAR;
-	      }
-	      return null;
-	    }
-	  },
-	  mounted() {
-	    if (this.user.COLLAB_USER) {
-	      this.renderAvatar();
-	    }
-	  },
-	  // language=Vue
-	  template: `
+		name: 'UserAvatar',
+		props: {
+			avatarSize: Number,
+			user: {
+				COLLAB_USER: Boolean,
+				SHARING_USER: Boolean,
+				EMAIL_USER: Boolean,
+				AVATAR: String | null,
+				DISPLAY_NAME: String
+			}
+		},
+		methods: {
+			renderAvatar() {
+				new ui_avatar.AvatarRoundGuest({
+					size: this.avatarSize,
+					userName: this.user.DISPLAY_NAME,
+					userpicPath: this.getAvatar(),
+					baseColor: '#19cc45'
+				}).renderTo(this.$refs.collabAvatar);
+			},
+			getAvatar() {
+				if (this.user.AVATAR && this.user.AVATAR !== '/bitrix/images/1.gif') {
+					return this.user.AVATAR;
+				}
+				return null;
+			}
+		},
+		mounted() {
+			if (this.user.COLLAB_USER) {
+				this.renderAvatar();
+			}
+		},
+		// language=Vue
+		template: `
 		<div class="calendar-slider-sidebar-user-block-item">
 			<div ref="collabAvatar" v-if="user.COLLAB_USER" :style="'width:' + avatarSize + 'px'"></div>
 			<div class="ui-icon ui-icon-common-user ui-icon-common-user-sharing" :style="'width:' + avatarSize + 'px'"
@@ -59,351 +59,346 @@ this.BX = this.BX || {};
 	};
 
 	const ViewEventSlider = {
-	  name: 'ViewEventSlider',
-	  props: ['params', 'reloadPlannerCallback', 'showUserListPopupCallback'],
-	  components: {
-	    UserAvatar
-	  },
-	  data() {
-	    return {
-	      id: this.params.id,
-	      eventId: parseInt(this.params.eventId, 10),
-	      name: this.params.name,
-	      description: this.params.description,
-	      timezoneHint: this.params.timezoneHint,
-	      timezone: this.params.userTimezone,
-	      fromToHtml: this.params.fromToHtml,
-	      isMeeting: this.params.isMeeting,
-	      meetingHost: this.params.meetingHost,
-	      meetingHostDisplayName: this.params.meetingHostDisplayName,
-	      meetingHostWorkPosition: this.params.meetingHostWorkPosition,
-	      avatarSize: this.params.avatarSize,
-	      attendees: this.params.attendees,
-	      avatarUsers: [],
-	      avatarMoreUsers: [],
-	      avatarMoreCount: 0,
-	      userList: {
-	        y: [],
-	        i: [],
-	        q: [],
-	        n: []
-	      },
-	      curUserStatus: this.params.curUserStatus,
-	      meetingCreatorUrl: this.params.meetingCreatorUrl,
-	      meetingCreatorDisplayName: this.params.meetingCreatorDisplayName,
-	      meetingCreatorCollabUser: this.params.meetingCreatorCollabUser,
-	      isRemind: this.params.isRemind,
-	      isWebdavEvent: this.params.isWebdavEvent,
-	      isCrmEvent: this.params.isCrmEvent,
-	      isHighImportance: this.params.isHighImportance,
-	      isRrule: this.params.isRrule,
-	      rruleDescription: this.params.rruleDescription,
-	      detailFilesTemplate: this.params.detailFilesTemplate,
-	      accessibility: this.params.accessibility,
-	      isIntranetEnabled: this.params.isIntranetEnabled,
-	      isPrivate: this.params.isPrivate,
-	      location: this.params.location,
-	      canEditCalendar: this.params.canEditCalendar,
-	      downloadIcsEnabled: this.params.downloadIcsEnabled,
-	      canAttendeeEditCalendar: this.params.canAttendeeEditCalendar,
-	      canDeleteEvent: this.params.canDeleteEvent,
-	      showComments: this.params.showComments,
-	      filesView: this.getComponentHTML(this.params.filesView),
-	      crmView: this.getComponentHTML(this.params.crmView),
-	      entry: new calendar_entry.Entry({
-	        data: this.params.entry,
-	        userIndex: this.params.userIndex
-	      }),
-	      isInvited: false,
-	      updateParamsDebounce: main_core.Runtime.debounce(this.updateParams, 500, this),
-	      hasPulls: false,
-	      backgroundPullEvent: null
-	    };
-	  },
-	  created() {
-	    this.isInvited = this.entry.isInvited();
-	  },
-	  mounted() {
-	    if (this.params.eventExists) {
-	      this.updateUserList();
-	      if (this.showComments) {
-	        this.loadCommentsView();
-	      }
-	      if (this.isWebdavEvent) {
-	        this.executeScripts(this.$refs.filesView);
-	      }
-	      main_core.Event.bind(document, 'visibilitychange', this.handleBackgroundPulls);
-	    }
-	    main_core.Event.bind(this.$refs.sliderDetailContent, 'mouseup', this.quote);
-	    main_core_events.EventEmitter.subscribe('AI.Copilot.Menu:open', this.handleCopilotMenuShow);
-	  },
-	  beforeMount() {
-	    if (this.params.eventExists) {
-	      main_core_events.EventEmitter.subscribe('onPullEvent-calendar', this.handlePullEvent);
-	      main_core_events.EventEmitter.subscribe(`MeetingStatusControl_${this.id}:onSetStatus`, this.handleStatusUpdate);
-	    }
-	  },
-	  beforeUnmount() {
-	    if (this.params.eventExists) {
-	      main_core_events.EventEmitter.unsubscribe('onPullEvent-calendar', this.handlePullEvent);
-	      main_core_events.EventEmitter.unsubscribe(`MeetingStatusControl_${this.id}:onSetStatus`, this.handleStatusUpdate);
-	      main_core.Event.unbind(this.$refs.sliderDetailContent, 'mouseup', this.quote);
-	      main_core_events.EventEmitter.unsubscribe('AI.Copilot.Menu:open', this.handleCopilotMenuShow);
-	    }
-	  },
-	  computed: {
-	    authorNodeId() {
-	      return this.id + '_detail-author-info';
-	    },
-	    meetingCreatorClassName() {
-	      return `calendar-slider-sidebar-user-info-name${this.meetingCreatorCollabUser ? ' calendar-collab-user' : ''}`;
-	    }
-	  },
-	  methods: {
-	    getComponentHTML(json) {
-	      if (!json) {
-	        return '';
-	      }
-	      return JSON.parse(json).data.html;
-	    },
-	    loadCommentsView() {
-	      BX.ajax.runAction('calendar.api.calendareventviewform.getCommentsView', {
-	        data: {
-	          signedEvent: this.params.signedEvent
-	        }
-	      }).then(response => {
-	        const commentsElement = document.createElement('div');
-	        commentsElement.innerHTML = response.data.html;
-	        this.$refs.commentsView.appendChild(commentsElement);
-	        this.executeScripts(this.$refs.commentsView);
-	      });
-	    },
-	    executeScripts(element) {
-	      if (!element) {
-	        return;
-	      }
-	      // run scripts
-	      const scripts = element.querySelectorAll('script');
-	      for (const script of scripts) {
-	        const s = document.createElement('script');
-	        s.innerHTML = script.innerHTML;
-	        script.parentNode.appendChild(s);
-	        script.remove();
-	      }
-	      // remove script elements
-	      // element.querySelectorAll('script').forEach(e => e.remove());
-	    },
+		name: 'ViewEventSlider',
+		props: ['params', 'reloadPlannerCallback', 'showUserListPopupCallback'],
+		components: {
+			UserAvatar
+		},
+		data() {
+			return {
+				id: this.params.id,
+				eventId: parseInt(this.params.eventId, 10),
+				name: this.params.name,
+				description: this.params.description,
+				timezoneHint: this.params.timezoneHint,
+				timezone: this.params.userTimezone,
+				fromToHtml: this.params.fromToHtml,
+				isMeeting: this.params.isMeeting,
+				meetingHost: this.params.meetingHost,
+				meetingHostDisplayName: this.params.meetingHostDisplayName,
+				meetingHostWorkPosition: this.params.meetingHostWorkPosition,
+				avatarSize: this.params.avatarSize,
+				attendees: this.params.attendees,
+				avatarUsers: [],
+				avatarMoreUsers: [],
+				avatarMoreCount: 0,
+				userList: {
+					y: [],
+					i: [],
+					q: [],
+					n: []
+				},
+				curUserStatus: this.params.curUserStatus,
+				meetingCreatorUrl: this.params.meetingCreatorUrl,
+				meetingCreatorDisplayName: this.params.meetingCreatorDisplayName,
+				meetingCreatorCollabUser: this.params.meetingCreatorCollabUser,
+				isRemind: this.params.isRemind,
+				isWebdavEvent: this.params.isWebdavEvent,
+				isCrmEvent: this.params.isCrmEvent,
+				isHighImportance: this.params.isHighImportance,
+				isRrule: this.params.isRrule,
+				rruleDescription: this.params.rruleDescription,
+				detailFilesTemplate: this.params.detailFilesTemplate,
+				accessibility: this.params.accessibility,
+				isIntranetEnabled: this.params.isIntranetEnabled,
+				isPrivate: this.params.isPrivate,
+				location: this.params.location,
+				canEditCalendar: this.params.canEditCalendar,
+				downloadIcsEnabled: this.params.downloadIcsEnabled,
+				canAttendeeEditCalendar: this.params.canAttendeeEditCalendar,
+				canDeleteEvent: this.params.canDeleteEvent,
+				showComments: this.params.showComments,
+				filesView: this.getComponentHTML(this.params.filesView),
+				crmView: this.getComponentHTML(this.params.crmView),
+				entry: new calendar_entry.Entry({
+					data: this.params.entry,
+					userIndex: this.params.userIndex
+				}),
+				isInvited: false,
+				updateParamsDebounce: main_core.Runtime.debounce(this.updateParams, 500, this),
+				hasPulls: false,
+				backgroundPullEvent: null
+			};
+		},
+		created() {
+			this.isInvited = this.entry.isInvited();
+		},
+		mounted() {
+			if (this.params.eventExists) {
+				this.updateUserList();
+				if (this.showComments) {
+					this.loadCommentsView();
+				}
+				if (this.isWebdavEvent) {
+					this.executeScripts(this.$refs.filesView);
+				}
+				main_core.Event.bind(document, 'visibilitychange', this.handleBackgroundPulls);
+			}
+			main_core.Event.bind(this.$refs.sliderDetailContent, 'mouseup', this.quote);
+			main_core_events.EventEmitter.subscribe('AI.Copilot.Menu:open', this.handleCopilotMenuShow);
+		},
+		beforeMount() {
+			if (this.params.eventExists) {
+				main_core_events.EventEmitter.subscribe('onPullEvent-calendar', this.handlePullEvent);
+				main_core_events.EventEmitter.subscribe(`MeetingStatusControl_${this.id}:onSetStatus`, this.handleStatusUpdate);
+			}
+		},
+		beforeUnmount() {
+			if (this.params.eventExists) {
+				main_core_events.EventEmitter.unsubscribe('onPullEvent-calendar', this.handlePullEvent);
+				main_core_events.EventEmitter.unsubscribe(`MeetingStatusControl_${this.id}:onSetStatus`, this.handleStatusUpdate);
+				main_core.Event.unbind(this.$refs.sliderDetailContent, 'mouseup', this.quote);
+				main_core_events.EventEmitter.unsubscribe('AI.Copilot.Menu:open', this.handleCopilotMenuShow);
+			}
+		},
+		computed: {
+			authorNodeId() {
+				return this.id + '_detail-author-info';
+			},
+			meetingCreatorClassName() {
+				return `calendar-slider-sidebar-user-info-name${this.meetingCreatorCollabUser ? ' calendar-collab-user' : ''}`;
+			}
+		},
+		methods: {
+			getComponentHTML(json) {
+				if (!json) {
+					return '';
+				}
+				return JSON.parse(json).data.html;
+			},
+			loadCommentsView() {
+				BX.ajax.runAction('calendar.api.calendareventviewform.getCommentsView', {
+					data: {
+						signedEvent: this.params.signedEvent
+					}
+				}).then(response => {
+					const commentsElement = document.createElement('div');
+					commentsElement.innerHTML = response.data.html;
+					this.$refs.commentsView.appendChild(commentsElement);
+					this.executeScripts(this.$refs.commentsView);
+				});
+			},
+			executeScripts(element) {
+				if (!element) {
+					return;
+				}
+				// run scripts
+				const scripts = element.querySelectorAll('script');
+				for (const script of scripts) {
+					const s = document.createElement('script');
+					s.innerHTML = script.innerHTML;
+					script.parentNode.appendChild(s);
+					script.remove();
+				}
+				// remove script elements
+				// element.querySelectorAll('script').forEach(e => e.remove());
+			},
+			quote(e) {
+				window.mplCheckForQuote(e, e.currentTarget, `EVENT_${this.eventId}`, this.authorNodeId);
+			},
+			updateUserList() {
+				this.userList = {
+					y: [],
+					i: [],
+					q: [],
+					n: []
+				};
+				if (this.entry.isMeeting()) {
+					this.entry.getAttendees().forEach(function (user) {
+						if (user.STATUS === 'H') {
+							this.userList.y.push(user);
+						} else if (this.userList[user.STATUS.toLowerCase()]) {
+							this.userList[user.STATUS.toLowerCase()].push(user);
+						}
+					}, this);
+				}
+				const accepted = this.attendees.y?.filter(attendee => {
+					if (!attendee) {
+						return false;
+					}
+					if (this.entry?.isOpenEvent()) {
+						return true;
+					}
+					return parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10);
+				}) ?? [];
+				if (accepted.length <= 11) {
+					this.avatarUsers = accepted.slice(0, 11);
+					this.avatarMoreUsers = [];
+				} else {
+					this.avatarUsers = accepted.slice(0, 10);
+					this.avatarMoreUsers = accepted.slice(10);
+				}
+				this.avatarMoreCount = this.avatarMoreUsers.length;
+				if (this.avatarMoreCount >= 1000) {
+					this.avatarMoreCount = `${parseInt(this.avatarMoreUsers.length / 1000, 10)}K`;
+				}
+			},
+			reloadPlanner() {
+				const plannerData = {
+					entryId: this.entry.id || 0,
+					entryLocation: this.entry.data.LOCATION || '',
+					ownerId: 0,
+					hostId: this.entry.getMeetingHost(),
+					type: 'user',
+					entityList: this.entry.getAttendeesEntityList(),
+					dateFrom: calendar_util.Util.formatDate(this.entry.from.getTime() - calendar_util.Util.getDayLength() * 3),
+					dateTo: calendar_util.Util.formatDate(this.entry.to.getTime() + calendar_util.Util.getDayLength() * 10),
+					timezone: this.timezone,
+					location: this.entry.getLocation(),
+					entry: this.entry
+				};
+				this.reloadPlannerCallback(plannerData);
+			},
+			handleBackgroundPulls() {
+				if (this.hasPulls) {
+					this.updateParamsDebounce(this.backgroundPullEvent);
+					this.hasPulls = false;
+				}
+			},
+			handleStatusUpdate(event) {
+				this.entry.data.MEETING_STATUS = event.getData().status;
+				this.curUserStatus = this.entry.data.MEETING_STATUS;
+				this.isInvited = this.entry.isInvited();
+			},
+			handlePullEvent(event) {
+				if (event.data[0] === 'refresh_sync_status') {
+					return;
+				}
+				if (event.data[1]?.fields?.CAL_TYPE === 'location') {
+					return;
+				}
 
-	    quote(e) {
-	      window.mplCheckForQuote(e, e.currentTarget, `EVENT_${this.eventId}`, this.authorNodeId);
-	    },
-	    updateUserList() {
-	      var _this$attendees$y$fil, _this$attendees$y;
-	      this.userList = {
-	        y: [],
-	        i: [],
-	        q: [],
-	        n: []
-	      };
-	      if (this.entry.isMeeting()) {
-	        this.entry.getAttendees().forEach(function (user) {
-	          if (user.STATUS === 'H') {
-	            this.userList.y.push(user);
-	          } else if (this.userList[user.STATUS.toLowerCase()]) {
-	            this.userList[user.STATUS.toLowerCase()].push(user);
-	          }
-	        }, this);
-	      }
-	      const accepted = (_this$attendees$y$fil = (_this$attendees$y = this.attendees.y) == null ? void 0 : _this$attendees$y.filter(attendee => {
-	        var _this$entry;
-	        if (!attendee) {
-	          return false;
-	        }
-	        if ((_this$entry = this.entry) != null && _this$entry.isOpenEvent()) {
-	          return true;
-	        }
-	        return parseInt(this.meetingHost.ID, 10) !== parseInt(attendee.ID, 10);
-	      })) != null ? _this$attendees$y$fil : [];
-	      if (accepted.length <= 11) {
-	        this.avatarUsers = accepted.slice(0, 11);
-	        this.avatarMoreUsers = [];
-	      } else {
-	        this.avatarUsers = accepted.slice(0, 10);
-	        this.avatarMoreUsers = accepted.slice(10);
-	      }
-	      this.avatarMoreCount = this.avatarMoreUsers.length;
-	      if (this.avatarMoreCount >= 1000) {
-	        this.avatarMoreCount = `${parseInt(this.avatarMoreUsers.length / 1000, 10)}K`;
-	      }
-	    },
-	    reloadPlanner() {
-	      const plannerData = {
-	        entryId: this.entry.id || 0,
-	        entryLocation: this.entry.data.LOCATION || '',
-	        ownerId: 0,
-	        hostId: this.entry.getMeetingHost(),
-	        type: 'user',
-	        entityList: this.entry.getAttendeesEntityList(),
-	        dateFrom: calendar_util.Util.formatDate(this.entry.from.getTime() - calendar_util.Util.getDayLength() * 3),
-	        dateTo: calendar_util.Util.formatDate(this.entry.to.getTime() + calendar_util.Util.getDayLength() * 10),
-	        timezone: this.timezone,
-	        location: this.entry.getLocation(),
-	        entry: this.entry
-	      };
-	      this.reloadPlannerCallback(plannerData);
-	    },
-	    handleBackgroundPulls() {
-	      if (this.hasPulls) {
-	        this.updateParamsDebounce(this.backgroundPullEvent);
-	        this.hasPulls = false;
-	      }
-	    },
-	    handleStatusUpdate(event) {
-	      this.entry.data.MEETING_STATUS = event.getData().status;
-	      this.curUserStatus = this.entry.data.MEETING_STATUS;
-	      this.isInvited = this.entry.isInvited();
-	    },
-	    handlePullEvent(event) {
-	      var _event$data$, _event$data$$fields;
-	      if (event.data[0] === 'refresh_sync_status') {
-	        return;
-	      }
-	      if (((_event$data$ = event.data[1]) == null ? void 0 : (_event$data$$fields = _event$data$.fields) == null ? void 0 : _event$data$$fields.CAL_TYPE) === 'location') {
-	        return;
-	      }
-
-	      // debounce all pull events except location
-	      // update only when page is active
-	      if (BX.Calendar.Util.documentIsDisplayingNow()) {
-	        this.updateParamsDebounce(event);
-	      } else {
-	        this.hasPulls = true;
-	        this.backgroundPullEvent = event;
-	      }
-	    },
-	    updateParams(event) {
-	      var _event$data$2, _event$data$2$fields;
-	      if (parseInt((_event$data$2 = event.data[1]) == null ? void 0 : (_event$data$2$fields = _event$data$2.fields) == null ? void 0 : _event$data$2$fields.PARENT_ID, 10) !== parseInt(this.params.parentId, 10)) {
-	        this.reloadPlanner();
-	        return;
-	      }
-	      const pullData = event.data[1].fields;
-	      if (pullData.NAME) {
-	        this.name = pullData.NAME;
-	      }
-	      if (pullData.ACCESSIBILITY) {
-	        this.accessibility = pullData.ACCESSIBILITY;
-	      }
-	      BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
-	        data: {
-	          entryId: this.eventId,
-	          dateFrom: calendar_util.Util.formatDate(pullData.DATE_FROM),
-	          timezoneOffset: pullData.TZ_OFFSET_FROM
-	        }
-	      }).then(response => {
-	        const newData = response.data;
-	        this.description = newData.description;
-	        this.isMeeting = newData.isMeeting;
-	        this.timezone = newData.userTimezone;
-	        this.timezoneHint = newData.timezoneHint;
-	        this.fromToHtml = newData.fromToHtml;
-	        this.meetingHost = newData.meetingHost;
-	        this.meetingHostDisplayName = newData.meetingHostDisplayName;
-	        this.meetingHostWorkPosition = newData.meetingHostWorkPosition;
-	        this.avatarSize = newData.avatarSize;
-	        this.attendees = newData.attendees;
-	        this.meetingCreatorUrl = newData.meetingCreatorUrl;
-	        this.meetingCreatorDisplayName = newData.meetingCreatorDisplayName;
-	        this.meetingCreatorCollabUser = newData.meetingCreatorCollabUser;
-	        this.isRemind = newData.isRemind;
-	        this.isWebdavEvent = newData.isWebdavEvent;
-	        this.isCrmEvent = newData.isCrmEvent;
-	        this.isHighImportance = newData.isHighImportance;
-	        this.isRrule = newData.isRrule;
-	        this.rruleDescription = newData.rruleDescription;
-	        this.detailFilesTemplate = newData.detailFilesTemplate;
-	        this.isIntranetEnabled = newData.isIntranetEnabled;
-	        this.isPrivate = newData.isPrivate;
-	        this.location = newData.location;
-	        this.canEditCalendar = newData.canEditCalendar;
-	        this.canAttendeeEditCalendar = newData.canAttendeeEditCalendar;
-	        this.canDeleteEvent = newData.canDeleteEvent;
-	        this.showComments = newData.showComments;
-	        this.filesView = this.getComponentHTML(newData.filesView);
-	        if (this.filesView) {
-	          // wait for div element created
-	          setTimeout(() => {
-	            this.executeScripts(this.$refs.filesView);
-	          }, 1000);
-	        }
-	        this.crmView = this.getComponentHTML(newData.crmView);
-	        this.entry = new calendar_entry.Entry({
-	          data: newData.entry,
-	          userIndex: newData.userIndex
-	        });
-	        this.updateUserList();
-	        this.reloadPlanner();
-	      });
-	    },
-	    handleCopilotMenuShow() {
-	      const copilotPopups = [...document.querySelectorAll('.ai__copilot-menu-popup')];
-	      const menu = copilotPopups.find(popup => popup.offsetHeight > 0);
-	      const offset = menu.getBoundingClientRect().bottom - this.$refs.comments.getBoundingClientRect().bottom;
-	      const marginBottom = parseInt(this.$refs.comments.style.marginBottom, 10);
-	      if (isNaN(marginBottom) && offset > 0 || !isNaN(marginBottom) && marginBottom < offset) {
-	        this.$refs.comments.style.marginBottom = `${offset}px`;
-	      }
-	    },
-	    highlightChange(element) {
-	      if (!element) {
-	        return;
-	      }
-	      const savedOpacity = element.style.opacity;
-	      const savedTransition = element.style.transition;
-	      element.style.opacity = '0.2';
-	      setTimeout(() => {
-	        element.style.transition = '1s';
-	        element.style.opacity = savedOpacity;
-	        setTimeout(() => {
-	          element.style.transition = savedTransition;
-	        }, 1000);
-	      }, 100);
-	    }
-	  },
-	  watch: {
-	    name: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightName);
-	      }
-	    },
-	    fromToHtml: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightFromTo);
-	      }
-	    },
-	    description: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightDescription);
-	      }
-	    },
-	    crmView: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightCrmView);
-	      }
-	    },
-	    location: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightLocation);
-	      }
-	    },
-	    accessibility: {
-	      handler(newValue, oldValue) {
-	        this.highlightChange(this.$refs.highlightAccessibility);
-	      }
-	    }
-	  },
-	  // language=Vue
-	  template: `
+				// debounce all pull events except location
+				// update only when page is active
+				if (BX.Calendar.Util.documentIsDisplayingNow()) {
+					this.updateParamsDebounce(event);
+				} else {
+					this.hasPulls = true;
+					this.backgroundPullEvent = event;
+				}
+			},
+			updateParams(event) {
+				if (parseInt(event.data[1]?.fields?.PARENT_ID, 10) !== parseInt(this.params.parentId, 10)) {
+					this.reloadPlanner();
+					return;
+				}
+				const pullData = event.data[1].fields;
+				if (pullData.NAME) {
+					this.name = pullData.NAME;
+				}
+				if (pullData.ACCESSIBILITY) {
+					this.accessibility = pullData.ACCESSIBILITY;
+				}
+				BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
+					data: {
+						entryId: this.eventId,
+						dateFrom: calendar_util.Util.formatDate(pullData.DATE_FROM),
+						timezoneOffset: pullData.TZ_OFFSET_FROM
+					}
+				}).then(response => {
+					const newData = response.data;
+					this.description = newData.description;
+					this.isMeeting = newData.isMeeting;
+					this.timezone = newData.userTimezone;
+					this.timezoneHint = newData.timezoneHint;
+					this.fromToHtml = newData.fromToHtml;
+					this.meetingHost = newData.meetingHost;
+					this.meetingHostDisplayName = newData.meetingHostDisplayName;
+					this.meetingHostWorkPosition = newData.meetingHostWorkPosition;
+					this.avatarSize = newData.avatarSize;
+					this.attendees = newData.attendees;
+					this.meetingCreatorUrl = newData.meetingCreatorUrl;
+					this.meetingCreatorDisplayName = newData.meetingCreatorDisplayName;
+					this.meetingCreatorCollabUser = newData.meetingCreatorCollabUser;
+					this.isRemind = newData.isRemind;
+					this.isWebdavEvent = newData.isWebdavEvent;
+					this.isCrmEvent = newData.isCrmEvent;
+					this.isHighImportance = newData.isHighImportance;
+					this.isRrule = newData.isRrule;
+					this.rruleDescription = newData.rruleDescription;
+					this.detailFilesTemplate = newData.detailFilesTemplate;
+					this.isIntranetEnabled = newData.isIntranetEnabled;
+					this.isPrivate = newData.isPrivate;
+					this.location = newData.location;
+					this.canEditCalendar = newData.canEditCalendar;
+					this.canAttendeeEditCalendar = newData.canAttendeeEditCalendar;
+					this.canDeleteEvent = newData.canDeleteEvent;
+					this.showComments = newData.showComments;
+					this.filesView = this.getComponentHTML(newData.filesView);
+					if (this.filesView) {
+						// wait for div element created
+						setTimeout(() => {
+							this.executeScripts(this.$refs.filesView);
+						}, 1000);
+					}
+					this.crmView = this.getComponentHTML(newData.crmView);
+					this.entry = new calendar_entry.Entry({
+						data: newData.entry,
+						userIndex: newData.userIndex
+					});
+					this.updateUserList();
+					this.reloadPlanner();
+				});
+			},
+			handleCopilotMenuShow() {
+				const copilotPopups = [...document.querySelectorAll('.ai__copilot-menu-popup')];
+				const menu = copilotPopups.find(popup => popup.offsetHeight > 0);
+				const offset = menu.getBoundingClientRect().bottom - this.$refs.comments.getBoundingClientRect().bottom;
+				const marginBottom = parseInt(this.$refs.comments.style.marginBottom, 10);
+				if (isNaN(marginBottom) && offset > 0 || !isNaN(marginBottom) && marginBottom < offset) {
+					this.$refs.comments.style.marginBottom = `${offset}px`;
+				}
+			},
+			highlightChange(element) {
+				if (!element) {
+					return;
+				}
+				const savedOpacity = element.style.opacity;
+				const savedTransition = element.style.transition;
+				element.style.opacity = '0.2';
+				setTimeout(() => {
+					element.style.transition = '1s';
+					element.style.opacity = savedOpacity;
+					setTimeout(() => {
+						element.style.transition = savedTransition;
+					}, 1000);
+				}, 100);
+			}
+		},
+		watch: {
+			name: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightName);
+				}
+			},
+			fromToHtml: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightFromTo);
+				}
+			},
+			description: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightDescription);
+				}
+			},
+			crmView: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightCrmView);
+				}
+			},
+			location: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightLocation);
+				}
+			},
+			accessibility: {
+				handler(newValue, oldValue) {
+					this.highlightChange(this.$refs.highlightAccessibility);
+				}
+			}
+		},
+		// language=Vue
+		template: `
 		<div class="ui-alert ui-alert-danger ui-alert-icon-danger ui-alert-text-center" v-if="!params.eventExists">
 			<span class="ui-alert-message">{{$Bitrix.Loc.getMessage('EC_VIEW_SLIDER_EVENT_NOT_FOUND')}}</span>
 		</div>
@@ -663,629 +658,618 @@ this.BX = this.BX || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t,
-	  _t2;
 	class EventViewForm {
-	  constructor(options = {}) {
-	    this.permissions = {};
-	    this.name = 'eventviewform';
-	    this.uid = null;
-	    this.DOM = {};
-	    this.RELOAD_REQUESTED = 'RELOAD_REQUESTED';
-	    this.RELOAD_FINISHED = 'RELOAD_FINISHED';
-	    this.reloadStatus = null;
-	    this.entityChanged = false;
-	    this.LOAD_DELAY = 500;
-	    this.app = null;
-	    this.type = options.type || 'user';
-	    this.attendees = [];
-	    this.ownerId = options.ownerId || 0;
-	    this.userId = options.userId || 0;
-	    this.zIndex = 3100;
-	    this.entryId = options.entryId || null;
-	    this.calendarContext = options.calendarContext || null;
-	    this.entryDateFrom = options.entryDateFrom || null;
-	    this.timezoneOffset = options.timezoneOffset || null;
-	    this.BX = calendar_util.Util.getBX();
-	    this.sliderOnLoad = this.onLoadSlider.bind(this);
-	    this.showUserListPopupBind = this.showUserListPopup.bind(this);
-	    this.keyHandlerBind = this.keyHandler.bind(this);
-	    this.destroyBind = this.destroy.bind(this);
-	    this.loadPlannerDataDebounce = main_core.Runtime.debounce(this.loadPlannerData, this.LOAD_DELAY, this);
-	    this.pullEventList = new Set();
-	  }
-	  initInSlider(slider, promiseResolve) {
-	    this.slider = slider;
-	    main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onLoad', this.sliderOnLoad);
-	    main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onCloseComplete', this.destroyBind);
-	    main_core.Event.bind(document, 'keydown', this.keyHandlerBind);
-	    this.createContent(slider).then(html => {
-	      if (main_core.Type.isFunction(promiseResolve)) {
-	        promiseResolve(html);
-	      }
-	    });
-	    this.opened = true;
-	  }
-	  isOpened() {
-	    return this.opened;
-	  }
-	  destroy() {
-	    main_core_events.EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onLoad', this.sliderOnLoad);
-	    main_core_events.EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onCloseComplete', this.destroyBind);
-	    main_core.Event.unbind(document, 'keydown', this.keyHandlerBind);
-	    if (this.app) {
-	      this.app.unmount();
-	    }
-	    if (this.intranetControllButton && this.intranetControllButton.destroy) {
-	      this.intranetControllButton.destroy();
-	    }
-	    calendar_util.Util.closeAllPopups();
-	    this.opened = false;
-	  }
-	  onLoadSlider(event) {
-	    var _data$;
-	    if (!event instanceof main_core_events.BaseEvent) {
-	      return;
-	    }
-	    const data = event.getData();
-	    const slider = (_data$ = data[0]) == null ? void 0 : _data$.slider;
-	    this.DOM.content = slider.layout.content;
+		permissions = {};
+		name = 'eventviewform';
+		uid = null;
+		DOM = {};
+		RELOAD_REQUESTED = 'RELOAD_REQUESTED';
+		RELOAD_FINISHED = 'RELOAD_FINISHED';
+		reloadStatus = null;
+		entityChanged = false;
+		LOAD_DELAY = 500;
+		app = null;
+		constructor(options = {}) {
+			this.type = options.type || 'user';
+			this.attendees = [];
+			this.ownerId = options.ownerId || 0;
+			this.userId = options.userId || 0;
+			this.zIndex = 3100;
+			this.entryId = options.entryId || null;
+			this.calendarContext = options.calendarContext || null;
+			this.entryDateFrom = options.entryDateFrom || null;
+			this.timezoneOffset = options.timezoneOffset || null;
+			this.BX = calendar_util.Util.getBX();
+			this.sliderOnLoad = this.onLoadSlider.bind(this);
+			this.showUserListPopupBind = this.showUserListPopup.bind(this);
+			this.keyHandlerBind = this.keyHandler.bind(this);
+			this.destroyBind = this.destroy.bind(this);
+			this.loadPlannerDataDebounce = main_core.Runtime.debounce(this.loadPlannerData, this.LOAD_DELAY, this);
+			this.pullEventList = new Set();
+		}
+		initInSlider(slider, promiseResolve) {
+			this.slider = slider;
+			main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onLoad', this.sliderOnLoad);
+			main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onCloseComplete', this.destroyBind);
+			main_core.Event.bind(document, 'keydown', this.keyHandlerBind);
+			this.createContent(slider).then(html => {
+				if (main_core.Type.isFunction(promiseResolve)) {
+					promiseResolve(html);
+				}
+			});
+			this.opened = true;
+		}
+		isOpened() {
+			return this.opened;
+		}
+		destroy() {
+			main_core_events.EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onLoad', this.sliderOnLoad);
+			main_core_events.EventEmitter.unsubscribe(this.slider, 'SidePanel.Slider:onCloseComplete', this.destroyBind);
+			main_core.Event.unbind(document, 'keydown', this.keyHandlerBind);
+			if (this.app) {
+				this.app.unmount();
+			}
+			if (this.intranetControllButton && this.intranetControllButton.destroy) {
+				this.intranetControllButton.destroy();
+			}
+			calendar_util.Util.closeAllPopups();
+			this.opened = false;
+		}
+		onLoadSlider(event) {
+			if (!event instanceof main_core_events.BaseEvent) {
+				return;
+			}
+			const data = event.getData();
+			const slider = data[0]?.slider;
+			this.DOM.content = slider.layout.content;
 
-	    // Used to execute javasctipt and attach CSS from ajax responce
-	    this.BX.html(slider.layout.content, slider.getData().get('sliderContent'));
-	    if (!main_core.Type.isNull(this.uid)) {
-	      this.initControls(this.uid);
-	    }
-	    this.reloadStatus = this.RELOAD_FINISHED;
-	  }
-	  loadComponentAssets(json) {
-	    if (!json) {
-	      return;
-	    }
-	    const assets = JSON.parse(json).data.assets;
-	    const promise = new Promise((resolve, reject) => {
-	      const css = assets.css;
-	      BX.load(css, () => {
-	        BX.loadScript(assets.js, resolve);
-	      });
-	    });
-	    promise.then(() => {
-	      const strings = assets.string;
-	      const stringAsset = strings.join('\n');
-	      BX.html(document.head, stringAsset, {
-	        useAdjacentHTML: true
-	      });
-	    });
-	  }
-	  createContent(slider) {
-	    return new Promise(resolve => {
-	      this.BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
-	        data: {
-	          entryId: this.entryId,
-	          dateFrom: calendar_util.Util.formatDate(this.entryDateFrom),
-	          timezoneOffset: this.timezoneOffset
-	        },
-	        analytics: {
-	          tool: 'im',
-	          category: 'events',
-	          event: 'view_card',
-	          c_section: 'card_full',
-	          p5: `eventId_${this.entryId}`
-	        }
-	      }).then(response => {
-	        const viewEventSliderRoot = document.createElement('div');
-	        if (main_core.Type.isFunction(slider.isOpen) && slider.isOpen() || slider.isOpen === true) {
-	          const params = response.data;
-	          params.eventExists = Boolean(params.entry.ID);
-	          this.attendees = [];
-	          for (const status in params.attendees) {
-	            this.attendees.push(...params.attendees[status]);
-	          }
+			// Used to execute javasctipt and attach CSS from ajax responce
+			this.BX.html(slider.layout.content, slider.getData().get('sliderContent'));
+			if (!main_core.Type.isNull(this.uid)) {
+				this.initControls(this.uid);
+			}
+			this.reloadStatus = this.RELOAD_FINISHED;
+		}
+		loadComponentAssets(json) {
+			if (!json) {
+				return;
+			}
+			const assets = JSON.parse(json).data.assets;
+			const promise = new Promise((resolve, reject) => {
+				const css = assets.css;
+				BX.load(css, () => {
+					BX.loadScript(assets.js, resolve);
+				});
+			});
+			promise.then(() => {
+				const strings = assets.string;
+				const stringAsset = strings.join('\n');
+				BX.html(document.head, stringAsset, {
+					useAdjacentHTML: true
+				});
+			});
+		}
+		createContent(slider) {
+			return new Promise(resolve => {
+				this.BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
+					data: {
+						entryId: this.entryId,
+						dateFrom: calendar_util.Util.formatDate(this.entryDateFrom),
+						timezoneOffset: this.timezoneOffset
+					},
+					analytics: {
+						tool: 'im',
+						category: 'events',
+						event: 'view_card',
+						c_section: 'card_full',
+						p5: `eventId_${this.entryId}`
+					}
+				}).then(response => {
+					const viewEventSliderRoot = document.createElement('div');
+					if (main_core.Type.isFunction(slider.isOpen) && slider.isOpen() || slider.isOpen === true) {
+						const params = response.data;
+						params.eventExists = Boolean(params.entry.ID);
+						this.attendees = [];
+						for (const status in params.attendees) {
+							this.attendees.push(...params.attendees[status]);
+						}
 
-	          // load components' css and js
-	          if (params.filesView) {
-	            this.loadComponentAssets(params.filesView);
-	          }
-	          if (params.crmView) {
-	            this.loadComponentAssets(params.crmView);
-	            this.BX.ajax.runAction('calendar.api.calendareventviewform.getCrmView', {
-	              data: {
-	                signedEvent: params.signedEvent
-	              }
-	            });
-	          }
+						// load components' css and js
+						if (params.filesView) {
+							this.loadComponentAssets(params.filesView);
+						}
+						if (params.crmView) {
+							this.loadComponentAssets(params.crmView);
+							this.BX.ajax.runAction('calendar.api.calendareventviewform.getCrmView', {
+								data: {
+									signedEvent: params.signedEvent
+								}
+							});
+						}
 
-	          // set vue component to slider
-	          this.app = ui_vue3.BitrixVue.createApp(ViewEventSlider, {
-	            params,
-	            reloadPlannerCallback: this.loadPlannerDataDebounce,
-	            showUserListPopupCallback: this.showUserListPopupBind
-	          });
-	          this.app.mount(viewEventSliderRoot);
-	          slider.sliderContent = viewEventSliderRoot;
+						// set vue component to slider
+						this.app = ui_vue3.BitrixVue.createApp(ViewEventSlider, {
+							params,
+							reloadPlannerCallback: this.loadPlannerDataDebounce,
+							showUserListPopupCallback: this.showUserListPopupBind
+						});
+						this.app.mount(viewEventSliderRoot);
+						slider.sliderContent = viewEventSliderRoot;
 
-	          // set local params
-	          this.userId = params.userId;
-	          this.uid = params.id;
-	          this.entryUrl = params.entryUrl;
-	          this.userTimezone = params.userTimezone;
-	          this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
-	          if (this.planner && !this.plannerFeatureEnabled) {
-	            this.planner.lock();
-	          }
-	          this.handleEntryData(params.entry, params.userIndex, params.section);
-	          this.isCollabUser = params.isCollabUser;
-	          this.downloadIcsEnabled = params.downloadIcsEnabled;
-	        }
-	        resolve(viewEventSliderRoot);
-	      }, response => {
-	        if (response.errors && response.errors.length > 0) {
-	          slider.getData().set('sliderContent', '<div class="calendar-slider-alert">' + '<div class="calendar-slider-alert-inner">' + '<div class="calendar-slider-alert-img"></div>' + `<h1 class="calendar-slider-alert-text">${main_core.Text.encode(response.errors[0].message)}</h1>` + '</div>' + '</div>');
-	        }
-	        if (response.data && !main_core.Type.isNil(response.data.isAvailable) && !response.data.isAvailable) {
-	          const showHelperCallback = () => {
-	            top.BX.UI.InfoHelper.show('limit_office_calendar_off', {
-	              isLimit: true,
-	              limitAnalyticsLabels: {
-	                module: 'calendar',
-	                source: 'eventViewForm'
-	              }
-	            });
-	          };
-	          if (this.slider) {
-	            this.slider.close(true, showHelperCallback);
-	          } else {
-	            showHelperCallback();
-	          }
-	        }
-	        console.error(response.errors);
-	        resolve(response);
-	      });
-	    });
-	  }
-	  initControls(uid) {
-	    var _this$entry, _this$entry$data, _BX, _BX$Intranet;
-	    this.DOM.title = this.DOM.content.querySelector(`#${uid}_title`);
-	    this.DOM.buttonSet = this.DOM.content.querySelector(`#${uid}_buttonset`);
-	    this.DOM.editButton = this.DOM.content.querySelector(`#${uid}_but_edit`);
-	    if (this.downloadIcsEnabled) {
-	      this.DOM.downloadButton = this.DOM.content.querySelector(`#${uid}_but_download`);
-	    }
-	    this.DOM.delButton = this.DOM.content.querySelector(`#${uid}_but_del`);
-	    this.DOM.sidebarInner = this.DOM.content.querySelector(`#${uid}_sidebar_inner`);
-	    if (this.DOM.buttonSet) {
-	      this.initPlannerControl(uid);
-	    }
-	    const innerTimeWrap = this.DOM.content.querySelector(`#${uid}_time_inner_wrap`);
-	    if (main_core.Type.isElementNode(innerTimeWrap) && innerTimeWrap.offsetHeight > 50) {
-	      main_core.Dom.addClass(this.DOM.content.querySelector(`#${uid}_time_wrap`), 'calendar-slider-sidebar-head-long-time');
-	    }
-	    if ((this.canDo('edit') || this.canDo('editLocation') || this.canDo('editAttendees')) && this.DOM.editButton) {
-	      main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
-	    }
-	    if (this.DOM.sidebarInner) {
-	      // Reminder
-	      this.DOM.reminderWrap = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-remind-wrap');
-	      if (main_core.Type.isDomNode(this.DOM.reminderWrap)) {
-	        main_core.Dom.clean(this.DOM.reminderWrap);
-	        const viewMode = !this.canDo('edit') && this.entry.getCurrentStatus() === false;
-	        this.reminderControl = new this.BX.Calendar.Controls.Reminder({
-	          wrap: this.DOM.reminderWrap,
-	          zIndex: this.zIndex,
-	          viewMode
-	        });
-	        this.reminderControl.setValue(this.entry.getReminders());
-	        if (!viewMode) {
-	          this.reminderControl.subscribe('onChange', event => {
-	            if (event instanceof main_core_events.BaseEvent) {
-	              this.handleEntityChanges();
-	              this.reminderValues = event.getData().values;
-	              this.BX.ajax.runAction('calendar.api.calendarajax.updateReminders', {
-	                data: {
-	                  entryId: this.entry.id,
-	                  userId: this.userId,
-	                  reminders: this.reminderValues
-	                }
-	              });
-	            }
-	          });
-	        }
-	      }
-	      const items = this.DOM.sidebarInner.querySelectorAll('.calendar-slider-sidebar-border-bottom');
-	      if (items.length >= 2) {
-	        this.BX.removeClass(items[items.length - 1], 'calendar-slider-sidebar-border-bottom');
-	      }
-	    }
-	    if (this.downloadIcsEnabled) {
-	      main_core.Event.bind(this.DOM.downloadButton, 'click', () => calendar_entry.EntryManager.downloadIcs(this.entryId));
-	    }
-	    if (this.canDo('delete')) {
-	      main_core.Event.bind(this.DOM.delButton, 'click', () => {
-	        main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
-	          this.BX.SidePanel.Instance.close();
-	        });
-	        calendar_entry.EntryManager.deleteEntry(this.entry, this.calendarContext);
-	      });
-	    } else {
-	      this.BX.remove(this.DOM.delButton);
-	    }
-	    const filesWrap = `${uid}_${this.entry.id}_files_wrap`;
-	    if (filesWrap) {
-	      const currentTop = typeof window.top.BX.viewElementBind === 'function' ? window.top.BX : window.BX;
-	      currentTop.viewElementBind(filesWrap, {
-	        showTitle: true
-	      }, node => {
-	        return main_core.Type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
-	      });
-	    }
-	    this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
-	    if (this.DOM.relationWrap && this.canDo('view') && ['#shared_crm#', '#booking#'].includes((_this$entry = this.entry) == null ? void 0 : (_this$entry$data = _this$entry.data) == null ? void 0 : _this$entry$data.EVENT_TYPE)) {
-	      this.relationControl = new calendar_entityrelation.RelationInterface({
-	        parentNode: this.DOM.relationWrap,
-	        eventId: this.entry.parentId
-	      });
-	      main_core.Dom.append(this.relationControl.render(), this.DOM.relationWrap);
-	    }
-	    if (this.entry && this.entry.isMeeting()) {
-	      this.initAcceptMeetingControl(uid);
-	    }
-	    if (this.DOM.sidebarInner) {
-	      const items = this.DOM.sidebarInner.querySelectorAll('.calendar-slider-sidebar-border-bottom');
-	      if (items.length >= 2) {
-	        this.BX.removeClass(items[items.length - 1], 'calendar-slider-sidebar-border-bottom');
-	      }
-	    }
-	    this.DOM.copyButton = this.DOM.content.querySelector(`#${uid}_copy_url_btn`);
-	    if (this.DOM.copyButton) {
-	      main_core.Event.bind(this.DOM.copyButton, 'click', this.copyEventUrl.bind(this));
-	    }
+						// set local params
+						this.userId = params.userId;
+						this.uid = params.id;
+						this.entryUrl = params.entryUrl;
+						this.userTimezone = params.userTimezone;
+						this.plannerFeatureEnabled = Boolean(params.plannerFeatureEnabled);
+						if (this.planner && !this.plannerFeatureEnabled) {
+							this.planner.lock();
+						}
+						this.handleEntryData(params.entry, params.userIndex, params.section);
+						this.isCollabUser = params.isCollabUser;
+						this.downloadIcsEnabled = params.downloadIcsEnabled;
+					}
+					resolve(viewEventSliderRoot);
+				}, response => {
+					if (response.errors && response.errors.length > 0) {
+						slider.getData().set('sliderContent', '<div class="calendar-slider-alert">' + '<div class="calendar-slider-alert-inner">' + '<div class="calendar-slider-alert-img"></div>' + `<h1 class="calendar-slider-alert-text">${main_core.Text.encode(response.errors[0].message)}</h1>` + '</div>' + '</div>');
+					}
+					if (response.data && !main_core.Type.isNil(response.data.isAvailable) && !response.data.isAvailable) {
+						const showHelperCallback = () => {
+							top.BX.UI.InfoHelper.show('limit_office_calendar_off', {
+								isLimit: true,
+								limitAnalyticsLabels: {
+									module: 'calendar',
+									source: 'eventViewForm'
+								}
+							});
+						};
+						if (this.slider) {
+							this.slider.close(true, showHelperCallback);
+						} else {
+							showHelperCallback();
+						}
+					}
+					console.error(response.errors);
+					resolve(response);
+				});
+			});
+		}
+		initControls(uid) {
+			this.DOM.title = this.DOM.content.querySelector(`#${uid}_title`);
+			this.DOM.buttonSet = this.DOM.content.querySelector(`#${uid}_buttonset`);
+			this.DOM.editButton = this.DOM.content.querySelector(`#${uid}_but_edit`);
+			if (this.downloadIcsEnabled) {
+				this.DOM.downloadButton = this.DOM.content.querySelector(`#${uid}_but_download`);
+			}
+			this.DOM.delButton = this.DOM.content.querySelector(`#${uid}_but_del`);
+			this.DOM.sidebarInner = this.DOM.content.querySelector(`#${uid}_sidebar_inner`);
+			if (this.DOM.buttonSet) {
+				this.initPlannerControl(uid);
+			}
+			const innerTimeWrap = this.DOM.content.querySelector(`#${uid}_time_inner_wrap`);
+			if (main_core.Type.isElementNode(innerTimeWrap) && innerTimeWrap.offsetHeight > 50) {
+				main_core.Dom.addClass(this.DOM.content.querySelector(`#${uid}_time_wrap`), 'calendar-slider-sidebar-head-long-time');
+			}
+			if ((this.canDo('edit') || this.canDo('editLocation') || this.canDo('editAttendees')) && this.DOM.editButton) {
+				main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+			}
+			if (this.DOM.sidebarInner) {
+				// Reminder
+				this.DOM.reminderWrap = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-remind-wrap');
+				if (main_core.Type.isDomNode(this.DOM.reminderWrap)) {
+					main_core.Dom.clean(this.DOM.reminderWrap);
+					const viewMode = !this.canDo('edit') && this.entry.getCurrentStatus() === false;
+					this.reminderControl = new this.BX.Calendar.Controls.Reminder({
+						wrap: this.DOM.reminderWrap,
+						zIndex: this.zIndex,
+						viewMode
+					});
+					this.reminderControl.setValue(this.entry.getReminders());
+					if (!viewMode) {
+						this.reminderControl.subscribe('onChange', event => {
+							if (event instanceof main_core_events.BaseEvent) {
+								this.handleEntityChanges();
+								this.reminderValues = event.getData().values;
+								this.BX.ajax.runAction('calendar.api.calendarajax.updateReminders', {
+									data: {
+										entryId: this.entry.id,
+										userId: this.userId,
+										reminders: this.reminderValues
+									}
+								});
+							}
+						});
+					}
+				}
+				const items = this.DOM.sidebarInner.querySelectorAll('.calendar-slider-sidebar-border-bottom');
+				if (items.length >= 2) {
+					this.BX.removeClass(items[items.length - 1], 'calendar-slider-sidebar-border-bottom');
+				}
+			}
+			if (this.downloadIcsEnabled) {
+				main_core.Event.bind(this.DOM.downloadButton, 'click', () => calendar_entry.EntryManager.downloadIcs(this.entryId));
+			}
+			if (this.canDo('delete')) {
+				main_core.Event.bind(this.DOM.delButton, 'click', () => {
+					main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
+						this.BX.SidePanel.Instance.close();
+					});
+					calendar_entry.EntryManager.deleteEntry(this.entry, this.calendarContext);
+				});
+			} else {
+				this.BX.remove(this.DOM.delButton);
+			}
+			const filesWrap = `${uid}_${this.entry.id}_files_wrap`;
+			if (filesWrap) {
+				const currentTop = typeof window.top.BX.viewElementBind === 'function' ? window.top.BX : window.BX;
+				currentTop.viewElementBind(filesWrap, {
+					showTitle: true
+				}, node => {
+					return main_core.Type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
+				});
+			}
+			this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
+			if (this.DOM.relationWrap && this.canDo('view') && ['#shared_crm#', '#booking#'].includes(this.entry?.data?.EVENT_TYPE)) {
+				this.relationControl = new calendar_entityrelation.RelationInterface({
+					parentNode: this.DOM.relationWrap,
+					eventId: this.entry.parentId
+				});
+				main_core.Dom.append(this.relationControl.render(), this.DOM.relationWrap);
+			}
+			if (this.entry && this.entry.isMeeting()) {
+				this.initAcceptMeetingControl(uid);
+			}
+			if (this.DOM.sidebarInner) {
+				const items = this.DOM.sidebarInner.querySelectorAll('.calendar-slider-sidebar-border-bottom');
+				if (items.length >= 2) {
+					this.BX.removeClass(items[items.length - 1], 'calendar-slider-sidebar-border-bottom');
+				}
+			}
+			this.DOM.copyButton = this.DOM.content.querySelector(`#${uid}_copy_url_btn`);
+			if (this.DOM.copyButton) {
+				main_core.Event.bind(this.DOM.copyButton, 'click', this.copyEventUrl.bind(this));
+			}
 
-	    // Init "Videocall" control
-	    this.DOM.videoCall = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-videocall');
-	    main_core.Dom.clean(this.DOM.videoCall);
-	    if (main_core.Type.isElementNode(this.DOM.videoCall) && this.entry && this.entry.data.PARENT_ID && (this.entry.data.EVENT_TYPE === '#shared#' || this.entry.data.EVENT_TYPE === '#shared_crm#')) {
-	      this.DOM.videoCall.style.display = '';
-	      this.conferenceButton = main_core.Tag.render(_t || (_t = _`
+			// Init "Videocall" control
+			this.DOM.videoCall = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-videocall');
+			main_core.Dom.clean(this.DOM.videoCall);
+			if (main_core.Type.isElementNode(this.DOM.videoCall) && this.entry && this.entry.data.PARENT_ID && (this.entry.data.EVENT_TYPE === '#shared#' || this.entry.data.EVENT_TYPE === '#shared_crm#')) {
+				this.DOM.videoCall.style.display = '';
+				this.conferenceButton = main_core.Tag.render`
 				<div class="ui-btn-split ui-btn-icon-camera-blue intranet-control-btn ui-btn-light-border ui-btn-icon-inline" style="width: 100%">
 					<button class="ui-btn-main calendar-slider-conference-button">
-						${0}
+						${main_core.Loc.getMessage('EC_CALENDAR_CONFERENCE')}
 					</button>
 				</div>
-			`), main_core.Loc.getMessage('EC_CALENDAR_CONFERENCE'));
-	      main_core.Event.bind(this.conferenceButton, 'click', this.handleConferenceButtonClick.bind(this));
-	      main_core.Dom.append(this.conferenceButton, this.DOM.videoCall);
-	    } else if ((_BX = BX) != null && (_BX$Intranet = _BX.Intranet) != null && _BX$Intranet.ControlButton && main_core.Type.isElementNode(this.DOM.videoCall) && this.entry.getCurrentStatus() !== false) {
-	      this.DOM.videoCall.style.display = '';
-	      const items = this.isCollabUser ? ['chat', 'videocall', 'task'] : ['chat', 'videocall', 'blog_post', 'task'];
-	      this.intranetControllButton = new calendar_controls.IntranetButton({
-	        intranetControlButtonParams: {
-	          items,
-	          container: this.DOM.videoCall,
-	          entityType: 'calendar_event',
-	          entityId: this.entry.parentId,
-	          entityData: {
-	            dateFrom: calendar_util.Util.formatDate(this.entry.from),
-	            parentId: this.entry.parentId
-	          },
-	          analytics: {
-	            startVideoCall: {
-	              tool: 'im',
-	              category: 'events',
-	              event: 'click_call',
-	              type: 'group',
-	              c_section: 'card_full',
-	              c_sub_section: 'context_menu',
-	              p5: `eventId_${this.entry.parentId}`
-	            }
-	          }
-	        },
-	        callbacks: {
-	          getUsersCount: () => this.attendees.length,
-	          hasChat: () => {
-	            var _this$entry$data2, _this$entry$data2$MEE;
-	            return ((_this$entry$data2 = this.entry.data) == null ? void 0 : (_this$entry$data2$MEE = _this$entry$data2.MEETING) == null ? void 0 : _this$entry$data2$MEE.CHAT_ID) > 0;
-	          }
-	        }
-	      });
-	    } else {
-	      this.DOM.videoCall.style.display = 'none';
-	    }
-	  }
-	  handleEntryData(data, userIndex, sectionData) {
-	    this.entry = new calendar_entry.Entry({
-	      data,
-	      userIndex
-	    });
-	    this.section = new calendar_sectionmanager.CalendarSection(sectionData);
-	    if (main_core.Type.isPlainObject(sectionData)) {
-	      this.permissions = sectionData.PERM;
-	    }
-	    calendar_entry.EntryManager.registerEntrySlider(this.entry, this);
-	  }
-	  initPlannerControl(uid) {
-	    this.plannerId = `${uid}_view_slider_planner`;
-	    this.DOM.plannerWrapOuter = this.DOM.content.querySelector('.calendar-slider-detail-timeline');
-	    this.DOM.plannerWrap = this.DOM.plannerWrapOuter.querySelector('.calendar-view-planner-wrap');
-	    main_core.Dom.clean(this.DOM.plannerWrap);
-	    this.planner = new calendar_planner.Planner({
-	      wrap: this.DOM.plannerWrap,
-	      minWidth: parseInt(this.DOM.plannerWrap.offsetWidth),
-	      solidStatus: true,
-	      readonly: true,
-	      locked: !this.plannerFeatureEnabled,
-	      alwaysBlue: true
-	    });
-	    this.planner.show();
-	    this.planner.showLoader();
-	    this.planner.setEntriesCount(this.attendees.length);
-	    setTimeout(() => {
-	      if (this.DOM.plannerWrapOuter) {
-	        main_core.Dom.removeClass(this.DOM.plannerWrapOuter, 'hidden');
-	      }
-	    }, 500);
-	    const plannerData = {
-	      entryId: this.entry.id || 0,
-	      entryLocation: this.entry.data.LOCATION || '',
-	      ownerId: this.ownerId,
-	      hostId: this.entry.getMeetingHost(),
-	      type: this.type,
-	      entityList: this.entry.getAttendeesEntityList(),
-	      dateFrom: calendar_util.Util.formatDate(this.entry.from.getTime() - calendar_util.Util.getDayLength() * 3),
-	      dateTo: calendar_util.Util.formatDate(this.entry.to.getTime() + calendar_util.Util.getDayLength() * 10),
-	      timezone: this.userTimezone,
-	      location: this.entry.getLocation(),
-	      entry: this.entry
-	    };
-	    this.loadPlannerDataDebounce(plannerData);
-	  }
-	  showUserListPopup(node, userList) {
-	    if (this.userListPopup) {
-	      this.userListPopup.close();
-	    }
-	    if (userList && userList.length > 0) {
-	      this.DOM.userListPopupWrap = this.BX.create('DIV', {
-	        props: {
-	          className: 'calendar-user-list-popup-block'
-	        }
-	      });
-	      userList.forEach(function (user) {
-	        let userAvatar = `
+			`;
+				main_core.Event.bind(this.conferenceButton, 'click', this.handleConferenceButtonClick.bind(this));
+				main_core.Dom.append(this.conferenceButton, this.DOM.videoCall);
+			} else if (BX?.Intranet?.ControlButton && main_core.Type.isElementNode(this.DOM.videoCall) && this.entry.getCurrentStatus() !== false) {
+				this.DOM.videoCall.style.display = '';
+				const items = this.isCollabUser ? ['chat', 'videocall', 'task'] : ['chat', 'videocall', 'blog_post', 'task'];
+				this.intranetControllButton = new calendar_controls.IntranetButton({
+					intranetControlButtonParams: {
+						items,
+						container: this.DOM.videoCall,
+						entityType: 'calendar_event',
+						entityId: this.entry.parentId,
+						entityData: {
+							dateFrom: calendar_util.Util.formatDate(this.entry.from),
+							parentId: this.entry.parentId
+						},
+						analytics: {
+							startVideoCall: {
+								tool: 'im',
+								category: 'events',
+								event: 'click_call',
+								type: 'group',
+								c_section: 'card_full',
+								c_sub_section: 'context_menu',
+								p5: `eventId_${this.entry.parentId}`
+							}
+						}
+					},
+					callbacks: {
+						getUsersCount: () => this.attendees.length,
+						hasChat: () => this.entry.data?.MEETING?.CHAT_ID > 0
+					}
+				});
+			} else {
+				this.DOM.videoCall.style.display = 'none';
+			}
+		}
+		handleEntryData(data, userIndex, sectionData) {
+			this.entry = new calendar_entry.Entry({
+				data,
+				userIndex
+			});
+			this.section = new calendar_sectionmanager.CalendarSection(sectionData);
+			if (main_core.Type.isPlainObject(sectionData)) {
+				this.permissions = sectionData.PERM;
+			}
+			calendar_entry.EntryManager.registerEntrySlider(this.entry, this);
+		}
+		initPlannerControl(uid) {
+			this.plannerId = `${uid}_view_slider_planner`;
+			this.DOM.plannerWrapOuter = this.DOM.content.querySelector('.calendar-slider-detail-timeline');
+			this.DOM.plannerWrap = this.DOM.plannerWrapOuter.querySelector('.calendar-view-planner-wrap');
+			main_core.Dom.clean(this.DOM.plannerWrap);
+			this.planner = new calendar_planner.Planner({
+				wrap: this.DOM.plannerWrap,
+				minWidth: parseInt(this.DOM.plannerWrap.offsetWidth),
+				solidStatus: true,
+				readonly: true,
+				locked: !this.plannerFeatureEnabled,
+				alwaysBlue: true
+			});
+			this.planner.show();
+			this.planner.showLoader();
+			this.planner.setEntriesCount(this.attendees.length);
+			setTimeout(() => {
+				if (this.DOM.plannerWrapOuter) {
+					main_core.Dom.removeClass(this.DOM.plannerWrapOuter, 'hidden');
+				}
+			}, 500);
+			const plannerData = {
+				entryId: this.entry.id || 0,
+				entryLocation: this.entry.data.LOCATION || '',
+				ownerId: this.ownerId,
+				hostId: this.entry.getMeetingHost(),
+				type: this.type,
+				entityList: this.entry.getAttendeesEntityList(),
+				dateFrom: calendar_util.Util.formatDate(this.entry.from.getTime() - calendar_util.Util.getDayLength() * 3),
+				dateTo: calendar_util.Util.formatDate(this.entry.to.getTime() + calendar_util.Util.getDayLength() * 10),
+				timezone: this.userTimezone,
+				location: this.entry.getLocation(),
+				entry: this.entry
+			};
+			this.loadPlannerDataDebounce(plannerData);
+		}
+		showUserListPopup(node, userList) {
+			if (this.userListPopup) {
+				this.userListPopup.close();
+			}
+			if (userList && userList.length > 0) {
+				this.DOM.userListPopupWrap = this.BX.create('DIV', {
+					props: {
+						className: 'calendar-user-list-popup-block'
+					}
+				});
+				userList.forEach(function (user) {
+					let userAvatar = `
 					<div class="ui-icon ui-icon-common-user" style="width: 34px; height: 34px;">
 						<i></i>
 					</div>
 				`;
-	        if (user.AVATAR && user.AVATAR !== '/bitrix/images/1.gif') {
-	          userAvatar = `<img src="${encodeURI(user.AVATAR)}" width="34" height="34">`;
-	        }
-	        if (user.EMAIL_USER) {
-	          userAvatar = `
+					if (user.AVATAR && user.AVATAR !== '/bitrix/images/1.gif') {
+						userAvatar = `<img src="${encodeURI(user.AVATAR)}" width="34" height="34">`;
+					}
+					if (user.EMAIL_USER) {
+						userAvatar = `
 						<div class="ui-icon ui-icon ui-icon-common-user-mail" style="width: 34px; height: 34px;">
 							<i></i>
 						</div>
 					`;
-	        }
-	        if (user.SHARING_USER) {
-	          userAvatar = `
+					}
+					if (user.SHARING_USER) {
+						userAvatar = `
 						<div class="ui-icon ui-icon-common-user ui-icon-common-user-sharing" style="width: 34px; height: 34px;">
 							<i></i>
 						</div>
 					`;
-	        }
-	        if (user.COLLAB_USER) {
-	          const userpicPath = user.AVATAR && user.AVATAR !== '/bitrix/images/1.gif' ? user.AVATAR : null;
-	          userAvatar = new ui_avatar.AvatarRoundGuest({
-	            size: 34,
-	            userName: user.DISPLAY_NAME,
-	            userpicPath,
-	            baseColor: '#19cc45'
-	          }).getContainer();
-	        }
-	        const userWrap = main_core.Tag.render(_t2 || (_t2 = _`
+					}
+					if (user.COLLAB_USER) {
+						const userpicPath = user.AVATAR && user.AVATAR !== '/bitrix/images/1.gif' ? user.AVATAR : null;
+						userAvatar = new ui_avatar.AvatarRoundGuest({
+							size: 34,
+							userName: user.DISPLAY_NAME,
+							userpicPath,
+							baseColor: '#19cc45'
+						}).getContainer();
+					}
+					const userWrap = main_core.Tag.render`
 					<div class="calendar-slider-sidebar-user-container calendar-slider-sidebar-user-card">
 						<div class="calendar-slider-sidebar-user-block-avatar">
 							<div class="calendar-slider-sidebar-user-block-item">
-								${0}
+								${userAvatar}
 							</div>
 						</div>
 						<div class="calendar-slider-sidebar-user-info">
-							<a href="${0}" 
-								class="calendar-slider-sidebar-user-info-name ${0}"
+							<a href="${user.URL ? user.URL : '#'}" 
+								class="calendar-slider-sidebar-user-info-name ${user.COLLAB_USER ? 'calendar-collab-user' : ''}"
 							>
-								${0}
+								${main_core.Text.encode(user.DISPLAY_NAME)}
 							</a>
 						</div>
 					</div>
-				`), userAvatar, user.URL ? user.URL : '#', user.COLLAB_USER ? 'calendar-collab-user' : '', main_core.Text.encode(user.DISPLAY_NAME));
-	        this.DOM.userListPopupWrap.append(userWrap);
-	      }, this);
-	      this.userListPopup = this.BX.PopupWindowManager.create(`user-list-popup-${Math.random()}`, node, {
-	        autoHide: true,
-	        closeByEsc: true,
-	        offsetTop: 0,
-	        offsetLeft: node.offsetWidth / 2,
-	        resizable: false,
-	        lightShadow: true,
-	        content: this.DOM.userListPopupWrap,
-	        className: 'calendar-user-list-popup',
-	        maxWidth: 300,
-	        maxHeight: 500,
-	        zIndex: 4000,
-	        angle: {
-	          position: 'top'
-	        }
-	      });
-	      this.userListPopup.show();
-	      this.BX.addCustomEvent(this.userListPopup, 'onPopupClose', () => {
-	        this.userListPopup.destroy();
-	      });
-	    }
-	  }
-	  initAcceptMeetingControl(uid) {
-	    this.DOM.statusButtonset = this.DOM.content.querySelector(`#${uid}_status_buttonset`);
-	    this.DOM.statusButtonset.style.marginRight = '12px';
-	    if (this.entry.getCurrentStatus() === 'H' || this.entry.getCurrentStatus() === false) {
-	      main_core.Dom.remove(this.DOM.statusButtonset);
-	    } else {
-	      this.statusControl = new calendar_controls.MeetingStatusControl({
-	        wrap: this.DOM.statusButtonset,
-	        currentStatus: this.DOM.content.querySelector(`#${uid}_current_status`).value || this.entry.getCurrentStatus()
-	      });
-	      this.statusControl.subscribe('onSetStatus', event => {
-	        if (event instanceof main_core_events.BaseEvent) {
-	          this.handleEntityChanges();
-	          calendar_entry.EntryManager.setMeetingStatus(this.entry, event.getData().status).then(() => {
-	            this.statusControl.setStatus(this.entry.getCurrentStatus(), false);
-	            this.statusControl.updateStatus();
-	            if (this.entry.getCurrentStatus() === 'Y') {
-	              main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
-	            } else {
-	              main_core.Event.unbind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
-	            }
-	            main_core_events.EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
-	          });
-	        }
-	      });
-	    }
-	  }
-	  copyEventUrl() {
-	    if (!this.entryUrl || !this.BX.clipboard.copy(window.location.origin + this.entryUrl)) {
-	      return;
-	    }
-	    this.timeoutIds = this.timeoutIds || [];
-	    const popup = new this.BX.PopupWindow(`calendar_clipboard_copy_${main_core.Text.getRandom().toLowerCase()}`, this.DOM.copyButton, {
-	      content: main_core.Loc.getMessage('CALENDAR_TIP_TEMPLATE_LINK_COPIED'),
-	      darkMode: true,
-	      autoHide: true,
-	      zIndex: 1000,
-	      angle: true,
-	      offsetLeft: 20,
-	      cachable: false
-	    });
-	    popup.show();
-	    let timeoutId;
-	    while (timeoutId = this.timeoutIds.pop()) {
-	      clearTimeout(timeoutId);
-	    }
-	    this.timeoutIds.push(setTimeout(() => {
-	      popup.close();
-	    }, 1500));
-	  }
-	  canDo(action) {
-	    if (action === 'edit' || action === 'delete') {
-	      if (this.entry.isResourcebooking()) {
-	        return false;
-	      }
-	      if (this.entry.permissions) {
-	        var _this$entry$permissio;
-	        return (_this$entry$permissio = this.entry.permissions) == null ? void 0 : _this$entry$permissio.edit;
-	      }
-	      return this.section.canDo('edit');
-	    }
-	    if (action === 'view') {
-	      if (this.entry.permissions) {
-	        var _this$entry$permissio2;
-	        return (_this$entry$permissio2 = this.entry.permissions) == null ? void 0 : _this$entry$permissio2.view_full;
-	      }
-	      return this.permissions.view_full;
-	    }
-	    const isInvitedOrRejected = ['Q', 'N'].includes(this.entry.getCurrentStatus());
-	    if (action === 'editLocation') {
-	      var _this$entry$permissio3, _this$entry$permissio4;
-	      const canEdit = ((_this$entry$permissio3 = this.entry.permissions) == null ? void 0 : _this$entry$permissio3.edit) === true;
-	      const canEditLocation = ((_this$entry$permissio4 = this.entry.permissions) == null ? void 0 : _this$entry$permissio4.editLocation) === true;
-	      return !isInvitedOrRejected && (canEdit || canEditLocation);
-	    }
-	    if (action === 'editAttendees') {
-	      var _this$entry$permissio5, _this$entry$permissio6;
-	      const canEdit = ((_this$entry$permissio5 = this.entry.permissions) == null ? void 0 : _this$entry$permissio5.edit) === true;
-	      const canEditAttendees = ((_this$entry$permissio6 = this.entry.permissions) == null ? void 0 : _this$entry$permissio6.editAttendees) === true;
-	      return !isInvitedOrRejected && (canEdit || canEditAttendees);
-	    }
-	    return false;
-	  }
-	  plannerIsShown() {
-	    return this.DOM.plannerWrap && main_core.Dom.hasClass(this.DOM.plannerWrap, 'calendar-edit-planner-wrap-shown');
-	  }
-	  loadPlannerData(plannerData) {
-	    return new Promise(resolve => {
-	      this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
-	        data: plannerData
-	      }).then(response => {
-	        this.planner.hideLoader();
-	        this.planner.update(response.data.entries, response.data.accessibility);
-	        this.planner.updateSelector(calendar_util.Util.adjustDateForTimezoneOffset(plannerData.entry.from, plannerData.entry.userTimezoneOffsetFrom, plannerData.entry.fullDay), calendar_util.Util.adjustDateForTimezoneOffset(plannerData.entry.to, plannerData.entry.userTimezoneOffsetTo, plannerData.entry.fullDay), plannerData.entry.fullDay);
-	        resolve(response);
-	      }, response => {
-	        resolve(response);
-	      });
-	    });
-	  }
-	  keyHandler(e) {
-	    if (e.keyCode === calendar_util.Util.getKeyCode('delete')
-	    // || e.keyCode === Util.getKeyCode('backspace')
-	    && this.canDo('delete')) {
-	      const target = event.target || event.srcElement;
-	      const tagName = main_core.Type.isElementNode(target) ? target.tagName.toLowerCase() : null;
-	      if (tagName && !['input', 'textarea'].includes(tagName)) {
-	        main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
-	          this.BX.SidePanel.Instance.close();
-	        });
-	        calendar_entry.EntryManager.deleteEntry(this.entry, this.calendarContext);
-	      }
-	    }
-	  }
-	  handleEntityChanges() {
-	    this.entityChanged = true;
-	  }
-	  handleConferenceButtonClick() {
-	    if (this.conferenceButton) {
-	      main_core.Dom.addClass(this.conferenceButton, 'ui-btn-wait');
-	    }
-	    this.getConferenceChatId();
-	    if (this.conferenceButton) {
-	      main_core.Dom.removeClass(this.conferenceButton, 'ui-btn-wait');
-	    }
-	  }
-	  getConferenceChatId() {
-	    return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
-	      data: {
-	        eventId: this.entry.data.PARENT_ID
-	      },
-	      analytics: {
-	        tool: 'im',
-	        category: 'events',
-	        event: 'click_call',
-	        type: 'videoconf',
-	        c_section: 'card_full',
-	        c_sub_section: 'card',
-	        p5: `eventId_${this.entry.parentId}`
-	      }
-	    }).then(response => {
-	      if (top.window.BXIM && response.data && response.data.chatId) {
-	        top.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
-	        return null;
-	      }
-	      alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
-	      return null;
-	    }, response => {
-	      alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
-	      return null;
-	    });
-	  }
-	  handleEditButtonClick() {
-	    this.BX.SidePanel.Instance.close(false, () => {
-	      calendar_entry.EntryManager.openEditSlider({
-	        entry: this.entry,
-	        type: this.type,
-	        ownerId: this.ownerId,
-	        userId: this.userId
-	      });
-	    });
-	  }
+				`;
+					this.DOM.userListPopupWrap.append(userWrap);
+				}, this);
+				this.userListPopup = this.BX.PopupWindowManager.create(`user-list-popup-${Math.random()}`, node, {
+					autoHide: true,
+					closeByEsc: true,
+					offsetTop: 0,
+					offsetLeft: node.offsetWidth / 2,
+					resizable: false,
+					lightShadow: true,
+					content: this.DOM.userListPopupWrap,
+					className: 'calendar-user-list-popup',
+					maxWidth: 300,
+					maxHeight: 500,
+					zIndex: 4000,
+					angle: {
+						position: 'top'
+					}
+				});
+				this.userListPopup.show();
+				this.BX.addCustomEvent(this.userListPopup, 'onPopupClose', () => {
+					this.userListPopup.destroy();
+				});
+			}
+		}
+		initAcceptMeetingControl(uid) {
+			this.DOM.statusButtonset = this.DOM.content.querySelector(`#${uid}_status_buttonset`);
+			this.DOM.statusButtonset.style.marginRight = '12px';
+			if (this.entry.getCurrentStatus() === 'H' || this.entry.getCurrentStatus() === false) {
+				main_core.Dom.remove(this.DOM.statusButtonset);
+			} else {
+				this.statusControl = new calendar_controls.MeetingStatusControl({
+					wrap: this.DOM.statusButtonset,
+					currentStatus: this.DOM.content.querySelector(`#${uid}_current_status`).value || this.entry.getCurrentStatus()
+				});
+				this.statusControl.subscribe('onSetStatus', event => {
+					if (event instanceof main_core_events.BaseEvent) {
+						this.handleEntityChanges();
+						calendar_entry.EntryManager.setMeetingStatus(this.entry, event.getData().status).then(() => {
+							this.statusControl.setStatus(this.entry.getCurrentStatus(), false);
+							this.statusControl.updateStatus();
+							if (this.entry.getCurrentStatus() === 'Y') {
+								main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+							} else {
+								main_core.Event.unbind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+							}
+							main_core_events.EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
+						});
+					}
+				});
+			}
+		}
+		copyEventUrl() {
+			if (!this.entryUrl || !this.BX.clipboard.copy(window.location.origin + this.entryUrl)) {
+				return;
+			}
+			this.timeoutIds = this.timeoutIds || [];
+			const popup = new this.BX.PopupWindow(`calendar_clipboard_copy_${main_core.Text.getRandom().toLowerCase()}`, this.DOM.copyButton, {
+				content: main_core.Loc.getMessage('CALENDAR_TIP_TEMPLATE_LINK_COPIED'),
+				darkMode: true,
+				autoHide: true,
+				zIndex: 1000,
+				angle: true,
+				offsetLeft: 20,
+				cachable: false
+			});
+			popup.show();
+			let timeoutId;
+			while (timeoutId = this.timeoutIds.pop()) {
+				clearTimeout(timeoutId);
+			}
+			this.timeoutIds.push(setTimeout(() => {
+				popup.close();
+			}, 1500));
+		}
+		canDo(action) {
+			if (action === 'edit' || action === 'delete') {
+				if (this.entry.isResourcebooking()) {
+					return false;
+				}
+				if (this.entry.permissions) {
+					return this.entry.permissions?.edit;
+				}
+				return this.section.canDo('edit');
+			}
+			if (action === 'view') {
+				if (this.entry.permissions) {
+					return this.entry.permissions?.view_full;
+				}
+				return this.permissions.view_full;
+			}
+			const isInvitedOrRejected = ['Q', 'N'].includes(this.entry.getCurrentStatus());
+			if (action === 'editLocation') {
+				const canEdit = this.entry.permissions?.edit === true;
+				const canEditLocation = this.entry.permissions?.editLocation === true;
+				return !isInvitedOrRejected && (canEdit || canEditLocation);
+			}
+			if (action === 'editAttendees') {
+				const canEdit = this.entry.permissions?.edit === true;
+				const canEditAttendees = this.entry.permissions?.editAttendees === true;
+				return !isInvitedOrRejected && (canEdit || canEditAttendees);
+			}
+			return false;
+		}
+		plannerIsShown() {
+			return this.DOM.plannerWrap && main_core.Dom.hasClass(this.DOM.plannerWrap, 'calendar-edit-planner-wrap-shown');
+		}
+		loadPlannerData(plannerData) {
+			return new Promise(resolve => {
+				this.BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
+					data: plannerData
+				}).then(response => {
+					this.planner.hideLoader();
+					this.planner.update(response.data.entries, response.data.accessibility);
+					this.planner.updateSelector(calendar_util.Util.adjustDateForTimezoneOffset(plannerData.entry.from, plannerData.entry.userTimezoneOffsetFrom, plannerData.entry.fullDay), calendar_util.Util.adjustDateForTimezoneOffset(plannerData.entry.to, plannerData.entry.userTimezoneOffsetTo, plannerData.entry.fullDay), plannerData.entry.fullDay);
+					resolve(response);
+				}, response => {
+					resolve(response);
+				});
+			});
+		}
+		keyHandler(e) {
+			if (e.keyCode === calendar_util.Util.getKeyCode('delete')
+			// || e.keyCode === Util.getKeyCode('backspace')
+			&& this.canDo('delete')) {
+				const target = event.target || event.srcElement;
+				const tagName = main_core.Type.isElementNode(target) ? target.tagName.toLowerCase() : null;
+				if (tagName && !['input', 'textarea'].includes(tagName)) {
+					main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
+						this.BX.SidePanel.Instance.close();
+					});
+					calendar_entry.EntryManager.deleteEntry(this.entry, this.calendarContext);
+				}
+			}
+		}
+		handleEntityChanges() {
+			this.entityChanged = true;
+		}
+		handleConferenceButtonClick() {
+			if (this.conferenceButton) {
+				main_core.Dom.addClass(this.conferenceButton, 'ui-btn-wait');
+			}
+			this.getConferenceChatId();
+			if (this.conferenceButton) {
+				main_core.Dom.removeClass(this.conferenceButton, 'ui-btn-wait');
+			}
+		}
+		getConferenceChatId() {
+			return this.BX.ajax.runAction('calendar.api.calendarajax.getConferenceChatId', {
+				data: {
+					eventId: this.entry.data.PARENT_ID
+				},
+				analytics: {
+					tool: 'im',
+					category: 'events',
+					event: 'click_call',
+					type: 'videoconf',
+					c_section: 'card_full',
+					c_sub_section: 'card',
+					p5: `eventId_${this.entry.parentId}`
+				}
+			}).then(response => {
+				if (top.window.BXIM && response.data && response.data.chatId) {
+					top.window.BXIM.openMessenger(`chat${parseInt(response.data.chatId, 10)}`);
+					return null;
+				}
+				alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
+				return null;
+			}, response => {
+				console.error(response);
+				alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
+				return null;
+			});
+		}
+		handleEditButtonClick() {
+			this.BX.SidePanel.Instance.close(false, () => {
+				calendar_entry.EntryManager.openEditSlider({
+					entry: this.entry,
+					type: this.type,
+					ownerId: this.ownerId,
+					userId: this.userId
+				});
+			});
+		}
 	}
 
 	exports.EventViewForm = EventViewForm;
 
-}((this.BX.Calendar = this.BX.Calendar || {}),BX.Calendar.Controls,BX.Calendar,BX.Vue3,BX.Calendar,BX.Calendar,BX,BX.Event,BX.Calendar,BX,BX.Main,BX.Calendar,BX.UI));
+})(this.BX.Calendar = this.BX.Calendar || {}, BX.Calendar, BX, BX.Calendar, BX.Calendar.Controls, BX.Event, BX.Calendar, BX.Vue3, BX.UI, BX.Calendar, BX, BX.Main, BX.Calendar);
 //# sourceMappingURL=eventviewform.bundle.js.map

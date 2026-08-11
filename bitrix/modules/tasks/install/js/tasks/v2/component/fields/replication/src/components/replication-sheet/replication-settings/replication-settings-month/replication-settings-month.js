@@ -1,10 +1,7 @@
-import { Loc } from 'main.core';
 import { BInput, InputDesign, InputSize } from 'ui.system.input.vue';
-import { markRaw } from 'ui.vue3';
 
 import {
 	ReplicationMonthlyType,
-	ReplicationPeriod,
 	ReplicationWeekDayNum,
 	ReplicationWeekDayIndex,
 } from 'tasks.v2.const';
@@ -14,7 +11,6 @@ import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
 
 import { ReplicationSettingsMonthlyByDayOfMonth } from './monthly-by-day-of-month/repllication-settings-monthly-by-day-of-month';
 import { ReplicationSettingsMonthlyByDayOfWeek } from './monthly-by-day-of-week/replication-settings-monthly-by-day-of-week';
-import { ReplicationInterval } from '../interval/interval';
 import './replication-settings-month.css';
 
 // @vue/component
@@ -22,7 +18,6 @@ export const ReplicationSettingsMonth = {
 	name: 'ReplicationSettingsMonth',
 	components: {
 		BInput,
-		ReplicationInterval,
 		ReplicationSettingsMonthlyByDayOfMonth,
 		ReplicationSettingsMonthlyByDayOfWeek,
 		QuestionMark,
@@ -47,41 +42,6 @@ export const ReplicationSettingsMonth = {
 		};
 	},
 	computed: {
-		period(): string
-		{
-			return markRaw(ReplicationPeriod.Monthly);
-		},
-		monthlyMonthNum(): number | null
-		{
-			return this.monthlyType === ReplicationMonthlyType.Absolute
-				? this.replicateParams.monthlyMonthNum1
-				: this.replicateParams.monthlyMonthNum2;
-		},
-			useInterval: {
-				get(): boolean
-				{
-					return true;
-				},
-				set(useInterval: boolean): void
-				{
-					if (!useInterval)
-					{
-						return;
-					}
-
-					this.updateMonthlyMonthNum(this.interval);
-				},
-			},
-		interval: {
-			get(): number
-			{
-				return this.monthlyMonthNum || 1;
-			},
-			set(value: number): void
-			{
-				this.updateMonthlyMonthNum(value);
-			},
-		},
 		monthlyType: {
 			get(): number
 			{
@@ -129,32 +89,11 @@ export const ReplicationSettingsMonth = {
 				this.update({ monthlyWeekDayNum: value });
 			},
 		},
-		hintText(): string
-		{
-			return Loc.getMessagePlural(
-				'TASKS_V2_REPLICATION_SETTINGS_MONTH_HINT',
-				this.interval,
-				{
-					'#COUNT#': this.interval,
-				},
-			);
-		},
 	},
 	methods: {
 		update(params: Partial<TaskReplicateParams>): void
 		{
 			this.$emit('update', params);
-		},
-		updateMonthlyMonthNum(monthlyMonthNum: number | null): void
-		{
-			if (this.monthlyType === ReplicationMonthlyType.Absolute)
-			{
-				this.update({ monthlyMonthNum1: monthlyMonthNum });
-			}
-			else
-			{
-				this.update({ monthlyMonthNum2: monthlyMonthNum });
-			}
 		},
 		updateFieldsByMonthlyType(monthlyType: number): void
 		{
@@ -190,20 +129,6 @@ export const ReplicationSettingsMonth = {
 				v-model:weekDay="monthlyWeekDay"
 				v-model:weekDayNumber="monthlyWeekDayNum"
 			/>
-				<ReplicationInterval
-					v-model:useInterval="useInterval"
-					v-model:interval="interval"
-					:period
-					controlType="none"
-				>
-				<template #hint>
-					<QuestionMark
-						class="tasks-replication-sheet-action-row__hint"
-						:hintText
-						:hintMaxWidth="260"
-					/>
-				</template>
-			</ReplicationInterval>
 		</div>
 	`,
 };

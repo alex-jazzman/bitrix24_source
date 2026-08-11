@@ -1,7 +1,7 @@
 <?php
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_CONFIRM_YES"] = "Yes";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_DESCRIPTION"] = "The users you selected include those who are not a project participant. They will get access to the project if you add them to the chat. Are you sure you want to continue?";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_TITLE"] = "Add project participants";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_DESCRIPTION"] = "The users you selected include those who are not a project member. They will get access to the project if you add them to the chat. Are you sure you want to continue?";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_ADD_PARTICIPANTS_PROJECT_TITLE"] = "Add project members";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_CHAT_CONFIRM_YES"] = "Yes";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_CHAT_FOR_ALL_DESCRIPTION"] = "This will delete messages and files for everyone. This action cannot be undone. Are you sure you want to proceed?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_CLEAR_HISTORY_CHAT_FOR_ME_DESCRIPTION"] = "This will delete messages and files for you only. This action cannot be undone. Are you sure you want to proceed?";
@@ -36,5 +36,5 @@ $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_PROJECT_TITLE"] = "Leave project
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_CONFIRM_YES"] = "Yes";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_DESCRIPTION"] = "Do you want to remove this member from the collab? They will lose access to the collab chat, tasks, files and meetings.";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_COLLAB_TITLE"] = "Remove member";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_DESCRIPTION"] = "Are you sure you want to remove this participant from the project? They will lose access to the project chat, files, tasks and/or calendar events.";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_TITLE"] = "Remove participant";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_DESCRIPTION"] = "Are you sure you want to remove this member from the project? They will lose access to the project chat, files, tasks and/or calendar events.";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REMOVE_PROJECT_TITLE"] = "Remove member";

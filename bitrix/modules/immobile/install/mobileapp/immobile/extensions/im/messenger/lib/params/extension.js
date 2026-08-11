@@ -47,6 +47,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		chatSharingLinkAvailable: false,
 		isAiAssistantFeedbackAvailable: false,
 		isAiAssistantRegenerateAvailable: false,
+		isCopilotDraftChatAvailable: false,
 	};
 
 	/**
@@ -347,9 +348,22 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('COPILOT_BOT_NAME', '');
 		}
 
+		/**
+		 * @returns {string}
+		 */
+		getCopilotAgentName()
+		{
+			return this.get('COPILOT_AGENT_NAME', '');
+		}
+
 		isMarketAvailable()
 		{
 			return this.get('IS_MARKET_AVAILABLE', false);
+		}
+
+		getVibecodeButtonAvailable()
+		{
+			return this.get('IS_VIBECODE_BUTTON_AVAILABLE', false);
 		}
 
 		canUseAudioPanel()

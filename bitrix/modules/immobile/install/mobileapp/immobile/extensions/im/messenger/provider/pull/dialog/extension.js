@@ -9,7 +9,6 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 	const {
 		UserRole,
-		EventType,
 		DialogType,
 		MessagesAutoDeleteDelay,
 	} = require('im/messenger/const');
@@ -17,9 +16,9 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { ChatDataProvider } = require('im/messenger/provider/data');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatDeletionOrigin, ChatDeletionReason } = require('im/messenger/application/lib/chat-deletion-manager');
 
 	const { InputActionListener } = require('im/messenger/provider/pull/lib/input-action-listener');
 
@@ -309,25 +308,9 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 			if (Number(userId) === MessengerParams.getUserId())
 			{
-				const chatProvider = new ChatDataProvider();
-				const chatDataResult = await chatProvider.get({ dialogId });
-
-				if (!chatDataResult.hasData())
-				{
-					this.logger.info('handleChatUserLeave not have chatData:', dialogId);
-
-					return;
-				}
-				const chatData = chatDataResult.getData();
-				const chatHelper = DialogHelper.createByModel(chatData);
-				if (chatHelper?.isChannel)
-				{
-					await this.#userLeaveFromChannel(chatHelper, chatProvider, chatData);
-				}
-				else
-				{
-					await this.#userLeaveFromChat(chatProvider, chatData);
-				}
+				// removeParticipants / extranet update below run for every leave (not only
+				// the current user's) and no-op on a missing dialog, so they stay here.
+				await serviceLocator.get('chat-deletion-manager').leave({ dialogId, chatId });
 			}
 
 			await this.store.dispatch('dialoguesModel/removeParticipants', {
@@ -435,11 +418,6 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			}
 			this.logger.info('handleChatDelete:', params, extra);
 
-			if (params.userId === MessengerParams.getUserId())
-			{
-				return;
-			}
-
 			if ([DialogType.openChannel, DialogType.channel].includes(params.type))
 			{
 				void this.store.dispatch('commentModel/deleteChannelCounters', {
@@ -456,47 +434,13 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				});
 			}
 
-			const chatProvider = new ChatDataProvider();
-			const chatDataResult = await chatProvider.get({ chatId: params.chatId });
-			if (!chatDataResult.hasData())
-			{
-				this.logger.log(`handleChatDelete dialog with chat id=${params.chatId} not found`);
-
-				return;
-			}
-
-			const chatData = chatDataResult.getData();
-
-			const openedDialogStack = this.store.getters['applicationModel/getOpenDialogs']();
-			for (const dialogId of openedDialogStack)
-			{
-				const dialog = this.#getDialogModel(dialogId);
-
-				if (dialog?.parentChatId === params.chatId)
-				{
-					MessengerEmitter.emit(EventType.dialog.external.delete, {
-						dialogId,
-						shouldShowAlert: false,
-						chatType: dialog.type,
-						shouldSendDeleteAnalytics: false,
-					});
-				}
-			}
-
-			try
-			{
-				await chatProvider.delete({ dialogId: chatData.dialogId });
-			}
-			catch (error)
-			{
-				this.logger.error('handleChatDelete delete chat error', error);
-			}
-
-			MessengerEmitter.emit(EventType.dialog.external.delete, {
-				dialogId: chatData.dialogId,
-				shouldShowAlert: true,
-				chatType: chatData.type,
-				shouldSendDeleteAnalytics: true,
+			// No userId self-check here on purpose: it would wrongly skip chats deleted
+			// from other devices by the same user. The echo of a local delete is a no-op.
+			await serviceLocator.get('chat-deletion-manager').delete({
+				dialogId: params.dialogId,
+				chatId: params.chatId,
+				origin: ChatDeletionOrigin.pull,
+				reason: ChatDeletionReason.delete,
 			});
 		}
 
@@ -590,77 +534,6 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		#getDialogModel(dialogId)
 		{
 			return this.store.getters['dialoguesModel/getById'](dialogId);
-		}
-
-		/**
-		 * @param {DialogHelper} chatHelper
-		 * @param {ChatDataProvider} chatProvider
-		 * @param {DialoguesModelState} chatData
-		 */
-		async #userLeaveFromChannel(chatHelper, chatProvider, chatData)
-		{
-			if (chatHelper?.isOpenChannel)
-			{
-				await this.store.dispatch('dialoguesModel/update', {
-					dialogId: chatHelper.dialogId,
-					fields: {
-						role: UserRole.guest,
-					},
-				});
-			}
-
-			void this.store.dispatch('commentModel/deleteChannelCounters', {
-				channelId: chatHelper.chatId,
-			});
-
-			const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatHelper.chatId);
-			if (
-				Type.isPlainObject(commentChatData)
-				&& this.store.getters['applicationModel/isDialogOpen'](commentChatData.dialogId)
-			)
-			{
-				await chatProvider.delete({ dialogId: commentChatData.dialogId });
-				MessengerEmitter.emit(EventType.dialog.external.delete, {
-					dialogId: commentChatData.dialogId,
-					shouldShowAlert: false,
-					shouldSendDeleteAnalytics: false,
-					chatType: chatData.type,
-				});
-			}
-
-			await chatProvider.deleteFromSource(ChatDataProvider.source.database, {
-				dialogId: chatHelper.dialogId,
-			});
-
-			MessengerEmitter.emit(EventType.dialog.external.delete, {
-				dialogId: chatHelper.dialogId,
-				shouldShowAlert: true,
-				shouldSendDeleteAnalytics: false,
-				chatType: chatData.type,
-			});
-		}
-
-		/**
-		 * @param {ChatDataProvider} chatProvider
-		 * @param {DialoguesModelState} chatData
-		 */
-		async #userLeaveFromChat(chatProvider, chatData)
-		{
-			try
-			{
-				await chatProvider.delete({ dialogId: chatData.dialogId });
-			}
-			catch (error)
-			{
-				this.logger.error('handleChatUserLeave.userLeaveFromChat chatProvider.delete catch:', error);
-			}
-
-			MessengerEmitter.emit(EventType.dialog.external.delete, {
-				dialogId: chatData.dialogId,
-				shouldShowAlert: true,
-				chatType: chatData.type,
-				shouldSendDeleteAnalytics: false,
-			});
 		}
 	}
 

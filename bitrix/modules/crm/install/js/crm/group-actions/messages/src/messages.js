@@ -3,6 +3,7 @@ import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc, Reflection } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { EntityCatalog } from 'ui.entity-catalog';
 import { BatchWhatsappMessageManager, ProcessRegistry, type ProgressBarRepository } from 'crm.autorun';
 import { UI } from 'ui.notification';
@@ -285,7 +286,7 @@ export class Messages
 
 		if (analyticsData)
 		{
-			BX.UI.Analytics.sendData(analyticsData.buildData());
+			sendData(analyticsData.buildData());
 		}
 	}
 }

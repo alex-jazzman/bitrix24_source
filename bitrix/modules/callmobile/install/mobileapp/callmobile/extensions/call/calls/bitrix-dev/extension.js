@@ -53,7 +53,6 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 	const backendPingPeriod = 25000;
 
 	const connectionRestoreTime = 15000;
-
 	class BitrixCallDev
 	{
 		constructor(params)
@@ -146,6 +145,8 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			this.lastSelfPingReceivedTimeout = null;
 
 			this.created = new Date();
+
+			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()
@@ -2014,7 +2015,7 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			{
 				clearTimeout(this.callingTimeout);
 			}
-			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), 30000);
+			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 			this.updateCalculatedState();
 		}
 

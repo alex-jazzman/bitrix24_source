@@ -116,6 +116,7 @@ $MESS["EC_CALENDAR_DEL_ERROR"] = "Error deleting the calendar.";
 $MESS["EC_CALENDAR_ERROR_CHAT_USER_NOT_FOUND"] = "Error! Only an event attendee can create a chat";
 $MESS["EC_CALENDAR_IM_NOT_FOUND"] = "The Web Messenger module is not installed.";
 $MESS["EC_CALENDAR_SAVE_ERROR"] = "Error saving the calendar.";
+$MESS["EC_CALENDAR_TIMEZONE_SETTINGS_HINT"] = "Open your user profile to change the time zone.";
 $MESS["EC_CALENDAR_TO_EXCH"] = "Synchronize Calendar With Microsoft Exchange";
 $MESS["EC_CALS_ARE_ABSENT"] = "No calendars available";
 $MESS["EC_CAL_ACCESS_SETTINGS"] = "Access permissions";

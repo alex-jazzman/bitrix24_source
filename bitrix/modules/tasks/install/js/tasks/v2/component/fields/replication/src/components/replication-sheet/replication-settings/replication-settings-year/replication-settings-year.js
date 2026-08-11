@@ -33,7 +33,7 @@ export const ReplicationSettingsYear = {
 
 				this.update({ yearlyType });
 
-				if (prevValue !== this.yearlyType)
+				if (prevValue !== yearlyType)
 				{
 					this.updateByYearlyType(yearlyType);
 				}

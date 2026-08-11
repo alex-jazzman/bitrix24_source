@@ -1,0 +1,19 @@
+<?php
+$MESS["MENU_PRESET_TITLE"] = "Выберите, с чем вы планируете работать в Битрикс24 чаще всего";
+$MESS["MENU_PRESET_DESC"] = "Это упростит ежедневную работу: выбранный инструмент будет открываться первым, в меню останутся только нужные вам разделы. Поменять меню вы сможете в любое время.";
+$MESS["MENU_PRESET_SOCIAL_TITLE1_1"] = "Совместная работа";
+$MESS["MENU_PRESET_SOCIAL_DESC1"] = "Общаться внутри компании";
+$MESS["MENU_PRESET_SOCIAL_DESC11"] = "Общаться и работать вместе";
+$MESS["MENU_PRESET_SOCIAL_DESC2"] = "быстро решать любые вопросы";
+$MESS["MENU_PRESET_CRM_TITLE"] = "CRM";
+$MESS["MENU_PRESET_CRM_DESC1"] = "Автоматизировать продажи";
+$MESS["MENU_PRESET_CRM_DESC11"] = "Продавать больше";
+$MESS["MENU_PRESET_CRM_DESC2"] = "повысить конверсию, общаться с клиентами";
+$MESS["MENU_PRESET_TASKS_TITLE"] = "Задачи";
+$MESS["MENU_PRESET_TASKS_TITLE1"] = "Задачи и проекты";
+$MESS["MENU_PRESET_TASKS_DESC1"] = "Управлять проектами";
+$MESS["MENU_PRESET_TASKS_DESC11"] = "Работать вместе и успевать вовремя";
+$MESS["MENU_PRESET_TASKS_DESC2"] = "следить за сроками и контролировать исполнение";
+$MESS["MENU_PRESET_SITES_TITLE"] = "Сайты";
+$MESS["MENU_PRESET_SITES_DESC1"] = "Создавать сайты, которые продают";
+$MESS["MENU_PRESET_SITES_DESC2"] = "самим создавать сайты и лендинги сразу в CRM";

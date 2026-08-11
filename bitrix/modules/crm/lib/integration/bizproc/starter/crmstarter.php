@@ -15,6 +15,7 @@ use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\EventDto;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use CCrmBizProcHelper;
@@ -89,55 +90,54 @@ final class CrmStarter
 		return $this->addConversionResult($result);
 	}
 
-	public function runOnInnerDocumentAdd(RunDataDto $dto): Result
+	public function runOnInnerDocumentAdd(
+		RunDataDto $dto,
+		bool $runAutomation = true,
+		bool $runProcess = true,
+	): Result
 	{
-		$result = new Result();
-
 		$freeScenarioResult = $this->runLeadFreeScenarioIfEnabled();
 		if ($freeScenarioResult)
 		{
-			return $result->setConversionResult($freeScenarioResult);
+			return (new Result())->setConversionResult($freeScenarioResult);
 		}
 
-		if (\Bitrix\Main\Config\Option::get('crm', 'start_bp_within_bp', 'N') === 'Y')
-		{
-			// both: process + automation
-			$starter = $this->getStarter(true, $dto);
-			if ($starter)
-			{
-				$starter->setValidateParameters(false);
-				$startResult = $starter->start();
-				$result->addErrors($startResult->getErrors());
-
-				return $this->addConversionResult($result);
-			}
-
-			$processResult = $this->runProcess($dto, \CCrmBizProcEventType::Create);
-			$result->addErrors($processResult->getErrors());
-			if ($processResult->getConversionResult())
-			{
-				$result->setConversionResult($processResult->getConversionResult());
-			}
-		}
-
-		$automationResult = $this->runAutomation($dto, \CCrmBizProcEventType::Create);
-		$result->addErrors($automationResult->getErrors());
-		if ($automationResult->getConversionResult())
-		{
-			$result->setConversionResult($automationResult->getConversionResult());
-		}
-
-		return $this->addConversionResult($result);
+		return $this->runOnInnerDocument(
+			$dto,
+			\CCrmBizProcEventType::Create,
+			runAutomation: $runAutomation,
+			runProcess: $runProcess,
+		);
 	}
 
-	public function runOnInnerDocumentUpdate(RunDataDto $dto): Result
+	public function runOnInnerDocumentUpdate(
+		RunDataDto $dto,
+		bool $runAutomation = true,
+		bool $runProcess = true,
+	): Result
+	{
+		return $this->runOnInnerDocument(
+			$dto,
+			\CCrmBizProcEventType::Edit,
+			runAutomation: $runAutomation,
+			runProcess: $runProcess,
+		);
+	}
+
+	private function runOnInnerDocument(
+		RunDataDto $dto,
+		int $eventType,
+		bool $runAutomation,
+		bool $runProcess,
+	): Result
 	{
 		$result = new Result();
+		$canStartBizProcWithinBizProc = Option::get('crm', 'start_bp_within_bp', 'N') === 'Y';
+		$isAdd = $eventType === \CCrmBizProcEventType::Create;
 
-		if (\Bitrix\Main\Config\Option::get('crm', 'start_bp_within_bp', 'N') === 'Y')
+		if ($runProcess && $runAutomation && $canStartBizProcWithinBizProc)
 		{
-			// both: process + automation
-			$starter = $this->getStarter(false, $dto);
+			$starter = $this->getStarter($isAdd, $dto);
 			if ($starter)
 			{
 				$starter->setValidateParameters(false);
@@ -146,8 +146,11 @@ final class CrmStarter
 
 				return $this->addConversionResult($result);
 			}
+		}
 
-			$processResult = $this->runProcess($dto, \CCrmBizProcEventType::Edit);
+		if ($runProcess && $canStartBizProcWithinBizProc)
+		{
+			$processResult = $this->runProcess($dto, $eventType);
 			$result->addErrors($processResult->getErrors());
 			if ($processResult->getConversionResult())
 			{
@@ -155,11 +158,14 @@ final class CrmStarter
 			}
 		}
 
-		$automationResult = $this->runAutomation($dto, \CCrmBizProcEventType::Edit);
-		$result->addErrors($automationResult->getErrors());
-		if ($automationResult->getConversionResult())
+		if ($runAutomation)
 		{
-			$result->setConversionResult($automationResult->getConversionResult());
+			$automationResult = $this->runAutomation($dto, $eventType);
+			$result->addErrors($automationResult->getErrors());
+			if ($automationResult->getConversionResult())
+			{
+				$result->setConversionResult($automationResult->getConversionResult());
+			}
 		}
 
 		return $this->addConversionResult($result);

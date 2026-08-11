@@ -96,3 +96,15 @@
 .bizproc-setuptemplateactivity-preview-block .ui-tile-uploader-item.--selected .ui-tile-uploader-item-remove {
 	width: auto;
 }
+
+.bizproc-setuptemplateactivity-preview-block .ui-form-label.--required {
+	position: relative;
+}
+
+.bizproc-setuptemplateactivity-preview-block .ui-form-label.--required::after {
+	content: '*';
+	position: absolute;
+	right: -5px;
+	top: 0;
+	color: var(--ui-color-palette-red-60);
+}

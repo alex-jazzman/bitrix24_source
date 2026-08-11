@@ -14,7 +14,7 @@
 	flex-direction: column;
 	justify-content: space-between;
 	width: 100%;
-	height: calc(100% - 45px);
+	height: 100%;
 }
 
 .editor-chart-catalog.--expanded {
@@ -41,10 +41,6 @@
 	height: 100%;
 	overflow: hidden;
 	box-sizing: border-box;
-}
-
-.editor-chart-catalog__footer {
-	height: 45px;
 }
 
 .editor-chart-catalog__search {

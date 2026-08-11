@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_vue3, booking_core, booking_const, booking_component_mixin_locMixin, booking_model_resourceCreationWizard, booking_model_aiAgent, booking_lib_sidePanelInstance, ui_vue3_vuex, booking_provider_service_resourceCreationWizardService, main_loader, booking_component_button, ui_notificationManager, crm_messagesender, booking_provider_service_resourcesService, booking_provider_service_resourcesTypeService, booking_provider_service_aiAgentLauncherService, booking_lib_analytics, booking_component_helpDeskLoc, ui_iconSet_api_vue, ui_iconSet_actions, ui_forms, ui_iconSet_main, ui_layoutForm, booking_lib_duration, ui_iconSet_api_core, ui_uploader_core, ui_vue3_components_richLoc, ui_notification, booking_component_uiErrorMessage, ui_entitySelector, booking_component_switcher, booking_component_reminder, booking_lib_limit, booking_provider_service_catalogServiceSkuService, ui_vue3_directives_hint, ui_buttons, booking_lib_timezone, main_date, main_popup, booking_component_popup, booking_lib_ahaMoments, ui_vue3_components_menu, ui_iconSet_outline, ui_iconSet_crm, ui_hint, booking_component_cyclePopup, booking_component_uiAlerts, booking_component_uiResourceWizardItem, ui_vue3_components_button) {
+(function (exports, main_core, ui_vue3, booking_core, booking_const, booking_component_mixin_locMixin, booking_model_resourceCreationWizard, booking_lib_sidePanelInstance, ui_vue3_vuex, booking_provider_service_resourceCreationWizardService, main_loader, booking_component_button, ui_notificationManager, crm_messagesender, booking_provider_service_resourcesService, booking_provider_service_resourcesTypeService, booking_lib_analytics, booking_component_helpDeskLoc, ui_iconSet_api_vue, ui_iconSet_actions, ui_forms, ui_iconSet_main, ui_layoutForm, booking_lib_duration, ui_iconSet_api_core, ui_uploader_core, ui_vue3_components_richLoc, ui_notification, booking_component_uiErrorMessage, ui_entitySelector, booking_component_switcher, booking_component_reminder, booking_lib_limit, booking_provider_service_catalogServiceSkuService, ui_buttons, ui_vue3_directives_hint, booking_lib_timezone, main_date, main_popup, booking_component_popup, booking_lib_ahaMoments, ui_vue3_components_menu, ui_iconSet_outline, ui_iconSet_crm, ui_hint, booking_component_cyclePopup, booking_component_uiAlerts, booking_component_uiResourceWizardItem, ui_vue3_components_button, booking_provider_service_aiAgentLauncherService) {
 	'use strict';
 
 	const UiLoader = {
@@ -233,10 +233,6 @@ this.BX = this.BX || {};
 				id: this.#resource.typeId,
 				...this.#prepareResourceTypeNotifications(this.#resource)
 			});
-			const aiAgent = this.store.getters[`${booking_const.Model.AiAgent}/aiAgent`];
-			if (aiAgent?.action === 'copyAndStart' && this.#resource.senderCode === booking_const.Communication.AiCall) {
-				void booking_provider_service_aiAgentLauncherService.aiAgentLauncherService.launchInBackground();
-			}
 			main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
 		}
 		#isBitrix24Approved() {
@@ -511,8 +507,8 @@ this.BX = this.BX || {};
 
 	const unitDurations$1 = booking_lib_duration.Duration.getUnitDurations();
 	const SlotLengthLimitWithoutMultiday = unitDurations$1.H * 12 / unitDurations$1.i;
-	function normalizeSlotLength(slotLength, isMultidayFeatureAvailable) {
-		if (isMultidayFeatureAvailable || slotLength <= SlotLengthLimitWithoutMultiday) {
+	function normalizeSlotLength(slotLength, isMultidayFeatureEnabled) {
+		if (isMultidayFeatureEnabled || slotLength <= SlotLengthLimitWithoutMultiday) {
 			return slotLength;
 		}
 		return SlotLengthLimitWithoutMultiday;
@@ -1772,7 +1768,7 @@ this.BX = this.BX || {};
 		},
 		methods: {
 			distributeInitialValue() {
-				let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureAvailable);
+				let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureEnabled);
 				this.days = Math.floor(remainingMinutes / (24 * 60));
 				remainingMinutes %= 24 * 60;
 				this.hours = Math.floor(remainingMinutes / 60);
@@ -1780,7 +1776,7 @@ this.BX = this.BX || {};
 				this.minutes = remainingMinutes;
 			},
 			calculateTotalMinutes() {
-				const totalMinutes = normalizeSlotLength(this.days * 24 * 60 + this.hours * 60 + this.minutes, this.isMultidayFeatureAvailable);
+				const totalMinutes = normalizeSlotLength(this.days * 24 * 60 + this.hours * 60 + this.minutes, this.isMultidayFeatureEnabled);
 				this.applyTotalMinutes(totalMinutes);
 				this.$emit('input', totalMinutes);
 			},
@@ -1833,22 +1829,16 @@ this.BX = this.BX || {};
 				if (event.key === 'Enter') {
 					event.target.blur();
 				}
+			},
+			handleDaysClick() {
+				if (!this.isMultidayFeatureEnabled) {
+					void booking_lib_limit.limit.show(booking_const.LimitFeatureId.MultidayBooking);
+				}
 			}
 		},
 		computed: {
-			isMultidayFeatureAvailable() {
-				return this.$store.getters[`${booking_const.Model.Interface}/isMultidayFeatureAvailable`];
-			},
-			hourHint() {
-				if (this.isMultidayFeatureAvailable) {
-					return null;
-				}
-				return {
-					text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'),
-					popupOptions: {
-						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-					}
-				};
+			isMultidayFeatureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingLong;
 			},
 			minutesHint() {
 				return {
@@ -1864,17 +1854,20 @@ this.BX = this.BX || {};
 			<div class="ui-form-row-inline">
 				<div
 					class="ui-form-row"
-					:class="{ '--disabled': !isMultidayFeatureAvailable }"
+					:class="{ '--disabled': !isMultidayFeatureEnabled }"
 				>
 					<div class="ui-form-content">
-						<div class="ui-form-row">
+						<div
+							class="ui-form-row resource-creation-wizard__form-slot-length-precision-days"
+							@click="handleDaysClick"
+						>
 							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
 								<input
 									:data-id="'brcw-resource-slot-length-precision-days'"
 									v-model="days"
 									type="text"
 									class="ui-ctl-element"
-									:disabled="!isMultidayFeatureAvailable"
+									:disabled="!isMultidayFeatureEnabled"
 									@blur="validateDays"
 									@keydown="handleEnterKey"
 								>
@@ -1890,10 +1883,7 @@ this.BX = this.BX || {};
 				<div class="ui-form-row">
 					<div class="ui-form-content">
 						<div class="ui-form-row">
-							<div 
-								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
-								v-hint="hourHint"
-							>
+							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
 								<input
 									:data-id="'brcw-resource-slot-length-precision-hours'"
 									v-model="hours"
@@ -1948,11 +1938,9 @@ this.BX = this.BX || {};
 	const multidayOnlyLengths = new Set([units.H * 24, units.d * 7]);
 	const SlotLengthSelector = {
 		name: 'ResourceSettingsCardSlotLengthSelector',
-		directives: {
-			hint: ui_vue3_directives_hint.hint
-		},
 		emits: ['select'],
 		components: {
+			Icon: ui_iconSet_api_vue.BIcon,
 			SlotLengthPrecisionSelection
 		},
 		props: {
@@ -1963,6 +1951,7 @@ this.BX = this.BX || {};
 		},
 		data() {
 			return {
+				IconSet: ui_iconSet_api_vue.Set,
 				selectedPrecisionValue: this.initialSelectedValue,
 				precisionMode: false
 			};
@@ -1978,8 +1967,8 @@ this.BX = this.BX || {};
 					});
 				}
 			},
-			isMultidayFeatureAvailable() {
-				return this.$store.getters[`${booking_const.Model.Interface}/isMultidayFeatureAvailable`];
+			isMultidayFeatureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingLong;
 			},
 			durations() {
 				return [{
@@ -2011,6 +2000,7 @@ this.BX = this.BX || {};
 		methods: {
 			select(value) {
 				if (this.isDurationDisabled(value)) {
+					void booking_lib_limit.limit.show(booking_const.LimitFeatureId.MultidayBooking);
 					return;
 				}
 				this.selectedValue = parseInt(value, 10);
@@ -2030,24 +2020,12 @@ this.BX = this.BX || {};
 				this.$emit('select', this.selectedPrecisionValue);
 			},
 			isDurationDisabled(value) {
-				return !this.isMultidayFeatureAvailable && multidayOnlyLengths.has(value);
+				return !this.isMultidayFeatureEnabled && multidayOnlyLengths.has(value);
 			},
 			getClass(value) {
 				return {
 					'ui-btn-primary': this.selectedValue === value,
-					'ui-btn-light': this.selectedValue !== value,
-					'ui-btn-disabled': this.isDurationDisabled(value)
-				};
-			},
-			getSoonHintContent(value) {
-				if (!this.isDurationDisabled(value)) {
-					return null;
-				}
-				return {
-					text: this.loc('BRCW_BOOKING_SOON_HINT'),
-					popupOptions: {
-						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-					}
+					'ui-btn-light': this.selectedValue !== value
 				};
 			}
 		},
@@ -2056,13 +2034,18 @@ this.BX = this.BX || {};
 			<div
 				v-for="(duration, index) in durations"
 				:key="index"
-				:data-id="'brcw-resource-slot-length-selector-size-' + index"
-				class="ui-btn ui-btn-xs"
-				:class="getClass(duration.value)"
-				@click="select(duration.value)"
-				v-hint="getSoonHintContent(duration.value)"
+				class="resource-creation-wizard__form-slot-length-selector-item"
+				:class="{'--locked': isDurationDisabled(duration.value)}"
 			>
-				{{ duration.label }}
+				<div
+					:data-id="'brcw-resource-slot-length-selector-size-' + index"
+					class="ui-btn ui-btn-xs"
+					:class="getClass(duration.value)"
+					@click="select(duration.value)"
+				>
+					{{ duration.label }}
+					<Icon v-if="isDurationDisabled(duration.value)" :name="IconSet.LOCK"/>
+				</div>
 			</div>
 		</div>
 		<transition name="fade">
@@ -2857,8 +2840,7 @@ this.BX = this.BX || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				timezone: `${booking_const.Model.Interface}/timezone`,
-				isMultidayFeatureAvailable: `${booking_const.Model.Interface}/isMultidayFeatureAvailable`
+				timezone: `${booking_const.Model.Interface}/timezone`
 			}),
 			...mapResourceGetters$1({
 				resource: 'getResource',
@@ -2891,7 +2873,10 @@ this.BX = this.BX || {};
 			},
 			slotSize() {
 				const slotRange = this.resource.slotRanges?.[0];
-				return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureAvailable);
+				return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureEnabled);
+			},
+			isMultidayFeatureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingLong;
 			},
 			isMain: {
 				get() {
@@ -2959,7 +2944,7 @@ this.BX = this.BX || {};
 				});
 			},
 			updateSlotLength(value) {
-				this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureAvailable);
+				this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureEnabled);
 				if (this.resource.slotRanges.length === 0) {
 					return;
 				}
@@ -2970,7 +2955,7 @@ this.BX = this.BX || {};
 				return slotRanges.map(slotRange => {
 					return {
 						...slotRange,
-						slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureAvailable),
+						slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureEnabled),
 						timezone: this.timezone
 					};
 				});
@@ -5056,9 +5041,9 @@ this.BX = this.BX || {};
 		async #initCore(resourceId) {
 			try {
 				await booking_core.Core.init();
-				await Promise.all([booking_core.Core.addDynamicModule(booking_model_resourceCreationWizard.ResourceCreationWizardModel.create().setVariables({
+				await booking_core.Core.addDynamicModule(booking_model_resourceCreationWizard.ResourceCreationWizardModel.create().setVariables({
 					resourceId
-				})), booking_core.Core.addDynamicModule(booking_model_aiAgent.AiAgentModel.create())]);
+				}));
 			} catch (error) {
 				console.error('Init Resource creation wizard error', error);
 			}
@@ -5088,7 +5073,7 @@ this.BX = this.BX || {};
 			this.unsubscribe();
 			this.#application.unmount();
 			this.#application = null;
-			await Promise.all([booking_core.Core.removeDynamicModule(booking_const.Model.ResourceCreationWizard), booking_core.Core.removeDynamicModule(booking_const.Model.AiAgent)]);
+			await booking_core.Core.removeDynamicModule(booking_const.Model.ResourceCreationWizard);
 		}
 		subscribe() {
 			main_core.Event.EventEmitter.subscribe(booking_const.EventName.CloseWizard, this.close);
@@ -5103,5 +5088,5 @@ this.BX = this.BX || {};
 
 	exports.ResourceCreationWizard = ResourceCreationWizard;
 
-})(this.BX.Booking = this.BX.Booking || {}, BX, BX.Vue3, BX.Booking, BX.Booking.Const, BX.Booking.Component.Mixin, BX.Booking.Model, BX.Booking.Model, BX.Booking.Lib, BX.Vue3.Vuex, BX.Booking.Provider.Service, BX, BX.Booking.Component, BX.UI.NotificationManager, BX.Crm.MessageSender, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib, BX.Booking.Component, BX.UI.IconSet, window, BX, window, BX.UI, BX.Booking.Lib, BX.UI.IconSet, BX.UI.Uploader, BX.UI.Vue3.Components, BX, BX.Booking.Component, BX.UI.EntitySelector, BX.Booking.Component, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Vue3.Directives, BX.UI, BX.Booking.Lib, BX.Main, BX.Main, BX.Booking.Component, BX.Booking.Lib, BX.UI.Vue3.Components, window, window, BX.UI, BX.Booking.Component, BX.Booking.Component, BX.Booking.Component, BX.Vue3.Components);
+})(this.BX.Booking = this.BX.Booking || {}, BX, BX.Vue3, BX.Booking, BX.Booking.Const, BX.Booking.Component.Mixin, BX.Booking.Model, BX.Booking.Lib, BX.Vue3.Vuex, BX.Booking.Provider.Service, BX, BX.Booking.Component, BX.UI.NotificationManager, BX.Crm.MessageSender, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib, BX.Booking.Component, BX.UI.IconSet, window, BX, window, BX.UI, BX.Booking.Lib, BX.UI.IconSet, BX.UI.Uploader, BX.UI.Vue3.Components, BX.UI.Notification, BX.Booking.Component, BX.UI.EntitySelector, BX.Booking.Component, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Provider.Service, BX.UI, BX.Vue3.Directives, BX.Booking.Lib, BX.Main, BX.Main, BX.Booking.Component, BX.Booking.Lib, BX.UI.Vue3.Components, window, window, BX.UI, BX.Booking.Component, BX.Booking.Component, BX.Booking.Component, BX.Vue3.Components, BX.Booking.Provider.Service);
 //# sourceMappingURL=resource-creation-wizard.bundle.js.map

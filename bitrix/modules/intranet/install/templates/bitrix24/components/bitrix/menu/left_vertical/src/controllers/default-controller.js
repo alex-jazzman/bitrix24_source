@@ -1,12 +1,10 @@
-import {Loc} from 'main.core';
-import {Menu, MenuItem} from 'main.popup';
-import {EventEmitter, BaseEvent} from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import Options from '../options';
 
 export default class DefaultController
 {
 	container;
-	#popup = null;
+	popup = null;
 
 	constructor(
 		container, {
@@ -38,32 +36,38 @@ export default class DefaultController
 
 	getPopup()
 	{
-		return this.#popup;
+		return this.popup;
+	}
+
+	bindPopupEvents()
+	{
+		EventEmitter.subscribe(this.popup, 'onClose', () => {
+			EventEmitter.emit(this, Options.eventName('onClose'));
+		});
+		EventEmitter.subscribe(this.popup, 'onShow', () => {
+			EventEmitter.emit(this, Options.eventName('onShow'));
+		});
+		EventEmitter.subscribe(this.popup, 'onDestroy', () => {
+			this.popup = null;
+		});
 	}
 
 	show()
 	{
-		if (this.#popup === null)
+		if (this.popup === null)
 		{
-			this.#popup = this.createPopup(...arguments);
-			EventEmitter.subscribe(this.#popup, 'onClose', () => {
-				EventEmitter.emit(this, Options.eventName('onClose'));
-			});
-			EventEmitter.subscribe(this.#popup, 'onShow', () => {
-				EventEmitter.emit(this, Options.eventName('onShow'));
-			});
-			EventEmitter.subscribe(this.#popup, 'onDestroy', () => {
-				this.#popup = null;
-			});
+			this.popup = this.createPopup(...arguments);
+
+			this.bindPopupEvents();
 		}
-		this.#popup.show()
+		this.popup.show();
 	}
 
 	hide()
 	{
-		if (this.#popup)
+		if (this.popup)
 		{
-			this.#popup.close();
+			this.popup.close();
 		}
 	}
 }

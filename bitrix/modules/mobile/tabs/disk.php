@@ -19,7 +19,8 @@ final class Disk implements Tabable
 
 	public function isAvailable()
 	{
-		return Loader::includeModule('diskmobile');
+		return Loader::includeModule('diskmobile')
+			&& !$this->context->isGuest;
 	}
 
 	public function getData()

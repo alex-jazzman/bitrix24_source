@@ -10,6 +10,7 @@ return [
     'rel' => [
 		'im.v2.const',
 		'main.core',
+		'main.core.events',
 		'ui.icon-set.api.vue',
 		'ui.vue3',
 	],

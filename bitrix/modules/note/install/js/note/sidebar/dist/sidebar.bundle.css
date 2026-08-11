@@ -103,7 +103,7 @@
 	flex: 0 0 auto;
 	width: 30px;
 	height: 30px;
-	background-image: url('/bitrix/js/note/sidebar/src/images/collection.svg?v=2');
+	background-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 20px 20px;
@@ -1036,8 +1036,8 @@
 }
 
 .sidebar-search-row__menu-icon-collection {
-	-webkit-mask-image: url('/bitrix/js/note/sidebar/src/images/collection.svg?v=2');
-	mask-image: url('/bitrix/js/note/sidebar/src/images/collection.svg?v=2');
+	-webkit-mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
+	mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;

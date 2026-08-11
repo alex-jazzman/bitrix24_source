@@ -1,50 +1,49 @@
-import { Text } from 'main.core';
+import { Text, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
 
-import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
+import { ChatType, Layout, UserRole } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelChat } from 'im.v2.model';
 
+import { AiAssistant } from './classes/ai-assistant';
+import { AttachMenu } from './classes/attach-menu';
+import { ChatCreate } from './classes/chat-create';
+import { ChatDelete } from './classes/chat-delete';
+import { ChatEdit } from './classes/chat-edit';
+import { ChatEntities } from './classes/chat-entities';
+import { ChatInviteLink } from './classes/chat-invite-link';
+import { CheckIn } from './classes/check-in';
+import { CollabEntities } from './classes/collab-entities';
+import { Copilot } from './classes/copilot';
+import { DesktopMode } from './classes/desktop-mode';
+import { FormatToolbar } from './classes/format-toolbar';
+import { HistoryLimit } from './classes/history-limit';
+import { Mention } from './classes/mention';
+import { MessageContextMenu } from './classes/message-context-menu';
+import { MessageDelete } from './classes/message-delete';
+import { MessageForward } from './classes/message-forward';
+import { MessagePins } from './classes/message-pins';
+import { MessageSearch } from './classes/message-search';
+import { Notification } from './classes/notification';
+import { Player } from './classes/player';
+import { RecentContextMenu } from './classes/recent-context-menu';
+import { RecentSearch } from './classes/recent-search';
+import { SliderInvite } from './classes/slider-invite';
+import { Stickers } from './classes/stickers';
+import { Supervisor } from './classes/supervisor';
+import { TaskComments } from './classes/task-comments';
+import { UserAdd } from './classes/user-add';
+import { Vote } from './classes/vote-create';
 import { AnalyticsEvent, AnalyticsTool, AnalyticsCategory } from './const';
-
-import { getCollabId } from './helpers/get-collab-id';
-import { getUserType } from './helpers/get-user-type';
 import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
 import { getChatType } from './helpers/get-chat-type';
+import { getCollabId } from './helpers/get-collab-id';
+import { getUserType } from './helpers/get-user-type';
 import { isAiAssistant } from './helpers/is-ai-assistant';
 import { isSelfChat } from './helpers/is-self-chat';
-
-import { CollabEntities } from './classes/collab-entities';
-import { ChatEntities } from './classes/chat-entities';
-import { ChatDelete } from './classes/chat-delete';
-import { MessageDelete } from './classes/message-delete';
-import { HistoryLimit } from './classes/history-limit';
-import { UserAdd } from './classes/user-add';
-import { ChatEdit } from './classes/chat-edit';
-import { ChatCreate } from './classes/chat-create';
-import { Supervisor } from './classes/supervisor';
-import { CheckIn } from './classes/check-in';
-import { Copilot } from './classes/copilot';
-import { AttachMenu } from './classes/attach-menu';
-import { Vote } from './classes/vote-create';
-import { MessagePins } from './classes/message-pins';
-import { MessageForward } from './classes/message-forward';
-import { MessageContextMenu } from './classes/message-context-menu';
-import { SliderInvite } from './classes/slider-invite';
-import { DesktopMode } from './classes/desktop-mode';
-import { ChatInviteLink } from './classes/chat-invite-link';
-import { AiAssistant } from './classes/ai-assistant';
-import { Player } from './classes/player';
-import { Notification } from './classes/notification';
-import { Stickers } from './classes/stickers';
-import { MessageSearch } from './classes/message-search';
-import { RecentContextMenu } from './classes/recent-context-menu';
-import { FormatToolbar } from './classes/format-toolbar';
-import { RecentSearch } from './classes/recent-search';
-import { Mention } from './classes/mention';
-import { TaskComments } from './classes/task-comments';
 import { RecentHeaderMenu } from './classes/recent-header-menu';
-
-import type { ImModelChat } from 'im.v2.model';
+import { BitrixGptAgentPromo } from './classes/bitrix-gpt-agent-promo';
 
 type DialogId = string;
 
@@ -88,6 +87,8 @@ export class Analytics
 	mention: Mention = new Mention();
 	taskComments: TaskComments = new TaskComments();
 	recentHeaderMenu: RecentHeaderMenu = new RecentHeaderMenu();
+	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+	bitrixGptAgentPromo: BitrixGptAgentPromo = new BitrixGptAgentPromo();
 
 	static #instance: Analytics;
 
@@ -103,6 +104,11 @@ export class Analytics
 
 	ignoreNextChatOpen(dialogId: string): void
 	{
+		if (!Type.isStringFilled(dialogId))
+		{
+			return;
+		}
+
 		this.#excludedChats.add(dialogId);
 	}
 
@@ -195,7 +201,7 @@ export class Analytics
 			params.p3 = `isMember_${isMember}`;
 		}
 
-		if (chatType === ChatType.copilot)
+		if (chatType === ChatType.copilot && !this.#isBitrixGptV2Available)
 		{
 			const role = Core.getStore().getters['copilot/chats/getRole'](dialog.dialogId);
 			params.p4 = `role_${Text.toCamelCase(role.code)}`;
@@ -206,6 +212,11 @@ export class Analytics
 
 	onTypeMessage(dialog: ImModelChat): void
 	{
+		if (!dialog.inited)
+		{
+			return;
+		}
+
 		if (!isSelfChat(dialog.dialogId) || this.#chatsWithTyping.has(dialog.dialogId))
 		{
 			return;

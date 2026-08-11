@@ -3,6 +3,7 @@ import { mapGetters } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
 import { DatePeriod, type DatePeriodTs } from 'booking.lib.date-period';
+import { Duration } from 'booking.lib.duration';
 import { EmptyFilterResultsPopup } from 'booking.component.empty-filter-results-popup';
 import { mainPageService } from 'booking.provider.service.main-page-service';
 import { saleChannelsService } from 'booking.provider.service.sale-channels-service';
@@ -28,6 +29,7 @@ import { CountersPanel, CounterItem } from './counters-panel/counters-panel';
 import { AfterTitle } from './after-title/after-title';
 import { MultiBooking } from './multi-booking/multi-booking';
 import { Banner } from './banner/banner';
+import { BannerAiCall } from './banner-ai-call/banner-ai-call';
 import { Trial } from './trial/trial';
 import { IntegrationsButton } from './integrations-button/integrations-button';
 import { SwitchViewButton } from './switch-view-button/switch-view-button';
@@ -43,6 +45,7 @@ export const App = {
 		CountersPanel,
 		MultiBooking,
 		Banner,
+		BannerAiCall,
 		Trial,
 		IntegrationsButton,
 		SwitchViewButton,
@@ -65,17 +68,12 @@ export const App = {
 			loadingFilter: false,
 		};
 	},
-	created(): void
-	{
-		this.loader = new Loader();
-	},
 	computed: {
 		...mapGetters({
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			selectedFirstDayPeriodTs: `${Model.Interface}/selectedFirstDayPeriodTs`,
 			viewDateTs: `${Model.Interface}/viewDateTs`,
 			isWeekMode: `${Model.Interface}/isWeekMode`,
-			isMultidayFeatureAvailable: `${Model.Interface}/isMultidayFeatureAvailable`,
 			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isDeletingResourceFilterMode: `${Model.Filter}/isDeletingResourceFilterMode`,
 			deletingResource: `${Model.Filter}/deletingResource`,
@@ -102,10 +100,37 @@ export const App = {
 		{
 			return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
 		},
+		filteredBookings(): BookingModel[]
+		{
+			if (this.isWeekMode)
+			{
+				return this.$store.getters[`${Model.Bookings}/getByIntervalAndIds`](
+					this.selectedFirstDayPeriodTs,
+					this.selectedFirstDayPeriodTs + Duration.getUnitDurations().w,
+					this.filteredBookingsIds,
+				);
+			}
+
+			return this.$store.getters[`${Model.Bookings}/getByDateAndIds`](
+				this.selectedDateTs,
+				this.filteredBookingsIds,
+			);
+		},
+		filteredResourcesIds(): number[]
+		{
+			return this.filteredBookings
+				.map((booking: BookingModel) => booking.resourcesIds[0])
+				.filter((value, index, array) => array.indexOf(value) === index);
+		},
 	},
 	watch: {
 		selectedDateTs(): void
 		{
+			if (this.isWeekMode)
+			{
+				return;
+			}
+
 			if (this.isFilterMode)
 			{
 				void this.applyFilter();
@@ -114,14 +139,27 @@ export const App = {
 			{
 				void this.applyDeletingResourceFilter(this.deletingResource);
 			}
-			else if (!this.isWeekMode)
+			else
 			{
 				void this.fetchPage();
 			}
 		},
 		selectedFirstDayPeriodTs(): void
 		{
-			if (this.isWeekMode)
+			if (!this.isWeekMode)
+			{
+				return;
+			}
+
+			if (this.isFilterMode)
+			{
+				void this.applyFilter();
+			}
+			else if (this.isDeletingResourceFilterMode)
+			{
+				void this.applyDeletingResourceFilter(this.deletingResource);
+			}
+			else
 			{
 				void this.fetchPage();
 			}
@@ -213,6 +251,10 @@ export const App = {
 				void this.applyDeletingResourceFilter(resource, true);
 			}
 		},
+	},
+	created(): void
+	{
+		this.loader = new Loader();
 	},
 	beforeMount(): void
 	{
@@ -375,11 +417,17 @@ export const App = {
 		async tryNavigateToOptimalFilterResult(inFuture = false): Promise<void>
 		{
 			const dateTs = await filterResultNavigator.getOptimalFilterDateTs(inFuture);
-
-			if (dateTs && dateTs !== this.selectedDateTs)
+			if (!dateTs)
 			{
-				await this.$store.dispatch(`${Model.Interface}/setSelectedDateTs`, dateTs);
+				return;
 			}
+
+			if (this.isWeekMode)
+			{
+				await this.$store.dispatch(`${Model.Interface}/setSelectedFirstDayPeriodTs`, dateTs);
+			}
+
+			await this.$store.dispatch(`${Model.Interface}/setSelectedDateTs`, dateTs);
 		},
 		getFilterFieldsByCounterItem(counterItem: string | null): BookingUIFilter
 		{
@@ -444,14 +492,7 @@ export const App = {
 		},
 		showResourcesWithBookings(): void
 		{
-			const resourcesIds = this.$store.getters[`${Model.Bookings}/getByDateAndIds`](
-				this.selectedDateTs,
-				this.filteredBookingsIds,
-			)
-				.map((booking: BookingModel) => booking.resourcesIds[0])
-				.filter((value, index, array) => array.indexOf(value) === index);
-
-			void this.$store.dispatch(`${Model.Interface}/setResourcesIds`, resourcesIds);
+			void this.$store.dispatch(`${Model.Interface}/setResourcesIds`, this.filteredResourcesIds);
 		},
 		async updateMarks(): Promise<void>
 		{
@@ -519,7 +560,7 @@ export const App = {
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
 			<IntegrationsButton :container="settingsButtonContainer"/>
-			<SwitchViewButton v-if="isMultidayFeatureAvailable" :container="counterPanelContainer"/>
+			<SwitchViewButton :container="counterPanelContainer"/>
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
@@ -536,6 +577,7 @@ export const App = {
 			/>
 			<BaseComponent ref="layout"/>
 			<Banner/>
+			<BannerAiCall/>
 			<Trial/>
 			<WhatsappPopupChangesSendingMessages
 				v-if="shouldShowWhatsAppEmergency"

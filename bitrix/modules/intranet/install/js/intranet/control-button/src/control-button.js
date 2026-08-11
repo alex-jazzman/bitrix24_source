@@ -307,16 +307,16 @@ export class ControlButton
 		});
 	}
 
-	openChat()
+	async openChat()
 	{
 		this.showLoader();
 
 		const analytics = this.analytics.openChat || {};
 
-		ajax.runAction('intranet.controlbutton.getChat', this.getAjaxConfig(analytics)).then((response) => {
+		return ajax.runAction('intranet.controlbutton.getChat', this.getAjaxConfig(analytics)).then(async (response) => {
 			if (response.data)
 			{
-				Messenger.openChat(`chat${parseInt(response.data, 10)}`);
+				await Messenger.openChat(`chat${parseInt(response.data, 10)}`);
 			}
 
 			this.chatLockCounter = 0;
@@ -325,7 +325,7 @@ export class ControlButton
 			if (response.errors[0].code === 'lock_error' && this.chatLockCounter < 4)
 			{
 				this.chatLockCounter++;
-				this.openChat();
+				return this.openChat();
 			}
 			else
 			{

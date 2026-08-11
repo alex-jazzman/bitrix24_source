@@ -1,11 +1,10 @@
 <?php
 
-$MESS['TIMEMAN_GET_REPORT_NAME'] = 'Получить рабочий отчёт';
-
 $MESS['TIMEMAN_GET_REPORT_PROP_USER_ID'] = 'Сотрудник';
 $MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE'] = 'Тип отчёта';
-$MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE_RECORD'] = 'Сделано за день';
-$MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE_AI'] = 'Отчёт AI-агента';
+$MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE_RECORD'] = 'Комментарий сотрудника';
+$MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE_AI'] = 'AI-отчёт';
+$MESS['TIMEMAN_GET_REPORT_PROP_REPORT_TYPE_ROBOT'] = 'Автоматический отчёт';
 $MESS['TIMEMAN_GET_REPORT_RETURN_REPORT_TEXT'] = 'Текст отчёта';
 
 $MESS['TIMEMAN_GET_REPORT_ERROR_MODULE_NOT_LOADED'] = 'Модуль «Учёт рабочего времени» не подключён';

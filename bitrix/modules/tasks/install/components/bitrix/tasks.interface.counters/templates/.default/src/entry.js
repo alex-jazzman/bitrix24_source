@@ -719,6 +719,7 @@ export class Counters extends CounterPanel
 			style: AirButtonStyle.OUTLINE,
 			size: ButtonSize.SMALL,
 			useAirDesign: true,
+			dataset: { testid: 'tasks-counters-chat-button' },
 		});
 
 		this.initChatButtonCounter();
@@ -730,14 +731,33 @@ export class Counters extends CounterPanel
 	{
 		const { Messenger } = await top.BX.Runtime.loadExtension('im.public');
 
-		if (Messenger?.isEmbeddedMode() || Messenger?.isMessengerSliderOpened())
+		const isChatOpen = Boolean(Messenger?.isEmbeddedMode() || Messenger?.isMessengerSliderOpened());
+
+		if (this.isProjectsTaskList())
+		{
+			if (isChatOpen)
+			{
+				top.BX.Event.EventEmitter.emit('IM.Recent:closeNestedList');
+				top.BX.Event.EventEmitter.emit('IM.Recent:openNestedList', {
+					parentDialogId: `sg${this.groupId}`,
+					options: { recentType: 'tasksTask', compactMode: true },
+				});
+
+				BX.SidePanel.Instance.getSliderByWindow(window)?.close();
+			}
+			else
+			{
+				await Messenger?.openCollab(`sg${this.groupId}`, { recentType: 'tasksTask', compactMode: true });
+			}
+		}
+		else if (isChatOpen)
 		{
 			BX.SidePanel.Instance.emulateAnchorClick('/online/?IM_TASK');
-
-			return;
 		}
-
-		BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
+		else
+		{
+			BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
+		}
 
 		sendData({
 			tool: 'tasks',
@@ -752,23 +772,34 @@ export class Counters extends CounterPanel
 
 	initChatButtonCounter(): void
 	{
-		if (this.counters.new_comments_total && this.chatButton)
+		if (!this.chatButton)
 		{
-			const value = Number(this.counters.new_comments_total.VALUE);
-
-			if (this.chatButton.getLeftCounter())
-			{
-				this.chatButton.getLeftCounter().setValue(value);
-				this.chatButton.getLeftCounter().setColor(this.getChatButtonCounterColor(value));
-
-				return;
-			}
-
-			this.chatButton.setLeftCounter({
-				value,
-				color: this.getChatButtonCounterColor(value),
-			});
+			return;
 		}
+
+		const counterData = this.isProjectsTaskList()
+			? this.counters.new_comments
+			: this.counters.new_comments_total;
+
+		if (!counterData)
+		{
+			return;
+		}
+
+		const value = Number(counterData.VALUE);
+
+		if (this.chatButton.getRightCounter())
+		{
+			this.chatButton.getRightCounter().setValue(value);
+			this.chatButton.getRightCounter().setColor(this.getChatButtonCounterColor(value));
+
+			return;
+		}
+
+		this.chatButton.setRightCounter({
+			value,
+			color: this.getChatButtonCounterColor(value),
+		});
 	}
 
 	getChatButtonCounterColor(value): String

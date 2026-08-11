@@ -19,6 +19,7 @@ import {
 	normalyzeInputOutputConnection,
 	validationAuxRule,
 	normalyzeAuxConnection,
+	shouldAnimateBlock,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
@@ -33,7 +34,10 @@ import { PORT_TYPES } from '../../../../shared/constants';
 import type { Block, BlockId } from '../../../../shared/types';
 
 const MAX_AUX_COUNT = 5;
-const DEFAULT_BLOCK_WIDTH = 200;
+const DEFAULT_BLOCK_WIDTH = 260;
+const SWITCH_NODE_ACTIVITY = 'SwitchNode';
+const SWITCH_NODE_WIDTH = 180;
+const SWITCH_NODE_MIN_RULES = 3;
 
 import { useLoc } from '../../../../shared/composables';
 
@@ -85,6 +89,7 @@ export const BlockComplex = {
 			validationAuxRule,
 			normalyzeAuxConnection,
 			getMessage,
+			shouldAnimateBlock,
 		};
 	},
 	computed:
@@ -97,9 +102,22 @@ export const BlockComplex = {
 		{
 			return this.block.ports.filter((port) => port.type === PORT_TYPES.aux).length;
 		},
+		isSwitchNode(): boolean
+		{
+			return this.block.activity?.Type === SWITCH_NODE_ACTIVITY;
+		},
 		blockWidth(): number
 		{
+			if (this.isSwitchNode)
+			{
+				return SWITCH_NODE_WIDTH;
+			}
+
 			return this.block.dimensions?.width ?? DEFAULT_BLOCK_WIDTH;
+		},
+		minRuleItemsCount(): number | undefined
+		{
+			return this.isSwitchNode ? SWITCH_NODE_MIN_RULES : undefined;
 		},
 		contextMenuItems(): Array<MenuItemOptions>
 		{
@@ -177,6 +195,8 @@ export const BlockComplex = {
 											:iconName="block.node.icon"
 											:iconColorIndex="block.node.colorIndex"
 											:deactivated="!isBlockActivated"
+											:blockId="block.id"
+											:animate="shouldAnimateBlock(block)"
 										/>
 									</template>
 								</BlockHeader>
@@ -189,6 +209,7 @@ export const BlockComplex = {
 									:title="blockMediator.getComplexBlockTitle(block)"
 									:disabled="isDisabled"
 									:deactivated="!isBlockActivated"
+									:minRuleItemsCount="minRuleItemsCount"
 								>
 									<template #header="{ title }">
 									</template>

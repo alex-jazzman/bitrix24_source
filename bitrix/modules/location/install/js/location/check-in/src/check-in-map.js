@@ -124,6 +124,9 @@ class CheckInMap
 			case CheckinMapCommandType.UPDATE_SETTINGS:
 				this.mapService.updateSettings(data);
 				break;
+			case CheckinMapCommandType.SET_GRAYSCALE:
+				this.mapService.setGrayscale(data.enabled);
+				break;
 			default:
 				console.warn('Unknown command type:', eventType);
 		}

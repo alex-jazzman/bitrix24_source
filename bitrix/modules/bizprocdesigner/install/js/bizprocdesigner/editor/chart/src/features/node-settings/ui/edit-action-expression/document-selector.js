@@ -1,9 +1,10 @@
 import { Loc, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import { Dialog, ItemOptions, TabOptions } from 'ui.entity-selector';
+import { type BaseEvent } from 'main.core.events';
+import { Dialog, type ItemOptions, type TabOptions } from 'ui.entity-selector';
+
 import { diagramStore } from '../../../../entities/blocks';
-import type { ActivityProperty, Block, PortId } from '../../../../shared/types';
 import { PROPERTY_TYPES } from '../../../../shared/constants';
+import { type ActivityProperty, type Block, type PortId } from '../../../../shared/types';
 
 const DocumentsTabId = 'documents';
 
@@ -13,17 +14,20 @@ export class DocumentSelector
 	#currentPortId: PortId | null = null;
 	#currentBlock : Block;
 	#fixedDocumentType: Array<string> | null = null;
+	#connectedBlocks: Array<Block> | null = null;
 
 	constructor(
 		currentBlock: Block,
 		currentPortId: PortId | null = null,
 		fixedDocumentType: Array<string> | null = null,
+		connectedBlocks: Array<Block> | null = null,
 	)
 	{
 		this.#store = diagramStore();
 		this.#currentBlock = currentBlock;
 		this.#currentPortId = currentPortId;
 		this.#fixedDocumentType = fixedDocumentType;
+		this.#connectedBlocks = connectedBlocks;
 	}
 
 	show(target: HTMLElement): Promise<string | null>
@@ -149,9 +153,26 @@ export class DocumentSelector
 
 	#getDocuments(): ItemOptions[]
 	{
-		const blocks = this.#store.getAllBlockAncestors(this.#currentBlock, this.#currentPortId);
+		const blocks = (
+			this.#connectedBlocks
+			?? this.#store.getAllBlockAncestors(this.#currentBlock, this.#currentPortId).reduce((acc: Block[], ancestor) => {
+				const block = Type.isPlainObject(ancestor?.block) ? ancestor.block : ancestor;
+				if (Type.isPlainObject(block))
+				{
+					acc.push(block);
+				}
 
-		return blocks.reduce((acc, block: Block) => {
+				return acc;
+			}, [])
+		);
+
+		return blocks.reduce((acc, currentBlock: Block) => {
+			const block = Type.isPlainObject(currentBlock?.block) ? currentBlock.block : currentBlock;
+			if (!Type.isPlainObject(block?.activity))
+			{
+				return acc;
+			}
+
 			if (Type.isArrayFilled(block.activity.Children))
 			{
 				const properties = this.#processChildrenProperties(block);

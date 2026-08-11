@@ -11,16 +11,31 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { PureComponent } = require('layout/pure-component');
 
+	const SectionId = {
+		MAIN: 'settings',
+		EXTRA: 'additional',
+	};
+
+	const ItemId = {
+		GENERAL: 'settings',
+		PRESETS: 'bottom_menu',
+		SECURITY: 'security',
+		NOTIFICATIONS: 'notifications',
+		CHANGE_PORTAL: 'change_portal',
+		GO_TO_WEB: 'go_to_web',
+		LOGOUT: 'exit',
+	};
+
 	const SETTINGS_SECTIONS = [
 		{
-			id: 'settings',
-			code: 'settings',
+			id: SectionId.MAIN,
+			code: SectionId.MAIN,
 			sort: 800,
 			hidden: false,
 			title: Loc.getMessage('MENU_SETTINGS_SETTINGS_SECTION_TITLE'),
 			items: [
 				{
-					id: 'settings',
+					id: ItemId.GENERAL,
 					imageName: Icon.SETTINGS.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_SETTINGS_MSGVER_1'),
 					sort: 100,
@@ -28,24 +43,30 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					params: {
 						analytics: {
 							tool: 'settings',
-							category: 'settings',
-							event: 'switch_account',
+							category: 'general_settings',
+							event: 'start_page',
 							c_section: 'ava_menu',
 						},
 					},
 				},
 				{
-					id: 'bottom_menu',
+					id: ItemId.PRESETS,
 					imageName: Icon.BOTTOM_MENU.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_BOTTOM_MENU'),
 					sort: 200,
 					path: '/settings/tab.presets',
 					params: {
 						counter: 'menu_tab_presets',
+						analytics: {
+							tool: 'settings',
+							category: 'tab_preset_settings',
+							event: 'start_page',
+							c_section: 'ava_menu',
+						},
 					},
 				},
 				{
-					id: 'security',
+					id: ItemId.SECURITY,
 					imageName: Icon.SHIELD.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_SECURITY'),
 					sort: 150,
@@ -60,7 +81,7 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
-					id: 'notifications',
+					id: ItemId.NOTIFICATIONS,
 					imageName: Icon.NOTIFICATION.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_NOTIFICATIONS'),
 					sort: 300,
@@ -77,13 +98,13 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 			],
 		},
 		{
-			id: 'additional',
-			code: 'additional',
+			id: SectionId.EXTRA,
+			code: SectionId.EXTRA,
 			sort: 900,
 			hidden: false,
 			items: [
 				{
-					id: 'change_portal',
+					id: ItemId.CHANGE_PORTAL,
 					imageName: 'change_order',
 					title: Loc.getMessage('MENU_BITRIX24_SECTION_CHANGE_PORTAL'),
 					sort: 100,
@@ -98,7 +119,7 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
-					id: 'go_to_web',
+					id: ItemId.GO_TO_WEB,
 					imageName: Icon.GO_TO.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_GO_TO_WEB'),
 					sort: 200,
@@ -110,7 +131,7 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
-					id: 'exit',
+					id: ItemId.LOGOUT,
 					imageName: 'log_out',
 					title: Loc.getMessage('MENU_BITRIX24_SECTION_EXIT'),
 					sort: 300,
@@ -140,28 +161,38 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 
 			return new List({
 				testId: testId || 'more-menu-settings-list',
-				structure: getUpdateSectionsWithCounters(this.prepareSettingsList(), counters),
+				structure: getUpdateSectionsWithCounters(this.prepareMenuItems(), counters),
 				onItemClick: handleItemClick,
 				shouldShowSectionTitle: false,
 			});
 		}
 
-		prepareSettingsList()
+		/**
+		 * Builds a fresh sections structure with per-instance visibility applied.
+		 * Does not mutate the shared SETTINGS_SECTIONS singleton.
+		 * @return {object[]}
+		 */
+		prepareMenuItems()
 		{
 			const canUseSecuritySettings = this.props.canUseSecuritySettings ?? false;
-			const preparedSections = SETTINGS_SECTIONS;
+			const canUseTabPresetSettings = this.props.canUseTabPresetSettings ?? true;
+			const canUseNotificationSettings = this.props.canUseNotificationSettings ?? true;
+			const canGoToWeb = this.props.canGoToWeb ?? true;
 
-			if (!canUseSecuritySettings)
-			{
-				const settingsSection = preparedSections.find((section) => section.id === 'settings');
-				const securityItem = settingsSection?.items?.find((item) => item.id === 'security');
-				if (securityItem)
-				{
-					securityItem.hidden = true;
-				}
-			}
+			const hideItems = {
+				[ItemId.SECURITY]: !canUseSecuritySettings,
+				[ItemId.PRESETS]: !canUseTabPresetSettings,
+				[ItemId.NOTIFICATIONS]: !canUseNotificationSettings,
+				[ItemId.GO_TO_WEB]: !canGoToWeb,
+			};
 
-			return preparedSections;
+			return SETTINGS_SECTIONS.map((section) => ({
+				...section,
+				items: section?.items?.map((item) => ({
+					...item,
+					hidden: Boolean(hideItems[item?.id]),
+				})),
+			}));
 		}
 	}
 

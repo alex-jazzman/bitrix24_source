@@ -16,6 +16,7 @@ export const AppLayout = {
 			'isShownRightPanel',
 			'isShownPreviewPanel',
 			'isShownDebugBar',
+			'isDataInspectorPanelShown',
 		]),
 		...mapState(useCatalogStore, [
 			'isExpandedCatalog',
@@ -27,7 +28,12 @@ export const AppLayout = {
 			:showPreviewPanel="isShownPreviewPanel"
 			:showDebugBar="isShownDebugBar"
 			:catalogExpanded="isExpandedCatalog"
+			:isDataInspectorPanelShown="isDataInspectorPanelShown"
 		>
+			<template #skeleton>
+				<slot name="skeleton" />
+			</template>
+
 			<template #header>
 				<slot name="header"/>
 			</template>
@@ -59,6 +65,11 @@ export const AppLayout = {
 			<template #settings>
 				<slot name="settings"/>
 			</template>
+
+			<template #settings-data-inspector>
+				<slot name="settings-data-inspector"/>
+			</template>
+
 		</AppLayoutEntity>
 	`,
 };

@@ -28,7 +28,7 @@ for ($i = 0; $i < 24; $i++)
 $timezoneList = CCalendar::GetTimezoneList();
 $isPersonal = $arParams['is_personal'];
 $showGeneralSettings = $arParams['show_general_settings'];
-$showAccess = $arParams['show_access_control'] || $showGeneralSettings;
+$showAccess = $arParams['show_access_control'];
 $showPersonalTitle = $showGeneralSettings && $isPersonal;
 $isExtranet = \Bitrix\Main\Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser();
 
@@ -70,10 +70,15 @@ $syncTasksLockCode = ((
 				<?endif;?>
 				<?if (\CTimeZone::optionEnabled()):?>
 				<div class="calendar-settings-control">
-					<div class="calendar-settings-control-name"><?=Loc::getMessage('EC_TIMEZONE')?></div>
+					<div class="calendar-settings-control-name"><?=Loc::getMessage('EC_TIMEZONE')?>
+						<div
+							class="ui-icon ui-icon-common-question calendar-settings-question-timezone"
+							data-hint="<?=Loc::getMessage('EC_CALENDAR_TIMEZONE_SETTINGS_HINT')?>">
+						</div>
+					</div>
 					<div class="calendar-field-container calendar-field-container-select">
 						<div class="calendar-field-block">
-							<select data-role="set_tz_sel" class="calendar-field calendar-field-select">
+							<select data-role="set_tz_sel" class="calendar-field calendar-field-select"  style="cursor: not-allowed;" disabled>
 								<option value=""> - </option>
 								<?foreach($timezoneList as $tz):?>
 									<option value="<?= $tz['timezone_id']?>"><?= htmlspecialcharsEx($tz['title'])?></option>
@@ -171,7 +176,7 @@ $syncTasksLockCode = ((
 				<div class="calendar-settings-control calendar-settings-email-wrap">
 					<div class="calendar-settings-control-name"><?=Loc::getMessage('EC_SEND_FROM_EMAIL')?>
 						<div
-							class="ui-icon ui-icon-common-question calendar-settings-question"
+							class="ui-icon ui-icon-common-question calendar-settings-question-email"
 							data-hint="<?=Loc::getMessage('EC_SEND_FROM_EMAIL_HELP_TITLE')?>">
 						</div>
 					</div>

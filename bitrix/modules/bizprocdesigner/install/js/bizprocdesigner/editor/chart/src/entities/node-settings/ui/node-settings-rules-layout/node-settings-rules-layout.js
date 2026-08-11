@@ -1,14 +1,11 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES } from '../../../../shared/constants';
-
 import { DragRuleEntity } from '../../directives/drag-rule-entity';
+import { type TRuleCard, type OrderPayload } from '../../types';
 
-// eslint-disable-next-line no-unused-vars
-import type { TRuleCard, NodeSettings, OrderPayload } from '../../types';
+import './style.css';
 
 // @vue/component
 export const NodeSettingsRulesLayout = {
@@ -34,13 +31,8 @@ export const NodeSettingsRulesLayout = {
 			type: Boolean,
 			required: true,
 		},
-		isShown:
-		{
-			type: Boolean,
-			required: true,
-		},
 	},
-	emits: ['close', 'drop', 'scroll-layout'],
+	emits: ['drop', 'scroll-layout'],
 	setup(): { getMessage: () => string; }
 	{
 		const { getMessage } = useLoc();
@@ -67,30 +59,16 @@ export const NodeSettingsRulesLayout = {
 		},
 	},
 	template: `
-		<transition-group name="slide-rules-panel">
-			<div
-				v-if="isShown"
-				class="editor-chart-node-settings-rules-panel"
-				:class="{ '--saving': isSaving }"
-			>
-				<div class="editor-chart-node-settings-rules-panel__header">
-					<BIcon
-						:size="20"
-						:data-test-id="$testId('complexNodeRuleSettingsClose')"
-						name="arrow-left-l"
-						color="#828b95"
-						class="editor-chart-node-settings-rules-panel__header_back"
-						@click="$emit('close')"
-					/>
-					<span class="editor-chart-node-settings-rules-panel__header_label">
-						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULES_LAYOUT_TITLE') }}
-					</span>
-					<slot name="rules-dropdown" />
-				</div>
+		<div
+			class="editor-chart-node-settings-rules-layout"
+			:class="{ '--saving': isSaving }"
+			@scroll="$emit('scroll-layout')"
+		>
+			<template v-if="currentRule">
+				<slot name="addConstructionToolbar" />
 				<div
-					class="editor-chart-node-settings-rules-panel__content"
+					class="editor-chart-node-settings-rules-layout__content"
 					v-drag-construction="onDrop"
-					@scroll="$emit('scroll-layout')"
 				>
 					<slot
 						v-for="ruleCard in ruleCards"
@@ -98,18 +76,20 @@ export const NodeSettingsRulesLayout = {
 						:ruleCard="ruleCard"
 						name="ruleCard"
 					/>
-					<slot v-if="ruleCards.length === 0"
-						name="addRuleCardButton"
-					/>
+					<template
+						v-if="ruleCards.length === 0"
+					>
+						<div class="editor-chart-node-settings-rules-layout__empty">
+							<h3 class="editor-chart-node-settings-rules-layout__empty_head">
+								{{ getMessage('BIZPROCDESIGNER_EDITOR_COMPLEX_NODE_SETTINGS_EMPTY_STATE_HEAD') }}
+							</h3>
+							<p class="editor-chart-node-settings-rules-layout__empty_text">
+								{{ getMessage('BIZPROCDESIGNER_EDITOR_COMPLEX_NODE_SETTINGS_EMPTY_STATE_TEXT') }}
+							</p>
+						</div>
+					</template>
 				</div>
-				<div class="editor-chart-node-settings-rules-panel__footer">
-					<slot name="actions" />
-				</div>
-			</div>
-			<div
-				v-if="isShown"
-				class="editor-chart-node-settings-rules-layout__back"
-			></div>
-		</transition-group>
+			</template>
+		</div>
 	`,
 };

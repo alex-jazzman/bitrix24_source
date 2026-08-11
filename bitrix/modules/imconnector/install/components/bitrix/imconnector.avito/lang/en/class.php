@@ -10,3 +10,4 @@ $MESS["IMCONNECTOR_COMPONENT_AVITO_OK_CONNECT"] = "Test connection has been esta
 $MESS["IMCONNECTOR_COMPONENT_AVITO_OK_REGISTER"] = "Registration was a success";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_OK_SAVE"] = "Information has been saved successfully.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_SESSION_HAS_EXPIRED"] = "Your session has expired. Please submit the form again.";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_TARIFF_REQUIRED"] = "To connect Avito Messenger to Bitrix24, an Avito plan is required. Ads in the Goods category require the Maximum plan, while ads in the Services category require the Extended plan or higher.";

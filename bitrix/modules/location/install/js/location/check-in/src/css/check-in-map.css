@@ -12,7 +12,7 @@
 }
 
 #check-in-map.theme-dark .leaflet-tile-pane {
-	filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1) saturate(0);
+	filter: invert(1) hue-rotate(127deg) brightness(1.59) contrast(0.93) saturate(0);
 }
 
 #check-in-map {
@@ -367,6 +367,10 @@
 	border-radius: 50%;
 	background: rgba(82, 92, 105, 0.5);
 	animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+#check-in-map.theme-dark .marker-bullet-loader .ui-loader__bullet_item {
+	background: rgba(255, 255, 255, 0.7);
 }
 
 .marker-bullet-loader .ui-loader__bullet_item:nth-child(1) {

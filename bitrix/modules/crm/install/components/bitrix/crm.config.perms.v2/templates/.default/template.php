@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Tour\PermissionsOnboardingPopup;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -40,11 +39,6 @@ echo (\Bitrix\Crm\Tour\ConfigPermsUserSelector::getInstance())->build();
 </div>
 <?php
 
-if ($arResult['isSharedCrmPermissionsSlider'])
-{
-	echo PermissionsOnboardingPopup::getInstance()->build();
-}
-
 if ($arResult['shouldDisplayLeftMenu'])
 {
 	$APPLICATION->IncludeComponent(
@@ -72,7 +66,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 		AccessRightsOption,
 		AccessRights,
 		hasLeftMenu: <?=$arResult['shouldDisplayLeftMenu'] ? 'true' : 'false' ?>,
-		useAirDesign: <?= defined('AIR_SITE_TEMPLATE') ? 'true' : 'false' ?>,
+		useAirDesign: true,
 	});
 
 	ConfigPerms.init();
@@ -94,6 +88,9 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 				->setColor(\Bitrix\UI\Buttons\Color::LINK)
 				->setText(Loc::getMessage('CRM_COMMON_CANCEL'))
 				->bindEvent('click', new \Bitrix\UI\Buttons\JsCode('ConfigPerms.AccessRights.fireEventReset()'))
+				->setStyle(\Bitrix\UI\Buttons\AirButtonStyle::OUTLINE)
+				->setSize(\Bitrix\UI\Buttons\Size::LARGE)
+				->setAirDesign(true)
 				->render()
 			,
 		],

@@ -1,9 +1,8 @@
 import { type CategoryModel } from 'crm.category-model';
-import { Builder, Dictionary, type EntityConvertEvent, type EventStatus } from 'crm.integration.analytics';
+import { Dictionary, type EntityConvertEvent } from 'crm.integration.analytics';
 import { ajax as Ajax, Dom, Loc, Tag, Text, Type, Uri } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { Button, ButtonColor } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.forms';
@@ -203,20 +202,12 @@ export class Converter
 			}
 
 			const status = result.isCanceled ? Dictionary.STATUS_CANCEL : Dictionary.STATUS_SUCCESS;
-
-			this.#config.getActiveItems().forEach((item) => {
-				this.#sendAnalyticsData(item.getEntityTypeId(), status);
-			});
 		}).catch((error) => {
 			if (error)
 			{
 				// eslint-disable-next-line no-console
 				console.log('Convert error', error, this);
 			}
-
-			this.#config.getActiveItems().forEach((item) => {
-				this.#sendAnalyticsData(item.getEntityTypeId(), Dictionary.STATUS_ERROR);
-			});
 		});
 	}
 
@@ -256,6 +247,7 @@ export class Converter
 						CONFIG: this.getConfig().externalize(),
 						CONTEXT: this.#data,
 						ORIGIN_URL: this.getOriginUrl(),
+						ANALYTICS: this.#params.analytics,
 					},
 				onsuccess: resolve,
 				onfailure: reject,
@@ -281,18 +273,6 @@ export class Converter
 				throw error;
 			})
 		;
-	}
-
-	#sendAnalyticsData(dstEntityTypeId: number, status: EventStatus): void
-	{
-		const builder = Builder.Entity.ConvertEvent.createDefault(this.#entityTypeId, dstEntityTypeId)
-			.setSection(this.#params.analytics.c_section)
-			.setSubSection(this.#params.analytics.c_sub_section)
-			.setElement(this.#params.analytics.c_element)
-			.setStatus(status)
-		;
-
-		sendAnalyticsData(builder.buildData());
 	}
 
 	#filterExternalAnalytics(analytics: any): ConverterParams['analytics']

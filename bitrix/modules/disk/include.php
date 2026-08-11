@@ -2,11 +2,17 @@
 
 use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
 use Bitrix\Disk\Document\OnlyOffice\ExporterBitrix24Scenario;
+use Bitrix\Disk\Internal\Service\OnlyOffice\Promo\IncreaseLimitRequestMessageResolver;
+use Bitrix\Disk\Internal\Service\OnlyOffice\Promo\Interface\IncreaseLimitRequestMessageResolverInterface;
+use Bitrix\Disk\Internal\Service\OnlyOffice\Promo\NullIncreaseLimitRequestMessageResolver;
 use Bitrix\Disk\QuickAccess;
+use Bitrix\Disk\QuickAccess\Config\ConfigInterface;
+use Bitrix\Disk\QuickAccess\FileInfo\ProviderFactory;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 
-\Bitrix\Main\Loader::registerAutoLoadClasses(
+Loader::registerAutoLoadClasses(
 	"disk",
 	array(
 		"disk" => "install/index.php",
@@ -133,23 +139,62 @@ CJSCore::RegisterExt('disk_information_popups', [
 \Bitrix\Disk\Internals\Engine\Binder::registerDefaultAutoWirings();
 
 
+ServiceLocator::getInstance()->addInstanceLazy('disk.userQuickAccessTokenManager', [
+	'constructor' => static function () {
+		$quickAccessConfig = ServiceLocator::getInstance()->get(ConfigInterface::class);
+
+		return new QuickAccess\UserQuickAccessTokenManager(
+			Bitrix\Main\Context::getCurrent()?->getRequest(),
+			Bitrix\Main\Context::getCurrent()?->getResponse(),
+			$quickAccessConfig->getKey(),
+		);
+	},
+]);
+
 ServiceLocator::getInstance()->addInstanceLazy('disk.scopeTokenService', [
 	'constructor' => static function () {
-		$quickAccessConfiguration = new QuickAccess\Configuration(
-			new QuickAccess\Config\JsonConfig(),
-			new QuickAccess\Config\SettingsConfig(),
-		);
-		$storageFactory = QuickAccess\Storage\StorageFactory::create($quickAccessConfiguration->getTokenStorage());
-		$fileInfoProviderFactory = new QuickAccess\FileInfo\ProviderFactory();
-		$fileInfoProviderFactory->register(QuickAccess\FileInfo\DiskProvider::class);
-		$fileInfoProviderFactory->register(QuickAccess\FileInfo\MainProvider::class);
+		$quickAccessConfig = ServiceLocator::getInstance()->get(ConfigInterface::class);
+		$signerKey = $quickAccessConfig->getKey();
+
+		$storageFactory = QuickAccess\Storage\StorageFactory::create($quickAccessConfig->getTokenStorage());
+		$fileInfoProviderFactory = ServiceLocator::getInstance()->get(ProviderFactory::class);
+		$userTokenManager = ServiceLocator::getInstance()->get('disk.userQuickAccessTokenManager');
+		$quickAccessReadinessChecker = new QuickAccess\QuickAccessReadinessChecker($signerKey);
 
 		return new QuickAccess\ScopeTokenService(
 			$storageFactory,
 			$fileInfoProviderFactory,
-			Bitrix\Main\Context::getCurrent()?->getRequest(),
-			Bitrix\Main\Context::getCurrent()?->getResponse(),
-			$quickAccessConfiguration->getKey(),
+			$signerKey,
+			$userTokenManager,
+			$quickAccessReadinessChecker,
 		);
+	},
+]);
+
+ServiceLocator::getInstance()->addInstanceLazy('disk.fileDataParameterService', [
+	'constructor' => static function () {
+		$quickAccessConfig = ServiceLocator::getInstance()->get(ConfigInterface::class);
+		$signerKey = $quickAccessConfig->getKey();
+		$fileInfoProviderFactory = ServiceLocator::getInstance()->get(ProviderFactory::class);
+		$userTokenManager = ServiceLocator::getInstance()->get('disk.userQuickAccessTokenManager');
+		$quickAccessReadinessChecker = new QuickAccess\QuickAccessReadinessChecker($signerKey);
+
+		return new QuickAccess\FileDataParameterService(
+			$signerKey,
+			$fileInfoProviderFactory,
+			$userTokenManager,
+			$quickAccessReadinessChecker,
+		);
+	},
+]);
+
+ServiceLocator::getInstance()->addInstanceLazy(IncreaseLimitRequestMessageResolverInterface::class, [
+	'constructor' => static function () {
+		if (!Loader::includeModule('humanresources') || !Loader::includeModule('im'))
+		{
+			return ServiceLocator::getInstance()->get(NullIncreaseLimitRequestMessageResolver::class);
+		}
+
+		return ServiceLocator::getInstance()->get(IncreaseLimitRequestMessageResolver::class);
 	},
 ]);

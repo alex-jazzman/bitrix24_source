@@ -10,6 +10,7 @@
 	const { NotifyManager } = require('notify-manager');
 	const { Loc } = require('loc');
 	const { RequestExecutor } = require('rest');
+	const { guid } = require('utils/guid');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -242,11 +243,7 @@
 
 		static createGuid()
 		{
-			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
-			};
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+			return guid();
 		}
 
 		static getSubtitle(membersCount)

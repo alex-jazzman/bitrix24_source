@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Bizproc\Internal\Service\Feature\AiAgentsFeature;
+use Bitrix\Bizproc\Internal\Service\Tariff\TariffChecker;
 use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -10,39 +11,41 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $isAiAgentsAvailable = false;
 $aiAgentsTariffSliderCode = null;
+$isBasicOrHigher = false;
 
 if (Loader::includeModule('bizproc'))
 {
 	$aiAgentsFeature = new AiAgentsFeature();
 	$isAiAgentsAvailable = $aiAgentsFeature->isAvailable();
 	$aiAgentsTariffSliderCode = $aiAgentsFeature->getTariffSliderCode();
+	$isBasicOrHigher = TariffChecker::isBasicOrHigher();
 }
 
 return [
 	'css' => 'dist/grid.bundle.css',
 	'js' => 'dist/grid.bundle.js',
 	'rel' => [
-		'bizproc.ai-agents.grid',
+		'bizproc.setup-template',
+		'humanresources.company-structure.public',
+		'im.public',
+		'main.core',
+		'main.core.events',
+		'main.date',
 		'main.popup',
 		'main.sidepanel',
-		'ui.entity-selector',
-		'im.public',
-		'humanresources.company-structure.public',
 		'ui.avatar',
-		'main.date',
 		'ui.buttons',
+		'ui.dialogs.messagebox',
+		'ui.entity-selector',
 		'ui.info-helper',
 		'ui.system.typography',
-		'main.core.events',
-		'bizproc.setup-template',
-		'main.core',
-		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 	'settings' => [
 		'tariffInfo' => [
 			'isAiAgentsAvailable' => $isAiAgentsAvailable,
 			'aiAgentsTariffSliderCode' => $aiAgentsTariffSliderCode,
+			'isBasicOrHigher' => $isBasicOrHigher,
 		],
 	],
 ];

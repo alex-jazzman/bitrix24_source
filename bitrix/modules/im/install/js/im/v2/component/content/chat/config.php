@@ -53,6 +53,7 @@ return [
 		'im.v2.provider.service.chat',
 		'im.v2.provider.service.comments',
 		'im.v2.provider.service.copilot',
+		'im.v2.provider.service.sending',
 		'main.core',
 		'main.core.events',
 		'main.popup',

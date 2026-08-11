@@ -24,6 +24,11 @@ export const sessionsFieldsConfig: FieldsConfig = [
 		formatFunction: convertToNumber,
 	},
 	{
+		fieldName: 'operatorIsBot',
+		targetFieldName: 'operatorIsBot',
+		checkFunction: Type.isBoolean,
+	},
+	{
 		fieldName: 'status',
 		targetFieldName: 'status',
 		checkFunction: Type.isString,

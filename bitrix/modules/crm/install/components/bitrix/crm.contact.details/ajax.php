@@ -95,6 +95,7 @@ elseif($action === 'SAVE')
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 	$sourceEntityID =  isset($params['CONTACT_ID']) ? (int)$params['CONTACT_ID'] : 0;
+	$analytics = ($_POST['ANALYTICS'] ?? []);
 
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 
@@ -426,6 +427,7 @@ elseif($action === 'SAVE')
 			$entity = new \CCrmContact(false);
 			$saveOptions = [
 				'REGISTER_SONET_EVENT' => true,
+				'ANALYTICS' => $analytics,
 				'eventId' => $_POST['EVENT_ID'] ?? null,
 			];
 

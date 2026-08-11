@@ -8,6 +8,8 @@ return [
 		'utils/object',
 		'im:messenger/const',
 		'im:messenger/loc',
+		'im:messenger/application/lib/chat-deletion-manager',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/params',
 		'im:messenger/provider/data',
 		'im:messenger/provider/rest',

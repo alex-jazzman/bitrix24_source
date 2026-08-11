@@ -69,6 +69,40 @@ const getCenteredAngleOffsetByPosition = (
 	;
 };
 
+// the arrow must stay on the straight segment of the popup edge, between the rounded corners
+const getAngleOffsetRange = (
+	popupContainer: HTMLElement,
+	angleElement: HTMLElement,
+	anglePosition: string,
+): { min: number, max: number } => {
+	const styles = getComputedStyle(popupContainer);
+	const isBottom = anglePosition === 'bottom';
+	const leftRadius = parseFloat(isBottom ? styles.borderBottomLeftRadius : styles.borderTopLeftRadius) || 0;
+	const rightRadius = parseFloat(isBottom ? styles.borderBottomRightRadius : styles.borderTopRightRadius) || 0;
+	const angleWidth = angleElement.offsetWidth || POPUP_ANGLE_HALF_WIDTH * 2;
+	const max = popupContainer.offsetWidth - angleWidth - rightRadius;
+
+	return { min: leftRadius, max: Math.max(max, leftRadius) };
+};
+
+// shifts the popup horizontally, but keeps it inside the viewport; returns the applied shift
+const shiftPopupHorizontally = (popupContainer: HTMLElement, desiredShift: number): number => {
+	const popupRect = popupContainer.getBoundingClientRect();
+	const viewportWidth = popupContainer.ownerDocument.documentElement.clientWidth;
+	const shift = desiredShift > 0
+		? Math.min(desiredShift, Math.max(0, viewportWidth - popupRect.right))
+		: Math.max(desiredShift, Math.min(0, -popupRect.left))
+	;
+
+	if (shift !== 0)
+	{
+		const popupLeft = parseFloat(Dom.style(popupContainer, 'left')) || 0;
+		Dom.style(popupContainer, 'left', `${popupLeft + shift}px`);
+	}
+
+	return shift;
+};
+
 const isScrollableY = (element: HTMLElement): boolean => {
 	const { overflowY } = getComputedStyle(element);
 
@@ -465,7 +499,7 @@ export default class Manager
 
 		setTimeout(() => {
 			const popupWidth = popupContainer.offsetWidth;
-			const offset = anchorNode
+			let offset = anchorNode
 				? getCenteredAngleOffsetByPosition(anchorNode, popupContainer)
 				: (
 					popupWidth
@@ -473,6 +507,20 @@ export default class Manager
 						: false
 				)
 			;
+
+			if (offset !== false)
+			{
+				const range = getAngleOffsetRange(popupContainer, this.#popup.angle.element, this.#popup.angle.position);
+				const clampedOffset = Math.min(Math.max(offset, range.min), range.max);
+
+				// keep the arrow pointed at the anchor: shift the popup instead of the arrow
+				const popupShift = anchorNode && clampedOffset !== offset
+					? shiftPopupHorizontally(popupContainer, offset - clampedOffset)
+					: 0
+				;
+
+				offset = Math.min(Math.max(offset - popupShift, range.min), range.max);
+			}
 
 			this.#popup.angle.offset = offset;
 

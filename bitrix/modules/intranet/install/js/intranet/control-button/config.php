@@ -11,9 +11,9 @@ return array(
 		'dist/control-button.bundle.js'
 	),
 	'rel' => [
+		'im.public.iframe',
 		'main.core',
 		'main.popup',
-		'im.public.iframe',
 		'pull.client',
 	],
 	'skip_core' => false,

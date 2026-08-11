@@ -1,31 +1,28 @@
-import { EventEmitter } from 'main.core.events';
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
-import { Text } from 'main.core';
-import { MessageBox } from 'ui.dialogs.messagebox';
 
 import { useLoc } from '../../../shared/composables';
-import { PORT_TYPES } from '../../../shared/constants';
-
-import { EditOutputExpression } from '../../../features/node-settings/ui/edit-output-expression/edit-output-expression';
+import { SaveSettingsButton, CancelSettingsButton } from '../../../shared/ui';
 
 import { diagramStore as useDiagramStore } from '../../../entities/blocks';
 import {
 	useNodeSettingsStore,
 	NodeSettingsRulesLayout,
 	RuleCard,
-	RuleConstruction, EVENT_NAMES,
+	RuleConstruction,
+	CONSTRUCTION_TYPES,
+	CONSTRUCTION_GROUPS,
+	type TRuleCard,
 } from '../../../entities/node-settings';
 import {
 	EditActionExpression,
 	EditConditionExpression,
 	AddConstruction,
 	DeleteConstruction,
-	CancelSettingsButton,
-	SaveSettingsButton,
 	SelectBooleanType,
-	SelectRule,
 	DeleteRuleCard,
 	EditExtendedAction,
+	EditOutputExpression,
+	EditFilterExpression,
 } from '../../../features/node-settings';
 
 // @vue/component
@@ -43,9 +40,9 @@ export const NodeSettingsRules = {
 		DeleteConstruction,
 		RuleConstruction,
 		SelectBooleanType,
-		SelectRule,
 		DeleteRuleCard,
 		EditExtendedAction,
+		EditFilterExpression,
 	},
 	setup(): { getMessage: () => string; }
 	{
@@ -63,50 +60,13 @@ export const NodeSettingsRules = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'block', 'isRuleSettingsShown', 'ports']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'block']),
 		...mapWritableState(useNodeSettingsStore, ['isSaving']),
 		...mapState(useDiagramStore, ['documentType', 'template']),
-		isShown(): boolean
-		{
-			return this.isRuleSettingsShown && this.currentRule.type === PORT_TYPES.input;
-		},
 	},
 	methods:
 	{
-		...mapActions(useNodeSettingsStore, [
-			'toggleRuleSettingsVisibility',
-			'reorder',
-			'saveRule',
-			'discardRuleSettings',
-		]),
-		...mapActions(useDiagramStore, ['setPorts']),
-		onRulesLayoutClose(): void
-		{
-			this.discardRuleSettings();
-			this.toggleRuleSettingsVisibility(false);
-		},
-		async onSaveRule(): Promise<void>
-		{
-			try
-			{
-				this.isSaving = true;
-
-				await EventEmitter.emitAsync(EVENT_NAMES.BEFORE_SUBMIT_EVENT);
-				await this.saveRule(this.documentType);
-				this.setPorts(this.block.id, this.ports);
-			}
-			catch (error)
-			{
-				if (error.errors && error.errors[0] && error.errors[0].message)
-				{
-					MessageBox.alert(Text.encode(error.errors[0].message));
-				}
-			}
-			finally
-			{
-				this.isSaving = false;
-			}
-		},
+		...mapActions(useNodeSettingsStore, ['reorder', 'addConstruction']),
 		onScroll(): void
 		{
 			this.isScrolling = true;
@@ -114,41 +74,44 @@ export const NodeSettingsRules = {
 				this.isScrolling = false;
 			});
 		},
+		onAddConstruction(groupName: string, ruleCard: TRuleCard): void
+		{
+			if (groupName === CONSTRUCTION_GROUPS.conditions)
+			{
+				this.addConstruction(ruleCard, CONSTRUCTION_TYPES.CONDITION.AND_CONDITION);
+
+				return;
+			}
+
+			this.addConstruction(ruleCard, CONSTRUCTION_TYPES.ACTION);
+		},
 	},
 	template: `
 		<NodeSettingsRulesLayout
-			:isShown="isShown"
 			:nodeSettings="nodeSettings"
 			:currentRule="currentRule"
 			:isSaving="isSaving"
-			@close="onRulesLayoutClose"
 			@drop="reorder"
 			@scroll-layout="onScroll"
 		>
-			<template #rules-dropdown>
-				<SelectRule :block="block" />
+			<template #addConstructionToolbar>
+				<AddConstruction />
 			</template>
 
 			<template #ruleCard="{ ruleCard }">
-				<RuleCard :ruleCard="ruleCard">
+				<RuleCard
+					:ruleCard="ruleCard"
+					@addConstruction="(groupName) => onAddConstruction(groupName, ruleCard)"
+				>
 					<template #deleteRuleCard>
 						<DeleteRuleCard :ruleCard="ruleCard" />
 					</template>
 
-					<template #default="{ construction, position }">
+					<template #construction="{ construction }">
 						<RuleConstruction
 							:ruleCardId="ruleCard.id"
 							:construction="construction"
-							:position="position"
 						>
-							<template #addConstructionButton>
-								<AddConstruction
-									:position="position"
-									:ruleCard="ruleCard"
-									:data-test-id="$testId('complexNodeRuleSettingsAddConstruction')"
-								/>
-							</template>
-
 							<template #deleteConstructionButton="{ iconColor }">
 								<DeleteConstruction
 									:iconColor="iconColor"
@@ -177,6 +140,15 @@ export const NodeSettingsRules = {
 								</EditActionExpression>
 							</template>
 
+							<template #filter>
+								<EditFilterExpression
+									:construction="construction"
+									:documentType="documentType"
+									:ruleCard="ruleCard"
+									:template="template"
+								/>
+							</template>
+
 							<template #booleanTypeSwitcher>
 								<SelectBooleanType :construction="construction" />
 							</template>
@@ -193,35 +165,7 @@ export const NodeSettingsRules = {
 							</template>
 						</RuleConstruction>
 					</template>
-
-					<template #addConstructionButton>
-						<AddConstruction
-							:ruleCard="ruleCard"
-							:data-test-id="$testId('complexNodeRuleSettingsAddConstruction')"
-						/>
-					</template>
 				</RuleCard>
-			</template>
-
-			<template #addRuleCardButton>
-				<AddConstruction
-					class="editor-chart-node-settings-add-rule-card"
-					:data-test-id="$testId('complexNodeRuleSettingsAddRuleCard')"
-				>
-					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_RULE_CARD_LABEL') }}
-				</AddConstruction>
-			</template>
-
-			<template #actions>
-				<SaveSettingsButton
-					:isSaving="isSaving"
-					:data-test-id="$testId('complexNodeRuleSettingsSave')"
-					@click="onSaveRule"
-				/>
-				<CancelSettingsButton
-					:data-test-id="$testId('complexNodeRuleSettingsDiscard')"
-					@click="onRulesLayoutClose"
-				/>
 			</template>
 		</NodeSettingsRulesLayout>
 	`,

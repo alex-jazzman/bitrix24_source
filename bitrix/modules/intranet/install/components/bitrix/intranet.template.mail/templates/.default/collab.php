@@ -1,10 +1,19 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Intranet\Internal\Integration\Ui\CopilotService;
+use Bitrix\Intranet\Portal;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
-$logoUrl = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDefaultLogo();
-$canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitrix24::isLicenseNeverPayed();
+$logoUrl = Portal::getInstance()->getSettings()->getDefaultLogo();
+$canInsertUserData = !Loader::includeModule('bitrix24') || !\CBitrix24::isLicenseNeverPayed();
+$copilotName = CopilotService::getName();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -240,7 +249,7 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 											<a href="<?=$arResult["FOOTER_LINK"]['IM']?>" style="display: inline-block; margin-right: 9%; font-size: 11px; color:#333333; text-decoration: underline; text-align: left;" class="intranet-email-link"><?=Loc::getMessage("INTRANET_INVITATION_COLLAB_LINK_IM_NAME")?></a>
 											<a href="<?=$arResult["FOOTER_LINK"]['TASKS']?>" style="display: inline-block; margin-right: 9%; font-size: 11px; color:#333333; text-decoration: underline; text-align: left;" class="intranet-email-link"><?=Loc::getMessage("INTRANET_INVITATION_COLLAB_LINK_TASKS_NAME")?></a>
 											<a href="<?=$arResult["FOOTER_LINK"]['CRM']?>" style="display: inline-block; margin-right: 9%; font-size: 11px; color:#333333; text-decoration: underline; text-align: left;" class="intranet-email-link"><?=Loc::getMessage("INTRANET_INVITATION_COLLAB_LINK_CRM_NAME")?></a>
-											<a href="<?=$arResult["FOOTER_LINK"]['WF']?>" style="display: inline-block; font-size: 11px; color:#333333; text-decoration: underline; text-align: left;" class="intranet-email-link"><?=Loc::getMessage($arResult["FOOTER_LINK"]['LAST_PHRASE'])?></a>
+											<a href="<?=$arResult["FOOTER_LINK"]['WF']?>" style="display: inline-block; font-size: 11px; color:#333333; text-decoration: underline; text-align: left;" class="intranet-email-link"><?=Loc::getMessage($arResult["FOOTER_LINK"]['LAST_PHRASE'], ['#COPILOT_NAME#' => $copilotName])?></a>
 										</div>
 									</div>
 									<!--[if mso]>
@@ -262,4 +271,3 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 </table>
 </body>
 </html>
-

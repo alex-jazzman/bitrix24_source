@@ -160,6 +160,10 @@ if(typeof BX.Crm.EntityEditorControllerFactory === "undefined")
 				{
 					return BX.Crm.EntityProductListController.create(controllerId, settings);
 				}
+				else if (type === 'analytics_controller')
+				{
+					return BX.Crm.EntityEditorAnalyticsController.create(controllerId, settings);
+				}
 				else if (type === "order_controller")
 				{
 					return BX.Crm.EntityEditorOrderController.create(controllerId, settings);

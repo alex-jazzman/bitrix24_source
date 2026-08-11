@@ -3,6 +3,7 @@
 /** @global CUser $USER */
 
 use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
+use Bitrix\Intranet\Internal\Integration\AiAssistant\MartaService;
 use Bitrix\Main\Composite\StaticArea;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -52,6 +53,7 @@ Loader::includeModule('intranet');
 ]);
 
 $isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
+$showAiAssistantHeaderButton = MartaService::shouldShowBitrixGpt();
 
 $isCompositeMode = defined('USE_HTML_STATIC_CACHE');
 $isIndexPage =
@@ -94,6 +96,7 @@ Loc::loadMessages(__DIR__ . '/site_template.php');
 $APPLICATION->showHead(false);
 $asset->addCss(SITE_TEMPLATE_PATH . '/dist/bitrix24.bundle.css', true);
 $asset->addJs(SITE_TEMPLATE_PATH . '/dist/bitrix24.bundle.js', true);
+
 AirTemplate::showHeadAssets();
 
 $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapsed-mode' : '';
@@ -231,7 +234,9 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 						'air'
 					);
 					$APPLICATION->includeComponent('bitrix:intranet.helpdesk', 'air', [], false);
-					?>
+					if ($showAiAssistantHeaderButton): ?>
+						<div class="air-header__marta-slot" id="air-header-marta-slot"></div>
+					<?php endif ?>
 				</div>
 			</div>
 		</div>

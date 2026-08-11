@@ -43,6 +43,10 @@
 	border-color: #FAA72C;
 }
 
+.transfer-account_integrator {
+	border-color: #48B2BE;
+}
+
 .transfer-account-avatar {
 	padding: 16px;
 }
@@ -75,6 +79,10 @@
 
 .account-data__position_extranet {
 	color: #FAA72C;
+}
+
+.account-data__position_integrator {
+	color: #48B2BE;
 }
 
 .transfer-start .department-control__dialog-title {
@@ -245,4 +253,3 @@
 	color: #0075FF !important;
 	font-weight: var(--ui-font-weight-medium, 500) !important;
 }
-

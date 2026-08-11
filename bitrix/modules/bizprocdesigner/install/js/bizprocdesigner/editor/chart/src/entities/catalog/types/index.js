@@ -15,6 +15,7 @@ export type CatalogMenuItem = {
 	subtitle: string,
 	icon: string,
 	colorIndex: number,
+	contentBlockColor?: ?number,
 	defaultSettings: DefaultSettings,
 	properties: {...} | null,
 };

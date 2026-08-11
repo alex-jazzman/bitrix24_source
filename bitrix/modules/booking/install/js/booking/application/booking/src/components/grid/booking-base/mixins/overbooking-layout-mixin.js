@@ -1,10 +1,11 @@
 import { Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model, Grid } from 'booking.const';
-import type { BookingId, OverbookingMapItem, OverbookingResourceIntersections } from 'booking.model.bookings';
+import { Model } from 'booking.const';
+import { gridTokens, GridTokenKey } from 'booking.lib.grid';
+import { type BookingId, type OverbookingMapItem, type OverbookingResourceIntersections } from 'booking.model.bookings';
 
-import type { OverlappingBookings } from '../types';
+import { type OverlappingBookings } from '../types';
 
 type CountOffsetProps = {
 	bookingId: BookingId,
@@ -93,13 +94,13 @@ export const overbookingLayoutMixin = {
 		{
 			const count = overlappingBookings.length > 0 ? overlappingBookings.length : 1;
 
-			return Grid.SizeElement.DayCellWidth / count;
+			return gridTokens.get(GridTokenKey.DayCellWidth) / count;
 		},
 		countHeight(overlappingBookings: OverlappingBookings): number
 		{
 			const count = overlappingBookings.length > 0 ? overlappingBookings.length : 1;
 
-			return Grid.SizeElement.WeekCellHeight / count;
+			return gridTokens.get(GridTokenKey.WeekCellHeight) / count;
 		},
 		countSideOffset(size: number): number
 		{

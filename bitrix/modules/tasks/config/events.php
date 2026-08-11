@@ -3,6 +3,7 @@
 use Bitrix\Tasks\V2\Internal\Integration\Im;
 use Bitrix\Tasks\V2\Internal\Integration\Rest;
 use Bitrix\Tasks\V2\Internal\Integration\Bizproc;
+use Bitrix\Tasks\V2\Internal\Integration\Disk;
 
 return [
 	'value' => [
@@ -31,15 +32,18 @@ return [
 			Im\EventHandler\OnAfterReadAllChats\UpdateCounters::class,
 			Im\EventHandler\OnAfterReadAllChats\SendPushNotification::class,
 		],
-		\Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent::class => [
-			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\UpdateCounters::class,
-			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\SendPushNotification::class,
+		\Bitrix\Im\V2\Message\Event\AfterReadChatsByTypeBatchEvent::class => [
+			Im\EventHandler\OnAfterReadChatsByTypeBatchTasksTask\UpdateCounters::class,
+			Im\EventHandler\OnAfterReadChatsByTypeBatchTasksTask\SendPushNotification::class,
 		],
 		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterUsersAddEvent::class => [
 			Im\EventHandler\OnAfterUsersAdded\AddUsersToAuditors::class,
 		],
 		\Bitrix\Bizproc\Public\Event\Document\OnGetDocumentTypeEvent\OnGetDocumentTypeEvent::class => [
 			Bizproc\EventHandler\OnGetDocumentTypeEvent\GetDocumentTypes::class,
+		],
+		\Bitrix\Disk\Public\Event\OnAfterDeleteAttachedObjectEvent::class => [
+			Disk\EventHandler\OnAfterDeleteAttachedObject\DetachFile::class,
 		],
 	],
 ];

@@ -5,7 +5,7 @@ import { DeclineAction } from './decline-action';
 import { ReinviteAction } from './reinvite-action';
 import { CreateChatAction } from './create-chat-action';
 import { ChangeDepartmentAction } from './change-department-action';
-import { BaseAction, BaseActionType } from './base-action';
+import { BaseAction, type BaseActionType } from './base-action';
 
 const ACTIONS = [
 	DeleteAction,

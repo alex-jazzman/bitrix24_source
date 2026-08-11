@@ -160,5 +160,5 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 
 	exports.CommentEditor = CommentEditor;
 
-})(this.BX.Crm.Timeline.Editors = this.BX.Crm.Timeline.Editors || {}, BX, BX, BX);
+})(this.BX.Crm.Timeline.Editors = this.BX.Crm.Timeline.Editors || {}, BX, BX, BX.UI.Notification);
 //# sourceMappingURL=comment-editor.bundle.js.map

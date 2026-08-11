@@ -6,8 +6,10 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 	const { MCPSelector } = require('ai/mcp-selector');
 	const { withCurrentDomain } = require('utils/url');
 
+	const { DialogWidgetType } = require('im/messenger/const');
 	const { MCPButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
-	const { AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/type');
+	const { AssistantButtonType, AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/type');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 
@@ -22,6 +24,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {DialogId} */
 		#dialogId;
 
+		/** @type {string} */
+		#dialogType;
+
 		/** @type {Object} */
 		#view;
 
@@ -31,18 +36,60 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {number|null} */
 		#selectedAuthId = null;
 
-		/** @type {() => void} */
+		/** @type {string|null} */
+		#selectedAuthName = null;
+
+		/** @type {(buttonType?: string, isActive?: boolean) => void} */
 		#onActiveStateChange = () => {};
+
+		/** @type {?AssistantButton} */
+		#currentButton = null;
 
 		/**
 		 * @param {DialogLocator} dialogLocator
-		 * @param {() => void} [onActiveStateChange]
+		 * @param {string} dialogType
+		 * @param {(buttonType?: string, isActive?: boolean) => void} [onActiveStateChange]
 		 */
-		constructor({ dialogLocator, onActiveStateChange })
+		constructor({ dialogLocator, dialogType, onActiveStateChange })
 		{
 			this.#dialogId = dialogLocator.get('dialogId');
+			this.#dialogType = dialogType;
 			this.#view = dialogLocator.get('view');
 			this.#onActiveStateChange = Type.isFunction(onActiveStateChange) ? onActiveStateChange : (() => {});
+		}
+
+		/**
+		 * @returns {Promise<boolean>}
+		 */
+		async canShow()
+		{
+			if (this.#dialogType === DialogWidgetType.copilot)
+			{
+				return Feature.isCopilotMCPButtonAvailable;
+			}
+
+			if (this.#dialogType === DialogWidgetType.aiAssistant)
+			{
+				return Feature.isAiAssistantMCPSelectorAvailable;
+			}
+
+			return false;
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildButton()
+		{
+			return { ...MCPButton };
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildCurrentButton()
+		{
+			return this.#currentButton ?? this.buildButton();
 		}
 
 		/**
@@ -59,6 +106,14 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		get selectedAuthId()
 		{
 			return this.#selectedAuthId;
+		}
+
+		/**
+		 * @returns {string|null}
+		 */
+		get selectedAuthName()
+		{
+			return this.#selectedAuthName;
 		}
 
 		/**
@@ -107,26 +162,39 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 				};
 
 				this.#selectedAuthId = selectedAuth.id;
-				await this.#view.textField.updateAssistantButton(MCPButton.id, MCPButtonIntegrated);
+				this.#selectedAuthName = selectedAuth.name ?? null;
+				await this.#applyButton(MCPButtonIntegrated);
 				void this.#sendSelectionHint(this.#selectedAuthId);
 
-				this.#onActiveStateChange();
+				this.#onActiveStateChange(AssistantButtonType.mcp, true);
 
 				return;
 			}
 
 			this.#selectedAuthId = null;
-			await this.#view.textField.updateAssistantButton(MCPButton.id, MCPButton);
+			this.#selectedAuthName = null;
+			await this.#applyButton({ ...MCPButton });
 
-			this.#onActiveStateChange();
+			this.#onActiveStateChange(AssistantButtonType.mcp, false);
 		};
+
+		/**
+		 * @param {AssistantButton} button
+		 * @returns {Promise<any>}
+		 */
+		#applyButton(button)
+		{
+			this.#currentButton = button;
+
+			return this.#view.textField.updateAssistantButton(button.id, button);
+		}
 
 		/**
 		 * @param {MCPAuth['id']} selectedAuthId
 		 */
 		async #sendSelectionHint(selectedAuthId)
 		{
-			await new ChatService().botService.sendAiAssistantMCPSelection(selectedAuthId);
+			await new ChatService().botService.sendAiAssistantMCPSelection(selectedAuthId, this.#dialogId);
 		}
 	}
 

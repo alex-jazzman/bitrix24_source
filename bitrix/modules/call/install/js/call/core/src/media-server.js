@@ -1,4 +1,3 @@
-import Util from './util';
 import { Hardware } from './call_hardware';
 import { removeUdpFromSdp } from './sdk/helpers/sdp';
 import { MediaStreamsKinds, MONITORING_EVENTS_NAME_LIST, LOG_LEVEL } from './sdk/const';
@@ -814,7 +813,7 @@ export class MediaServer
 			return;
 		}
 
-		if (Util.useTcpSdp() && event.candidate.protocol !== 'tcp')
+		if (BX.message('call_use_tcp_sdp') === 'Y' && event.candidate.protocol !== 'tcp')
 		{
 			return;
 		}
@@ -977,7 +976,7 @@ export class MediaServer
 			let answer = await this.subscriberPeerConnection.createAnswer();
 			let sdp = this.#filterCodecs(answer.sdp);
 
-			if (Util.useTcpSdp())
+			if (BX.message('call_use_tcp_sdp') === 'Y')
 			{
 				sdp = removeUdpFromSdp(sdp);
 			}
@@ -1023,7 +1022,7 @@ export class MediaServer
 
 		try
 		{
-			if (Util.useTcpSdp())
+			if (BX.message('call_use_tcp_sdp') === 'Y')
 			{
 				data.answer.sdp = removeUdpFromSdp(data.answer.sdp);
 			}
@@ -1080,7 +1079,7 @@ export class MediaServer
 		{
 			const candidate = JSON.parse(data.trickle.candidateInit);
 
-			if (Util.useTcpSdp() && !candidate.candidate.includes('tcp'))
+			if (BX.message('call_use_tcp_sdp') === 'Y' && !candidate.candidate.includes('tcp'))
 			{
 				return;
 			}
@@ -1121,7 +1120,7 @@ export class MediaServer
 				let offer = await this.publisherPeerConnection.createOffer();
 				let sdp = this.#filterCodecs(offer.sdp);
 
-				if (Util.useTcpSdp())
+				if (BX.message('call_use_tcp_sdp') === 'Y')
 				{
 					sdp = removeUdpFromSdp(sdp);
 				}

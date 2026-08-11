@@ -67,6 +67,12 @@ $isStExportAllFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_
 						&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'] === 'Y');
 $arResult['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStExport && $isStExportAllFields) ? 'Y' : 'N';
 
+$isStExportProductsFields = (
+	isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'])
+	&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'] === 'Y'
+);
+$arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'] = ($isStExport && $isStExportProductsFields) ? 'Y' : 'N';
+
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
 $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
@@ -928,6 +934,19 @@ if(!in_array('ID', $arSelect))
 if ($isInExportMode)
 {
 	$arResult['SELECTED_HEADERS'] = $arSelectedHeaders;
+	// ID column must be present in export so the importer can group product rows
+	// of one invoice back into a single entity (same behaviour as deals export)
+	if (!in_array('ID', $arResult['SELECTED_HEADERS'], true))
+	{
+		$arResult['SELECTED_HEADERS'][] = 'ID';
+	}
+	if ($isStExportProductsFields)
+	{
+		if (!in_array('PRODUCT_ID', $arResult['SELECTED_HEADERS'], true))
+		{
+			$arResult['SELECTED_HEADERS'][] = 'PRODUCT_ID';
+		}
+	}
 	$arFilter['PERMISSION'] = 'EXPORT';
 }
 
@@ -1309,7 +1328,7 @@ if ($arResult['GADGET'] != 'Y' && !$isInExportMode)
 
 while($arInvoice = $obRes->GetNext())
 {
-	$entityID = $arInvoice['ID'];
+	$entityID = (int)$arInvoice['ID'];
 
 	// urls for row actions
 	$showLink = ($arParams['IS_RECURRING']  !== "Y") ? $arParams['PATH_TO_INVOICE_SHOW'] : $arParams['PATH_TO_INVOICE_RECUR_SHOW'];
@@ -1703,14 +1722,52 @@ $arResult['DB_LIST'] = $obRes;
 
 if (isset($arResult['INVOICE_ID']) && !empty($arResult['INVOICE_ID']))
 {
-	// try to load product rows
-	$arProductRows = array();
+	// Batch-load product rows when product export is enabled
+	if ($isInExportMode && $isStExportProductsFields)
+	{
+		$allProductRows = CCrmInvoice::GetProductRows(array_keys($arResult['INVOICE_ID']));
+		foreach ($allProductRows as $productRow)
+		{
+			$ownerID = (int)$productRow['ORDER_ID'];
+			if (!isset($arResult['INVOICE'][$ownerID]))
+			{
+				continue;
+			}
+			// Export the tax-inclusive price, the same basis the reference Deal export uses.
+			// The legacy Invoice basket keeps the tax-exclusive price when tax is not
+			// included in the price; exporting it as-is drops the tax on re-import and
+			// changes the sum (bug 0248111). This adjusts the value for export only - the
+			// stored basket price is left untouched.
+			if (
+				($productRow['VAT_INCLUDED'] ?? 'N') !== 'Y'
+				&& (float)($productRow['VAT_RATE'] ?? 0) > 0
+			)
+			{
+				$productRow['PRICE'] = \Bitrix\Crm\Service\Accounting::calculatePriceIncludingTax(
+					(float)$productRow['PRICE'],
+					(float)$productRow['VAT_RATE'] * 100
+				);
+			}
+			if (!isset($arResult['INVOICE'][$ownerID]['PRODUCT_ROWS']))
+			{
+				$arResult['INVOICE'][$ownerID]['PRODUCT_ROWS'] = [];
+			}
+			$arResult['INVOICE'][$ownerID]['PRODUCT_ROWS'][] = $productRow;
+		}
+	}
 
-	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Invoice, $arResult['INVOICE_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(
+		CCrmOwnerType::Invoice,
+		$arResult['INVOICE_ID']
+	);
 	foreach ($arResult['INVOICE_ID'] as $iInvoiceId)
 	{
-		$arResult['INVOICE'][$iInvoiceId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $iInvoiceId);
-		$arResult['INVOICE'][$iInvoiceId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $iInvoiceId);
+		$arResult['INVOICE'][$iInvoiceId]['EDIT'] =
+			$userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $iInvoiceId)
+		;
+		$arResult['INVOICE'][$iInvoiceId]['DELETE'] =
+			$userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $iInvoiceId)
+		;
 	}
 }
 

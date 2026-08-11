@@ -28,6 +28,12 @@ export const ResourcesSelector = {
 			selected: [],
 		};
 	},
+	computed: {
+		shortSlotsOnly(): boolean
+		{
+			return Boolean(this.$store.state[Model.SkuResourcesEditor].options.shortSlotsOnly);
+		},
+	},
 	created(): void
 	{
 		this.createDialog();
@@ -68,6 +74,9 @@ export const ResourcesSelector = {
 						id: EntitySelectorEntity.Resource,
 						dynamicLoad: true,
 						dynamicSearch: true,
+						options: {
+							shortSlotsOnly: this.shortSlotsOnly,
+						},
 					},
 				],
 				preselectedItems: this.resourcesIds.map((id) => ([EntitySelectorEntity.Product, id])),

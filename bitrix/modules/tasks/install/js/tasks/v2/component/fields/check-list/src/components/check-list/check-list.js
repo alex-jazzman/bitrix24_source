@@ -89,6 +89,7 @@ export const CheckList = {
 		return {
 			shownPopups: new Set(),
 			resizeObserver: null,
+			notifiers: new Map(),
 			AirButtonStyle,
 			ButtonSize,
 			ButtonIcon,
@@ -110,7 +111,6 @@ export const CheckList = {
 			isForwardMenuShown: false,
 			forwardMenuSectionCode: 'createSection',
 			forwardBindElement: null,
-			notifiers: new Map(),
 			isFreeze: false,
 			closing: false,
 		};
@@ -320,7 +320,9 @@ export const CheckList = {
 
 		this.checkListChangeTracker = new CheckListChangeTracker({
 			computed: {
-				checkLists: () => this.checkLists,
+				checkLists: () => this.checkLists.filter((item: CheckListModel) => {
+					return !this.deletingCheckListIds[item.id];
+				}),
 			},
 		});
 
@@ -773,14 +775,8 @@ export const CheckList = {
 
 			if (this.checkListChangeTracker.hasChanges() && this.isEdit)
 			{
-				const deletingIds = new Set(Object.values(this.deletingCheckListIds));
-				const fullListDeletingIds = this.checkListManager.expandIdsWithChildren(deletingIds);
-
-				const checkListsToSave = this.checkLists.filter((checkList: CheckListModel) => {
-					return !fullListDeletingIds.has(checkList.id);
-				});
-
-				await checkListService.save(this.taskId, checkListsToSave);
+				// Удаляемые пункты и их потомки отсеиваются внутри checkListService.save() (#excludeDeletingItems)
+				await checkListService.save(this.taskId, this.checkLists);
 			}
 
 			this.checkListChangeTracker.reset();

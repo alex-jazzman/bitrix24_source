@@ -59,7 +59,6 @@ const ChatMessage = {
 			pushedToUseBitrix24Notifications: null,
 			smsSenderListComponentKey: 0,
 			messageSenderEditor: null,
-			templateError: false,
 		};
 	},
 	computed: {
@@ -87,22 +86,6 @@ const ChatMessage = {
 			return this.$root.$app.context !== ContextDictionary.sms;
 		},
 	},
-	watch: {
-		messageData(newMessageData): void
-		{
-			if (!this.messageSenderEditor)
-			{
-				return;
-			}
-
-			this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
-
-			this.$store.commit(
-				'orderCreation/setIsSenderSelected',
-				!this.templateError,
-			);
-		},
-	},
 	mounted() {
 		if (this.messageSenderAvailable)
 		{
@@ -112,7 +95,14 @@ const ChatMessage = {
 	methods: {
 		initMessageSenderEditor()
 		{
-			this.messageSenderEditor = new Editor(this.messageSenderData);
+			const editorConfig = {
+				...this.messageSenderData,
+				message: {
+					...this.messageSenderData.message,
+					text: this.convertLegacyTemplateToBBCode(this.messageSenderData.message?.text ?? ''),
+				},
+			};
+			this.messageSenderEditor = new Editor(editorConfig);
 			this.messageSenderEditor.render().then(() => this.initMessageData()).catch(() => {});
 			this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
 		},
@@ -123,6 +113,7 @@ const ChatMessage = {
 				body: state.message?.body,
 			};
 			this.$store.dispatch('orderCreation/setMessageData', messageData);
+			this.$store.commit('orderCreation/setIsSenderSelected', true);
 		},
 		onItemHint(e)
 		{

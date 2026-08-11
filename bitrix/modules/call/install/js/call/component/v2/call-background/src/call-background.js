@@ -2,11 +2,10 @@ import 'ui.vue3';
 import 'ui.buttons';
 import 'ui.fonts.opensans';
 
-import {BaseEvent} from 'main.core.events';
-import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { DesktopApi } from 'call.adapter.desktop-api';
 
-import {Utils} from 'im.v2.lib.utils';
-import {Logger} from 'im.v2.lib.logger';
+import {Utils} from 'call.adapter.utils';
+import {Logger} from 'call.adapter.logger';
 
 import {BackgroundComponent} from './components/background';
 import {ActionComponent} from './components/action';
@@ -223,11 +222,11 @@ export const CallBackground = {
 				inputNode: this.$refs['uploadInput']
 			});
 
-			this.uploadManager.subscribe(UploadManager.event.uploadStart, (event: BaseEvent) => {
+			this.uploadManager.subscribe(UploadManager.event.uploadStart, (event) => {
 				const backgroundsInstance = Background.createCustomFromUploaderEvent(event.getData());
 				this.customBackgrounds.unshift(backgroundsInstance);
 			});
-			this.uploadManager.subscribe(UploadManager.event.uploadProgress, (event: BaseEvent) => {
+			this.uploadManager.subscribe(UploadManager.event.uploadProgress, (event) => {
 				const {id, progress} = event.getData();
 				const background = this.findCustomBackgroundById(id);
 				if (!background)
@@ -236,7 +235,7 @@ export const CallBackground = {
 				}
 				background.setUploadProgress(progress);
 			});
-			this.uploadManager.subscribe(UploadManager.event.uploadComplete, (event: BaseEvent) => {
+			this.uploadManager.subscribe(UploadManager.event.uploadComplete, (event) => {
 				const {id, fileResult} = event.getData();
 				const background = this.findCustomBackgroundById(id);
 				if (!background)
@@ -249,7 +248,7 @@ export const CallBackground = {
 
 				this.getBackgroundService().commitBackground(background.id);
 			});
-			this.uploadManager.subscribe(UploadManager.event.uploadError, (event: BaseEvent) => {
+			this.uploadManager.subscribe(UploadManager.event.uploadError, (event) => {
 				const {id} = event.getData();
 				const background = this.findCustomBackgroundById(id);
 				if (!background)

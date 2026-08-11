@@ -391,5 +391,22 @@ $jsSettings = array(
 				<input type="text" autocomplete="off" id="security_SYNC2" name="security_SYNC2" size="8" maxlength="8" value="">
 			</td>
 		</tr>
+
+		<?php if (Otp::isPushPossible()): ?>
+
+		<tr class="heading">
+			<td colspan="2"><?= GetMessage('SEC_OTP_PARAMS'); ?></td>
+		</tr>
+		<tr>
+			<td>
+				<?= GetMessage('SEC_OTP_EMAIL'); ?>
+			</td>
+			<td>
+				<input type="text" name="security_EMAIL" size="30" maxlength="255" value="<?= htmlspecialcharsbx($_POST['security_EMAIL'] ?? $otp->getEmail()); ?>">
+			</td>
+		</tr>
+
+		<?php endif; ?>
+
 	<?endif;?>
 <?endif;?>

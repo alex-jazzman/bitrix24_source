@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Application;
+
 if(class_exists("security"))
 {
 	return;
@@ -22,7 +24,7 @@ class security extends CModule
 	{
 		$arModuleVersion = array();
 
-		include(__DIR__.'/version.php');
+		include __DIR__ . '/version.php';
 
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
@@ -110,7 +112,7 @@ class security extends CModule
 	{
 		global $DB, $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$this->errors = false;
 
 		// Database tables creation
@@ -133,6 +135,7 @@ class security extends CModule
 			RegisterModuleDependences("main", "OnAfterUserUpdate", "security", "CSecurityUser", "onAfterUserUpdate");
 			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityFilter", "GetAuditTypes");
 			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityAntiVirus", "GetAuditTypes");
+			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", '\Bitrix\Security\Mfa\Otp', "getAuditTypes");
 			RegisterModuleDependences("main", "OnAdminInformerInsertItems", "security", "CSecurityFilter", "OnAdminInformerInsertItems");
 			RegisterModuleDependences("main", "OnAdminInformerInsertItems", "security", "CSecuritySiteChecker", "OnAdminInformerInsertItems");
 			CModule::IncludeModule("security");
@@ -171,7 +174,7 @@ class security extends CModule
 	{
 		global $DB, $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$this->errors = false;
 
 		UnRegisterModuleDependences("main", "OnPageStart", "security", "CSecurityIPRule", "OnPageStart");
@@ -182,6 +185,7 @@ class security extends CModule
 		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "security", "CSecurityUser", "onAfterUserUpdate");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityFilter", "GetAuditTypes");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityAntiVirus", "GetAuditTypes");
+		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", '\Bitrix\Security\Mfa\Otp', "getAuditTypes");
 		UnRegisterModuleDependences("main", "OnBeforeLocalRedirect", "security", "CSecurityRedirect", "BeforeLocalRedirect");
 		UnRegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityRedirect", "EndBufferContent");
 		UnRegisterModuleDependences("main", "OnAdminInformerInsertItems", "security", "CSecurityFilter", "OnAdminInformerInsertItems");
@@ -211,23 +215,31 @@ class security extends CModule
 
 	function InstallEvents()
 	{
-		global $DB;
-		$sIn = "'VIRUS_DETECTED'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
-		$ar = $rs->Fetch();
-		if($ar["C"] <= 0)
+		$dbEvent = CEventMessage::GetList('', '', ['EVENT_NAME' => 'VIRUS_DETECTED']);
+		if (!$dbEvent->Fetch())
 		{
-			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/security/install/events.php");
+			include __DIR__ . "/events.php";
 		}
 		return true;
 	}
 
 	function UnInstallEvents()
 	{
-		global $DB;
-		$sIn = "'VIRUS_DETECTED'";
-		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ");
-		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
+		$eventTypes = [
+			'VIRUS_DETECTED',
+			'USER_OTP_AUTH_CODE',
+			'USER_OTP_EMAIL_CONFIRM',
+		];
+		foreach ($eventTypes as $eventType)
+		{
+			$dbEvent = CEventMessage::GetList('id', 'asc', ['EVENT_NAME' => $eventType]);
+			while ($arEvent = $dbEvent->Fetch())
+			{
+				CEventMessage::Delete($arEvent['ID']);
+			}
+			CEventType::Delete($eventType);
+		}
+
 		return true;
 	}
 

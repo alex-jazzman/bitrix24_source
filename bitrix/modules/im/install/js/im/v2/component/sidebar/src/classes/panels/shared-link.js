@@ -1,12 +1,12 @@
+import { type Store } from 'ui.vue3.vuex';
+
 import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
+import { type ImModelSidebarSharedLinkItem } from 'im.v2.model';
 
-import { isSharedLinkCopyAllowed } from '../../helpers/shared-link';
+import { isGuestLinkCopyAllowed, isSharedLinkCopyAllowed } from '../../helpers/shared-link';
 
-import type { Store } from 'ui.vue3.vuex';
-import type { ImModelSidebarSharedLinkItem } from 'im.v2.model';
-
-type GetIndividualLinkResult = {
+type LinkResult = {
 	sharingLink: ImModelSidebarSharedLinkItem,
 };
 
@@ -21,39 +21,51 @@ export class SharedLink
 		this.dialogId = dialogId;
 	}
 
-	getInitialQuery(): ?{ [$Values<typeof RestMethod>]: { dialogId: string } }
+	getInitialQuery(): { [$Values<typeof RestMethod>]: { dialogId: string } }
 	{
-		if (!isSharedLinkCopyAllowed(this.dialogId))
+		const query = {};
+
+		if (isSharedLinkCopyAllowed(this.dialogId))
 		{
-			return null;
+			query[RestMethod.imV2ChatSharedLinkGetIndividual] = { dialogId: this.dialogId };
 		}
 
-		return {
-			[RestMethod.imV2ChatSharedLinkGetIndividual]: { dialogId: this.dialogId },
-		};
+		if (isGuestLinkCopyAllowed(this.dialogId))
+		{
+			query[RestMethod.imV2GuestLinkGenerate] = { dialogId: this.dialogId };
+		}
+
+		return query;
 	}
 
-	getResponseHandler(): () => Promise
+	getResponseHandler(): () => Promise<void>
 	{
 		return (response) => {
-			if (!this.getInitialQuery())
+			const updateStorePromise = [];
+			if (!response)
 			{
-				return Promise.resolve();
+				return Promise.all(updateStorePromise);
 			}
 
-			if (!response[RestMethod.imV2ChatSharedLinkGetIndividual])
+			const individualResponse: LinkResult = response[RestMethod.imV2ChatSharedLinkGetIndividual];
+			if (individualResponse)
 			{
-				return Promise.reject(new Error('SidebarChat service error: no response'));
+				updateStorePromise.push(this.updateModels(individualResponse));
 			}
 
-			return this.updateModels(response[RestMethod.imV2ChatSharedLinkGetIndividual]);
+			const guestResponse: LinkResult = response[RestMethod.imV2GuestLinkGenerate];
+			if (guestResponse)
+			{
+				updateStorePromise.push(this.updateModels(guestResponse));
+			}
+
+			return Promise.all(updateStorePromise);
 		};
 	}
 
-	updateModels(resultData: GetIndividualLinkResult): Promise
+	updateModels(resultData: LinkResult): Promise<void>
 	{
 		const { sharingLink } = resultData;
-
 		if (!sharingLink)
 		{
 			return Promise.resolve();

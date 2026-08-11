@@ -15,6 +15,7 @@ if ($arResult["BACKURL"] <> '')
 ?>
 	<input type="hidden" name="AUTH_FORM" value="Y">
 	<input type="hidden" name="TYPE" value="SEND_PWD">
+	<?= bitrix_sessid_post(); ?>
 	<div class="field"><?=GetMessage("AUTH_FORGOT_PASSWORD_1")?></div>
 
 		<div class="field">

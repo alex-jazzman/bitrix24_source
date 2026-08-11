@@ -1,5 +1,7 @@
 import { EventEmitter } from 'main.core.events';
+
 import { SlideAnimation } from 'im.v2.component.animation';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { CopilotWidgetChatContent } from './components/chat-content';
 import { CopilotWidgetRecentList } from './components/list';
@@ -22,19 +24,22 @@ export const CopilotWidgetLayout = {
 			default: false,
 		},
 	},
-	emits: ['select', 'createChat', 'recentVisibilityChanged'],
+	emits: ['select', 'createChat', 'recentVisibilityChanged', 'selectSuggestion'],
 	data(): { isPanelOpen: boolean }
 	{
 		return {
 			isPanelOpen: false,
 		};
 	},
-
+	mounted()
+	{
+		Analytics.getInstance().aiAssistant.onOpenMiniChat();
+	},
 	methods: {
 		togglePanel()
 		{
 			this.isPanelOpen = !this.isPanelOpen;
-			this.$emit('recentVisibilityChanged', this.isPanelOpen )
+			this.$emit('recentVisibilityChanged', this.isPanelOpen);
 		},
 		closePanel()
 		{
@@ -66,12 +71,12 @@ export const CopilotWidgetLayout = {
 		<div class="bx-im-ai-assistant-widget-layout__container">
 			<main class="bx-im-ai-assistant-widget-layout__content">
 				<CopilotWidgetChatContent
-					v-if="dialogId"
 					:dialogId="dialogId"
 					:withSidebar="false"
 					:isCreatingChat="isCreatingChat"
 					@toggleList="togglePanel"
 					@createChat="onCreateChat"
+					@selectSuggestion="$emit('selectSuggestion', $event)"
 				/>
 			</main>
 

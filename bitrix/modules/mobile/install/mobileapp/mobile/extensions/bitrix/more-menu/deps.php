@@ -26,5 +26,7 @@ return [
 		'utils/object',
 		'utils/test',
 		'utils/validation',
+		'more-menu/ref-registry',
+		'stafftrack:statemanager/redux/slices/check-in',
 	],
 ];

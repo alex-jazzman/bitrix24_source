@@ -236,3 +236,37 @@
 .tasks-templates-list-grid-tag {
 	cursor: pointer;
 }
+
+.task-regular-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: #828B95;
+}
+
+.tasks-hint {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+}
+
+.tasks-grid-tooltip-link {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--ui-color-base-8);
+	font-weight: var(--ui-font-weight-normal);
+	--font-size: var(--ui-font-size-md);
+	--ui-icon-set__icon-color: var(--ui-color-base-8);
+}
+
+.template-title-indicators {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	vertical-align: middle;
+}
+
+.template-title-indicators:before {
+	content: '';
+	display: inline-block;
+	vertical-align: middle;
+	height: 16px;
+}

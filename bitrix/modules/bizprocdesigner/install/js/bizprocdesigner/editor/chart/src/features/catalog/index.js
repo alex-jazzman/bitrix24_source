@@ -5,3 +5,4 @@ export * from './ui/change-catalog-group/change-catalog-group';
 export * from './ui/back-to-groups-btn/back-to-groups-btn';
 export * from './ui/change-founded-catalog-item/change-founded-catalog-item';
 export * from './ui/change-founded-catalog-group/change-founded-catalog-group';
+export * from './composables/use-default-title';

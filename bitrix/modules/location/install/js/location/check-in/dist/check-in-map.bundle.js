@@ -596,6 +596,9 @@ this.BX.Location = this.BX.Location || {};
 				case location_core.CheckinMapCommandType.UPDATE_SETTINGS:
 					this.mapService.updateSettings(data);
 					break;
+				case location_core.CheckinMapCommandType.SET_GRAYSCALE:
+					this.mapService.setGrayscale(data.enabled);
+					break;
 				default:
 					console.warn('Unknown command type:', eventType);
 			}

@@ -1528,6 +1528,10 @@ this.BX = this.BX || {};
 				let leaveMessageField = new ui_formElements_view.Checker(this.getValue('general_chat_message_leave'));
 				CommunicationPage.addToSectionHelper(leaveMessageField, settingsSection);
 			}
+			if (this.hasValue('chat_with_guests_available')) {
+				let chatWithGuestsField = new ui_formElements_view.Checker(this.getValue('chat_with_guests_available'));
+				CommunicationPage.addToSectionHelper(chatWithGuestsField, settingsSection);
+			}
 			if (this.hasValue('general_chat_message_admin_rights')) {
 				let adminMessageField = new ui_formElements_view.Checker(this.getValue('general_chat_message_admin_rights'));
 				CommunicationPage.addToSectionHelper(adminMessageField, settingsSection);
@@ -3858,6 +3862,7 @@ this.BX = this.BX || {};
 			}
 			this.#buildDataLeakProtectionSection()?.renderTo(contentNode);
 			this.#buildRestIntegrationSection()?.renderTo(contentNode);
+			this.#buildVibecodePermissionSourceSection()?.renderTo(contentNode);
 
 			// if (isBitrix24)
 			// {
@@ -4166,6 +4171,19 @@ this.BX = this.BX || {};
 				});
 				SecurityPage.addToSectionHelper(personalAppCreateSelector, settingsSection);
 			}
+			return settingsSection;
+		}
+		#buildVibecodePermissionSourceSection() {
+			if (!this.hasValue('sectionVibecodePermissionSource') || !this.hasValue('switcherVibecodePermissionSource')) {
+				return;
+			}
+			const vibecodeSection = new ui_section.Section(this.getValue('sectionVibecodePermissionSource'));
+			const settingsSection = new ui_formElements_field.SettingsSection({
+				section: vibecodeSection,
+				parent: this
+			});
+			const permissionSourceChecker = new ui_formElements_view.Checker(this.getValue('switcherVibecodePermissionSource'));
+			SecurityPage.addToSectionHelper(permissionSourceChecker, settingsSection);
 			return settingsSection;
 		}
 		#buildAccessIPSection() {

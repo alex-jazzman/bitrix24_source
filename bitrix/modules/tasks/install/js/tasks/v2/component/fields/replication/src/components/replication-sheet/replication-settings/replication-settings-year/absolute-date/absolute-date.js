@@ -37,11 +37,22 @@ export const ReplicationSettingsYearAbsoluteDate = {
 			ReplicationYearlyType,
 		};
 	},
-	data(): { prevDayNumber: number }
+	data(): { localDayNumber: string, lastValidDayNumber: number }
 	{
 		return {
-			prevDayNumber: 0,
+			localDayNumber: '',
+			lastValidDayNumber: 1,
 		};
+	},
+	watch: {
+		yearlyDayNumber: {
+			immediate: true,
+			handler(value: number): void
+			{
+				this.lastValidDayNumber = value;
+				this.localDayNumber = String(value);
+			},
+		},
 	},
 	computed: {
 		disabled(): boolean
@@ -69,21 +80,25 @@ export const ReplicationSettingsYearAbsoluteDate = {
 			},
 		},
 	},
-	mounted(): void
-	{
-		this.prevDayNumber = this.dayNumber;
-	},
 	methods: {
 		updateDayNumber(value: string = ''): void
 		{
-			let day = parseInt(value.replaceAll(/\D/g, ''), 10) ?? 0;
+			this.localDayNumber = value.replaceAll(/\D/g, '').slice(0, 2);
+		},
+		handleDayNumberBlur(): void
+		{
+			const day = parseInt(this.localDayNumber, 10);
 
 			if (!Type.isInteger(day) || day < 1 || day > 31)
 			{
-				day = this.prevDayNumber;
+				this.localDayNumber = String(this.lastValidDayNumber);
+
+				return;
 			}
 
-			this.dayNumber = day;
+			this.lastValidDayNumber = day;
+			this.localDayNumber = String(day);
+			this.$emit('update:yearlyDayNumber', day);
 		},
 	},
 	template: `
@@ -99,13 +114,14 @@ export const ReplicationSettingsYearAbsoluteDate = {
 				@update:modelValue="$emit('update:yearlyType', $event)"
 			/>
 			<BInput
-				:modelValue="dayNumber.toString()"
+				:modelValue="localDayNumber"
 				:size="InputSize.Sm"
 				:design="disabled ? InputDesign.Disabled : InputDesign.Grey"
 				:disabled
 				stretched
 				style="max-width: 4em;"
 				@update:modelValue="updateDayNumber"
+				@blur="handleDayNumberBlur"
 			/>
 			<MonthSelect v-model="month" :disabled/>
 		</div>

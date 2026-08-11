@@ -331,6 +331,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				flexDirection: 'row',
 				flexShrink: 1,
 				backgroundColor: this.getBackgroundColor(),
+				backgroundColorGradient: this.getBackgroundColorGradient(),
 				justifyContent: 'center',
 				height: this.size.getHeight(),
 				...this.getBorderStyle(),
@@ -430,6 +431,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			}
 
 			return designBackgroundColor?.withPressed();
+		}
+
+		getBackgroundColorGradient()
+		{
+			return this.designStyle.backgroundColorGradient;
 		}
 
 		getDisabledStyle()

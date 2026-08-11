@@ -101,15 +101,6 @@ abstract class SecurityContext implements IErrorable
 	 * @param $objectId
 	 * @return bool
 	 */
-	public function canDownload($objectId)
-	{
-		return $this->canRead($objectId);
-	}
-
-	/**
-	 * @param $objectId
-	 * @return bool
-	 */
 	abstract public function canRename($objectId);
 
 	/**
@@ -141,6 +132,20 @@ abstract class SecurityContext implements IErrorable
 	 * @return string
 	 */
 	abstract public function getSqlExpressionForList($columnObjectId, $columnCreatedBy);
+
+	/**
+	 * Returns rights check expression for a list where every candidate row is a root object (PARENT_ID IS NULL).
+	 * Calling it on a list that may contain non-root objects is not allowed: the expression is free to rely
+	 * on the fact that the nearest rights checkpoint of a root object is the object itself.
+	 *
+	 * @param string $columnObjectId
+	 * @param string $columnCreatedBy
+	 * @return string
+	 */
+	public function getSqlExpressionForRootObjectList(string $columnObjectId, string $columnCreatedBy): string
+	{
+		return $this->getSqlExpressionForList($columnObjectId, $columnCreatedBy);
+	}
 
 	/**
 	 * Load operations if we show one level with objects.

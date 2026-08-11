@@ -1436,5 +1436,5 @@ this.BX = this.BX || {};
 	exports.RolesDialog = RolesDialog;
 	exports.RolesDialogEvents = RolesDialogEvents;
 
-})(this.BX.AI = this.BX.AI || {}, BX.AI, BX, BX.Event, BX, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Vue3.Pinia, BX.UI.IconSet, BX.UI);
+})(this.BX.AI = this.BX.AI || {}, BX.AI, BX, BX.Event, BX.UI.Notification, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Vue3.Pinia, BX.UI.IconSet, BX.UI);
 //# sourceMappingURL=roles-dialog.bundle.js.map

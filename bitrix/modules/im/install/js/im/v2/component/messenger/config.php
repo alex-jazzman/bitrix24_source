@@ -38,6 +38,7 @@ return [
 		'im.v2.lib.init',
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
+		'im.v2.lib.page-context',
 		'im.v2.lib.promo',
 		'im.v2.lib.theme',
 		'planner',

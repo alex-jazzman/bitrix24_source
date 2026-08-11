@@ -40,6 +40,7 @@ export const Feature = {
 	isMessageBuilderAvailable: 'isMessageBuilderAvailable',
 	isTaskCardAvailable: 'isMountedTasksCardAvailable',
 	isBitrixGptV2Available: 'isBitrixGptV2Available',
+	isCopilotDraftChatAvailable: 'isCopilotDraftChatAvailable',
 	isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
 	isCollabV2Available: 'isNestedChatAvailable',
 	isChatWithGuestsAvailable: 'isChatWithGuestsAvailable',

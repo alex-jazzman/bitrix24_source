@@ -1,20 +1,19 @@
 import { defineStore } from 'ui.vue3.pinia';
 import { Runtime, Type } from 'main.core';
 
-import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../shared/constants';
-import type { Block, PortId, Port, ActivityData } from '../../../shared/types';
+import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS, NODE_SETTINGS_TABS } from '../../../shared/constants';
+import { type Block, type PortId, type Port, type PortTypes, type ActivityData } from '../../../shared/types';
 
 import { createUniqueId, parsePortTitle } from '../../../shared/utils';
 import { complexNodeApi } from '../api';
-import { CONSTRUCTION_TYPES } from '../constants';
+import { CONSTRUCTION_TYPES, CRM_FILTER_BACKING_ACTIVITY_TYPE } from '../constants';
 
-import type { Construction, TRuleCard, NodeSettings, OrderPayload, OutputConstruction, Rule } from '../types';
+import { type Construction, type TRuleCard, type NodeSettings, type OrderPayload, type OutputConstruction, type Rule } from '../types';
 import { generateNextInputPortId } from '../utils';
 
 type NodesSettingsState = {
 	isLoading: boolean;
 	isShown: boolean;
-	isRuleSettingsShown: boolean;
 	currentRule: Port;
 	nodeSettings: NodeSettings | null;
 	block: Block | null,
@@ -38,7 +37,7 @@ type SyncAuxPorts = {
 
 type PortParams = {
 	portId: PortId,
-	type: PortType,
+	type: PortTypes,
 	label: string,
 	portTitle?: string,
 };
@@ -53,13 +52,13 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		isLoading: false,
 		isSaving: false,
 		isShown: false,
-		isRuleSettingsShown: false,
 		currentRule: null,
 		prevSavedNodeSettings: null,
 		ports: null,
 		nodeSettings: null,
 		block: null,
 		lastFetchId: 0,
+		selectedTabId: NODE_SETTINGS_TABS.basic,
 	}),
 	getters:
 	{
@@ -75,31 +74,40 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 	},
 	actions:
 	{
-		async fetchNodeSettings(block: Block): Promise<void>
+		async fetchNodeSettings(
+			block: Block,
+			defaultTitlePromise: Promise<string> = Promise.resolve(''),
+		): Promise<void>
 		{
 			const fetchId = ++this.lastFetchId;
 			this.nodeSettings = {
-				title: block.node.title,
+				title: '',
 				description: '',
 				rules: new Map(),
 				relations: new Map(),
 				blockId: block.id,
+				filterSupported: false,
 			};
 			this.isLoading = true;
+			const [loaded, defaultTitle] = await Promise.all([
+				complexNodeApi.loadSettings(block.activity),
+				defaultTitlePromise,
+			]);
 			const {
 				actions,
 				rules,
 				fixedDocumentType,
+				filterSupported,
 				title: loadedTitle,
 				description,
-			} = await complexNodeApi.loadSettings(block.activity);
+			} = loaded;
 
 			if (this.lastFetchId !== fetchId || !this.nodeSettings)
 			{
 				return;
 			}
 
-			if (Type.isStringFilled(loadedTitle))
+			if (Type.isStringFilled(loadedTitle) && loadedTitle !== defaultTitle)
 			{
 				this.nodeSettings.title = loadedTitle;
 			}
@@ -121,6 +129,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				),
 				fixedDocumentType,
 				description,
+				filterSupported,
 			};
 			this.prevSavedNodeSettings = Runtime.clone(this.nodeSettings);
 			this.ports = block.ports.map((port) => ({ ...port })).sort((a, b) => {
@@ -130,10 +139,19 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				return aId - bId;
 			});
 			const rulesIds = new Set(this.nodeSettings.rules.keys());
+			let firstRulePort = null;
 			this.ports.forEach((port) => {
-				if (port.type === PORT_TYPES.input && !rulesIds.has(port.id))
+				if (port.type === PORT_TYPES.input)
 				{
-					this.addRule(port.id);
+					if (!rulesIds.has(port.id))
+					{
+						this.addRule(port.id);
+					}
+
+					if (!firstRulePort)
+					{
+						firstRulePort = port;
+					}
 
 					return;
 				}
@@ -143,6 +161,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 					this.addRelation(port.id);
 				}
 			});
+			this.setCurrentRule(firstRulePort);
 			this.block = block;
 			this.isLoading = false;
 		},
@@ -156,14 +175,11 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			this.nodeSettings = null;
 			this.block = null;
 			this.ports = null;
+			this.selectedTabId = NODE_SETTINGS_TABS.basic;
 		},
 		toggleVisibility(isShown: boolean): void
 		{
 			this.isShown = isShown;
-		},
-		toggleRuleSettingsVisibility(isShown: boolean): void
-		{
-			this.isRuleSettingsShown = isShown;
 		},
 		setCurrentRule(port: Port): void
 		{
@@ -191,7 +207,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			return nextPortId;
 		},
-		addConstruction(ruleCard: TRuleCard, constructionType: string, position: ?number): void
+		addConstruction(ruleCard: TRuleCard, constructionType: string): void
 		{
 			const newConstruction = {
 				id: createUniqueId(),
@@ -203,10 +219,19 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				},
 			};
 
-			if (constructionType === CONSTRUCTION_TYPES.ACTION)
+			if (
+				constructionType === CONSTRUCTION_TYPES.ACTION
+				|| constructionType === CONSTRUCTION_TYPES.FILTER
+			)
 			{
 				newConstruction.expression.value = {};
-				newConstruction.expression.actionId = '';
+				newConstruction.expression.actionId = constructionType === CONSTRUCTION_TYPES.FILTER
+					? CRM_FILTER_BACKING_ACTIVITY_TYPE
+					: ''
+				;
+				newConstruction.expression.rawActivityData = null;
+				newConstruction.expression.activityData = null;
+				newConstruction.expression.document = null;
 			}
 			else
 			{
@@ -222,7 +247,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				};
 			}
 
-			const pos = position ?? ruleCard.constructions.length;
+			const pos = ruleCard.constructions.length;
 			ruleCard.constructions.splice(pos, 0, newConstruction);
 		},
 		deleteConstruction(ruleCard: TRuleCard, construction: Construction): void
@@ -235,9 +260,13 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		},
 		deleteRuleSettings(ruleId: string): SyncOutputPorts | null
 		{
-			this.currentSettingsItems.delete(ruleId);
+			const isRule = this.nodeSettings.rules.has(ruleId);
+			const settingsItems = isRule ? this.nodeSettings.rules : this.nodeSettings.relations;
+			settingsItems.delete(ruleId);
 
-			return this.syncOutputPortsWithRules();
+			const portType = isRule ? PORT_TYPES.input : PORT_TYPES.inputRelation;
+
+			return this.syncOutputPortsWithRules(portType);
 		},
 		selectBooleanType(construction: Construction, type: string): void
 		{
@@ -297,22 +326,28 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			this.nodeSettings.rules.set(ruleId, transformedPortRule);
 			this.prevSavedNodeSettings.rules.set(ruleId, Runtime.clone(transformedPortRule));
 
-			return this.syncOutputPortsWithRules();
+			return this.syncOutputPortsWithRules(PORT_TYPES.input);
 		},
-		syncOutputPortsWithRules(): SyncOutputPorts | null
+		syncOutputPortsWithRules(portType?: string): SyncOutputPorts | null
 		{
 			if (!this.block)
 			{
 				return null;
 			}
 
-			const outputConstructions = [...this.currentSettingsItems.values()].flatMap((r) => {
+			const type = portType ?? this.currentRule?.type;
+			const settingsItems = type === PORT_TYPES.input
+				? this.nodeSettings.rules
+				: this.nodeSettings.relations
+			;
+
+			const outputConstructions = [...settingsItems.values()].flatMap((r) => {
 				return r.ruleCards.flatMap((ruleCard) => {
 					return ruleCard.constructions.filter((construction) => construction.type === CONSTRUCTION_TYPES.OUTPUT);
 				});
 			});
 
-			const outputType = this.currentRule.type === PORT_TYPES.input
+			const outputType = type === PORT_TYPES.input
 				? PORT_TYPES.output
 				: PORT_TYPES.outputRelation
 			;
@@ -347,18 +382,11 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				outputPortsToDelete: toDeletePortIds,
 			};
 		},
-		async saveRule(documentType: Array<string>): Promise<void>
+		async saveRule(ruleId: string, documentType: Array<string>): Promise<void>
 		{
-			const {
-				outputPortsToAdd,
-				outputPortsToDelete,
-			} = await this.savePortRule(this.currentRule.id, documentType);
-			this.toggleRuleSettingsVisibility(false);
+			const { outputPortsToAdd } = await this.savePortRule(ruleId, documentType);
 			outputPortsToAdd.forEach(({ portId, title }) => {
 				this.addRulePort(portId, PORT_TYPES.output, title);
-			});
-			outputPortsToDelete.forEach((portId) => {
-				this.deletePort(portId);
 			});
 
 			const auxSync = this.syncAuxPortsWithActions();
@@ -369,28 +397,31 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				this.activatePort(portId);
 			});
 		},
-		async saveRelation(): Promise<void>
+		async saveRelation(relationId: string): Promise<void>
 		{
 			await new Promise((resolve) => {
 				setTimeout(resolve, 2000);
 			});
-			const rule = this.nodeSettings.relations.get(this.currentRule.id);
+			const rule = this.nodeSettings.relations.get(relationId);
 			rule.isFilled = true;
-			this.toggleRuleSettingsVisibility(false);
-			const { outputPortsToAdd, outputPortsToDelete } = this.syncOutputPortsWithRules();
+			const { outputPortsToAdd } = this.syncOutputPortsWithRules(PORT_TYPES.inputRelation);
 			outputPortsToAdd.forEach(({ portId, title }) => {
 				this.addRelationPort(portId, PORT_TYPES.outputRelation, title);
 			});
-			outputPortsToDelete.forEach((portId) => {
-				this.deletePort(portId);
-			});
 		},
-		async saveForm(documentType: string): Promise<ActivityData>
+		async saveForm(documentType: string, defaultTitle: string = ''): Promise<ActivityData>
 		{
 			try
 			{
+				const nodeSettingsToSave = {
+					...this.nodeSettings,
+					title: Type.isStringFilled(this.nodeSettings.title)
+						? this.nodeSettings.title
+						: defaultTitle,
+				};
+
 				return await complexNodeApi.saveSettings(
-					this.nodeSettings,
+					nodeSettingsToSave,
 					this.block.activity,
 					documentType,
 				);
@@ -404,24 +435,6 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		discardFormSettings(): void
 		{
 			this.nodeSettings = Runtime.clone(this.prevSavedNodeSettings);
-		},
-		discardRuleSettings(): void
-		{
-			const { rules: prevSavedRules, relations: prevSavedRelations } = this.prevSavedNodeSettings;
-			const prevSavedItems = this.currentRule.type === PORT_TYPES.input
-				? prevSavedRules : prevSavedRelations;
-
-			if (!prevSavedItems.has(this.currentRule.id))
-			{
-				const currentRule = this.currentSettingsItems.get(this.currentRule.id);
-				currentRule.isFilled = false;
-				currentRule.ruleCards = [];
-
-				return;
-			}
-
-			const copyItem = Runtime.clone(prevSavedItems.get(this.currentRule.id));
-			this.currentSettingsItems.set(this.currentRule.id, copyItem);
 		},
 		createPort(ports: Array<Port>, { portId, type, label, portTitle }: PortParams): Port
 		{
@@ -438,7 +451,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				position: leftInputPortTypes.has(type) ? PORT_POSITIONS.left : PORT_POSITIONS.right,
 			};
 		},
-		addRulePort(portId: string, type: PortType, portTitle: ?string): void
+		addRulePort(portId: string, type: PortTypes, portTitle: ?string): void
 		{
 			if (![PORT_TYPES.input, PORT_TYPES.output].includes(type))
 			{
@@ -466,7 +479,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			this.ports.unshift(port);
 		},
-		addRelationPort(portId: string, type: PortType): void
+		addRelationPort(portId: string, type: PortTypes): void
 		{
 			if (![PORT_TYPES.inputRelation, PORT_TYPES.outputRelation].includes(type))
 			{
@@ -497,6 +510,10 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			}
 
 			this.ports.splice(this.ports.indexOf(deletedPort), 1);
+			if (portId === this.currentRule.id)
+			{
+				this.setCurrentRule(null);
+			}
 		},
 		activatePort(portId: string): void
 		{
@@ -521,8 +538,10 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 							&& construction.expression?.auxPortId === portId
 						)
 						{
-							construction.expression.auxPortId = null;
-							construction.expression.auxPortTitle = null;
+							Object.assign(construction.expression, {
+								auxPortId: null,
+								auxPortTitle: null,
+							});
 						}
 					});
 				});

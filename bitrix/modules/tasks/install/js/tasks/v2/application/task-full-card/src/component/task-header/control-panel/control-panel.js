@@ -1,4 +1,6 @@
 import { BIcon, Outline, Solid, Main } from 'ui.icon-set.api.vue';
+
+import { EventEmitter } from 'main.core.events';
 import 'ui.icon-set.outline';
 import { Notifier } from 'ui.notification-manager';
 import { Popup } from 'ui.vue3.components.popup';
@@ -12,11 +14,12 @@ import {
 	TasksControlPanelInfo,
 } from 'tasks.v2.component.tasks-control-panel';
 import { TasksEntityPicker } from 'tasks.v2.component.tasks-entity-picker';
-import { Analytics, EntitySelectorEntity, Model } from 'tasks.v2.const';
+import { Analytics, EntitySelectorEntity, EventName, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { templateService } from 'tasks.v2.provider.service.template-service';
 
 import { TasksOpenerFullCard } from '../tasks-opener-full-card/tasks-opener-full-card.js';
 import './control-panel.css';
@@ -313,7 +316,7 @@ export const ControlPanel = {
 			return {
 				id: templatePickerOpenerId,
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK_WITH_TEMPLATE'),
-				icon: Outline.TEMPLATE_TASK,
+				icon: Outline.TEMPLATE_PLUS,
 				handleClickItem: this.handleClickTemplatesPickerOpener,
 				isActive: this.isTemplatesPickerOpened,
 			};
@@ -322,11 +325,12 @@ export const ControlPanel = {
 		{
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'),
-				icon: Outline.TEMPLATE_TASK,
-				handleClickItem: (): void => TaskCard.showCompactCard({
-					groupId: this.task.groupId,
-					analytics: this.getAnalytics(),
-				}),
+				icon: Outline.O_TEMPLATE_TASK,
+				handleClickItem: async (): Promise<void> => {
+					this.isControlPanelOpened = false;
+					const [id, error] = await templateService.addFromExistingTask(this.taskId);
+					EventEmitter.emit(EventName.NotifyTemplateCreated, { id, error });
+				},
 			};
 		},
 		itemRoutingBitrixMarket(): MenuItemOptions
@@ -383,7 +387,7 @@ export const ControlPanel = {
 				this.task.rights.createSubtask && this.itemCreationSubtask,
 				this.task.rights.copy && this.itemCreationTaskCopy,
 				this.userRights.tasks.createFromTemplate && this.itemCreationTaskNewWithTemplate,
-				false && this.task.rights.saveAsTemplate && this.itemCreationTemplateFromTask, // TODO: handle later
+				this.task.rights.saveAsTemplate && this.itemCreationTemplateFromTask,
 				this.itemToggleFavor,
 			].filter((item: MenuItemOptions) => item);
 		},

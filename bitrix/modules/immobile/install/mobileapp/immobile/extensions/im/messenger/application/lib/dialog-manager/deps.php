@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
+		'debug:prism',
 		'im:messenger/const',
 		'im:messenger/controller/dialog/ai-assistant',
 		'im:messenger/controller/dialog/chat',

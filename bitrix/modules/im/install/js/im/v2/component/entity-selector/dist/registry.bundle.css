@@ -193,10 +193,6 @@
 	transform: rotate(180deg);
 }
 
-.bx-im-tab-wrapper__tabs {
-	margin: 0 22px 28px;
-}
-
 .bx-im-entity-selector-add-to-chat__container {
 	--im-entity-selector-add-to-chat__color_show-history: var(--ui-color-gray-90);
 	--im-entity-selector-add-to-chat__color_popup-title: var(--ui-color-black-base);
@@ -314,47 +310,44 @@
 	cursor: not-allowed;
 }
 
-.bx-im-invitation-input__container input {
-	--bx-im-invitation-input__primary-color: var(--ui-color-accent-main-primary);
+.bx-im-tab-wrapper__tabs {
+	margin: 0 22px 28px;
+}
 
-	width: 100%;
-	padding: 8px 12px;
-	border: 1px solid var(--ui-color-base-5);
-	border-radius: var(--ui-border-radius-sm);
-	font-size: var(--ui-font-size-lg);
-	color: var(--ui-color-base-1);
-	outline: none;
+.bx-im-invitation-input__container {
 	margin-top: 12px;
-	caret-color: var(--ui-color-accent-main-primary);
 }
 
-.bx-im-invitation-input__container input.--error {
-	border-color: var(--ui-color-red-50);
+.bx-im-invitation-input__container .ui-tag-selector-outer-container {
+	cursor: text;
 }
 
-.bx-im-invitation-input__container input:focus {
-	border-color: var(--ui-color-accent-main-primary);
+.bx-im-invitation-input__container .ui-tag-selector-outer-container.--error {
+	border-color: var(--ui-color-palette-red-60);
+}
+
+.bx-im-invitation-input__container .ui-tag-selector-text-box {
+	flex-grow: 1;
+	min-width: 0;
 }
 
 .bx-im-invitation-input__error {
 	display: flex;
 	align-items: center;
+	margin-top: 4px;
 }
 
 .bx-im-invitation-input__error-text {
-	font-size: var(--im-font-size-xs);
-	color: var(--ui-color-accent-main-alert);
+	color: var(--ui-color-palette-red-50);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 18px;
 }
 
 .bx-im-invitation-input__error-icon.ui-icon-set {
-	background-color: var(--ui-color-red-60);
+	background-color: var(--ui-color-palette-red-60);
 	height: 18px;
 	width: 18px;
-}
-
-.bx-im-invitation-input__error-icon {
-	font-size: var(--im-font-size-2xl);
-	color: var(--ui-color-red-60);
 }
 
 /*!* region Custom popup header *!*/

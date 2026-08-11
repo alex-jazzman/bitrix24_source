@@ -40,6 +40,7 @@ export class SecurityPage extends BaseSettingsPage
 
 		this.#buildDataLeakProtectionSection()?.renderTo(contentNode);
 		this.#buildRestIntegrationSection()?.renderTo(contentNode);
+		this.#buildVibecodePermissionSourceSection()?.renderTo(contentNode);
 
 		// if (isBitrix24)
 		// {
@@ -427,6 +428,26 @@ export class SecurityPage extends BaseSettingsPage
 
 			SecurityPage.addToSectionHelper(personalAppCreateSelector, settingsSection);
 		}
+
+		return settingsSection;
+	}
+
+	#buildVibecodePermissionSourceSection(): ?SettingsSection
+	{
+		if (!this.hasValue('sectionVibecodePermissionSource') || !this.hasValue('switcherVibecodePermissionSource'))
+		{
+			return;
+		}
+
+		const vibecodeSection = new Section(this.getValue('sectionVibecodePermissionSource'));
+
+		const settingsSection = new SettingsSection({
+			section: vibecodeSection,
+			parent: this,
+		});
+
+		const permissionSourceChecker = new Checker(this.getValue('switcherVibecodePermissionSource'));
+		SecurityPage.addToSectionHelper(permissionSourceChecker, settingsSection);
 
 		return settingsSection;
 	}

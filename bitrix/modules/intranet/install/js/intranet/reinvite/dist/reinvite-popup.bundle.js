@@ -1,303 +1,226 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_popup,ui_buttons,main_core) {
+(function (exports, main_core, main_popup, ui_buttons) {
 	'use strict';
 
-	let _ = t => t,
-	  _t;
-	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
-	var _value = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("value");
-	var _userId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userId");
-	var _content = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
-	var _formNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formNode");
 	class Form {
-	  constructor(options) {
-	    Object.defineProperty(this, _id, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _value, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _userId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _content, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _formNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = `form-${options.id}`;
-	    babelHelpers.classPrivateFieldLooseBase(this, _value)[_value] = options.inputValue;
-	    babelHelpers.classPrivateFieldLooseBase(this, _userId)[_userId] = options.userId;
-	  }
-	  getTitleRender() {
-	    return new HTMLElement();
-	  }
-	  getFieldRender() {
-	    return new HTMLElement();
-	  }
-	  getFormNode() {
-	    return this.render().querySelector('form#' + babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]);
-	  }
-	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _content)[_content]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _content)[_content];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _content)[_content] = main_core.Tag.render(_t || (_t = _`
+		#id;
+		#value;
+		#userId;
+		#content;
+		#formNode;
+		constructor(options) {
+			this.#id = `form-${options.id}`;
+			this.#value = options.inputValue;
+			this.#userId = options.userId;
+		}
+		getTitleRender() {
+			return new HTMLElement();
+		}
+		getFieldRender() {
+			return new HTMLElement();
+		}
+		getFormNode() {
+			return this.render().querySelector('form#' + this.#id);
+		}
+		render() {
+			if (this.#content) {
+				return this.#content;
+			}
+			this.#content = main_core.Tag.render`
 		<div class="intranet-reinvite-popup-wrapper">
-			<form method="POST" id="${0}">
-				<input type="hidden" name="userId" value="${0}">
-				${0}
-				${0}
+			<form method="POST" id="${this.#id}">
+				<input type="hidden" name="userId" value="${this.#userId}">
+				${this.getTitleRender()}
+				${this.getFieldRender()}
 			</form>
-		</div>`), babelHelpers.classPrivateFieldLooseBase(this, _id)[_id], babelHelpers.classPrivateFieldLooseBase(this, _userId)[_userId], this.getTitleRender(), this.getFieldRender());
-	    return babelHelpers.classPrivateFieldLooseBase(this, _content)[_content];
-	  }
-	  getValue() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _value)[_value];
-	  }
-	  getData() {
-	    return new FormData(this.getFormNode());
-	  }
+		</div>`;
+			return this.#content;
+		}
+		getValue() {
+			return this.#value;
+		}
+		getData() {
+			return new FormData(this.getFormNode());
+		}
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2;
 	class PhoneForm extends Form {
-	  getTitleRender() {
-	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="intranet-reinvite-popup-title">
-			${0}
-		</div>`), main_core.Loc.getMessage('INTRANET_JS_PHONE_POPUP_TITLE', {
-	      '#CODE#': 'redirect=detail&code=17729332'
-	    }));
-	  }
-	  getFieldRender() {
-	    const form = main_core.Tag.render(_t2 || (_t2 = _$1`
+		getTitleRender() {
+			return main_core.Tag.render`<div class="intranet-reinvite-popup-title">
+			${main_core.Loc.getMessage('INTRANET_JS_PHONE_POPUP_TITLE', {
+			'#CODE#': 'redirect=detail&code=17729332'
+		})}
+		</div>`;
+		}
+		getFieldRender() {
+			const form = main_core.Tag.render`
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon intranet-reinvite-popup-field-row">
 				<div class="intranet-reinvite-popup-field-label">
-					<label>${0}</label>
+					<label>${main_core.Loc.getMessage('INTRANET_JS_PHONE_FIELD_LABEL')}</label>
 				</div>
 				<div class="ui-ctl ui-ctl-textbox">
 					<div id="intranet_reinvite_phone_flag" class="ui-ctl-before --flag"></div>
-					<input id="intranet_reinvite_phone_input" type="text" name="newPhone" value="${0}" class="ui-ctl-element">
+					<input id="intranet_reinvite_phone_input" type="text" name="newPhone" value="${this.getValue()}" class="ui-ctl-element">
 				</div>
-			</div>`), main_core.Loc.getMessage('INTRANET_JS_PHONE_FIELD_LABEL'), this.getValue());
-	    new BX.PhoneNumber.Input({
-	      node: form.querySelector('#intranet_reinvite_phone_input'),
-	      defaultCountry: 'ru',
-	      flagNode: form.querySelector('#intranet_reinvite_phone_flag'),
-	      flagSize: 24,
-	      onChange: function (e) {}
-	    });
-	    return form;
-	  }
+			</div>`;
+			new BX.PhoneNumber.Input({
+				node: form.querySelector('#intranet_reinvite_phone_input'),
+				defaultCountry: 'ru',
+				flagNode: form.querySelector('#intranet_reinvite_phone_flag'),
+				flagSize: 24,
+				onChange: function (e) {}
+			});
+			return form;
+		}
 	}
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$1;
-	var _onButtonStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onButtonStateChange");
 	class EmailForm extends Form {
-	  constructor(options) {
-	    super(options);
-	    Object.defineProperty(this, _onButtonStateChange, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange] = main_core.Type.isFunction(options.onButtonStateChange) ? options.onButtonStateChange : null;
-	  }
-	  getTitleRender() {
-	    return main_core.Tag.render(_t$2 || (_t$2 = _$2`<div class="intranet-reinvite-popup-title">
-			${0}
-			</div>`), main_core.Loc.getMessage('INTRANET_JS_EMAIL_POPUP_TITLE', {
-	      '#CODE#': 'redirect=detail&code=17729332'
-	    }));
-	  }
-	  getFieldRender() {
-	    const field = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+		#onButtonStateChange;
+		constructor(options) {
+			super(options);
+			this.#onButtonStateChange = main_core.Type.isFunction(options.onButtonStateChange) ? options.onButtonStateChange : null;
+		}
+		getTitleRender() {
+			return main_core.Tag.render`<div class="intranet-reinvite-popup-title">
+			${main_core.Loc.getMessage('INTRANET_JS_EMAIL_POPUP_TITLE', {
+			'#CODE#': 'redirect=detail&code=17729332'
+		})}
+			</div>`;
+		}
+		getFieldRender() {
+			const field = main_core.Tag.render`
 			<div class="intranet-reinvite-popup-field-row">
 				<div class="intranet-reinvite-popup-field-label">
-					<label>${0}</label>
+					<label>${main_core.Loc.getMessage('INTRANET_JS_EMAIL_FIELD_LABEL')}</label>
 				</div>
 				<div class="ui-ctl ui-ctl-textbox">
-					<input type="text" name="newEmail" value="${0}" class="ui-ctl-element"> 
+					<input type="text" name="newEmail" value="${this.getValue()}" class="ui-ctl-element"> 
 				</div>
-			</div>`), main_core.Loc.getMessage('INTRANET_JS_EMAIL_FIELD_LABEL'), this.getValue());
-	    const input = field.querySelector('input[name="newEmail"]');
-	    if (input && babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange]) {
-	      main_core.Event.bind(input, 'input', event => {
-	        const value = event.target.value.trim();
-	        babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange](main_core.Type.isStringFilled(value));
-	      });
-	    }
-	    return field;
-	  }
+			</div>`;
+			const input = field.querySelector('input[name="newEmail"]');
+			if (input && this.#onButtonStateChange) {
+				main_core.Event.bind(input, 'input', event => {
+					const value = event.target.value.trim();
+					this.#onButtonStateChange(main_core.Type.isStringFilled(value));
+				});
+			}
+			return field;
+		}
 	}
 
 	const FormType = {
-	  EMAIL: 'email',
-	  PHONE: 'phone'
+		EMAIL: 'email',
+		PHONE: 'phone'
 	};
 
 	class FormFactory {
-	  constructor() {}
-	  static create(type, options) {
-	    switch (type) {
-	      case FormType.EMAIL:
-	        return new EmailForm(options);
-	      case FormType.PHONE:
-	        return new PhoneForm(options);
-	      default:
-	        throw new Error('Unknown ContextType value: ' + type);
-	    }
-	  }
+		constructor() {}
+		static create(type, options) {
+			switch (type) {
+				case FormType.EMAIL:
+					return new EmailForm(options);
+				case FormType.PHONE:
+					return new PhoneForm(options);
+				default:
+					throw new Error('Unknown ContextType value: ' + type);
+			}
+		}
 	}
 
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _transport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
-	var _userId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userId");
-	var _id$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
-	var _inputValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputValue");
-	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
-	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
-	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
-	var _handleButtonStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonStateChange");
-	var _createPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPopup");
 	class ReinvitePopup {
-	  constructor(options) {
-	    Object.defineProperty(this, _createPopup, {
-	      value: _createPopup2
-	    });
-	    Object.defineProperty(this, _handleButtonStateChange, {
-	      value: _handleButtonStateChange2
-	    });
-	    Object.defineProperty(this, _popup, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _transport, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _userId$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _id$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _inputValue, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _bindElement, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _form, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _width, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _sendButton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    if (options.userId <= 0) {
-	      throw new Error('Invalide "userId" parameter');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _userId$1)[_userId$1] = options.userId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1] = 'reinvite-popup-' + options.userId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement] = main_core.Type.isElementNode(options.bindElement) ? options.bindElement : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport] = main_core.Type.isFunction(options.transport) ? options.transport : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] = 348;
-	    babelHelpers.classPrivateFieldLooseBase(this, _form)[_form] = FormFactory.create(options.formType, {
-	      id: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1],
-	      userId: babelHelpers.classPrivateFieldLooseBase(this, _userId$1)[_userId$1],
-	      inputValue: options.inputValue,
-	      onButtonStateChange: babelHelpers.classPrivateFieldLooseBase(this, _handleButtonStateChange)[_handleButtonStateChange].bind(this)
-	    });
-	  }
-	  show() {
-	    this.getPopup().show();
-	  }
-	  getPopup() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = babelHelpers.classPrivateFieldLooseBase(this, _createPopup)[_createPopup]();
-	    return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
-	  }
-	  send() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport](babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getData());
-	  }
-	}
-	function _handleButtonStateChange2(isEnabled) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].setDisabled(!isEnabled);
-	  }
-	}
-	function _createPopup2(options) {
-	  var _babelHelpers$classPr;
-	  if (main_popup.PopupManager.isPopupExists(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1])) {
-	    return main_popup.PopupManager.getPopupById(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]);
-	  }
-	  const popup = new main_popup.Popup(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1], babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement], {
-	    content: babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].render(),
-	    autoHide: true,
-	    angle: {
-	      offset: babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] / 2 - 16.5
-	    },
-	    width: babelHelpers.classPrivateFieldLooseBase(this, _width)[_width],
-	    padding: 18,
-	    offsetLeft: (babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement].offsetWidth / 2 - babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] / 2) / 2 - 10,
-	    closeIcon: false,
-	    closeByEsc: true,
-	    overlay: false,
-	    className: 'reinvite-popup-container',
-	    bindOptions: {
-	      position: 'top'
-	    },
-	    animation: "fading-slide",
-	    buttons: [babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = new ui_buttons.Button({
-	      text: main_core.Loc.getMessage('INTRANET_JS_BTN_SEND'),
-	      color: ui_buttons.Button.Color.PRIMARY,
-	      round: true,
-	      noCaps: true,
-	      onclick: button => {
-	        this.send();
-	        this.getPopup().close();
-	      }
-	    }), new ui_buttons.Button({
-	      text: main_core.Loc.getMessage('INTRANET_JS_BTN_CANCEL'),
-	      color: ui_buttons.Button.Color.LIGHT_BORDER,
-	      round: true,
-	      noCaps: true,
-	      onclick: button => {
-	        this.getPopup().close();
-	      }
-	    })]
-	  });
-	  const inputValue = ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getValue()) == null ? void 0 : _babelHelpers$classPr.trim()) || '';
-	  babelHelpers.classPrivateFieldLooseBase(this, _handleButtonStateChange)[_handleButtonStateChange](inputValue !== '');
-	  return popup;
+		#popup;
+		#transport;
+		#userId;
+		#id;
+		#inputValue;
+		#bindElement;
+		#form;
+		#width;
+		#sendButton;
+		constructor(options) {
+			if (options.userId <= 0) {
+				throw new Error('Invalide "userId" parameter');
+			}
+			this.#userId = options.userId;
+			this.#id = 'reinvite-popup-' + options.userId;
+			this.#bindElement = main_core.Type.isElementNode(options.bindElement) ? options.bindElement : null;
+			this.#transport = main_core.Type.isFunction(options.transport) ? options.transport : null;
+			this.#width = 348;
+			this.#form = FormFactory.create(options.formType, {
+				id: this.#id,
+				userId: this.#userId,
+				inputValue: options.inputValue,
+				onButtonStateChange: this.#handleButtonStateChange.bind(this)
+			});
+		}
+		#handleButtonStateChange(isEnabled) {
+			if (this.#sendButton) {
+				this.#sendButton.setDisabled(!isEnabled);
+			}
+		}
+		show() {
+			this.getPopup().show();
+		}
+		getPopup() {
+			if (this.#popup) {
+				return this.#popup;
+			}
+			this.#popup = this.#createPopup();
+			return this.#popup;
+		}
+		#createPopup(options) {
+			if (main_popup.PopupManager.isPopupExists(this.#id)) {
+				return main_popup.PopupManager.getPopupById(this.#id);
+			}
+			const popup = new main_popup.Popup(this.#id, this.#bindElement, {
+				content: this.#form.render(),
+				autoHide: true,
+				angle: {
+					offset: this.#width / 2 - 16.5
+				},
+				width: this.#width,
+				padding: 18,
+				offsetLeft: (this.#bindElement.offsetWidth / 2 - this.#width / 2) / 2 - 10,
+				closeIcon: false,
+				closeByEsc: true,
+				overlay: false,
+				className: 'reinvite-popup-container',
+				bindOptions: {
+					position: 'top'
+				},
+				animation: "fading-slide",
+				buttons: [this.#sendButton = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_JS_BTN_SEND'),
+					color: ui_buttons.Button.Color.PRIMARY,
+					round: true,
+					noCaps: true,
+					onclick: button => {
+						this.send();
+						this.getPopup().close();
+					}
+				}), new ui_buttons.Button({
+					text: main_core.Loc.getMessage('INTRANET_JS_BTN_CANCEL'),
+					color: ui_buttons.Button.Color.LIGHT_BORDER,
+					round: true,
+					noCaps: true,
+					onclick: button => {
+						this.getPopup().close();
+					}
+				})]
+			});
+			const inputValue = this.#form.getValue()?.trim() || '';
+			this.#handleButtonStateChange(inputValue !== '');
+			return popup;
+		}
+		send() {
+			this.#transport(this.#form.getData());
+		}
 	}
 
-	exports.ReinvitePopup = ReinvitePopup;
 	exports.FormType = FormType;
+	exports.ReinvitePopup = ReinvitePopup;
 
-}((this.BX.Intranet.Reinvite = this.BX.Intranet.Reinvite || {}),BX.Main,BX.UI,BX));
+})(this.BX.Intranet.Reinvite = this.BX.Intranet.Reinvite || {}, BX, BX.Main, BX.UI);
 //# sourceMappingURL=reinvite-popup.bundle.js.map

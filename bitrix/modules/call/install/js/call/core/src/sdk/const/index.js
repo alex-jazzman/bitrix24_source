@@ -87,6 +87,7 @@ export const JoinRequestFailedCodes = {
 	UnexpectedResponse: 'UnexpectedResponse',
 	FailedRequest: 'FailedRequest',
 	AbortedRequest: 'AbortedRequest',
+	BodyReadError: 'BodyReadError',
 	UnknownError: 'UnknownError',
 };
 

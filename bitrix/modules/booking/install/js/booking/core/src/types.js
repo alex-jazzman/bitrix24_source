@@ -11,7 +11,6 @@ export type BookingParams = {
 	features: Feature[],
 	canTurnOnTrial: boolean,
 	canTurnOnDemo: boolean,
-	isMultidayFeatureAvailable: boolean,
 	timezone: string,
 	firstWeekDay: number,
 	filterId: string,

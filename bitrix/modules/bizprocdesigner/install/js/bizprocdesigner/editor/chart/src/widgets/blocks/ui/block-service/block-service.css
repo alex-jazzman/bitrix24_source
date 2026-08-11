@@ -1,0 +1,14 @@
+.editor-chart-block-service__content--large {
+	min-height: 95px;
+}
+
+.editor-chart-block-service__constants-label {
+	display: block;
+	padding: 0 7px;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-3);
+}

@@ -1,7 +1,8 @@
-import { type Receiver } from 'crm.messagesender';
-import { type Backend, type Channel, type Editor as EditorType } from 'crm.messagesender.editor';
 import { Runtime, Tag, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
+
+import { type Backend, type Channel, type Editor as EditorType } from 'crm.messagesender.editor';
+
 import Item from '../../item';
 
 export type ResendParams = {
@@ -19,7 +20,7 @@ export type ResendParams = {
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class Message extends Item
 {
-	#isRendered: Boolean = false;
+	#renderPromise: ?Promise = null;
 	#editor: EditorType = null;
 
 	createLayout(): HTMLElement
@@ -30,18 +31,10 @@ export default class Message extends Item
 			return container;
 		}
 
-		const skeleton = new BX.Crm.MessageSender.Editor.Skeleton.Skeleton({
+		const skeleton = new BX.MessageService.Message.Editor.Skeleton.Skeleton({
 			layout: this.getSetting('editor').layout,
 		});
 		skeleton.renderTo(container);
-
-		for (const tourString of this.getSetting('tours', []))
-		{
-			if (Type.isStringFilled(tourString))
-			{
-				Runtime.html(null, tourString);
-			}
-		}
 
 		return container;
 	}
@@ -53,13 +46,15 @@ export default class Message extends Item
 		void this.#renderEditor();
 	}
 
-	async #renderEditor(): Promise<void>
+	#renderEditor(): Promise<void>
 	{
-		if (this.#isRendered)
-		{
-			return;
-		}
+		this.#renderPromise ??= this.#doRenderEditor();
 
+		return this.#renderPromise;
+	}
+
+	async #doRenderEditor(): Promise<void>
+	{
 		if (!this.#shouldRender())
 		{
 			return;
@@ -75,21 +70,25 @@ export default class Message extends Item
 
 		await this.#editor.render();
 
-		this.#isRendered = true;
 		this.#bindEvents();
-
-		if (Type.isArrayFilled(this.#editor.getOptions().promoBanners))
-		{
-			EventEmitter.emit('BX.Crm.Timeline.MenuBar.Message:ShowNewChannelsAvailableTour', {
-				stepId: 'menubar-message-new-channels-available',
-				target: this.getContainer().querySelector('[data-role="header-left"]'),
-			});
-		}
 	}
 
 	#shouldRender(): boolean
 	{
 		return Boolean(this.getSetting('shouldRender'));
+	}
+
+	#isRendered(): Promise<boolean>
+	{
+		if (!this.#renderPromise || !this.#editor)
+		{
+			return Promise.resolve(false);
+		}
+
+		// if both resolved, the first in the array always wins
+		return Promise.race([this.#renderPromise, 'not yet resolved'])
+			.then((promiseResult) => promiseResult !== 'not yet resolved')
+		;
 	}
 
 	#bindEvents(): void
@@ -105,22 +104,6 @@ export default class Message extends Item
 			void this.#editor?.reload();
 		});
 
-		EventEmitter.subscribeOnce('BX.Crm.Tour.EntityDetailsMenubar.Message:onConnectionsSliderClose', async () => {
-			void this.#editor?.reload();
-
-			const analytics = this.getSetting('analytics', {});
-
-			const { Builder, Dictionary, sendData } = await Runtime.loadExtension('crm.integration.analytics', 'ui.analytics');
-
-			const event = (new Builder.Communication.Channel.ConnectEvent())
-				.setSection(analytics.c_section)
-				.setSubSection(analytics.c_sub_section)
-				.setElement(Dictionary.ELEMENT_AHA_MOMENT)
-			;
-
-			sendData(event.buildData());
-		});
-
 		const hide = () => {
 			setTimeout(() => this.emitFinishEditEvent(), 50);
 		};
@@ -132,9 +115,9 @@ export default class Message extends Item
 	/**
 	 * @public
 	 */
-	shouldConfirmStateChange(params: ResendParams): boolean
+	async shouldConfirmStateChange(params: ResendParams): Promise<boolean>
 	{
-		if (!this.#isRendered)
+		if (!await this.#isRendered())
 		{
 			return false;
 		}
@@ -187,7 +170,7 @@ export default class Message extends Item
 	{
 		await this.#renderEditor();
 
-		this.#setState(params);
+		await this.#setState(params);
 
 		const editorState = this.#editor.getState();
 		const analytics = this.getSetting('analytics', {});
@@ -204,9 +187,9 @@ export default class Message extends Item
 		sendData(eventData);
 	}
 
-	#setState(params: ResendParams): void
+	async #setState(params: ResendParams): Promise<void>
 	{
-		if (!this.#isRendered)
+		if (!await this.#isRendered())
 		{
 			return;
 		}
@@ -240,18 +223,18 @@ export default class Message extends Item
 
 		if (Type.isPlainObject(params?.client))
 		{
-			const chan = this.#editor.getState().channel;
+			const toList = this.#editor.getOptions().toList ?? [];
 
-			const receiver: ?Receiver = chan.toList.find((candidate: Receiver) => {
-				return candidate.addressSource.entityTypeId === params.client.entityTypeId
-					&& candidate.addressSource.entityId === params.client.entityId
-					&& candidate.address.value === params.client.value
+			const to = toList.find((candidate) => {
+				return candidate.customData?.addressSource?.entityTypeId === params.client.entityTypeId
+					&& candidate.customData?.addressSource?.entityId === params.client.entityId
+					&& candidate.value === params.client.value
 				;
 			});
 
-			if (receiver)
+			if (to)
 			{
-				this.#editor.setTo(receiver.address.id);
+				this.#editor.setTo(to.id);
 			}
 		}
 

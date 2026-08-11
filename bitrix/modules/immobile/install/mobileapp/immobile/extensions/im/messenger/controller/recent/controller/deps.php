@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'type',
 		'im:messenger/const',
 		'im:messenger/lib/logger',

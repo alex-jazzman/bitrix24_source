@@ -37,9 +37,6 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 		isChannelChoiceAvailable() {
 			return this.#data.isChannelChoiceAvailable;
 		}
-		getAiAgent() {
-			return this.#data.aiAgent ?? null;
-		}
 	}
 
 	class ResourceCreationWizardService {
@@ -51,7 +48,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 				const data = await booking_lib_apiClient.apiClient.post('ResourceWizard.get', {});
 				const extractor = new ResourceCreationWizardDataExtractor(data);
 				const wizardModel = booking_const.Model.ResourceCreationWizard;
-				await Promise.all([this.$store.dispatch(`${wizardModel}/setAdvertisingTypes`, extractor.getAdvertisingTypes()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()), this.$store.dispatch(`${wizardModel}/setLicenseWarning`, extractor.showLicenseWarning()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()), this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()), this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()), this.$store.dispatch(`${booking_const.Model.AiAgent}/setAiAgent`, extractor.getAiAgent()), this.$store.dispatch(`${booking_const.Model.Notifications}/upsertMany`, extractor.getNotifications())]);
+				await Promise.all([this.$store.dispatch(`${wizardModel}/setAdvertisingTypes`, extractor.getAdvertisingTypes()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()), this.$store.dispatch(`${wizardModel}/setLicenseWarning`, extractor.showLicenseWarning()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()), this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()), this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()), this.$store.dispatch(`${booking_const.Model.Notifications}/upsertMany`, extractor.getNotifications())]);
 			} catch (error) {
 				console.error('ResourceCreationWizardService loadData error', error);
 			}

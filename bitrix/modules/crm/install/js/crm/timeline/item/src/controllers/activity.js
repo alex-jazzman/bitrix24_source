@@ -7,7 +7,6 @@ import { Dialog, Item } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
 
 import 'crm_common';
-import 'crm.timeline';
 
 import ConfigurableItem from '../configurable-item';
 import { type ActionParams, Base } from './base';

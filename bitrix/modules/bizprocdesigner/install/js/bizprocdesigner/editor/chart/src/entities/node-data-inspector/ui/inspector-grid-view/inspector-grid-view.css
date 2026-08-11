@@ -1,0 +1,68 @@
+.editor-chart-inspector-grid-view {
+	border-radius: 8px;
+	border: 1px solid var(--ui-color-divider-vibrant-accent, rgba(0, 0, 0, 0.08));
+	margin: 20px 18px 4px 18px;
+	cursor: default;
+	display: flex;
+	flex-direction: column;
+	height: calc(100% - 24px);
+	box-sizing: border-box;
+}
+
+.editor-chart-inspector-grid-view__table{
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.editor-chart-inspector-grid-view__heads {
+	display: flex;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 14px;
+	color: var(--ui-color-gray-70);
+	background: rgba(250, 251, 252, 0.92);
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+
+.editor-chart-inspector-grid-view__cell {
+	padding: 14px 0 14px 18px;
+	flex: 1 0;
+}
+
+.editor-chart-inspector-grid-view__heads .editor-chart-inspector-grid-view__cell {
+	border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.editor-chart-inspector-grid-view__heads .inspector-grid-view__cell:last-child {
+	border: none;
+}
+
+.editor-chart-inspector-grid-view__cell:last-child {
+	flex: 1 0;
+	border-right: none;
+}
+
+.editor-chart-inspector-grid-view__rows {
+	overflow-y: auto;
+}
+
+.editor-chart-inspector-grid-view__row {
+	display: flex;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-black-base);
+	border-top: 1px solid #f2f2f2;
+}
+
+.editor-chart-inspector-grid-view__cell.--name {
+	font-weight: 500;
+	line-height: 17px;
+}
+
+.editor-chart-inspector-grid-view__cell.--type {
+	color: var(--ui-color-base-4);
+}

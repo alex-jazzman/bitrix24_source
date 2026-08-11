@@ -7,9 +7,9 @@ import {
 } from 'ui.buttons';
 import { BitrixVue } from 'ui.vue3';
 import { hint } from 'ui.vue3.directives.hint';
-
 import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
+
 import { BaseButton } from './baseButton';
 import { ButtonMenu } from './button-menu';
 
@@ -29,7 +29,7 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 		size: {
 			type: String,
 			required: false,
-			default: 'extra_small',
+			default: 'medium',
 		},
 		menuItems: {
 			type: Object,
@@ -43,20 +43,20 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 		return {
 			timerSecondsRemaining: 0,
 			currentState: this.state,
-			hintText: this.tooltip || '',
+			hintText: Type.isStringFilled(this.tooltip) ? this.tooltip : '',
 		};
 	},
 
 	computed:
 	{
-		itemTypeToButtonColorDict(): Object
+		itemTypeToButtonStyleDict(): Object
 		{
 			return {
-				[ButtonType.PRIMARY]: UIButton.Color.PRIMARY,
-				[ButtonType.SECONDARY]: UIButton.Color.LIGHT_BORDER,
-				[ButtonType.LIGHT]: UIButton.Color.LIGHT,
-				[ButtonType.ICON]: UIButton.Color.LINK,
-				[ButtonType.AI]: UIButton.Color.AI,
+				[ButtonType.PRIMARY]: UIButton.AirStyle.FILLED,
+				[ButtonType.SECONDARY]: UIButton.AirStyle.OUTLINE,
+				[ButtonType.LIGHT]: UIButton.AirStyle.PLAIN,
+				[ButtonType.ICON]: UIButton.AirStyle.PLAIN_NO_ACCENT,
+				[ButtonType.AI]: UIButton.AirStyle.FILLED_BITRIX_GPT,
 			};
 		},
 
@@ -98,16 +98,16 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 		{
 			const upperCaseIconName = Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
 			const upperCaseButtonSize = Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-			const btnColor = this.itemTypeToButtonColorDict[this.type] || UIButton.Color.LIGHT_BORDER;
+			const btnStyle = this.itemTypeToButtonStyleDict[this.type] || UIButton.AirStyle.OUTLINE;
 			const titleText = this.type === ButtonType.ICON ? '' : this.title;
 
 			return {
 				id: this.id,
+				useAirDesign: true,
 				round: true,
-				dependOnTheme: false,
 				size: UIButton.Size[upperCaseButtonSize],
 				text: titleText,
-				color: btnColor,
+				style: btnStyle,
 				state: this.itemStateToButtonStateDict[this.currentState],
 				icon: UIButton.Icon[upperCaseIconName],
 				props: Type.isPlainObject(this.props) ? this.props : {},

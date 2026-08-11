@@ -1,10 +1,12 @@
 // @vue/component
 
-import { hint } from 'ui.vue3.directives.hint';
 import 'ui.buttons';
+import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.main';
 
-import { Model } from 'booking.const';
+import { LimitFeatureId, Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
+import { limit } from 'booking.lib.limit';
 import { type SlotLengthId } from 'booking.model.resource-creation-wizard';
 
 import { SlotLengthPrecisionSelection } from './slot-length-precision-selection';
@@ -18,9 +20,9 @@ const multidayOnlyLengths = new Set([units.H * 24, units.d * 7]);
 
 export const SlotLengthSelector = {
 	name: 'ResourceSettingsCardSlotLengthSelector',
-	directives: { hint },
 	emits: ['select'],
 	components: {
+		Icon,
 		SlotLengthPrecisionSelection,
 	},
 	props: {
@@ -32,6 +34,7 @@ export const SlotLengthSelector = {
 	data(): Object
 	{
 		return {
+			IconSet,
 			selectedPrecisionValue: this.initialSelectedValue,
 			precisionMode: false,
 		};
@@ -47,9 +50,9 @@ export const SlotLengthSelector = {
 				this.$store.dispatch(`${Model.ResourceCreationWizard}/setSlotLengthId`, { slotLengthId });
 			},
 		},
-		isMultidayFeatureAvailable(): boolean
+		isMultidayFeatureEnabled(): boolean
 		{
-			return this.$store.getters[`${Model.Interface}/isMultidayFeatureAvailable`];
+			return this.$store.state[Model.Interface].enabledFeature.bookingLong;
 		},
 		durations(): { label: string, value: number }[]
 		{
@@ -98,6 +101,8 @@ export const SlotLengthSelector = {
 		{
 			if (this.isDurationDisabled(value))
 			{
+				void limit.show(LimitFeatureId.MultidayBooking);
+
 				return;
 			}
 
@@ -128,28 +133,13 @@ export const SlotLengthSelector = {
 		},
 		isDurationDisabled(value: number): boolean
 		{
-			return !this.isMultidayFeatureAvailable && multidayOnlyLengths.has(value);
+			return !this.isMultidayFeatureEnabled && multidayOnlyLengths.has(value);
 		},
 		getClass(value): Object
 		{
 			return {
 				'ui-btn-primary': this.selectedValue === value,
 				'ui-btn-light': this.selectedValue !== value,
-				'ui-btn-disabled': this.isDurationDisabled(value),
-			};
-		},
-		getSoonHintContent(value: number): ?Object
-		{
-			if (!this.isDurationDisabled(value))
-			{
-				return null;
-			}
-
-			return {
-				text: this.loc('BRCW_BOOKING_SOON_HINT'),
-				popupOptions: {
-					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-				},
 			};
 		},
 	},
@@ -158,13 +148,18 @@ export const SlotLengthSelector = {
 			<div
 				v-for="(duration, index) in durations"
 				:key="index"
-				:data-id="'brcw-resource-slot-length-selector-size-' + index"
-				class="ui-btn ui-btn-xs"
-				:class="getClass(duration.value)"
-				@click="select(duration.value)"
-				v-hint="getSoonHintContent(duration.value)"
+				class="resource-creation-wizard__form-slot-length-selector-item"
+				:class="{'--locked': isDurationDisabled(duration.value)}"
 			>
-				{{ duration.label }}
+				<div
+					:data-id="'brcw-resource-slot-length-selector-size-' + index"
+					class="ui-btn ui-btn-xs"
+					:class="getClass(duration.value)"
+					@click="select(duration.value)"
+				>
+					{{ duration.label }}
+					<Icon v-if="isDurationDisabled(duration.value)" :name="IconSet.LOCK"/>
+				</div>
 			</div>
 		</div>
 		<transition name="fade">

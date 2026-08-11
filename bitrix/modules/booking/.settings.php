@@ -684,6 +684,31 @@ return [
 					];
 				}
 			],
+			\Bitrix\Booking\Internals\Service\Promotion\AiCallBanner\AiCallBannerService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Promotion\AiCallBanner\AiCallBannerService::class,
+				'constructorParams' => static function()
+				{
+					return [
+						'optionRepository' => \Bitrix\Booking\Internals\Container::getOptionRepository(),
+						'aiCallMessageSender' => \Bitrix\Booking\Internals\Container::getAiCallMessageSender(),
+						'crmMessageSender' => \Bitrix\Booking\Internals\Container::getCrmMessageSender(),
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'aiCallMassSwitcher' => \Bitrix\Booking\Internals\Container::getAiCallMassSwitcher(),
+					];
+				}
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\AiCallMassSwitcher::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\AiCallMassSwitcher::class,
+				'constructorParams' => static function()
+				{
+					return [
+						'aiCallMessageSender' => \Bitrix\Booking\Internals\Container::getAiCallMessageSender(),
+						'transactionHandler' => \Bitrix\Booking\Internals\Container::getTransactionHandler(),
+						'aiAgentLauncher' => \Bitrix\Booking\Internals\Container::getAiAgentLauncher(),
+					];
+				}
+			],
 			\Bitrix\Booking\Internals\Service\CrmForm\CrmFormService::class => [
 				'className' => \Bitrix\Booking\Internals\Service\CrmForm\CrmFormService::class,
 				'constructorParams' => static function()
@@ -756,6 +781,14 @@ return [
 					];
 				},
 			],
+			\Bitrix\Booking\Internals\Integration\Bizproc\AiAgentLauncher::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Bizproc\AiAgentLauncher::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getAiAgentTemplateQuery(),
+					];
+				},
+			],
 			\Bitrix\Booking\Internals\Integration\Bizproc\AiCallMessageSender::class => [
 				'className' => \Bitrix\Booking\Internals\Integration\Bizproc\AiCallMessageSender::class,
 				'constructorParams' => static function() {
@@ -766,8 +799,13 @@ return [
 						\Bitrix\Booking\Internals\Container::getAiAgentTemplateQuery(),
 						\Bitrix\Booking\Internals\Container::getCrmClientExtractor(),
 						\Bitrix\Booking\Internals\Container::getCrmBindingsBuilder(),
+						\Bitrix\Booking\Internals\Container::getAiCallAvailabilityService(),
+						\Bitrix\Booking\Internals\Container::getAiAgentProvider(),
 					];
 				},
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\AiCallAvailabilityService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\AiCallAvailabilityService::class,
 			],
 			/**
 			 * AiAssistant

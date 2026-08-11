@@ -2,6 +2,7 @@ export * from './stores/node-settings-store';
 export * from './ui/node-settings-layout/node-settings-layout';
 export * from './ui/node-settings-preview/node-settings-preview';
 export * from './ui/node-settings-rules-layout/node-settings-rules-layout';
+export * from '../node-data-inspector/ui/node-settings-rules-inspector-toggle-button/node-settings-rules-inspector-toggle-button';
 export * from './ui/rule-card/rule-card';
 export * from './ui/rule-construction/rule-construction';
 export * from './constants';

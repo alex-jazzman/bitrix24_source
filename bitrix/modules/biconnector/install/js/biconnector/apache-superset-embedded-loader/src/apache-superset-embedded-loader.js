@@ -190,23 +190,6 @@ export class ApacheSupersetEmbeddedLoader
 		});
 	}
 
-	// Reserved for the BitrixGPT integration (see #onGptButtonClick in
-	// detail-instance.js). The legacy AI prototype consumed both helpers; the
-	// next iteration will go through the MCP tool set — kept here as
-	// scaffolding so the switchboard contract is documented next to the
-	// other passthrough methods.
-	/*
-	getDataMask(): Promise
-	{
-		return this.#switchboard.get('getDataMask');
-	}
-
-	getAppliedFilters(): Promise
-	{
-		return this.#switchboard.get('getAppliedFilters');
-	}
-	*/
-
 	// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
 	getScreenshot(): Promise
 	{

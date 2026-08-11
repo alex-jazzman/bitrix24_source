@@ -1,11 +1,20 @@
 import { Extension, Type, Event, type JsonObject } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
-import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 import 'ui.icon-set.outline';
+import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 
+import { Core } from 'im.v2.application.core';
 import { SendButton } from 'im.v2.component.elements.send-button';
-import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color, type InsertTextEvent, type InsertMentionEvent } from 'im.v2.const';
+import {
+	EventType,
+	LocalStorageKey,
+	SoundType,
+	TextareaPanelType as PanelType,
+	Color,
+	type InsertTextEvent,
+	type InsertMentionEvent,
+} from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { DraftManager } from 'im.v2.lib.draft';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
@@ -80,6 +89,10 @@ export const ChatTextarea = {
 			type: Boolean,
 			default: true,
 		},
+		withDraft: {
+			type: Boolean,
+			default: true,
+		},
 		withUploadMenu: {
 			type: Boolean,
 			default: true,
@@ -99,6 +112,14 @@ export const ChatTextarea = {
 		withCopilot: {
 			type: Boolean,
 			default: true,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
+		deferredDialogPromise: {
+			type: Object,
+			default: null,
 		},
 	},
 	emits: ['mounted'],
@@ -123,6 +144,8 @@ export const ChatTextarea = {
 
 			showFormatToolbar: false,
 			formatToolbarPosition: {},
+
+			dialogReady: !this.deferredDialogPromise,
 		};
 	},
 	computed:
@@ -135,7 +158,7 @@ export const ChatTextarea = {
 		},
 		dialogInited(): boolean
 		{
-			return this.dialog.inited;
+			return this.dialog.inited || !this.dialogReady;
 		},
 		replyMode(): boolean
 		{
@@ -155,6 +178,11 @@ export const ChatTextarea = {
 		},
 		isDisabled(): boolean
 		{
+			if (this.disabled)
+			{
+				return true;
+			}
+
 			return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 		},
 		baseTextareaPlaceholder(): string
@@ -215,13 +243,29 @@ export const ChatTextarea = {
 		{
 			return this.$refs.textarea === document.activeElement;
 		},
+		isGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](Core.getUserId());
+		},
+		showMarketIcon(): boolean
+		{
+			return this.withMarket && !this.isGuest;
+		},
 	},
 	watch:
 	{
 		text(newValue)
 		{
 			this.adjustTextareaHeight();
-			this.getDraftManager().setDraftText(this.dialogId, newValue);
+			if (!this.dialogReady)
+			{
+				return;
+			}
+
+			if (this.withDraft)
+			{
+				this.getDraftManager().setDraftText(this.dialogId, newValue);
+			}
 
 			if (Type.isStringFilled(newValue))
 			{
@@ -233,7 +277,6 @@ export const ChatTextarea = {
 	{
 		this.initResizeManager();
 		this.restoreTextareaHeight();
-		void this.restorePanel();
 		this.initSendingService();
 
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
@@ -250,16 +293,16 @@ export const ChatTextarea = {
 		this.getEmitter().subscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 		this.getEmitter().subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 	},
-	mounted()
+	async mounted()
 	{
-		void this.initMentionManager();
-
 		if (this.withAutoFocus)
 		{
 			this.focus();
 		}
 
 		this.$emit('mounted');
+
+		await this.getDialogReadyPromise();
 	},
 	beforeUnmount()
 	{
@@ -294,13 +337,15 @@ export const ChatTextarea = {
 
 			return this.text;
 		},
-		sendMessage()
+		async sendMessage()
 		{
 			this.text = this.text.trim();
 			if (this.isDisabled || !this.dialogInited)
 			{
 				return;
 			}
+
+			await this.getDialogReadyPromise();
 
 			const eventResult = EventEmitter.emit(EventType.textarea.onBeforeSendMessage);
 			if (eventResult.includes(BeforeSendMessageAction.cancel))
@@ -310,7 +355,9 @@ export const ChatTextarea = {
 				return;
 			}
 
-			const text = this.mentionManager.replaceMentions(this.text);
+			const text = this.mentionManager
+				? this.mentionManager.replaceMentions(this.text)
+				: this.text;
 
 			if (this.hasActiveMessageAction())
 			{
@@ -568,7 +615,7 @@ export const ChatTextarea = {
 			if (sendMessageCombination && !newLineCombination)
 			{
 				event.preventDefault();
-				this.sendMessage();
+				void this.sendMessage();
 
 				return;
 			}
@@ -604,7 +651,7 @@ export const ChatTextarea = {
 				return;
 			}
 
-			this.mentionManager.onKeyDown(event);
+			this.mentionManager?.onKeyDown(event);
 		},
 		handleNewLine()
 		{
@@ -631,13 +678,16 @@ export const ChatTextarea = {
 				this.openEditPanel(lastOwnMessageId);
 			}
 		},
-		onSendMessage(event: BaseEvent<{ text: string, dialogId: string }>)
+		async onSendMessage(event: BaseEvent<{ text: string, dialogId: string }>)
 		{
 			const { text, dialogId } = event.getData();
 			if (this.dialogId !== dialogId)
 			{
 				return;
 			}
+
+			await this.getDialogReadyPromise();
+
 			this.getSendingService().sendMessage({ text, dialogId: this.dialogId });
 		},
 		onResizeStart(event)
@@ -820,6 +870,43 @@ export const ChatTextarea = {
 			}
 
 			this.sendingService = SendingService.getInstance();
+		},
+		getDialogReadyPromise(): Promise<void>
+		{
+			if (!this.dialogReadyPromise)
+			{
+				this.dialogReadyPromise = this.initDialogReadyPromise();
+			}
+
+			return this.dialogReadyPromise;
+		},
+		async initDialogReadyPromise(): Promise<void>
+		{
+			if (this.deferredDialogPromise)
+			{
+				try
+				{
+					await this.deferredDialogPromise;
+				}
+				catch (error)
+				{
+					Logger.error('ChatTextarea: deferredDialogPromise rejected', error);
+				}
+				// wait for parent to finish flushing prop updates (withMention/dialogId)
+				await this.$nextTick();
+			}
+
+			if (this.text === '' && this.withDraft)
+			{
+				void this.restorePanel();
+			}
+
+			if (this.withMention)
+			{
+				await this.initMentionManager();
+			}
+
+			this.dialogReady = true;
 		},
 		async initMentionManager()
 		{
@@ -1033,7 +1120,7 @@ export const ChatTextarea = {
 							:dialogId="dialogId"
 						/>
 						<BIcon
-							v-if="withMarket"
+							v-if="showMarketIcon"
 							:name="OutlineIcons.APPS"
 							:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
 							:size="ICON_SIZE"
@@ -1046,11 +1133,17 @@ export const ChatTextarea = {
 							:dialogId="dialogId"
 						/>
 						<AudioInput
+							v-if="dialogReady"
 							:dialogId="dialogId"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>
-						<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
+						<SendButton
+							:dialogId="dialogId"
+							:editMode="editMode"
+							:isDisabled="isDisabled"
+							@click="sendMessage"
+						/>
 					</div>
 				</div>
 			</div>

@@ -27,7 +27,7 @@
 	justify-content: center;
 	align-items: center;
 	width: 100%;
-	padding: 16px 13px 26px 13px;
+	padding: 16px 13px 14px 13px;
 	border-bottom: 1px solid rgba(var(--imol-list-container-recent__border-color), 0.08);
 }
 

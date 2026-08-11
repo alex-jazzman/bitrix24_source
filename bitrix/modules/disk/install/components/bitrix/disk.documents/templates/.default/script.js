@@ -829,6 +829,7 @@ this.BX.Disk = this.BX.Disk || {};
 			const objectId = dataset.objectId;
 			const objectName = dataset.objectName;
 			const mode = dataset.type;
+			const uniqueCode = dataset.uniqueCode;
 			const supportsSharingAccessPopup = dataset.supportsSharingAccessPopup === 'true';
 			this.data['onclick'] = () => {
 				this.emit('close');
@@ -858,7 +859,8 @@ this.BX.Disk = this.BX.Disk || {};
 				}) => {
 					const popup = new SharingPopupDialog();
 					popup.open({
-						objectId: Number(objectId)
+						objectId: Number(objectId),
+						uniqueCode
 					});
 				});
 			};

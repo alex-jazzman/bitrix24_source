@@ -1,4 +1,4 @@
-<?
+<?php
 //<title>Yandex</title>
 /** @global CUser $USER */
 /** @var int $IBLOCK_ID */
@@ -12,12 +12,13 @@
 /** @var bool $boolNeedRootSection */
 /** @var int $intMaxSectionID */
 
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Currency,
-	Bitrix\Iblock,
-	Bitrix\Catalog,
-	Bitrix\Sale;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Currency;
+use Bitrix\Iblock;
+use Bitrix\Catalog;
+use Bitrix\Sale;
+use Bitrix\Main\Web\Uri;
 
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/catalog/export_yandex.php');
 IncludeModuleLangFile(__FILE__);
@@ -304,7 +305,7 @@ function yandex_get_value(
 								if ($ar_file = CFile::GetFileArray($intValue))
 								{
 									if(mb_substr($ar_file["SRC"], 0, 1) == "/")
-										$strFile = $options['PROTOCOL'].$options['SITE_NAME'].CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
+										$strFile = $options['PROTOCOL'].$options['SITE_NAME'] . Uri::urnEncode($ar_file['SRC']);
 									else
 										$strFile = $ar_file["SRC"];
 									$value .= ($value ? ', ' : '').$strFile;
@@ -321,7 +322,7 @@ function yandex_get_value(
 							if ($ar_file = CFile::GetFileArray($arProperty['VALUE']))
 							{
 								if(mb_substr($ar_file["SRC"], 0, 1) == "/")
-									$strFile = $options['PROTOCOL'].$options['SITE_NAME'].CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
+									$strFile = $options['PROTOCOL'].$options['SITE_NAME'] . Uri::urnEncode($ar_file['SRC']);
 								else
 									$strFile = $ar_file["SRC"];
 								$value = $strFile;
@@ -453,7 +454,7 @@ if (!function_exists('yandexPrepareItems'))
 				if (!empty($pictureFile))
 				{
 					if (strncmp($pictureFile['SRC'], '/', 1) == 0)
-						$picturePath = $options['PROTOCOL'].$options['SITE_NAME'].CHTTP::urnEncode($pictureFile['SRC'], 'utf-8');
+						$picturePath = $options['PROTOCOL'].$options['SITE_NAME'] . Uri::urnEncode($pictureFile['SRC']);
 					else
 						$picturePath = $pictureFile['SRC'];
 					$row['PICTURE'] = $picturePath;

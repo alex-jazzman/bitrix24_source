@@ -13,6 +13,7 @@ return [
 		'main.core.events',
 		'main.popup',
 		'main.sidepanel',
+		'note.analytics',
 		'note.ui.theme-context',
 		'ui.buttons',
 		'ui.entity-selector',

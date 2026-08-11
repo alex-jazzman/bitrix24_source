@@ -65,7 +65,11 @@
 
 	DayView.prototype.preBuild = function()
 	{
-		this.viewCont = BX.create('DIV', {props: {className: this.contClassName}, style: {display: 'none'}});
+		this.viewCont = BX.create('DIV', {
+			attrs: {'data-testid': 'calendar-day-week-view'},
+			props: {className: this.contClassName},
+			style: {display: 'none'}
+		});
 	};
 
 	DayView.prototype.build = function()
@@ -344,7 +348,10 @@
 			dayCode = this.util.getDayCode(date);
 
 			this.fullDayEventsHolderCont.appendChild(BX.create('DIV', {
-				attrs: {'data-bx-calendar-week-day': dayCode},
+				attrs: {
+					'data-bx-calendar-week-day': dayCode,
+					'data-testid': 'calendar-day-week-view__create-cell-' + dayCode
+				},
 				props: {className: this.gridCellClass}
 			}));
 
@@ -451,7 +458,10 @@
 			date: new Date(date.getTime()),
 			dayOffset: this.util.getWeekDayOffset(weekDay),
 			node: this.gridRow.appendChild(BX.create('DIV', {
-				attrs: {'data-bx-calendar-timeline-day': dayCode},
+				attrs: {
+					'data-bx-calendar-timeline-day': dayCode,
+					'data-testid': 'calendar-day-week-view__timeline-cell-' + dayCode
+				},
 				props: {
 					className: this.gridCellClass + className + ' a1' + ' ' + todayClass
 				},
@@ -1133,7 +1143,10 @@
 		}
 
 		partWrap = BX.create('DIV', {
-			attrs: {'data-bx-calendar-entry': entry.uid},
+			attrs: {
+				'data-bx-calendar-entry': entry.uid,
+				'data-testid': 'calendar-day-week-view__event-' + entry.uid
+			},
 			props: {className: entryClassName}, style: {
 				top: 0,
 				left: this.dayCount > 1 ? 'calc((100% / ' + this.dayCount + ') * (' + (from.dayOffset + 1) + ' - 1) + 2px)' : '2px',
@@ -1342,7 +1355,10 @@
 			}
 
 			wrapNode = BX.create('DIV', {
-				attrs: {'data-bx-calendar-entry': entry.uid},
+				attrs: {
+					'data-bx-calendar-entry': entry.uid,
+					'data-testid': 'calendar-day-week-view__event-' + entry.uid
+				},
 				props: {
 					className: entryClassName
 				},
@@ -3054,7 +3070,10 @@
 
 		const daysCount = params.part.daysCount, from = params.part.from;
 		let partWrap = BX.create('DIV', {
-			attrs: {'data-bx-calendar-entry': entry.uid},
+			attrs: {
+				'data-bx-calendar-entry': entry.uid,
+				'data-testid': 'calendar-day-week-view__event-' + entry.uid
+			},
 			props: {className: entryClassName}, style: {
 				top: 0,
 				left: 'calc((100% / ' + this.dayCount + ') * (' + (from.dayOffset + 1) + ' - 1) + 2px)',

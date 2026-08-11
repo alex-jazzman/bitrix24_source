@@ -1,19 +1,12 @@
-import './style.css';
-
 import { BIcon } from 'ui.icon-set.api.vue';
 
-import { PORT_TYPES } from '../../../../shared/constants';
 import { useLoc } from '../../../../shared/composables';
-
-import { CONSTRUCTION_LABELS, GENERAL_CONSTRUCTION_TYPES } from '../../constants';
+import { PORT_TYPES } from '../../../../shared/constants';
+import { CONSTRUCTION_TYPES, CONSTRUCTION_LABELS } from '../../constants';
+import { type ConstructionLabels, type Construction, type TRuleCard } from '../../types';
 import { evaluateConditionExpressionFieldTitle } from '../../utils';
 
-import type {
-	GeneralConstructionTypes,
-	ConstructionLabels,
-	Construction,
-	TRuleCard,
-} from '../../types';
+import './style.css';
 
 // @vue/component
 export const NodeSettingsPreview = {
@@ -63,9 +56,26 @@ export const NodeSettingsPreview = {
 		{
 			return CONSTRUCTION_LABELS;
 		},
-		generalConstructionTypes(): GeneralConstructionTypes
+		groupedConstructionTypes(): { [key: string]: string }
 		{
-			return GENERAL_CONSTRUCTION_TYPES;
+			const { CONDITION, ...rest } = CONSTRUCTION_TYPES;
+			const conditionTypes = new Set(Object.values(CONDITION));
+			const restTypes = Object.values(rest);
+
+			return [...conditionTypes, ...restTypes].reduce((acc, currentType) => {
+				if (conditionTypes.has(currentType))
+				{
+					return {
+						...acc,
+						[currentType]: 'condition',
+					};
+				}
+
+				return {
+					...acc,
+					[currentType]: currentType,
+				};
+			}, {});
 		},
 		ifLabel(): string
 		{
@@ -88,7 +98,12 @@ export const NodeSettingsPreview = {
 		},
 		getExpressionTitle({ expression, type }: Construction): string
 		{
-			if (type === GENERAL_CONSTRUCTION_TYPES.action)
+			if (type === CONSTRUCTION_TYPES.FILTER)
+			{
+				return this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_EXPRESSION_NAME');
+			}
+
+			if (type === CONSTRUCTION_TYPES.ACTION)
 			{
 				if (!expression.actionId)
 				{
@@ -98,7 +113,7 @@ export const NodeSettingsPreview = {
 				return this.nodeSettings.actions.get(expression.actionId).title;
 			}
 
-			if (type === GENERAL_CONSTRUCTION_TYPES.output || !expression.field)
+			if (type === CONSTRUCTION_TYPES.OUTPUT || !expression.field)
 			{
 				return '';
 			}
@@ -107,9 +122,14 @@ export const NodeSettingsPreview = {
 		},
 		getExpressionValue({ expression: { value, title }, type }: Construction): string
 		{
-			if (type === GENERAL_CONSTRUCTION_TYPES.output)
+			if (type === CONSTRUCTION_TYPES.OUTPUT)
 			{
 				return title;
+			}
+
+			if (type === CONSTRUCTION_TYPES.FILTER)
+			{
+				return '';
 			}
 
 			return value;
@@ -143,7 +163,7 @@ export const NodeSettingsPreview = {
 						v-for="construction in card.constructions"
 						:key="construction.id"
 						class="editor-chart-node-settings-preview__construction"
-						:class="['--' + generalConstructionTypes[construction.type]]"
+						:class="['--' + groupedConstructionTypes[construction.type]]"
 						:data-if-indent="ifLabel"
 					>
 						<span class="editor-chart-node-settings-preview__construction_type">
@@ -159,7 +179,7 @@ export const NodeSettingsPreview = {
 							{{ construction.expression.operator }}
 						</span>
 						<span
-							v-if="generalConstructionTypes[construction.type] !== generalConstructionTypes.action"
+							v-if="groupedConstructionTypes[construction.type] !== groupedConstructionTypes.action"
 							class="editor-chart-node-settings-preview__expression-part"
 						>
 							{{ getExpressionValue(construction) }}

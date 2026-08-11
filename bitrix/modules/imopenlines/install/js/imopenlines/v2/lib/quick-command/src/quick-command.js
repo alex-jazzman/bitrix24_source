@@ -6,14 +6,12 @@ import { Utils } from 'im.v2.lib.utils';
 import { EventType } from 'im.v2.const';
 import { BeforeSendMessageAction } from 'im.v2.component.textarea';
 
-const COMMAND_PREFIX = '/';
-const AUTO_HIDE_DELAY = 5000;
+import { QuickCommand, COMMAND_PREFIX } from './commands';
 
-const QuickCommand = {
-	getDialogId: 'getDialogId',
-	getChatId: 'getChatId',
-	rename: 'rename',
-};
+export { QuickCommand };
+export type { QuickCommandItem } from './commands';
+
+const AUTO_HIDE_DELAY = 5000;
 
 export class QuickCommandManager
 {
@@ -51,6 +49,8 @@ export class QuickCommandManager
 		{
 			return BeforeSendMessageAction.cancel;
 		}
+
+		return null;
 	}
 
 	#getText(): string
@@ -75,9 +75,9 @@ export class QuickCommandManager
 	#getCommandMap(): { [string]: Function }
 	{
 		return {
-			[QuickCommand.getDialogId]: this.#executeGetDialogId.bind(this),
-			[QuickCommand.getChatId]: this.#executeGetDialogId.bind(this),
-			[QuickCommand.rename]: this.#executeRename.bind(this),
+			[QuickCommand.getDialogId.id]: this.#executeGetDialogId.bind(this),
+			[QuickCommand.getChatId.id]: this.#executeGetDialogId.bind(this),
+			[QuickCommand.rename.id]: this.#executeRename.bind(this),
 		};
 	}
 

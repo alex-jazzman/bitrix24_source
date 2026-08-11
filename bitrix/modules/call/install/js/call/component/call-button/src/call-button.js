@@ -1,4 +1,4 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { Loc } from 'main.core';
 import { Messenger } from 'im.public';
 import { LocalStorageKey, ChatType } from 'im.v2.const';
@@ -195,7 +195,7 @@ export const CallButton = {
 		{
 			this.getCallMenu().subscribe(
 				CallMenu.events.onMenuItemClick,
-				(event: BaseEvent<{id: string}>) => {
+				(event) => {
 					const { id: callTypeId } = event.getData();
 					this.saveLastCallChoice(callTypeId);
 				},

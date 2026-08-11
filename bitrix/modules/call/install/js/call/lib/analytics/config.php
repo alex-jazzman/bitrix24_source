@@ -10,11 +10,11 @@ return [
 		'./dist/analytics.bundle.js',
 	],
 	'rel' => [
-		'main.polyfill.core',
+		'call.const',
 		'im.v2.const',
 		'im.v2.lib.analytics',
+		'main.core',
 		'ui.analytics',
-		'call.const',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

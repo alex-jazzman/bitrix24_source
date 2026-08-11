@@ -1,0 +1,6 @@
+<?php
+$MESS["TASKS_V2_NOTIFY_TASK_TEMPLATE_OPEN"] = "Open";
+$MESS["TASKS_V2_NOTIFY_TASK_TEMPLATE_UPDATED"] = "Task template has been updated.";
+$MESS["TASKS_V2_NOTIFY_TEMPLATE_CREATED_FAIL"] = "Could not save template.";
+$MESS["TASKS_V2_NOTIFY_TEMPLATE_CREATED_OPEN"] = "Open";
+$MESS["TASKS_V2_NOTIFY_TEMPLATE_CREATED_SUCC"] = "Template has been created.";

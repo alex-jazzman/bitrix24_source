@@ -123,14 +123,14 @@ if($logo || $logoRetina)
 	}
 
 	$retinaPath = file_exists(WIZARD_SITE_ROOT_PATH."include/logo_retina.png") ? WIZARD_SITE_PATH."include/logo_retina.png" : "";
-	$content = '<img src="'.WIZARD_SITE_DIR.'include/logo.png"'.($retinaPath ? ' srcset="'.$retinaPath.' 2x"' : "").'/>';
+	$content = '<img src="'.WIZARD_SITE_DIR.'include/logo.png"'.($retinaPath ? ' srcset="'.$retinaPath.' 2x"' : "").' alt="" />';
 	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo.php", $content);
 }
 elseif(WIZARD_INSTALL_DEMO_DATA || !file_exists(WIZARD_SITE_PATH."/include/company_logo.php") && !file_exists(WIZARD_SITE_PATH."/include/logo.png"))
 {
 	copy(WIZARD_ABSOLUTE_PATH."/site/templates/eshop_bootstrap/themes/".$themeID."/images/logo.png", WIZARD_SITE_PATH."include/logo.png");
 	copy(WIZARD_ABSOLUTE_PATH."/site/templates/eshop_bootstrap/themes/".$themeID."/images/logo_retina.png", WIZARD_SITE_PATH."include/logo_retina.png");
-	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo.php", '<img src="'.WIZARD_SITE_DIR.'include/logo.png"  srcset="'.WIZARD_SITE_DIR.'include/logo_retina.png" />');
+	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo.php", '<img src="'.WIZARD_SITE_DIR.'include/logo.png"  srcset="'.WIZARD_SITE_DIR.'include/logo_retina.png" alt="" />');
 }
 
 $fLogoMobile = CFile::GetByID($wizard->GetVar("siteLogoMobile"));
@@ -154,12 +154,12 @@ if($logoMobile || $logoMobileRetina)
 	}
 
 	$retinaPath = file_exists(WIZARD_SITE_ROOT_PATH."include/logo_mobile_retina.png") ? WIZARD_SITE_PATH."include/logo_mobile_retina.png" : "";
-	$content = '<img src="'.WIZARD_SITE_DIR.'include/logo_mobile.png"'.($retinaPath ? ' srcset="'.$retinaPath.' 2x"' : "").'/>';
+	$content = '<img src="'.WIZARD_SITE_DIR.'include/logo_mobile.png"'.($retinaPath ? ' srcset="'.$retinaPath.' 2x"' : "").' alt="" />';
 	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo_mobile.php", $content);
 }
 elseif(WIZARD_INSTALL_DEMO_DATA || !file_exists(WIZARD_SITE_PATH."/include/company_logo_mobile.php") && !file_exists(WIZARD_SITE_PATH."/include/logo_mobile.png") /*|| __isDefaultLogoOrText(WIZARD_SITE_PATH."/include/company_name.php")*/)
 {
 	copy(WIZARD_ABSOLUTE_PATH."/site/templates/eshop_bootstrap/themes/".$themeID."/images/logo_mobile.png", WIZARD_SITE_PATH."include/logo_mobile.png");
 	copy(WIZARD_ABSOLUTE_PATH."/site/templates/eshop_bootstrap/themes/".$themeID."/images/logo_mobile_retina.png", WIZARD_SITE_PATH."include/logo_mobile_retina.png");
-	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo_mobile.php", '<img src="'.WIZARD_SITE_DIR.'include/logo_mobile.png"  srcset="'.WIZARD_SITE_DIR.'include/logo_mobile_retina.png" />');
+	___writeToAreasFile(WIZARD_SITE_PATH."include/company_logo_mobile.php", '<img src="'.WIZARD_SITE_DIR.'include/logo_mobile.png"  srcset="'.WIZARD_SITE_DIR.'include/logo_mobile_retina.png" alt="" />');
 }

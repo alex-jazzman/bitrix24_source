@@ -11,6 +11,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/integration/mobile/vibecode',
 		'im:messenger/lib/read-all-chats',
 		'im:messenger/lib/popup-menu/recent-actions',
 		'im:messenger/lib/ui/notification',

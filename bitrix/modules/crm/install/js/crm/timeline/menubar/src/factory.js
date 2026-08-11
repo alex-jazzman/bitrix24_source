@@ -14,8 +14,6 @@ import RestPlacementWithLayout from './items/restplacement/withlayout';
 import RestPlacementWithSlider from './items/restplacement/withslider';
 import Sharing from './items/sharing';
 import Message from './items/sms/message';
-import Sms from './items/sms/sms';
-import Whatsapp from './items/sms/whatsapp';
 import Task from './items/task';
 import ToDo from './items/todo/todo';
 import Visit from './items/visit';
@@ -35,12 +33,6 @@ export default class Factory
 				break;
 			case 'comment':
 				item = new Comment();
-				break;
-			case 'sms':
-				item = new Sms();
-				break;
-			case 'whatsapp':
-				item = new Whatsapp();
 				break;
 			case 'message':
 				item = new Message();

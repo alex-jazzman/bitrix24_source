@@ -37,7 +37,11 @@ $arActivityDescription =
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('StartWorkTimeTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::TEAM_MANAGEMENT->value,
+			ActivityGroup::HR->value,
+		])
 		->setReturn([
 			'USER' => [
 				'Name' => (string)Loc::getMessage('START_WORK_TIME_TRIGGER_RETURN_FIELD_USER'),

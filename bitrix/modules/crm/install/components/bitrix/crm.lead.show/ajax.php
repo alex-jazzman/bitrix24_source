@@ -485,6 +485,11 @@ if($mode === 'CONVERT')
 			$contextData['MODE'] = 'LINK';
 		}
 	}
+
+	if (isset($_POST['ANALYTICS']) && is_array($_POST['ANALYTICS']))
+	{
+		\Bitrix\Crm\Service\Container::getInstance()->getContext()->setAnalytics($_POST['ANALYTICS']);
+	}
 	//endregion
 	if($wizard->execute($contextData))
 	{

@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 	const { openDialog } = require('im/messenger/controller/recent/service/select/lib/opener');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatDeletionOrigin, ChatDeletionReason } = require('im/messenger/application/lib/chat-deletion-manager');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 	const { FolderSelector } = require('im/messenger/controller/folder/selector');
 
@@ -195,6 +196,14 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		}
 
 		const tabs = store.getters['recentModel/getTabsContainsItem'](recentItem.id);
+		// Copy the chat coordinates as primitives BEFORE deletion so the announce does
+		// not depend on the store object that delete() removes from the collection.
+		const dialog = store.getters['dialoguesModel/getById'](recentItem.id);
+		const snapshot = {
+			chatId: dialog?.chatId,
+			parentChatId: dialog?.parentChatId,
+			chatType: dialog?.type,
+		};
 		const recentProvider = new RecentDataProvider();
 
 		try
@@ -202,6 +211,22 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			const chatProvider = new ChatDataProvider();
 			await recentProvider.delete({ dialogId: recentItem.id });
 			await chatProvider.delete({ dialogId: recentItem.id });
+
+			// Data is removed here (with rollback above); only announce the UI close so
+			// any open screen / project nested navigation is closed via the coordinator.
+			// TODO: open child screens are not closed here — this path keeps its own
+			// rollback and does not capture children. Route through ChatDeletionManager
+			// .delete() once the rollback is reconciled to also close project children.
+			serviceLocator.get('chat-deletion-manager').announceDeleted({
+				dialogId: recentItem.id,
+				chatId: snapshot.chatId,
+				parentChatId: snapshot.parentChatId,
+				chatType: snapshot.chatType,
+				origin: ChatDeletionOrigin.local,
+				reason: ChatDeletionReason.delete,
+				shouldShowAlert: false,
+				shouldSendDeleteAnalytics: false,
+			});
 		}
 		catch (error)
 		{

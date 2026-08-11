@@ -87,6 +87,10 @@ export const ChatAvatar = {
 		{
 			return this.user?.type === UserType.collaber;
 		},
+		isGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](this.avatarDialogId);
+		},
 		isExtranetChat(): boolean
 		{
 			return this.avatarDialog.extranet;
@@ -125,6 +129,7 @@ export const ChatAvatar = {
 				{ condition: () => this.isSelfChat, component: SelfChatAvatar },
 				{ condition: () => this.isExtranet, component: ExtranetUserAvatar },
 				{ condition: () => this.isCollaber, component: CollaberAvatar },
+				{ condition: () => this.isGuest, component: CollaberAvatar },
 				{ condition: () => this.isCollabChat, component: CollabChatAvatar },
 				{ condition: () => this.isAiAssistantBitrixGptInChat, component: CopilotAvatar },
 				{ condition: () => this.isAiAssistantMarta, component: MartaAvatar },

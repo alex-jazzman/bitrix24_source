@@ -1,6 +1,0 @@
-<?php
-$MESS["MESSAGE_STATUS_DELIVERED"] = "Delivered";
-$MESS["MESSAGE_STATUS_FAILED"] = "Send failed";
-$MESS["MESSAGE_STATUS_READ"] = "Viewed";
-$MESS["MESSAGE_STATUS_SENDING"] = "Sending";
-$MESS["MESSAGE_STATUS_SENT"] = "Sent";

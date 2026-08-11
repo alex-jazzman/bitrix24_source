@@ -1550,10 +1550,37 @@ BX(function() {
 			this.colorPinnedRows();
 			this.showStub();
 			this.clearAnalyticsParams();
+			this.initHints();
 
 			if (options.arParams && options.arParams['LAZY_LOAD'])
 			{
 				this.grid.reload();
+			}
+		},
+
+		initHints: function() {
+			if (BX.UI && BX.UI.Hint)
+			{
+				const tooltip = BX.UI.Hint.createInstance({
+					popupParameters: {
+						className: 'tasks-hint-popup',
+						darkMode: false,
+						offsetTop: 2,
+						background: 'var(--ui-color-bg-content-inapp)',
+						padding: 6,
+						angle: true,
+						targetContainer: document.body,
+						events: {
+							onPopupShow: (popup) => {
+								popup.setOffset({
+									offsetLeft: popup.bindElement.getBoundingClientRect()?.width / 2 ?? 0,
+								});
+							}
+						}
+					},
+					attributeName: 'data-tasks-hint',
+				});
+				tooltip.init(this.grid.getContainer());
 			}
 		},
 
@@ -1709,6 +1736,7 @@ BX(function() {
 				}.bind(this))
 				;
 				this.showStub();
+				this.initHints();
 			}.bind(this));
 
 			BX.addCustomEvent('BX.Tasks.Filter.group', function(grid, groupType, value) {

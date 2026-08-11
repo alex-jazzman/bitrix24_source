@@ -39,8 +39,6 @@ if(Main\Loader::includeModule("bitrix24"))
 	]);
 }
 
-echo \Bitrix\Crm\Tour\Permissions\WebForm::getInstance()->build();
-
 foreach ($arResult["ITEMS"] as $index => $data)
 {
 	foreach ($data as $dataKey => $dataValue)

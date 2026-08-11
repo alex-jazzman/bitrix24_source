@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.popup',
 		'ui.loader',
 		'ui.vue3',
 		'ui.vue3.components.audioplayer',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

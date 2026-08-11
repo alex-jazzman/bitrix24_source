@@ -10,6 +10,7 @@ export class AhaMoment
 		this.id = options.id ?? `biconnector-aha-moment-${Math.random().toString(16).slice(2)}`;
 		this.title = options.title ?? '';
 		this.description = options.description ?? '';
+		this.compact = options.compact === true;
 		this.imageSrc = options.imageSrc ?? '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon.png';
 		this.backgroundImageSrc = '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon-background.svg';
 		this.popupAlignment = options.popupAlignment === 'start' ? 'start' : 'center';
@@ -250,65 +251,80 @@ export class AhaMoment
 			return this.content;
 		}
 
-		const children = [
+		const innerChildren = [];
+
+		if (!this.compact)
+		{
+			innerChildren.push(
+				Dom.create('div', {
+					props: {
+						className: 'biconnector-aha-moment__visual',
+					},
+					children: [
+						Dom.create('div', {
+							props: {
+								className: 'biconnector-aha-moment__ellipse',
+							},
+						}),
+						Dom.create('img', {
+							props: {
+								className: 'biconnector-aha-moment__img_background',
+								src: this.backgroundImageSrc,
+								alt: '',
+							},
+						}),
+					],
+				}),
+				Dom.create('div', {
+					props: {
+						className: 'biconnector-aha-moment__logo-block',
+					},
+					children: [
+						Dom.create('img', {
+							props: {
+								className: 'biconnector-aha-moment__image',
+								src: this.imageSrc,
+								alt: '',
+							},
+						}),
+					],
+				}),
+			);
+		}
+
+		innerChildren.push(
 			Dom.create('div', {
 				props: {
-					className: 'biconnector-aha-moment__inner',
+					className: 'biconnector-aha-moment__content',
 				},
 				children: [
 					Dom.create('div', {
 						props: {
-							className: 'biconnector-aha-moment__visual',
+							className: 'biconnector-aha-moment__title',
 						},
-						children: [
-							Dom.create('div', {
-								props: {
-									className: 'biconnector-aha-moment__ellipse',
-								},
-							}),
-							Dom.create('img', {
-								props: {
-									className: 'biconnector-aha-moment__img_background',
-									src: this.backgroundImageSrc,
-									alt: '',
-								},
-							}),
-						],
+						text: this.title,
 					}),
 					Dom.create('div', {
 						props: {
-							className: 'biconnector-aha-moment__logo-block',
+							className: 'biconnector-aha-moment__description',
 						},
-						children: [
-							Dom.create('img', {
-								props: {
-									className: 'biconnector-aha-moment__image',
-									src: this.imageSrc,
-									alt: '',
-								},
-							}),
-						],
-					}),
-					Dom.create('div', {
-						props: {
-							className: 'biconnector-aha-moment__content',
-						},
-						children: [
-							Dom.create('div', {
-								props: {
-									className: 'biconnector-aha-moment__title',
-								},
-								text: this.title,
-							}),
-							Dom.create('div', {
-								props: {
-									className: 'biconnector-aha-moment__description',
-								},
-								text: this.description,
-							}),
-						],
+						text: this.description,
 					}),
 				],
+			}),
+		);
+
+		const innerClassName = this.compact
+			? 'biconnector-aha-moment__inner biconnector-aha-moment__inner--compact'
+			: 'biconnector-aha-moment__inner'
+		;
+
+		const children = [
+			Dom.create('div', {
+				props: {
+					className: innerClassName,
+				},
+				children: innerChildren,
 			}),
 		];
 

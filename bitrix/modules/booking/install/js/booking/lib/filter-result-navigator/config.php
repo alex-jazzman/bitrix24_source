@@ -10,7 +10,9 @@ return [
 	'rel' => [
 		'booking.const',
 		'booking.core',
+		'booking.lib.duration',
 		'booking.lib.remove-resource',
+		'booking.lib.utils',
 		'booking.provider.service.calendar-service',
 		'main.core',
 	],

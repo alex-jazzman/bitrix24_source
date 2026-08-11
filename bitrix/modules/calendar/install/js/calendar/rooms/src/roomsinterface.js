@@ -1107,7 +1107,8 @@ export class RoomsInterface extends SectionInterface
 		this.currentRoom = room;
 
 		this.DOM.confirmRoomPopup = new MessageBox({
-			message: this.getConfirmRoomInterfaceContent(Loc.getMessage('EC_ROOM_DELETE_CONFIRM')),
+			useAirDesign: true,
+			message: Loc.getMessage('EC_ROOM_DELETE_CONFIRM'),
 			minHeight: 120,
 			minWidth: 280,
 			maxWidth: 300,
@@ -1127,10 +1128,8 @@ export class RoomsInterface extends SectionInterface
 					},
 				},
 				closeByEsc: true,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
-			}
+			},
 		});
 
 		this.DOM.confirmRoomPopup.show();
@@ -1141,7 +1140,8 @@ export class RoomsInterface extends SectionInterface
 		this.currentCategory = category;
 
 		this.DOM.confirmCategoryPopup = new MessageBox({
-			message: this.getConfirmRoomInterfaceContent(Loc.getMessage('EC_CATEGORY_DELETE_CONFIRM')),
+			useAirDesign: true,
+			message: Loc.getMessage('EC_CATEGORY_DELETE_CONFIRM'),
 			minHeight: 120,
 			minWidth: 280,
 			maxWidth: 300,
@@ -1162,18 +1162,11 @@ export class RoomsInterface extends SectionInterface
 					},
 				},
 				closeByEsc: true,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
-			}
+			},
 		});
 
 		this.DOM.confirmCategoryPopup.show();
-	}
-
-	getConfirmRoomInterfaceContent(text)
-	{
-		return Tag.render`<div class="calendar-list-slider-messagebox-text">${text}</div>`;
 	}
 
 	openHelpDesk()

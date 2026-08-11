@@ -1,0 +1,8 @@
+.bx-im-message-block-line-divider__container {
+	padding: 5px 0 6px;
+}
+
+.bx-im-message-block-line-divider__line {
+	height: 1px;
+	background: var(--ui-color-divider-default);
+}

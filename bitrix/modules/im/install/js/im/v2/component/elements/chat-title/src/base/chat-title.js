@@ -182,6 +182,11 @@ export const ChatTitle = {
 				return DialogSpecialType.collaber;
 			}
 
+			if (this.isGuest)
+			{
+				return DialogSpecialType.guest;
+			}
+
 			if (this.isNetwork)
 			{
 				return DialogSpecialType.network;
@@ -191,7 +196,7 @@ export const ChatTitle = {
 		},
 		isDialogSpecialTypeWithLeftIcon(): boolean
 		{
-			if (this.isCollaberChatOrUser || this.isExtranet)
+			if (this.isCollaberChatOrUser || this.isExtranet || this.isGuest)
 			{
 				return false;
 			}
@@ -290,6 +295,15 @@ export const ChatTitle = {
 			}
 
 			return false;
+		},
+		isGuest(): boolean
+		{
+			if (!this.isUser)
+			{
+				return false;
+			}
+
+			return this.$store.getters['users/isGuest'](this.dialogId);
 		},
 		isAutoDeleteEnabled(): boolean
 		{

@@ -1,27 +1,17 @@
 /* eslint-disable no-param-reassign */
 
 import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { BusySlot, DraggedElementKind, Grid, Model } from 'booking.const';
+import { BusySlot, DraggedElementKind, Grid, Model, type AiCallBannerMode } from 'booking.const';
+import { GridTokenKey, gridTokens } from 'booking.lib.grid';
 import { Timezone } from 'booking.lib.timezone';
 import { Utils } from 'booking.lib.utils';
-import type { BusySlotDto } from 'booking.lib.busy-slots';
-import type { BookingModel, DealData } from 'booking.model.bookings';
+import { type BusySlotDto } from 'booking.lib.busy-slots';
+import { type BookingModel, type DealData } from 'booking.model.bookings';
 
 import { getOverbookingOccupancy } from './lib';
-import type {
-	InterfaceModelState,
-	Intersections,
-	MousePosition,
-	MoneyStatistics,
-	Occupancy,
-	DraggedDataTransfer,
-	Cell,
-	CellStats,
-	HoveredPlacementSlot,
-} from './types';
+import { type InterfaceModelState, type Intersections, type MousePosition, type MoneyStatistics, type Occupancy, type DraggedDataTransfer, type Cell, type CellStats, type HoveredPlacementSlot, type GoToDayPayload } from './types';
 
 export class Interface extends BuilderModel
 {
@@ -34,8 +24,9 @@ export class Interface extends BuilderModel
 	{
 		const today = new Date();
 		const schedule = this.getVariable('schedule', {});
-		const isMultidayFeatureAvailable = this.getVariable('isMultidayFeatureAvailable', false);
-		const gridMode = isMultidayFeatureAvailable
+		const enabledFeature = this.getVariable('enabledFeature', {});
+		const isMultidayFeatureEnabled = Boolean(enabledFeature.bookingLong);
+		const gridMode = isMultidayFeatureEnabled
 			? this.getVariable('gridMode', Grid.Mode.Day)
 			: Grid.Mode.Day
 		;
@@ -55,7 +46,6 @@ export class Interface extends BuilderModel
 			isFeatureEnabled: this.getVariable('isFeatureEnabled', false),
 			canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 			canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
-			isMultidayFeatureAvailable,
 			editingBookingId: this.getVariable('editingBookingId', 0),
 			editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 			draggedBookingId: 0,
@@ -110,8 +100,10 @@ export class Interface extends BuilderModel
 			createdFromEmbedBookings: {},
 			createdFromEmbedWaitListItems: {},
 			menuOpenedForBookingKey: this.getVariable('menuOpenedForBookingKey', ''),
-			enabledFeature: this.getVariable('enabledFeature', {}),
+			enabledFeature,
 			shouldShowWhatsAppEmergency: false,
+			aiCallBannerMode: null,
+			isAiCallAhaShown: false,
 		};
 	}
 
@@ -127,8 +119,6 @@ export class Interface extends BuilderModel
 			canTurnOnTrial: (state): boolean => state.canTurnOnTrial,
 			/** @function interface/canTurnOnDemo */
 			canTurnOnDemo: (state): boolean => state.canTurnOnDemo,
-			/** @function interface/isMultidayFeatureAvailable */
-			isMultidayFeatureAvailable: (state): boolean => state.isMultidayFeatureAvailable,
 			/** @function interface/isShownTrialPopup */
 			isShownTrialPopup: (state): boolean => state.isShownTrialPopup,
 			/** @function interface/editingBookingId */
@@ -267,6 +257,10 @@ export class Interface extends BuilderModel
 			mousePosition: (state): MousePosition => state.mousePosition,
 			/** @function interface/shouldShowWhatsAppEmergency */
 			shouldShowWhatsAppEmergency: (state): boolean => state.shouldShowWhatsAppEmergency,
+			/** @function interface/aiCallBannerMode */
+			aiCallBannerMode: (state): $Values<typeof AiCallBannerMode> | null => state.aiCallBannerMode,
+			/** @function interface/isAiCallAhaShown */
+			isAiCallAhaShown: (state): boolean => state.isAiCallAhaShown,
 			/** @function interface/getColliding */
 			getColliding: (state, getters) => {
 				return (
@@ -413,7 +407,7 @@ export class Interface extends BuilderModel
 			},
 			/** @function interface/setGridMode */
 			setGridMode: (store, gridMode: $Values<typeof Grid.Mode>) => {
-				if (!store.state.isMultidayFeatureAvailable)
+				if (!store.state.enabledFeature.bookingLong)
 				{
 					return;
 				}
@@ -518,11 +512,23 @@ export class Interface extends BuilderModel
 			setHoveredPlacementSlotStats: (store, stats: CellStats | null) => {
 				store.commit('setHoveredPlacementSlotStats', stats);
 			},
-			/** @function interface/goToDay */
-			goToDay: (store, selectedDateTs: number) => {
+			/** @function interface/goToDayMode */
+			goToDayMode: (store, payload: GoToDayPayload) => {
+				const { selectedDateTs, resourceId } = payload;
+
 				void store.dispatch('setGridMode', Grid.Mode.Day);
 				store.commit('setSelectedDateTs', selectedDateTs);
 				store.commit('setViewDateTs', Utils.time.getMonthStartTs(selectedDateTs));
+
+				if (resourceId)
+				{
+					const resourceIndex = store.getters.resourcesIds.indexOf(resourceId);
+					if (resourceIndex > 0)
+					{
+						const dayCellWidth = gridTokens.get(GridTokenKey.DayCellWidth);
+						store.commit('setScroll', resourceIndex * dayCellWidth);
+					}
+				}
 			},
 			/** @function interface/upsertBusySlotMany */
 			upsertBusySlotMany: (store: Store, busySlots: BusySlotDto[]): void => {
@@ -585,6 +591,14 @@ export class Interface extends BuilderModel
 			/** @function interface/setShouldShowWhatsAppEmergency */
 			setShouldShowWhatsAppEmergency: (store, shouldShowWhatsAppEmergency: boolean) => {
 				store.commit('setShouldShowWhatsAppEmergency', shouldShowWhatsAppEmergency);
+			},
+			/** @function interface/setAiCallBannerMode */
+			setAiCallBannerMode: (store, aiCallBannerMode: $Values<typeof AiCallBannerMode> | null) => {
+				store.commit('setAiCallBannerMode', aiCallBannerMode);
+			},
+			/** @function interface/setIsAiCallAhaShown */
+			setIsAiCallAhaShown: (store, isAiCallAhaShown: boolean) => {
+				store.commit('setIsAiCallAhaShown', isAiCallAhaShown);
 			},
 			/** @function interface/setIsFeatureEnabled */
 			setIsFeatureEnabled: (store, isFeatureEnabled: boolean) => {
@@ -791,6 +805,12 @@ export class Interface extends BuilderModel
 			},
 			setShouldShowWhatsAppEmergency: (state, shouldShowWhatsAppEmergency: boolean) => {
 				state.shouldShowWhatsAppEmergency = shouldShowWhatsAppEmergency;
+			},
+			setAiCallBannerMode: (state, aiCallBannerMode: $Values<typeof AiCallBannerMode> | null) => {
+				state.aiCallBannerMode = aiCallBannerMode;
+			},
+			setIsAiCallAhaShown: (state, isAiCallAhaShown: boolean) => {
+				state.isAiCallAhaShown = isAiCallAhaShown;
 			},
 			setIsFeatureEnabled: (state, isFeatureEnabled: boolean) => {
 				state.isFeatureEnabled = isFeatureEnabled;

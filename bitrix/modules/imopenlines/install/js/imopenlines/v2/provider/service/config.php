@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/service.bundle.css',
 	'js' => 'dist/service.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'im.public',
 		'im.v2.application.core',
 		'im.v2.const',
@@ -20,6 +19,8 @@ return [
 		'im.v2.provider.service.search',
 		'imopenlines.v2.const',
 		'imopenlines.v2.lib.search',
+		'main.core',
+		'ui.notification',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

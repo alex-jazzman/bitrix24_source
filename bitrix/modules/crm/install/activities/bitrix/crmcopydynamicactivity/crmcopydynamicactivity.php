@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Service;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -175,16 +178,22 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 
 		if (isset($newItem))
 		{
-			$this->ItemId = $newItem->getId();
+			$newItemId = $newItem->getId();
+			$this->ItemId = $newItemId;
 
-			if (COption::GetOptionString('crm', 'start_bp_within_bp', 'N') === 'Y')
-			{
-				$CCrmBizProc = new CCrmBizProc($this->GetDocumentType()[2]);
-				if ($CCrmBizProc->CheckFields(false, true))
-				{
-					$CCrmBizProc->StartWorkflow($this->ItemId);
-				}
-			}
+			$starter = new CrmStarter(new DocumentDto($newItem->getEntityTypeId(), $newItemId));
+			$starter
+				->setContextModuleId('bizproc')
+				->runOnInnerDocumentAdd(
+					new RunDataDto(
+						actualFields: Crm\Automation\Helper::prepareCompatibleData(
+							$newItem->getEntityTypeId(),
+							$newItem->getCompatibleData(),
+						),
+					),
+					runAutomation: false
+				)
+			;
 		}
 	}
 

@@ -613,11 +613,8 @@ export class Util
 	static showConfirmPopup(action, message, options = {})
 	{
 		this.confirmPopup = new MessageBox({
-			message: Tag.render`
-				<div class="calendar-list-slider-messagebox-text">
-					${message}
-				</div>
-			`,
+			message,
+			useAirDesign: true,
 			minHeight: 120,
 			minWidth: 280,
 			maxWidth: 300,
@@ -636,8 +633,6 @@ export class Util
 					},
 				},
 				closeByEsc: false,
-				padding: 0,
-				contentPadding: 0,
 				animation: 'fading-slide',
 			},
 			...options,

@@ -6678,15 +6678,20 @@ this.BX = this.BX || {};
 		}
 		send() {
 			const start = Date.now();
-			const data = {
-				departmentId: this.#departmentIds,
-				isEmail: 'N'
-			};
-			BX.ajax.runComponentAction(this.#options.componentName, 'moveToIntranet', {
+			const request = this.#options.runActionName ? BX.ajax.runAction(this.#options.runActionName, {
+				data: {
+					userId: this.#options.userId,
+					departmentIds: this.#options.showDepartmentControl === false ? [] : this.#departmentIds
+				}
+			}) : BX.ajax.runComponentAction(this.#options.componentName, this.#options.actionName ?? 'moveToIntranet', {
 				signedParameters: this.#options.signedParameters,
 				mode: 'ajax',
-				data
-			}).then(response => {
+				data: this.#options.showDepartmentControl === false ? {} : {
+					departmentId: this.#departmentIds,
+					isEmail: 'N'
+				}
+			});
+			request.then(response => {
 				const time = Date.now() - start;
 				let delay = 0;
 				if (time <= 2500) {
@@ -6827,10 +6832,8 @@ this.BX = this.BX || {};
 			}
 		}
 		#renderBlock() {
-			const title = this.#isSuccess ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE_ERROR');
-			const description = this.#isSuccess ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION', {
-				'[USER_NAME]': `<b>${this.#options.userName}</b>`
-			}) : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION_ERROR');
+			const title = this.#getTitle();
+			const description = this.#getDescription();
 			return main_core.Tag.render`
 			<div class="transfer-result">
 				${this.#getImageBlock()}
@@ -6897,6 +6900,14 @@ this.BX = this.BX || {};
 				}
 			}).render();
 		}
+		#getTitle() {
+			return this.#isSuccess ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_TITLE_ERROR');
+		}
+		#getDescription() {
+			return this.#isSuccess ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION', {
+				'[USER_NAME]': `<b>${this.#options.userName}</b>`
+			}) : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_RESULT_DESCRIPTION_ERROR');
+		}
 	}
 
 	class StartStep {
@@ -6916,14 +6927,16 @@ this.BX = this.BX || {};
 			return this.#content;
 		}
 		#renderBlock() {
-			const isCollaber = this.#options.userType === 'collaber';
-			const modificator = isCollaber ? 'collaber' : 'extranet';
-			const title = isCollaber ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_COLLABA_TITLE') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TITLE');
-			const position = isCollaber ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_COLLABER') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_EXTRANET');
+			const modificator = this.#getModificator();
+			const departmentControl = this.#isDepartmentControlVisible() ? main_core.Tag.render`
+				<div class="transfer-start__department">
+					${this.#getDepartmentControl().render()}
+				</div>
+			` : '';
 			return main_core.Tag.render`
 			<div class="transfer-start">
 				<div class="transfer-start__title">
-					${title}
+					${this.#getTitle()}
 				</div>
 				<div class="transfer-start__account">
 					<div class="transfer-account transfer-account_${modificator}">
@@ -6935,14 +6948,12 @@ this.BX = this.BX || {};
 								${this.#options.userName}
 							</div>
 							<div class="account-data__position account-data__position_${modificator}">
-								${position}
+								${this.#getPosition()}
 							</div>
 						</div>
 					</div>
 				</div>
-				<div class="transfer-start__department">
-					${this.#getDepartmentControl().render()}
-				</div>
+				${departmentControl}
 				<div class="transfer-start__action">
 					${this.#getSendButton().render()}
 					${this.#getCancelButton().render()}
@@ -6970,6 +6981,9 @@ this.BX = this.BX || {};
 			return avatar;
 		}
 		#getDepartmentControl() {
+			if (!this.#isDepartmentControlVisible()) {
+				return null;
+			}
 			if (!this.#department) {
 				const rootDepartment = this.#options.rootDepartment;
 				this.#department = new intranet_departmentControl.DepartmentControl({
@@ -6981,21 +6995,23 @@ this.BX = this.BX || {};
 			return this.#department;
 		}
 		#getSendButton() {
+			const isDepartmentControlVisible = this.#isDepartmentControlVisible();
+			const departmentControl = isDepartmentControlVisible ? this.#getDepartmentControl() : null;
 			this.#sendButton ??= new ui_buttons.Button({
 				className: 'transfer-start__action-send',
-				text: main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TRANSFER'),
+				text: this.#getActionButtonText(),
 				size: ui_buttons.Button.Size.LARGE,
 				style: '--style-filled',
 				useAirDesign: true,
 				noCaps: true,
 				isDependOnTheme: true,
-				state: this.#getDepartmentControl().getValues().length > 0 ? null : ui_buttons.Button.State.DISABLED,
+				state: !isDepartmentControlVisible || departmentControl.getValues().length > 0 ? null : ui_buttons.Button.State.DISABLED,
 				onclick: () => {
 					if (this.#sendButton.getState() === ui_buttons.Button.State.DISABLED) {
 						return;
 					}
 					this.#parent.emit('changestate', {
-						departmentValues: this.#department.getValues()
+						departmentValues: isDepartmentControlVisible ? departmentControl.getValues() : []
 					});
 				}
 			});
@@ -7014,11 +7030,50 @@ this.BX = this.BX || {};
 			});
 		}
 		#onChangeDepartments(event) {
+			if (!this.#isDepartmentControlVisible()) {
+				return;
+			}
 			const {
 				tags
 			} = event.data;
 			const state = tags?.length > 0 ? null : ui_buttons.Button.State.DISABLED;
 			this.#getSendButton().setState(state);
+		}
+		#getModificator() {
+			switch (this.#options.userType) {
+				case 'collaber':
+					return 'collaber';
+				case 'integrator':
+					return 'integrator';
+				default:
+					return 'extranet';
+			}
+		}
+		#getTitle() {
+			switch (this.#options.userType) {
+				case 'collaber':
+					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_COLLABA_TITLE');
+				case 'integrator':
+					return main_core.Extension.getSettings('intranet.transfer-to-intranet').isRenamedIntegrator === true ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_INTEGRATOR_TITLE_RENAMED') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_INTEGRATOR_TITLE');
+				default:
+					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TITLE');
+			}
+		}
+		#getPosition() {
+			switch (this.#options.userType) {
+				case 'collaber':
+					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_COLLABER');
+				case 'integrator':
+					return main_core.Extension.getSettings('intranet.transfer-to-intranet').isRenamedIntegrator === true ? main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_INTEGRATOR');
+				default:
+					return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_POSITION_EXTRANET');
+			}
+		}
+		#getActionButtonText() {
+			return main_core.Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TRANSFER');
+		}
+		#isDepartmentControlVisible() {
+			return this.#options.showDepartmentControl !== false;
 		}
 	}
 

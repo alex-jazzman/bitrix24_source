@@ -420,6 +420,8 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		async #sendMessage(sendMessageParams, options)
 		{
 			const isCopilotAnimatedScroll = Feature.isCopilotAnimatedScrollSupported && this.dialogHelper?.isCopilotDirect;
+			const shouldScrollFirstOwnMessage = this.#shouldScrollFirstOwnMessage(sendMessageParams);
+
 			if (!isCopilotAnimatedScroll && this.#shouldGoToBottomMessageContext())
 			{
 				await this.contextManager.goToBottomMessageContext();
@@ -436,6 +438,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 					if (!isCopilotAnimatedScroll)
 					{
 						await this.view.scrollToBottomSmoothly();
+					}
+					else if (shouldScrollFirstOwnMessage)
+					{
+						this.view.scrollLastMessageToTop(true);
 					}
 					await this.#sendMessageToServer(sendMessageParams);
 					AppRatingClient.increaseSendMessageCounter(this.dialogHelper?.isCopilot);
@@ -458,6 +464,18 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
 
 			return dialog?.hasNextPage === true;
+		}
+
+		/**
+		 * @param {SendMessageParams} sendMessageParams
+		 * @return {boolean}
+		 */
+		#shouldScrollFirstOwnMessage(sendMessageParams)
+		{
+			const chatWasEmpty = !Type.isArrayFilled(this.store.getters['messagesModel/getByChatId'](this.chatId));
+			const isMessageFromCurrentUser = sendMessageParams.message.authorId === serviceLocator.get('core').getUserId();
+
+			return chatWasEmpty && isMessageFromCurrentUser;
 		}
 
 		/**

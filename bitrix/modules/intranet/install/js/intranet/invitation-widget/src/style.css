@@ -56,10 +56,18 @@
 	align-items: center;
 }
 
+.intranet-invitation-widget-item.--project .intranet-invitation-widget-item-icon--collab {
+	background-color: var(--ui-color-accent-soft-blue-2);
+}
+
 .intranet-invitation-widget-item-icon--collab .ui-icon-set {
 	background-color: #19CC45;
 	height: 20px;
 	width: 20px;
+}
+
+.intranet-invitation-widget-item.--project .intranet-invitation-widget-item-icon--collab .ui-icon-set {
+	background-color: var(--ui-color-accent-main-primary);
 }
 
 .intranet-invitation-widget-item--active .intranet-invitation-widget-item-icon--ext {
@@ -183,6 +191,11 @@
 	color: var(--ui-color-palette-gray-90);
 }
 
+.intranet-invitation-widget-item.--project .intranet-invitation-widget-item-btn:hover {
+	border-color: var(--ui-color-accent-soft-blue-1);
+	background: var(--ui-color-accent-soft-blue-1);
+}
+
 .intranet-invitation-widget-item--company:hover .intranet-invitation-widget-item-btn,
 .intranet-invitation-widget-item--wide:hover .intranet-invitation-widget-item-btn {
 	border-color: #edeef0;
@@ -241,6 +254,10 @@
 
 .intranet-invitation-widget-item--collab {
 	border: 1px solid #19CC45;
+}
+
+.intranet-invitation-widget-item--collab.--project {
+	border-color: var(--ui-color-accent-main-primary);
 }
 
 .intranet-invitation-widget-content {

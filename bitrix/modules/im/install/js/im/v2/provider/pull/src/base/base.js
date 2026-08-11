@@ -219,6 +219,11 @@ export class BasePullHandler
 	{
 		this.#userHandler.handleUserShowInRecent(params);
 	}
+
+	handleUserLogout(params)
+	{
+		this.#userHandler.handleUserLogout(params);
+	}
 	// endregion 'user'
 
 	// region 'desktop'

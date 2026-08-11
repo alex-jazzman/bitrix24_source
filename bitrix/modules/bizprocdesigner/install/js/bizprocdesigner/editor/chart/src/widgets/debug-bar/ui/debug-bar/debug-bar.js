@@ -1,6 +1,7 @@
 import { mapState, mapActions } from 'ui.vue3.pinia';
 import { useAppStore } from '../../../../entities/app';
-import { DebugBarPanel, useDebugBarStore } from '../../../../entities/debug-bar';
+import { useDebugBarStore } from '../../../../entities/debug-bar';
+import { DebugBarPanel } from '../../../../entities/debug-bar/ui/debug-bar-panel/debug-bar-panel';
 import { diagramStore } from '../../../../entities/blocks';
 
 // @vue/component

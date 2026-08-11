@@ -354,7 +354,10 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 				const error = errors.pop();
 				if (!TaskErrorCode.isTaskNotFoundErrorCode(error.code))
 				{
-					Alert.alert(error.message);
+					const message = error?.code === 'NETWORK_ERROR'
+						? Loc.getMessage('BPMOBILE_WORKFLOW_SIMPLE_LIST_NETWORK_ERROR')
+						: error.message;
+					Alert.alert(message);
 				}
 			}
 		}

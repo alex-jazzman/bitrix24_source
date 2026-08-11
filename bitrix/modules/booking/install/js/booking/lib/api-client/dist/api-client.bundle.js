@@ -18,20 +18,17 @@ this.BX.Booking = this.BX.Booking || {};
 			});
 			return this.handleResponse(response);
 		}
-		async post(endpoint, data) {
+		async post(endpoint, data = {}) {
 			const url = this.buildUrl(endpoint);
 			const response = await main_core.ajax.runAction(url, {
 				json: data
 			});
 			return this.handleResponse(response);
 		}
-		async put(endpoint, data) {
+		async put(endpoint, data = {}) {
 			const url = this.buildUrl(endpoint);
 			const response = await main_core.ajax.runAction(url, {
 				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json'
-				},
 				json: data
 			});
 			return this.handleResponse(response);

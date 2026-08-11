@@ -22,6 +22,13 @@
 	display: flex;
 }
 
+.disk-popup-limits__content_main a {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: none;
+	-webkit-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
 .disk-popup-limits__content_icon-box {
 	position: relative;
 	top: -8px;
@@ -38,4 +45,12 @@
 	font-size: var(--ui-font-size-xl);
 	color: var(--ui-color-base-90);
 	line-height: 21px;
+}
+
+.disk-popup-limits__content_footer
+{
+	padding-top: 24px;
+}
+.disk-popup-limits__content_footer button:first-child {
+	margin-right: 12px;
 }

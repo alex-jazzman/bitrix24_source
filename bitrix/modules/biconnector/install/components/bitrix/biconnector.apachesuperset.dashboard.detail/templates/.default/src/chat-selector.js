@@ -1,5 +1,5 @@
 import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { Dialog, Item } from 'ui.entity-selector';
 
@@ -148,7 +148,7 @@ export class ChatSelector
 	{
 		return [
 			Tag.render`
-				<div class="biconnector-send-to-chat-footer" onclick="${this.#handleOnFooterLinkClick.bind(this)}}">
+				<div class="biconnector-send-to-chat-footer" onclick="${this.#handleOnFooterLinkClick.bind(this)}">
 					<span class="ui-icon-set --send" style="--ui-icon-set__icon-size: 32px; --ui-icon-set__icon-color: #2FC6F6; margin-right: 10px;">
 					</span>
 					<span class="biconnector-send-to-chat-footer-text">

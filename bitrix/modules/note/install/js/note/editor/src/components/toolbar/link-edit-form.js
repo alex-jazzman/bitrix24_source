@@ -33,6 +33,10 @@ export const LinkEditFormComponent = {
 			type: Boolean,
 			default: false,
 		},
+		showApply: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update:linkValue', 'apply', 'unset'],
 	computed: {
@@ -97,8 +101,10 @@ export const LinkEditFormComponent = {
 				@input="emitValue($event.target.value)"
 				@keydown="handleKeydown"
 			/>
-			<button type="button" class="note-editor-popover-button" :disabled="linkActionDisabled" @click="$emit('apply')"><EnterIcon /></button>
-			<div class="note-editor-popover-separator"></div>
+			<template v-if="showApply">
+				<button type="button" class="note-editor-popover-button" :disabled="linkActionDisabled" @click="$emit('apply')"><EnterIcon /></button>
+				<div class="note-editor-popover-separator"></div>
+			</template>
 			<button type="button" class="note-editor-popover-button" :disabled="!safeLinkHref" @click="openLink"><ExternalLinkIcon /></button>
 			<button type="button" class="note-editor-popover-button" :disabled="!linkIsActive" @click="$emit('unset')"><TrashIcon /></button>
 		</div>

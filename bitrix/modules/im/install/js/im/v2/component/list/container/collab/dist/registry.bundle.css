@@ -131,6 +131,7 @@
 }
 
 .bx-im-nested-list-collab-card__title {
+	padding-right: 13px;
 	font: 19px/26px var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--ui-color-base-0);

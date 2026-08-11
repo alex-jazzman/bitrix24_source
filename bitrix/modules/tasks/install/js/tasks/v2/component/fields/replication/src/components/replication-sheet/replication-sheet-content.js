@@ -4,11 +4,15 @@ import { computed } from 'ui.vue3';
 import { HeadlineMd, TextMd } from 'ui.system.typography.vue';
 import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import 'ui.icon-set.outline';
 
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import type { TaskModel, TaskReplicateParams } from 'tasks.v2.model.tasks';
-import { ReplicateCreator } from 'tasks.v2.provider.service.task-service';
+import { replicationService } from 'tasks.v2.provider.service.replication-service';
+import { ReplicateCreator, taskService } from 'tasks.v2.provider.service.task-service';
+import { deepToRaw } from 'tasks.v2.lib.reactive-utils';
+import { calendar } from 'tasks.v2.lib.calendar';
 import { ReplicationPeriod } from 'tasks.v2.const';
 
 import { ReplicationSettings } from './replication-settings/replication-settings';
@@ -46,6 +50,7 @@ export const ReplicationSheetContent = {
 		task: {},
 		taskId: {},
 		isTemplate: {},
+		isEdit: {},
 	},
 	provide(): { replicateParams: TaskReplicateParams }
 	{
@@ -64,6 +69,7 @@ export const ReplicationSheetContent = {
 	{
 		return {
 			replicateParams: ReplicateCreator.createEmptyReplicateParams(),
+			initialReplicateParams: {},
 		};
 	},
 	computed: {
@@ -71,10 +77,18 @@ export const ReplicationSheetContent = {
 		{
 			return this.replicateParams.period === ReplicationPeriod.Daily;
 		},
+		hasChanges(): boolean
+		{
+			return JSON.stringify(this.replicateParams) !== JSON.stringify(this.initialReplicateParams);
+		},
 	},
 	created(): void
 	{
 		this.initReplicateParams();
+	},
+	mounted(): void
+	{
+		this.initialReplicateParams = deepToRaw(this.replicateParams);
 	},
 	methods: {
 		initReplicateParams(): void
@@ -97,13 +111,97 @@ export const ReplicationSheetContent = {
 				...params,
 			};
 		},
+		updateReplication(): void
+		{
+			const payload = {
+				replicate: true,
+				replicateParams: this.replicateParams,
+			};
+
+			this.$emit('close');
+
+			if (!this.isEdit)
+			{
+				const deadlineOffset = this.replicateParams.deadlineOffset;
+				if (deadlineOffset)
+				{
+					const deadlineOffsetTs = deadlineOffset * 1000;
+					const now = Date.now();
+
+					payload.deadlineTs = this.task.matchesWorkTime
+						? calendar.calculateEndTs(now, now, deadlineOffsetTs)
+						: now + deadlineOffsetTs;
+				}
+
+				taskService.updateStoreTask(this.taskId, payload);
+
+				return;
+			}
+
+			void replicationService.update(this.task, payload);
+		},
 		showHelpDesk(): void
 		{
 			top.BX.Helper.show('redirect=detail&code=18127718');
 		},
-		close(): void
+		showSaveConfirmDialog(): void
 		{
-			this.$emit('close');
+			MessageBox.show({
+				title: this.loc('TASKS_V2_REPLICATION_SAVE_CHANGES_TITLE'),
+				message: this.loc('TASKS_V2_REPLICATION_SAVE_CHANGES_MESSAGE'),
+				useAirDesign: true,
+				buttons: MessageBoxButtons.YES_NO,
+				yesCaption: this.loc('TASKS_V2_REPLICATION_SAVE_CHANGES_SAVE'),
+				noCaption: this.loc('TASKS_V2_REPLICATION_SAVE_CHANGES_CANCEL'),
+				onYes: (box) => {
+					box.close();
+					this.updateReplication();
+				},
+				onNo: (box) => {
+					box.close();
+					this.$emit('close');
+				},
+			});
+		},
+		async save(): void
+		{
+			if (!this.isEdit)
+			{
+				this.updateReplication();
+
+				return;
+			}
+
+			const hasExistingReplication = Boolean(this.task?.replicateParams);
+
+			if (!hasExistingReplication)
+			{
+				if (this.isTemplate)
+				{
+					this.updateReplication();
+
+					return;
+				}
+
+				this.$emit('close');
+
+				await replicationService.add(this.taskId, {
+					...this.task,
+					replicate: true,
+					replicateParams: this.replicateParams,
+				});
+
+				return;
+			}
+
+			if (!this.hasChanges)
+			{
+				this.$emit('close');
+
+				return;
+			}
+
+			this.showSaveConfirmDialog();
 		},
 	},
 	template: `
@@ -114,11 +212,11 @@ export const ReplicationSheetContent = {
 					class="tasks-field-replication-sheet-close"
 					:name="Outline.CROSS_L"
 					hoverable
-					@click="close"
+					@click="save"
 				/>
 			</div>
 			<div class="tasks-field-replication-sheet-body">
-				<div v-if="!isTemplate" class="tasks-field-replication-sheet-description">
+				<div v-if="!isTemplate && !task.replicateParams" class="tasks-field-replication-sheet-description">
 					<span class="tasks-field-replication-sheet-description-text">
 						<RichLoc :text="loc('TASKS_V2_REPLICATION_SHEET_DESCRIPTION')" placeholder="[helpdesk]">
 							<template #helpdesk="{ text }">
@@ -130,11 +228,13 @@ export const ReplicationSheetContent = {
 				<ReplicationSettings @update="updateReplicateParams"/>
 				<ReplicationStart @update="updateReplicateParams"/>
 				<ReplicationFinish @update="updateReplicateParams"/>
-				<ReplicationStartTime @update="updateReplicateParams"/>
-				<ReplicationDeadline v-if="!isTemplate" @update="updateReplicateParams"/>
-				<ReplicationWeekend v-if="isDailyPeriod" @update="updateReplicateParams"/>
+				<div class="tasks-field-replication-settings">
+					<ReplicationStartTime @update="updateReplicateParams"/>
+					<ReplicationDeadline v-if="!isTemplate" @update="updateReplicateParams"/>
+					<ReplicationWeekend v-if="isDailyPeriod" @update="updateReplicateParams"/>
+				</div>
 			</div>
-			<ReplicationSheetFooter :replicateParams @close="close"/>
+			<ReplicationSheetFooter :replicateParams @close="$emit('close')" @save="save"/>
 		</div>
 	`,
 };

@@ -292,6 +292,36 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
+			 * Returns the (parentChatId, recentSection) pairs in which the item is still present,
+			 * scanning the given parentChatIds. Used by hide to decide whether the chat remains
+			 * visible in any section (e.g. task child chats are virtually lifted to top-level,
+			 * so both ROOT_PARENT_CHAT_ID and the chat's own parentChatId must be checked).
+			 *
+			 * @function recentModel/getSectionsContainingItem
+			 * @return {Array<{ parentChatId: number, recentSection: string }>}
+			 */
+			getSectionsContainingItem: (state) => (id, parentChatIds = [ROOT_PARENT_CHAT_ID]) => {
+				const result = [];
+
+				parentChatIds.forEach((parentChatId) => {
+					const sections = state.nestedIdCollection[parentChatId];
+					if (!sections)
+					{
+						return;
+					}
+
+					Object.entries(sections).forEach(([recentSection, set]) => {
+						if (set?.has(id))
+						{
+							result.push({ parentChatId, recentSection });
+						}
+					});
+				});
+
+				return result;
+			},
+
+			/**
 			 * @function recentModel/getCollectionSizeByTabId
 			 * @return {number|null}
 			 */

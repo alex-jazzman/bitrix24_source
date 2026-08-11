@@ -1,8 +1,8 @@
 import 'ui.info-helper';
 
-import { Utils } from 'im.v2.lib.utils';
-import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
+import { Utils } from 'call.adapter.utils';
+import { DesktopApi, DesktopFeature } from 'call.adapter.desktop-api';
+import { openHelpdeskArticle } from 'call.adapter.helpdesk';
 
 import { Action } from './items/action';
 

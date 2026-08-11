@@ -81,7 +81,8 @@
 	color: var(--im-chat-title-extranet-color);
 }
 
-.bx-im-chat-title__text.--collaber {
+.bx-im-chat-title__text.--collaber,
+.bx-im-chat-title__text.--guest {
 	color: var(--im-chat-title-collab-color);
 }
 

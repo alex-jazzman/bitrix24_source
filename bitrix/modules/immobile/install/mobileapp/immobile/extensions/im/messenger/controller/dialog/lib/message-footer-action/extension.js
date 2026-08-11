@@ -15,9 +15,13 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('dialog--message-footer-action');
+
+	const FEEDBACK_MESSAGE_MAX_LENGTH = 1000;
 
 	const ActionTint = Object.freeze({
 		active: ColorTokens.accentMainPrimaryalt.toHex(),
@@ -238,13 +242,25 @@ jn.define('im/messenger/controller/dialog/lib/message-footer-action', (require, 
 		#openFeedbackForm(messageId)
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](messageId);
+			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			const formId = Feature.isBitrixGptV2Available ? 'aiAssistantV2' : 'aiAssistant';
+
+			const extraHiddenFields = {
+				message: modelMessage.text.slice(0, FEEDBACK_MESSAGE_MAX_LENGTH),
+				chat_id: dialogModel?.chatId ?? 0,
+				message_id: modelMessage.id,
+				user_id: MessengerParams.getUserId(),
+				sending_time: modelMessage.date instanceof Date
+					? modelMessage.date.toISOString()
+					: String(modelMessage.date),
+			};
 
 			const feedbackForm = new FeedbackForm({
-				formId: 'aiAssistant',
+				formId,
 				senderPage: 'copilot_message',
-				extraHiddenFields: { cp_answer: modelMessage.text },
+				extraHiddenFields,
 			});
-
 			feedbackForm.openInBackdrop();
 		}
 

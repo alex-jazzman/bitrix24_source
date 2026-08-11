@@ -9,11 +9,29 @@
 			EXPIRED: 30000,
 			START: 30000
 		},
+		viewportContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover',
 		SITE_ID = BX.message('SITE_ID'),
 		_worktime_timeman = function(h, m, s) {
 			m = m+'';
 			s = s+'';
 			return '<span>' + h + '</span>:<span>' + ("00".substring(0, 2 - m.length) + m) + '</span>:<span>' + ("00".substring(0, 2 - s.length) + s) + '</span>';
+		},
+		_normalizeViewport = function() {
+			var viewport = document.querySelector('meta[name="viewport"]');
+			if (!viewport)
+			{
+				viewport = document.createElement('meta');
+				viewport.setAttribute('name', 'viewport');
+				viewport.setAttribute('id', 'bx_mobile_viewport');
+				document.head.appendChild(viewport);
+			}
+			viewport.setAttribute('content', viewportContent);
+		},
+		_resetViewportScroll = function() {
+			_normalizeViewport();
+			window.setTimeout(function() {
+				window.scrollTo(0, 0);
+			}, 0);
 		},
 		_initPage = function(menuItems){
 			var title = BX.message('PAGE_TITLE');
@@ -187,6 +205,7 @@
 		})(),
 		location = null;
 	BX.ready(function(){
+		_resetViewportScroll();
 		window.app.pullDown({
 			enable:   true,
 			pulltext: BX.message('PULLDOWN_PULL'),
@@ -298,6 +317,7 @@
 					this.collectNodes();
 					this.bind();
 					this.check(true);
+					_resetViewportScroll();
 					this.inited = true;
 					this.collectGeoData = false;
 					if (BX.type.isPlainObject(DATA))
@@ -462,6 +482,7 @@
 					}
 					this.DATA = data;
 					this.check(true);
+					_resetViewportScroll();
 					return true;
 				},
 				onUpdate : function(id, action, data) {

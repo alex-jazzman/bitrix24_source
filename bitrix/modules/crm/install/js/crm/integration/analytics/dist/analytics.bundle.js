@@ -868,114 +868,6 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication.Editor
 	 */
-	let CancelEvent$2 = class CancelEvent {
-		#section;
-		#subSection;
-		setSection(section) {
-			this.#section = section;
-			return this;
-		}
-		setSubSection(subSection) {
-			this.#subSection = subSection;
-			return this;
-		}
-		buildData() {
-			return filterOutNilValues({
-				tool: Dictionary.TOOL_CRM,
-				category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-				event: Dictionary.EVENT_CANCEL,
-				type: Dictionary.TYPE_MESSAGE,
-				c_section: this.#section,
-				c_sub_section: this.#subSection,
-				p1: getCrmMode()
-			});
-		}
-	};
-
-	/**
-	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication.Editor
-	 */
-	class CopilotEvent {
-		#section;
-		#subSection;
-		setSection(section) {
-			this.#section = section;
-			return this;
-		}
-		setSubSection(subSection) {
-			this.#subSection = subSection;
-			return this;
-		}
-		buildData() {
-			return filterOutNilValues({
-				tool: Dictionary.TOOL_CRM,
-				category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-				event: Dictionary.EVENT_COPILOT,
-				type: Dictionary.TYPE_MESSAGE,
-				c_section: this.#section,
-				c_sub_section: this.#subSection,
-				p1: getCrmMode()
-			});
-		}
-	}
-
-	/**
-	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication.Editor
-	 */
-	class InteractionEvent {
-		#section;
-		#subSection;
-		#element;
-		#addedElement;
-		#channelId;
-		static createDefault(channelId) {
-			const self = new InteractionEvent();
-			self.#channelId = channelId;
-			return self;
-		}
-		setSection(section) {
-			this.#section = section;
-			return this;
-		}
-		setSubSection(subSection) {
-			this.#subSection = subSection;
-			return this;
-		}
-		setElement(element) {
-			this.#element = element;
-			return this;
-		}
-		setAddedElement(addedElement) {
-			this.#addedElement = addedElement;
-			return this;
-		}
-		buildData() {
-			let p2 = null;
-			if (this.#addedElement) {
-				p2 = `element_${this.#addedElement}`;
-			}
-			let p5 = null;
-			if (!main_core.Type.isNil(this.#channelId)) {
-				p5 = `channel_${normalizeChannelId(this.#channelId)}`;
-			}
-			return filterOutNilValues({
-				tool: Dictionary.TOOL_CRM,
-				category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-				event: Dictionary.EVENT_EDIT,
-				type: Dictionary.TYPE_MESSAGE,
-				c_section: this.#section,
-				c_sub_section: this.#subSection,
-				c_element: this.#element,
-				p1: getCrmMode(),
-				p2,
-				p5
-			});
-		}
-	}
-
-	/**
-	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication.Editor
-	 */
 	class ResendEvent {
 		#section;
 		#subSection;
@@ -1065,32 +957,6 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				p1: getCrmMode(),
 				p3,
 				p5
-			});
-		}
-	};
-
-	/**
-	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication.Editor
-	 */
-	let ViewEvent$4 = class ViewEvent {
-		#section;
-		#subSection;
-		setSection(section) {
-			this.#section = section;
-			return this;
-		}
-		setSubSection(subSection) {
-			this.#subSection = subSection;
-			return this;
-		}
-		buildData() {
-			return filterOutNilValues({
-				tool: Dictionary.TOOL_CRM,
-				category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
-				event: Dictionary.EVENT_VIEW,
-				c_section: this.#section,
-				c_sub_section: this.#subSection,
-				p1: getCrmMode()
 			});
 		}
 	};
@@ -1944,12 +1810,8 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				InviteEvent: InviteEvent
 			},
 			Editor: {
-				ViewEvent: ViewEvent$4,
-				InteractionEvent: InteractionEvent,
-				CopilotEvent: CopilotEvent,
 				SendEvent: SendEvent$1,
-				ResendEvent: ResendEvent,
-				CancelEvent: CancelEvent$2
+				ResendEvent: ResendEvent
 			}
 		},
 		RepeatSale: {

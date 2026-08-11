@@ -1,4 +1,5 @@
 <?php
+$MESS["BIZPROC_SRA_EMPTY_FILTER_FIELDS"] = "The \"Field filter\" must not be empty.";
 $MESS["BIZPROC_SRA_EMPTY_RETURN_FIELDS"] = "At least one return field is required.";
 $MESS["BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE"] = "Storage not selected, or storage symbolic code not specified.";
 $MESS["BIZPROC_SRA_FIELD_RECORD_CODE"] = "Symbolic code";

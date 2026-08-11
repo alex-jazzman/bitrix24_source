@@ -1,5 +1,6 @@
 import { Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { NoteAnalytics } from 'note.analytics';
 import {
 	ALL_USERS_SUBJECT_CODE,
 	LEVEL_EDIT,
@@ -122,6 +123,25 @@ function flattenStateForDocument(state: PopupSaveState): Array<{ subjectCode: st
 	return permissions;
 }
 
+// Collection ACL popup only exposes MODERATE/MANAGE/VIEW sections, so byLevel[EDIT] stays empty
+// for collections (backend collection levels: NONE/VIEW/MANAGE/MODERATE). EDIT is folded into
+// reductorsCount as a no-loss safeguard. Counts include the ALL_USERS policy subject as-is.
+function buildCollectionCreateStats(state: PopupSaveState): Object
+{
+	const byLevel = state?.byLevel || {};
+	const countAt = (level: PermissionLevel): number => (
+		Array.isArray(byLevel[level]) ? byLevel[level].length : 0
+	);
+
+	// Web-created collection is never an import, so no importType/import counters are sent.
+	return {
+		admin: countAt(LEVEL_MODERATE),
+		reductorsCount: countAt(LEVEL_MANAGE) + countAt(LEVEL_EDIT),
+		viewersCount: countAt(LEVEL_VIEW),
+		customCount: 0,
+	};
+}
+
 export function createCollectionEditConfig(
 	api: PermissionsApi,
 	collectionId: number,
@@ -143,21 +163,31 @@ export function createCollectionEditConfig(
 		tagSelectorContext: `NOTE_COLLECTION_PERMISSIONS_${collectionId}`,
 		load: () => api.loadCollectionPermissions(collectionId),
 		save: async (state: PopupSaveState) => {
-			const trimmedName = String(state.name || '').trim();
-			const renamed = trimmedName && trimmedName !== initialName.trim();
-			if (renamed)
+			try
 			{
-				await api.updateCollection(collectionId, trimmedName);
+				const trimmedName = String(state.name || '').trim();
+				const renamed = trimmedName && trimmedName !== initialName.trim();
+				if (renamed)
+				{
+					await api.updateCollection(collectionId, trimmedName);
+				}
+
+				const { policyLevel, permissions } = flattenStateForCollection(state);
+				await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
+
+				if (renamed)
+				{
+					EventEmitter.emit(EVENT_COLLECTION_RENAMED, new BaseEvent({
+						data: { id: collectionId, name: trimmedName },
+					}));
+				}
+
+				NoteAnalytics.collectionAccessChanged(true);
 			}
-
-			const { policyLevel, permissions } = flattenStateForCollection(state);
-			await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
-
-			if (renamed)
+			catch (error)
 			{
-				EventEmitter.emit(EVENT_COLLECTION_RENAMED, new BaseEvent({
-					data: { id: collectionId, name: trimmedName },
-				}));
+				NoteAnalytics.collectionAccessChanged(false);
+				throw error;
 			}
 		},
 		successMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS'),
@@ -195,42 +225,55 @@ export function createCollectionCreateConfig(
 			return Promise.resolve({ permissions, policyLevel: LEVEL_NONE });
 		},
 		save: async (state: PopupSaveState) => {
-			const trimmedName = String(state.name || '').trim();
-			const collection = await api.createCollection(trimmedName);
-			const collectionId = Number(collection?.id || 0);
-			if (!collectionId)
-			{
-				throw new Error('note.permissions: collection create returned no id');
-			}
-
-			const { policyLevel, permissions } = flattenStateForCollection(state);
+			// Single create_collection event by the outcome of both hits (create + save perms).
+			// Backend does not emit create_collection for web (removed in P3), so no double-count.
+			const stats = buildCollectionCreateStats(state);
 			try
 			{
-				await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
-			}
-			catch (savePermissionsError)
-			{
+				const trimmedName = String(state.name || '').trim();
+				const collection = await api.createCollection(trimmedName);
+				const collectionId = Number(collection?.id || 0);
+				if (!collectionId)
+				{
+					throw new Error('note.permissions: collection create returned no id');
+				}
+
+				const { policyLevel, permissions } = flattenStateForCollection(state);
 				try
 				{
-					await api.deleteCollection(collectionId);
+					await api.saveCollectionPermissions(collectionId, policyLevel, permissions);
 				}
-				catch (rollbackError)
+				catch (savePermissionsError)
 				{
-					// Surface a more specific error so popup can show an extra hint
-					rollbackError.noteRollbackFailed = true;
-					throw rollbackError;
+					try
+					{
+						await api.deleteCollection(collectionId);
+					}
+					catch (rollbackError)
+					{
+						// Surface a more specific error so popup can show an extra hint
+						rollbackError.noteRollbackFailed = true;
+						throw rollbackError;
+					}
+
+					throw savePermissionsError;
 				}
 
-				throw savePermissionsError;
-			}
+				NoteAnalytics.collectionCreated(stats, true);
 
-			if (typeof options.onCreated === 'function')
+				if (typeof options.onCreated === 'function')
+				{
+					options.onCreated({
+						id: collectionId,
+						name: String(collection?.name || trimmedName),
+						position: Number(collection?.position || 0),
+					});
+				}
+			}
+			catch (error)
 			{
-				options.onCreated({
-					id: collectionId,
-					name: String(collection?.name || trimmedName),
-					position: Number(collection?.position || 0),
-				});
+				NoteAnalytics.collectionCreated(stats, false);
+				throw error;
 			}
 		},
 		successMessage: getMessage('NOTE_PERMISSIONS_POPUP_CREATE_SUCCESS'),
@@ -261,7 +304,16 @@ export function createDocumentEditConfig(
 		load: () => api.loadDocumentPermissions(documentId),
 		save: async (state: PopupSaveState) => {
 			const permissions = flattenStateForDocument(state);
-			await api.saveDocumentPermissions(documentId, permissions);
+			try
+			{
+				await api.saveDocumentPermissions(documentId, permissions);
+				NoteAnalytics.documentAccessChanged(true);
+			}
+			catch (error)
+			{
+				NoteAnalytics.documentAccessChanged(false);
+				throw error;
+			}
 		},
 		successMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS_DOCUMENT'),
 		errorMessage: getMessage('NOTE_PERMISSIONS_POPUP_SAVE_ERROR_DOCUMENT'),

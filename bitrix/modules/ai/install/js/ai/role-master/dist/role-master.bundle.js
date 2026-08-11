@@ -1,37 +1,36 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue3_components_hint,ui_alerts,ui_layoutForm,ui_uploader_core,ui_notification,main_core_events,ui_entitySelector,main_loader,ui_iconSet_main,ui_buttons,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_actions,ui_vue3,main_core,main_popup) {
+(function (exports, main_core, main_core_events, ui_vue3, ui_vue3_components_hint, ui_alerts, ui_buttons, ui_layoutForm, ui_uploader_core, ui_iconSet_api_vue, ui_notification, ui_iconSet_main, ui_iconSet_actions, main_popup, ui_entitySelector, main_loader, ui_iconSet_api_core) {
 	'use strict';
 
 	const RoleMasterEditor = {
-	  props: {
-	    text: String,
-	    maxTextLength: Number,
-	    minTextLength: {
-	      type: Number,
-	      required: false,
-	      default: 5
-	    },
-	    placeholder: String
-	  },
-	  emits: ['update:text'],
-	  computed: {
-	    textLength() {
-	      var _this$text;
-	      return ((_this$text = this.text) == null ? void 0 : _this$text.length) || 0;
-	    }
-	  },
-	  methods: {
-	    handleInput(e) {
-	      this.$emit('update:text', e.target.value);
-	    }
-	  },
-	  mounted() {
-	    requestAnimationFrame(() => {
-	      this.$refs.textField.focus();
-	    });
-	  },
-	  template: `
+		props: {
+			text: String,
+			maxTextLength: Number,
+			minTextLength: {
+				type: Number,
+				required: false,
+				default: 5
+			},
+			placeholder: String
+		},
+		emits: ['update:text'],
+		computed: {
+			textLength() {
+				return this.text?.length || 0;
+			}
+		},
+		methods: {
+			handleInput(e) {
+				this.$emit('update:text', e.target.value);
+			}
+		},
+		mounted() {
+			requestAnimationFrame(() => {
+				this.$refs.textField.focus();
+			});
+		},
+		template: `
 		<div class="ai__role-master_editor ui-ctl-textarea">
 			<textarea
 				ref="textField"
@@ -50,23 +49,23 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterProgress = {
-	  props: {
-	    current: Number
-	  },
-	  computed: {
-	    total() {
-	      return 2;
-	    }
-	  },
-	  methods: {
-	    getProgressStepClassname(isActive) {
-	      return {
-	        'ai__role-master_progress-step': true,
-	        '--active': isActive
-	      };
-	    }
-	  },
-	  template: `
+		props: {
+			current: Number
+		},
+		computed: {
+			total() {
+				return 2;
+			}
+		},
+		methods: {
+			getProgressStepClassname(isActive) {
+				return {
+					'ai__role-master_progress-step': true,
+					'--active': isActive
+				};
+			}
+		},
+		template: `
 		<div class="ai__role-master_progress">
 			<span
 				v-for="index in total"
@@ -78,43 +77,43 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterWarning = {
-	  props: {
-	    text: String
-	  },
-	  computed: {
-	    alertHtmlString() {
-	      const alert = new ui_alerts.Alert({
-	        inline: true,
-	        text: this.text,
-	        color: ui_alerts.Alert.Color.WARNING,
-	        animated: false,
-	        icon: ui_alerts.Alert.Icon.INFO,
-	        size: ui_alerts.Alert.Size.XS,
-	        closeBtn: false
-	      });
-	      alert.show();
-	      return alert.render().outerHTML;
-	    }
-	  },
-	  template: `
+		props: {
+			text: String
+		},
+		computed: {
+			alertHtmlString() {
+				const alert = new ui_alerts.Alert({
+					inline: true,
+					text: this.text,
+					color: ui_alerts.Alert.Color.WARNING,
+					animated: false,
+					icon: ui_alerts.Alert.Icon.INFO,
+					size: ui_alerts.Alert.Size.XS,
+					closeBtn: false
+				});
+				alert.show();
+				return alert.render().outerHTML;
+			}
+		},
+		template: `
 		<div v-html="alertHtmlString"></div>
 	`
 	};
 
 	const RoleMasterStep = {
-	  name: 'RoleMasterStep',
-	  components: {
-	    RoleMasterProgress,
-	    RoleMasterWarning,
-	    Hint: ui_vue3_components_hint.Hint
-	  },
-	  props: {
-	    title: String,
-	    titleHint: String,
-	    stepNumber: Number,
-	    warningText: String
-	  },
-	  template: `
+		name: 'RoleMasterStep',
+		components: {
+			RoleMasterProgress,
+			RoleMasterWarning,
+			Hint: ui_vue3_components_hint.Hint
+		},
+		props: {
+			title: String,
+			titleHint: String,
+			stepNumber: Number,
+			warningText: String
+		},
+		template: `
 		<div class="ai__role-master_step">
 			<div class="ai__role-master_step-header">
 				<div class="ai__role-master_step-title-with-hint">
@@ -140,23 +139,23 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterTextStep = {
-	  props: {
-	    roleText: String,
-	    stepNumber: Number,
-	    maxTextLength: Number,
-	    minTextLength: Number,
-	    warningText: String
-	  },
-	  components: {
-	    RoleMasterStep,
-	    RoleMasterEditor
-	  },
-	  methods: {
-	    handleRoleTextUpdate(value) {
-	      this.$emit('update:role-text', value);
-	    }
-	  },
-	  template: `
+		props: {
+			roleText: String,
+			stepNumber: Number,
+			maxTextLength: Number,
+			minTextLength: Number,
+			warningText: String
+		},
+		components: {
+			RoleMasterStep,
+			RoleMasterEditor
+		},
+		methods: {
+			handleRoleTextUpdate(value) {
+				this.$emit('update:role-text', value);
+			}
+		},
+		template: `
 		<RoleMasterStep
 			:title="$Bitrix.Loc.getMessage('ROLE_MASTER_ROLE_TEXT_STEP_TITLE')"
 			:title-hint="$Bitrix.Loc.getMessage('ROLE_MASTER_ROLE_TEXT_STEP_TITLE_HINT')"
@@ -177,143 +176,143 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterBtn = {
-	  props: {
-	    text: String,
-	    state: {
-	      type: String,
-	      required: false,
-	      default: null
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: ui_buttons.Button.Color.AI
-	    }
-	  },
-	  computed: {
-	    buttonOuterHtmlString() {
-	      const button = new ui_buttons.Button({
-	        text: this.text,
-	        state: this.state,
-	        color: this.color,
-	        round: true
-	      });
-	      return button.render().outerHTML;
-	    },
-	    ButtonState() {
-	      return ui_buttons.ButtonState;
-	    }
-	  },
-	  methods: {
-	    handleClick(e) {
-	      if (this.state === ui_buttons.ButtonState.DISABLED) {
-	        e.preventDefault();
-	        e.stopImmediatePropagation();
-	        return false;
-	      }
-	      return true;
-	    }
-	  },
-	  template: '<div @click="handleClick" v-html="buttonOuterHtmlString"></div>'
+		props: {
+			text: String,
+			state: {
+				type: String,
+				required: false,
+				default: null
+			},
+			color: {
+				type: String,
+				required: false,
+				default: ui_buttons.Button.Color.AI
+			}
+		},
+		computed: {
+			buttonOuterHtmlString() {
+				const button = new ui_buttons.Button({
+					text: this.text,
+					state: this.state,
+					color: this.color,
+					round: true
+				});
+				return button.render().outerHTML;
+			},
+			ButtonState() {
+				return ui_buttons.ButtonState;
+			}
+		},
+		methods: {
+			handleClick(e) {
+				if (this.state === ui_buttons.ButtonState.DISABLED) {
+					e.preventDefault();
+					e.stopImmediatePropagation();
+					return false;
+				}
+				return true;
+			}
+		},
+		template: '<div @click="handleClick" v-html="buttonOuterHtmlString"></div>'
 	};
 
 	const RoleMasterAvatarUploader = {
-	  name: 'RoleMasterAvatarUploader',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    avatarUrl: ''
-	  },
-	  emits: ['uploadAvatarFile', 'removeAvatarFile', 'selectAvatar', 'generateAvatar'],
-	  data() {
-	    return {
-	      uploader: null,
-	      isDraggingFile: false
-	    };
-	  },
-	  computed: {
-	    avatarUploaderStyle() {
-	      return {
-	        backgroundImage: this.avatarUrl ? `url(${this.avatarUrl})` : null
-	      };
-	    },
-	    IconSet() {
-	      return ui_iconSet_api_vue.Set;
-	    }
-	  },
-	  methods: {
-	    handleDragElementEnterDocument() {
-	      this.isDraggingFile = true;
-	    },
-	    handleDragElementLeaveDocument(event) {
-	      if (event.relatedTarget === null) {
-	        this.isDraggingFile = false;
-	      }
-	    },
-	    handleDropFile() {
-	      this.isDraggingFile = false;
-	    },
-	    handleDragOverFile(event) {
-	      event.preventDefault();
-	    },
-	    showNotification(message) {
-	      const id = String(Math.random() * 1000);
-	      ui_notification.UI.Notification.Center.notify({
-	        id,
-	        content: message
-	      });
-	    },
-	    removeUploadedFile() {
-	      const files = this.uploader.getFiles();
-	      if (files.length > 0) {
-	        ui_vue3.toRaw(this.uploader).removeFiles();
-	        this.$emit('removeAvatarFile');
-	      }
-	      this.$refs.uploaderContainer.click();
-	    }
-	  },
-	  mounted() {
-	    this.uploader = new ui_uploader_core.Uploader({
-	      dropElement: this.$refs.dropArea,
-	      browseElement: this.$refs.uploaderContainer,
-	      assignServerFile: false,
-	      allowReplaceSingle: true,
-	      assignAsFile: true,
-	      acceptOnlyImages: true,
-	      acceptedFileTypes: ['image/jpeg', 'image/png'],
-	      maxFileSize: 1048076,
-	      multiple: false,
-	      events: {
-	        [ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
-	          this.uploadedFile = event.getData().file;
-	          this.$emit('uploadAvatarFile', event.getData().file);
-	          this.$refs.uploaderContainer.blur();
-	        },
-	        [ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
-	          const error = event.getData().error;
-	          this.showNotification(error.getMessage());
-	          this.$refs.uploaderContainer.blur();
-	        },
-	        [ui_uploader_core.UploaderEvent.FILE_REMOVE]: () => {
-	          // TODO don't work this event
-	          this.$emit('removeAvatarFile');
-	          this.$refs.uploaderContainer.blur();
-	        }
-	      }
-	    });
-	    main_core.bind(document, 'dragenter', this.handleDragElementEnterDocument);
-	    main_core.bind(document, 'dragleave', this.handleDragElementLeaveDocument);
-	    main_core.bind(document, 'drop', this.handleDropFile);
-	    main_core.bind(document, 'dragover', this.handleDragOverFile);
-	  },
-	  unmounted() {
-	    main_core.unbind(document, 'dragenter', this.handleDragElementEnterDocument);
-	    main_core.unbind(document, 'dragleave', this.handleDragElementLeaveDocument);
-	    main_core.unbind(document, 'drop', this.handleDropFile);
-	    main_core.unbind(document, 'dragover', this.handleDragOverFile);
-	  },
-	  template: `
+		name: 'RoleMasterAvatarUploader',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			avatarUrl: ''
+		},
+		emits: ['uploadAvatarFile', 'removeAvatarFile', 'selectAvatar', 'generateAvatar'],
+		data() {
+			return {
+				uploader: null,
+				isDraggingFile: false
+			};
+		},
+		computed: {
+			avatarUploaderStyle() {
+				return {
+					backgroundImage: this.avatarUrl ? `url(${this.avatarUrl})` : null
+				};
+			},
+			IconSet() {
+				return ui_iconSet_api_vue.Set;
+			}
+		},
+		methods: {
+			handleDragElementEnterDocument() {
+				this.isDraggingFile = true;
+			},
+			handleDragElementLeaveDocument(event) {
+				if (event.relatedTarget === null) {
+					this.isDraggingFile = false;
+				}
+			},
+			handleDropFile() {
+				this.isDraggingFile = false;
+			},
+			handleDragOverFile(event) {
+				event.preventDefault();
+			},
+			showNotification(message) {
+				const id = String(Math.random() * 1000);
+				ui_notification.UI.Notification.Center.notify({
+					id,
+					content: message
+				});
+			},
+			removeUploadedFile() {
+				const files = this.uploader.getFiles();
+				if (files.length > 0) {
+					ui_vue3.toRaw(this.uploader).removeFiles();
+					this.$emit('removeAvatarFile');
+				}
+				this.$refs.uploaderContainer.click();
+			}
+		},
+		mounted() {
+			this.uploader = new ui_uploader_core.Uploader({
+				dropElement: this.$refs.dropArea,
+				browseElement: this.$refs.uploaderContainer,
+				assignServerFile: false,
+				allowReplaceSingle: true,
+				assignAsFile: true,
+				acceptOnlyImages: true,
+				acceptedFileTypes: ['image/jpeg', 'image/png'],
+				maxFileSize: 1_048_076,
+				multiple: false,
+				events: {
+					[ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
+						this.uploadedFile = event.getData().file;
+						this.$emit('uploadAvatarFile', event.getData().file);
+						this.$refs.uploaderContainer.blur();
+					},
+					[ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
+						const error = event.getData().error;
+						this.showNotification(error.getMessage());
+						this.$refs.uploaderContainer.blur();
+					},
+					[ui_uploader_core.UploaderEvent.FILE_REMOVE]: () => {
+						// TODO don't work this event
+						this.$emit('removeAvatarFile');
+						this.$refs.uploaderContainer.blur();
+					}
+				}
+			});
+			main_core.bind(document, 'dragenter', this.handleDragElementEnterDocument);
+			main_core.bind(document, 'dragleave', this.handleDragElementLeaveDocument);
+			main_core.bind(document, 'drop', this.handleDropFile);
+			main_core.bind(document, 'dragover', this.handleDragOverFile);
+		},
+		unmounted() {
+			main_core.unbind(document, 'dragenter', this.handleDragElementEnterDocument);
+			main_core.unbind(document, 'dragleave', this.handleDragElementLeaveDocument);
+			main_core.unbind(document, 'drop', this.handleDropFile);
+			main_core.unbind(document, 'dragover', this.handleDragOverFile);
+		},
+		template: `
 		<div
 			class="ai__role-master_avatar-uploader-wrapper"
 			:style="avatarUploaderStyle"
@@ -377,289 +376,286 @@ this.BX = this.BX || {};
 	};
 
 	const clickableHint = {
-	  beforeMount(bindElement, bindings) {
-	    let popup = null;
-	    let isMouseOnHintPopup = false;
-	    const destroyPopup = () => {
-	      var _popup;
-	      (_popup = popup) == null ? void 0 : _popup.destroy();
-	      popup = null;
-	      isMouseOnHintPopup = false;
-	    };
-	    main_core.Event.bind(bindElement, 'mouseenter', () => {
-	      if (popup === null) {
-	        popup = createHintPopup(bindElement, bindings.value);
-	        popup.show();
-	        main_core.Event.bind(popup.getPopupContainer(), 'mouseenter', () => {
-	          isMouseOnHintPopup = true;
-	        });
-	      }
-	    });
-	    main_core.Event.bind(bindElement, 'mouseleave', () => {
-	      var _popup2;
-	      const popupContainer = (_popup2 = popup) == null ? void 0 : _popup2.getPopupContainer();
-	      setTimeout(() => {
-	        if (isMouseOnHintPopup) {
-	          main_core.bind(popupContainer, 'mouseleave', e => {
-	            if (bindElement.contains(e.relatedTarget) === false) {
-	              destroyPopup();
-	            }
-	          });
-	        } else {
-	          destroyPopup();
-	        }
-	      }, 100);
-	    });
-	  }
+		beforeMount(bindElement, bindings) {
+			let popup = null;
+			let isMouseOnHintPopup = false;
+			const destroyPopup = () => {
+				popup?.destroy();
+				popup = null;
+				isMouseOnHintPopup = false;
+			};
+			main_core.Event.bind(bindElement, 'mouseenter', () => {
+				if (popup === null) {
+					popup = createHintPopup(bindElement, bindings.value);
+					popup.show();
+					main_core.Event.bind(popup.getPopupContainer(), 'mouseenter', () => {
+						isMouseOnHintPopup = true;
+					});
+				}
+			});
+			main_core.Event.bind(bindElement, 'mouseleave', () => {
+				const popupContainer = popup?.getPopupContainer();
+				setTimeout(() => {
+					if (isMouseOnHintPopup) {
+						main_core.bind(popupContainer, 'mouseleave', e => {
+							if (bindElement.contains(e.relatedTarget) === false) {
+								destroyPopup();
+							}
+						});
+					} else {
+						destroyPopup();
+					}
+				}, 100);
+			});
+		}
 	};
 	function createHintPopup(bindElement, html) {
-	  const bindElementPosition = main_core.Dom.getPosition(bindElement);
-	  return new main_popup.Popup({
-	    bindElement: {
-	      top: bindElementPosition.top + 10,
-	      left: bindElementPosition.left + bindElementPosition.width / 2
-	    },
-	    className: 'ai__role-master_hint-popup',
-	    darkMode: true,
-	    content: html,
-	    maxWidth: 266,
-	    maxHeight: 300,
-	    animation: 'fading-slide',
-	    angle: true,
-	    bindOptions: {
-	      position: 'top'
-	    }
-	  });
+		const bindElementPosition = main_core.Dom.getPosition(bindElement);
+		return new main_popup.Popup({
+			bindElement: {
+				top: bindElementPosition.top + 10,
+				left: bindElementPosition.left + bindElementPosition.width / 2
+			},
+			className: 'ai__role-master_hint-popup',
+			darkMode: true,
+			content: html,
+			maxWidth: 266,
+			maxHeight: 300,
+			animation: 'fading-slide',
+			angle: true,
+			bindOptions: {
+				position: 'top'
+			}
+		});
 	}
 
 	const RoleMasterUserSelector = {
-	  directives: {
-	    clickableHint
-	  },
-	  events: ['update:selected-items'],
-	  props: {
-	    selectedItems: {
-	      type: Array,
-	      required: false,
-	      default: () => {
-	        return [];
-	      }
-	    },
-	    maxCirclesInInput: {
-	      type: Number,
-	      required: false,
-	      default: 8
-	    },
-	    undeselectedItems: {
-	      type: Array,
-	      required: false,
-	      default: () => {
-	        return [];
-	      }
-	    }
-	  },
-	  data() {
-	    return {
-	      etcItemHint: null,
-	      cursorOnEtcItem: false,
-	      selectedItemsWithData: [],
-	      dataIsLoaded: false
-	    };
-	  },
-	  computed: {
-	    preselectedItems() {
-	      return this.typedSelectedItems.map(item => {
-	        return item;
-	      });
-	    },
-	    typedSelectedItems() {
-	      return this.selectedItems;
-	    },
-	    etcItemHintContent() {
-	      const titles = this.selectedItemsWithData.slice(this.maxCirclesInInput).map(item => this.getEncodedString(item.title));
-	      const titlesText = titles.join('<br>');
-	      return `<div>${titlesText}</div>`;
-	    },
-	    etcSelectedItemsCount() {
-	      return this.selectedItems.slice(this.maxCirclesInInput).length;
-	    },
-	    etcSelectedItemsCircleNumber() {
-	      return this.etcSelectedItemsCount < 100 ? this.etcSelectedItemsCount : 99;
-	    }
-	  },
-	  methods: {
-	    updateSelectedItemsWithData() {
-	      const selectedItems = this.getUserSelectorDialog().getSelectedItems();
-	      if (selectedItems.length === this.selectedItemsWithData.length) {
-	        return;
-	      }
-	      this.selectedItemsWithData = selectedItems.map(item => {
-	        return this.getSelectedItemsWithDataFromDialogItem(item);
-	      });
-	    },
-	    getSelectedItemsWithDataFromDialogItem(item) {
-	      return {
-	        id: item.id,
-	        avatar: item.avatar,
-	        entityId: item.entityId,
-	        title: item.title.text
-	      };
-	    },
-	    getUserSelectorDialog() {
-	      const existingDialog = ui_entitySelector.Dialog.getById('ai-role-master-user-selector');
-	      if (existingDialog) {
-	        existingDialog.setTargetNode(this.$refs.userSelector);
-	        return existingDialog;
-	      }
-	      return new ui_entitySelector.Dialog({
-	        id: 'ai-role-master-user-selector',
-	        targetNode: this.$refs.userSelector,
-	        width: 400,
-	        height: 300,
-	        dropdownMode: false,
-	        showAvatars: true,
-	        compactView: true,
-	        multiple: true,
-	        preload: true,
-	        enableSearch: true,
-	        entities: [{
-	          id: 'user',
-	          options: {
-	            inviteEmployeeLink: false
-	          }
-	        }, {
-	          id: 'department',
-	          options: {
-	            selectMode: 'usersAndDepartments'
-	          }
-	        }, {
-	          id: 'meta-user',
-	          options: {
-	            'all-users': true
-	          }
-	        }, {
-	          id: 'project'
-	        }],
-	        preselectedItems: this.preselectedItems,
-	        undeselectedItems: this.undeselectedItems,
-	        events: {
-	          'Item:onSelect': event => {
-	            this.selectItem(event.getData().item);
-	          },
-	          'Item:onDeselect': event => {
-	            this.deselectItem(event.getData().item);
-	          },
-	          onLoad: () => {
-	            this.dataIsLoaded = true;
-	            this.updateSelectedItemsWithData();
-	          },
-	          onHide: () => {
-	            this.$refs.addBtn.focus();
-	          }
-	        }
-	      });
-	    },
-	    showUserSelector() {
-	      const dialog = this.getUserSelectorDialog();
-	      dialog.show();
-	    },
-	    selectItem(item) {
-	      this.$emit('update:selected-items', this.getDialogSelectedItems());
-	    },
-	    deselectItem(item) {
-	      this.$emit('update:selected-items', this.getDialogSelectedItems());
-	    },
-	    getDialogSelectedItems() {
-	      return this.getUserSelectorDialog().getSelectedItems().map(item => {
-	        return [item.entityId, item.getId()];
-	      });
-	    },
-	    getSelectedItemStyle(item, index) {
-	      const backgroundImage = `url('${this.getAvatarFromItem(item)}')`;
-	      return {
-	        backgroundImage,
-	        left: `${index > 0 ? 24 * index : 0}px`
-	      };
-	    },
-	    getAvatarFromItem(item) {
-	      if (item.avatar) {
-	        return item.avatar;
-	      }
-	      if (item.entityId === 'user') {
-	        return '/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg';
-	      }
-	      if (item.entityId === 'meta-user') {
-	        return '/bitrix/js/socialnetwork/entity-selector/src/images/meta-user-all.svg';
-	      }
-	      return '';
-	    },
-	    getDepartmentFirstLetter(title) {
-	      return title.split(' ')[0][0].toUpperCase();
-	    },
-	    showEtcItemsHint() {
-	      this.cursorOnEtcItem = true;
-	      if (this.etcItemHint) {
-	        return;
-	      }
-	      this.etcItemHint = new main_popup.Popup({
-	        bindElement: this.$refs.etcItem,
-	        darkMode: true,
-	        content: this.etcItemHintContent,
-	        autoHide: true,
-	        maxHeight: 300,
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        animation: 'fading-slide',
-	        angle: true
-	      });
-	      this.etcItemHint.setOffset({
-	        offsetTop: -10,
-	        offsetLeft: 16
-	      });
-	      this.etcItemHint.show();
-	    },
-	    closeEtcItemsHint() {
-	      this.cursorOnEtcItem = false;
-	      setTimeout(() => {
-	        const hoveredItems = document.querySelectorAll(':hover');
-	        const lastHoveredItem = hoveredItems[hoveredItems.length - 1];
-	        const popupContainer = this.etcItemHint.getPopupContainer();
-	        const isHintPopupUnderCursor = popupContainer.contains(lastHoveredItem);
-	        if (isHintPopupUnderCursor === false) {
-	          this.destroyEtcItemsHint();
-	          return;
-	        }
-	        main_core.bind(popupContainer, 'mouseleave', () => {
-	          setTimeout(() => {
-	            if (this.cursorOnEtcItem === false) {
-	              this.destroyEtcItemsHint();
-	            }
-	          }, 100);
-	        });
-	      }, 100);
-	    },
-	    destroyEtcItemsHint() {
-	      var _this$etcItemHint;
-	      (_this$etcItemHint = this.etcItemHint) == null ? void 0 : _this$etcItemHint.destroy();
-	      this.etcItemHint = null;
-	    },
-	    getEncodedString(str) {
-	      return main_core.Text.encode(str);
-	    }
-	  },
-	  watch: {
-	    'selectedItems.length': function () {
-	      this.updateSelectedItemsWithData();
-	    }
-	  },
-	  mounted() {
-	    this.updateSelectedItemsWithData();
-	  },
-	  unmounted() {
-	    this.getUserSelectorDialog().destroy();
-	  },
-	  template: `
+		directives: {
+			clickableHint
+		},
+		events: ['update:selected-items'],
+		props: {
+			selectedItems: {
+				type: Array,
+				required: false,
+				default: () => {
+					return [];
+				}
+			},
+			maxCirclesInInput: {
+				type: Number,
+				required: false,
+				default: 8
+			},
+			undeselectedItems: {
+				type: Array,
+				required: false,
+				default: () => {
+					return [];
+				}
+			}
+		},
+		data() {
+			return {
+				etcItemHint: null,
+				cursorOnEtcItem: false,
+				selectedItemsWithData: [],
+				dataIsLoaded: false
+			};
+		},
+		computed: {
+			preselectedItems() {
+				return this.typedSelectedItems.map(item => {
+					return item;
+				});
+			},
+			typedSelectedItems() {
+				return this.selectedItems;
+			},
+			etcItemHintContent() {
+				const titles = this.selectedItemsWithData.slice(this.maxCirclesInInput).map(item => this.getEncodedString(item.title));
+				const titlesText = titles.join('<br>');
+				return `<div>${titlesText}</div>`;
+			},
+			etcSelectedItemsCount() {
+				return this.selectedItems.slice(this.maxCirclesInInput).length;
+			},
+			etcSelectedItemsCircleNumber() {
+				return this.etcSelectedItemsCount < 100 ? this.etcSelectedItemsCount : 99;
+			}
+		},
+		methods: {
+			updateSelectedItemsWithData() {
+				const selectedItems = this.getUserSelectorDialog().getSelectedItems();
+				if (selectedItems.length === this.selectedItemsWithData.length) {
+					return;
+				}
+				this.selectedItemsWithData = selectedItems.map(item => {
+					return this.getSelectedItemsWithDataFromDialogItem(item);
+				});
+			},
+			getSelectedItemsWithDataFromDialogItem(item) {
+				return {
+					id: item.id,
+					avatar: item.avatar,
+					entityId: item.entityId,
+					title: item.title.text
+				};
+			},
+			getUserSelectorDialog() {
+				const existingDialog = ui_entitySelector.Dialog.getById('ai-role-master-user-selector');
+				if (existingDialog) {
+					existingDialog.setTargetNode(this.$refs.userSelector);
+					return existingDialog;
+				}
+				return new ui_entitySelector.Dialog({
+					id: 'ai-role-master-user-selector',
+					targetNode: this.$refs.userSelector,
+					width: 400,
+					height: 300,
+					dropdownMode: false,
+					showAvatars: true,
+					compactView: true,
+					multiple: true,
+					preload: true,
+					enableSearch: true,
+					entities: [{
+						id: 'user',
+						options: {
+							inviteEmployeeLink: false
+						}
+					}, {
+						id: 'department',
+						options: {
+							selectMode: 'usersAndDepartments'
+						}
+					}, {
+						id: 'meta-user',
+						options: {
+							'all-users': true
+						}
+					}, {
+						id: 'project'
+					}],
+					preselectedItems: this.preselectedItems,
+					undeselectedItems: this.undeselectedItems,
+					events: {
+						'Item:onSelect': event => {
+							this.selectItem(event.getData().item);
+						},
+						'Item:onDeselect': event => {
+							this.deselectItem(event.getData().item);
+						},
+						onLoad: () => {
+							this.dataIsLoaded = true;
+							this.updateSelectedItemsWithData();
+						},
+						onHide: () => {
+							this.$refs.addBtn.focus();
+						}
+					}
+				});
+			},
+			showUserSelector() {
+				const dialog = this.getUserSelectorDialog();
+				dialog.show();
+			},
+			selectItem(item) {
+				this.$emit('update:selected-items', this.getDialogSelectedItems());
+			},
+			deselectItem(item) {
+				this.$emit('update:selected-items', this.getDialogSelectedItems());
+			},
+			getDialogSelectedItems() {
+				return this.getUserSelectorDialog().getSelectedItems().map(item => {
+					return [item.entityId, item.getId()];
+				});
+			},
+			getSelectedItemStyle(item, index) {
+				const backgroundImage = `url('${this.getAvatarFromItem(item)}')`;
+				return {
+					backgroundImage,
+					left: `${index > 0 ? 24 * index : 0}px`
+				};
+			},
+			getAvatarFromItem(item) {
+				if (item.avatar) {
+					return item.avatar;
+				}
+				if (item.entityId === 'user') {
+					return '/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg';
+				}
+				if (item.entityId === 'meta-user') {
+					return '/bitrix/js/socialnetwork/entity-selector/src/images/meta-user-all.svg';
+				}
+				return '';
+			},
+			getDepartmentFirstLetter(title) {
+				return title.split(' ')[0][0].toUpperCase();
+			},
+			showEtcItemsHint() {
+				this.cursorOnEtcItem = true;
+				if (this.etcItemHint) {
+					return;
+				}
+				this.etcItemHint = new main_popup.Popup({
+					bindElement: this.$refs.etcItem,
+					darkMode: true,
+					content: this.etcItemHintContent,
+					autoHide: true,
+					maxHeight: 300,
+					bindOptions: {
+						position: 'top'
+					},
+					animation: 'fading-slide',
+					angle: true
+				});
+				this.etcItemHint.setOffset({
+					offsetTop: -10,
+					offsetLeft: 16
+				});
+				this.etcItemHint.show();
+			},
+			closeEtcItemsHint() {
+				this.cursorOnEtcItem = false;
+				setTimeout(() => {
+					const hoveredItems = document.querySelectorAll(':hover');
+					const lastHoveredItem = hoveredItems[hoveredItems.length - 1];
+					const popupContainer = this.etcItemHint.getPopupContainer();
+					const isHintPopupUnderCursor = popupContainer.contains(lastHoveredItem);
+					if (isHintPopupUnderCursor === false) {
+						this.destroyEtcItemsHint();
+						return;
+					}
+					main_core.bind(popupContainer, 'mouseleave', () => {
+						setTimeout(() => {
+							if (this.cursorOnEtcItem === false) {
+								this.destroyEtcItemsHint();
+							}
+						}, 100);
+					});
+				}, 100);
+			},
+			destroyEtcItemsHint() {
+				this.etcItemHint?.destroy();
+				this.etcItemHint = null;
+			},
+			getEncodedString(str) {
+				return main_core.Text.encode(str);
+			}
+		},
+		watch: {
+			'selectedItems.length': function () {
+				this.updateSelectedItemsWithData();
+			}
+		},
+		mounted() {
+			this.updateSelectedItemsWithData();
+		},
+		unmounted() {
+			this.getUserSelectorDialog().destroy();
+		},
+		template: `
 		<div class="ai__role-master_user-selector">
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 				<div
@@ -733,50 +729,50 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterMainStep = {
-	  components: {
-	    RoleMasterStep,
-	    RoleMasterUserSelector,
-	    RoleMasterAvatarUploader,
-	    RoleMasterEditor
-	  },
-	  emits: ['uploadAvatarFile', 'removeAvatarFile', 'update:name', 'update:description', 'update:items-with-access'],
-	  props: {
-	    stepNumber: Number,
-	    avatar: String,
-	    name: String,
-	    description: String,
-	    itemsWithAccess: {
-	      type: Array,
-	      required: false,
-	      default: () => {
-	        return [];
-	      }
-	    },
-	    undeselectedItemsWithAccess: {
-	      type: Array,
-	      required: false,
-	      default: () => {
-	        return [];
-	      }
-	    }
-	  },
-	  methods: {
-	    handleAvatarFileUpload(file) {
-	      this.$emit('uploadAvatarFile', file);
-	    },
-	    handleAvatarFileRemove() {
-	      this.$emit('removeAvatarFile');
-	    },
-	    handleAvatarFileLoad(file) {
-	      this.$emit('loadAvatarFile', file);
-	    }
-	  },
-	  mounted() {
-	    requestAnimationFrame(() => {
-	      this.$refs.roleNameInput.focus();
-	    });
-	  },
-	  template: `
+		components: {
+			RoleMasterStep,
+			RoleMasterUserSelector,
+			RoleMasterAvatarUploader,
+			RoleMasterEditor
+		},
+		emits: ['uploadAvatarFile', 'removeAvatarFile', 'update:name', 'update:description', 'update:items-with-access'],
+		props: {
+			stepNumber: Number,
+			avatar: String,
+			name: String,
+			description: String,
+			itemsWithAccess: {
+				type: Array,
+				required: false,
+				default: () => {
+					return [];
+				}
+			},
+			undeselectedItemsWithAccess: {
+				type: Array,
+				required: false,
+				default: () => {
+					return [];
+				}
+			}
+		},
+		methods: {
+			handleAvatarFileUpload(file) {
+				this.$emit('uploadAvatarFile', file);
+			},
+			handleAvatarFileRemove() {
+				this.$emit('removeAvatarFile');
+			},
+			handleAvatarFileLoad(file) {
+				this.$emit('loadAvatarFile', file);
+			}
+		},
+		mounted() {
+			requestAnimationFrame(() => {
+				this.$refs.roleNameInput.focus();
+			});
+		},
+		template: `
 		<RoleMasterStep
 			:title="$Bitrix.Loc.getMessage('ROLE_MASTER_ROLE_MAIN_STEP_TITLE')"
 			:step-number="stepNumber"
@@ -857,47 +853,46 @@ this.BX = this.BX || {};
 	};
 
 	const RoleMasterSavingStatus = {
-	  props: {
-	    status: String
-	  },
-	  emits: ['repeat-request', 'back-to-editor', 'close-master'],
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    RoleMasterBtn
-	  },
-	  computed: {
-	    savingStatus() {
-	      return RoleSavingStatus;
-	    },
-	    IconSet() {
-	      return ui_iconSet_api_vue.Set;
-	    },
-	    ButtonColor() {
-	      return ui_buttons.ButtonColor;
-	    }
-	  },
-	  methods: {
-	    showLoader() {
-	      var _getComputedStyle$get;
-	      const loader = new main_loader.Loader({
-	        size: 80,
-	        color: (_getComputedStyle$get = getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary')) != null ? _getComputedStyle$get : '#8e52ec',
-	        strokeWidth: 4
-	      });
-	      loader.show(this.$refs.loaderContainer);
-	    }
-	  },
-	  mounted() {
-	    if (this.status === RoleSavingStatus.SAVING) {
-	      this.showLoader();
-	    }
-	  },
-	  updated() {
-	    if (this.status === RoleSavingStatus.SAVING) {
-	      this.showLoader();
-	    }
-	  },
-	  template: `
+		props: {
+			status: String
+		},
+		emits: ['repeat-request', 'back-to-editor', 'close-master'],
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			RoleMasterBtn
+		},
+		computed: {
+			savingStatus() {
+				return RoleSavingStatus;
+			},
+			IconSet() {
+				return ui_iconSet_api_vue.Set;
+			},
+			ButtonColor() {
+				return ui_buttons.ButtonColor;
+			}
+		},
+		methods: {
+			showLoader() {
+				const loader = new main_loader.Loader({
+					size: 80,
+					color: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary') ?? '#8e52ec',
+					strokeWidth: 4
+				});
+				loader.show(this.$refs.loaderContainer);
+			}
+		},
+		mounted() {
+			if (this.status === RoleSavingStatus.SAVING) {
+				this.showLoader();
+			}
+		},
+		updated() {
+			if (this.status === RoleSavingStatus.SAVING) {
+				this.showLoader();
+			}
+		},
+		template: `
 		<div class="ai__role-master_saving-status">
 			<div v-if="status === savingStatus.SAVING" class="ai__role-master_saving-loading">
 				<div ref="loaderContainer" class="ai__role-master_saving-loader"></div>
@@ -966,180 +961,179 @@ this.BX = this.BX || {};
 
 	const currentUserId = main_core.Extension.getSettings('ai.role-master').get('currentUserId');
 	const RoleSavingStatus = Object.freeze({
-	  NONE: 'none',
-	  SAVING: 'saving',
-	  SAVING_ERROR: 'saving-error',
-	  SAVING_SUCCESS: 'saving-success'
+		NONE: 'none',
+		SAVING: 'saving',
+		SAVING_ERROR: 'saving-error',
+		SAVING_SUCCESS: 'saving-success'
 	});
-	const RoleMaster = {
-	  name: 'RoleMaster',
-	  components: {
-	    RoleMasterTextStep,
-	    RoleMasterMainStep,
-	    RoleMasterSavingStatus,
-	    RoleMasterBtn,
-	    RoleMasterWarning,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    id: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    authorId: String,
-	    text: String,
-	    name: String,
-	    avatar: String,
-	    description: String,
-	    avatarUrl: String,
-	    itemsWithAccess: {
-	      type: Array,
-	      required: false,
-	      default: () => []
-	    }
-	  },
-	  data() {
-	    return {
-	      currentStepNumber: 1,
-	      roleText: this.text,
-	      roleName: this.name,
-	      roleAvatar: this.avatar,
-	      roleAvatarUrl: this.avatarUrl,
-	      roleDescription: this.description,
-	      roleItemsWithAccess: this.itemsWithAccess.length > 0 ? this.itemsWithAccess : [['user', currentUserId]],
-	      uploadedAvatarFile: null,
-	      roleSavingStatus: RoleSavingStatus.NONE
-	    };
-	  },
-	  computed: {
-	    isEditRoleMode() {
-	      return this.id;
-	    },
-	    maxTextLength() {
-	      return 2000;
-	    },
-	    minTextLength() {
-	      return 1;
-	    },
-	    isEditMode() {
-	      return false;
-	    },
-	    uploadedAvatarFilePreview() {
-	      var _this$uploadedAvatarF, _this$uploadedAvatarF2;
-	      return (_this$uploadedAvatarF = (_this$uploadedAvatarF2 = this.uploadedAvatarFile) == null ? void 0 : _this$uploadedAvatarF2.getPreviewUrl()) != null ? _this$uploadedAvatarF : null;
-	    },
-	    RoleSavingStatus() {
-	      return RoleSavingStatus;
-	    },
-	    ButtonState() {
-	      return ui_buttons.ButtonState;
-	    },
-	    isRoleTextValid() {
-	      return this.roleText.length >= this.minTextLength && this.roleText.length <= this.maxTextLength;
-	    },
-	    isRoleNameValid() {
-	      return this.roleName.length > 0 && this.roleName.length <= 70;
-	    },
-	    isRoleDescriptionValid() {
-	      return this.roleDescription.length > 0 && this.roleDescription.length <= 150;
-	    },
-	    isRoleDataValid() {
-	      return this.isRoleTextValid && this.isRoleNameValid && this.isRoleDescriptionValid && this.roleItemsWithAccess.length > 0;
-	    },
-	    nextStepBtnState() {
-	      return this.isRoleTextValid ? '' : this.ButtonState.DISABLED;
-	    },
-	    saveBtnState() {
-	      if (this.isRoleDataValid === false) {
-	        return ui_buttons.ButtonState.DISABLED;
-	      }
-	      if (this.roleSavingStatus === RoleSavingStatus.SAVING) {
-	        return ui_buttons.ButtonState.CLOCKING;
-	      }
-	      return '';
-	    },
-	    backIconProps() {
-	      return {
-	        size: 16,
-	        icon: ui_iconSet_api_core.Actions.CHEVRON_LEFT
-	      };
-	    },
-	    warningText() {
-	      return this.isEditRoleMode && this.itemsWithAccess.length > 1 ? this.$Bitrix.Loc.getMessage('ROLE_MASTER_EDIT_WARNING_TEXT') : '';
-	    },
-	    undeselectedItemsWithAccess() {
-	      if (this.isEditRoleMode) {
-	        return [['user', this.authorId]];
-	      }
-	      return [['user', currentUserId]];
-	    }
-	  },
-	  methods: {
-	    async saveRole() {
-	      const action = this.isEditRoleMode ? 'change' : 'create';
-	      let isLoadFinished = false;
-	      try {
-	        setTimeout(() => {
-	          if (isLoadFinished === false) {
-	            this.roleSavingStatus = RoleSavingStatus.SAVING;
-	          }
-	        }, 100);
-	        const roleAvatar = await this.getAvatarFile();
-	        const data = {
-	          roleText: this.roleText,
-	          roleTitle: this.roleName,
-	          roleAvatar,
-	          roleDescription: this.roleDescription,
-	          accessCodes: this.roleItemsWithAccess
-	        };
-	        if (action === 'change') {
-	          data.roleCode = this.id;
-	        }
-	        await main_core.ajax.runAction(`ai.shareRole.${action}`, {
-	          data: main_core.Http.Data.convertObjectToFormData(data)
-	        });
-	        this.roleSavingStatus = RoleSavingStatus.SAVING_SUCCESS;
-	        main_core_events.EventEmitter.emit('AI.RoleMasterApp:Save-success', data);
-	      } catch (e) {
-	        console.error(e);
-	        this.roleSavingStatus = RoleSavingStatus.SAVING_ERROR;
-	        main_core_events.EventEmitter.emit('AI.RoleMasterApp:Save-failed');
-	      } finally {
-	        isLoadFinished = true;
-	      }
-	    },
-	    async getAvatarFile() {
-	      if (!this.uploadedAvatarFile) {
-	        return null;
-	      }
-	      return this.uploadedAvatarFile.getBinary();
-	    },
-	    handleAvatarFileUpload(file) {
-	      this.uploadedAvatarFile = file;
-	    },
-	    handleAvatarFileRemove() {
-	      this.uploadedAvatarFile = null;
-	      this.roleAvatar = null;
-	    },
-	    handleAvatarFileLoad(file) {
-	      this.uploadedAvatarFile = ui_vue3.toRaw(file);
-	    },
-	    closeMaster() {
-	      main_core_events.EventEmitter.emit('AI.RoleMasterApp:Close');
-	    },
-	    backToEditor() {
-	      this.roleSavingStatus = RoleSavingStatus.NONE;
-	    },
-	    openHelpdeskSlider() {
-	      const articleCode = '23184474';
-	      const Helper = main_core.Reflection.getClass('top.BX.Helper');
-	      if (Helper) {
-	        Helper.show(`redirect=detail&code=${articleCode}`);
-	      }
-	    }
-	  },
-	  template: `
+	const RoleMaster$1 = {
+		name: 'RoleMaster',
+		components: {
+			RoleMasterTextStep,
+			RoleMasterMainStep,
+			RoleMasterSavingStatus,
+			RoleMasterBtn,
+			RoleMasterWarning,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			id: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			authorId: String,
+			text: String,
+			name: String,
+			avatar: String,
+			description: String,
+			avatarUrl: String,
+			itemsWithAccess: {
+				type: Array,
+				required: false,
+				default: () => []
+			}
+		},
+		data() {
+			return {
+				currentStepNumber: 1,
+				roleText: this.text,
+				roleName: this.name,
+				roleAvatar: this.avatar,
+				roleAvatarUrl: this.avatarUrl,
+				roleDescription: this.description,
+				roleItemsWithAccess: this.itemsWithAccess.length > 0 ? this.itemsWithAccess : [['user', currentUserId]],
+				uploadedAvatarFile: null,
+				roleSavingStatus: RoleSavingStatus.NONE
+			};
+		},
+		computed: {
+			isEditRoleMode() {
+				return this.id;
+			},
+			maxTextLength() {
+				return 2000;
+			},
+			minTextLength() {
+				return 1;
+			},
+			isEditMode() {
+				return false;
+			},
+			uploadedAvatarFilePreview() {
+				return this.uploadedAvatarFile?.getPreviewUrl() ?? null;
+			},
+			RoleSavingStatus() {
+				return RoleSavingStatus;
+			},
+			ButtonState() {
+				return ui_buttons.ButtonState;
+			},
+			isRoleTextValid() {
+				return this.roleText.length >= this.minTextLength && this.roleText.length <= this.maxTextLength;
+			},
+			isRoleNameValid() {
+				return this.roleName.length > 0 && this.roleName.length <= 70;
+			},
+			isRoleDescriptionValid() {
+				return this.roleDescription.length > 0 && this.roleDescription.length <= 150;
+			},
+			isRoleDataValid() {
+				return this.isRoleTextValid && this.isRoleNameValid && this.isRoleDescriptionValid && this.roleItemsWithAccess.length > 0;
+			},
+			nextStepBtnState() {
+				return this.isRoleTextValid ? '' : this.ButtonState.DISABLED;
+			},
+			saveBtnState() {
+				if (this.isRoleDataValid === false) {
+					return ui_buttons.ButtonState.DISABLED;
+				}
+				if (this.roleSavingStatus === RoleSavingStatus.SAVING) {
+					return ui_buttons.ButtonState.CLOCKING;
+				}
+				return '';
+			},
+			backIconProps() {
+				return {
+					size: 16,
+					icon: ui_iconSet_api_core.Actions.CHEVRON_LEFT
+				};
+			},
+			warningText() {
+				return this.isEditRoleMode && this.itemsWithAccess.length > 1 ? this.$Bitrix.Loc.getMessage('ROLE_MASTER_EDIT_WARNING_TEXT') : '';
+			},
+			undeselectedItemsWithAccess() {
+				if (this.isEditRoleMode) {
+					return [['user', this.authorId]];
+				}
+				return [['user', currentUserId]];
+			}
+		},
+		methods: {
+			async saveRole() {
+				const action = this.isEditRoleMode ? 'change' : 'create';
+				let isLoadFinished = false;
+				try {
+					setTimeout(() => {
+						if (isLoadFinished === false) {
+							this.roleSavingStatus = RoleSavingStatus.SAVING;
+						}
+					}, 100);
+					const roleAvatar = await this.getAvatarFile();
+					const data = {
+						roleText: this.roleText,
+						roleTitle: this.roleName,
+						roleAvatar,
+						roleDescription: this.roleDescription,
+						accessCodes: this.roleItemsWithAccess
+					};
+					if (action === 'change') {
+						data.roleCode = this.id;
+					}
+					await main_core.ajax.runAction(`ai.shareRole.${action}`, {
+						data: main_core.Http.Data.convertObjectToFormData(data)
+					});
+					this.roleSavingStatus = RoleSavingStatus.SAVING_SUCCESS;
+					main_core_events.EventEmitter.emit('AI.RoleMasterApp:Save-success', data);
+				} catch (e) {
+					console.error(e);
+					this.roleSavingStatus = RoleSavingStatus.SAVING_ERROR;
+					main_core_events.EventEmitter.emit('AI.RoleMasterApp:Save-failed');
+				} finally {
+					isLoadFinished = true;
+				}
+			},
+			async getAvatarFile() {
+				if (!this.uploadedAvatarFile) {
+					return null;
+				}
+				return this.uploadedAvatarFile.getBinary();
+			},
+			handleAvatarFileUpload(file) {
+				this.uploadedAvatarFile = file;
+			},
+			handleAvatarFileRemove() {
+				this.uploadedAvatarFile = null;
+				this.roleAvatar = null;
+			},
+			handleAvatarFileLoad(file) {
+				this.uploadedAvatarFile = ui_vue3.toRaw(file);
+			},
+			closeMaster() {
+				main_core_events.EventEmitter.emit('AI.RoleMasterApp:Close');
+			},
+			backToEditor() {
+				this.roleSavingStatus = RoleSavingStatus.NONE;
+			},
+			openHelpdeskSlider() {
+				const articleCode = '23184474';
+				const Helper = main_core.Reflection.getClass('top.BX.Helper');
+				if (Helper) {
+					Helper.show(`redirect=detail&code=${articleCode}`);
+				}
+			}
+		},
+		template: `
 		<div>
 			<header></header>
 			<main>
@@ -1215,215 +1209,168 @@ this.BX = this.BX || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t;
 	const RoleMasterEvents = {
-	  CLOSE: 'close',
-	  SAVE_SUCCESS: 'save-success'
+		CLOSE: 'close',
+		SAVE_SUCCESS: 'save-success'
 	};
-	var _roleMasterOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleMasterOptions");
-	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
-	class RoleMaster$1 extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super(options);
-	    Object.defineProperty(this, _roleMasterOptions, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _app, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace('AI.RoleMaster');
-	    babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions] = options;
-	  }
-	  render() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10;
-	    main_core_events.EventEmitter.subscribe('AI.RoleMasterApp:Close', () => {
-	      this.emit(RoleMasterEvents.CLOSE);
-	    });
-	    main_core_events.EventEmitter.subscribe('AI.RoleMasterApp:Save-success', event => {
-	      this.emit(RoleMasterEvents.SAVE_SUCCESS, event.getData());
-	    });
-	    const appContainer = main_core.Tag.render(_t || (_t = _`<div class="ai__role-master-app-container"></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp(RoleMaster, {
-	      id: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].id) != null ? _babelHelpers$classPr : '',
-	      authorId: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].authorId) != null ? _babelHelpers$classPr2 : '',
-	      name: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].name) != null ? _babelHelpers$classPr3 : '',
-	      text: (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].text) != null ? _babelHelpers$classPr4 : '',
-	      description: (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr6.description) != null ? _babelHelpers$classPr5 : '',
-	      avatarUrl: (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr8.avatarUrl) != null ? _babelHelpers$classPr7 : '',
-	      itemsWithAccess: (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr10.itemsWithAccess) != null ? _babelHelpers$classPr9 : []
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(appContainer);
-	    return appContainer;
-	  }
-	  destroy() {
-	    var _babelHelpers$classPr11;
-	    (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr11.unmount();
-	  }
-	  static validateOptions(options) {
-	    if (!options) {
-	      return;
-	    }
-	    if (options && main_core.Type.isObject(options) === false) {
-	      throw new Error('AI.RoleMaster: options must be the object');
-	    }
-	    if (options.id && main_core.Type.isStringFilled(options.id) === false) {
-	      throw new Error('AI.RoleMaster: id option must be the filled string');
-	    }
-	    if (options.text && main_core.Type.isStringFilled(options.text) === false) {
-	      throw new Error('AI.RoleMaster: roleText option must be the filled string');
-	    }
-	    if (options.avatarUrl && main_core.Type.isStringFilled(options.avatarUrl) === false) {
-	      throw new Error('AI.RoleMaster: avatar option must be the url string');
-	    }
-	    if (options.description && main_core.Type.isStringFilled(options.description) === false) {
-	      throw new Error('AI.RoleMaster: description option must be the filled string');
-	    }
-	    if (options.name && main_core.Type.isStringFilled(options.name) === false) {
-	      throw new Error('AI.RoleMaster: name option must be the filled string');
-	    }
-	    if (options.itemsWithAccess && main_core.Type.isArrayFilled(options.itemsWithAccess) === false) {
-	      throw new Error('AI.RoleMaster: users option must be the array.');
-	    }
-	  }
+	class RoleMaster extends main_core_events.EventEmitter {
+		#roleMasterOptions;
+		#app;
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('AI.RoleMaster');
+			this.#roleMasterOptions = options;
+		}
+		render() {
+			main_core_events.EventEmitter.subscribe('AI.RoleMasterApp:Close', () => {
+				this.emit(RoleMasterEvents.CLOSE);
+			});
+			main_core_events.EventEmitter.subscribe('AI.RoleMasterApp:Save-success', event => {
+				this.emit(RoleMasterEvents.SAVE_SUCCESS, event.getData());
+			});
+			const appContainer = main_core.Tag.render`<div class="ai__role-master-app-container"></div>`;
+			this.#app = ui_vue3.BitrixVue.createApp(RoleMaster$1, {
+				id: this.#roleMasterOptions.id ?? '',
+				authorId: this.#roleMasterOptions.authorId ?? '',
+				name: this.#roleMasterOptions.name ?? '',
+				text: this.#roleMasterOptions.text ?? '',
+				description: this.#roleMasterOptions?.description ?? '',
+				avatarUrl: this.#roleMasterOptions?.avatarUrl ?? '',
+				itemsWithAccess: this.#roleMasterOptions?.itemsWithAccess ?? []
+			});
+			this.#app.mount(appContainer);
+			return appContainer;
+		}
+		destroy() {
+			this.#app?.unmount();
+		}
+		static validateOptions(options) {
+			if (!options) {
+				return;
+			}
+			if (options && main_core.Type.isObject(options) === false) {
+				throw new Error('AI.RoleMaster: options must be the object');
+			}
+			if (options.id && main_core.Type.isStringFilled(options.id) === false) {
+				throw new Error('AI.RoleMaster: id option must be the filled string');
+			}
+			if (options.text && main_core.Type.isStringFilled(options.text) === false) {
+				throw new Error('AI.RoleMaster: roleText option must be the filled string');
+			}
+			if (options.avatarUrl && main_core.Type.isStringFilled(options.avatarUrl) === false) {
+				throw new Error('AI.RoleMaster: avatar option must be the url string');
+			}
+			if (options.description && main_core.Type.isStringFilled(options.description) === false) {
+				throw new Error('AI.RoleMaster: description option must be the filled string');
+			}
+			if (options.name && main_core.Type.isStringFilled(options.name) === false) {
+				throw new Error('AI.RoleMaster: name option must be the filled string');
+			}
+			if (options.itemsWithAccess && main_core.Type.isArrayFilled(options.itemsWithAccess) === false) {
+				throw new Error('AI.RoleMaster: users option must be the array.');
+			}
+		}
 	}
 
-	let _$1 = t => t,
-	  _t$1;
 	const RoleMasterPopupEvents = Object.freeze({
-	  OPEN: 'open',
-	  CANCEL: 'cancel',
-	  SAVE_SUCCESS: 'role-save-success',
-	  SAVE_FAILED: 'role-save-success'
+		OPEN: 'open',
+		CANCEL: 'cancel',
+		SAVE_SUCCESS: 'role-save-success',
+		SAVE_FAILED: 'role-save-success'
 	});
-	var _roleMasterOptions$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleMasterOptions");
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _roleMaster = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleMaster");
-	var _cancelledRoleSavingHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelledRoleSavingHandler");
-	var _initPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopup");
-	var _cancelRoleSavingAnalyticEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelRoleSavingAnalyticEvent");
-	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
-	var _validateOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateOptions");
 	class RoleMasterPopup extends main_core.Event.EventEmitter {
-	  constructor(_options = {}) {
-	    super(_options);
-	    Object.defineProperty(this, _validateOptions, {
-	      value: _validateOptions2
-	    });
-	    Object.defineProperty(this, _renderPopupContent, {
-	      value: _renderPopupContent2
-	    });
-	    Object.defineProperty(this, _cancelRoleSavingAnalyticEvent, {
-	      value: _cancelRoleSavingAnalyticEvent2
-	    });
-	    Object.defineProperty(this, _initPopup, {
-	      value: _initPopup2
-	    });
-	    Object.defineProperty(this, _roleMasterOptions$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _popup, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _roleMaster, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _cancelledRoleSavingHandler, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace('AI.RoleMaster');
-	    babelHelpers.classPrivateFieldLooseBase(this, _validateOptions)[_validateOptions](_options);
-	    babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions$1)[_roleMasterOptions$1] = _options.roleMaster || {};
-	  }
-	  async sendAnalytics(event) {
-	    try {
-	      const {
-	        sendData
-	      } = await main_core.Runtime.loadExtension('ui.analytics');
-	      const sendDataOptions = {
-	        event,
-	        status: 'success',
-	        tool: 'ai',
-	        category: 'roles_saving'
-	      };
-	      sendData(sendDataOptions);
-	    } catch (e) {
-	      console.error('AI: RolesDialog: Can\'t send analytics', e);
-	    }
-	  }
-	  show() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = babelHelpers.classPrivateFieldLooseBase(this, _initPopup)[_initPopup]();
-	    }
-	    this.sendAnalytics(RoleMasterPopupEvents.OPEN);
-	    babelHelpers.classPrivateFieldLooseBase(this, _cancelledRoleSavingHandler)[_cancelledRoleSavingHandler] = babelHelpers.classPrivateFieldLooseBase(this, _cancelRoleSavingAnalyticEvent)[_cancelRoleSavingAnalyticEvent].bind(this);
-	    main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].closeIcon, 'click', babelHelpers.classPrivateFieldLooseBase(this, _cancelledRoleSavingHandler)[_cancelledRoleSavingHandler]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
-	  }
-	  hide() {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
-	  }
-	}
-	function _initPopup2() {
-	  return new main_popup.Popup({
-	    id: 'role-master-popup',
-	    width: 360,
-	    minHeight: 592,
-	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
-	    cacheable: false,
-	    closeIcon: true,
-	    overlay: true,
-	    padding: 17,
-	    borderRadius: '12px',
-	    events: {
-	      onPopupClose: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
-	        babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].unsubscribeAll(RoleMasterEvents.CLOSE);
-	        babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].unsubscribeAll(RoleMasterEvents.SAVE_SUCCESS);
-	        babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].destroy();
-	      }
-	    }
-	  });
-	}
-	function _cancelRoleSavingAnalyticEvent2() {
-	  this.sendAnalytics(RoleMasterPopupEvents.CANCEL);
-	}
-	function _renderPopupContent2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster] = new RoleMaster$1({
-	    ...babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions$1)[_roleMasterOptions$1]
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].subscribeOnce(RoleMasterEvents.CLOSE, () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].close();
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].subscribeOnce(RoleMasterEvents.SAVE_SUCCESS, event => {
-	    this.emit(RoleMasterPopupEvents.SAVE_SUCCESS, event.getData());
-	  });
-	  const headerText = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions$1)[_roleMasterOptions$1].id === undefined ? main_core.Loc.getMessage('ROLE_MASTER_POPUP_TITLE') : main_core.Loc.getMessage('ROLE_MASTER_POPUP_TITLE_EDIT_MODE');
-	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+		#roleMasterOptions;
+		#popup = null;
+		#roleMaster;
+		#cancelledRoleSavingHandler;
+		constructor(options = {}) {
+			super(options);
+			this.setEventNamespace('AI.RoleMaster');
+			this.#validateOptions(options);
+			this.#roleMasterOptions = options.roleMaster || {};
+		}
+		async sendAnalytics(event) {
+			try {
+				const {
+					sendData
+				} = await main_core.Runtime.loadExtension('ui.analytics');
+				const sendDataOptions = {
+					event,
+					status: 'success',
+					tool: 'ai',
+					category: 'roles_saving'
+				};
+				sendData(sendDataOptions);
+			} catch (e) {
+				console.error('AI: RolesDialog: Can\'t send analytics', e);
+			}
+		}
+		show() {
+			if (!this.#popup) {
+				this.#popup = this.#initPopup();
+			}
+			this.sendAnalytics(RoleMasterPopupEvents.OPEN);
+			this.#cancelledRoleSavingHandler = this.#cancelRoleSavingAnalyticEvent.bind(this);
+			main_core.bind(this.#popup.closeIcon, 'click', this.#cancelledRoleSavingHandler);
+			this.#popup.show();
+		}
+		hide() {
+			this.#popup?.close();
+		}
+		#initPopup() {
+			return new main_popup.Popup({
+				id: 'role-master-popup',
+				width: 360,
+				minHeight: 592,
+				content: this.#renderPopupContent(),
+				cacheable: false,
+				closeIcon: true,
+				overlay: true,
+				padding: 17,
+				borderRadius: '12px',
+				events: {
+					onPopupClose: () => {
+						this.#popup = null;
+						this.#roleMaster.unsubscribeAll(RoleMasterEvents.CLOSE);
+						this.#roleMaster.unsubscribeAll(RoleMasterEvents.SAVE_SUCCESS);
+						this.#roleMaster.destroy();
+					}
+				}
+			});
+		}
+		#cancelRoleSavingAnalyticEvent() {
+			this.sendAnalytics(RoleMasterPopupEvents.CANCEL);
+		}
+		#renderPopupContent() {
+			this.#roleMaster = new RoleMaster({
+				...this.#roleMasterOptions
+			});
+			this.#roleMaster.subscribeOnce(RoleMasterEvents.CLOSE, () => {
+				this.#popup.close();
+			});
+			this.#roleMaster.subscribeOnce(RoleMasterEvents.SAVE_SUCCESS, event => {
+				this.emit(RoleMasterPopupEvents.SAVE_SUCCESS, event.getData());
+			});
+			const headerText = this.#roleMasterOptions.id === undefined ? main_core.Loc.getMessage('ROLE_MASTER_POPUP_TITLE') : main_core.Loc.getMessage('ROLE_MASTER_POPUP_TITLE_EDIT_MODE');
+			return main_core.Tag.render`
 			<div class="ai__role-master-popup-content">
 				<header class="ai__role-master-popup-content-header">
-					${0}
+					${headerText}
 				</header>
 				<div class="ai__role-master-popup-content-main">
-					${0}
+					${this.#roleMaster.render()}
 				</div>
 			</div>
-		`), headerText, babelHelpers.classPrivateFieldLooseBase(this, _roleMaster)[_roleMaster].render());
-	}
-	function _validateOptions2(options) {
-	  RoleMaster$1.validateOptions(options.roleMaster);
+		`;
+		}
+		#validateOptions(options) {
+			RoleMaster.validateOptions(options.roleMaster);
+		}
 	}
 
-	exports.RoleMaster = RoleMaster$1;
+	exports.RoleMaster = RoleMaster;
 	exports.RoleMasterPopup = RoleMasterPopup;
 	exports.RoleMasterPopupEvents = RoleMasterPopupEvents;
 
-}((this.BX.AI = this.BX.AI || {}),BX.Vue3.Components,BX.UI,BX.UI,BX.UI.Uploader,BX,BX.Event,BX.UI.EntitySelector,BX,BX,BX.UI,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Vue3,BX,BX.Main));
+})(this.BX.AI = this.BX.AI || {}, BX, BX.Event, BX.Vue3, BX.Vue3.Components, BX.UI, BX.UI, BX.UI, BX.UI.Uploader, BX.UI.IconSet, BX.UI.Notification, window, window, BX.Main, BX.UI.EntitySelector, BX, BX.UI.IconSet);
 //# sourceMappingURL=role-master.bundle.js.map

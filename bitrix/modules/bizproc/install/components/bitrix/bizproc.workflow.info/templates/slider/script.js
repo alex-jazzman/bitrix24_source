@@ -210,9 +210,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 			const resultNode = this.workflowContent.querySelector('[data-role="bp-workflow-result"]');
 			if (resultNode && this.#workflowResult) {
-				main_core.Runtime.loadExtension('bizproc.workflow.result').then(exports$1 => {
-					if (exports$1?.WorkflowResult) {
-						new exports$1.WorkflowResult(this.#workflowResult).renderTo(resultNode);
+				main_core.Runtime.loadExtension('bizproc.workflow.result').then(exports => {
+					if (exports?.WorkflowResult) {
+						new exports.WorkflowResult(this.#workflowResult).renderTo(resultNode);
 					}
 				}).catch(() => {});
 			}
@@ -339,10 +339,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		#handleDelegateButtonClick(uiButton) {
 			uiButton.setDisabled(true);
-			main_core.Runtime.loadExtension('ui.entity-selector').then(exports$1 => {
+			main_core.Runtime.loadExtension('ui.entity-selector').then(exports => {
 				const {
 					Dialog
-				} = exports$1;
+				} = exports;
 				uiButton.setDisabled(false);
 				const dialog = new Dialog({
 					targetNode: uiButton.getContainer(),

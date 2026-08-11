@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 	const { Icon } = require('assets/icons');
 
 	const { Loc } = require('im/messenger/loc');
+	const { DialogWidgetType } = require('im/messenger/const');
 	const { ModeMenuButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/buttons');
 	const { AssistantButtonType, AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/src/const/type');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -37,6 +38,9 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {DialogId} */
 		#dialogId;
 
+		/** @type {string} */
+		#dialogType;
+
 		/** @type {Object} */
 		#view;
 
@@ -46,18 +50,63 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		/** @type {Set<string>} */
 		#activeModes = new Set();
 
-		/** @type {() => void} */
+		/** @type {(buttonType?: string, isActive?: boolean) => void} */
 		#onActiveStateChange = () => {};
+
+		/** @type {?AssistantButton} */
+		#currentButton = null;
 
 		/**
 		 * @param {DialogLocator} dialogLocator
-		 * @param {() => void} [onActiveStateChange]
+		 * @param {string} dialogType
+		 * @param {(buttonType?: string, isActive?: boolean) => void} [onActiveStateChange]
 		 */
-		constructor({ dialogLocator, onActiveStateChange })
+		constructor({ dialogLocator, dialogType, onActiveStateChange })
 		{
 			this.#dialogId = dialogLocator.get('dialogId');
+			this.#dialogType = dialogType;
 			this.#view = dialogLocator.get('view');
 			this.#onActiveStateChange = Type.isFunction(onActiveStateChange) ? onActiveStateChange : (() => {});
+		}
+
+		/**
+		 * @returns {Promise<boolean>}
+		 */
+		async canShow()
+		{
+			return this.#dialogType === DialogWidgetType.copilot;
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildButton()
+		{
+			return { ...ModeMenuButton };
+		}
+
+		/**
+		 * @returns {AssistantButton}
+		 */
+		buildCurrentButton()
+		{
+			return this.#currentButton ?? this.buildButton();
+		}
+
+		/**
+		 * @desc Called by AssistantButtonManager after a flush — recalculates the
+		 *       collapsed-mode text overlay so the value survives the next flush.
+		 * @param {boolean} hasAnyActive
+		 */
+		applyCollapsedOverlay(hasAnyActive)
+		{
+			if (this.isActive)
+			{
+				return;
+			}
+
+			const text = hasAnyActive ? '' : ModeMenuButton.text;
+			void this.#applyButton({ ...ModeMenuButton, text });
 		}
 
 		/**
@@ -255,7 +304,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 
 			await this.#updateModeMenuButton();
 
-			this.#onActiveStateChange();
+			this.#onActiveStateChange(this.#getButtonTypeByModeItem(modeMenuItemId), true);
 		}
 
 		/**
@@ -267,7 +316,16 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 
 			await this.#updateModeMenuButton();
 
-			this.#onActiveStateChange();
+			this.#onActiveStateChange(this.#getButtonTypeByModeItem(modeMenuItemId), false);
+		}
+
+		/**
+		 * @param {string} modeMenuItemId
+		 * @returns {?string} one of AssistantButtonType, or null for modes without a toggle button
+		 */
+		#getButtonTypeByModeItem(modeMenuItemId)
+		{
+			return modeMenuItemId === ModeMenuItemId.reasoning ? AssistantButtonType.reasoning : null;
 		}
 
 		/**
@@ -296,7 +354,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 		{
 			if (this.hasMultipleModesActive)
 			{
-				await this.#view.textField.updateAssistantButton(AssistantButtonType.menu, {
+				await this.#applyButton({
 					...ModeMenuButton,
 					design: AssistantButtonDesign.bitrixGpt,
 				});
@@ -308,7 +366,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 			{
 				const [activeModeMenuItemId] = this.#activeModes;
 				const text = ModeMenuButtonTextByItemId[activeModeMenuItemId] ?? '';
-				await this.#view.textField.updateAssistantButton(AssistantButtonType.menu, {
+				await this.#applyButton({
 					...ModeMenuButton,
 					text,
 					design: AssistantButtonDesign.bitrixGpt,
@@ -317,7 +375,18 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager/src/butto
 				return;
 			}
 
-			await this.#view.textField.updateAssistantButton(AssistantButtonType.menu, { ...ModeMenuButton });
+			await this.#applyButton({ ...ModeMenuButton });
+		}
+
+		/**
+		 * @param {AssistantButton} button
+		 * @returns {Promise<any>}
+		 */
+		#applyButton(button)
+		{
+			this.#currentButton = button;
+
+			return this.#view.textField.updateAssistantButton(button.id, button);
 		}
 	}
 

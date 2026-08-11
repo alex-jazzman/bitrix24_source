@@ -68266,6 +68266,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    }
 	  }, {
+	    key: "addMessageToModel",
+	    value: function addMessageToModel(_ref4) {
+	      var text = _ref4.text,
+	        params = _ref4.params,
+	        sending = _ref4.sending;
+	      return this.store.dispatch('messages/add', {
+	        chatId: this.getChatId(),
+	        authorId: this.getUserId(),
+	        text: text,
+	        params: params,
+	        sending: sending,
+	        id: this.generateUuidV4()
+	      });
+	    }
+	  }, {
+	    key: "generateUuidV4",
+	    value: function generateUuidV4() {
+	      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+	        var r = Math.random() * 16 | 0;
+	        return (c === 'x' ? r : r & 0x3 | 0x8).toString(16);
+	      });
+	    }
+	  }, {
 	    key: "sendMessageToServer",
 	    value: function sendMessageToServer(message) {
 	      var _this4 = this;

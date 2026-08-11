@@ -72,7 +72,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleReply()
 		{
-			if (this.#isChannel() || this.dialogModel.type === DialogType.copilot)
+			if (this.#isChannel())
 			{
 				return false;
 			}

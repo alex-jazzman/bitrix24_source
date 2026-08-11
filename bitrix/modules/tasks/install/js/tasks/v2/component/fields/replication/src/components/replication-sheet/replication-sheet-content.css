@@ -7,10 +7,17 @@
 .tasks-field-replication-link {
 	cursor: pointer;
 	color: var(--ui-color-accent-main-primary);
+	padding: var(--ui-space-inline-3xs) 0;
 }
 
 .tasks-field-replication-secondary {
 	color: var(--ui-color-base-2);
+}
+
+.tasks-bottom-sheet-replicate-content {
+	background-color: var(--ui-color-bg-vibrant-less);
+	-webkit-backdrop-filter: blur(24px);
+	backdrop-filter: blur(24px);
 }
 
 .tasks-bottom-sheet-replicate-content > .b24-bottom-sheet-content {
@@ -82,24 +89,12 @@
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
-	gap: var(--ui-space-inline-2xs2);
-	padding: var(--ui-space-inline-xs) var(--ui-space-stack-sm);
-	background-color: var(--ui-color-bg-content-secondary);
+	gap: var(--ui-space-inline-xs);
 	min-height: 28px;
 }
 
 .tasks-replication-sheet-action-row.--selectable {
 	cursor: pointer;
-}
-
-.tasks-replication-sheet-action-row:first-child {
-	border-top-left-radius: var(--ui-border-radius-md);
-	border-top-right-radius: var(--ui-border-radius-md);
-}
-
-.tasks-replication-sheet-action-row:last-child {
-	border-bottom-left-radius: var(--ui-border-radius-md);
-	border-bottom-right-radius: var(--ui-border-radius-md);
 }
 
 .tasks-replication-sheet-action-row:not(.--active) .tasks-field-replication-row.--text,
@@ -119,4 +114,14 @@
 
 .tasks-replication-sheet-action-row__hint {
 	margin: 0 0 0 auto;
+}
+
+.tasks-field-replication-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm);
+	background: var(--ui-color-bg-content-primary);
+	padding: 18px;
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.04);
 }

@@ -222,7 +222,7 @@ export class LinkOptionsSection
 		if (!this.#allowRegisterWhiteList)
 		{
 			this.#allowRegisterWhiteList = new Input({
-				label: Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS'),
+				label: Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
 				placeholder: 'example.com',
 				design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? InputDesign.Grey : InputDesign.Disabled,
 				onInput: this.#onAllowRegisterWhiteListInput.bind(this),

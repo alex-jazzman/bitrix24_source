@@ -6,7 +6,9 @@
 	list-style: none;
 	overflow-y: scroll;
 	overflow-x: hidden;
+	/* @chef-ignore */
 	scrollbar-width: thin;
+	/* @chef-ignore */
 	scrollbar-color: var(--ui-color-base-10, #dddee0) var(--ui-color-base-02);
 }
 

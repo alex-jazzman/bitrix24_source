@@ -1,7 +1,7 @@
 <?php
 $MESS["DISK_ACTION_SAVE_TO_OWN_FILES"] = "Save to Bitrix24.Drive";
 $MESS["DISK_FOLDER_FILTER_CREATED_BY"] = "Created by";
-$MESS["DISK_FOLDER_LIST_ACCESS_BY_LINK"] = "Share";
+$MESS["DISK_FOLDER_LIST_ACCESS_BY_LINK"] = "More sharing options";
 $MESS["DISK_FOLDER_LIST_ACT_BIZPROC_OLD_TEMPLATE"] = "(old version)";
 $MESS["DISK_FOLDER_LIST_ACT_CONNECT"] = "Connect to Drive";
 $MESS["DISK_FOLDER_LIST_ACT_COPIED_INTERNAL_LINK"] = "Link copied to the Clipboard";

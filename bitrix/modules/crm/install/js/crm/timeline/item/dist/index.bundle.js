@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_timeline_item, crm_timeline_tools, main_core, ui_vue3, main_loader, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, crm_field_colorSelector, main_core_events, ui_iconSet_api_core, ui_designTokens, ui_label, ui_cnt, crm_router, ui_dialogs_messagebox, ui_entitySelector, crm_common, crm_timeline, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, crm_ai_nameService, ui_iconSet_api_vue, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, crm_entityEditor_field_paymentDocuments, ui_sidepanel, crm_integration_analytics) {
+(function (exports, crm_timeline_tools, main_core, ui_vue3, main_loader, ui_iconSet_api_vue, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_router, ui_dialogs_messagebox, ui_entitySelector, crm_common, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, crm_ai_nameService, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, crm_entityEditor_field_paymentDocuments, ui_sidepanel, crm_integration_analytics) {
 	'use strict';
 
 	const StreamType = {
@@ -451,7 +451,44 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
+	const ICON_TO_BICON_MAP$1 = Object.freeze({
+		'call': ui_iconSet_api_vue.Outline.PHONE_UP,
+		'call-default': ui_iconSet_api_vue.Outline.PHONE_UP,
+		'call-incoming': ui_iconSet_api_vue.Outline.PHONE_IN,
+		'call-outgoing': ui_iconSet_api_vue.Outline.PHONE_OUT,
+		'mail-income-unread': ui_iconSet_api_vue.Outline.MAIL,
+		'mail-income-read': ui_iconSet_api_vue.Outline.MAIL_OPEN,
+		'mail-outcome': ui_iconSet_api_vue.Outline.MAIL_SEND,
+		'email': ui_iconSet_api_vue.Outline.MAIL,
+		'document': ui_iconSet_api_vue.Outline.FILE,
+		'document-signed': ui_iconSet_api_vue.Outline.DOCUMENT_SIGN,
+		'document-print': ui_iconSet_api_vue.Outline.DOCUMENT_PRINT,
+		'document-addition': ui_iconSet_api_vue.Outline.FORM,
+		'document-draft': ui_iconSet_api_vue.Outline.FILE,
+		'shop': ui_iconSet_api_vue.Outline.PACKAGE,
+		'shop-eye': ui_iconSet_api_vue.Outline.SEEN_ITEMS,
+		'list-check': ui_iconSet_api_vue.Outline.CHECK_LIST,
+		'check': ui_iconSet_api_vue.Outline.SEEN_ITEMS,
+		'sms': ui_iconSet_api_vue.Outline.SMS,
+		'comment': ui_iconSet_api_vue.Outline.MESSAGE,
+		'openline': ui_iconSet_api_vue.Outline.MESSAGES,
+		'channel-chat': ui_iconSet_api_vue.Outline.OPEN_CHANNELS,
+		'channel-whatsapp': ui_iconSet_api_vue.Outline.WHATSAPP,
+		'channel-web-form': ui_iconSet_api_vue.Outline.CRM_FORM,
+		'task-activity': ui_iconSet_api_vue.Outline.TASK,
+		'unread-comment': ui_iconSet_api_vue.Outline.NEW_MESSAGE,
+		'bank-card': ui_iconSet_api_vue.Outline.BANK_CARD,
+		'calendar-share': ui_iconSet_api_vue.Outline.CALENDAR_SHARE,
+		'delivery': ui_iconSet_api_vue.Outline.DELIVERY,
+		'notification': ui_iconSet_api_vue.Outline.NOTIFICATION,
+		'repeat-sale': ui_iconSet_api_vue.Outline.REPEAT_SALES,
+		'bizproc': ui_iconSet_api_vue.Outline.BUSINES_PROCESS_STAGES,
+		'bizproc-task': ui_iconSet_api_vue.Outline.BUSINES_PROCESS_STAGES
+	});
 	const Logo = {
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		props: {
 			type: String,
 			addIcon: String,
@@ -497,6 +534,21 @@ this.BX.Crm = this.BX.Crm || {};
 					result.backgroundSize = parseInt(this.backgroundSize) + 'px';
 				}
 				return result;
+			},
+			useBIcon() {
+				return ICON_TO_BICON_MAP$1.hasOwnProperty(this.currentIcon) && !this.backgroundUrl;
+			},
+			bIconName() {
+				return ICON_TO_BICON_MAP$1[this.currentIcon] || '';
+			},
+			bIconColor() {
+				if (this.iconType === 'failure') {
+					return 'var(--ui-color-accent-main-alert)';
+				}
+				if (this.iconType === 'secondary') {
+					return 'var(--ui-color-background-secondary)';
+				}
+				return 'var(--ui-color-accent-main-primary-alt-2)';
 			}
 		},
 		watch: {
@@ -520,7 +572,13 @@ this.BX.Crm = this.BX.Crm || {};
 		<div :class="className" @click="executeAction">
 			<div class="crm-timeline__card-logo_content">
 				<div :class="iconClassname">
-					<i :style="iconInteriorStyle"></i>
+					<BIcon
+						v-if="useBIcon"
+						:name="bIconName"
+						:size="48"
+						:color="bIconColor"
+					/>
+					<i v-else :style="iconInteriorStyle"></i>
 				</div>
 				<div :class="addIconClassname" v-if="addIcon">
 					<i></i>
@@ -995,7 +1053,7 @@ this.BX.Crm = this.BX.Crm || {};
 			size: {
 				type: String,
 				required: false,
-				default: 'extra_small'
+				default: 'medium'
 			},
 			menuItems: {
 				type: Object,
@@ -1007,17 +1065,17 @@ this.BX.Crm = this.BX.Crm || {};
 			return {
 				timerSecondsRemaining: 0,
 				currentState: this.state,
-				hintText: this.tooltip || ''
+				hintText: main_core.Type.isStringFilled(this.tooltip) ? this.tooltip : ''
 			};
 		},
 		computed: {
-			itemTypeToButtonColorDict() {
+			itemTypeToButtonStyleDict() {
 				return {
-					[ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
-					[ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
-					[ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
-					[ButtonType.ICON]: ui_buttons.Button.Color.LINK,
-					[ButtonType.AI]: ui_buttons.Button.Color.AI
+					[ButtonType.PRIMARY]: ui_buttons.Button.AirStyle.FILLED,
+					[ButtonType.SECONDARY]: ui_buttons.Button.AirStyle.OUTLINE,
+					[ButtonType.LIGHT]: ui_buttons.Button.AirStyle.PLAIN,
+					[ButtonType.ICON]: ui_buttons.Button.AirStyle.PLAIN_NO_ACCENT,
+					[ButtonType.AI]: ui_buttons.Button.AirStyle.FILLED_BITRIX_GPT
 				};
 			},
 			buttonContainerRef() {
@@ -1045,15 +1103,15 @@ this.BX.Crm = this.BX.Crm || {};
 			getButtonOptions() {
 				const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
 				const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-				const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
+				const btnStyle = this.itemTypeToButtonStyleDict[this.type] || ui_buttons.Button.AirStyle.OUTLINE;
 				const titleText = this.type === ButtonType.ICON ? '' : this.title;
 				return {
 					id: this.id,
+					useAirDesign: true,
 					round: true,
-					dependOnTheme: false,
 					size: ui_buttons.Button.Size[upperCaseButtonSize],
 					text: titleText,
-					color: btnColor,
+					style: btnStyle,
 					state: this.itemStateToButtonStateDict[this.currentState],
 					icon: ui_buttons.Button.Icon[upperCaseIconName],
 					props: main_core.Type.isPlainObject(this.props) ? this.props : {}
@@ -1169,16 +1227,49 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const AdditionalButtonIcon = Object.freeze({
 		NOTE: 'note',
-		SCRIPT: 'script',
 		PRINT: 'print',
+		SCRIPT: 'script',
+		QR_CODE: 'qr-code',
+		VIDEOCONFERENCE: 'videoconference',
 		DOTS: 'dots'
 	});
 	const AdditionalButtonColor = Object.freeze({
 		DEFAULT: 'default',
 		PRIMARY: 'primary'
 	});
-	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	const ICON_MAP = Object.freeze({
+		[AdditionalButtonIcon.NOTE]: ui_iconSet_api_core.Outline.NOTE,
+		[AdditionalButtonIcon.PRINT]: ui_iconSet_api_core.Outline.PRINTER,
+		[AdditionalButtonIcon.SCRIPT]: ui_iconSet_api_core.Outline.TRANSCRIPTION,
+		[AdditionalButtonIcon.QR_CODE]: ui_iconSet_api_core.Outline.QR_CODE,
+		[AdditionalButtonIcon.VIDEOCONFERENCE]: ui_iconSet_api_core.Outline.RECORD_VIDEO,
+		[AdditionalButtonIcon.DOTS]: ui_iconSet_api_core.Outline.MORE_L
+	});
+	const STYLE_MAP = Object.freeze({
+		[AdditionalButtonColor.DEFAULT]: ui_vue3_components_button.AirButtonStyle.PLAIN_NO_ACCENT,
+		[AdditionalButtonColor.PRIMARY]: ui_vue3_components_button.AirButtonStyle.PLAIN_ACCENT
+	});
+	const UI_BUTTON_STATE_MAP = Object.freeze({
+		[ButtonState.LOADING]: ui_vue3_components_button.ButtonState.WAITING,
+		[ButtonState.AI_LOADING]: ui_vue3_components_button.ButtonState.AI_WAITING
+	});
+	const AdditionalButton = {
+		name: 'AdditionalButton',
+		components: {
+			UiButton: ui_vue3_components_button.Button
+		},
+		inheritAttrs: false,
 		props: {
+			id: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			title: {
+				type: String,
+				required: false,
+				default: ''
+			},
 			iconName: {
 				type: String,
 				required: false,
@@ -1194,44 +1285,107 @@ this.BX.Crm = this.BX.Crm || {};
 				validator(value) {
 					return Object.values(AdditionalButtonColor).indexOf(value) > -1;
 				}
+			},
+			state: {
+				type: String,
+				required: false,
+				default: ButtonState.DEFAULT
+			},
+			action: Object
+		},
+		setup() {
+			return {
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			return {
+				currentState: this.state
+			};
+		},
+		watch: {
+			state(value) {
+				this.setButtonState(value);
 			}
 		},
 		computed: {
-			className() {
-				return ['crm-timeline__card_add-button', {
-					[`--icon-${this.iconName}`]: this.iconName,
-					[`--color-${this.color}`]: this.color,
-					[`--state-${this.currentState}`]: this.currentState
-				}];
+			mappedIcon() {
+				return ICON_MAP[this.iconName] || null;
 			},
-			ButtonState() {
-				return ButtonState;
+			mappedStyle() {
+				return STYLE_MAP[this.color] || ui_vue3_components_button.AirButtonStyle.PLAIN_NO_ACCENT;
 			},
-			loaderHtml() {
-				const loader = new main_loader.Loader({
-					mode: 'inline',
-					size: 20
-				});
-				loader.show();
-				return loader.layout.outerHTML;
+			buttonDataset() {
+				return this.iconName ? {
+					testid: `crm-timeline-additional-button-${this.iconName}`
+				} : {};
+			},
+			isHidden() {
+				return this.currentState === ButtonState.HIDDEN;
+			},
+			isDisabled() {
+				return this.currentState === ButtonState.DISABLED;
+			},
+			isLoading() {
+				return this.uiButtonState === ui_vue3_components_button.ButtonState.WAITING;
+			},
+			uiButtonState() {
+				return UI_BUTTON_STATE_MAP[this.currentState] || null;
 			}
 		},
+		created() {
+			this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
+		},
+		beforeUnmount() {
+			this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
+		},
+		methods: {
+			setButtonState(value) {
+				if (this.currentState !== value) {
+					this.currentState = value;
+				}
+			},
+			setDisabled(disabled) {
+				this.setButtonState(disabled ? ButtonState.DISABLED : ButtonState.DEFAULT);
+			},
+			setLoading(loading) {
+				this.setButtonState(loading ? ButtonState.LOADING : ButtonState.DEFAULT);
+			},
+			onLayoutUpdated() {
+				this.setButtonState(this.state);
+			},
+			executeAction() {
+				if (this.isDisabled || this.uiButtonState) {
+					return;
+				}
+				if (this.action) {
+					const action = new Action(this.action);
+					action.execute(this);
+				}
+			}
+		},
+		// language=Vue
 		template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
+		<div
+			v-if="!isHidden"
+			:title="title"
+			class="crm-timeline__additional-button"
+		>
+			<UiButton
+				:text="title"
+				:leftIcon="mappedIcon"
+				:size="ButtonSize.LARGE"
+				:style="mappedStyle"
+				:state="uiButtonState"
+				:disabled="isDisabled"
+				:loading="isLoading"
+				:dataset="buttonDataset"
+				collapsed
 				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
+			/>
+		</div>
 	`
-	});
+	};
 
 	const Buttons = {
 		components: {
@@ -1884,6 +2038,7 @@ this.BX.Crm = this.BX.Crm || {};
 		static WARNING = 'warning';
 		static FAILURE = 'failure';
 		static LAVENDER = 'lavender';
+		static AI = 'ai';
 	}
 
 	const Tag = {
@@ -1926,14 +2081,15 @@ this.BX.Crm = this.BX.Crm || {};
 					'--hint': Boolean(this.hint)
 				};
 			},
-			tagTypeToLabelColorDict() {
+			tagTypeToLabelStyleDict() {
 				return {
-					[TagType.PRIMARY]: ui_label.Label.Color.LIGHT_BLUE,
-					[TagType.SECONDARY]: ui_label.Label.Color.LIGHT,
-					[TagType.LAVENDER]: ui_label.Label.Color.LAVENDER,
-					[TagType.SUCCESS]: ui_label.Label.Color.LIGHT_GREEN,
-					[TagType.WARNING]: ui_label.Label.Color.LIGHT_YELLOW,
-					[TagType.FAILURE]: ui_label.Label.Color.LIGHT_RED
+					[TagType.PRIMARY]: ui_system_label.LabelStyle.TINTED,
+					[TagType.SECONDARY]: ui_system_label.LabelStyle.TINTED_NO_ACCENT,
+					[TagType.LAVENDER]: ui_system_label.LabelStyle.TINTED_VIOLET,
+					[TagType.AI]: ui_system_label.LabelStyle.TINTED_BITRIX_GPT,
+					[TagType.SUCCESS]: ui_system_label.LabelStyle.TINTED_SUCCESS,
+					[TagType.WARNING]: ui_system_label.LabelStyle.TINTED_WARNING,
+					[TagType.FAILURE]: ui_system_label.LabelStyle.TINTED_ALERT
 				};
 			},
 			tagContainerRef() {
@@ -1952,10 +2108,9 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		methods: {
-			getLabelColorFromTagType(tagType) {
+			getLabelStyleFromTagType(tagType) {
 				const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
-				const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
-				return labelColor || ui_label.Label.Color.LIGHT;
+				return this.tagTypeToLabelStyleDict[lowerCaseTagType] || ui_system_label.LabelStyle.TINTED_NO_ACCENT;
 			},
 			// eslint-disable-next-line consistent-return
 			renderTag(tagOptions) {
@@ -1966,11 +2121,11 @@ this.BX.Crm = this.BX.Crm || {};
 					title,
 					type
 				} = tagOptions;
-				const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
-				const label = new ui_label.Label({
-					text: uppercaseTitle,
-					color: this.getLabelColorFromTagType(type),
-					fill: true
+				const labelText = title && main_core.Type.isString(title) ? title : '';
+				const label = new ui_system_label.Label({
+					value: labelText,
+					style: this.getLabelStyleFromTagType(type),
+					size: ui_system_label.LabelSize.MD
 				});
 				main_core.Dom.clean(this.tagContainerRef);
 				main_core.Dom.append(label.render(), this.tagContainerRef);
@@ -2201,7 +2356,75 @@ this.BX.Crm = this.BX.Crm || {};
 		static FAILURE = 'failure';
 	}
 
+	const ICON_TO_BICON_MAP = Object.freeze({
+		'email': ui_iconSet_api_core.Outline.MAIL,
+		'mail-income': ui_iconSet_api_core.Outline.MAIL,
+		'mail-outcome': ui_iconSet_api_core.Outline.MAIL_SEND,
+		'IM': ui_iconSet_api_core.Outline.MESSAGES,
+		'call': ui_iconSet_api_core.Outline.PHONE_UP,
+		'call-completed': ui_iconSet_api_core.Outline.PHONE_DOWN,
+		'call-incoming': ui_iconSet_api_core.Outline.PHONE_IN,
+		'call-incoming-missed': ui_iconSet_api_core.Outline.PHONE_BROKEN,
+		'call-outcoming': ui_iconSet_api_core.Outline.PHONE_OUT,
+		'crmForm': ui_iconSet_api_core.Outline.CRM_FORM,
+		'store': ui_iconSet_api_core.Outline.PACKAGE,
+		'task': ui_iconSet_api_core.Outline.TASK,
+		'store-document': ui_iconSet_api_core.Outline.TASK,
+		'meeting': ui_iconSet_api_core.Outline.MEETING_POINT,
+		'visit': ui_iconSet_api_core.Outline.USER_PROFILE,
+		'bp': ui_iconSet_api_core.Outline.BUSINES_PROCESS_STAGES,
+		'info': ui_iconSet_api_core.Outline.INFO_CIRCLE,
+		'comment': ui_iconSet_api_core.Outline.MESSAGE,
+		'complete': ui_iconSet_api_core.Outline.CIRCLE_CHECK,
+		'convert': ui_iconSet_api_core.Outline.REFRESH,
+		'link': ui_iconSet_api_core.Outline.LINK,
+		'unlink': ui_iconSet_api_core.Outline.UNLINK,
+		'bank-card': ui_iconSet_api_core.Outline.BANK_CARD,
+		'wallet': ui_iconSet_api_core.Outline.WALLET,
+		'robot': ui_iconSet_api_core.Outline.ROBOT,
+		'rest': ui_iconSet_api_core.Outline.DEVELOPER_RESOURCES,
+		'taxi': ui_iconSet_api_core.Outline.DELIVERY,
+		'terminal': ui_iconSet_api_core.Outline.PAYMENT_TERMINAL,
+		'restApp': ui_iconSet_api_core.Outline.APPS,
+		'sms': ui_iconSet_api_core.Outline.SMS,
+		'new': ui_iconSet_api_core.Outline.EMPTY_MESSAGE,
+		'whatsapp': ui_iconSet_api_core.Outline.WHATSAPP,
+		'telegram': ui_iconSet_api_core.Outline.TELEGRAM,
+		'check': ui_iconSet_api_core.Outline.RECEIPT,
+		'document': ui_iconSet_api_core.Outline.FILE,
+		'stage-change': ui_iconSet_api_core.Outline.STAGE,
+		'relation': ui_iconSet_api_core.Outline.CONNECTION,
+		'sum': ui_iconSet_api_core.Outline.SIGMA_SUMM,
+		'circle-check': ui_iconSet_api_core.Outline.CIRCLE_CHECK,
+		'clock': ui_iconSet_api_core.Outline.CLOCK,
+		'view': ui_iconSet_api_core.Outline.SEEN_ITEMS,
+		'pipeline': ui_iconSet_api_core.Outline.FILTER_FUNNEL,
+		'attention': ui_iconSet_api_core.Outline.ALERT,
+		'restoration': ui_iconSet_api_core.Outline.CLOCK_BACK,
+		'arrow-up': ui_iconSet_api_core.Outline.ARROW_TOP_M,
+		'arrow-down': ui_iconSet_api_core.Outline.ARROW_DOWN_M,
+		'task-ping': ui_iconSet_api_core.Outline.PING,
+		'task-new-comment': ui_iconSet_api_core.Outline.NEW_MESSAGE,
+		'task-viewed-comment': ui_iconSet_api_core.Outline.MESSAGE,
+		'task-activity': ui_iconSet_api_core.Outline.TASK,
+		'ai-copilot': ui_iconSet_api_core.Outline.COPILOT,
+		'ai-process': ui_iconSet_api_core.Outline.AI_PROCESS,
+		'cycle-equal': ui_iconSet_api_core.Outline.REPEAT_CYCLE,
+		'message-with-point': ui_iconSet_api_core.Outline.NEW_MESSAGE,
+		'bizproc': ui_iconSet_api_core.Outline.BUSINES_PROCESS_STAGES,
+		'booking': ui_iconSet_api_core.Outline.ONLINE_BOOKING,
+		'repeat-sale': ui_iconSet_api_core.Outline.REPEAT_SALES,
+		'conversion': ui_iconSet_api_core.Outline.DUPLICATE,
+		'camera': ui_iconSet_api_core.Outline.CAMERA,
+		'calendar': ui_iconSet_api_core.Outline.CALENDAR,
+		'circle-crossed': ui_iconSet_api_core.Outline.CIRCLE_CROSS,
+		'cross-air': ui_iconSet_api_core.Outline.CIRCLE_CROSS
+	});
+
 	const Icon = {
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		props: {
 			code: {
 				type: String,
@@ -2247,6 +2470,18 @@ this.BX.Crm = this.BX.Crm || {};
 					backgroundImage: `url('${encodeURI(main_core.Text.encode(this.backgroundUri))}')`
 				};
 			},
+			useBIcon() {
+				return ICON_TO_BICON_MAP.hasOwnProperty(this.code) && !this.backgroundUri;
+			},
+			bIconName() {
+				return ICON_TO_BICON_MAP[this.code] || '';
+			},
+			bIconColor() {
+				if (this.isLogMessage) {
+					return 'var(--ui-color-base-40)';
+				}
+				return 'var(--ui-color-background-primary)';
+			},
 			iconStyle() {
 				if (main_core.Type.isStringFilled(this.backgroundColor)) {
 					return {
@@ -2261,11 +2496,20 @@ this.BX.Crm = this.BX.Crm || {};
 				if (!this.counterType) {
 					return;
 				}
+				const styleMap = {
+					danger: ui_cnt.CounterStyle.FILLED_ALERT,
+					success: ui_cnt.CounterStyle.FILLED_SUCCESS
+				};
+				const style = styleMap[this.counterType];
+				if (!style) {
+					return;
+				}
 				main_core.Dom.clean(this.counterNodeContainer);
 				const counter = new ui_cnt.Counter({
 					value: 1,
+					useAirDesign: true,
 					border: true,
-					color: ui_cnt.Counter.Color[this.counterType.toUpperCase()]
+					style
 				});
 				counter.renderTo(this.counterNodeContainer);
 			}
@@ -2284,7 +2528,13 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		template: `
 		<div :class="className" :style="iconStyle">
-			<i :style="styles"></i>
+			<BIcon
+				v-if="useBIcon"
+				:name="bIconName"
+				:size="24"
+				:color="bIconColor"
+			/>
+			<i v-else :style="styles"></i>
 			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>
 	`
@@ -2790,7 +3040,7 @@ this.BX.Crm = this.BX.Crm || {};
 				this.#currentUser = settings.currentUser || null;
 				this.#ownerTypeId = settings.ownerTypeId;
 				this.#ownerId = settings.ownerId;
-				this.#streamType = settings.streamType || crm_timeline_item.StreamType.history;
+				this.#streamType = settings.streamType || StreamType.history;
 			}
 			this.#controllers = ControllerManager.getInstance(this.#timelineId).getItemControllers(this);
 		}
@@ -2942,7 +3192,7 @@ this.BX.Crm = this.BX.Crm || {};
 		#getLayoutAppProps() {
 			return {
 				initialLayout: this.getLayout().asPlainObject(),
-				initialColor: this.#streamType === crm_timeline_item.StreamType.scheduled ? this.#color : null,
+				initialColor: this.#streamType === StreamType.scheduled ? this.#color : null,
 				id: String(this.getId()),
 				useShortTimeFormat: this.#useShortTimeFormat,
 				isReadOnly: this.isReadOnly(),
@@ -3009,9 +3259,9 @@ this.BX.Crm = this.BX.Crm || {};
 				ownerTypeId: this.#ownerTypeId,
 				ownerId: this.#ownerId
 			};
-			if (this.#streamType === crm_timeline_item.StreamType.history || this.#streamType === crm_timeline_item.StreamType.pinned) {
+			if (this.#streamType === StreamType.history || this.#streamType === StreamType.pinned) {
 				data.historyIds = [this.getId()];
-			} else if (this.#streamType === crm_timeline_item.StreamType.scheduled) {
+			} else if (this.#streamType === StreamType.scheduled) {
 				data.activityIds = [this.getId()];
 			} else {
 				throw new Error('Wrong stream type');
@@ -4131,7 +4381,7 @@ this.BX.Crm = this.BX.Crm || {};
 			if (isCopilotAgreementNeedShow) {
 				await this.#showCopilotAgreement(item, actionData);
 			} else {
-				this.#launchCopilot(item, actionData);
+				await this.#launchCopilot(item, actionData);
 			}
 		}
 		async openCopilotSummaryPopup(actionData, activityProvider, jobId = null) {
@@ -4171,13 +4421,13 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 				const isAgreementAccepted = await copilotAgreementPopup.checkAgreement();
 				if (isAgreementAccepted) {
-					this.#launchCopilot(item, actionData);
+					await this.#launchCopilot(item, actionData);
 				}
 			} catch {
 				await console.error('Cant load "ai.copilot-agreement" extension');
 			}
 		}
-		#launchCopilot(item, actionData) {
+		async #launchCopilot(item, actionData) {
 			if (!this.#validateCopilotParams(actionData)) {
 				throw new Error('Invalid "actionData" parameters');
 			}
@@ -4187,12 +4437,14 @@ this.BX.Crm = this.BX.Crm || {};
 				return;
 			}
 			this.#copilotConfig.onPreLaunch?.(item, actionData);
+			const previousButtonState = aiCopilotBtnUI?.getState();
 			aiCopilotBtnUI?.setState(ui_buttons.ButtonState.AI_WAITING);
-			this.#executeCopilotRequest(actionData).then(response => {
+			try {
+				const response = await this.#executeCopilotRequest(actionData);
 				this.#copilotConfig.onPostLaunch?.(item, actionData, response);
-			}).catch(response => {
-				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI);
-			});
+			} catch (response) {
+				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI, previousButtonState);
+			}
 		}
 		#validateCopilotParams(actionData) {
 			return main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && this.#copilotConfig.validEntityTypes.includes(parseInt(actionData.ownerTypeId, 10));
@@ -4210,25 +4462,27 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 			});
 		}
-		#handleCopilotError(item, actionData, response, btnUI) {
+		#handleCopilotError(item, actionData, response, btnUI, previousButtonState) {
 			const customData = response?.errors?.[0]?.customData;
 			if (customData) {
 				this.#showAdditionalInfo(customData, item);
-				btnUI?.setState(ui_buttons.ButtonState.ACTIVE);
+				this.#restoreButtonState(btnUI, previousButtonState);
 			} else {
-				this.#showGenericError(response, btnUI);
+				this.#showGenericError(response, btnUI, previousButtonState);
 			}
 			this.#copilotConfig.onError?.(item, actionData, response);
-			throw response;
 		}
-		#showGenericError(response, btnUI) {
+		#restoreButtonState(btnUI, previousButtonState) {
+			btnUI?.setState(main_core.Type.isStringFilled(previousButtonState) ? previousButtonState : ui_buttons.ButtonState.ACTIVE);
+		}
+		#showGenericError(response, btnUI, previousButtonState) {
 			btnUI?.setState(ui_buttons.ButtonState.DISABLED);
 			ui_notification.UI.Notification.Center.notify({
 				content: main_core.Text.encode(response?.errors?.[0]?.message ?? main_core.Loc.getMessage('CRM_COMMON_ERROR')),
 				autoHideDelay: COPILOT_BUTTON_DISABLE_DELAY
 			});
 			setTimeout(() => {
-				btnUI?.setState(ui_buttons.ButtonState.ACTIVE);
+				this.#restoreButtonState(btnUI, previousButtonState);
 			}, COPILOT_BUTTON_DISABLE_DELAY);
 		}
 		#showAdditionalInfo(data, item) {
@@ -4700,7 +4954,7 @@ this.BX.Crm = this.BX.Crm || {};
 				return this.$refs.actionBarContainer;
 			},
 			getIconByDesign(design) {
-				if (design === ui_system_chip_vue.ChipDesign.OutlineCopilot) {
+				if (design === ui_system_chip_vue.ChipDesign.OutlineBitrixGpt) {
 					return ui_iconSet_api_vue.Outline.COPILOT;
 				}
 				return null;
@@ -9389,52 +9643,6 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
-	class Notification extends Base {
-		onInitialize(item) {
-			if (item) {
-				this.#showTour(item);
-			}
-		}
-		#showTour(item) {
-			setTimeout(() => {
-				const layout = item.getLayout()?.asPlainObject();
-				const isSms = main_core.Type.isStringFilled(layout?.header?.title) && layout.header.title.includes('SMS');
-				if (!isSms) {
-					return;
-				}
-				if (this.#isInViewport(item.getLayoutComponent().$el)) {
-					main_core_events.EventEmitter.emit(this, 'BX.Crm.Timeline.Notification:onShowForcedSmsTour', {
-						target: item.getLayoutComponent().$el,
-						stepId: 'notifications-forced-sms',
-						delay: 1500
-					});
-					return;
-				}
-				const showTourOnScroll = () => {
-					if (this.#isInViewport(item.getLayoutComponent().$el)) {
-						main_core_events.EventEmitter.emit(this, 'BX.Crm.Timeline.Notification:onShowForcedSmsTour', {
-							target: item.getLayoutComponent().$el,
-							stepId: 'notifications-forced-sms',
-							delay: 1000
-						});
-						main_core.Event.unbind(window, 'scroll', showTourOnScroll);
-					}
-				};
-				main_core.Event.bind(window, 'scroll', showTourOnScroll);
-			}, 50);
-		}
-		#isInViewport(element) {
-			if (!main_core.Type.isDomNode(element)) {
-				return false;
-			}
-			const rect = element.getBoundingClientRect();
-			return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-		}
-		static isItemSupported(item) {
-			return item.getType() === 'Activity:Notification';
-		}
-	}
-
 	var ChatMessage = {
 		props: {
 			messageHtml: String,
@@ -10242,7 +10450,8 @@ this.BX.Crm = this.BX.Crm || {};
 		if (!messageItem) {
 			return false;
 		}
-		if (messageItem.shouldConfirmStateChange(params)) {
+		if (await messageItem.shouldConfirmStateChange(params)) {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
 			const {
 				isCancelled
 			} = await confirmStateChange();
@@ -10948,7 +11157,6 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(Sms);
 	ControllerManager.registerController(WhatsApp);
 	ControllerManager.registerController(Telegram);
-	ControllerManager.registerController(Notification);
 	ControllerManager.registerController(Bizproc);
 	ControllerManager.registerController(Booking);
 	ControllerManager.registerController(WaitListItem);
@@ -10961,5 +11169,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Item = Item;
 	exports.StreamType = StreamType;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.Main, BX, BX.UI.Analytics, BX, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.Crm.Field, BX.Event, BX.UI.IconSet, BX, BX.UI, BX.UI, BX.Crm, BX.UI.Dialogs, BX.UI.EntitySelector, BX, BX.Crm.Timeline, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.Crm.AI, BX.UI.IconSet, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, BX, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.Crm, BX, BX.Crm.Integration.Analytics);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.UI.IconSet, BX.Main, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm, BX.UI.Dialogs, BX.UI.EntitySelector, BX, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.Crm.AI, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, window, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.Crm, BX, BX.Crm.Integration.Analytics);
 //# sourceMappingURL=index.bundle.js.map

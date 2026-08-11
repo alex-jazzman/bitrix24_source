@@ -1467,15 +1467,25 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/disableKeyboardByMessageId */
-			disableKeyboardByMessageId: (store, messageId) => {
+			disableKeyboardByMessageId: (store, { id, buttonId }) => {
 				/** @type {MessagesModelState} */
-				const message = store.state.collection[messageId];
+				const message = store.state.collection[id];
 				if (!message)
 				{
 					return;
 				}
 
+				const isClicked = (button) => (
+					button.command === buttonId.command
+					&& button.commandParams === buttonId.commandParams
+				);
+
 				const keyboard = message.keyboard.map((button) => {
+					if (button.block === false && !isClicked(button))
+					{
+						return button;
+					}
+
 					button.disabled = true;
 
 					return button;
@@ -1484,7 +1494,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				store.commit('update', {
 					actionName: 'disableKeyboardByMessageId',
 					data: {
-						id: messageId,
+						id,
 						fields: {
 							keyboard,
 						},

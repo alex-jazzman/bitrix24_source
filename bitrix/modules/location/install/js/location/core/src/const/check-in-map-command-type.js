@@ -15,6 +15,7 @@ const CheckInMapCommandType = {
 	DISABLE_CLUSTERING: 'disableClustering',
 	UPDATE_CLUSTER_ICON: 'updateClusterIcon',
 	UPDATE_SETTINGS: 'updateSettings',
+	SET_GRAYSCALE: 'setGrayscale',
 };
 
 export default CheckInMapCommandType;

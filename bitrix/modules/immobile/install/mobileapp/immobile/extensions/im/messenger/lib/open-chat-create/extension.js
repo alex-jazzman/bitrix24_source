@@ -42,6 +42,28 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 		return serviceLocator.get('dialog-creator').createCopilotDialogWithoutSelector();
 	}
 
+	/**
+	 * @desc Auto-opens a copilot draft chat when the copilot recent tab is empty.
+	 * Fires only when the draft-chat feature is on (otherwise it would create a real
+	 * chat) and when copilot is the active recent tab (guards against background preload).
+	 * @return {Promise<void>}
+	 */
+	async function openCopilotDraftChatOnEmpty()
+	{
+		if (!Feature.isCopilotDraftChatAvailable)
+		{
+			return;
+		}
+
+		const activeRecent = serviceLocator.get('recent-manager').getActiveRecent();
+		if (activeRecent?.id !== NavigationTabId.copilot)
+		{
+			return;
+		}
+
+		await directCopilotChatCreate();
+	}
+
 	function openChannelCreate()
 	{
 		const createChannel = new CreateChannel();
@@ -67,6 +89,7 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 		openChatCreateByActiveRecentTab,
 		openChatCreate,
 		openCopilotCreate,
+		openCopilotDraftChatOnEmpty,
 		openChannelCreate,
 		openCollabCreate,
 	};

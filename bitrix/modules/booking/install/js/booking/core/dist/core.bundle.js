@@ -10,7 +10,9 @@ this.BX = this.BX || {};
 		booking_overbooking: 'bookingOverbooking',
 		booking_multi: 'bookingMulti',
 		booking_crm_slider: 'bookingCrmSlider',
-		booking_notifications_settings: 'bookingNotificationsSettings'
+		booking_notifications_settings: 'bookingNotificationsSettings',
+		booking_notifications_ai_call: 'bookingNotificationsAiCall',
+		booking_long: 'bookingLong'
 	});
 	function extractFeatures({
 		features
@@ -22,7 +24,9 @@ this.BX = this.BX || {};
 			bookingOverbooking: false,
 			bookingCrmSlider: false,
 			bookingMulti: false,
-			bookingNotificationsSettings: false
+			bookingNotificationsSettings: false,
+			bookingNotificationsAiCall: false,
+			bookingLong: false
 		};
 		for (const feature of features) {
 			if (!(feature.id in featuresMap)) {
@@ -74,7 +78,6 @@ this.BX = this.BX || {};
 					isFeatureEnabled: this.#params.isFeatureEnabled,
 					canTurnOnTrial: this.#params.canTurnOnTrial,
 					canTurnOnDemo: this.#params.canTurnOnDemo,
-					isMultidayFeatureAvailable: this.#params.isMultidayFeatureAvailable,
 					embedItems: this.#params.embedItems.map(item => {
 						return {
 							value: item.id,

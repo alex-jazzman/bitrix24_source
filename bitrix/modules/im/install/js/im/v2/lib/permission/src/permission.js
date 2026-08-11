@@ -179,7 +179,7 @@ export class PermissionManager
 		let minimalRoleForGroup = chatPermissions[actionGroup];
 		if (!minimalRoleForGroup)
 		{
-			minimalRoleForGroup = UserRole.member;
+			minimalRoleForGroup = UserRole.none;
 		}
 
 		return this.#checkMinimalRole(minimalRoleForGroup, userRole);

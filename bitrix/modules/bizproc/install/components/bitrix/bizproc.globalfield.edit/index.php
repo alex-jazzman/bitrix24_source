@@ -14,7 +14,7 @@ $componentParams = [
 	'TYPES' => $_GET['availableTypes'] ?? [],
 ];
 
-if ($_REQUEST['IFRAME'] === 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+if (($_REQUEST['IFRAME'] ?? null) === 'Y' && ($_REQUEST['IFRAME_TYPE'] ?? null) === 'SIDE_SLIDER')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',

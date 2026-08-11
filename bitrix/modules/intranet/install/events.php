@@ -1,4 +1,14 @@
 <?
+
+$eventsToInstall = [];
+foreach (['USER_OTP_AUTH_CODE', 'USER_OTP_EMAIL_CONFIRM'] as $eventName)
+{
+	if (CEventType::GetList(['EVENT_NAME' => $eventName])->Fetch() !== false)
+	{
+		$eventsToInstall[$eventName] = $eventName;
+	}
+}
+
 $langs = CLanguage::GetList();
 while($lang = $langs->Fetch())
 {
@@ -130,6 +140,37 @@ while($lang = $langs->Fetch())
 			"MESSAGE" => GetMessage("INTRANET_MAILDOMAIN_NOREG_MESSAGE"),
 			"BODY_TYPE" => "html",
 		));
+
+		if (isset($eventsToInstall['USER_OTP_AUTH_CODE']))
+		{
+			$emess->Add([
+				'ACTIVE' => 'Y',
+				'EVENT_NAME' => 'USER_OTP_AUTH_CODE',
+				'LID' => $arSites,
+				'LANGUAGE_ID' => $lid,
+				'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+				'EMAIL_TO' => '#EMAIL#',
+				'BCC' => '',
+				'SUBJECT' => GetMessage('INTRANET_OTP_AUTH_SUBJECT'),
+				'MESSAGE' => '<?EventMessageThemeCompiler::includeComponent("bitrix:intranet.template.mail", "", array("CODE" => "{#CODE#}","SERVER_NAME" => "{#SERVER_NAME#}","TEMPLATE_TYPE" => "USER_OTP_AUTH_CODE","FIELDS" => $arParams));?>',
+				'BODY_TYPE' => 'html',
+			]);
+		}
+		if (isset($eventsToInstall['USER_OTP_EMAIL_CONFIRM']))
+		{
+			$emess->Add([
+				'ACTIVE' => 'Y',
+				'EVENT_NAME' => 'USER_OTP_EMAIL_CONFIRM',
+				'LID' => $arSites,
+				'LANGUAGE_ID' => $lid,
+				'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+				'EMAIL_TO' => '#EMAIL#',
+				'BCC' => '',
+				'SUBJECT' => GetMessage('INTRANET_OTP_CONFIRM_SUBJECT'),
+				'MESSAGE' => '<?EventMessageThemeCompiler::includeComponent("bitrix:intranet.template.mail", "", array("CODE" => "{#CODE#}","SERVER_NAME" => "{#SERVER_NAME#}","TEMPLATE_TYPE" => "USER_OTP_EMAIL_CONFIRM","FIELDS" => $arParams));?>',
+				'BODY_TYPE' => 'html',
+			]);
+		}
 	}
 }
 ?>

@@ -9,6 +9,7 @@ this.BX = this.BX || {};
 			this.id = options.id ?? `biconnector-aha-moment-${Math.random().toString(16).slice(2)}`;
 			this.title = options.title ?? '';
 			this.description = options.description ?? '';
+			this.compact = options.compact === true;
 			this.imageSrc = options.imageSrc ?? '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon.png';
 			this.backgroundImageSrc = '/bitrix/js/biconnector/aha-moment/images/aha-moment-icon-background.svg';
 			this.popupAlignment = options.popupAlignment === 'start' ? 'start' : 'center';
@@ -168,11 +169,9 @@ this.BX = this.BX || {};
 			if (this.content) {
 				return this.content;
 			}
-			const children = [main_core.Dom.create('div', {
-				props: {
-					className: 'biconnector-aha-moment__inner'
-				},
-				children: [main_core.Dom.create('div', {
+			const innerChildren = [];
+			if (!this.compact) {
+				innerChildren.push(main_core.Dom.create('div', {
 					props: {
 						className: 'biconnector-aha-moment__visual'
 					},
@@ -198,22 +197,30 @@ this.BX = this.BX || {};
 							alt: ''
 						}
 					})]
+				}));
+			}
+			innerChildren.push(main_core.Dom.create('div', {
+				props: {
+					className: 'biconnector-aha-moment__content'
+				},
+				children: [main_core.Dom.create('div', {
+					props: {
+						className: 'biconnector-aha-moment__title'
+					},
+					text: this.title
 				}), main_core.Dom.create('div', {
 					props: {
-						className: 'biconnector-aha-moment__content'
+						className: 'biconnector-aha-moment__description'
 					},
-					children: [main_core.Dom.create('div', {
-						props: {
-							className: 'biconnector-aha-moment__title'
-						},
-						text: this.title
-					}), main_core.Dom.create('div', {
-						props: {
-							className: 'biconnector-aha-moment__description'
-						},
-						text: this.description
-					})]
+					text: this.description
 				})]
+			}));
+			const innerClassName = this.compact ? 'biconnector-aha-moment__inner biconnector-aha-moment__inner--compact' : 'biconnector-aha-moment__inner';
+			const children = [main_core.Dom.create('div', {
+				props: {
+					className: innerClassName
+				},
+				children: innerChildren
 			})];
 			const actionsContainer = this.getActionsContainer();
 			if (actionsContainer) {

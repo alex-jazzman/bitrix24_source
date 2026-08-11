@@ -41,17 +41,12 @@ const UserList = {
 		},
 		pinAvailable()
 		{
-			let onlineUsers = 0;
 			const users = Object.values(this.call.users);
+			const onlineCount = users.filter(
+				(user) => this.onlineStates.includes(user.state),
+			).length;
 
-			users.forEach((user) => {
-				if (this.onlineStates.includes(user.state) && ++onlineUsers > 2)
-				{
-					return true;
-				}
-			});
-
-			return false;
+			return onlineCount > 2;
 		},
 		isCurrentUserExternal()
 		{

@@ -123,8 +123,7 @@ this.BX = this.BX || {};
 			return this.hasPermission(action);
 		}
 		hasPermission(action) {
-			var _Util$getCalendarCont;
-			if (action === 'edit_section' && (_Util$getCalendarCont = calendar_util.Util.getCalendarContext()) !== null && _Util$getCalendarCont !== void 0 && _Util$getCalendarCont.isCollabUser) {
+			if (action === 'edit_section' && calendar_util.Util.getCalendarContext()?.isCollabUser) {
 				return false;
 			}
 			if (action === 'view_event') {
@@ -239,13 +238,12 @@ this.BX = this.BX || {};
 	}
 
 	class CalendarTaskSection extends CalendarSection {
-		constructor() {
-			let data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-			let _ref = arguments.length > 1 ? arguments[1] : undefined,
-				type = _ref.type,
-				userId = _ref.userId,
-				ownerId = _ref.ownerId,
-				isNewProjectsOn = _ref.isNewProjectsOn;
+		constructor(data = {}, {
+			type,
+			userId,
+			ownerId,
+			isNewProjectsOn
+		}) {
 			const defaultColor = '#ff5b55';
 			let belongToUser = false;
 			let defaultName = main_core.Loc.getMessage('EC_SEC_USER_TASK_DEFAULT');
@@ -281,6 +279,9 @@ this.BX = this.BX || {};
 	}
 
 	class SectionManager {
+		static newEntrySectionId = null;
+		static EXTERNAL_TYPE_LOCAL = 'local';
+		static RELOAD_DELAY = 1000;
 		constructor(data, config) {
 			this.setSections(data.sections);
 			this.setConfig(config);
@@ -291,8 +292,7 @@ this.BX = this.BX || {};
 			});
 			this.reloadDataDebounce = main_core.Runtime.debounce(this.reloadData, SectionManager.RELOAD_DELAY, this);
 		}
-		setSections() {
-			let rawSections = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+		setSections(rawSections = []) {
 			this.sections = [];
 			this.sectionIndex = {};
 			rawSections.forEach(sectionData => {
@@ -417,7 +417,6 @@ this.BX = this.BX || {};
 		}
 		saveSection(name, color, access, params) {
 			return new Promise(resolve => {
-				var _params$section;
 				name = main_core.Type.isString(name) && name.trim() ? name.trim() : main_core.Loc.getMessage('EC_SEC_SLIDER_NEW_SECTION');
 				if (params.section.id) ;
 				const isCustomization = params.section.id && params.section.isPseudo();
@@ -435,7 +434,7 @@ this.BX = this.BX || {};
 						access: access || null,
 						userId: this.userId,
 						customization: isCustomization ? 'Y' : 'N',
-						external_type: params !== null && params !== void 0 && (_params$section = params.section) !== null && _params$section !== void 0 && _params$section.id ? params.section.getExternalType() : 'local'
+						external_type: params?.section?.id ? params.section.getExternalType() : 'local'
 					}
 				}).then(response => {
 					if (isCustomization) {
@@ -517,21 +516,19 @@ this.BX = this.BX || {};
 				}
 			}
 		}
-		static getNewEntrySectionId() {
-			let calendarType = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-			let ownerId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+		static getNewEntrySectionId(calendarType = null, ownerId = null) {
 			const calendarContext = calendar_util.Util.getCalendarContext();
 			if (calendarContext && !calendarContext.isExternalMode()) {
 				calendarType = calendarType || calendarContext.util.type;
 				if (calendarType === 'location') {
 					const section = calendarContext.sectionManager.getDefaultSection('user', calendarContext.util.userId);
-					return parseInt(section === null || section === void 0 ? void 0 : section.id, 10);
+					return parseInt(section?.id, 10);
 				} else if (calendarContext.isCollabUser && calendarContext.util.type === 'user') {
 					const section = calendarContext.sectionManager.getSections().find(section => section.isCollab());
-					return parseInt(section === null || section === void 0 ? void 0 : section.id, 10);
+					return parseInt(section?.id, 10);
 				} else {
 					const section = calendarContext.sectionManager.getDefaultSection(calendarType, ownerId);
-					return parseInt(section === null || section === void 0 ? void 0 : section.id, 10);
+					return parseInt(section?.id, 10);
 				}
 			}
 			if (SectionManager.newEntrySectionId) {
@@ -542,8 +539,7 @@ this.BX = this.BX || {};
 		static setNewEntrySectionId(sectionId) {
 			SectionManager.newEntrySectionId = parseInt(sectionId);
 		}
-		static getSectionGroupList() {
-			let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+		static getSectionGroupList(options = {}) {
 			let type = options.type,
 				ownerId = options.ownerId,
 				userId = options.userId,
@@ -633,9 +629,7 @@ this.BX = this.BX || {};
 		getSectionAccessTasks() {
 			return this.sectionAccessTasks;
 		}
-		getDefaultSection() {
-			let calendarType = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-			let ownerId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+		getDefaultSection(calendarType = null, ownerId = null) {
 			let sections = this.getSectionListForEdit();
 			calendarType = main_core.Type.isString(calendarType) ? calendarType : this.calendarType;
 			ownerId = main_core.Type.isNumber(ownerId) ? ownerId : this.ownerId;
@@ -672,8 +666,7 @@ this.BX = this.BX || {};
 				}
 			}
 		}
-		static saveDefaultSectionId(sectionId) {
-			let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+		static saveDefaultSectionId(sectionId, options = {}) {
 			const calendarContext = calendar_util.Util.getCalendarContext();
 			if (calendarContext) {
 				calendarContext.sectionManager.setDefaultSection(sectionId);
@@ -703,26 +696,20 @@ this.BX = this.BX || {};
 				}
 			}
 		}
-		static getSectionExternalConnection(section, sectionExternalType) {
-			const calendarContext = calendar_util.Util.getCalendarContext();
+		static getSectionExternalConnection(section, sectionExternalType, calendarContext) {
 			const linkList = section.getConnectionLinks();
+			let provider = undefined;
 			let connection = undefined;
-			let connectionId = linkList.length ? parseInt(linkList[0].id) : parseInt(section.data.CAL_DAV_CON, 10);
+			const connectionId = linkList.length > 0 ? parseInt(linkList[0].id, 10) : parseInt(section.data.CAL_DAV_CON, 10);
 			if (connectionId && calendarContext && calendarContext.syncInterface) {
-				var _calendarContext$sync = calendarContext.syncInterface.getProviderById(connectionId);
-				var _calendarContext$sync2 = babelHelpers.slicedToArray(_calendarContext$sync, 2);
-				_calendarContext$sync2[0];
-				connection = _calendarContext$sync2[1];
-				if (connection && (!linkList.length || connection.getType() === sectionExternalType)) {
+				[provider, connection] = calendarContext.syncInterface.getProviderById(connectionId);
+				if (connection && (linkList.length === 0 || connection.getType() === sectionExternalType)) {
 					return connection;
 				}
 			}
 			return null;
 		}
 	}
-	babelHelpers.defineProperty(SectionManager, "newEntrySectionId", null);
-	babelHelpers.defineProperty(SectionManager, "EXTERNAL_TYPE_LOCAL", 'local');
-	babelHelpers.defineProperty(SectionManager, "RELOAD_DELAY", 1000);
 
 	exports.CalendarSection = CalendarSection;
 	exports.SectionManager = SectionManager;

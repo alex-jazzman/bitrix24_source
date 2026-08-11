@@ -1,16 +1,14 @@
+import { getPlainText } from 'messageservice.template.editor';
 import { Editor } from './editor';
-import { Previewer, type PreviewerParams } from './previewer';
-import type { FilledPlaceholder, OnSelectParams } from './types';
-import { getPlainText } from './utils';
+import { EventHandler } from './event-handler';
+import { type FilledPlaceholder } from './types';
 
 export {
 	Editor,
-	Previewer,
 	getPlainText,
+	EventHandler,
 };
 
 export type {
 	FilledPlaceholder,
-	PreviewerParams,
-	OnSelectParams,
 };

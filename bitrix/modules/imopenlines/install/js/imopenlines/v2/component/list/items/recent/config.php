@@ -13,6 +13,7 @@ return [
 		'im.v2.component.elements.avatar',
 		'im.v2.component.elements.chat-title',
 		'im.v2.component.elements.list-loading-state',
+		'im.v2.component.list.items.elements.empty-state',
 		'im.v2.const',
 		'im.v2.lib.date-formatter',
 		'im.v2.lib.parser',

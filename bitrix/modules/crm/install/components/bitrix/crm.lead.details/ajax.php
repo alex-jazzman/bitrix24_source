@@ -87,6 +87,7 @@ elseif($action === 'SAVE')
 
 	$params = (isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : []);
 	$viewMode = ($params['VIEW_MODE'] ?? null);
+	$analytics = ($_POST['ANALYTICS'] ?? []);
 
 	if(($ID > 0 && !\CCrmLead::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmLead::CheckCreatePermission($currentUserPermissions))
@@ -607,6 +608,7 @@ elseif($action === 'SAVE')
 						'VIEW_MODE' => $viewMode,
 						'STATUS_ID' => $fields['STATUS_ID'],
 					],
+					'ANALYTICS' => $analytics,
 					'eventId' => $eventId,
 				];
 
@@ -1111,6 +1113,9 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
+			'COMPONENT_AJAX_DATA' => [
+				'POST_FORM_ANALYTICS' => $_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? [],
+			],
 			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
 			'HOST_COLUMN_FOR_QUICK_EDITOR_ID' => $_POST['HOST_COLUMN_FOR_QUICK_EDITOR_ID'] ?? null,
 		)

@@ -3,6 +3,7 @@ import { type JsonObject } from 'main.core';
 import { Messenger } from 'im.public';
 import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Color } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
@@ -14,8 +15,8 @@ const BUTTON_HOVER_COLOR = '#eee';
 const BUTTON_TEXT_COLOR = 'rgba(82, 92, 105, 0.9)';
 
 // @vue/component
-export const CopilotEmptyState = {
-	name: 'CopilotEmptyState',
+export const CopilotLegacyEmptyState = {
+	name: 'CopilotLegacyEmptyState',
 	components: { ChatButton },
 	data(): JsonObject
 	{
@@ -65,6 +66,8 @@ export const CopilotEmptyState = {
 			try
 			{
 				const newDialogId = await this.getCopilotService().createDefaultChat();
+				Analytics.getInstance().copilot.onCreateChat(newDialogId);
+				Analytics.getInstance().ignoreNextChatOpen(newDialogId);
 
 				this.isCreatingChat = false;
 				void Messenger.openCopilot(newDialogId);

@@ -67,10 +67,6 @@ export const HoverCatalogLayout = {
 			<template #search-results>
 				<slot name="search-results"/>
 			</template>
-
-			<template #footer>
-				<slot name="footer"/>
-			</template>
 		</CatalogLayout>
 	`,
 };

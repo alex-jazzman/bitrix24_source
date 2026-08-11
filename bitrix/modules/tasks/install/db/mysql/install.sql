@@ -978,7 +978,8 @@ create table if not exists b_tasks_task_chat (
 	TASK_ID  INT UNSIGNED NOT NULL,
 	CHAT_ID  INT UNSIGNED NOT NULL,
 	PRIMARY KEY (TASK_ID, CHAT_ID),
-	INDEX task_chat_index (TASK_ID, CHAT_ID)
+	INDEX task_chat_index (TASK_ID, CHAT_ID),
+	INDEX task_chat_chat_index (CHAT_ID, TASK_ID)
 );
 
 create table if not exists b_tasks_checklist_user_option (

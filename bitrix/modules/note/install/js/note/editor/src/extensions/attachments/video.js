@@ -22,4 +22,5 @@ export const Video = FileAssetNodeFactory.createNode({
 			default: true,
 		},
 	},
+	resizable: true,
 });

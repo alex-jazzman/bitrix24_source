@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/controller', (require, exports, module) => {
 	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 	const { runAction } = require('im/messenger/lib/rest');
@@ -45,24 +46,34 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 
 		async init(applicationStartUp = false)
 		{
+			/** @type {PerfPoint} */
+			const initPerfPoint = serviceLocator.get('messenger-init-perf-point');
+			initPerfPoint?.startPoint('recent-init');
+			this.recentInitPerfPoint = new PerfPoint('recent-init', this.id).start();
+
 			this.locator.get('emitter').emit(RecentEventType.onInit, []);
 			const { promise, resolve } = createPromiseWithResolvers();
 			this.initPromise = promise;
 
 			if (this.locator.has('quick-recent'))
 			{
+				this.recentInitPerfPoint.startPoint('quick-recent');
 				await this.locator.get('quick-recent').renderList();
+				this.recentInitPerfPoint.endPoint('quick-recent');
 			}
 
 			if (this.locator.has('database-load'))
 			{
 				try
 				{
+					this.recentInitPerfPoint.startPoint('database-load');
 					await this.locator.get('database-load').loadFirstPage();
+					this.recentInitPerfPoint.endPoint('database-load');
 				}
 				catch (error)
 				{
 					this.logger.error('init with load first page from db error', error);
+					this.recentInitPerfPoint.endPoint('database-load', { error });
 				}
 			}
 
@@ -70,16 +81,21 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			{
 				try
 				{
+					this.recentInitPerfPoint.startPoint('server-load');
 					await this.#loadFirstPageFromServer(RefreshMode.startUp);
+					this.recentInitPerfPoint.endPoint('server-load');
 				}
 				catch (error)
 				{
 					this.logger.error('init with load first page from server error', error);
+					this.recentInitPerfPoint.endPoint('server-load', { error });
 				}
 			}
 
 			this.markAsActive();
 
+			initPerfPoint?.endPoint('recent-init');
+			this.recentInitPerfPoint.end();
 			resolve();
 		}
 
@@ -134,6 +150,23 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		{
 			this.isActived = true;
 			this.resumeMode = null;
+		}
+
+		/**
+		 * @desc Called on every return to an already-initialized tab. Does not re-render the
+		 * empty-state; only re-checks the empty condition and fires its onActivatedWhenEmpty
+		 * callback (e.g. copilot draft auto-open). Deferred until initPromise resolves so the
+		 * empty check does not race a still-in-flight first init (db/server load) and auto-open
+		 * a draft over a list that is only temporarily empty.
+		 */
+		reactivate()
+		{
+			void this.initPromise.then(() => {
+				if (this.locator.has('empty-state'))
+				{
+					this.locator.get('empty-state').notifyActivatedWhenEmpty();
+				}
+			});
 		}
 
 		destroy()
@@ -338,6 +371,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 				floatingButton?.subscribeEvents();
 
 				emptyState?.redraw();
+				emptyState?.notifyActivatedWhenEmpty();
 				floatingButton?.redraw();
 
 				if (this.locator.has('invite-banner'))

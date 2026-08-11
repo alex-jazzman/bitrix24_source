@@ -1,14 +1,13 @@
-import './style.css';
-
-import { mapActions, mapState } from 'ui.vue3.pinia';
-import { Popup } from 'ui.vue3.components.popup';
 import { BIcon } from 'ui.icon-set.api.vue';
+import { Popup } from 'ui.vue3.components.popup';
+import { mapActions, mapState } from 'ui.vue3.pinia';
 
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
 import { PORT_TYPES } from '../../../../shared/constants';
+import { type Port } from '../../../../shared/types';
 
-import type { Port } from '../../../../shared/types';
+import './style.css';
 
 const OUTPUT_LABELS = {
 	rule: 'E',
@@ -39,7 +38,7 @@ export const EditOutputExpression = {
 
 		return { getMessage };
 	},
-	data(): Object
+	data(): { isPopupShown: boolean; allOutputPorts: Array<Port>; }
 	{
 		return {
 			isPopupShown: false,
@@ -48,7 +47,7 @@ export const EditOutputExpression = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'ports', 'currentRule']),
 		selectedPort:
 		{
 			get(): string
@@ -95,7 +94,7 @@ export const EditOutputExpression = {
 		},
 		portTitle(): string
 		{
-			const lastPort = this.ports[this.ports.length - 1];
+			const lastPort = this.filteredPorts[this.filteredPorts.length - 1];
 			const label = this.portType === PORT_TYPES.output
 				? OUTPUT_LABELS.rule
 				: OUTPUT_LABELS.relation;
@@ -109,7 +108,7 @@ export const EditOutputExpression = {
 				? PORT_TYPES.output
 				: PORT_TYPES.outputRelation;
 		},
-		ports(): Array<Port>
+		filteredPorts(): Array<Port>
 		{
 			return this.currentRule.type === PORT_TYPES.input
 				? this.allOutputPorts.filter((port) => port.type === PORT_TYPES.output)
@@ -128,7 +127,7 @@ export const EditOutputExpression = {
 	},
 	created(): void
 	{
-		this.allOutputPorts = this.block?.ports.reduce((acc, port) => {
+		this.allOutputPorts = this.ports.reduce((acc, port) => {
 			if (port.type === PORT_TYPES.output || port.type === PORT_TYPES.outputRelation)
 			{
 				acc.push({
@@ -140,7 +139,7 @@ export const EditOutputExpression = {
 
 			return acc;
 		}, []) ?? [];
-		if (this.ports.length === 0)
+		if (this.filteredPorts.length === 0)
 		{
 			this.addNewPort();
 		}
@@ -231,7 +230,7 @@ export const EditOutputExpression = {
 								ref="nodeSettingsRuleOutputDropdownContent"
 							>
 								<div
-									v-for="outputPort in ports"
+									v-for="outputPort in filteredPorts"
 									class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-item"
 									@click="selectPort(outputPort)"
 								>

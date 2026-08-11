@@ -14,6 +14,7 @@ export const RootApp = {
 		objectId: { type: [Number, String], required: true },
 		uniqueCode: { type: String, default: null },
 		initialTab: { type: String, default: null },
+		initialAccessRights: { type: Object, default: null },
 		mode: { type: String, default: 'default' },
 		closeDialog: { type: Function, required: true },
 	},
@@ -29,6 +30,7 @@ export const RootApp = {
 			<SharingAccessMainSettings
 				:objectId="objectId"
 				:uniqueCode="uniqueCode"
+				:initialAccessRights="initialAccessRights"
 				:mode="mode"
 				:closeDialog="closeDialog"
 				v-model:isPublic="isPublic"

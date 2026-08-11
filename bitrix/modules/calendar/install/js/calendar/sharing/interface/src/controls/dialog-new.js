@@ -12,7 +12,7 @@ import 'main.qrcode';
 import 'ui.design-tokens';
 
 type DialogOptions = {
-	bindElement: HTMLElement,
+	bindElement: ?HTMLElement,
 	userInfo: ?User,
 	sharingUrl: string,
 	linkHash: string,
@@ -65,41 +65,45 @@ export default class DialogNew
 
 	getPopup(): Popup
 	{
-		if (!this.#popup)
-		{
-			this.#popup = new Popup({
-				bindElement: this.#layout.bindElement,
-				targetContainer: document.body,
-				className: 'calendar-sharing__dialog',
-				closeByEsc: true,
-				closeIcon: this.#isExternalSharing(),
-				autoHide: true,
-				padding: 0,
-				width: 470,
-				angle: this.#getAngleConfig(),
-				autoHideHandler: (event) => this.canBeClosed(event),
-				content: this.getPopupWrapper(),
-				animation: 'fading-slide',
-				events: {
-					onPopupShow: this.onPopupShow.bind(this),
-					onPopupClose: this.onPopupClose.bind(this),
-				},
-			});
-		}
+		this.#popup ??= new Popup({
+			...(this.#layout.bindElement ? { bindElement: this.#layout.bindElement } : {}),
+			targetContainer: document.body,
+			className: 'calendar-sharing__dialog',
+			closeByEsc: true,
+			closeIcon: this.#isExternalSharing() || !this.#layout.bindElement,
+			autoHide: true,
+			padding: 0,
+			width: 470,
+			angle: this.#getAngleConfig(),
+			autoHideHandler: (event) => this.canBeClosed(event),
+			content: this.getPopupWrapper(),
+			animation: 'fading-slide',
+			events: {
+				onPopupShow: this.onPopupShow.bind(this),
+				onPopupClose: this.onPopupClose.bind(this),
+			},
+		});
 
 		return this.#popup;
 	}
 
 	onPopupShow(): void
 	{
-		Dom.addClass(this.#layout.bindElement, 'ui-btn-hover');
+		if (this.#layout.bindElement)
+		{
+			Dom.addClass(this.#layout.bindElement, 'ui-btn-hover');
+		}
 
 		Analytics.sendPopupOpened(this.#settingsModel.getContext());
 	}
 
 	onPopupClose(): void
 	{
-		Dom.removeClass(this.#layout.bindElement, 'ui-btn-hover');
+		if (this.#layout.bindElement)
+		{
+			Dom.removeClass(this.#layout.bindElement, 'ui-btn-hover');
+		}
+
 		this.#dialogLayout.reset();
 	}
 
@@ -155,7 +159,11 @@ export default class DialogNew
 	{
 		this.#settingsModel.sortRanges();
 
-		this.getPopup().adjustPosition({ forceBindPosition: true });
+		if (this.#layout.bindElement)
+		{
+			this.getPopup().adjustPosition({ forceBindPosition: true });
+		}
+
 		this.getPopup().show();
 	}
 
@@ -214,7 +222,7 @@ export default class DialogNew
 
 	#getAngleConfig()
 	{
-		if (this.#isExternalSharing())
+		if (this.#isExternalSharing() || !this.#layout.bindElement)
 		{
 			return null;
 		}

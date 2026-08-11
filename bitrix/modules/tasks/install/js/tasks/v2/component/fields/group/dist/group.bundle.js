@@ -82,6 +82,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					[tasks_v2_const.GroupType.Collab]: collabTitle,
 					[tasks_v2_const.GroupType.Scrum]: this.loc('TASKS_V2_GROUP_ABOUT_SCRUM')
 				}[this.group?.type] ?? this.loc('TASKS_V2_GROUP_ABOUT');
+			},
+			groupRestricted() {
+				return !this.group || Boolean(this.group.isRestrictedView);
 			}
 		},
 		mounted() {
@@ -91,6 +94,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		methods: {
 			openGroup() {
+				if (this.groupRestricted) {
+					return;
+				}
 				this.closePopup();
 				this.$emit('openGroup');
 			},
@@ -98,7 +104,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.clearTimeouts();
 			},
 			handleMouseEnter() {
-				if (!this.group) {
+				if (this.groupRestricted) {
 					return;
 				}
 				this.groupInfoPromise = tasks_v2_provider_service_groupService.groupService.getGroupInfo(this.group.id);
@@ -332,6 +338,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			readonly() {
 				return !this.task.rights.edit || this.hasFlow;
 			},
+			isRestrictedView() {
+				return Boolean(this.group?.isRestrictedView);
+			},
 			isLocked() {
 				return !this.settings.restrictions.project.available;
 			},
@@ -346,7 +355,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				if (this.readonly) {
-					if (!this.isSecret) {
+					if (!this.isSecret && !this.isRestrictedView) {
 						void this.openGroup();
 					}
 					return;
@@ -358,6 +367,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 			},
 			async openGroup() {
+				if (!this.group || this.isRestrictedView) {
+					return;
+				}
 				if (this.embedded) {
 					void groupDialog.openProject(this.group);
 				} else {
@@ -389,11 +401,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-value="task.groupId"
 			ref="group"
 		>
-			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" @click="handleClick">
+			<div class="tasks-field-group-group" :class="{ '--secret': isSecret, '--restricted': isRestrictedView, }" @click="handleClick">
 				<HoverPill
 					v-if="task.groupId"
 					:withClear
 					@clear="clear"
+					:readonly
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>

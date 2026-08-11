@@ -9,6 +9,8 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 	const { SpinnerLoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { SidebarBaseTabContent } = require('im/messenger/controller/sidebar-v2/tabs/base/src/content');
 
+	const ROWS_ANIMATION_NONE = 'none';
+
 	/**
 	 * @abstract class SidebarBaseTabListContent
 	 */
@@ -105,7 +107,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 
 			if (newItems.length > 0)
 			{
-				await this.appendRows(newItems);
+				await this.insertNewRows(items, newItems, existingItems);
 			}
 
 			if (removedItems.length > 0)
@@ -121,16 +123,57 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 
 		/**
 		 * @protected
+		 * @param {SidebarTabListItemModel[]} targetItems
+		 * @param {SidebarTabListItemModel[]} newItems
+		 * @param {Map<number, SidebarTabListItemModel>} existingItems
+		 * @return {Promise<void>}
+		 */
+		async insertNewRows(targetItems, newItems, existingItems)
+		{
+			const position = targetItems.findIndex((item) => !existingItems.has(item.getId()));
+			if (position === 0)
+			{
+				await this.prependRows(newItems);
+
+				return;
+			}
+
+			if (position + newItems.length === targetItems.length)
+			{
+				await this.appendRows(newItems);
+
+				return;
+			}
+
+			const rows = newItems.map((item) => item.toListView());
+			await this.listViewRef.insertRows(rows, 0, position, ROWS_ANIMATION_NONE);
+			this.state.items.splice(position, 0, ...newItems);
+		}
+
+		/**
+		 * @protected
 		 * @param {Array<SidebarTabListItemModel>} newItems
 		 * @return {Promise<void>}
 		 */
 		async appendRows(newItems = [])
 		{
 			const rows = newItems.map((item) => item.toListView());
-			const animation = 'none';
 
-			await this.listViewRef.appendRows(rows, animation);
+			await this.listViewRef.appendRows(rows, ROWS_ANIMATION_NONE);
 			this.state.items.push(...newItems);
+		}
+
+		/**
+		 * @protected
+		 * @param {Array<SidebarTabListItemModel>} newItems
+		 * @return {Promise<void>}
+		 */
+		async prependRows(newItems = [])
+		{
+			const rows = newItems.map((item) => item.toListView());
+
+			await this.listViewRef.prependRows(rows, ROWS_ANIMATION_NONE);
+			this.state.items.unshift(...newItems);
 		}
 
 		/**
@@ -139,7 +182,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 		 * @param {string} [animation='none']
 		 * @return {Promise<void>}
 		 */
-		async removeRows(removedItems, animation = 'none')
+		async removeRows(removedItems, animation = ROWS_ANIMATION_NONE)
 		{
 			return new Promise((resolve) => {
 				const rowKeys = new Set(removedItems.map((item) => item.getKey()));
@@ -168,7 +211,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 		 * @param {string} [animation='none']
 		 * @return {Promise<void>}
 		 */
-		async deleteAllData(animation = 'none')
+		async deleteAllData(animation = ROWS_ANIMATION_NONE)
 		{
 			return new Promise((resolve) => {
 				const rowKeys = new Set(this.getItems().map((item) => item.getKey()));
@@ -183,7 +226,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 		 * @param {string} animation
 		 * @returns {Promise<void>}
 		 */
-		async updateRows(items, animation = 'none')
+		async updateRows(items, animation = ROWS_ANIMATION_NONE)
 		{
 			const rows = items.map((item) => item.toListView());
 

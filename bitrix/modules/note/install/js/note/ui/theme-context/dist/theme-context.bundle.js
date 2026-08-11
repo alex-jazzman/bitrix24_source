@@ -87,6 +87,25 @@ this.BX.Note = this.BX.Note || {};
 			dialog.subscribe?.('onAfterHide', onHide);
 		},
 		/**
+		 * One-shot pre-paint theme application for a `ui.entity-selector` TagSelector.
+		 * Swaps the design-system context class on the outer container without
+		 * subscribing to future theme changes — use this when the live-change path is
+		 * already covered elsewhere (e.g. themeEntitySelector) to avoid leaked
+		 * subscriptions on repeated opens.
+		 */
+		applyToTagSelectorOnce(selector) {
+			if (!selector || typeof selector.getOuterContainer !== 'function') {
+				return;
+			}
+			const outer = selector.getOuterContainer();
+			if (!outer) {
+				return;
+			}
+			main_core.Dom.removeClass(outer, DESIGN_CONTEXT_CLASS[NoteTheme.LIGHT]);
+			main_core.Dom.removeClass(outer, DESIGN_CONTEXT_CLASS[NoteTheme.DARK]);
+			main_core.Dom.addClass(outer, DESIGN_CONTEXT_CLASS[currentTheme]);
+		},
+		/**
 		 * Apply the active design-system context class to a `ui.entity-selector`
 		 * TagSelector. The selector hardcodes `--ui-context-content-light` on its
 		 * outer container; call this AFTER `new TagSelector(...)` but BEFORE
@@ -134,9 +153,20 @@ this.BX.Note = this.BX.Note || {};
 				if (!popupEl) {
 					return;
 				}
+				const ctxClass = DESIGN_CONTEXT_CLASS[normalize(theme)];
 				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.LIGHT]);
 				main_core.Dom.removeClass(popupEl, DESIGN_CONTEXT_CLASS[NoteTheme.DARK]);
-				main_core.Dom.addClass(popupEl, DESIGN_CONTEXT_CLASS[normalize(theme)]);
+				main_core.Dom.addClass(popupEl, ctxClass);
+
+				// entity-selector hardcodes `--ui-context-content-light` on the inner
+				// tag-selector outer container (the search field wrapper), which re-scopes
+				// `--ui-color-*` tokens back to light and seals the search field from the
+				// popup's dark context. Re-scope it to the active theme so search themes too.
+				popupEl.querySelectorAll('.ui-tag-selector-outer-container').forEach(el => {
+					main_core.Dom.removeClass(el, DESIGN_CONTEXT_CLASS[NoteTheme.LIGHT]);
+					main_core.Dom.removeClass(el, DESIGN_CONTEXT_CLASS[NoteTheme.DARK]);
+					main_core.Dom.addClass(el, ctxClass);
+				});
 			};
 			const onShow = () => {
 				apply(currentTheme);

@@ -164,6 +164,7 @@ $MESS["SALESCENTER_SMS_MESSAGE_HINT"] = "Full link address will be shown after t
 $MESS["SALESCENTER_SUBMENU_CLOSE"] = "Collapse";
 $MESS["SALESCENTER_SUBMENU_OPEN"] = "Expand";
 $MESS["SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT"] = "Template-based message";
+$MESS["SALESCENTER_TEMPLATE_PLACEHOLDER_LINK"] = "Payment link";
 $MESS["SALESCENTER_TERMINAL_CASHBOX_SETUP_HINT"] = "Connect an online cash register to create and send a fiscal receipt. Once the payment system has processed the payment, the online cash register will create a receipt and send it to the customer.";
 $MESS["SALESCENTER_TERMINAL_MOBILE_POPUP_ADD_PHONE"] = "add phone number";
 $MESS["SALESCENTER_TERMINAL_MOBILE_POPUP_BTN_LINK"] = "copy link";

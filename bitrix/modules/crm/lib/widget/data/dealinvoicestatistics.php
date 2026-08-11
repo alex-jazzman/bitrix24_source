@@ -69,6 +69,11 @@ class DealInvoiceStatistics extends DealDataSource
 			$name = 'INVOICE_SUM';
 		}
 
+		if(!in_array($name, self::getAllowedSelectNames(), true))
+		{
+			$name = 'INVOICE_SUM';
+		}
+
 		if($aggregate !== '' && !in_array($aggregate, array('SUM', 'COUNT', 'MAX', 'MIN')))
 		{
 			$aggregate = '';
@@ -100,7 +105,7 @@ class DealInvoiceStatistics extends DealDataSource
 			}
 			else
 			{
-				$query->registerRuntimeField('', new ExpressionField($name, "{$aggregate}({$name})"));
+				$query->registerRuntimeField('', new ExpressionField($name, "{$aggregate}(%s)", $name));
 			}
 		}
 
@@ -338,6 +343,18 @@ class DealInvoiceStatistics extends DealDataSource
 					'SQL' => 'INNER JOIN('.$query->getQuery().') DS ON DS.OWNER_ID = L.ID'
 				)
 			)
+		);
+	}
+
+	private static function getAllowedSelectNames()
+	{
+		return array(
+			'INVOICE_SUM',
+			'INVOICE_QTY',
+			'TOTAL_INVOICE_SUM',
+			'TOTAL_INVOICE_QTY',
+			'TOTAL_SUM',
+			'TOTAL_OWED',
 		);
 	}
 	/**

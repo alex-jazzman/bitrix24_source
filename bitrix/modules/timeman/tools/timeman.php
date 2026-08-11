@@ -691,8 +691,11 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									$res["INFO"]["TEXT_TITLE"] = FormatDate($dayMonthFormat, MakeTimeStamp($report["DATE_TO"]));
 								}
 
-								$res["INFO"]["REPORT_STRIP_TAGS"] = strip_tags(nl2br($res["INFO"]["REPORT"]));
-								$res["INFO"]["PLAN_STRIP_TAGS"] = strip_tags(nl2br($res["INFO"]["PLANS"]));
+								$res["INFO"]["REPORT"] = CUserReportFull::renderReportHtml((string)($res["INFO"]["REPORT"] ?? ''));
+								$res["INFO"]["PLANS"] = CUserReportFull::renderReportHtml((string)($res["INFO"]["PLANS"] ?? ''));
+
+								$res["INFO"]["REPORT_STRIP_TAGS"] = strip_tags($res["INFO"]["REPORT"]);
+								$res["INFO"]["PLAN_STRIP_TAGS"] = strip_tags($res["INFO"]["PLANS"]);
 								$res["INFO"]["APPROVER_INFO"] = [];
 
 								if (intval($res["INFO"]["APPROVER"]) > 0)
@@ -1226,6 +1229,10 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							}
 						}
 
+						$reportRaw = (string)($res['REPORT'] ?? '');
+						$res['REPORT_HTML'] = CUserReportFull::renderReportHtml($reportRaw);
+						$res['REPORT'] = CUserReportFull::renderReportPlain($reportRaw);
+
 						if (count($arUserIDs) > 0)
 						{
 							$arUserIDs = array_unique($arUserIDs);
@@ -1470,7 +1477,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 							$bReturnRes = true;
 							$res = [
-								'REPORT' => $arReport['REPORT'],
+								'REPORT' => CUserReportFull::renderReportPlain((string)$arReport['REPORT']),
 								'REPORT_TS' => MakeTimeStamp($arReport['TIMESTAMP_X']),
 							];
 						}
@@ -2409,7 +2416,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 												break;
 
 											case 'REPORT':
-												$res['REPORT'] = nl2br(htmlspecialcharsbx($arReport['REPORT']));
+												$res['REPORT'] = CUserReportFull::renderReportHtml((string)$arReport['REPORT']);
 										}
 									}
 
@@ -2440,7 +2447,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									$dbRes = CTimeManReportDaily::GetList(['ID' => 'DESC'], ['ENTRY_ID' => $arInfo['INFO']['ID']]);
 									if ($arRes = $dbRes->Fetch())
 									{
-										$res['REPORT'] = nl2br(htmlspecialcharsEx($arRes['REPORT']));
+										$res['REPORT'] = CUserReportFull::renderReportHtml((string)$arRes['REPORT']);
 
 										if ($res['INFO']['TASKS_ENABLED'])
 										{
@@ -2515,7 +2522,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 					$arReport = $obUser->SetReport('', 0, $info['ID']);
 					if (is_array($arReport))
 					{
-						$info['REPORT'] = $arReport['REPORT'];
+						$info['REPORT'] = CUserReportFull::renderReportPlain((string)$arReport['REPORT']);
 						$info['REPORT_TS'] = MakeTimeStamp($arReport['TIMESTAMP_X']);
 					}
 					echo CUtil::PhpToJsObject($info);

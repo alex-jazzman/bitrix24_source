@@ -67,7 +67,7 @@ export class CopilotBase extends Base
 		}
 		else
 		{
-			this.#launchCopilot(item, actionData);
+			await this.#launchCopilot(item, actionData);
 		}
 	}
 
@@ -120,7 +120,7 @@ export class CopilotBase extends Base
 			const isAgreementAccepted = await copilotAgreementPopup.checkAgreement();
 			if (isAgreementAccepted)
 			{
-				this.#launchCopilot(item, actionData);
+				await this.#launchCopilot(item, actionData);
 			}
 		}
 		catch
@@ -129,7 +129,7 @@ export class CopilotBase extends Base
 		}
 	}
 
-	#launchCopilot(item: ConfigurableItem, actionData: Object): void
+	async #launchCopilot(item: ConfigurableItem, actionData: Object): Promise<void>
 	{
 		if (!this.#validateCopilotParams(actionData))
 		{
@@ -145,15 +145,18 @@ export class CopilotBase extends Base
 
 		this.#copilotConfig.onPreLaunch?.(item, actionData);
 
+		const previousButtonState = aiCopilotBtnUI?.getState();
 		aiCopilotBtnUI?.setState(ButtonState.AI_WAITING);
 
-		this.#executeCopilotRequest(actionData)
-			.then((response) => {
-				this.#copilotConfig.onPostLaunch?.(item, actionData, response);
-			})
-			.catch((response) => {
-				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI);
-			});
+		try
+		{
+			const response = await this.#executeCopilotRequest(actionData);
+			this.#copilotConfig.onPostLaunch?.(item, actionData, response);
+		}
+		catch (response)
+		{
+			this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI, previousButtonState);
+		}
 	}
 
 	#validateCopilotParams(actionData: Object): boolean
@@ -183,26 +186,35 @@ export class CopilotBase extends Base
 		});
 	}
 
-	#handleCopilotError(item: ConfigurableItem, actionData: Object, response: Object, btnUI: ?ButtonUI): void
+	#handleCopilotError(
+		item: ConfigurableItem,
+		actionData: Object,
+		response: Object,
+		btnUI: ?ButtonUI,
+		previousButtonState: ?string,
+	): void
 	{
 		const customData: ?CoPilotAdditionalInfoData = response?.errors?.[0]?.customData;
 		if (customData)
 		{
 			this.#showAdditionalInfo(customData, item);
 
-			btnUI?.setState(ButtonState.ACTIVE);
+			this.#restoreButtonState(btnUI, previousButtonState);
 		}
 		else
 		{
-			this.#showGenericError(response, btnUI);
+			this.#showGenericError(response, btnUI, previousButtonState);
 		}
 
 		this.#copilotConfig.onError?.(item, actionData, response);
-
-		throw response;
 	}
 
-	#showGenericError(response: Object, btnUI: ?ButtonUI): void
+	#restoreButtonState(btnUI: ?ButtonUI, previousButtonState: ?string): void
+	{
+		btnUI?.setState(Type.isStringFilled(previousButtonState) ? previousButtonState : ButtonState.ACTIVE);
+	}
+
+	#showGenericError(response: Object, btnUI: ?ButtonUI, previousButtonState: ?string): void
 	{
 		btnUI?.setState(ButtonState.DISABLED);
 
@@ -212,7 +224,7 @@ export class CopilotBase extends Base
 		});
 
 		setTimeout(() => {
-			btnUI?.setState(ButtonState.ACTIVE);
+			this.#restoreButtonState(btnUI, previousButtonState);
 		}, COPILOT_BUTTON_DISABLE_DELAY);
 	}
 

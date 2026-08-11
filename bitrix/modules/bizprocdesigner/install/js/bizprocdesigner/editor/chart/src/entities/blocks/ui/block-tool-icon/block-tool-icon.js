@@ -23,6 +23,14 @@ export const BlockToolIcon = {
 			type: Boolean,
 			default: false,
 		},
+		blockId: {
+			type: String,
+			default: null,
+		},
+		animate: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): BlockToolIconSetup
 	{
@@ -44,6 +52,8 @@ export const BlockToolIcon = {
 			:iconName="preparedIconName"
 			:iconColorIndex="0"
 			:deactivated="deactivated"
+			:blockId="blockId"
+			:animate="animate"
 		/>
 	`,
 };

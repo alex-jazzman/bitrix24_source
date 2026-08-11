@@ -13,6 +13,7 @@ export const UserType = {
 	bot: 'bot',
 	extranet: 'extranet',
 	collaber: 'collaber',
+	guest: 'guest',
 };
 
 export const UserRole = {

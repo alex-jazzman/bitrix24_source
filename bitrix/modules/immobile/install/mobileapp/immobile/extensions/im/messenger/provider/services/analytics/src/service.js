@@ -25,6 +25,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { VoteAnalytics } = require('im/messenger/provider/services/analytics/vote');
 	const { MessageCreateMenu } = require('im/messenger/provider/services/analytics/message-create-menu');
 	const { ChatOpen } = require('im/messenger/provider/services/analytics/chat-open');
+	const { Suggests } = require('im/messenger/provider/services/analytics/suggests');
 	const { ChatPin } = require('im/messenger/provider/services/analytics/chat-pin');
 	const { NavigationTab } = require('im/messenger/provider/services/analytics/navigation-tab');
 	const { AudioAnalytics } = require('im/messenger/provider/services/analytics/src/audio');
@@ -85,6 +86,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#messageCreateMenu;
 		/** @type {ChatOpen} */
 		#chatOpen;
+		/** @type {Suggests} */
+		#suggests;
 		/** @type {ChatPin} */
 		#chatPin;
 		/** @type {NavigationTab} */
@@ -249,6 +252,17 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#chatOpen = this.#chatOpen ?? new ChatOpen();
 
 			return this.#chatOpen;
+		}
+
+		/**
+		 * @protected
+		 * @return {Suggests}
+		 */
+		get suggests()
+		{
+			this.#suggests = this.#suggests ?? new Suggests();
+
+			return this.#suggests;
 		}
 
 		/** @protected */
@@ -495,13 +509,15 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.chatPin.sendPinChatNotes();
 		}
 
+
 		/**
 		 * @param {DialogId} dialogId
-		 * @param {string} section
+		 * @param {string} [context]
+		 * @param {ModesState} [modesState]
 		 */
-		sendOpenCopilotDialog({ dialogId, context })
+		sendOpenCopilotDialog({ dialogId, context, modesState })
 		{
-			return this.chatOpen.sendOpenCopilotDialog({ dialogId, context });
+			return this.chatOpen.sendOpenCopilotDialog({ dialogId, context, modesState });
 		}
 
 		/**
@@ -804,6 +820,44 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendClickMCPIntegrations(dialogId)
 		{
 			this.assistantButtonAnalytics.sendClickMCPIntegrations(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {ModesState} [modesState]
+		 */
+		sendSuggestsShow({ dialogId, modesState })
+		{
+			this.suggests.sendSuggestsShow({ dialogId, modesState });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} suggestText
+		 * @param {ModesState} [modesState]
+		 */
+		sendSuggestsClick({ dialogId, suggestText, modesState })
+		{
+			this.suggests.sendSuggestsClick({ dialogId, suggestText, modesState });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} mode - one of Analytics.ChatMode
+		 * @param {ModesState} [modesState]
+		 */
+		sendModeChange({ dialogId, mode, modesState })
+		{
+			this.assistantButtonAnalytics.sendModeChange({ dialogId, mode, modesState });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {ModesState} [modesState]
+		 */
+		sendRoleChange({ dialogId, modesState })
+		{
+			this.assistantButtonAnalytics.sendRoleChange({ dialogId, modesState });
 		}
 
 		/**

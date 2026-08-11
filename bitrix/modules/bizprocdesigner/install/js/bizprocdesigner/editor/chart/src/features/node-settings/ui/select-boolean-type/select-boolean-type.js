@@ -1,8 +1,4 @@
-import './style.css';
-
 import { mapActions } from 'ui.vue3.pinia';
-
-import { useLoc } from '../../../../shared/composables';
 
 import {
 	useNodeSettingsStore,
@@ -12,6 +8,9 @@ import {
 	// eslint-disable-next-line no-unused-vars
 	type Construction,
 } from '../../../../entities/node-settings';
+import { useLoc } from '../../../../shared/composables';
+
+import './style.css';
 
 // @vue/component
 export const SelectBooleanType = {
@@ -47,8 +46,8 @@ export const SelectBooleanType = {
 		booleanTypes(): Array<$Values<typeof CONSTRUCTION_TYPES>>
 		{
 			return [
-				CONSTRUCTION_TYPES.AND_CONDITION,
-				CONSTRUCTION_TYPES.OR_CONDITION,
+				CONSTRUCTION_TYPES.CONDITION.AND_CONDITION,
+				CONSTRUCTION_TYPES.CONDITION.OR_CONDITION,
 			];
 		},
 		constructionLabels(): ConstructionLabels

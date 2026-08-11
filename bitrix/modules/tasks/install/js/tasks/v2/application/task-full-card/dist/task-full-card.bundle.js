@@ -307,7 +307,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				return {
 					id: templatePickerOpenerId,
 					title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK_WITH_TEMPLATE'),
-					icon: ui_iconSet_api_vue.Outline.TEMPLATE_TASK,
+					icon: ui_iconSet_api_vue.Outline.TEMPLATE_PLUS,
 					handleClickItem: this.handleClickTemplatesPickerOpener,
 					isActive: this.isTemplatesPickerOpened
 				};
@@ -315,11 +315,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			itemCreationTemplateFromTask() {
 				return {
 					title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'),
-					icon: ui_iconSet_api_vue.Outline.TEMPLATE_TASK,
-					handleClickItem: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
-						groupId: this.task.groupId,
-						analytics: this.getAnalytics()
-					})
+					icon: ui_iconSet_api_vue.Outline.O_TEMPLATE_TASK,
+					handleClickItem: async () => {
+						this.isControlPanelOpened = false;
+						const [id, error] = await tasks_v2_provider_service_templateService.templateService.addFromExistingTask(this.taskId);
+						main_core_events.EventEmitter.emit(tasks_v2_const.EventName.NotifyTemplateCreated, {
+							id,
+							error
+						});
+					}
 				};
 			},
 			itemRoutingBitrixMarket() {
@@ -361,9 +365,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				return [this.itemToggleWatch, this.itemToggleNotification, this.itemCopyUrl].filter(item => item);
 			},
 			itemsCreation() {
-				return [this.userRights.tasks.create && this.itemCreationTaskNew, this.task.rights.createSubtask && this.itemCreationSubtask, this.task.rights.copy && this.itemCreationTaskCopy, this.userRights.tasks.createFromTemplate && this.itemCreationTaskNewWithTemplate, false,
-				// TODO: handle later
-				this.itemToggleFavor].filter(item => item);
+				return [this.userRights.tasks.create && this.itemCreationTaskNew, this.task.rights.createSubtask && this.itemCreationSubtask, this.task.rights.copy && this.itemCreationTaskCopy, this.userRights.tasks.createFromTemplate && this.itemCreationTaskNewWithTemplate, this.task.rights.saveAsTemplate && this.itemCreationTemplateFromTask, this.itemToggleFavor].filter(item => item);
 			},
 			itemsRouting() {
 				return [this.itemRoutingBitrixMarket, this.userRights.tasks.robot && this.itemRoutingRobots].filter(item => item);
@@ -2284,6 +2286,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						isEnabled: this.wasFilled(tasks_v2_const.TaskField.RelatedTasks) || this.task.rights.edit
 					},
 					printIgnore: !this.task.relatedTaskIds || this.task.relatedTaskIds.length === 0
+				}, {
+					chip: {
+						component: tasks_v2_component_fields_replication.ReplicationChip,
+						props: {
+							isSheetShown: this.isReplicationSheetShown,
+							sheetBindProps: this.sheetBindProps
+						},
+						isEnabled: this.wasFilled(tasks_v2_const.TaskField.Replication) || this.task.rights.saveAsTemplate || tasks_v2_core.Core.getParams().rights.templates.create,
+						events: {
+							'update:isSheetShown': isShown => {
+								this.isReplicationSheetShown = isShown;
+							}
+						}
+					}
 				}, !this.isTemplate && {
 					chip: {
 						component: tasks_v2_component_fields_gantt.GanttChip,
@@ -2303,20 +2319,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						events: {
 							'update:isSheetShown': isShown => {
 								this.isDatePlanSheetShown = isShown;
-							}
-						}
-					}
-				}, this.isTemplate && {
-					chip: {
-						component: tasks_v2_component_fields_replication.ReplicationChip,
-						props: {
-							isSheetShown: this.isReplicationSheetShown,
-							sheetBindProps: this.sheetBindProps
-						},
-						isEnabled: this.wasFilled(tasks_v2_const.TaskField.Replication) || this.task.rights.edit,
-						events: {
-							'update:isSheetShown': isShown => {
-								this.isReplicationSheetShown = isShown;
 							}
 						}
 					}
@@ -2485,11 +2487,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					initialTemplate.requireDeadlineChangeReason = false;
 					initialTemplate.allowsChangeDeadline = false;
 				}
+				const responsibleIds = this.initialTask.responsibleIds;
 				await tasks_v2_provider_service_taskService.taskService.insertStoreTask({
 					...this.initialTask,
 					id: this.taskId,
 					creatorId: tasks_v2_core.Core.getParams().currentUser.id,
-					responsibleIds: [tasks_v2_core.Core.getParams().currentUser.id],
+					responsibleIds: responsibleIds?.length > 0 ? responsibleIds : [tasks_v2_core.Core.getParams().currentUser.id],
 					deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
 					needsControl: flags.needsControl ?? null,
 					matchesWorkTime: flags.matchesWorkTime ?? null,
@@ -3013,6 +3016,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 									<RelatedTasks/>
 								</div>
 								<div
+									v-if="wasFilled(TaskField.Replication)"
+									class="tasks-full-card-field-container --custom print-ignore"
+									data-field-container
+								>
+									<Replication
+										v-model:isSheetShown="isReplicationSheetShown"
+										v-model:isHistorySheetShown="isReplicationHistorySheetShown"
+										:sheetBindProps
+									/>
+								</div>
+								<div
 									v-if="!isTemplate && wasFilled(TaskField.Gantt)"
 									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
 									:class="{ 'print-ignore': shouldIgnoreGanttPrint }"
@@ -3027,17 +3041,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 									data-field-container
 								>
 									<DatePlan v-model:isSheetShown="isDatePlanSheetShown" :sheetBindProps/>
-								</div>
-								<div
-									v-if="isTemplate && wasFilled(TaskField.Replication)"
-									class="tasks-full-card-field-container print-before-divider-accent --custom tasks-full-card-field-container-replication"
-									data-field-container
-								>
-									<Replication
-										v-model:isSheetShown="isReplicationSheetShown"
-										v-model:isHistorySheetShown="isReplicationHistorySheetShown"
-										:sheetBindProps
-									/>
 								</div>
 								<div
 									v-if="shouldShowUserFields"
@@ -3291,7 +3294,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		};
 		#handleTemplateAdd = event => {
 			const initialTemplate = event.getData().initialTemplate;
-			if (initialTemplate.id !== this.#params.taskId) {
+			if (!initialTemplate || initialTemplate.id !== this.#params.taskId) {
 				return;
 			}
 			const template = event.getData().template;

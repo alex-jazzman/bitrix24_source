@@ -1,0 +1,21 @@
+<?php
+
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_COUNTER'] = 'Знаков [color]#COUNT#[/color]/#MAX#';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_ADD_FILE'] = 'Файл';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_ADD_FILE_UPLOAD'] = 'Выбрать на компьютере';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_ADD_FILE_DISK'] = 'Найти в Битрикс24';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_PLACEHOLDER'] = 'Напишите сообщение';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_BUTTON_ADD'] = 'Добавить';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_PREVIEW'] = 'Что увидит клиент';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_PLACEHOLDER_FILLED_LATER_HINT'] = 'Некоторые данные заполнятся автоматически после отправки сообщения';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_NO_RECEIVER'] = 'Добавьте телефон клиента';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_NO_TEMPLATE_TITLE'] = 'Здесь будет шаблон сообщения';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_NO_TEMPLATE_BODY'] = 'Зарегистрируйте свой шаблон в личном кабинете вашего канала связи, чтобы отправлять клиенту сообщения';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_SUGGEST_TEMPLATE'] = 'Предложить шаблон';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_TEMPLATES'] = 'Шаблоны';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_FROM'] = 'Отправим сообщение с номера #FROM#';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_BUTTON_SEND'] = 'Отправить';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_BUTTON_CANCEL'] = 'Отмена';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_BUTTON_NO_CHANNELS'] = 'Подключить отправку сообщений';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_GENERIC_ERROR'] = 'Не удалось выполнить действие. Попробуйте ещё раз';
+$MESS['MESSAGESERVICE_MESSAGE_EDITOR_TEMPLATE_MESSAGE'] = 'Сообщение по шаблону';

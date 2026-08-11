@@ -1,4 +1,6 @@
 import { ConnectPopup } from './connect-popup';
+import { EmailEnterCodeView } from './view/email-enter-code-view';
+import { EmailView } from './view/email-view';
 import { QrView } from './view/qr-view';
 import { SendNumberView } from './view/send-number-view';
 import { EnablePushOtpProvider } from './enable-push-otp-provider';
@@ -8,6 +10,8 @@ import { pauseOtpRequest, resumeOtpRequest } from './request';
 
 export {
 	ConnectPopup,
+	EmailEnterCodeView,
+	EmailView,
 	QrView,
 	SendNumberView,
 	EnablePushOtpProvider,

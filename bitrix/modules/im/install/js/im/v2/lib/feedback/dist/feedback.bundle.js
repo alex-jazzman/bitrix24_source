@@ -5,8 +5,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports, main_core, im_v2_application_core, im_v2_lib_feature) {
 	'use strict';
 
-	const AI_ASSISTANT_FORM_ID = 'im.ai-assistant.feedback';
-	const COPILOT_FORM_ID = 'im.copilot.feedback';
 	const GENERAL_FORM_ID = 'im-v2-feedback';
 	const FormContext = {
 		aiAssistantBot: 'chat_ai-assistant_one_by_one',
@@ -14,14 +12,82 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		copilotGroup: 'chat_copilot_tab_multi',
 		general: 'profile'
 	};
-	const FormConfigAiAssistant = {
-		id: AI_ASSISTANT_FORM_ID,
-		forms: getAiAssistantForms()
-	};
-	const FormConfigCopilot = {
-		id: COPILOT_FORM_ID,
-		forms: getCopilotForms()
-	};
+	const AiAssistantFormId = 'im.ai-assistant.feedback';
+	const AiAssistantFormsV2 = [{
+		zones: ['en'],
+		id: 834,
+		lang: 'en',
+		sec: 'qnauno'
+	}, {
+		zones: ['ru', 'by', 'kz', 'uz'],
+		id: 2982,
+		lang: 'ru',
+		sec: 'vqmcxn'
+	}];
+	const AiAssistantFormsLegacy = [{
+		zones: ['es'],
+		id: 838,
+		lang: 'es',
+		sec: 'm82wkx'
+	}, {
+		zones: ['en'],
+		id: 834,
+		lang: 'en',
+		sec: 'qnauno'
+	}, {
+		zones: ['de'],
+		id: 836,
+		lang: 'de',
+		sec: 'frcsm3'
+	}, {
+		zones: ['com.br'],
+		id: 840,
+		lang: 'com.br',
+		sec: 'ufjnte'
+	}, {
+		zones: ['ru', 'kz', 'by', 'uz'],
+		id: 2982,
+		lang: 'ru',
+		sec: 'vqmcxn'
+	}];
+	const CopilotFormId = 'im.copilot.feedback';
+	const CopilotFormsV2 = [{
+		zones: ['en'],
+		id: 834,
+		lang: 'en',
+		sec: 'qnauno'
+	}, {
+		zones: ['ru', 'by', 'kz', 'uz'],
+		id: 2982,
+		lang: 'ru',
+		sec: 'vqmcxn'
+	}];
+	const CopilotFormsLegacy = [{
+		zones: ['es'],
+		id: 684,
+		lang: 'es',
+		sec: 'svvq1x'
+	}, {
+		zones: ['en'],
+		id: 686,
+		lang: 'en',
+		sec: 'tjwodz'
+	}, {
+		zones: ['de'],
+		id: 688,
+		lang: 'de',
+		sec: 'nrwksg'
+	}, {
+		zones: ['com.br'],
+		id: 690,
+		lang: 'com.br',
+		sec: 'kpte6m'
+	}, {
+		zones: ['ru', 'by', 'kz'],
+		id: 692,
+		lang: 'ru',
+		sec: 'jbujn0'
+	}];
 	const FormConfigGeneral = {
 		id: GENERAL_FORM_ID,
 		forms: [{
@@ -36,97 +102,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			lang: 'en'
 		}]
 	};
-	function getAiAssistantForms() {
-		if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
-			return [{
-				zones: ['en'],
-				id: 834,
-				lang: 'en',
-				sec: 'qnauno'
-			}, {
-				zones: ['ru', 'by', 'kz', 'uz'],
-				id: 2982,
-				lang: 'ru',
-				sec: 'vqmcxn'
-			}];
-		}
-		return [{
-			zones: ['es'],
-			id: 838,
-			lang: 'es',
-			sec: 'm82wkx'
-		}, {
-			zones: ['en'],
-			id: 834,
-			lang: 'en',
-			sec: 'qnauno'
-		}, {
-			zones: ['de'],
-			id: 836,
-			lang: 'de',
-			sec: 'frcsm3'
-		}, {
-			zones: ['com.br'],
-			id: 840,
-			lang: 'com.br',
-			sec: 'ufjnte'
-		}, {
-			zones: ['ru', 'kz', 'by', 'uz'],
-			id: 2982,
-			lang: 'ru',
-			sec: 'vqmcxn'
-		}];
-	}
-	function getCopilotForms() {
-		if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
-			return [{
-				zones: ['en'],
-				id: 834,
-				lang: 'en',
-				sec: 'qnauno'
-			}, {
-				zones: ['ru', 'by', 'kz', 'uz'],
-				id: 2982,
-				lang: 'ru',
-				sec: 'vqmcxn'
-			}];
-		}
-		return [{
-			zones: ['es'],
-			id: 684,
-			lang: 'es',
-			sec: 'svvq1x'
-		}, {
-			zones: ['en'],
-			id: 686,
-			lang: 'en',
-			sec: 'tjwodz'
-		}, {
-			zones: ['de'],
-			id: 688,
-			lang: 'de',
-			sec: 'nrwksg'
-		}, {
-			zones: ['com.br'],
-			id: 690,
-			lang: 'com.br',
-			sec: 'kpte6m'
-		}, {
-			zones: ['ru', 'by', 'kz'],
-			id: 692,
-			lang: 'ru',
-			sec: 'jbujn0'
-		}];
-	}
 
 	const FEEDBACK_EXTENSION = 'ui.feedback.form';
 	class FeedbackManager {
+		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
 		async openAiAssistantForm(params) {
-			const {
-				id,
-				forms
-			} = FormConfigAiAssistant;
-			const formattedId = `${id}-${this.#generateFormIdSuffix()}`;
+			const formattedId = `${AiAssistantFormId}-${this.#generateFormIdSuffix()}`;
+			const forms = this.#isBitrixGptV2Available ? AiAssistantFormsV2 : AiAssistantFormsLegacy;
 			const config = {
 				id: formattedId,
 				forms,
@@ -139,21 +121,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			void this.#openForm(config);
 		}
 		async openCopilotForm(params) {
-			const {
-				id,
-				forms
-			} = FormConfigCopilot;
-			const formattedId = `${id}-${this.#generateFormIdSuffix()}`;
+			const formattedId = `${CopilotFormId}-${this.#generateFormIdSuffix()}`;
+			const forms = this.#isBitrixGptV2Available ? CopilotFormsV2 : CopilotFormsLegacy;
 			const context = params.userCounter <= 2 ? FormContext.copilotBot : FormContext.copilotGroup;
 			const config = {
 				id: formattedId,
 				forms,
 				presets: {
 					sender_page: context,
-					language: im_v2_application_core.Core.getLanguageId(),
-					cp_answer: params.text
+					language: im_v2_application_core.Core.getLanguageId()
 				}
 			};
+			if (this.#isBitrixGptV2Available) {
+				config.presets = {
+					...config.presets,
+					message: params.message.text,
+					sending_time: params.message.date,
+					chat_id: params.message.chatId,
+					message_id: params.message.id
+				};
+			} else {
+				config.presets = {
+					...config.presets,
+					cp_answer: params.message.text
+				};
+			}
 			void this.#openForm(config);
 		}
 		async openGeneralForm() {

@@ -6,7 +6,7 @@ import {
 	type Store,
 } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Communication, Model } from 'booking.const';
 import {
 	type ResourceModel,
 	type ResourcesState,
@@ -59,6 +59,7 @@ export class Resources extends BuilderModel
 			createdAt: 0,
 			updatedAt: 0,
 			deletedAt: 0,
+			senderCode: Communication.Bitrix24,
 			entities: [],
 			skus: [],
 			skusYandex: [],
@@ -125,6 +126,10 @@ export class Resources extends BuilderModel
 			setResourcesSkuRelations: (store, resourcesSkuRelations: ResourceSkuRelationsModel) => {
 				store.commit('setResourcesSkuRelations', resourcesSkuRelations);
 			},
+			/** @function resources/setSenderCodeForAll */
+			setSenderCodeForAll: (store: Store, senderCode: string): void => {
+				store.commit('setSenderCodeForAll', senderCode);
+			},
 		};
 	}
 
@@ -145,6 +150,12 @@ export class Resources extends BuilderModel
 			},
 			setResourcesSkuRelations: (state, resourcesSkuRelations: ResourceSkuRelationsModel) => {
 				state.resourcesSkuRelations = resourcesSkuRelations;
+			},
+			setSenderCodeForAll: (state: ResourcesState, senderCode: string): void => {
+				for (const resource of Object.values(state.collection))
+				{
+					resource.senderCode = senderCode;
+				}
 			},
 		};
 	}

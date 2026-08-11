@@ -3,16 +3,14 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports, im_v2_application_core, im_v2_component_elements_listLoadingState, im_v2_lib_utils, imopenlines_v2_const, imopenlines_v2_lib_menu, imopenlines_v2_provider_service, im_v2_component_elements_avatar, im_v2_const, im_v2_lib_dateFormatter, im_v2_component_elements_chatTitle, im_v2_lib_parser) {
+(function (exports, im_v2_application_core, im_v2_component_elements_listLoadingState, im_v2_lib_utils, imopenlines_v2_const, imopenlines_v2_lib_menu, imopenlines_v2_provider_service, im_v2_component_list_items_elements_emptyState, im_v2_lib_dateFormatter, im_v2_component_elements_avatar, im_v2_const, im_v2_component_elements_chatTitle, im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
 	const EmptyState = {
 		name: 'EmptyState',
-		computed: {
-			message() {
-				return this.loc('IMOL_LIST_RECENT_EMPTY_MESSAGE');
-			}
+		components: {
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 		},
 		methods: {
 			loc(phraseCode) {
@@ -20,12 +18,41 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			}
 		},
 		template: `
-		<div class="bx-imol-list-recent-empty-state__container">
-			<p class="bx-im-list-openlines-empty-state__text">
-				{{ message }}
-			</p>
-		</div>
+		<RecentEmptyState
+			class="bx-imol-list-recent-empty-state"
+			:title="loc('IMOL_LIST_RECENT_EMPTY_MESSAGE_MSGVER_1')"
+		/>
 	`
+	};
+
+	const getMessageDate = messageId => {
+		const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+		return message ? message.date : null;
+	};
+	const getDayKey = date => {
+		return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+	};
+	const groupByDate = (recentItems, order = 'desc') => {
+		const groupsByDay = new Map();
+		recentItems.forEach(item => {
+			const messageDate = getMessageDate(item.messageId);
+			if (!messageDate) {
+				return;
+			}
+			const dayKey = getDayKey(messageDate);
+			let group = groupsByDay.get(dayKey);
+			if (!group) {
+				group = {
+					date: messageDate,
+					items: []
+				};
+				groupsByDay.set(dayKey, group);
+			} else if (messageDate > group.date) {
+				group.date = messageDate;
+			}
+			group.items.push(item);
+		});
+		return [...groupsByDay.values()].sort((a, b) => order === 'asc' ? a.date - b.date : b.date - a.date);
 	};
 
 	// @vue/component
@@ -203,8 +230,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	};
 
 	// @vue/component
-	const RecentGroup = {
-		name: 'RecentGroup',
+	const RecentDateGroup = {
+		name: 'RecentDateGroup',
 		components: {
 			RecentItem
 		},
@@ -222,6 +249,13 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		computed: {
 			groupTitle() {
 				return this.loc(`IMOL_LIST_STATUS_MESSAGE_${this.groupName.toUpperCase()}`);
+			},
+			itemsByDate() {
+				const order = this.groupName === imopenlines_v2_const.StatusGroup.answered ? 'desc' : 'asc';
+				return groupByDate(this.groupItems, order).map(group => ({
+					...group,
+					title: this.formatDateGroup(group.date)
+				}));
 			}
 		},
 		methods: {
@@ -231,35 +265,45 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			onContextMenu(dialogId, event) {
 				this.$emit('recentContextMenu', dialogId, event);
 			},
+			formatDateGroup(date) {
+				return im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.dateGroup);
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
 		},
 		template: `
 		<div class="bx-imol-list-recent__group-item_container" v-if="groupItems.length !== 0">
-			<span 
-				class="bx-imol-list-recent__group_name" 
+			<span
+				class="bx-imol-list-recent__group_name"
 				:class="'bx-imol-list-recent__group_name_' + groupName.toLowerCase()"
 			>
 				{{ groupTitle }}
 			</span>
-			<RecentItem
-				v-for="item in groupItems"
-				:item="item"
-				:key="item.dialogId"
-				@click="onRecentClick(item.dialogId)"
-				@contextmenu.prevent="onContextMenu(item.dialogId, $event)"
-			/>
+			<div v-for="dateGroup in itemsByDate" :key="dateGroup.title">
+				<div class="bx-imol-list-recent__date-group_name">{{ dateGroup.title }}</div>
+				<RecentItem
+					v-for="item in dateGroup.items"
+					:item="item"
+					:key="item.dialogId"
+					@click="onRecentClick(item.dialogId)"
+					@contextmenu.prevent="onContextMenu(item.dialogId, $event)"
+				/>
+			</div>
 		</div>
 	`
 	};
 
+	const componentByStatusGroup = {
+		[imopenlines_v2_const.StatusGroup.new]: RecentDateGroup,
+		[imopenlines_v2_const.StatusGroup.work]: RecentDateGroup,
+		[imopenlines_v2_const.StatusGroup.answered]: RecentDateGroup
+	};
 	// @vue/component
 	const RecentList = {
 		name: 'RecentList',
 		components: {
 			EmptyState,
-			RecentGroup,
 			LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState
 		},
 		emits: ['chatClick'],
@@ -330,6 +374,9 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				const session = this.getSessionByDialogId(dialogId);
 				return session ? session.status : imopenlines_v2_const.StatusGroup.new;
 			},
+			componentForGroup(groupName) {
+				return componentByStatusGroup[groupName];
+			},
 			sortGroupItems(groupName, items) {
 				if (groupName === imopenlines_v2_const.StatusGroup.answered) {
 					return this.sortItemsDesc(items);
@@ -374,7 +421,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			<LoadingState v-if="isLoading && !firstPageLoaded" />
 			<div v-else @scroll="onScroll"  class="bx-imol-list-recent__scroll-container">
 				<EmptyState v-if="isEmptyCollection" />
-				<RecentGroup
+				<component
+					:is="componentForGroup(groupName)"
 					v-for="(groupItems, groupName) in sortedCollectionByGroups"
 					:groupItems="groupItems"
 					:groupName="groupName"
@@ -390,5 +438,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-})(this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.OpenLines.v2.Const, BX.OpenLines.v2.Lib, BX.OpenLines.v2.Provider.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib);
+})(this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.OpenLines.v2.Const, BX.OpenLines.v2.Lib, BX.OpenLines.v2.Provider.Service, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib);
 //# sourceMappingURL=recent-list.bundle.js.map

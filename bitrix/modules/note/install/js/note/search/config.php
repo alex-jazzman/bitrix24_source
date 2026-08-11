@@ -9,6 +9,7 @@ return [
     'css' => './dist/search.bundle.css',
     'rel' => [
 		'main.core',
+		'note.analytics',
 		'note.ui.document-list',
 		'ui.notification',
 	],

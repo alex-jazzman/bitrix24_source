@@ -280,6 +280,14 @@ Class disk extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			fromModuleId: 'main',
+			eventType: 'OnAfterUserLogout',
+			toModuleId: 'disk',
+			toClass: \Bitrix\Disk\Internal\Integration\Main\EventHandlers\OnAfterUserLogoutEventHandler::class,
+			toMethod: 'handle',
+		);
+
+		$eventManager->registerEventHandler(
 			fromModuleId: 'disk',
 			/** @see DeletingCustomServerEvent::EVENT_NAME */
 			eventType: 'deletingCustomServer',
@@ -371,6 +379,14 @@ Class disk extends CModule
 			toModuleId: 'disk',
 			toClass: \Bitrix\Disk\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentType\GetDocumentTypes::class,
 			toMethod: 'onGetDocumentType',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'main',
+			eventType: 'OnAfterUserLogout',
+			toModuleId: 'disk',
+			toClass: \Bitrix\Disk\Internal\Integration\Main\EventHandlers\OnAfterUserLogoutEventHandler::class,
+			toMethod: 'handle',
 		);
 
 		$eventManager->unRegisterEventHandler(

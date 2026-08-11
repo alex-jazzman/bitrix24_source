@@ -597,7 +597,7 @@ body {
 }
 
 body.--right-panel-expanded {
-	--air-right-panel-width: 380px;
+	--air-right-panel-width: 360px;
 	--air-right-panel-expanded: 1;
 
 	--air-sidepanel-toolbar-right: var(--air-sidepanel-toolbar-right-shifted);
@@ -839,7 +839,7 @@ body.--right-panel-expanded.--right-panel-no-transition .app__page {
 }
 
 body.--right-panel-expanded.--resizing .app__right-panel {
-	min-width: 320px;
+	min-width: 360px;
 }
 
 body.--right-panel-expanded.--right-panel-no-transition .app__right-panel {
@@ -3483,4 +3483,29 @@ body.im-chat-embedded {
 	.pagetitle-star {
 		display: none !important;
 	}
+}
+
+.air-header__marta-slot {
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	overflow: visible;
+	visibility: hidden;
+}
+
+.air-header__marta-slot.--ready {
+	visibility: visible;
+}
+
+.air-header__marta-slot .aiassistant-marta {
+	position: relative;
+	left: auto;
+	bottom: auto;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	transform: scale(0.82);
+	transform-origin: center;
 }

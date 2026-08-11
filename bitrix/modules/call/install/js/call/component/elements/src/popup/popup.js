@@ -1,4 +1,4 @@
-import { Popup, PopupManager, PopupOptions } from 'main.popup';
+import { Popup, PopupManager } from 'main.popup';
 import { Type } from 'main.core';
 
 import type { JsonObject } from 'main.core';
@@ -26,9 +26,7 @@ export const CallPopupContainer = {
 	emits: ['close', 'popup-instance-created'],
 	data(): JsonObject
 	{
-		return {
-			instance: null,
-		};
+		return {};
 	},
 	computed:
 	{
@@ -39,11 +37,7 @@ export const CallPopupContainer = {
 	},
 	created()
 	{
-		if (this.instance)
-		{
-			this.closePopup();
-		}
-
+		this.instance = null;
 		this.instance = this.getPopupInstance();
 		this.instance.show();
 	},
@@ -78,7 +72,7 @@ export const CallPopupContainer = {
 
 			return this.instance;
 		},
-		getDefaultConfig(): PopupOptions
+		getDefaultConfig()
 		{
 			return {
 				id: this.id,
@@ -119,9 +113,15 @@ export const CallPopupContainer = {
 		},
 		closePopup()
 		{
-			this.$emit('close');
-			this.instance.destroy();
+			if (!this.instance)
+			{
+				return;
+			}
+
+			const instance = this.instance;
 			this.instance = null;
+			this.$emit('close');
+			instance.destroy();
 		},
 		enableAutoHide()
 		{

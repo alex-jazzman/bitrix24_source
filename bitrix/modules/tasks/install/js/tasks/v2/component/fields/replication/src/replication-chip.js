@@ -133,7 +133,7 @@ export const ReplicationChip = {
 			@click="handleClick"
 		/>
 		<ReplicationSheet
-			v-if="isSheetShown"
+			v-if="isSheetShown && !isSelected"
 			:sheetBindProps
 			@close="setSheetShown(false)"
 		/>

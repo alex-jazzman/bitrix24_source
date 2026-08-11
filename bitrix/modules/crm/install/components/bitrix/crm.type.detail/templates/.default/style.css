@@ -673,3 +673,13 @@ body.crm-type-settings-presets #workarea-content {
 .crm-type-permissions-reset-alert{
 	margin: 10px 0 0;
 }
+
+.crm-type input[type=number]::-webkit-outer-spin-button,
+.crm-type input[type=number]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+}
+
+.crm-type input[type=number] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}

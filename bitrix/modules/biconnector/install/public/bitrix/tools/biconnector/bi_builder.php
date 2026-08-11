@@ -7,6 +7,7 @@ use Bitrix\Main\Web\Json;
 
 define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
+define('BX_SENDPULL_COUNTER_QUEUE_DISABLE', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
 define('SKIP_DISK_QUOTA_CHECK', true);
 define('CACHED_b_file', false);
@@ -37,6 +38,9 @@ catch (Main\ArgumentException $e)
 	echo "\n";
 	Main\Application::getInstance()->terminate();
 }
+
+$queryMetadata = is_array($input['bx_query_metadata'] ?? null) ? $input['bx_query_metadata'] : null;
+unset($input['bx_query_metadata']);
 
 if (!Main\Loader::includeModule('biconnector'))
 {
@@ -189,6 +193,7 @@ elseif ($service->getTableFields($tableName))
 			$_SERVER['REQUEST_URI'],
 			$limit,
 			$limitManager,
+			$queryMetadata,
 		);
 
 		if (!$resultQuery->isSuccess())
@@ -229,7 +234,10 @@ if ($isLocked)
 if ($lockFile)
 {
 	fclose($lockFile);
-	unlink($lockFileName);
+	if (is_file($lockFileName))
+	{
+		unlink($lockFileName);
+	}
 }
 
 \Bitrix\BIConnector\MemoryCache::expunge();

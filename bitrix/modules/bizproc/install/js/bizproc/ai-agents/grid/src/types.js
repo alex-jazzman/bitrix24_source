@@ -89,6 +89,7 @@ export type DeleteActionParams = {
 
 export type DeleteActionDataType = {
 	agentIds: number,
+	deleteChatbots?: boolean,
 };
 
 export type RestartActionParams = {
@@ -156,6 +157,7 @@ export type ExtensionSettings = {
 	tariffInfo: {
 		isAiAgentsAvailable: boolean,
 		aiAgentsTariffSliderCode: ?string,
+		isBasicOrHigher: boolean,
 	},
 };
 

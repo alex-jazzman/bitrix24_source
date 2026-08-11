@@ -723,8 +723,10 @@
 	height: calc(100% - 34px);
 }
 
-.bx-im-component-call-right-chat .bx-ui-smiles-elements-wrap {
-	scrollbar-gutter: stable;
+@supports (scrollbar-gutter: stable) {
+	.bx-im-component-call-right-chat .bx-ui-smiles-elements-wrap {
+		scrollbar-gutter: stable;
+	}
 }
 
 .bx-im-component-call-right-chat ::-webkit-scrollbar {
@@ -1624,8 +1626,10 @@
 	z-index: 100;
 }
 
-.bx-im-application-call-mobile-state .bx-im-component-call-left-preparation:has(.bx-im-component-call-video-step-container){
-	max-height: min(800px, calc(100% - 250px));
+@supports selector(:has(*)) {
+	.bx-im-application-call-mobile-state .bx-im-component-call-left-preparation:has(.bx-im-component-call-video-step-container) {
+		max-height: min(800px, calc(100% - 250px));
+	}
 }
 
 .bx-im-application-call-mobile-state .bx-im-component-call-check-devices-camera-no-video {

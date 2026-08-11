@@ -1,4 +1,5 @@
 <?php
+$MESS["AI_PROCESSING_ACTIVITY_DISABLED"] = "Maximum number of requests exceeded. Try again later.";
 $MESS["AI_PROCESSING_ACTIVITY_EMPTY_ENGINE"] = "AI provider is not selected.";
 $MESS["AI_PROCESSING_ACTIVITY_EMPTY_PROMPT"] = "AI prompt is not specified.";
 $MESS["AI_PROCESSING_ACTIVITY_EMPTY_RETURN_TYPE"] = "Incorrect response format.";

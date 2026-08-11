@@ -29,6 +29,35 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const { TaskDetailsButtons } = require('bizproc/task/details/buttons');
 	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
 
+	/**
+	 * @param {function(): Promise} fn
+	 * @param {number} maxRetries
+	 * @param {number} delayMs
+	 * @return {Promise}
+	 */
+	async function retryReadOnNetworkError(fn, maxRetries = 3, delayMs = 1000)
+	{
+		const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		let attempt = 1;
+		while (true)
+		{
+			try
+			{
+				return await fn();
+			}
+			catch (error)
+			{
+				const isNetwork = (error?.errors ?? [error]).some((e) => e?.code === 'NETWORK_ERROR');
+				if (!isNetwork || attempt >= maxRetries)
+				{
+					throw error;
+				}
+				await delay(delayMs);
+				attempt += 1;
+			}
+		}
+	}
+
 	class TaskDetails extends PureComponent
 	{
 		static open(layout = PageManager, props = {})
@@ -302,9 +331,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		loadTask()
 		{
-			BX.ajax.runAction(
-				'bizprocmobile.Task.loadDetails',
-				{ data: { taskId: this.props.taskId, targetUserId: this.props.targetUserId } },
+			retryReadOnNetworkError(
+				() => BX.ajax.runAction(
+					'bizprocmobile.Task.loadDetails',
+					{ data: { taskId: this.props.taskId, targetUserId: this.props.targetUserId } },
+				),
 			)
 				.then(({ data }) => {
 					this.layout.setRightButtons([
@@ -336,7 +367,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 					if (Array.isArray(errors) && errors.length > 0)
 					{
-						Alert.alert(errors[0].message, '', () => {
+						const isNetworkError = errors.some((e) => e?.code === 'NETWORK_ERROR');
+						const message = isNetworkError
+							? Loc.getMessage('BPMOBILE_TASK_DETAILS_NETWORK_ERROR')
+							: errors[0].message;
+						Alert.alert(message, '', () => {
 							if (this.layout)
 							{
 								this.layout.close();
@@ -577,7 +612,10 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 									);
 								}
 							})
-							.catch(({ errors }) => Alert.alert(errors.pop().message))
+							.catch(({ errors }) => {
+								const isNetworkError = Array.isArray(errors) && errors.some((e) => e?.code === 'NETWORK_ERROR');
+								Alert.alert(isNetworkError ? Loc.getMessage('BPMOBILE_TASK_DETAILS_NETWORK_ERROR') : errors.pop().message);
+							})
 						;
 					},
 				},

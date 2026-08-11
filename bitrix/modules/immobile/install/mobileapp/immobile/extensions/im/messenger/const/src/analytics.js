@@ -71,6 +71,9 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		modeOn: 'mode_on',
 		modeOff: 'mode_off',
 		clickMCPIntegrations: 'click_mcp_integrations',
+		suggestsShow: 'suggests_show',
+		suggestsClick: 'suggests_click',
+		modeChange: 'mode_change',
 		openNotifications: 'open_notifications',
 		openStickerTab: 'open_sticker_tab',
 		clickCreateStickerPack: 'click_create_stickerpack',
@@ -87,6 +90,21 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickShare: 'click_share',
 		askCopilot: 'ask_copilot',
 		addFeedback: 'add_feedback',
+	});
+
+	/**
+	 * @desc p1 values for the mode_change event (camelCase, aligned with web BitrixGPT 2.0)
+	 */
+	const ChatMode = Object.freeze({
+		mcpOn: 'mcp_on',
+		mcpOff: 'mcp_off',
+		reasoningOn: 'reasoning_on',
+		reasoningOff: 'reasoning_off',
+		webSearchOn: 'webSearch_on',
+		webSearchOff: 'webSearch_off',
+		agentModeOn: 'agentMode_on',
+		agentModeOff: 'agentMode_off',
+		roleChange: 'role_change',
 	});
 
 	const Tool = Object.freeze({
@@ -329,6 +347,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 
 	const Analytics = Object.freeze({
 		CopilotChatType,
+		ChatMode,
 		Event,
 		Tool,
 		Category,

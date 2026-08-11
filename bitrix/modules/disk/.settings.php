@@ -22,6 +22,11 @@ use Bitrix\Disk\Internal\Service\VersionMatcher\Matcher;
 use Bitrix\Disk\Internals\DeletedLogManager;
 use Bitrix\Disk\Internals\DeletionNotifyManager;
 use Bitrix\Disk\Internals\Runtime\StorageRuntimeCache;
+use Bitrix\Disk\QuickAccess;
+use Bitrix\Disk\QuickAccess\Config\ConfigInterface;
+use Bitrix\Disk\QuickAccess\FileInfo\DiskProvider;
+use Bitrix\Disk\QuickAccess\FileInfo\MainProvider;
+use Bitrix\Disk\QuickAccess\FileInfo\ProviderFactory;
 use Bitrix\Disk\RecentlyUsedManager;
 use Bitrix\Disk\Rest\RestManager;
 use Bitrix\Disk\RightsManager;
@@ -106,6 +111,19 @@ return [
 			],
 			DocumentSessionRepositoryInterface::class => [
 				'className' => BitrixOrmDocumentSessionRepository::class,
+			],
+			ConfigInterface::class => [
+				'className' => QuickAccess\Configuration::class,
+			],
+			ProviderFactory::class => [
+				'constructor' => static function() {
+					$providerFactory = new ProviderFactory();
+					$providerFactory->register(DiskProvider::class);
+					$providerFactory->register(MainProvider::class);
+
+
+					return $providerFactory;
+				},
 			],
 			LimitEncounterCounterRepositoryInterface::class => [
 				'className' => LimitEncounterCounterPersistentStorageRepository::class,

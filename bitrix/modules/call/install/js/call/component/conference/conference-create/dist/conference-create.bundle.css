@@ -1,13 +1,7 @@
 .bx-conference-quick-create-wrap {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	align-items: center;
+	justify-content: center;
 	width: 100%;
 	height: 100%;
 	background: #EDEEF0;
@@ -18,19 +12,10 @@
 }
 
 .bx-conference-quick-create-content {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	width: 630px;
 	max-height: 750px;
 	overflow-y: auto;
@@ -40,8 +25,7 @@
 	background-position: center;
 	background-color: #fff;
 	border-radius: 3px;
-	-webkit-box-shadow: 0 6px 21px 0 rgba(83,92,105,.15);
-	        box-shadow: 0 6px 21px 0 rgba(83,92,105,.15);
+	box-shadow: 0 6px 21px 0 rgba(83,92,105,.15);
 }
 
 .bx-conference-quick-create-wrap-dark .bx-conference-quick-create-content {
@@ -66,25 +50,16 @@
 }
 
 .bx-conference-quick-create-field-block {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	margin-bottom: 20px;
     width: 480px;
 }
 
 .bx-conference-quick-create-field-block-inline {
     width: 480px;
-    display: -webkit-box;
-    display: -ms-flexbox;
     display: flex;
-    -webkit-box-align: center;
-        -ms-flex-align: center;
-            align-items: center;
+    align-items: center;
     margin-bottom: 20px;
 }
 
@@ -104,8 +79,7 @@
 }
 
 .bx-conference-quick-create-field-input {
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	width: 480px;
 	height: 40px;
 	border-radius: 2px;
@@ -143,15 +117,9 @@
 }
 
 .bx-conference-quick-create-button-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	justify-content: center;
+	align-items: center;
 }
 
 .bx-conference-quick-create-button-wrap button.ui-btn-disabled {
@@ -193,21 +161,15 @@
 }
 
 .bx-conference-quick-create-wrap .ui-tag-selector-outer-container {
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	width: 480px;
 	border-radius: 2px;
 }
 
 .bx-conference-quick-create-error-wrap {
 	width: 480px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 }
 
 .bx-conference-quick-create-error-wrap a {
@@ -220,21 +182,11 @@
 }
 
 .bx-conference-quick-create-success-block {
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
-    display: -webkit-box;
-    display: -ms-flexbox;
+	box-sizing: border-box;
     display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-        -ms-flex-direction: column;
-            flex-direction: column;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-    -webkit-box-align: center;
-        -ms-flex-align: center;
-            align-items: center;
+    flex-direction: column;
+	justify-content: center;
+    align-items: center;
 	margin-top: 25px;
 	margin-bottom: 20px;
 	width: 480px;

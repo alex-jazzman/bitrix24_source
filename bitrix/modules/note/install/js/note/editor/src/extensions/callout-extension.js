@@ -131,7 +131,10 @@ export const Callout = Node.create({
 	renderMarkdown(node: Object, helpers: Object): string
 	{
 		const calloutType = node.attrs?.type || 'info';
-		const inner = helpers.renderChildren(node);
+		// Block separator (blank line) between children — callout holds `block+`, so a block child
+		// like an image must land on its own line, not glued to the next paragraph (which would make
+		// the image unparseable on re-paste). Without an explicit separator renderChildren joins with ''.
+		const inner = helpers.renderChildren(node, '\n\n');
 
 		return `:::${calloutType}\n${inner}\n:::`;
 	},

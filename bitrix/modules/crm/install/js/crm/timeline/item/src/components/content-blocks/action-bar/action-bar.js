@@ -40,7 +40,7 @@ export default {
 
 		getIconByDesign(design: string): ?string
 		{
-			if (design === ChipDesign.OutlineCopilot)
+			if (design === ChipDesign.OutlineBitrixGpt)
 			{
 				return Outline.COPILOT;
 			}

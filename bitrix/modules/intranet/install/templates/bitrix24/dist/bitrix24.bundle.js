@@ -1119,10 +1119,84 @@ this.BX.Intranet = this.BX.Intranet || {};
 		}
 	}
 
+	class HeaderMartaButton {
+		#observer = null;
+		constructor() {
+			this.slot = null;
+		}
+		init() {
+			this.slot = document.getElementById('air-header-marta-slot');
+			if (!this.slot) {
+				return;
+			}
+			this.createClone();
+		}
+		createClone() {
+			const button = document.querySelector('.aiassistant-marta:not([data-role="header-marta-clone"])');
+			const currentClone = this.slot.querySelector('.aiassistant-marta[data-role="header-marta-clone"]');
+			if (currentClone) {
+				main_core.Dom.remove(currentClone);
+			}
+			if (!button) {
+				main_core.Dom.removeClass(this.slot, '--ready');
+				this.waitForButton();
+				return;
+			}
+			const clone = button.cloneNode(true);
+			main_core.Dom.style(clone, 'z-index', null);
+			main_core.Dom.adjust(clone, {
+				attrs: {
+					'data-role': 'header-marta-clone',
+					'aria-label': 'Marta AI'
+				},
+				events: {
+					click: event => {
+						event.preventDefault();
+						event.stopPropagation();
+						button.click();
+					},
+					mouseenter: () => {
+						button.dispatchEvent(new MouseEvent('mouseenter', {
+							bubbles: true
+						}));
+					}
+				}
+			});
+			main_core.Dom.append(clone, this.slot);
+			main_core.Dom.addClass(this.slot, '--ready');
+		}
+		waitForButton() {
+			if (this.#observer) {
+				return;
+			}
+			const root = document.querySelector('.js-app');
+			if (!root) {
+				return;
+			}
+			this.#observer = new MutationObserver(mutations => {
+				const appeared = mutations.some(mutation => {
+					return [...mutation.addedNodes].some(node => {
+						return node.nodeType === Node.ELEMENT_NODE && node.matches('.aiassistant-marta:not([data-role="header-marta-clone"])');
+					});
+				});
+				if (!appeared) {
+					return;
+				}
+				this.#observer.disconnect();
+				this.#observer = null;
+				this.createClone();
+			});
+			this.#observer.observe(root, {
+				childList: true
+			});
+		}
+	}
+
 	class Header {
 		#burgerCounter = null;
 		constructor() {
 			this.#initMobileBurger();
+			this.#initMartaButton();
 		}
 		getContainer() {
 			return document.getElementById('app-header');
@@ -1173,6 +1247,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.#burgerCounter.renderTo(counterWrapper);
 			main_core.addCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', total => {
 				this.#burgerCounter.update(total);
+			});
+		}
+		#initMartaButton() {
+			main_core.ready(() => {
+				new HeaderMartaButton().init();
 			});
 		}
 	}
@@ -1310,7 +1389,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	class RightPanel extends main_core_events.EventEmitter {
 		static #EXPANDED_CLASS = '--right-panel-expanded';
 		static #RESIZING_CLASS = '--resizing';
-		static #DEFAULT_WIDTH = 380;
+		static #DEFAULT_WIDTH = 360;
 		static #SS_WIDTH_KEY = 'b24_right_panel_width';
 		static #SS_EXPANDED_KEY = 'b24_right_panel_expanded';
 		#resizeObserver = null;

@@ -1,7 +1,7 @@
 .booking-booking-grid-now-line {
 	position: absolute;
 	z-index: 4;
-	left: var(--left-panel-width);
+	left: var(--booking-left-panel-width);
 	margin-top: var(--padding-top);
 	width: 100%;
 	height: 2px;
@@ -27,7 +27,7 @@
 	left: 0;
 	margin-top: 0;
 	width: 1px;
-	height: calc(100% - var(--booking-height-second-row-week-grid));
+	height: calc(100% - var(--booking-week-days-panel-height));
 	transform: none;
 }
 

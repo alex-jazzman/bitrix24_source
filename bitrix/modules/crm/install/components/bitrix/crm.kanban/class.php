@@ -446,7 +446,19 @@ class CrmKanbanComponent extends CBitrixComponent
 
 			if ($entity->isCategoriesSupported())
 			{
-				$this->arResult['CATEGORIES'] = $entity->getCategoriesWithAddPermissions($userPermissions);
+				$canUpdateInCurrent = Container::getInstance()
+					->getUserPermissions()
+					->entityType()
+					->canUpdateItemsInCategory(
+						$entity->getTypeId(),
+						$entity->getCategoryId(),
+					)
+				;
+				$this->arResult['CATEGORIES'] = $canUpdateInCurrent
+					? $entity->getCategoriesWithAddPermissions($userPermissions)
+					: []
+				;
+				$this->ensureCurrentCategoryVisible($entity);
 			}
 		}
 
@@ -509,6 +521,38 @@ class CrmKanbanComponent extends CBitrixComponent
 		$GLOBALS['APPLICATION']->setTitle($entity->getTitle());
 
 		return $this->IncludeComponentTemplate();
+	}
+
+	private function ensureCurrentCategoryVisible(\Bitrix\Crm\Kanban\Entity $entity): void
+	{
+		$currentCategoryId = $entity->getCategoryId();
+		if ($currentCategoryId < 0 || isset($this->arResult['CATEGORIES'][$currentCategoryId]))
+		{
+			return;
+		}
+
+		$factory = Container::getInstance()->getFactory($entity->getTypeId());
+		$category = $factory?->getCategory($currentCategoryId);
+		if (!$category)
+		{
+			return;
+		}
+
+		$router = Container::getInstance()->getRouter();
+		$this->arResult['CATEGORIES'][$currentCategoryId] = $category->getData();
+		$this->arResult['CATEGORIES'][$currentCategoryId]['url'] =
+			$router->getKanbanUrl($entity->getTypeId(), $currentCategoryId);
+
+		$orderedCategories = [];
+		foreach ($factory->getCategories() as $factoryCategory)
+		{
+			$factoryCategoryId = $factoryCategory->getId();
+			if (isset($this->arResult['CATEGORIES'][$factoryCategoryId]))
+			{
+				$orderedCategories[$factoryCategoryId] = $this->arResult['CATEGORIES'][$factoryCategoryId];
+			}
+		}
+		$this->arResult['CATEGORIES'] = $orderedCategories;
 	}
 
 	protected function getPreparedItemsConfigParams(): array

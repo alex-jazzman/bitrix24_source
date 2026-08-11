@@ -21,11 +21,10 @@ return [
 		'ui.dialogs.messagebox',
 		'ui.info-helper',
 		'ui.notification',
-		'ui.notification.center',
 	],
 	'skip_core' => false,
 	'settings' => [
-		'marketUrl' => Bitrix\Crm\Integration\Market\Router::getBasePath() . 'category/integration_sms/',
+		'marketUrl' => \Bitrix\Main\Loader::includeModule('crm') ? Bitrix\Crm\Integration\Market\Router::getBasePath() . 'category/integration_sms/' : '',
 		'canUseNotifications' => $hasImConnector && \Bitrix\ImConnector\Limit::canUseConnector('notifications'),
 	],
 ];

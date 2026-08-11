@@ -277,6 +277,12 @@ export default class SyncWizard extends EventEmitter
 
 		this.statusCarouselInterval = setInterval(() => {
 			const currentPhraseNode = statusNode.firstElementChild;
+			if (!Type.isElementNode(currentPhraseNode))
+			{
+				clearInterval(this.statusCarouselInterval);
+				return;
+			}
+
 			if (this.countDots(currentPhraseNode.innerText) < 3)
 			{
 				currentPhraseNode.innerText += '.';
@@ -705,6 +711,7 @@ export default class SyncWizard extends EventEmitter
 	setErrorState()
 	{
 		this.errorStatus = true;
+		clearInterval(this.statusCarouselInterval);
 		this.showErrorWrapper();
 		this.hideInfoStatusWrapper();
 		this.hideSyncStagesWrapper();

@@ -147,26 +147,11 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	Object.defineProperty(exports, "AirButtonStyle", {
-		enumerable: true,
-		get: function () { return ui_buttons.AirButtonStyle; }
-	});
-	Object.defineProperty(exports, "ButtonColor", {
-		enumerable: true,
-		get: function () { return ui_buttons.ButtonColor; }
-	});
-	Object.defineProperty(exports, "ButtonIcon", {
-		enumerable: true,
-		get: function () { return ui_buttons.ButtonIcon; }
-	});
-	Object.defineProperty(exports, "ButtonSize", {
-		enumerable: true,
-		get: function () { return ui_buttons.ButtonSize; }
-	});
-	Object.defineProperty(exports, "ButtonStyle", {
-		enumerable: true,
-		get: function () { return ui_buttons.ButtonStyle; }
-	});
+	exports.AirButtonStyle = ui_buttons.AirButtonStyle;
+	exports.ButtonColor = ui_buttons.ButtonColor;
+	exports.ButtonIcon = ui_buttons.ButtonIcon;
+	exports.ButtonSize = ui_buttons.ButtonSize;
+	exports.ButtonStyle = ui_buttons.ButtonStyle;
 	exports.Button = Button;
 
 })(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX.UI, BX);

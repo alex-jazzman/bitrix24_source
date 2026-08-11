@@ -131,14 +131,8 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	Object.defineProperty(exports, "SwitcherColor", {
-		enumerable: true,
-		get: function () { return ui_switcher.SwitcherColor; }
-	});
-	Object.defineProperty(exports, "SwitcherSize", {
-		enumerable: true,
-		get: function () { return ui_switcher.SwitcherSize; }
-	});
+	exports.SwitcherColor = ui_switcher.SwitcherColor;
+	exports.SwitcherSize = ui_switcher.SwitcherSize;
 	exports.Switcher = Switcher;
 
 })(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX, BX.UI);

@@ -6,6 +6,7 @@ import {
 	ASSET_TYPE_TO_NODE,
 	parseEnrichedAssetCell,
 } from './enriched-asset-parser';
+import { INLINE_ASSET_NODE_TYPES } from './note-asset-parser';
 
 type AssetType = 'image' | 'file' | 'video';
 
@@ -81,7 +82,7 @@ export const EnrichedAssetTokenizer: Object = Node.create({
 			return null;
 		}
 
-		return {
+		const node = {
 			type: nodeType,
 			attrs: {
 				fileId: Number(fileId),
@@ -91,5 +92,13 @@ export const EnrichedAssetTokenizer: Object = Node.create({
 				mimeType: mimeType ?? null,
 			},
 		};
+
+		// Inline asset node from a block-level token: wrap in a paragraph to keep `doc` content legal.
+		if (INLINE_ASSET_NODE_TYPES.has(nodeType))
+		{
+			return { type: 'paragraph', content: [node] };
+		}
+
+		return node;
 	},
 });

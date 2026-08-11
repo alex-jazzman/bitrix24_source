@@ -53,7 +53,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		constructor() {
 			const {
-				promoList
+				promoList = []
 			} = im_v2_application_core.Core.getApplicationData();
 			im_v2_lib_logger.Logger.warn('PromoManager: promoList', promoList);
 			this.#init(promoList);

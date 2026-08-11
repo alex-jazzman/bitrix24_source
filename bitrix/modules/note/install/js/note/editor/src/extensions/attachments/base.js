@@ -1,4 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import { Plugin, NodeSelection } from '@tiptap/pm/state';
 import { Loc, Type } from 'main.core';
 import { VueAttachmentNodeView } from './node-view';
 import { normalizeFileSize } from '../../utils/file-size';
@@ -12,11 +13,13 @@ type NodeConfig = {
 	defaultNameMessage: string,
 	defaultTypeMessage: string,
 	assetType: AssetType,
+	inline?: boolean,
 	commandName?: string,
 	nodeViewComponent?: Object | null,
 	extraAttrs?: (() => Object) | Object,
 	dataAttributes?: ((attrs: Object) => Object) | Object,
 	parseHTMLTags?: string[],
+	resizable?: boolean,
 };
 
 type BaseAttrs = {
@@ -62,6 +65,17 @@ function buildBaseAttributes(config: NodeConfig): Object
 		unavailable: {
 			default: false,
 		},
+		// Rendered width as a percentage of the container (image resize), >0..100, fractional
+		// allowed (0.01% steps). null = natural size. Persisted in markdown as `width=N` (bare
+		// number = percent).
+		width: {
+			default: null,
+		},
+		// Float-based image alignment: 'left' | 'right'. null = center (default, no float).
+		// Persisted in markdown as `align=left|right` (center is never serialized).
+		align: {
+			default: null,
+		},
 	};
 }
 
@@ -97,7 +111,7 @@ function resolveParseHtml(config: NodeConfig): Object[]
 
 function renderFallback(config: NodeConfig, attrs: Object): Array<mixed>
 {
-	return ['div', { class: `${config.className}-fallback` },
+	return [config.inline === true ? 'span' : 'div', { class: `${config.className}-fallback` },
 		attrs.name || Loc.getMessage(config.defaultNameMessage),
 		' · ',
 		attrs.mimeType || Loc.getMessage(config.defaultTypeMessage),
@@ -133,9 +147,12 @@ export class FileAssetNodeFactory
 
 	static createNode(config: NodeConfig): Object
 	{
+		const isInline = config.inline === true;
+
 		return Node.create({
 			name: config.name,
-			group: 'block',
+			group: isInline ? 'inline' : 'block',
+			inline: isInline,
 			atom: true,
 			selectable: true,
 			draggable: true,
@@ -153,7 +170,7 @@ export class FileAssetNodeFactory
 			renderHTML({ HTMLAttributes, node })
 			{
 				return [
-					'div',
+					isInline ? 'span' : 'div',
 					mergeAttributes(HTMLAttributes, {
 						'data-type': config.dataType,
 						class: config.className,
@@ -172,6 +189,10 @@ export class FileAssetNodeFactory
 				return {
 					nodeViewComponent: config.nodeViewComponent || null,
 					defaultTypeMessage: config.defaultTypeMessage,
+					// Injected for image replace (see media-extensions/registry). null for file/video.
+					uploadService: null,
+					// Enables resize/align/float-stacking for this node type (image, video).
+					resizable: config.resizable === true,
 				};
 			},
 			addNodeView()
@@ -183,7 +204,49 @@ export class FileAssetNodeFactory
 					extension: this,
 					dataType: config.dataType,
 					className: config.className,
+					inline: isInline,
+					uploadService: this.options.uploadService,
 				});
+			},
+			addProseMirrorPlugins()
+			{
+				const nodeName = config.name;
+
+				return [
+					new Plugin({
+						props: {
+							// Deterministic click-to-select: PM's native click handling leaves inline atoms
+							// selected-or-not depending on click x-position. Force a NodeSelection instead.
+							handleClickOn(view, pos, node, nodePos, event, direct)
+							{
+								if (!direct || node.type.name !== nodeName || !view.editable)
+								{
+									return false;
+								}
+
+								if (event.target instanceof Element
+									&& event.target.closest('.note-editor-media-resize-handle'))
+								{
+									return false;
+								}
+
+								// Already selected: let the click pass through natively (link → viewer),
+								// and don't block ProseMirror's drag-and-drop of the selected node.
+								const { selection } = view.state;
+								if (selection instanceof NodeSelection && selection.from === nodePos)
+								{
+									return false;
+								}
+
+								view.dispatch(view.state.tr.setSelection(
+									NodeSelection.create(view.state.doc, nodePos),
+								));
+
+								return true;
+							},
+						},
+					}),
+				];
 			},
 			addCommands: createCommandFactory(config),
 			renderMarkdown(node)
@@ -194,7 +257,14 @@ export class FileAssetNodeFactory
 					return '';
 				}
 
-				return `[[${config.assetType} fileId=${fileId}]]`;
+				// width is a percentage (>0..100, fractional allowed); serialize as a bare number.
+				const width = Number(node?.attrs?.width);
+				const widthAttr = (Number.isFinite(width) && width > 0 && width <= 100) ? ` width=${width}` : '';
+
+				const align = node?.attrs?.align;
+				const alignAttr = (align === 'left' || align === 'right') ? ` align=${align}` : '';
+
+				return `[[${config.assetType} fileId=${fileId}${widthAttr}${alignAttr}]]`;
 			},
 		});
 	}

@@ -241,7 +241,7 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 							{ '#TASK_NAME#': task.name },
 						),
 						time: 2,
-						position: this.state.viewMode === ViewMode.REGULAR ? Position.BOTTOM : Position.TOP,
+						position: Position.TOP,
 					},
 					this.layout,
 				);

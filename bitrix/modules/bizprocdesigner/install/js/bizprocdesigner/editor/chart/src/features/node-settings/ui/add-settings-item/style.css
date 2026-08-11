@@ -5,9 +5,9 @@
 	color: var(--ui-color-palette-gray-70);
 	display: flex;
 	align-items: center;
-	margin-top: 16px;
+	margin-top: 13px;
 }
 
 .editor-chart-node-settings-add-item-button__plus {
-	margin-right: 5px;
+	margin-right: 7px;
 }

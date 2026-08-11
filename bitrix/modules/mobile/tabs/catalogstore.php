@@ -22,6 +22,7 @@ class CatalogStore implements Tabable {
 	{
 		return (
 			!$this->context->extranet
+			&& !$this->context->isGuest
 			&& IsModuleInstalled('catalog')
 			&& \CModule::IncludeModule('catalog')
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)

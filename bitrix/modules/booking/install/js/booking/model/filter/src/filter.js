@@ -1,18 +1,18 @@
 /* eslint-disable no-param-reassign */
 
 import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import type { ResourceModel } from 'booking.model.resources';
+import { Utils } from 'booking.lib.utils';
+import { type ResourceModel } from 'booking.model.resources';
 
-import type {
-	FilterModelState,
-	DatesCount,
-	FilterFields,
-	QuickFilter,
-	DeletingResourceFilter,
+import {
+	type FilterModelState,
+	type DatesCount,
+	type FilterFields,
+	type QuickFilter,
+	type DeletingResourceFilter,
 } from './types';
 
 export class Filter extends BuilderModel
@@ -68,27 +68,45 @@ export class Filter extends BuilderModel
 			},
 			/** @function filter/isMaxFilterDate */
 			isMaxFilterDate: (state, getters, rootState, rootGetters): boolean => {
-				return (
-					state.datesCount?.maxDate?.length > 0
-					&& rootGetters[`${Model.Interface}/selectedDateTs`] >= new Date(state.datesCount.maxDate).setHours(
-						0,
-						0,
-						0,
-						0,
-					)
-				);
+				const selectedDateTs = rootGetters[`${Model.Interface}/selectedDateTs`];
+				const offset = rootGetters[`${Model.Interface}/offset`];
+
+				if (state.datesCount?.maxDate?.length <= 0)
+				{
+					return false;
+				}
+
+				const maxDateTs = new Date(state.datesCount.maxDate).setHours(0, 0, 0, 0);
+				if (rootGetters[`${Model.Interface}/isWeekMode`])
+				{
+					const selectedFirstDayPeriodTs = rootGetters[`${Model.Interface}/selectedFirstDayPeriodTs`];
+					const firstWeekDay = rootGetters[`${Model.Interface}/firstWeekDay`];
+
+					return (selectedFirstDayPeriodTs + offset) >= Utils.time.getWeekStartTs(maxDateTs, firstWeekDay);
+				}
+
+				return (selectedDateTs + offset) >= maxDateTs;
 			},
 			/** @function filter/isMinFilterDate */
 			isMinFilterDate: (state, getters, rootState, rootGetters): boolean => {
-				return (
-					state.datesCount?.minDate?.length > 0
-					&& rootGetters[`${Model.Interface}/selectedDateTs`] <= new Date(state.datesCount.minDate).setHours(
-						0,
-						0,
-						0,
-						0,
-					)
-				);
+				const selectedDateTs = rootGetters[`${Model.Interface}/selectedDateTs`];
+				const offset = rootGetters[`${Model.Interface}/offset`];
+
+				if (state.datesCount?.minDate?.length <= 0)
+				{
+					return false;
+				}
+
+				const minDateTs = new Date(state.datesCount.minDate).setHours(0, 0, 0, 0);
+				if (rootGetters[`${Model.Interface}/isWeekMode`])
+				{
+					const selectedFirstDayPeriodTs = rootGetters[`${Model.Interface}/selectedFirstDayPeriodTs`];
+					const firstWeekDay = rootGetters[`${Model.Interface}/firstWeekDay`];
+
+					return (selectedFirstDayPeriodTs + offset) <= Utils.time.getWeekStartTs(minDateTs, firstWeekDay);
+				}
+
+				return (selectedDateTs + offset) <= minDateTs;
 			},
 			/** @function filter/fetchingNextDate */
 			fetchingNextDate: (state): boolean => state.fetchingNextDate,

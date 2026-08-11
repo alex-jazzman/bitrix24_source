@@ -19,5 +19,12 @@
 
 .resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled {
 	opacity: .4;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled .ui-ctl-element {
 	pointer-events: none;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled .resource-creation-wizard__form-slot-length-precision-days {
+	cursor: pointer;
 }

@@ -34,6 +34,7 @@ export class SessionsModel extends BuilderModel
 			id: 0,
 			chatId: 0,
 			operatorId: 0,
+			operatorIsBot: false,
 			status: '',
 			queueId: 0,
 			pinned: false,
@@ -60,7 +61,8 @@ export class SessionsModel extends BuilderModel
 			},
 			/** @function openLines/sessions/getByChatId */
 			getByChatId: (state: SessionsState) => (chatId: number, getBlank: boolean = false): ?ImolModelSession => {
-				const session = Object.values(state.collection).find((item: ImolModelSession) => item.chatId === chatId);
+				const session = Object.values(state.collection)
+					.find((item: ImolModelSession) => item.chatId === chatId);
 
 				if (!session && getBlank)
 				{

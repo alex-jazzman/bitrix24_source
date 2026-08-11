@@ -155,7 +155,7 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 				messageId: this.messageId,
 				limit: this.requestLimit,
 				order: {
-					id: 'ASC',
+					id: 'DESC',
 				},
 				filter,
 			};

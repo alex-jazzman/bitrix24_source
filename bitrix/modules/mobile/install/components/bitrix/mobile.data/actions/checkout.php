@@ -16,6 +16,7 @@ use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Context;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
@@ -39,6 +40,7 @@ use Bitrix\Mobile\Auth;
 use Bitrix\Mobile\AvaMenu;
 use Bitrix\Mobile\Config\Feature;
 use Bitrix\Mobile\Feature\MenuFeature;
+use Bitrix\Mobile\Auth\GuestCheckout;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -95,6 +97,19 @@ if (array_key_exists("servercheck", $_REQUEST))
 	return $data;
 }
 
+$guestCode = $_REQUEST['guest_code'] ?? null;
+if (is_string($guestCode) && $guestCode !== '' && Loader::includeModule('im'))
+{
+	$guestName = is_string($_REQUEST['guest_name'] ?? null) ? $_REQUEST['guest_name'] : null;
+
+	// Guest checkout (warm-start same-chat validation / join-by-code). Returns the native
+	// response, or null for a PORTAL_USER who followed a guest link — fall through to standard auth.
+	$guestResponse = (new GuestCheckout($USER))->handle($guestCode, $guestName);
+	if ($guestResponse !== null)
+	{
+		return $guestResponse;
+	}
+}
 
 $isAlreadyAuthorized = $USER->IsAuthorized();
 

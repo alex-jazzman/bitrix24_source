@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_timeline_item, main_core, main_date, crm_timeline_tools, ui_vue3, main_loader, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, crm_field_colorSelector, main_core_events) {
+(function (exports, crm_timeline_item, main_core, main_date, crm_timeline_tools, ui_vue3, main_loader, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_iconSet_api_vue, ui_buttons, ui_vue3_directives_hint, main_popup, crm_field_colorSelector, main_core_events, ui_iconSet_api_core) {
 	'use strict';
 
 	/** @memberof BX.Crm.Timeline.Animation */
@@ -2106,7 +2106,45 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	};
 
+	const ICON_TO_BICON_MAP = Object.freeze({
+		'call': ui_iconSet_api_vue.Outline.PHONE_UP,
+		'call-default': ui_iconSet_api_vue.Outline.PHONE_UP,
+		'call-play-record': ui_iconSet_api_vue.Outline.PARTS_RECORD_PLAY,
+		'call-incoming': ui_iconSet_api_vue.Outline.PHONE_IN,
+		'call-outgoing': ui_iconSet_api_vue.Outline.PHONE_OUT,
+		'mail-income-unread': ui_iconSet_api_vue.Outline.MAIL,
+		'mail-income-read': ui_iconSet_api_vue.Outline.MAIL_OPEN,
+		'mail-outcome': ui_iconSet_api_vue.Outline.MAIL_SEND,
+		'email': ui_iconSet_api_vue.Outline.MAIL,
+		'document': ui_iconSet_api_vue.Outline.FILE,
+		'document-signed': ui_iconSet_api_vue.Outline.DOCUMENT_SIGN,
+		'document-print': ui_iconSet_api_vue.Outline.DOCUMENT_PRINT,
+		'document-addition': ui_iconSet_api_vue.Outline.FORM,
+		'document-draft': ui_iconSet_api_vue.Outline.FILE,
+		'shop': ui_iconSet_api_vue.Outline.PACKAGE,
+		'shop-eye': ui_iconSet_api_vue.Outline.SEEN_ITEMS,
+		'list-check': ui_iconSet_api_vue.Outline.CHECK_LIST,
+		'check': ui_iconSet_api_vue.Outline.SEEN_ITEMS,
+		'sms': ui_iconSet_api_vue.Outline.SMS,
+		'comment': ui_iconSet_api_vue.Outline.MESSAGE,
+		'openline': ui_iconSet_api_vue.Outline.MESSAGES,
+		'channel-chat': ui_iconSet_api_vue.Outline.OPEN_CHANNELS,
+		'channel-whatsapp': ui_iconSet_api_vue.Outline.WHATSAPP,
+		'channel-web-form': ui_iconSet_api_vue.Outline.CRM_FORM,
+		'task-activity': ui_iconSet_api_vue.Outline.TASK,
+		'unread-comment': ui_iconSet_api_vue.Outline.NEW_MESSAGE,
+		'bank-card': ui_iconSet_api_vue.Outline.BANK_CARD,
+		'calendar-share': ui_iconSet_api_vue.Outline.CALENDAR_SHARE,
+		'delivery': ui_iconSet_api_vue.Outline.DELIVERY,
+		'notification': ui_iconSet_api_vue.Outline.NOTIFICATION,
+		'repeat-sale': ui_iconSet_api_vue.Outline.REPEAT_SALES,
+		'bizproc': ui_iconSet_api_vue.Outline.BUSINES_PROCESS_STAGES,
+		'bizproc-task': ui_iconSet_api_vue.Outline.BUSINES_PROCESS_STAGES
+	});
 	const Logo = {
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		props: {
 			type: String,
 			addIcon: String,
@@ -2152,6 +2190,21 @@ this.BX.Crm = this.BX.Crm || {};
 					result.backgroundSize = parseInt(this.backgroundSize) + 'px';
 				}
 				return result;
+			},
+			useBIcon() {
+				return ICON_TO_BICON_MAP.hasOwnProperty(this.currentIcon) && !this.backgroundUrl;
+			},
+			bIconName() {
+				return ICON_TO_BICON_MAP[this.currentIcon] || '';
+			},
+			bIconColor() {
+				if (this.iconType === 'failure') {
+					return 'var(--ui-color-accent-main-alert)';
+				}
+				if (this.iconType === 'secondary') {
+					return 'var(--ui-color-background-secondary)';
+				}
+				return 'var(--ui-color-accent-main-primary-alt-2)';
 			}
 		},
 		watch: {
@@ -2175,7 +2228,13 @@ this.BX.Crm = this.BX.Crm || {};
 		<div :class="className" @click="executeAction">
 			<div class="crm-timeline__card-logo_content">
 				<div :class="iconClassname">
-					<i :style="iconInteriorStyle"></i>
+					<BIcon
+						v-if="useBIcon"
+						:name="bIconName"
+						:size="48"
+						:color="bIconColor"
+					/>
+					<i v-else :style="iconInteriorStyle"></i>
 				</div>
 				<div :class="addIconClassname" v-if="addIcon">
 					<i></i>
@@ -2556,7 +2615,7 @@ this.BX.Crm = this.BX.Crm || {};
 			size: {
 				type: String,
 				required: false,
-				default: 'extra_small'
+				default: 'medium'
 			},
 			menuItems: {
 				type: Object,
@@ -2568,17 +2627,17 @@ this.BX.Crm = this.BX.Crm || {};
 			return {
 				timerSecondsRemaining: 0,
 				currentState: this.state,
-				hintText: this.tooltip || ''
+				hintText: main_core.Type.isStringFilled(this.tooltip) ? this.tooltip : ''
 			};
 		},
 		computed: {
-			itemTypeToButtonColorDict() {
+			itemTypeToButtonStyleDict() {
 				return {
-					[ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
-					[ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
-					[ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
-					[ButtonType.ICON]: ui_buttons.Button.Color.LINK,
-					[ButtonType.AI]: ui_buttons.Button.Color.AI
+					[ButtonType.PRIMARY]: ui_buttons.Button.AirStyle.FILLED,
+					[ButtonType.SECONDARY]: ui_buttons.Button.AirStyle.OUTLINE,
+					[ButtonType.LIGHT]: ui_buttons.Button.AirStyle.PLAIN,
+					[ButtonType.ICON]: ui_buttons.Button.AirStyle.PLAIN_NO_ACCENT,
+					[ButtonType.AI]: ui_buttons.Button.AirStyle.FILLED_COPILOT
 				};
 			},
 			buttonContainerRef() {
@@ -2606,15 +2665,15 @@ this.BX.Crm = this.BX.Crm || {};
 			getButtonOptions() {
 				const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
 				const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-				const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
+				const btnStyle = this.itemTypeToButtonStyleDict[this.type] || ui_buttons.Button.AirStyle.OUTLINE;
 				const titleText = this.type === ButtonType.ICON ? '' : this.title;
 				return {
 					id: this.id,
+					useAirDesign: true,
 					round: true,
-					dependOnTheme: false,
 					size: ui_buttons.Button.Size[upperCaseButtonSize],
 					text: titleText,
-					color: btnColor,
+					style: btnStyle,
 					state: this.itemStateToButtonStateDict[this.currentState],
 					icon: ui_buttons.Button.Icon[upperCaseIconName],
 					props: main_core.Type.isPlainObject(this.props) ? this.props : {}
@@ -2792,6 +2851,71 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		</transition>
 	`
+	});
+
+	Object.freeze({
+		'email': ui_iconSet_api_core.Outline.MAIL,
+		'mail-income': ui_iconSet_api_core.Outline.MAIL,
+		'mail-outcome': ui_iconSet_api_core.Outline.MAIL_SEND,
+		'IM': ui_iconSet_api_core.Outline.MESSAGES,
+		'call': ui_iconSet_api_core.Outline.PHONE_UP,
+		'call-completed': ui_iconSet_api_core.Outline.PHONE_DOWN,
+		'call-incoming': ui_iconSet_api_core.Outline.PHONE_IN,
+		'call-incoming-missed': ui_iconSet_api_core.Outline.PHONE_BROKEN,
+		'call-outcoming': ui_iconSet_api_core.Outline.PHONE_OUT,
+		'crmForm': ui_iconSet_api_core.Outline.CRM_FORM,
+		'store': ui_iconSet_api_core.Outline.PACKAGE,
+		'task': ui_iconSet_api_core.Outline.TASK,
+		'store-document': ui_iconSet_api_core.Outline.TASK,
+		'meeting': ui_iconSet_api_core.Outline.MEETING_POINT,
+		'visit': ui_iconSet_api_core.Outline.USER_PROFILE,
+		'bp': ui_iconSet_api_core.Outline.BUSINES_PROCESS_STAGES,
+		'info': ui_iconSet_api_core.Outline.INFO_CIRCLE,
+		'comment': ui_iconSet_api_core.Outline.MESSAGE,
+		'complete': ui_iconSet_api_core.Outline.CIRCLE_CHECK,
+		'convert': ui_iconSet_api_core.Outline.REFRESH,
+		'link': ui_iconSet_api_core.Outline.LINK,
+		'unlink': ui_iconSet_api_core.Outline.UNLINK,
+		'bank-card': ui_iconSet_api_core.Outline.BANK_CARD,
+		'wallet': ui_iconSet_api_core.Outline.WALLET,
+		'robot': ui_iconSet_api_core.Outline.ROBOT,
+		'rest': ui_iconSet_api_core.Outline.DEVELOPER_RESOURCES,
+		'taxi': ui_iconSet_api_core.Outline.DELIVERY,
+		'terminal': ui_iconSet_api_core.Outline.PAYMENT_TERMINAL,
+		'restApp': ui_iconSet_api_core.Outline.APPS,
+		'sms': ui_iconSet_api_core.Outline.SMS,
+		'new': ui_iconSet_api_core.Outline.EMPTY_MESSAGE,
+		'whatsapp': ui_iconSet_api_core.Outline.WHATSAPP,
+		'telegram': ui_iconSet_api_core.Outline.TELEGRAM,
+		'check': ui_iconSet_api_core.Outline.RECEIPT,
+		'document': ui_iconSet_api_core.Outline.FILE,
+		'stage-change': ui_iconSet_api_core.Outline.STAGE,
+		'relation': ui_iconSet_api_core.Outline.CONNECTION,
+		'sum': ui_iconSet_api_core.Outline.SIGMA_SUMM,
+		'circle-check': ui_iconSet_api_core.Outline.CIRCLE_CHECK,
+		'clock': ui_iconSet_api_core.Outline.CLOCK,
+		'view': ui_iconSet_api_core.Outline.SEEN_ITEMS,
+		'pipeline': ui_iconSet_api_core.Outline.FILTER_FUNNEL,
+		'attention': ui_iconSet_api_core.Outline.ALERT,
+		'restoration': ui_iconSet_api_core.Outline.CLOCK_BACK,
+		'arrow-up': ui_iconSet_api_core.Outline.ARROW_TOP_M,
+		'arrow-down': ui_iconSet_api_core.Outline.ARROW_DOWN_M,
+		'task-ping': ui_iconSet_api_core.Outline.PING,
+		'task-new-comment': ui_iconSet_api_core.Outline.NEW_MESSAGE,
+		'task-viewed-comment': ui_iconSet_api_core.Outline.MESSAGE,
+		'task-activity': ui_iconSet_api_core.Outline.TASK,
+		'ai-copilot': ui_iconSet_api_core.Outline.COPILOT,
+		'ai-process': ui_iconSet_api_core.Outline.AI_PROCESS,
+		'cycle-equal': ui_iconSet_api_core.Outline.REPEAT_CYCLE,
+		'message-with-point': ui_iconSet_api_core.Outline.NEW_MESSAGE,
+		'bizproc': ui_iconSet_api_core.Outline.BUSINES_PROCESS_STAGES,
+		'booking': ui_iconSet_api_core.Outline.ONLINE_BOOKING,
+		'repeat-sale': ui_iconSet_api_core.Outline.REPEAT_SALES,
+		'conversion': ui_iconSet_api_core.Outline.DUPLICATE,
+		'camera': ui_iconSet_api_core.Outline.CAMERA,
+		'calendar': ui_iconSet_api_core.Outline.CALENDAR,
+		'circle-crossed': ui_iconSet_api_core.Outline.CIRCLE_CROSS,
+		'cross-air': ui_iconSet_api_core.Outline.CIRCLE_CROSS
 	});
 
 	/** @memberof BX.Crm.Timeline.Animation */
@@ -12699,5 +12823,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Tools = Tools;
 	exports.Types = types;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Main, BX.Crm.Timeline, BX.Vue3, BX, BX, BX.UI.Analytics, BX, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.Crm.Field, BX.Event);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Main, BX.Crm.Timeline, BX.Vue3, BX, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI.IconSet, BX.UI, BX.Vue3.Directives, BX.Main, BX.Crm.Field, BX.Event, BX.UI.IconSet);
 //# sourceMappingURL=timeline.bundle.js.map

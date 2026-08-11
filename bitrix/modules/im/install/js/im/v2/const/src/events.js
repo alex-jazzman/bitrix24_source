@@ -147,4 +147,8 @@ export const EventType = {
 	{
 		onBeforeAddMessageToModel: 'IM:Textarea:onBeforeAddMessageToModel',
 	},
+	guest:
+	{
+		onAfterGuestNamePopupClose: 'IM:Guest:onAfterGuestNamePopupClose',
+	},
 };

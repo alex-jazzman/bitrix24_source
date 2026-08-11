@@ -52,10 +52,6 @@ export const CatalogLayout = {
 					<slot name="search-results"/>
 				</div>
 			</div>
-
-			<div class="editor-chart-catalog__footer">
-				<slot name="footer"/>
-			</div>
 		</section>
 	`,
 };

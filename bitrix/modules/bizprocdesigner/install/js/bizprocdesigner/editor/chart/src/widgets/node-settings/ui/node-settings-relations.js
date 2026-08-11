@@ -4,6 +4,7 @@ import { MessageBox } from 'ui.dialogs.messagebox';
 
 import { useLoc } from '../../../shared/composables';
 import { PORT_TYPES } from '../../../shared/constants';
+import { SaveSettingsButton, CancelSettingsButton } from '../../../shared/ui';
 
 import { EditOutputExpression } from '../../../features/node-settings/ui/edit-output-expression/edit-output-expression';
 
@@ -14,13 +15,12 @@ import {
 	RuleCard,
 	RuleConstruction,
 } from '../../../entities/node-settings';
+import { useAppStore } from '../../../entities/app';
 import {
 	EditActionExpression,
 	EditConditionExpression,
 	AddConstruction,
 	DeleteConstruction,
-	CancelSettingsButton,
-	SaveSettingsButton,
 	SelectBooleanType,
 	SelectRule,
 	DeleteRuleCard,
@@ -62,21 +62,23 @@ export const NodeSettingsRelations = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'block', 'isRuleSettingsShown']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'block', 'isShown']),
 		...mapWritableState(useNodeSettingsStore, ['isSaving']),
 		...mapState(useDiagramStore, ['documentType', 'template']),
-		isShown(): boolean
+		areRelationsShown(): boolean
 		{
-			return this.isRuleSettingsShown && this.currentRule.type === PORT_TYPES.inputRelation;
+			return this.isShown && this.currentRule.type === PORT_TYPES.inputRelation;
 		},
 	},
 	methods:
 	{
 		...mapActions(useNodeSettingsStore, [
-			'toggleRuleSettingsVisibility',
 			'reorder',
 			'discardRuleSettings',
 			'saveRelation',
+		]),
+		...mapActions(useAppStore, [
+			'toggleSettingsRulesPanel',
 		]),
 		async onSaveRelation(): Promise<void>
 		{
@@ -85,6 +87,7 @@ export const NodeSettingsRelations = {
 				this.isSaving = true;
 
 				await this.saveRelation();
+				this.toggleSettingsRulesPanel(false);
 			}
 			catch (error)
 			{
@@ -101,7 +104,7 @@ export const NodeSettingsRelations = {
 		onRulesLayoutClose(): void
 		{
 			this.discardRuleSettings();
-			this.toggleRuleSettingsVisibility(false);
+			this.toggleSettingsRulesPanel(false);
 		},
 		onScroll(): void
 		{
@@ -113,7 +116,7 @@ export const NodeSettingsRelations = {
 	},
 	template: `
 		<NodeSettingsRulesLayout
-			:isShown="isShown"
+			v-if="areRelationsShown"
 			:nodeSettings="nodeSettings"
 			:currentRule="currentRule"
 			:isSaving="isSaving"

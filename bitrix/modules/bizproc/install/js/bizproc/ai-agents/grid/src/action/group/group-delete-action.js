@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { ACTION_TYPE } from '../../constants';
 import type { DeleteActionDataType } from '../../types';
@@ -17,6 +16,11 @@ export class GroupDeleteAction extends DeleteAction
 		return this.grid.getRows().getSelectedIds();
 	}
 
+	isSingleSelection(): boolean
+	{
+		return this.getSelectedIds()?.length === 1;
+	}
+
 	getActionData(): DeleteActionDataType
 	{
 		const data = {
@@ -28,28 +32,17 @@ export class GroupDeleteAction extends DeleteAction
 		return data;
 	}
 
-	getConfirmationPopup(): MessageBox
+	getConfirmationTitle(): string
 	{
-		if (this.getSelectedIds()?.length === 1)
-		{
-			return super.getConfirmationPopup();
-		}
+		return this.isSingleSelection()
+			? super.getConfirmationTitle()
+			: Loc.getMessage('BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_TITLE');
+	}
 
-		const message = Loc.getMessage('BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_MESSAGE');
-		const title = Loc.getMessage('BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_TITLE');
-		const buttons = MessageBoxButtons.OK_CANCEL;
-		const okCaption = Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_BUTTON_OK');
-		const cancelCaption = Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DELETE_ACTION_BUTTON_CANCEL');
-
-		return new MessageBox({
-			message,
-			title,
-			buttons,
-			okCaption,
-			onCancel: (messageBox) => {
-				messageBox.close();
-			},
-			cancelCaption,
-		});
+	getConfirmationMessageText(): string
+	{
+		return this.isSingleSelection()
+			? super.getConfirmationMessageText()
+			: Loc.getMessage('BIZPROC_AI_AGENTS_GRID_GROUP_DELETE_ACTION_CONFIRM_MESSAGE');
 	}
 }

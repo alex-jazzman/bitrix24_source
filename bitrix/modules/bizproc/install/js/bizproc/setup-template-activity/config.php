@@ -11,7 +11,7 @@ return [
 		'bizproc.setup-template',
 		'main.core',
 		'main.core.events',
-		'main.sidepanel',
+		'ui.dialogs.messagebox',
 		'ui.icon-set.api.core',
 		'ui.icon-set.api.vue',
 		'ui.system.menu.vue',

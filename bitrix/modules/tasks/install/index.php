@@ -252,6 +252,15 @@ class tasks extends CModule
 			toMethod: 'handle',
 		);
 
+		// disk
+		$eventManager->registerEventHandler(
+			fromModuleId: 'disk',
+			eventType: 'onAfterDeleteAttachedObject',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
 		$this->registerChatEvents();
 
 		$this->InstallTasks();
@@ -896,6 +905,15 @@ class tasks extends CModule
 			toMethod: 'handle',
 		);
 
+		// disk
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'disk',
+			eventType: 'onAfterDeleteAttachedObject',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
 		$this->unRegisterChatEvents();
 
 		// remove tasks from socnetlog table
@@ -1372,10 +1390,10 @@ class tasks extends CModule
 			toMethod: 'dispatch',
 		);
 
-		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent */
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadChatsByTypeBatchEvent */
 		$eventManager->registerEventHandler(
 			fromModuleId: 'im',
-			eventType: 'OnAfterReadAllChatsByTypeTasksTask',
+			eventType: 'OnAfterReadChatsByTypeBatchTasksTask',
 			toModuleId: 'tasks',
 			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
 			toMethod: 'dispatch',
@@ -1449,10 +1467,10 @@ class tasks extends CModule
 			toMethod: 'dispatch',
 		);
 
-		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent */
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadChatsByTypeBatchEvent */
 		$eventManager->unRegisterEventHandler(
 			fromModuleId: 'im',
-			eventType: 'OnAfterReadAllChatsByTypeTasksTask',
+			eventType: 'OnAfterReadChatsByTypeBatchTasksTask',
 			toModuleId: 'tasks',
 			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
 			toMethod: 'dispatch',

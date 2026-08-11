@@ -1,0 +1,108 @@
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!\Bitrix\Main\Loader::includeModule('booking'))
+{
+	return [];
+}
+
+return [
+	'lang' => BX_ROOT.'/modules/booking/install/components/bitrix/booking/class.php',
+	'css' => 'dist/booking.bundle.css',
+	'js' => 'dist/booking.bundle.js',
+	'rel' => [
+		'booking.component.mixin.loc-mixin',
+		'main.loader',
+		'booking.component.empty-filter-results-popup',
+		'booking.provider.service.main-page-service',
+		'booking.provider.service.sale-channels-service',
+		'booking.provider.service.dictionary-service',
+		'booking.provider.service.calendar-service',
+		'booking.lib.filter-result-navigator',
+		'booking.component.whatsapp-popup-changes-sending-messages',
+		'ui.counterpanel',
+		'booking.lib.drag',
+		'ui.vue3.components.rich-loc',
+		'booking.provider.service.booking-actions-service',
+		'ui.vue3.directives.hint',
+		'booking.lib.mouse-position',
+		'booking.component.time-selector',
+		'booking.component.note-popup',
+		'ui.icon-set.animated',
+		'booking.component.counter',
+		'booking.lib.check-booking-intersection',
+		'booking.lib.grid',
+		'booking.lib.in-interval',
+		'booking.lib.range',
+		'booking.core',
+		'ui.date-picker',
+		'booking.component.counter-floating',
+		'booking.lib.is-real-id',
+		'ui.dialogs.messagebox',
+		'booking.component.actions-popup',
+		'booking.component.booking',
+		'booking.lib.deal-helper',
+		'ui.icon-set.api.core',
+		'ui.icon-set.outline',
+		'booking.model.bookings',
+		'booking.model.clients',
+		'booking.provider.service.wait-list-service',
+		'booking.lib.remove-booking',
+		'booking.lib.remove-wait-list-item',
+		'ui.label',
+		'booking.lib.currency-format',
+		'booking.component.statistics-popup',
+		'ui.hint',
+		'booking.lib.remove-resource',
+		'ui.icon-set.actions',
+		'booking.lib.side-panel-instance',
+		'booking.resource-creation-wizard',
+		'booking.lib.resources',
+		'booking.lib.resources-date-cache',
+		'main.popup',
+		'ui.icon-set.main',
+		'booking.provider.service.option-service',
+		'booking.lib.help-desk',
+		'booking.lib.busy-slots',
+		'ui.entity-selector',
+		'booking.lib.limit',
+		'booking.provider.service.booking-service',
+		'booking.provider.service.client-service',
+		'ui.ears',
+		'main.date',
+		'booking.lib.duration',
+		'booking.component.client-popup',
+		'booking.lib.analytics',
+		'ui.auto-launch',
+		'ui.vue3.vuex',
+		'ui.vue3',
+		'ui.banner-dispatcher',
+		'booking.lib.resolvable',
+		'booking.component.button',
+		'booking.component.popup',
+		'booking.component.loader',
+		'booking.application.yandex-integration-wizard',
+		'booking.lib.aha-moments',
+		'ui.icon-set.api.vue',
+		'ui.cnt',
+		'main.core.events',
+		'main.core',
+		'ui.notification-manager',
+		'booking.const',
+		'booking.application.sku-resources-editor',
+		'booking.provider.service.resources-service',
+		'booking.provider.service.resource-dialog-service',
+	],
+	'skip_core' => false,
+	'settings' => [
+		'isAirTemplate' =>
+			\Bitrix\Main\Loader::includeModule('intranet')
+			&& class_exists(\Bitrix\Intranet\Integration\Templates\Air\AirTemplate::class)
+			&& \Bitrix\Intranet\Integration\Templates\Air\AirTemplate::isEnabled()
+		,
+	],
+];

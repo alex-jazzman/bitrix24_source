@@ -1,145 +1,138 @@
-import { type Receiver } from 'crm.messagesender';
 import { ajax as Ajax, type JsonObject, Type } from 'main.core';
-import { type EventEmitter } from 'main.core.events';
-import { type Store } from 'ui.vue3.vuex';
-import { type Channel, type From } from '../editor';
-import { type MessageModel } from '../model/message-model';
-import { type Template } from '../model/templates-model';
-import { type AnalyticsService } from './analytics-service';
-import { type PreferencesService } from './preferences-service';
-import { type Logger } from './logger';
+
+import { replaceCustomMessagePlaceholders } from 'messageservice.message.editor';
+
+import { BaseContentProvider } from '../content-provider/base-content-provider';
+import { type State } from '../editor';
 
 type Params = {
-	logger: Logger,
-	store: Store,
-	messageModel: MessageModel,
-	eventEmitter: EventEmitter,
-	analyticsService: AnalyticsService,
-	preferencesService: PreferencesService,
+	entityTypeId: ?number,
+	entityId: ?number,
+	providerFactory: Object,
 };
 
 export class SendService
 {
-	#logger: Logger;
-	#store: Store;
-	#messageModel: MessageModel;
-	#emitter: EventEmitter;
-	#analyticsService: AnalyticsService;
-	#preferencesService: PreferencesService;
+	#entityTypeId: ?number;
+	#entityId: ?number;
+	#providerFactory;
 
-	constructor(params: Params)
+	constructor({ entityTypeId, entityId, providerFactory }: Params)
 	{
-		this.#logger = params.logger;
-		this.#store = params.store;
-		this.#messageModel = params.messageModel;
-		this.#emitter = params.eventEmitter;
-		this.#analyticsService = params.analyticsService;
-		this.#preferencesService = params.preferencesService;
+		this.#entityTypeId = entityTypeId;
+		this.#entityId = entityId;
+		this.#providerFactory = providerFactory;
 	}
 
-	sendMessage(): Promise<void>
+	sendMessage(state: State): Promise<void>
 	{
-		if (this.#store.getters['application/isProgress'])
-		{
-			this.#logger.warn('sendMessage: already in progress');
-
-			return Promise.resolve();
-		}
-
-		void this.#store.dispatch('application/setProgress', { isSending: true });
-
-		const channel: Channel = this.#store.getters['channels/current'];
-		const from: From = this.#store.getters['channels/from'];
-		const receiver: Receiver = this.#store.getters['channels/receiver'];
-
-		const params = this.#prepareParams(channel, from, receiver);
+		const params = this.#prepareParams(state);
 
 		return new Promise((resolve, reject) => {
 			Ajax.runAction('crm.activity.sms.send', {
 				data: {
-					ownerTypeId: this.#store.state.application.context.entityTypeId,
-					ownerId: this.#store.state.application.context.entityId,
+					ownerTypeId: this.#entityTypeId,
+					ownerId: this.#entityId,
 					params,
 				},
 			})
-				.then(resolve)
+				.then((result) => {
+					this.#resetProviderData();
+					resolve(result);
+				})
 				.catch(reject)
 			;
-		}).then(() => {
-			this.#analyticsService.onSend();
-			this.#messageModel.clearState();
-			void this.#store.dispatch('application/resetAlert');
-			this.#emitter.emit('crm:messagesender:editor:onSendSuccess');
-			this.#preferencesService.saveChannelLastUsedFrom(channel, from.id);
-		}).catch((response) => {
-			this.#logger.error('sendMessage: error', { response });
-
-			throw response;
-		}).finally(() => {
-			void this.#store.dispatch('application/setProgress', { isSending: false });
 		});
 	}
 
-	#prepareParams(channel: Channel, from: From, receiver: Receiver): JsonObject
+	#prepareParams(state: State): JsonObject
 	{
+		const { channel } = state;
+
 		if (channel.backend.senderCode === 'bitrix24')
 		{
-			return this.#prepareNotificationParams(channel, from, receiver);
+			return this.#prepareNotificationParams(state);
 		}
 
 		if (channel.isTemplatesBased)
 		{
-			return this.#prepareTemplateParams(channel, from, receiver);
+			return this.#prepareTemplateParams(state);
 		}
 
-		return this.#prepareCustomTextParams(channel, from, receiver);
+		return this.#prepareCustomTextParams(state);
 	}
 
-	#prepareNotificationParams(channel: Channel, from: From, receiver: Receiver): JsonObject
+	#prepareNotificationParams(state: State): JsonObject
 	{
 		return {
-			...this.#prepareCommonParams(channel, from, receiver),
-			signedTemplate: this.#store.state.application.notificationTemplate.signed,
+			...this.#prepareCommonParams(state),
+			signedTemplate: state.notificationTemplate.signed,
 		};
 	}
 
-	#prepareTemplateParams(channel: Channel, from: From, receiver: Receiver): JsonObject
+	#prepareTemplateParams(state: State): JsonObject
 	{
-		const template: ?Template = this.#store.getters['templates/current'];
+		const { template } = state;
 
 		return {
-			...this.#prepareCommonParams(channel, from, receiver),
-			body: this.#store.getters['message/body'],
+			...this.#prepareCommonParams(state),
+			body: state.message.body,
 			template: template.ID,
 			templateOriginalId: template.ORIGINAL_ID,
 			isTemplateWithPlaceholders: Type.isPlainObject(template.PLACEHOLDERS),
 			isReplacePlaceholders: true,
-			isPlaceholdersInDisplayFormat: false,
 		};
 	}
 
-	#prepareCustomTextParams(channel: Channel, from: From, receiver: Receiver): JsonObject
+	#prepareCustomTextParams(state: State): JsonObject
 	{
 		return {
-			...this.#prepareCommonParams(channel, from, receiver),
-			body: this.#store.getters['message/body'],
-			paymentId: this.#store.state.message.paymentId,
-			shipmentId: this.#store.state.message.shipmentId,
-			source: this.#store.state.message.source,
-			compilationProductIds: this.#store.state.message.compilationProductIds,
+			...this.#prepareCommonParams(state),
+			body: replaceCustomMessagePlaceholders(
+				state.message.body,
+				(value) => `{${value}}`,
+			),
+			...this.#collectProviderData(),
 			isReplacePlaceholders: true,
-			isPlaceholdersInDisplayFormat: true,
 		};
 	}
 
-	#prepareCommonParams(channel: Channel, from: From, receiver: Receiver): JsonObject
+	#collectProviderData(): Object
 	{
+		let data = {};
+		for (const provider of this.#providerFactory.getProviders())
+		{
+			if (provider instanceof BaseContentProvider)
+			{
+				data = { ...data, ...provider.getSendData() };
+			}
+		}
+
+		return data;
+	}
+
+	#resetProviderData(): void
+	{
+		for (const provider of this.#providerFactory.getProviders())
+		{
+			if (provider instanceof BaseContentProvider)
+			{
+				provider.resetSendData();
+			}
+		}
+	}
+
+	#prepareCommonParams(state: State): JsonObject
+	{
+		const { channel, from, to } = state;
+		const addressSource = to.customData?.addressSource ?? {};
+
 		return {
 			senderId: channel.backend.id,
 			from: from.id,
-			to: receiver.address.value,
-			entityTypeId: receiver.addressSource.entityTypeId,
-			entityId: receiver.addressSource.entityId,
+			to: to.value,
+			entityTypeId: addressSource.entityTypeId,
+			entityId: addressSource.entityId,
 		};
 	}
 }

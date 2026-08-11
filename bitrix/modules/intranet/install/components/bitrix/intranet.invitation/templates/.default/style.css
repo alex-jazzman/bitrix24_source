@@ -470,7 +470,7 @@
 }
 
 .intranet-invite-form-rows-container {
-	width: 640px;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
@@ -478,11 +478,22 @@
 }
 
 .intranet-invite-form-row {
+	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs2);
 	padding-bottom: var(--ui-space-stack-xs);
 }
 
 .intranet-invite-form-row .ui-system-input {
-	flex-grow: 1;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+@media (max-width: 560px) {
+	.intranet-invite-form-row .ui-system-input {
+		flex-basis: 100%;
+	}
 }
 
 .intranet-invitation-list {
@@ -554,7 +565,8 @@
 .intranet-invitation-block__body {
 	display: flex;
 	flex-direction: column;
-	width: 640px;
+	width: 100%;
+	max-width: 640px;
 	gap: var(--ui-space-stack-xs);
 	margin-top: var(--ui-space-stack-lg2);
 }
@@ -670,10 +682,13 @@
 	display: flex;
 	gap: 12px;
 	align-items: flex-end;
+	width: 100%;
 }
 
 .intranet-invitation-block__copy-link-input-wrapper {
-	width: 420px;
+	flex: 1;
+	min-width: 0;
+	max-width: 420px;
 	margin-top: var(--ui-space-stack-md);
 }
 

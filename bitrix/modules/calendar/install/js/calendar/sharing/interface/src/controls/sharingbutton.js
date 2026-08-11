@@ -9,6 +9,9 @@ import 'spotlight';
 import { Guide } from 'ui.tour';
 import { Counter } from 'ui.cnt';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
+import { Outline } from 'ui.icon-set.api.core';
+
+import 'ui.icon-set.outline';
 
 export default class SharingButton
 {
@@ -52,6 +55,7 @@ export default class SharingButton
 			size: ButtonSize.EXTRA_SMALL,
 			color: ButtonColor.LIGHT_BORDER,
 			icon: this.sharingFeatureLimit ? ButtonIcon.LOCK : null,
+			collapsedIcon: ButtonIcon.CALENDAR_WITH_SLOTS,
 			className: 'ui-btn-themes calendar-sharing__btn',
 			onclick: (button, event) => {
 				if (!button.getSwitcher().getNode().contains(event.target))
@@ -182,25 +186,22 @@ export default class SharingButton
 		this.pulsar?.close();
 		Dom.remove(this.counterNode);
 
-		if (!this.newDialog)
-		{
-			this.newDialog = new DialogNew({
-				bindElement: this.button.getContainer(),
-				sharingUrl: this.sharingUrl,
-				linkHash: this.linkHash,
-				sharingRule: this.sharingRule,
-				context: 'calendar',
-				calendarSettings: {
-					weekHolidays: Util.config.week_holidays,
-					weekStart: Util.config.week_start,
-					workTimeStart: Util.config.work_time_start,
-					workTimeEnd: Util.config.work_time_end,
-				},
-				userInfo: this.userInfo,
-				settingsCollapsed: this.sharingSettingsCollapsed,
-				sortJointLinksByFrequentUse: this.sortJointLinksByFrequentUse,
-			});
-		}
+		this.newDialog ??= new DialogNew({
+			bindElement: this.button.getContainer(),
+			sharingUrl: this.sharingUrl,
+			linkHash: this.linkHash,
+			sharingRule: this.sharingRule,
+			context: 'calendar',
+			calendarSettings: {
+				weekHolidays: Util.config.week_holidays,
+				weekStart: Util.config.week_start,
+				workTimeStart: Util.config.work_time_start,
+				workTimeEnd: Util.config.work_time_end,
+			},
+			userInfo: this.userInfo,
+			settingsCollapsed: this.sharingSettingsCollapsed,
+			sortJointLinksByFrequentUse: this.sortJointLinksByFrequentUse,
+		});
 
 		if (!this.newDialog.isShown())
 		{
@@ -235,6 +236,7 @@ export default class SharingButton
 		if (!this.warningPopup)
 		{
 			this.warningPopup = new MessageBox({
+				useAirDesign: true,
 				title: Loc.getMessage('SHARING_WARNING_POPUP_TITLE_1'),
 				message: Loc.getMessage('SHARING_WARNING_POPUP_CONTENT_2'),
 				buttons: this.getWarningPopupButtons(),

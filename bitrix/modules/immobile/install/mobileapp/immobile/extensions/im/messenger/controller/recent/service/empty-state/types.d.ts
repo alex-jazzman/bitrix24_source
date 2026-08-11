@@ -4,6 +4,7 @@ export interface IEmptyStateService extends IBaseRecentService
 {
     subscribeEvents: () => void;
     redraw: () => void;
+    notifyActivatedWhenEmpty: () => void;
     show: () => Promise<void>;
     hide: () => Promise<void>;
 }
@@ -18,4 +19,5 @@ declare interface IWelcomeScreen
 declare type CommonEmptyStateServiceProps = {
     welcomeScreenExtension: string,
 	welcomeScreenProps?: object,
+	onActivatedWhenEmpty?: () => void | Promise<void>,
 };

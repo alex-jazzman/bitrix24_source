@@ -57,6 +57,14 @@ if (
 
 $userId = (int)$arResult['User']['ID'];
 $isCurrentUserPage = ($userId === (int)$USER->GetID());
+$currentUser = new \Bitrix\Intranet\Entity\User(
+	id: (int)$USER->GetID(),
+	externalAuthId: $USER->GetParam('EXTERNAL_AUTH_ID') ?: null,
+);
+$isImGuestMenu = (
+	$currentUser->isImGuest()
+	|| \Bitrix\Intranet\Entity\User::initByArray($arResult['User'])->isImGuest()
+);
 
 $this->addExternalCss(SITE_TEMPLATE_PATH . "/src/css/standalone/profile-menu.css");
 
@@ -107,6 +115,17 @@ if (!$isCurrentUserPage)
 }
 
 $items = array_merge($items, $profileItem);
+
+if ($isImGuestMenu)
+{
+	$arResult['CanView'] = [];
+
+	if (is_array($arResult['CurrentUserPerms']['Operations'] ?? null))
+	{
+		$arResult['CurrentUserPerms']['Operations']['timeman'] = false;
+		$arResult['CurrentUserPerms']['Operations']['viewgroups'] = false;
+	}
+}
 
 if (
 	is_array($arResult["CanView"])

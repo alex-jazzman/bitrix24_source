@@ -1,0 +1,275 @@
+<?php
+
+namespace Bitrix\BIConnector\DataSource;
+
+use Bitrix\Main\DB\Connection;
+use Bitrix\Main\DB\SqlHelper;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Event;
+use Bitrix\Main\Result;
+
+abstract class Dataset
+{
+	protected const FIELD_NAME_PREFIX = '';
+
+	protected function __construct(
+		private readonly Connection $dataConnection,
+		protected readonly ?string $languageId = null
+	)
+	{
+	}
+
+	/**
+	 * Return final dataset table name
+	 *
+	 * @return string
+	 */
+	abstract protected function getResultTableName(): string;
+
+	/**
+	 * Return table alias for sql selection
+	 *
+	 * @return string
+	 */
+	abstract public function getSqlTableAlias(): string;
+
+	/**
+	 * Return internal bitrix table name
+	 *
+	 * @return string
+	 */
+	abstract protected function getConnectionTableName(): string;
+
+	/**
+	 * Return `DatasetField[]` array for building select table description
+	 *
+	 * @return array
+	 */
+	abstract protected function getFields(): array;
+
+	/**
+	 * @return Result
+	 */
+	protected function onBeforeEvent(): Result
+	{
+		return new Result();
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getTableDescription(): string
+	{
+		return $this->getMessage('TABLE_DESCRIPTION', $this->getConnectionTableName());
+	}
+
+	/**
+	 * Returns extended table description for display in table detail view.
+	 *
+	 * @return string
+	 */
+	protected function getTableDescriptionFull(): string
+	{
+		return $this->getMessage('TABLE_DESCRIPTION_FULL', '');
+	}
+
+	/**
+	 * @return DatasetFilter|null
+	 */
+	protected function getFilter(): ?DatasetFilter
+	{
+		return null;
+	}
+
+	/**
+	 * @return array|null
+	 */
+	protected function getDictionaries(): array
+	{
+		return [];
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getDatasetFields(): array
+	{
+		$result = [];
+
+		foreach ($this->getFields() as $field)
+		{
+			if ($field instanceof DatasetField)
+			{
+				$field->setDataset($this);
+				$result[$field->getCode()] = $field;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getDataConnection(): Connection
+	{
+		return $this->dataConnection;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getResultFields(): array
+	{
+		$result = [];
+
+		foreach ($this->getDatasetFields() as $field)
+		{
+			$result[$field->getCode()] = $field->getFormatted();
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getResult(): array
+	{
+		$result = [
+			'TABLE_NAME' => $this->getConnectionTableName(),
+			'TABLE_ALIAS' => $this->getSqlTableAlias(),
+			'TABLE_DESCRIPTION' => $this->getTableDescription(),
+			'TABLE_DESCRIPTION_FULL' => $this->getTableDescriptionFull(),
+			'FIELDS' => $this->getResultFields(),
+		];
+
+		$filter = $this->getFilter();
+		if ($filter !== null && !empty($filter->filterFields()))
+		{
+			$result['FILTER'] = $filter->datasetFilter();
+			$result['FILTER_FIELDS'] = [];
+			foreach ($filter->filterFields() as $field)
+			{
+				$result['FILTER_FIELDS'][$field->getCode()] =
+					$field
+						->setDataset($this)
+						->getFormatted()
+				;
+			}
+		}
+
+		if (!empty($this->getDictionaries()))
+		{
+			$result['DICTIONARY'] = $this->getDictionaries();
+		}
+
+		$groupBy = $this->getGroupBy();
+		if (!empty($groupBy))
+		{
+			$result['GROUP'] = $groupBy;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $alias
+	 * @param string $joinInner
+	 * @param string $joinLeft
+	 *
+	 * @return JoinSelection
+	 */
+	protected function createJoin(string $alias, string $joinInner, string $joinLeft): JoinSelection
+	{
+		return new JoinSelection(
+			$this,
+			$alias,
+			$joinInner,
+			$joinLeft
+		);
+	}
+
+	public function getAliasFieldName(string $code): string
+	{
+		$code = $this->getSqlHelper()->quote($code);
+		$tableAlias = $this->getSqlTableAlias();
+		if (!empty($tableAlias))
+		{
+			$tableAlias = $this->getSqlHelper()->quote($tableAlias);
+			$code = "{$tableAlias}.{$code}";
+		}
+
+		return $code;
+	}
+
+	/**
+	 * @param string $phraseCode
+	 * @param string $defaultValue
+	 *
+	 * @return string
+	 */
+	public function getMessage(string $phraseCode, string $defaultValue = ''): string
+	{
+		return Loc::getMessage($phraseCode, null, $this->languageId) ?? $defaultValue ;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getFieldNamePrefix(): string
+	{
+		return static::FIELD_NAME_PREFIX;
+	}
+
+	/**
+	 * @return SqlHelper
+	 */
+	public function getSqlHelper(): SqlHelper
+	{
+		return $this->dataConnection->getSqlHelper();
+	}
+
+	/**
+	 * Event handler for OnBIConnectorDataSources event.
+	 * Adds a key from `getResultTableName` to the second event parameter.
+	 * Fills it with data to retrieve information from table.
+	 *
+	 * @param Event $event Event data.
+	 *
+	 * @return void
+	 */
+	public static function onBIConnectorDataSources(Event $event)
+	{
+		$params = $event->getParameters();
+		$manager = $params[0];
+		$languageId = $params[2];
+		$connection = $manager->getDatabaseConnection();
+		if (!$connection)
+		{
+			return;
+		}
+
+		$dataset = new static($connection, $languageId);
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $dataset->getResultTableName() !== $eventTableName)
+		{
+			return;
+		}
+
+		if (!$dataset->onBeforeEvent()->isSuccess())
+		{
+			return;
+		}
+
+		$result = &$params[1];
+		$tableName = $dataset->getResultTableName();
+		$result[$tableName] = $dataset->getResult();
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getGroupBy(): array
+	{
+		return [];
+	}
+}

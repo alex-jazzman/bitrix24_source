@@ -2673,6 +2673,18 @@ div.crm-entity-widget-content-block-radio-label {
 	align-items: center;
 }
 
+.crm-entity-card-common,
+.crm-entity-card-private {
+	display: inline-block;
+	width: 40px;
+	height: 26px;
+	vertical-align: middle;
+}
+
+.crm-entity-card-private { background: url(images/private.svg) no-repeat center; }
+
+.crm-entity-card-common { background: url(images/common.svg) no-repeat center; }
+
 .crm-entity-add-app-link,
 .crm-entity-settings-link,
 .crm-entity-add-widget-link {
@@ -2719,18 +2731,6 @@ div.crm-entity-widget-content-block-radio-label {
 	color: #fff !important;
 	opacity: 1;
 }
-
-.crm-entity-card-common,
-.crm-entity-card-private {
-	display: inline-block;
-	width: 40px;
-	height: 26px;
-	vertical-align: middle;
-}
-
-.crm-entity-card-private { background: url(images/private.svg) no-repeat center; }
-
-.crm-entity-card-common { background: url(images/common.svg) no-repeat center; }
 
 .money-editor-currency-selector-wrap {
 	position: relative;
@@ -4415,3 +4415,4 @@ a.crm-widget-employee-position:hover {
 {
 	margin-left: 5px;
 }
+

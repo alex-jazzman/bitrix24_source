@@ -9,6 +9,7 @@ return [
 	'css' => './dist/workspace.bundle.css',
 	'rel' => [
 		'main.core',
+		'note.analytics',
 		'note.permissions',
 		'note.sidebar',
 		'note.ui.action-menu',

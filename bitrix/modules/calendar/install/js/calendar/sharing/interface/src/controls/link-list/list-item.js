@@ -282,6 +282,7 @@ export default class ListItem
 		if (!this.#deletePopup)
 		{
 			this.#deletePopup = new MessageBox({
+				useAirDesign: true,
 				title: Loc.getMessage('CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_TITLE_MSGVER_1'),
 				message: Loc.getMessage('CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_DESC_MSGVER_1'),
 				buttons: this.getDeletePopupButtons(),

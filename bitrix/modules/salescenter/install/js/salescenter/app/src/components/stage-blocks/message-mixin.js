@@ -9,8 +9,11 @@ const MessageMixin = {
 				{
 					const textModes = this.$root.$app.sendingMethodDesc.text_modes;
 					const currentMessage = compilationMode ? textModes.compilation : textModes.payment;
-					this.messageSenderEditor.setMessageText(currentMessage);
-					this.$store.dispatch('orderCreation/setMessageData', { body: currentMessage });
+					const bbcodeMessage = this.convertLegacyTemplateToBBCode(currentMessage);
+					this.messageSenderEditor.setMessageText(bbcodeMessage);
+					this.$store.dispatch('orderCreation/setMessageData', {
+						body: bbcodeMessage,
+					});
 				}
 			},
 		},
@@ -35,6 +38,22 @@ const MessageMixin = {
 		},
 	methods:
 		{
+			convertLegacyTemplateToBBCode(template: string): string
+			{
+				const caption = Loc.getMessage('SALESCENTER_TEMPLATE_PLACEHOLDER_LINK');
+				let isFirstOccurrence = true;
+
+				return template.replaceAll('#LINK#', (): string => {
+					if (isFirstOccurrence)
+					{
+						isFirstOccurrence = false;
+
+						return `[placeholder code=LINK removable=false copyable=false]${caption}[/placeholder]`;
+					}
+
+					return caption;
+				});
+			},
 			onMessageBodyChangeHandler(event)
 			{
 				const body = event.getData().body;
@@ -42,27 +61,6 @@ const MessageMixin = {
 				if (this.messageData.senderCode !== 'bitrix24')
 				{
 					this.$root.$app.sendingMethodDesc.text_modes[this.isCompilationMode ? 'compilation' : 'payment'] = body;
-				}
-			},
-			setTemplateError(show: boolean): void
-			{
-				if (this.messageSenderEditor)
-				{
-					if (show)
-					{
-						if (!this.templateError)
-						{
-							this.templateError = true;
-							this.messageSenderEditor.setError(
-								Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'),
-							);
-						}
-					}
-					else if (this.templateError)
-					{
-						this.templateError = false;
-						this.messageSenderEditor.resetAlert();
-					}
 				}
 			},
 		},

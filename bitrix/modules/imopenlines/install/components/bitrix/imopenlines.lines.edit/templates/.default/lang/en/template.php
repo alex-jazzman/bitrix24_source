@@ -191,16 +191,16 @@ $MESS["IMOL_CONFIG_EDIT_QUICK_ANSWERS_STORAGE"] = "Canned response list";
 $MESS["IMOL_CONFIG_EDIT_RESPONSIBLE_QUEUE"] = "Queue";
 $MESS["IMOL_CONFIG_EDIT_RESPONSIBLE_USERS_QUEUE"] = "Agent queue:";
 $MESS["IMOL_CONFIG_EDIT_SAVE"] = "Save";
-$MESS["IMOL_CONFIG_EDIT_SHOW_NOTIFICATION_REDIRECT"] = "Notify about forwarded customer enquiries when clocking in";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED"] = "waiting for user reaction";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED_NEW"] = "replied to";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_CLOSED"] = "closed";
+$MESS["IMOL_CONFIG_EDIT_SHOW_NOTIFICATION_REDIRECT"] = "After the agent has clocked in, notify if a customer enquiry is assigned to the agent";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED"] = "waiting for customer reaction";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_ANSWERED_NEW"] = "answered";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_OPTION_CLOSED"] = "resolved";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP"] = "<b>Answered</b>: excludes chats to which an agent replied at least once; also excludes both closed chats and chats awaiting for rating.
 <br><br><b>Waiting for user reaction</b>: excludes chats to which an agent has replied and is now waiting for reaction. Both closed chats and chats awaiting for rating are excluded as well.<br><br>
-<b>Closed</b>: excludes both closed chats and chats awaiting for rating.";
-$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Answered</b>: excludes enquiries to which an agent replied at least once; also closed enquiries and enquiries awaiting for rating.
-<br><br><b>Waiting for user reaction</b>: excludes enquiries to which an agent has replied and is now waiting for reaction. Both closed enquiries and enquiries awaiting for rating are excluded as well.<br><br>
-<b>Closed</b>: excludes both closed enquiries and enquiries awaiting for rating.";
+<b>Resolved</b>: excludes both closed chats and chats awaiting for rating.";
+$MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Answered</b>: excludes enquiries to which the customer received at least one reply, also excludes resolved and pending customer rating enquiries.
+<br><br><b>Waiting for customer reaction</b>: excludes enquiries to which an agent replied and is now waiting for reaction. Excludes resolved and pending customer rating enquiries.<br><br>
+<b>Resolved</b>: excludes resolved and pending customer rating enquiries.";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE"] = "Exclude chats:";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE_NEW"] = "Ignore enquiries in this status when calculating distribution";
 $MESS["IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH"] = "Allow user to rate ongoing conversation";

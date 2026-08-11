@@ -174,6 +174,8 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 		replicate: taskDto.replicate,
 		mark: taskDto.mark,
 		replicateParams: mapReplicateParamsToModel(taskDto),
+		replicateTemplate: taskDto.replicateTemplate,
+		forkedByTemplate: taskDto.forkedByTemplate,
 	};
 
 	return Object.fromEntries(

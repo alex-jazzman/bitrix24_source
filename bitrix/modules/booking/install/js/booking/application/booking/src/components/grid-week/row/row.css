@@ -1,10 +1,23 @@
 
 .booking-booking__booking__week-grid_row {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
 	box-sizing: border-box;
-	min-height: var(--booking-resource-item-height);
+	min-height: var(--booking-cell-height);
 	width: max-content;
-	padding-right: 260px;
+	padding-right: var(--booking-sidebar-zone-width);
+}
+
+.booking-booking__booking__week-grid_row::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: calc(var(--booking-week-cell-width) * var(--zoom) * 7);
+	width: 70px;
+	background: linear-gradient(to right, transparent 0%, var(--ui-color-base-white-fixed) 60%, var(--ui-color-base-white-fixed) 100%);
+	pointer-events: none;
+	z-index: 4;
 }

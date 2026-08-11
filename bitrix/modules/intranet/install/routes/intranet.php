@@ -338,9 +338,33 @@ return static function (RoutingConfigurator $routes) {
 		->default('extra', '')
 		->default('videoconf', 1)
 	;
-	$routes->any($siteDir . 'guest/{code}',
-		new PublicPageController($siteDir . 'guest/index.php'))
+	$guestPageMiddleware = static function () {
+		$defines = [
+			'SITE_TEMPLATE_ID' => 'bitrix24',
+			'NOT_CHECK_PERMISSIONS' => true,
+			'BX_SKIP_USER_LIMIT_CHECK' => true,
+			'BX_SKIP_SESSION_EXPAND' => true,
+		];
+		foreach ($defines as $name => $value)
+		{
+			if (!defined($name))
+			{
+				define($name, $value);
+			}
+		}
+	};
+	// Cloud serves this public URL with a trailing slash; the route regex is anchored (#^...$#),
+	// so /guest/{code}/ won't match without an explicit trailing segment.
+	$routes->any($siteDir . 'guest/{code}/{any}',
+		[\Bitrix\Im\V2\Guest\Controller\Page::class, 'view'])
 		->where('code', '[a-zA-Z0-9]+')
+		->where('any', '.*')
+		->middleware($guestPageMiddleware)
+	;
+	$routes->any($siteDir . 'guest/{code}',
+		[\Bitrix\Im\V2\Guest\Controller\Page::class, 'view'])
+		->where('code', '[a-zA-Z0-9]+')
+		->middleware($guestPageMiddleware)
 	;
 	$routes->any($siteDir . 'online/{alias}/{extra}',
 		new PublicPageController($siteDir . 'desktop_app/router.php'))

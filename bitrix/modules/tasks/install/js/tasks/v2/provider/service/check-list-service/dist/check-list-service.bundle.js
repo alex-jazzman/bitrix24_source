@@ -161,6 +161,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			await this.#getPromises[toId];
 		}
 		async save(taskId, checklists, skipNotification = false) {
+			checklists = this.#excludeDeletingItems(checklists);
+
 			// eslint-disable-next-line no-async-promise-executor
 			return new Promise(async (resolve, reject) => {
 				try {
@@ -317,6 +319,24 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			} catch {
 				promise?.resolve();
 			}
+		}
+		#excludeDeletingItems(checkLists) {
+			const deletingMap = this.$store.getters[`${tasks_v2_const.Model.Interface}/deletingCheckListIds`] ?? {};
+			const deletingIds = new Set(Object.values(deletingMap));
+			if (deletingIds.size === 0) {
+				return checkLists;
+			}
+			const queue = [...deletingIds];
+			while (queue.length > 0) {
+				const parentId = queue.shift();
+				checkLists.forEach(item => {
+					if (!deletingIds.has(item.id) && item.parentId === parentId) {
+						deletingIds.add(item.id);
+						queue.push(item.id);
+					}
+				});
+			}
+			return checkLists.filter(item => !deletingIds.has(item.id));
 		}
 		isCheckListExists(checkListId) {
 			return this.#getById(checkListId) !== null;

@@ -12,7 +12,8 @@ $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_FORWARD_TITLE'] = 'Переслать со
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_FORWARD_TITLE_SEVERAL_MESSAGES'] = 'Переслать сообщения';
 $MESS['IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TITLE_EMPLOYEE'] = 'Пригласите гостей в чат';
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST"] = 'Гостями могут быть подрядчики, партнёры, клиенты. Приглашайте их, когда нужно быстро обсудить что-то вместе с командой. У гостя будет доступ только к этому чату';
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER"] = "Введите e-mail гостя";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER_MSGVER_1"] = "Добавьте e-mail гостя";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER_WITH_PHONE"] = "Добавьте телефон или e-mail гостя";
 
 $MESS["IM_ENTITY_SELECTOR_GUESTS_TAB"] = "Гости";
 $MESS["IM_ENTITY_SELECTOR_EMPLOYEES_TAB"] = "Сотрудники";
@@ -30,4 +31,9 @@ $MESS["IM_ENTITY_SELECTOR_ADD_GUEST_INVITE_BY_LINK"] = "По ссылке";
 $MESS["IM_ENTITY_SELECTOR_ADD_GUEST_INVITE_BY_PHONE_OR_EMAIL"] = "По номеру телефона или e-mail";
 $MESS["IM_ENTITY_SELECTOR_ADD_GUEST_INVITE_BY_EMAIL"] = "По e-mail";
 $MESS["IM_ENTITY_SELECTOR_ADD_GUEST_HELPDESK_LINK"] = "Подробнее";
-$MESS["IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT"] = "Обновите ссылку для приглашения, если хотите закрыть доступ по старой";
+$MESS["IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT_MSGVER_1"] = "Ссылку можно изменить. Все, кто переходил по старой ссылке, больше не смогут попасть в чат";
+
+$MESS["IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_TITLE"] = "Добавить чат в проект?";
+$MESS["IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_TEXT"] = "Все участники чата получат доступ к проекту, а сам чат станет отображаться только внутри проекта";
+$MESS["IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_BUTTON"] = "Да, добавить";
+$MESS["IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CANCEL_BUTTON"] = "Отмена";

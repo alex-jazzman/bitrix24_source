@@ -1,11 +1,7 @@
-import { Event } from 'main.core';
-
 import { Button as UiButton, ButtonColor, ButtonSize, AirButtonStyle } from 'ui.vue3.components.button';
 import 'ui.icon-set.outline';
 
-import { EventName } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
-import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { replicationMeta } from '../../../replication-meta';
@@ -28,7 +24,7 @@ export const ReplicationSheetFooter = {
 			required: true,
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'save'],
 	setup(): { task: TaskModel }
 	{
 		return {
@@ -50,19 +46,12 @@ export const ReplicationSheetFooter = {
 	methods: {
 		async save(): void
 		{
-			this.$emit('close');
-
 			if (this.wasEmpty)
 			{
 				void fieldHighlighter.setContainer(this.$root.$el).highlight(replicationMeta.id);
 			}
 
-			await taskService.update(this.taskId, {
-				replicate: true,
-				replicateParams: this.replicateParams,
-			});
-
-			Event.EventEmitter.emit(EventName.UpdateReplicateParams);
+			this.$emit('save');
 		},
 	},
 	template: `

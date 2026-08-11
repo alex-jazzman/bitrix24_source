@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/conference-channel.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.lib.desktop-api',
-		'call.core',
+		'call.adapter.desktop-api',
+		'call.infrastructure.broadcast-channel',
 	],
 	'skip_core' => true,
 ];

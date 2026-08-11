@@ -116,7 +116,23 @@ $userHelper = $arResult['userHelper'] ?? null;
 						<div class="timeman-report-title-text"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_REPORT')); ?></div>
 					</div>
 					<div class="timeman-report-decs-inner">
-						<?= $arResult['WORKTIME_REPORT']['REPORT'] ?>
+						<!-- bbcode-parse-applied -->
+						<?php
+						$reportRaw = (string)($arResult['WORKTIME_REPORT']['REPORT'] ?? '');
+						if ($reportRaw !== '')
+						{
+							$reportRaw = preg_replace_callback(
+								'#(\[(?:img|url)[^\]]*\])(.+?)(\[/(?:img|url)\])#isu',
+								static fn($m) => $m[1] . str_replace('&amp;', '&', $m[2]) . $m[3],
+								$reportRaw
+							);
+
+							$parser = new \CTextParser();
+							$parser->useTypography = true;
+							$parser->allow['NL2BR'] = 'Y';
+							echo $parser->convertText($reportRaw);
+						}
+						?>
 					</div>
 				</div>
 				<div class="timeman-report-activity-block

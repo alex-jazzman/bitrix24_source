@@ -100,6 +100,7 @@ export default class GoogleTemplate extends InterfaceTemplate
 	showAlertPopup()
 	{
 		const messageBox = new MessageBox({
+			useAirDesign: true,
 			className: this.id,
 			message: Loc.getMessage('GOOGLE_IS_NOT_CALDAV_SETTINGS_WARNING_MESSAGE'),
 			width: 500,

@@ -4,7 +4,6 @@
 jn.define('crm/onboarding/src/condition', (require, exports, module) => {
 	const { ConditionBase } = require('onboarding/condition');
 	const { Type } = require('type');
-	const { TypeId } = require('crm/type');
 	const {
 		fetchCrmKanbanList,
 		selectByEntityTypeId,
@@ -160,27 +159,6 @@ jn.define('crm/onboarding/src/condition', (require, exports, module) => {
 			return Object.fromEntries(
 				Object.entries(stages).filter(([key]) => allowedIds.has(Number(key))),
 			);
-		}
-
-		static isClientRelatedEntity()
-		{
-			return async (context) => {
-				if (!context || !context.entityTypeId)
-				{
-					return false;
-				}
-
-				return context.entityTypeId === TypeId.Contact
-					|| context.entityTypeId === TypeId.Company
-					|| context.isClientEnabled;
-			};
-		}
-
-		static hasOpenLineAccess()
-		{
-			return async (context) => {
-				return Boolean(context && context.hasOpenLinesAccess);
-			};
 		}
 
 		static hasSMSProviderConnection()

@@ -1131,6 +1131,10 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		blur = () => {
 			this.contentFieldRef?.blur({ hideKeyboard: true });
 		};
+
+		clear = () => {
+			this.contentFieldRef?.clear();
+		};
 	}
 
 	Input.defaultProps = {

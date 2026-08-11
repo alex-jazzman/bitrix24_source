@@ -7,6 +7,7 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Bizproc\Api\Enum\ErrorMessage;
 
 $siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
@@ -122,140 +123,125 @@ $documentId = $paramDocumentId ? array($moduleId, $entity, $paramDocumentId) : n
 $documentStates = CBPDocument::GetDocumentStates($documentType, $documentId);
 $userGroups = $user->GetUserGroupArray();
 
+$currentUserId = (int)$user->getId();
+$startRequestParameters = array_merge($request->getPostList()->toArray(), $request->getFileList()->toArray());
+
 switch ($action)
 {
 	case 'GET_TEMPLATES':
-		$templates = \CBPDocument::getTemplatesForStart($user->getId(), $documentType, $documentId, array(
-			"UserGroups" => $userGroups,
-			"DocumentStates" => $documentStates
-		));
-		$sendData(array(
-			'templates' => $templates
-		));
-	break;
+		$templates = \CBPDocument::getTemplatesForStart(
+			$currentUserId,
+			$documentType,
+			$documentId,
+			['UserGroups' => $userGroups, 'DocumentStates' => $documentStates]
+		);
+		$sendData(['templates' => $templates]);
+		break;
 
 	case 'START_WORKFLOW':
+		$templateId = (int)$request->getPost('template_id');
 
-		$templateId = $request->getPost('template_id');
-
-		if (!CBPDocument::CanUserOperateDocument(
-			CBPCanUserOperateOperation::StartWorkflow,
-			$user->getId(),
-			$documentId,
-			array(
-				"UserGroups" => $userGroups,
-				"DocumentStates" => $documentStates,
-				"WorkflowTemplateId" => $templateId)
-		))
+		if (
+			$templateId <= 0
+			|| !CBPDocument::CanUserOperateDocument(
+				CBPCanUserOperateOperation::StartWorkflow,
+				$currentUserId,
+				$documentId,
+				[
+					'UserGroups' => $userGroups,
+					'DocumentStates' => $documentStates,
+					'WorkflowTemplateId' => $templateId,
+				]
+			)
+		)
 		{
 			$sendError('Access Denied!');
 		}
 
-		$arWorkflowTemplate = CBPWorkflowTemplateLoader::GetList(
-			array(),
-			array(
-				'ID' => $templateId,
-				"DOCUMENT_TYPE" => $documentType,
-				"ACTIVE" => "Y",
-				'!AUTO_EXECUTE' => CBPDocumentEventType::Automation
-			),
-			false,
-			false,
-			array("ID", "NAME", "DESCRIPTION", "PARAMETERS")
-		)->fetch();
+		$workflowParameters = (new \Bitrix\Bizproc\Api\Service\WorkflowTemplateService())
+			->prepareStartParameters(
+				new \Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareStartParametersRequest(
+					templateId: $templateId,
+					complexDocumentType: $documentType,
+					requestParameters: $startRequestParameters,
+					targetUserId: $currentUserId,
+				)
+			)
+		;
 
-		if (!$arWorkflowTemplate)
+		if (!$workflowParameters->isSuccess())
 		{
-			$sendError('Access Denied!');
-		}
-
-		$arWorkflowParameters = array();
-		$arErrorsTmp = array();
-
-		if (count($arWorkflowTemplate["PARAMETERS"]) > 0)
-		{
-			$arRequest = $_POST;
-
-			foreach ($_FILES as $k => $v)
+			$workflowParameterError = $workflowParameters->getErrors()[0] ?? null;
+			if ($workflowParameterError?->getCode() === ErrorMessage::TEMPLATE_NOT_FOUND->value)
 			{
-				if (array_key_exists("name", $v))
-				{
-					if (is_array($v["name"]))
-					{
-						$ks = array_keys($v["name"]);
-						for ($i = 0, $cnt = count($ks); $i < $cnt; $i++)
-						{
-							$ar = array();
-							foreach ($v as $k1 => $v1)
-								$ar[$k1] = $v1[$ks[$i]];
-							$arRequest[$k][] = $ar;
-						}
-					}
-					else
-					{
-						$arRequest[$k] = $v;
-					}
-				}
+				$sendError('Access Denied!');
 			}
 
-			$arWorkflowParameters = CBPWorkflowTemplateLoader::CheckWorkflowParameters(
-				$arWorkflowTemplate["PARAMETERS"],
-				$arRequest,
-				$documentType,
-				$arErrorsTmp
-			);
-
-			if (count($arErrorsTmp) > 0)
-			{
-				$sendError($arErrorsTmp[0]['message']);
-			}
+			$sendError($workflowParameterError?->getMessage() ?? 'Internal error. Try to start again.');
 		}
 
-		$arWorkflowParameters[CBPDocument::PARAM_TAGRET_USER] = "user_".$user->getId();
-		$arWorkflowParameters[CBPDocument::PARAM_DOCUMENT_EVENT_TYPE] = CBPDocumentEventType::Manual;
+		$starter = (new \Bitrix\Bizproc\Public\Service\Workflow\StarterService())
+			->getStarterForManualDocumentScenario(
+				templateIds: [$templateId],
+				context: new \Bitrix\Bizproc\Starter\Dto\ContextDto(
+					'bizproc',
+					\Bitrix\Bizproc\Starter\Enum\Face::WEB,
+				),
+				document: new \Bitrix\Bizproc\Starter\Dto\DocumentDto(
+					complexDocumentId: $documentId,
+					complexDocumentType: $documentType,
+				),
+				userId: $currentUserId,
+				parameters: $workflowParameters->getParameters(),
+			)
+			->setValidateParameters(false)
+		;
 
 		$conn = Application::getConnection();
 		$conn->startTransaction();
-		$wfId = null;
+		$workflowId = null;
+
 		try
 		{
-			$wfId = CBPDocument::StartWorkflow(
-				$templateId,
-				$documentId,
-				$arWorkflowParameters,
-				$arErrorsTmp
-			);
+			$startResult = $starter->start();
+
+			if (!$startResult->isSuccess())
+			{
+				$conn->rollbackTransaction();
+				$sendError($startResult->getErrorMessages()[0] ?? 'Internal error. Try to start again.');
+			}
+
+			$workflowId = current($startResult->getWorkflowIds()) ?: null;
+			if (!$workflowId)
+			{
+				$conn->rollbackTransaction();
+				$sendError('Internal error. Try to start again.');
+			}
+
+			$conn->commitTransaction();
+
 		}
 		catch (SqlQueryException)
 		{
-			$arErrorsTmp[0] = [
-				'code' => 'InternalError',
-				'message' => 'Internal error. Try to start again.',
-			];
+			$conn->rollbackTransaction();
+			$sendError('Internal error. Try to start again.');
 		}
 
-		if (count($arErrorsTmp) > 0)
-		{
-			$conn->rollbackTransaction();
-			$sendError($arErrorsTmp[0]['message']);
-		}
-		else
-		{
-			$conn->commitTransaction();
-			$sendData(array('workflow_id' => $wfId));
-		}
-	break;
+		$sendData(['workflow_id' => $workflowId]);
+		break;
 
 	case 'CHECK_PARAMETERS':
-		if (!CBPDocument::CanUserOperateDocumentType(
-			CBPCanUserOperateOperation::StartWorkflow,
-			$user->getId(),
-			$documentType,
-			array(
-				"UserGroups" => $userGroups,
-				"DocumentStates" => $documentStates
+		if (
+			!CBPDocument::CanUserOperateDocumentType(
+				CBPCanUserOperateOperation::StartWorkflow,
+				$currentUserId,
+				$documentType,
+				[
+					'UserGroups' => $userGroups,
+					'DocumentStates' => $documentStates,
+				]
 			)
-		))
+		)
 		{
 			$sendError('Access Denied!');
 		}
@@ -266,32 +252,40 @@ switch ($action)
 			$documentType, $eventType
 		);
 
-		$parametersValues = array();
-		$errors = array();
+		$parametersValues = [];
 
 		foreach ($arDocumentStates as $template)
 		{
-			if (count($template['TEMPLATE_PARAMETERS']) > 0)
+			$templateId = (int)($template['TEMPLATE_ID'] ?? 0);
+			$templateParameters = $template['TEMPLATE_PARAMETERS'] ?? null;
+			if ($templateId <= 0 || !is_array($templateParameters) || !$templateParameters)
 			{
-				$parametersValues[$template['TEMPLATE_ID']] = CBPDocument::StartWorkflowParametersValidate(
-					$template['TEMPLATE_ID'],
-					$template['TEMPLATE_PARAMETERS'],
-					$documentType,
-					$errors
-				);
-				if ($errors)
-				{
-					break;
-				}
+				continue;
 			}
+
+			$requestParameters = [];
+			foreach ($templateParameters as $key => $property)
+			{
+				$requestParameters[$key] = $startRequestParameters["bizproc{$templateId}_{$key}"] ?? null;
+			}
+
+			$preparedParameters = (new \Bitrix\Bizproc\Api\Service\WorkflowTemplateService())->prepareParameters(
+				new \Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareParametersRequest(
+					templateParameters: $templateParameters,
+					requestParameters: $requestParameters,
+					complexDocumentType: $documentType,
+				)
+			);
+			if (!$preparedParameters->isSuccess())
+			{
+				$sendError($preparedParameters->getErrorMessages()[0] ?? 'Internal error. Try to start again.');
+			}
+
+			$parametersValues[$templateId] = $preparedParameters->getParameters();
 		}
 
-		if ($errors)
-		{
-			$sendError($errors[0]['message']);
-		}
-
-		$sendData(array('parameters' => CBPDocument::signParameters($parametersValues)));
-	break;
+		$sendData(['parameters' => CBPDocument::signParameters($parametersValues)]);
+		break;
 }
+
 $sendError('Unknown action!');

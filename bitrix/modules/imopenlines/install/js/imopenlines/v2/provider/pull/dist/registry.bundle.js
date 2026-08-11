@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
-(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_lib_layout) {
+(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_lib_layout, imopenlines_v2_lib_quickReply) {
 	'use strict';
 
 	class LinesPullHandler {
@@ -109,9 +109,47 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 		}
 	}
 
-	const OpenLinesHandlers = [LinesPullHandler, SessionPullHandler, QueuePullHandler];
+	class CrmPullHandler {
+		constructor() {
+			this.store = im_v2_application_core.Core.getStore();
+		}
+		getModuleId() {
+			return 'imopenlines';
+		}
+		handleUpdateCrm(params) {
+			if (!params.dialogId || !params.crm) {
+				return;
+			}
+			void this.store.dispatch('openLines/crm/set', {
+				dialogId: params.dialogId,
+				data: params.crm
+			});
+		}
+	}
+
+	class ConnectorPullHandler {
+		constructor() {
+			this.store = im_v2_application_core.Core.getStore();
+		}
+		getModuleId() {
+			return 'imopenlines';
+		}
+		handleUpdateConnector(params) {
+			const {
+				dialogId,
+				connector
+			} = params;
+			void this.store.dispatch('openLines/connector/set', {
+				dialogId,
+				data: connector
+			});
+			imopenlines_v2_lib_quickReply.QuickReplyManager.getInstance().resetCache(dialogId);
+		}
+	}
+
+	const OpenLinesHandlers = [LinesPullHandler, SessionPullHandler, QueuePullHandler, CrmPullHandler, ConnectorPullHandler];
 
 	exports.OpenLinesHandlers = OpenLinesHandlers;
 
-})(this.BX.OpenLines.v2.Provider.Pull = this.BX.OpenLines.v2.Provider.Pull || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
+})(this.BX.OpenLines.v2.Provider.Pull = this.BX.OpenLines.v2.Provider.Pull || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.OpenLines.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

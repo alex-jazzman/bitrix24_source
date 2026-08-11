@@ -346,11 +346,11 @@ export const CheckListParentItem = {
 		{
 			if (this.totalCount > 0)
 			{
-				this.complete(this.totalCount === this.completedCount);
+				this.complete(this.totalCount === this.completedCount, /* persist */ false);
 			}
 			else if (this.completed)
 			{
-				this.complete(false);
+				this.complete(false, /* persist */ false);
 			}
 		},
 		checkSticky(): void

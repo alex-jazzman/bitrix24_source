@@ -15,7 +15,7 @@ import {
 	splitBookingsByResourceId,
 	getResourceBookingUiGroups,
 } from '../../grid/bookings/libs';
-import { MinVisibleBookingDurationMs } from '../const';
+import { InsufficientZoomMinVisibleDurationMs, InsufficientZoomThreshold } from '../const';
 import { weekCellService } from '../lib/cell';
 import { WeekBusySlot } from './busy-slot/busy-slot';
 import { BookingWeek } from './booking/booking';
@@ -53,6 +53,7 @@ export const Bookings = {
 			hoveredPlacementSlot: 'hoveredPlacementSlot',
 			busySlots: 'busySlots',
 			selectedPlacementSlots: 'selectedPlacementSlots',
+			zoom: 'zoom',
 		}),
 		...mapFilterGetters({
 			filteredBookingsIds: 'filteredBookingsIds',
@@ -134,11 +135,14 @@ export const Bookings = {
 
 			for (const booking of this.bookings)
 			{
-				if (!bookingService.isVisibleByMinDuration(
-					booking,
-					this.visiblePeriod,
-					MinVisibleBookingDurationMs,
-				))
+				if (
+					this.shouldFilterByMinVisibleBookingDuration
+					&& !bookingService.isVisibleByMinDuration(
+						booking,
+						this.visiblePeriod,
+						InsufficientZoomMinVisibleDurationMs,
+					)
+				)
 				{
 					continue;
 				}
@@ -147,6 +151,10 @@ export const Bookings = {
 			}
 
 			return visibleBookingsMap;
+		},
+		shouldFilterByMinVisibleBookingDuration(): boolean
+		{
+			return this.zoom < InsufficientZoomThreshold;
 		},
 		resourceBookingsUiGroupsMap(): Map<number, BookingUiGroup[]>
 		{

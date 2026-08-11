@@ -1,7 +1,9 @@
+import { Event } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Label, LabelSize } from 'ui.label';
 
-import { Model } from 'booking.const';
+import { EventName, Model } from 'booking.const';
+import { ahaMoments } from 'booking.lib.aha-moments';
 import { Duration } from 'booking.lib.duration';
 import { currencyFormat } from 'booking.lib.currency-format';
 import { Counter as UiCounter, CounterSize } from 'booking.component.counter';
@@ -26,6 +28,10 @@ export const Resource = {
 		resourceId: {
 			type: Number,
 			required: true,
+		},
+		withScale: {
+			type: Boolean,
+			default: true,
 		},
 	},
 	setup(): Object
@@ -111,6 +117,10 @@ export const Resource = {
 
 			return label.render().outerHTML;
 		},
+		isFirstResource(): boolean
+		{
+			return this.resourceId === this.resourcesIds[0];
+		},
 	},
 	watch: {
 		scroll(): void
@@ -134,6 +144,18 @@ export const Resource = {
 	{
 		this.updateVisibility();
 		this.updateVisibilityDuringTransition();
+
+		if (this.isFirstResource)
+		{
+			Event.EventEmitter.subscribe(EventName.AiCallBannerClosed, this.tryShowAiCallAha);
+		}
+	},
+	beforeUnmount(): void
+	{
+		if (this.isFirstResource)
+		{
+			Event.EventEmitter.unsubscribe(EventName.AiCallBannerClosed, this.tryShowAiCallAha);
+		}
 	},
 	methods: {
 		updateVisibilityDuringTransition(): void
@@ -165,6 +187,23 @@ export const Resource = {
 				this.visible = rect.right > 0 && rect.left < window.innerWidth;
 			}
 		},
+		async tryShowAiCallAha(): Promise<void>
+		{
+			const isAiCallAhaShown = this.$store.getters[`${Model.Interface}/isAiCallAhaShown`];
+			if (isAiCallAhaShown || !this.$refs.meta)
+			{
+				return;
+			}
+
+			void this.$store.dispatch(`${Model.Interface}/setIsAiCallAhaShown`, true);
+
+			await ahaMoments.show({
+				id: 'booking-ai-call-notification',
+				text: this.loc('BOOKING_AHA_AI_CALL_NOTIFICATION_TEXT'),
+				target: this.$refs.meta,
+				isPulsarTransparent: true,
+			});
+		},
 	},
 	template: `
 		<div
@@ -177,7 +216,7 @@ export const Resource = {
 				<ResourceWorkload
 					v-if="!resource.isDeleted"
 					:resourceId="resourceId"
-					:scale="zoom"
+					:scale="withScale ? zoom : undefined"
 					:isGrid="true"
 				/>
 				<div class="booking-booking-header-resource-title">
@@ -192,14 +231,14 @@ export const Resource = {
 					v-if="resource.isDeleted"
 					v-html="labelHTML"
 				></div>
-				<div class="booking-booking-header-resource-meta" v-else>
+				<div v-else class="booking-booking-header-resource-meta">
 					<div
 						class="booking-booking-header-resource-profit"
 						v-html="profit"
 					></div>
-					<div class="booking-booking-header-resource-meta-row">
+					<div class="booking-booking-header-resource-meta-row" ref="meta">
 						<div class="booking-booking-header-resource-actions">
-							<ResourceMenu :resourceId="resourceId" />
+							<ResourceMenu :resourceId="resourceId"/>
 						</div>
 						<UiCounter
 							v-if="neededShowIntersectionCounter"

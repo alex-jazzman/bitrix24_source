@@ -12,7 +12,6 @@ use Bitrix\Crm\Tour\AutomatedSolution\LeftMenu;
 use Bitrix\Crm\Tour\ClientFields\AbstractClientFieldsEntityList;
 use Bitrix\Crm\Tour\Grid\GridImprovements;
 use Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection;
-use Bitrix\Crm\Tour\Permissions\AutomatedSolution;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
@@ -105,11 +104,6 @@ $this->getComponent()->addToolbar($this);
 
 if (!$isRecurring)
 {
-	echo AutomatedSolution::getInstance()
-		->setEntityTypeId($arParams['entityTypeId'])
-		->build()
-	;
-
 	$clientFieldsTour = AbstractClientFieldsEntityList::getInstanceByEntityTypeId($arParams['entityTypeId']);
 	if ($clientFieldsTour !== null)
 	{

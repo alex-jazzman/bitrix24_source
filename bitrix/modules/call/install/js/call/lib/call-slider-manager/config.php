@@ -11,9 +11,8 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'main.core.events',
 		'im.v2.lib.confirm',
-		'call.lib.call-manager',
+		'main.core.events',
 	],
 	'skip_core' => true,
 ];

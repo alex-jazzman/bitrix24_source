@@ -163,6 +163,8 @@ export const EditorToolbarComponent = {
 			if (nextOpenMenu !== 'more')
 			{
 				this.moreSubMode = 'menu';
+				// Auto-apply the link on close (no explicit "Apply" button); commit is a no-op if unchanged.
+				this.linkState.commit();
 				this.linkState.close();
 			}
 
@@ -185,6 +187,8 @@ export const EditorToolbarComponent = {
 			}
 			else
 			{
+				// Auto-apply the link when leaving the link sub-mode; commit is a no-op if unchanged.
+				this.linkState.commit();
 				this.linkState.close();
 			}
 
@@ -212,6 +216,7 @@ export const EditorToolbarComponent = {
 			cancelAnimationFrame(this.popoverSyncFrame);
 			this.popoverSyncFrame = null;
 		}
+		this.linkState.commit();
 		this.linkState.close();
 	},
 	methods: {

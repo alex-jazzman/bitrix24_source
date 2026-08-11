@@ -1,8 +1,4 @@
 .bx-imol-list-recent__content {
-	--imol-list-recent__background-color: var(--ui-color-palette-gray-20);
-	--imol-list-recent__color_work: var(--ui-color-palette-blue-50);
-	--imol-list-recent__color_new: var(--ui-color-palette-red-50);
-	--imol-list-recent__color_answered: var(--ui-color-palette-green-70);
 	--imol-list-recent__color_emty-text: #606162;
 	--imol-list-recent__color_hover: #888888;
 
@@ -28,31 +24,38 @@
 	width: 400px;
 	margin-left: 10px;
 	margin-top: 9px;
-	background-color: var(--imol-list-recent__background-color);
+	background-color: var(--ui-color-palette-gray-20);
 }
 
 .bx-imol-list-recent__group_name_work {
-	color: var(--imol-list-recent__color_work);
+	color: var(--ui-color-palette-blue-50);
 }
 
 .bx-imol-list-recent__group_name_work::after {
-	background-color: var(--imol-list-recent__color_work);
+	background-color: var(--ui-color-palette-blue-50);
 }
 
 .bx-imol-list-recent__group_name_new {
-	color: var(--imol-list-recent__color_new);
+	color: var(--ui-color-palette-red-50);
 }
 
 .bx-imol-list-recent__group_name_new::after {
-	background-color: var(--imol-list-recent__color_new);
+	background-color: var(--ui-color-palette-red-50);
 }
 
 .bx-imol-list-recent__group_name_answered {
-	color: var(--imol-list-recent__color_answered);
+	color: var(--ui-color-palette-green-70);
 }
 
 .bx-imol-list-recent__group_name_answered::after {
-	background-color: var(--imol-list-recent__color_answered);
+	background-color: var(--ui-color-palette-green-70);
+}
+
+.bx-imol-list-recent__date-group_name {
+	padding: 6px 10px 4px;
+	font-size: 12px;
+	color: var(--ui-color-palette-gray-60);
+	text-transform: capitalize;
 }
 
 .bx-imol-list-recent-empty-state__container {
@@ -66,6 +69,15 @@
 	flex-grow: 1;
 	overflow: hidden;
 	overflow-y: scroll;
+}
+
+.bx-imol-list-recent-empty-state .bx-im-list-recent-empty-state__title {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-50);
+}
+
+.bx-imol-list-recent-empty-state .bx-im-list-recent-empty-state__image {
+	margin-bottom: 14px;
 }
 
 .bx-imol-list-recent__item {

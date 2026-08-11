@@ -1,4 +1,5 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+
 import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loader';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 

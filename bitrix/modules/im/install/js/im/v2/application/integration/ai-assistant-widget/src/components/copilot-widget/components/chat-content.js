@@ -1,14 +1,16 @@
 import { CopilotContent } from 'im.v2.component.content.chat';
 import { ChatDialog } from 'im.v2.component.dialog.chat';
 import { SpecialBackground } from 'im.v2.lib.theme';
+
 import { AiAssistantWidgetChatHeader } from '../../header/header';
+import { WidgetEmptyState } from './empty-state';
 
 import '../css/chat-content.css';
 
 // @vue/component
 export const CopilotWidgetChatContent = {
 	name: 'CopilotWidgetChatContent',
-	components: { CopilotContent, ChatDialog, AiAssistantWidgetChatHeader },
+	components: { CopilotContent, ChatDialog, AiAssistantWidgetChatHeader, WidgetEmptyState },
 	props: {
 		dialogId: {
 			type: String,
@@ -23,9 +25,26 @@ export const CopilotWidgetChatContent = {
 			default: false,
 		},
 	},
-	emits: ['toggleList', 'createChat'],
+	emits: ['toggleList', 'createChat', 'selectSuggestion'],
 	computed: {
 		SpecialBackground: () => SpecialBackground,
+		isChatEmpty(): boolean
+		{
+			if (!this.dialogId)
+			{
+				return false;
+			}
+
+			const dialog = this.$store.getters['chats/get'](this.dialogId);
+			if (!dialog?.chatId || !dialog.inited)
+			{
+				return false;
+			}
+
+			const messages = this.$store.getters['messages/getByChatId'](dialog.chatId);
+
+			return messages.length === 0;
+		},
 	},
 	template: `
 		<CopilotContent
@@ -43,7 +62,8 @@ export const CopilotWidgetChatContent = {
 				/>
 			</template>
 			<template #dialog>
-				<div class="bx-im-ai-assistant-widget-dialog-context --ui-context-content-light">
+				<WidgetEmptyState v-if="isChatEmpty" :dialogId="dialogId" @selectSuggestion="$emit('selectSuggestion', $event)" />
+				<div v-else class="bx-im-ai-assistant-widget-dialog-context --ui-context-content-light">
 					<ChatDialog :dialogId="dialogId" :key="dialogId"/>
 				</div>
 			</template>

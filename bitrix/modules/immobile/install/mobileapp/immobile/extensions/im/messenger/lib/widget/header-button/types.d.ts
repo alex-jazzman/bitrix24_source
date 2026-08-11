@@ -1,14 +1,16 @@
 export type HeaderButtonsConfig = {
 	rightButtons: Array<Button | PopupCreateButton>;
+	leftButtons?: Array<Button | PopupCreateButton>;
 }
 
 export type HeaderButtonConfig = {
 	id: string;
-	type: string;
+	iconName: string;
 	callback: () => Promise<void>;
 	testId?: string;
 	shouldShow?: () => Promise<boolean>;
 	badgeCode?: string;
+	isDot?: () => boolean;
 }
 
 export type HeaderPopupCreateButtonConfig = {

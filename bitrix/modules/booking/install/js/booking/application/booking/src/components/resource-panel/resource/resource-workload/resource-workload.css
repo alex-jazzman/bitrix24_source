@@ -8,3 +8,7 @@
 .booking-booking-header-resource .booking-booking-header-resource-workload {
 	margin-right: calc(8px * var(--half-zoom));
 }
+
+.booking-booking__base-component.--week-mode .booking-booking-header-resource .booking-booking-header-resource-workload {
+	margin-right: 8px;
+}

@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS b_timeman_report_full (
 	EVENTS mediumtext DEFAULT NULL,
 	FILES text,
 	REPORT text,
+	REPORT_EXTENDED text NULL,
+	TYPE varchar(100) NOT NULL DEFAULT 'REPORT',
 	PLANS text,
 	MARK char(1) DEFAULT 'N',
 	APPROVE char(1) DEFAULT 'N',
@@ -299,4 +301,17 @@ CREATE TABLE IF NOT EXISTS b_timeman_monitor_report_comment (
     COMMENT text default '',
     PRIMARY KEY (ID),
     INDEX IX_B_TIMEMAN_MONITOR_REPORT_COMMENT_1 (USER_ID, DATE_LOG, DESKTOP_CODE)
+);
+
+CREATE TABLE IF NOT EXISTS b_timeman_scheduled_action (
+	ID int not null auto_increment,
+	TYPE varchar(100) not null,
+	USER_ID int not null,
+	EXECUTE_TIME int not null,
+	STATUS varchar(16) not null default 'pending',
+	CREATED_AT timestamp not null default CURRENT_TIMESTAMP,
+	UPDATED_AT timestamp not null default CURRENT_TIMESTAMP,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX UX_B_TIMEMAN_SCHEDULED_ACTION_1 (USER_ID, TYPE, EXECUTE_TIME),
+	INDEX IX_B_TIMEMAN_SCHEDULED_ACTION_1 (STATUS, EXECUTE_TIME)
 );

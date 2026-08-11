@@ -1,2248 +1,2724 @@
 /* eslint-disable */
-this.BX = this.BX || {};
-(function (exports,ui_designTokens,ui_fonts_opensans,im_eventHandler,im_component_dialog,im_component_textarea,ui_switcher,ui_vue_components_smiles,main_core,ui_forms,im_lib_cookie,call_core,call_component_callFeedback,im_lib_desktop,ui_vue,im_lib_logger,im_lib_utils,im_v2_lib_utils,im_const,call_const,main_core_events,ui_vue_vuex,main_popup,im_lib_clipboard,ui_dialogs_messagebox) {
+(function (ui_designTokens, ui_fonts_opensans, ui_vue, ui_vue_vuex, im_lib_utils, im_const, call_const, im_eventHandler, im_lib_logger, main_core_events, im_component_dialog, im_component_textarea, ui_switcher, ui_vue_components_smiles, main_core, ui_dialogs_messagebox, ui_forms, im_lib_cookie, call_core, call_component_callFeedback, im_lib_desktop, im_v2_lib_utils, main_popup, im_lib_clipboard) {
 	'use strict';
 
-	var ConferenceTextareaHandler = /*#__PURE__*/function (_TextareaHandler) {
-	  babelHelpers.inherits(ConferenceTextareaHandler, _TextareaHandler);
-	  function ConferenceTextareaHandler($Bitrix) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, ConferenceTextareaHandler);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConferenceTextareaHandler).call(this, $Bitrix));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
-	    _this.application = $Bitrix.Application.get();
-	    return _this;
-	  }
-	  babelHelpers.createClass(ConferenceTextareaHandler, [{
-	    key: "onAppButtonClick",
-	    value: function onAppButtonClick(_ref) {
-	      var event = _ref.data;
-	      if (event.appId === 'smile') {
-	        this.application.toggleSmiles();
-	      }
-	    }
-	  }]);
-	  return ConferenceTextareaHandler;
-	}(im_eventHandler.TextareaHandler);
+	class ConferenceTextareaHandler extends im_eventHandler.TextareaHandler {
+		application = null;
+		constructor($Bitrix) {
+			super($Bitrix);
+			this.application = $Bitrix.Application.get();
+		}
+		onAppButtonClick({
+			data: event
+		}) {
+			if (event.appId === 'smile') {
+				this.application.toggleSmiles();
+			}
+		}
+	}
 
-	var ConferenceTextareaUploadHandler = /*#__PURE__*/function (_TextareaUploadHandle) {
-	  babelHelpers.inherits(ConferenceTextareaUploadHandler, _TextareaUploadHandle);
-	  function ConferenceTextareaUploadHandler() {
-	    babelHelpers.classCallCheck(this, ConferenceTextareaUploadHandler);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConferenceTextareaUploadHandler).apply(this, arguments));
-	  }
-	  babelHelpers.createClass(ConferenceTextareaUploadHandler, [{
-	    key: "addMessageWithFile",
-	    value: function addMessageWithFile(event) {
-	      var _this = this;
-	      var message = event.getData();
-	      if (!this.getDiskFolderId()) {
-	        this.requestDiskFolderId(message.chatId).then(function () {
-	          _this.addMessageWithFile(event);
-	        })["catch"](function (error) {
-	          im_lib_logger.Logger.error('addMessageWithFile error', error);
-	          return false;
-	        });
-	        return false;
-	      }
-	      message.chatId = this.getChatId();
-	      this.setUploaderCustomHeaders();
-	      this.uploader.addTask({
-	        taskId: message.file.id,
-	        fileData: message.file.source.file,
-	        fileName: message.file.source.file.name,
-	        generateUniqueName: true,
-	        diskFolderId: this.getDiskFolderId(),
-	        previewBlob: message.file.previewBlob
-	      });
-	    }
-	  }, {
-	    key: "setUploaderCustomHeaders",
-	    value: function setUploaderCustomHeaders() {
-	      if (!this.uploader.senderOptions.customHeaders) {
-	        this.uploader.senderOptions.customHeaders = {};
-	      }
-	      this.uploader.senderOptions.customHeaders['Call-Auth-Id'] = this.getUserHash();
-	      this.uploader.senderOptions.customHeaders['Call-Chat-Id'] = this.getChatId();
-	    }
-	  }, {
-	    key: "getUserHash",
-	    value: function getUserHash() {
-	      return this.controller.store.state.conference.user.hash;
-	    }
-	  }, {
-	    key: "getActionCommitFile",
-	    value: function getActionCommitFile() {
-	      return 'call.Disk.commit';
-	    }
-	  }, {
-	    key: "getActionUploadChunk",
-	    value: function getActionUploadChunk() {
-	      return 'call.Disk.upload';
-	    }
-	  }]);
-	  return ConferenceTextareaUploadHandler;
-	}(im_eventHandler.TextareaUploadHandler);
+	class ConferenceTextareaUploadHandler extends im_eventHandler.TextareaUploadHandler {
+		addMessageWithFile(event) {
+			const message = event.getData();
+			if (!this.getDiskFolderId()) {
+				this.requestDiskFolderId(message.chatId).then(() => {
+					this.addMessageWithFile(event);
+				}).catch(error => {
+					im_lib_logger.Logger.error('addMessageWithFile error', error);
+					return false;
+				});
+				return false;
+			}
+			message.chatId = this.getChatId();
+			this.setUploaderCustomHeaders();
+			this.uploader.addTask({
+				taskId: message.file.id,
+				fileData: message.file.source.file,
+				fileName: message.file.source.file.name,
+				generateUniqueName: true,
+				diskFolderId: this.getDiskFolderId(),
+				previewBlob: message.file.previewBlob
+			});
+		}
+		setUploaderCustomHeaders() {
+			if (!this.uploader.senderOptions.customHeaders) {
+				this.uploader.senderOptions.customHeaders = {};
+			}
+			this.uploader.senderOptions.customHeaders['Call-Auth-Id'] = this.getUserHash();
+			this.uploader.senderOptions.customHeaders['Call-Chat-Id'] = this.getChatId();
+		}
+		getUserHash() {
+			return this.controller.store.state.conference.user.hash;
+		}
+		getActionCommitFile() {
+			return 'call.Disk.commit';
+		}
+		getActionUploadChunk() {
+			return 'call.Disk.upload';
+		}
+	}
 
-	var ConferenceSmiles = {
-	  methods: {
-	    onSelectSmile: function onSelectSmile(event) {
-	      this.$emit('selectSmile', event);
-	    },
-	    onSelectSet: function onSelectSet(event) {
-	      this.$emit('selectSet', event);
-	    },
-	    hideSmiles: function hideSmiles() {
-	      main_core_events.EventEmitter.emit(im_const.EventType.conference.hideSmiles);
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-smiles-box\">\n\t\t\t<div class=\"bx-im-component-smiles-box-close\" @click=\"hideSmiles\"></div>\n\t\t\t<div class=\"bx-im-component-smiles-box-list\">\n\t\t\t\t<bx-smiles\n\t\t\t\t\t@selectSmile=\"onSelectSmile\"\n\t\t\t\t\t@selectSet=\"onSelectSet\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
+	const ConferenceSmiles = {
+		methods: {
+			onSelectSmile(event) {
+				this.$emit('selectSmile', event);
+			},
+			onSelectSet(event) {
+				this.$emit('selectSet', event);
+			},
+			hideSmiles() {
+				main_core_events.EventEmitter.emit(im_const.EventType.conference.hideSmiles);
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="bx-im-component-smiles-box">
+			<div class="bx-im-component-smiles-box-close" @click="hideSmiles"></div>
+			<div class="bx-im-component-smiles-box-list">
+				<bx-smiles
+					@selectSmile="onSelectSmile"
+					@selectSet="onSelectSet"
+				/>
+			</div>
+		</div>
+	`
 	};
 
-	var MicLevel = {
-	  props: ['localStream'],
-	  data: function data() {
-	    return {
-	      bars: [],
-	      barDisabledColor: 'rgba(255,255,255,0.42)',
-	      barEnabledColor: '#1CAE6A'
-	    };
-	  },
-	  watch: {
-	    localStream: function localStream(stream) {
-	      if (!main_core.Type.isNil(stream)) {
-	        this.startAudioCheck();
-	      }
-	    }
-	  },
-	  mounted: function mounted() {
-	    this.bars = babelHelpers.toConsumableArray(document.querySelectorAll('.bx-im-component-call-check-devices-micro-level-item'));
-	  },
-	  computed: {
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_CHECK_DEVICES_');
-	    }
-	  },
-	  methods: {
-	    startAudioCheck: function startAudioCheck() {
-	      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-	      this.analyser = this.audioContext.createAnalyser();
-	      this.microphone = this.audioContext.createMediaStreamSource(this.localStream);
-	      this.scriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
-	      this.analyser.smoothingTimeConstant = 0.8;
-	      this.analyser.fftSize = 1024;
-	      this.microphone.connect(this.analyser);
-	      this.analyser.connect(this.scriptNode);
-	      this.scriptNode.connect(this.audioContext.destination);
-	      this.scriptNode.onaudioprocess = this.processVolume;
-	    },
-	    processVolume: function processVolume() {
-	      var _this = this;
-	      var arr = new Uint8Array(this.analyser.frequencyBinCount);
-	      this.analyser.getByteFrequencyData(arr);
-	      var values = 0;
-	      for (var i = 0; i < arr.length; i++) {
-	        values += arr[i];
-	      }
-	      var average = values / arr.length;
-	      var oneBarValue = 100 / this.bars.length;
-	      var barsToColor = Math.round(average / oneBarValue);
-	      var elementsToColor = this.bars.slice(0, barsToColor);
-	      this.bars.forEach(function (elem) {
-	        elem.style.backgroundColor = _this.barDisabledColor;
-	      });
-	      elementsToColor.forEach(function (elem) {
-	        elem.style.backgroundColor = _this.barEnabledColor;
-	      });
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-check-devices-row\">\n\t\t\t<div class=\"bx-im-component-call-check-devices-micro-icon\"></div>\n\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level\">\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-micro-level-item\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	const MicLevel = {
+		props: ['localStream'],
+		data() {
+			return {
+				bars: [],
+				barDisabledColor: 'rgba(255,255,255,0.42)',
+				barEnabledColor: '#1CAE6A'
+			};
+		},
+		watch: {
+			localStream(stream) {
+				if (!main_core.Type.isNil(stream)) {
+					this.startAudioCheck();
+				}
+			}
+		},
+		mounted() {
+			this.bars = [...document.querySelectorAll('.bx-im-component-call-check-devices-micro-level-item')];
+		},
+		computed: {
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_CHECK_DEVICES_');
+			}
+		},
+		methods: {
+			startAudioCheck() {
+				this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+				this.analyser = this.audioContext.createAnalyser();
+				this.microphone = this.audioContext.createMediaStreamSource(this.localStream);
+				this.scriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
+				this.analyser.smoothingTimeConstant = 0.8;
+				this.analyser.fftSize = 1024;
+				this.microphone.connect(this.analyser);
+				this.analyser.connect(this.scriptNode);
+				this.scriptNode.connect(this.audioContext.destination);
+				this.scriptNode.onaudioprocess = this.processVolume;
+			},
+			processVolume() {
+				let arr = new Uint8Array(this.analyser.frequencyBinCount);
+				this.analyser.getByteFrequencyData(arr);
+				let values = 0;
+				for (let i = 0; i < arr.length; i++) {
+					values += arr[i];
+				}
+				let average = values / arr.length;
+				let oneBarValue = 100 / this.bars.length;
+				let barsToColor = Math.round(average / oneBarValue);
+				let elementsToColor = this.bars.slice(0, barsToColor);
+				this.bars.forEach(elem => {
+					elem.style.backgroundColor = this.barDisabledColor;
+				});
+				elementsToColor.forEach(elem => {
+					elem.style.backgroundColor = this.barEnabledColor;
+				});
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-check-devices-row">
+			<div class="bx-im-component-call-check-devices-micro-icon"></div>
+			<div class="bx-im-component-call-check-devices-micro-level">
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+				<div class="bx-im-component-call-check-devices-micro-level-item"></div>
+			</div>
+		</div>
+	`
 	};
 
-	var CheckDevices = {
-	  data: function data() {
-	    return {
-	      isDestroyed: false,
-	      noVideo: true,
-	      selectedCamera: null,
-	      selectedMic: null,
-	      videoStream: null,
-	      audioStream: null,
-	      videoStreamPromise: null,
-	      audioStreamPromise: null,
-	      showMic: true,
-	      userDisabledCamera: false,
-	      gettingVideo: false,
-	      isFlippedVideo: BX.Call.Hardware.enableMirroring
-	    };
-	  },
-	  created: function created() {
-	    var _this = this;
-	    this.$root.$on('setCameraState', function (state) {
-	      _this.onCameraStateChange(state);
-	    });
-	    this.$root.$on('setMicState', function (state) {
-	      _this.onMicStateChange(state);
-	    });
-	    this.$root.$on('callLocalMediaReceived', function () {
-	      _this.stopLocalVideo();
-	      _this.stopLocalAudio();
-	    });
-	    this.$root.$on('cameraSelected', function (cameraId) {
-	      _this.onCameraSelected(cameraId);
-	    });
-	    this.$root.$on('micSelected', function (micId) {
-	      _this.onMicSelected(micId);
-	    });
-	    this.getApplication().initHardware().then(function () {
-	      _this.getDefaultDevices();
-	    })["catch"](function () {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        message: _this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_HARDWARE_ERROR'),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
-	      });
-	    });
-	  },
-	  destroyed: function destroyed() {
-	    this.isDestroyed = true;
-	    this.stopLocalVideo();
-	    this.stopLocalAudio();
-	  },
-	  computed: {
-	    noVideoText: function noVideoText() {
-	      if (this.gettingVideo) {
-	        return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_GETTING_CAMERA'];
-	      }
-	      if (this.userDisabledCamera) {
-	        return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_DISABLED_CAMERA'];
-	      }
-	      return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_NO_VIDEO'];
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_CHECK_DEVICES_');
-	    },
-	    cameraVideoClasses: function cameraVideoClasses() {
-	      return {
-	        'bx-im-component-call-check-devices-camera-video': true,
-	        'bx-im-component-call-check-devices-camera-video-flipped': this.isFlippedVideo
-	      };
-	    }
-	  },
-	  methods: {
-	    getDefaultDevices: function getDefaultDevices() {
-	      var _this2 = this;
-	      if (BX.Call.Hardware.defaultCamera) {
-	        this.selectedCamera = BX.Call.Hardware.defaultCamera;
-	      }
-	      if (BX.Call.Hardware.defaultMicrophone) {
-	        this.selectedMic = BX.Call.Hardware.defaultMicrophone;
-	      }
-	      this.getLocalVideoStream().then(function () {
-	        _this2.getApplication().updateMediaDevices();
-	        if (!_this2.selectedCamera) {
-	          _this2.selectedCamera = _this2.videoStream.getVideoTracks()[0].getSettings().deviceId;
-	        }
-	        _this2.getApplication().setSelectedCamera(_this2.selectedCamera);
-	      })["catch"](function (error) {
-	        im_lib_logger.Logger.warn('Error getting default video stream', error);
-	      });
-	      this.getLocalAudioStream().then(function () {
-	        if (!_this2.selectedMic) {
-	          _this2.selectedMic = _this2.audioStream.getAudioTracks()[0].getSettings().deviceId;
-	        }
-	        _this2.getApplication().setSelectedMic(_this2.selectedMic);
-	      })["catch"](function (error) {
-	        im_lib_logger.Logger.warn('Error getting default audio stream', error);
-	      });
-	    },
-	    getLocalVideoStream: function getLocalVideoStream() {
-	      var _this3 = this;
-	      if (this.videoStreamPromise) {
-	        return this.videoStreamPromise;
-	      }
-	      this.videoStreamPromise = new Promise(function (resolve, reject) {
-	        _this3.gettingVideo = true;
-	        var constraints = {
-	          video: _this3.getVideoConstraints(),
-	          audio: false
-	        };
-	        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-	          _this3.setLocalStream(stream);
-	          _this3.playLocalVideo();
-	          if (_this3.isDestroyed) {
-	            _this3.stopLocalVideo();
-	          }
-	          resolve();
-	        })["catch"](function (error) {
-	          im_lib_logger.Logger.warn('Getting video from camera error', error);
-	          _this3.noVideo = true;
-	          _this3.getApplication().setCameraState(false);
-	          reject(error);
-	        })["finally"](function () {
-	          _this3.gettingVideo = false;
-	          _this3.videoStreamPromise = null;
-	        });
-	      });
-	      return this.videoStreamPromise;
-	    },
-	    getLocalAudioStream: function getLocalAudioStream() {
-	      var _this4 = this;
-	      if (this.audioStreamPromise) {
-	        return this.audioStreamPromise;
-	      }
-	      this.audioStreamPromise = new Promise(function (resolve, reject) {
-	        var constraints = {
-	          audio: {
-	            deviceId: {
-	              exact: _this4.selectedMic
-	            }
-	          },
-	          video: false
-	        };
-	        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-	          _this4.audioStream = stream;
-	          if (_this4.isDestroyed) {
-	            _this4.stopLocalAudio();
-	          }
-	          resolve();
-	        })["catch"](function (error) {
-	          im_lib_logger.Logger.warn('Getting audio from microphone error', error);
-	          reject(error);
-	        })["finally"](function () {
-	          _this4.audioStreamPromise = null;
-	        });
-	      });
-	      return this.audioStreamPromise;
-	    },
-	    setLocalStream: function setLocalStream(stream) {
-	      this.videoStream = stream;
-	      this.getApplication().setLocalVideoStream(this.videoStream);
-	    },
-	    playLocalVideo: function playLocalVideo() {
-	      im_lib_logger.Logger.warn('playing local video');
-	      this.noVideo = false;
-	      this.userDisabledCamera = false;
-	      this.getApplication().setCameraState(true);
-	      this.$refs.video.volume = 0;
-	      this.$refs.video.srcObject = this.videoStream;
-	      this.$refs.video.play();
-	    },
-	    stopLocalVideo: function stopLocalVideo() {
-	      if (!this.videoStream) {
-	        return;
-	      }
-	      this.videoStream.getTracks().forEach(function (track) {
-	        return track.stop();
-	      });
-	      this.videoStream = null;
-	      this.getApplication().stopLocalVideoStream();
-	    },
-	    stopLocalAudio: function stopLocalAudio() {
-	      if (!this.audioStream) {
-	        return;
-	      }
-	      this.audioStream.getTracks().forEach(function (track) {
-	        return track.stop();
-	      });
-	      this.audioStream = null;
-	    },
-	    onCameraSelected: function onCameraSelected(cameraId) {
-	      this.stopLocalVideo();
-	      this.selectedCamera = cameraId;
-	      this.getLocalVideoStream();
-	    },
-	    onMicSelected: function onMicSelected(micId) {
-	      /*this.stopLocalVideo();
-	      this.selectedMic = micId;
-	      this.getLocalStream();*/
-	    },
-	    onCameraStateChange: function onCameraStateChange(state) {
-	      if (state) {
-	        this.noVideo = false;
-	        this.getLocalVideoStream();
-	      } else {
-	        this.stopLocalVideo();
-	        this.userDisabledCamera = true;
-	        this.noVideo = true;
-	        this.getApplication().setCameraState(false);
-	      }
-	    },
-	    onMicStateChange: function onMicStateChange(state) {
-	      if (state) {
-	        this.getLocalAudioStream();
-	      } else {
-	        this.stopLocalAudio();
-	      }
-	      this.showMic = state;
-	    },
-	    isMobile: function isMobile() {
-	      return im_lib_utils.Utils.device.isMobile();
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    },
-	    getVideoConstraints: function getVideoConstraints() {
-	      var videoConstraints = {};
-	      if (this.selectedCamera) {
-	        videoConstraints.deviceId = {
-	          exact: this.selectedCamera
-	        };
-	      }
-	      if (!im_lib_utils.Utils.device.isMobile()) {
-	        videoConstraints.width = {
-	          ideal: 1280
-	        };
-	        videoConstraints.height = {
-	          ideal: 720
-	        };
-	      }
-	      return videoConstraints;
-	    }
-	  },
-	  components: {
-	    MicLevel: MicLevel
-	  },
-	  template: "\n\t<div class=\"bx-im-component-call-device-check-container\">\n\t\t<div class=\"bx-im-component-call-check-devices\">\n\t\t\t<div v-show=\"noVideo\">\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-camera-no-video\">\n\t\t\t\t\t<div class=\"bx-im-component-call-check-devices-camera-no-video-icon\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-check-devices-camera-no-video-text\">{{ noVideoText }}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"!noVideo\">\n\t\t\t\t<div class=\"bx-im-component-call-check-devices-camera-video-container\">\n\t\t\t\t\t<video :class=\"cameraVideoClasses\" ref=\"video\" muted autoplay playsinline></video>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t<mic-level v-show=\"showMic\" :localStream=\"audioStream\"/>\n\t\t\t</template>\n\t\t</div>\n\t</div>\n\t"
+	const CheckDevices = {
+		data() {
+			return {
+				isDestroyed: false,
+				noVideo: true,
+				selectedCamera: null,
+				selectedMic: null,
+				videoStream: null,
+				audioStream: null,
+				videoStreamPromise: null,
+				audioStreamPromise: null,
+				showMic: true,
+				userDisabledCamera: false,
+				gettingVideo: false,
+				isFlippedVideo: BX.Call.Hardware.enableMirroring
+			};
+		},
+		created() {
+			this.$root.$on('setCameraState', state => {
+				this.onCameraStateChange(state);
+			});
+			this.$root.$on('setMicState', state => {
+				this.onMicStateChange(state);
+			});
+			this.$root.$on('callLocalMediaReceived', () => {
+				this.stopLocalVideo();
+				this.stopLocalAudio();
+			});
+			this.$root.$on('cameraSelected', cameraId => {
+				this.onCameraSelected(cameraId);
+			});
+			this.$root.$on('micSelected', micId => {
+				this.onMicSelected(micId);
+			});
+			this.getApplication().initHardware().then(() => {
+				this.getDefaultDevices();
+			}).catch(() => {
+				ui_dialogs_messagebox.MessageBox.show({
+					message: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_HARDWARE_ERROR'),
+					modal: true,
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
+				});
+			});
+		},
+		destroyed() {
+			this.isDestroyed = true;
+			this.stopLocalVideo();
+			this.stopLocalAudio();
+		},
+		computed: {
+			noVideoText() {
+				if (this.gettingVideo) {
+					return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_GETTING_CAMERA'];
+				}
+				if (this.userDisabledCamera) {
+					return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_DISABLED_CAMERA'];
+				}
+				return this.localize['BX_IM_COMPONENT_CALL_CHECK_DEVICES_NO_VIDEO'];
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_CHECK_DEVICES_');
+			},
+			cameraVideoClasses() {
+				return {
+					'bx-im-component-call-check-devices-camera-video': true,
+					'bx-im-component-call-check-devices-camera-video-flipped': this.isFlippedVideo
+				};
+			}
+		},
+		methods: {
+			getDefaultDevices() {
+				if (BX.Call.Hardware.defaultCamera) {
+					this.selectedCamera = BX.Call.Hardware.defaultCamera;
+				}
+				if (BX.Call.Hardware.defaultMicrophone) {
+					this.selectedMic = BX.Call.Hardware.defaultMicrophone;
+				}
+				this.getLocalVideoStream().then(() => {
+					this.getApplication().updateMediaDevices();
+					if (!this.selectedCamera) {
+						this.selectedCamera = this.videoStream.getVideoTracks()[0].getSettings().deviceId;
+					}
+					this.getApplication().setSelectedCamera(this.selectedCamera);
+				}).catch(error => {
+					im_lib_logger.Logger.warn('Error getting default video stream', error);
+				});
+				this.getLocalAudioStream().then(() => {
+					if (!this.selectedMic) {
+						this.selectedMic = this.audioStream.getAudioTracks()[0].getSettings().deviceId;
+					}
+					this.getApplication().setSelectedMic(this.selectedMic);
+				}).catch(error => {
+					im_lib_logger.Logger.warn('Error getting default audio stream', error);
+				});
+			},
+			getLocalVideoStream() {
+				if (this.videoStreamPromise) {
+					return this.videoStreamPromise;
+				}
+				this.videoStreamPromise = new Promise((resolve, reject) => {
+					this.gettingVideo = true;
+					const constraints = {
+						video: this.getVideoConstraints(),
+						audio: false
+					};
+					navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+						this.setLocalStream(stream);
+						this.playLocalVideo();
+						if (this.isDestroyed) {
+							this.stopLocalVideo();
+						}
+						resolve();
+					}).catch(error => {
+						im_lib_logger.Logger.warn('Getting video from camera error', error);
+						this.noVideo = true;
+						this.getApplication().setCameraState(false);
+						reject(error);
+					}).finally(() => {
+						this.gettingVideo = false;
+						this.videoStreamPromise = null;
+					});
+				});
+				return this.videoStreamPromise;
+			},
+			getLocalAudioStream() {
+				if (this.audioStreamPromise) {
+					return this.audioStreamPromise;
+				}
+				this.audioStreamPromise = new Promise((resolve, reject) => {
+					const constraints = {
+						audio: {
+							deviceId: {
+								exact: this.selectedMic
+							}
+						},
+						video: false
+					};
+					navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+						this.audioStream = stream;
+						if (this.isDestroyed) {
+							this.stopLocalAudio();
+						}
+						resolve();
+					}).catch(error => {
+						im_lib_logger.Logger.warn('Getting audio from microphone error', error);
+						reject(error);
+					}).finally(() => {
+						this.audioStreamPromise = null;
+					});
+				});
+				return this.audioStreamPromise;
+			},
+			setLocalStream(stream) {
+				this.videoStream = stream;
+				this.getApplication().setLocalVideoStream(this.videoStream);
+			},
+			playLocalVideo() {
+				im_lib_logger.Logger.warn('playing local video');
+				this.noVideo = false;
+				this.userDisabledCamera = false;
+				this.getApplication().setCameraState(true);
+				this.$refs.video.volume = 0;
+				this.$refs.video.srcObject = this.videoStream;
+				this.$refs.video.play();
+			},
+			stopLocalVideo() {
+				if (!this.videoStream) {
+					return;
+				}
+				this.videoStream.getTracks().forEach(track => track.stop());
+				this.videoStream = null;
+				this.getApplication().stopLocalVideoStream();
+			},
+			stopLocalAudio() {
+				if (!this.audioStream) {
+					return;
+				}
+				this.audioStream.getTracks().forEach(track => track.stop());
+				this.audioStream = null;
+			},
+			onCameraSelected(cameraId) {
+				this.stopLocalVideo();
+				this.selectedCamera = cameraId;
+				this.getLocalVideoStream();
+			},
+			onMicSelected(micId) {
+				/*this.stopLocalVideo();
+				this.selectedMic = micId;
+				this.getLocalStream();*/
+			},
+			onCameraStateChange(state) {
+				if (state) {
+					this.noVideo = false;
+					this.getLocalVideoStream();
+				} else {
+					this.stopLocalVideo();
+					this.userDisabledCamera = true;
+					this.noVideo = true;
+					this.getApplication().setCameraState(false);
+				}
+			},
+			onMicStateChange(state) {
+				if (state) {
+					this.getLocalAudioStream();
+				} else {
+					this.stopLocalAudio();
+				}
+				this.showMic = state;
+			},
+			isMobile() {
+				return im_lib_utils.Utils.device.isMobile();
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			},
+			getVideoConstraints() {
+				const videoConstraints = {};
+				if (this.selectedCamera) {
+					videoConstraints.deviceId = {
+						exact: this.selectedCamera
+					};
+				}
+				if (!im_lib_utils.Utils.device.isMobile()) {
+					videoConstraints.width = {
+						ideal: 1280
+					};
+					videoConstraints.height = {
+						ideal: 720
+					};
+				}
+				return videoConstraints;
+			}
+		},
+		components: {
+			MicLevel
+		},
+		template: `
+	<div class="bx-im-component-call-device-check-container">
+		<div class="bx-im-component-call-check-devices">
+			<div v-show="noVideo">
+				<div class="bx-im-component-call-check-devices-camera-no-video">
+					<div class="bx-im-component-call-check-devices-camera-no-video-icon"></div>
+					<div class="bx-im-component-call-check-devices-camera-no-video-text">{{ noVideoText }}</div>
+				</div>
+			</div>
+			<div v-show="!noVideo">
+				<div class="bx-im-component-call-check-devices-camera-video-container">
+					<video :class="cameraVideoClasses" ref="video" muted autoplay playsinline></video>
+				</div>
+			</div>
+			<template v-if="!isMobile()">
+				<mic-level v-show="showMic" :localStream="audioStream"/>
+			</template>
+		</div>
+	</div>
+	`
 	};
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var Error$1 = {
-	  data: function data() {
-	    return {
-	      downloadAppArticleCode: 11387752,
-	      callFeedbackSent: false
-	    };
-	  },
-	  computed: _objectSpread({
-	    errorCode: function errorCode() {
-	      return this.conference.common.error;
-	    },
-	    bitrix24only: function bitrix24only() {
-	      return this.errorCode === call_const.ConferenceErrorCode.bitrix24only;
-	    },
-	    detectIntranetUser: function detectIntranetUser() {
-	      return this.errorCode === call_const.ConferenceErrorCode.detectIntranetUser;
-	    },
-	    userLimitReached: function userLimitReached() {
-	      return this.errorCode === call_const.ConferenceErrorCode.userLimitReached;
-	    },
-	    kickedFromCall: function kickedFromCall() {
-	      return this.errorCode === call_const.ConferenceErrorCode.kickedFromCall;
-	    },
-	    wrongAlias: function wrongAlias() {
-	      return this.errorCode === call_const.ConferenceErrorCode.wrongAlias;
-	    },
-	    conferenceFinished: function conferenceFinished() {
-	      return this.errorCode === call_const.ConferenceErrorCode.finished;
-	    },
-	    unsupportedBrowser: function unsupportedBrowser() {
-	      return this.errorCode === call_const.ConferenceErrorCode.unsupportedBrowser;
-	    },
-	    missingMicrophone: function missingMicrophone() {
-	      return this.errorCode === call_const.ConferenceErrorCode.missingMicrophone;
-	    },
-	    unsafeConnection: function unsafeConnection() {
-	      return this.errorCode === call_const.ConferenceErrorCode.unsafeConnection;
-	    },
-	    noSignalFromCamera: function noSignalFromCamera() {
-	      return this.errorCode === call_const.ConferenceErrorCode.noSignalFromCamera;
-	    },
-	    userLeftCall: function userLeftCall() {
-	      return this.errorCode === call_const.ConferenceErrorCode.userLeftCall;
-	    },
-	    showFeedback: function showFeedback() {
-	      return this.$Bitrix.Application.get().showFeedback;
-	    },
-	    callDetails: function callDetails() {
-	      return this.$Bitrix.Application.get().callDetails;
-	    },
-	    isExternalUser: function isExternalUser() {
-	      return this.$Bitrix.Application.get().isExternalUser();
-	    },
-	    isFinishedByOrganizer: function isFinishedByOrganizer() {
-	      var _this$$Bitrix$Applica;
-	      return ((_this$$Bitrix$Applica = this.$Bitrix.Application.get().currentCall) === null || _this$$Bitrix$Applica === void 0 ? void 0 : _this$$Bitrix$Applica.state) === call_core.State.Finished;
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  methods: {
-	    reloadPage: function reloadPage() {
-	      location.reload();
-	    },
-	    redirectToAuthorize: function redirectToAuthorize() {
-	      location.href = location.origin + '/auth/?backurl=' + location.pathname;
-	    },
-	    continueAsGuest: function continueAsGuest() {
-	      im_lib_cookie.Cookie.set(null, "VIDEOCONF_GUEST_".concat(this.conference.common.alias), '', {
-	        path: '/'
-	      });
-	      location.reload(true);
-	    },
-	    getBxLink: function getBxLink() {
-	      return "bx://videoconf/code/".concat(this.$Bitrix.Application.get().getAlias());
-	    },
-	    openHelpArticle: function openHelpArticle() {
-	      if (BX.Helper) {
-	        BX.Helper.show("redirect=detail&code=" + this.downloadAppArticleCode);
-	      }
-	    },
-	    isMobile: function isMobile() {
-	      return im_lib_utils.Utils.device.isMobile();
-	    },
-	    onFeedbackSent: function onFeedbackSent() {
-	      var _this = this;
-	      setTimeout(function () {
-	        _this.callFeedbackSent = true;
-	      }, 1500);
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-error-wrap\">\n\t\t\t<template v-if=\"bitrix24only\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-b24only\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_B24_ONLY'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"detectIntranetUser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-intranet\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_PLEASE_LOG_IN'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"redirectToAuthorize\" class=\"bx-im-component-call-error-button-authorize\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>\n\t\t\t\t\t\t\t<button @click=\"continueAsGuest\" class=\"bx-im-component-call-error-button-as-guest\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLimitReached\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-full\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_USER_LIMIT'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"kickedFromCall\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-kicked\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_KICKED'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"wrongAlias || conferenceFinished\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-finished\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_FINISHED'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsupportedBrowser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-browser\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_UNSUPPORTED_BROWSER'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_DETAILS'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"missingMicrophone\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_MIC'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsafeConnection\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-https\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_HTTPS'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"noSignalFromCamera\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_SIGNAL_FROM_CAMERA'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"reloadPage\" class=\"bx-im-component-call-error-button-reload\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLeftCall\">\n\t\t\t\t<template v-if=\"!callFeedbackSent && showFeedback\">\n\t\t\t\t\t<bx-im-component-call-feedback @feedbackSent=\"onFeedbackSent\" :callDetails=\"callDetails\" :darkMode=\"true\"/>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">\n\t\t\t\t\t\t\t\t<span v-if=\"isFinishedByOrganizer\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_ORGANIZER_FINISHED_CONFERENCE'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_USER_LEFT_THE_CALL'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<br />\n\t\t\t\t\t\t\t\t<a v-if=\"!isExternalUser\" href=\"/\" class=\"bx-im-component-call-error-link\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_RETURN_TO_PORTAL'] }}</a>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t</div>\n\t"
+	const Error = {
+		data() {
+			return {
+				downloadAppArticleCode: 11387752,
+				callFeedbackSent: false
+			};
+		},
+		computed: {
+			errorCode() {
+				return this.conference.common.error;
+			},
+			bitrix24only() {
+				return this.errorCode === call_const.ConferenceErrorCode.bitrix24only;
+			},
+			detectIntranetUser() {
+				return this.errorCode === call_const.ConferenceErrorCode.detectIntranetUser;
+			},
+			userLimitReached() {
+				return this.errorCode === call_const.ConferenceErrorCode.userLimitReached;
+			},
+			kickedFromCall() {
+				return this.errorCode === call_const.ConferenceErrorCode.kickedFromCall;
+			},
+			wrongAlias() {
+				return this.errorCode === call_const.ConferenceErrorCode.wrongAlias;
+			},
+			conferenceFinished() {
+				return this.errorCode === call_const.ConferenceErrorCode.finished;
+			},
+			unsupportedBrowser() {
+				return this.errorCode === call_const.ConferenceErrorCode.unsupportedBrowser;
+			},
+			missingMicrophone() {
+				return this.errorCode === call_const.ConferenceErrorCode.missingMicrophone;
+			},
+			unsafeConnection() {
+				return this.errorCode === call_const.ConferenceErrorCode.unsafeConnection;
+			},
+			noSignalFromCamera() {
+				return this.errorCode === call_const.ConferenceErrorCode.noSignalFromCamera;
+			},
+			userLeftCall() {
+				return this.errorCode === call_const.ConferenceErrorCode.userLeftCall;
+			},
+			showFeedback() {
+				return this.$Bitrix.Application.get().showFeedback;
+			},
+			callDetails() {
+				return this.$Bitrix.Application.get().callDetails;
+			},
+			isExternalUser() {
+				return this.$Bitrix.Application.get().isExternalUser();
+			},
+			isFinishedByOrganizer() {
+				return this.$Bitrix.Application.get().currentCall?.state === call_core.State.Finished;
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference
+			})
+		},
+		methods: {
+			reloadPage() {
+				location.reload();
+			},
+			redirectToAuthorize() {
+				location.href = location.origin + '/auth/?backurl=' + location.pathname;
+			},
+			continueAsGuest() {
+				im_lib_cookie.Cookie.set(null, `VIDEOCONF_GUEST_${this.conference.common.alias}`, '', {
+					path: '/'
+				});
+				location.reload(true);
+			},
+			getBxLink() {
+				return `bx://videoconf/code/${this.$Bitrix.Application.get().getAlias()}`;
+			},
+			openHelpArticle() {
+				if (BX.Helper) {
+					BX.Helper.show("redirect=detail&code=" + this.downloadAppArticleCode);
+				}
+			},
+			isMobile() {
+				return im_lib_utils.Utils.device.isMobile();
+			},
+			onFeedbackSent() {
+				setTimeout(() => {
+					this.callFeedbackSent = true;
+				}, 1500);
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-error-wrap">
+			<template v-if="bitrix24only">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-b24only"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_B24_ONLY'] }}</div>
+						<template v-if="!isMobile()">
+							<a @click.prevent="openHelpArticle" class="bx-im-component-call-error-more-link">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>
+						</template>
+					</div>
+				</div>
+			</template>
+			<template v-if="detectIntranetUser">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-intranet"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_PLEASE_LOG_IN'] }}</div>
+						<div class="bx-im-component-call-error-buttons">
+							<button @click="redirectToAuthorize" class="bx-im-component-call-error-button-authorize">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>
+							<button @click="continueAsGuest" class="bx-im-component-call-error-button-as-guest">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>
+						</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="userLimitReached">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-full"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_USER_LIMIT'] }}</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="kickedFromCall">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-kicked"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_KICKED'] }}</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="wrongAlias || conferenceFinished">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-finished"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_FINISHED'] }}</div>
+						<template v-if="!isMobile()">
+							<a @click.prevent="openHelpArticle" class="bx-im-component-call-error-more-link">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>
+						</template>
+					</div>
+				</div>
+			</template>
+			<template v-if="unsupportedBrowser">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-browser"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_UNSUPPORTED_BROWSER'] }}</div>
+						<template v-if="!isMobile()">
+							<a @click.prevent="openHelpArticle" class="bx-im-component-call-error-more-link">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_DETAILS'] }}</a>
+						</template>
+					</div>
+				</div>
+			</template>
+			<template v-if="missingMicrophone">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_MIC'] }}</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="unsafeConnection">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-icon bx-im-component-call-error-icon-https"></div>
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_HTTPS'] }}</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="noSignalFromCamera">
+				<div class="bx-im-component-call-error-container">
+					<div class="bx-im-component-call-error-content">
+						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_SIGNAL_FROM_CAMERA'] }}</div>
+						<div class="bx-im-component-call-error-buttons">
+							<button @click="reloadPage" class="bx-im-component-call-error-button-reload">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>
+						</div>
+					</div>
+				</div>
+			</template>
+			<template v-if="userLeftCall">
+				<template v-if="!callFeedbackSent && showFeedback">
+					<bx-im-component-call-feedback @feedbackSent="onFeedbackSent" :callDetails="callDetails" :darkMode="true"/>
+				</template>
+				<template v-else>
+					<div class="bx-im-component-call-error-container">
+						<div class="bx-im-component-call-error-content">
+							<div class="bx-im-component-call-error-text">
+								<span v-if="isFinishedByOrganizer">
+									{{ localize['BX_IM_COMPONENT_CALL_ERROR_ORGANIZER_FINISHED_CONFERENCE'] }}
+								</span>
+								<span v-else>
+									{{ localize['BX_IM_COMPONENT_CALL_ERROR_USER_LEFT_THE_CALL'] }}
+								</span>
+								<br />
+								<a v-if="!isExternalUser" href="/" class="bx-im-component-call-error-link">{{ localize['BX_IM_COMPONENT_CALL_ERROR_RETURN_TO_PORTAL'] }}</a>
+							</div>
+						</div>
+					</div>
+				</template>
+			</template>
+		</div>
+	`
 	};
 
-	var OrientationDisabled = {
-	  template: "\n\t\t<div class=\"bx-im-component-call-orientation-disabled-wrap\">\n\t\t\t<div class=\"bx-im-component-call-orientation-disabled-icon\"></div>\n\t\t\t<div class=\"bx-im-component-call-orientation-disabled-text\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_ROTATE_DEVICE') }}\n\t\t\t</div>\n\t\t</div>\n\t"
+	const OrientationDisabled = {
+		template: `
+		<div class="bx-im-component-call-orientation-disabled-wrap">
+			<div class="bx-im-component-call-orientation-disabled-icon"></div>
+			<div class="bx-im-component-call-orientation-disabled-text">
+				{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_ROTATE_DEVICE') }}
+			</div>
+		</div>
+	`
 	};
 
-	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var PasswordCheck = {
-	  data: function data() {
-	    return {
-	      password: '',
-	      checkingPassword: '',
-	      wrongPassword: ''
-	    };
-	  },
-	  created: function created() {
-	    main_core_events.EventEmitter.subscribe(im_const.EventType.conference.setPasswordFocus, this.onSetPasswordFocus);
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.setPasswordFocus, this.onSetPasswordFocus);
-	  },
-	  computed: _objectSpread$1({
-	    conferenceTitle: function conferenceTitle() {
-	      return this.conference.common.conferenceTitle;
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  methods: {
-	    onSetPasswordFocus: function onSetPasswordFocus() {
-	      this.$refs['passwordInput'].focus();
-	    },
-	    checkPassword: function checkPassword() {
-	      var _this = this;
-	      if (!this.password || this.checkingPassword) {
-	        this.wrongPassword = true;
-	        return false;
-	      }
-	      this.checkingPassword = true;
-	      this.wrongPassword = false;
-	      this.getApplication().checkPassword(this.password)["catch"](function () {
-	        _this.wrongPassword = true;
-	      })["finally"](function () {
-	        _this.checkingPassword = false;
-	      });
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div>\n\t\t\t<div class=\"bx-im-component-call-info-container\">\n\t\t\t\t<div class=\"bx-im-component-call-info-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-info-title\">{{ conferenceTitle }}</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-password-container\">\n\t\t\t\t<template v-if=\"wrongPassword\">\n\t\t\t\t\t<div class=\"bx-im-component-call-password-error\">\n\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_WRONG'] }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-im-component-call-password-title\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-password-title-logo\"></div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-password-title-text\">\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_TITLE'] }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<input\n\t\t\t\t\t@keyup.enter=\"checkPassword\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tv-model=\"password\"\n\t\t\t\t\tclass=\"bx-im-component-call-password-input\"\n\t\t\t\t\t:placeholder=\"localize['BX_IM_COMPONENT_CALL_PASSWORD_PLACEHOLDER']\"\n\t\t\t\t\tref=\"passwordInput\"\n\t\t\t\t/>\n\t\t\t\t<button @click=\"checkPassword\" class=\"ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-password-button\">\n\t\t\t  \t\t{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_JOIN'] }}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t"
+	const PasswordCheck = {
+		data() {
+			return {
+				password: '',
+				checkingPassword: '',
+				wrongPassword: ''
+			};
+		},
+		created() {
+			main_core_events.EventEmitter.subscribe(im_const.EventType.conference.setPasswordFocus, this.onSetPasswordFocus);
+		},
+		beforeDestroy() {
+			main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.setPasswordFocus, this.onSetPasswordFocus);
+		},
+		computed: {
+			conferenceTitle() {
+				return this.conference.common.conferenceTitle;
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference
+			})
+		},
+		methods: {
+			onSetPasswordFocus() {
+				this.$refs['passwordInput'].focus();
+			},
+			checkPassword() {
+				if (!this.password || this.checkingPassword) {
+					this.wrongPassword = true;
+					return false;
+				}
+				this.checkingPassword = true;
+				this.wrongPassword = false;
+				this.getApplication().checkPassword(this.password).catch(() => {
+					this.wrongPassword = true;
+				}).finally(() => {
+					this.checkingPassword = false;
+				});
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		// language=Vue
+		template: `
+		<div>
+			<div class="bx-im-component-call-info-container">
+				<div class="bx-im-component-call-info-logo"></div>
+				<div class="bx-im-component-call-info-title">{{ conferenceTitle }}</div>
+			</div>
+			<div class="bx-im-component-call-password-container">
+				<template v-if="wrongPassword">
+					<div class="bx-im-component-call-password-error">
+						{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_WRONG'] }}
+					</div>
+				</template>
+				<template v-else>
+					<div class="bx-im-component-call-password-title">
+						<div class="bx-im-component-call-password-title-logo"></div>
+						<div class="bx-im-component-call-password-title-text">
+							{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_TITLE'] }}
+						</div>
+					</div>
+				</template>
+				<input
+					@keyup.enter="checkPassword"
+					type="text"
+					v-model="password"
+					class="bx-im-component-call-password-input"
+					:placeholder="localize['BX_IM_COMPONENT_CALL_PASSWORD_PLACEHOLDER']"
+					ref="passwordInput"
+				/>
+				<button @click="checkPassword" class="ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-password-button">
+						{{ localize['BX_IM_COMPONENT_CALL_PASSWORD_JOIN'] }}
+				</button>
+			</div>
+		</div>
+	`
 	};
 
-	var LoadingStatus = {
-	  computed: {
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-loading\">\n\t\t\t<div class=\"bx-im-component-call-loading-text\">{{ localize['BX_IM_COMPONENT_CALL_LOADING'] }}</div>\n\t\t</div>\n\t"
+	const LoadingStatus = {
+		computed: {
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="bx-im-component-call-loading">
+			<div class="bx-im-component-call-loading-text">{{ localize['BX_IM_COMPONENT_CALL_LOADING'] }}</div>
+		</div>
+	`
 	};
 
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	var NOT_ALLOWED_ERROR_CODE = 'NotAllowedError';
-	var RequestPermissions = {
-	  props: {
-	    skipRequest: {
-	      type: Boolean,
-	      required: false,
-	      "default": false
-	    }
-	  },
-	  created: function created() {
-	    main_core_events.EventEmitter.subscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
-	    this.getApplication().viewPort.blockButtons(['microphone', 'camera']);
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
-	  },
-	  computed: {
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  },
-	  methods: {
-	    onRequestPermissions: function onRequestPermissions() {
-	      this.requestPermissions();
-	    },
-	    requestPermissions: function requestPermissions() {
-	      var _this = this;
-	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-	        var tryGetUserMedia, devices;
-	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-	          while (1) switch (_context2.prev = _context2.next) {
-	            case 0:
-	              tryGetUserMedia = /*#__PURE__*/function () {
-	                var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-	                  var params,
-	                    videoParams,
-	                    constraints,
-	                    stream,
-	                    _stream,
-	                    _args = arguments;
-	                  return _regeneratorRuntime().wrap(function _callee$(_context) {
-	                    while (1) switch (_context.prev = _context.next) {
-	                      case 0:
-	                        params = _args.length > 0 && _args[0] !== undefined ? _args[0] : {
-	                          video: 'exact'
-	                        };
-	                        videoParams = params.video ? {
-	                          width: {
-	                            ideal: 1280
-	                          },
-	                          height: {
-	                            ideal: 720
-	                          },
-	                          deviceId: babelHelpers.defineProperty({}, params.video, BX.Call.Hardware.defaultCamera)
-	                        } : false;
-	                        constraints = {
-	                          audio: true,
-	                          video: videoParams
-	                        };
-	                        stream = null;
-	                        _context.prev = 4;
-	                        _context.next = 7;
-	                        return navigator.mediaDevices.getUserMedia(constraints);
-	                      case 7:
-	                        stream = _context.sent;
-	                        _this.setPermissionsRequestedFlag();
-	                        return _context.abrupt("return", videoParams ? ['microphone', 'camera'] : ['microphone']);
-	                      case 12:
-	                        _context.prev = 12;
-	                        _context.t0 = _context["catch"](4);
-	                        if (!(_context.t0.name === NOT_ALLOWED_ERROR_CODE)) {
-	                          _context.next = 16;
-	                          break;
-	                        }
-	                        throw _context.t0;
-	                      case 16:
-	                        if (!(params.video === 'exact')) {
-	                          _context.next = 20;
-	                          break;
-	                        }
-	                        return _context.abrupt("return", tryGetUserMedia({
-	                          video: 'ideal'
-	                        }));
-	                      case 20:
-	                        if (!(params.video === 'ideal')) {
-	                          _context.next = 22;
-	                          break;
-	                        }
-	                        return _context.abrupt("return", tryGetUserMedia({
-	                          video: false
-	                        }));
-	                      case 22:
-	                        throw _context.t0;
-	                      case 23:
-	                        _context.prev = 23;
-	                        (_stream = stream) === null || _stream === void 0 ? void 0 : _stream.getTracks().forEach(function (track) {
-	                          return track.stop();
-	                        });
-	                        return _context.finish(23);
-	                      case 26:
-	                      case "end":
-	                        return _context.stop();
-	                    }
-	                  }, _callee, null, [[4, 12, 23, 26]]);
-	                }));
-	                return function tryGetUserMedia() {
-	                  return _ref.apply(this, arguments);
-	                };
-	              }();
-	              _context2.prev = 1;
-	              _context2.next = 4;
-	              return _this.getApplication().initHardware();
-	            case 4:
-	              _context2.next = 6;
-	              return tryGetUserMedia({
-	                video: 'exact'
-	              });
-	            case 6:
-	              devices = _context2.sent;
-	              _this.getApplication().viewPort.showButtons(['camera', 'microphone']);
-	              _this.getApplication().viewPort.unblockButtons(devices);
-	              _context2.next = 17;
-	              break;
-	            case 11:
-	              _context2.prev = 11;
-	              _context2.t0 = _context2["catch"](1);
-	              if (!(_context2.t0.name === NOT_ALLOWED_ERROR_CODE)) {
-	                _context2.next = 16;
-	                break;
-	              }
-	              _this.showMessageBox(_this.localize['BX_IM_COMPONENT_CALL_NOT_ALLOWED_ERROR']);
-	              return _context2.abrupt("return", false);
-	            case 16:
-	              _this.showMessageBox(_this.localize['BX_IM_COMPONENT_CALL_HARDWARE_ERROR']);
-	            case 17:
-	              _context2.prev = 17;
-	              BX.Call.Hardware.getCurrentDeviceList();
-	              return _context2.finish(17);
-	            case 20:
-	            case "end":
-	              return _context2.stop();
-	          }
-	        }, _callee2, null, [[1, 11, 17, 20]]);
-	      }))();
-	    },
-	    setPermissionsRequestedFlag: function setPermissionsRequestedFlag() {
-	      var _this2 = this;
-	      this.$nextTick(function () {
-	        return _this2.$store.dispatch('conference/setPermissionsRequested', {
-	          status: true
-	        });
-	      });
-	    },
-	    showMessageBox: function showMessageBox(text) {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        message: text,
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
-	      });
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-permissions-container\">\n\t\t\t<template v-if=\"!skipRequest\">\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_TEXT'] }}</div>\n\t\t\t\t<button @click=\"requestPermissions\" class=\"bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ENABLE_DEVICES_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t\t<slot></slot>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_LOADING'] }}</div>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-wait bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t</template>\n\t\t</div>\n\t"
+	const NOT_ALLOWED_ERROR_CODE = 'NotAllowedError';
+	const RequestPermissions = {
+		props: {
+			skipRequest: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		created() {
+			main_core_events.EventEmitter.subscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
+			this.getApplication().viewPort.blockButtons(['microphone', 'camera']);
+		},
+		beforeDestroy() {
+			main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.requestPermissions, this.onRequestPermissions);
+		},
+		computed: {
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			}
+		},
+		methods: {
+			onRequestPermissions() {
+				this.requestPermissions();
+			},
+			async requestPermissions() {
+				const tryGetUserMedia = async (params = {
+					video: 'exact'
+				}) => {
+					const videoParams = params.video ? {
+						width: {
+							ideal: 1280
+						},
+						height: {
+							ideal: 720
+						},
+						deviceId: {
+							[params.video]: BX.Call.Hardware.defaultCamera
+						}
+					} : false;
+					const constraints = {
+						audio: true,
+						video: videoParams
+					};
+					let stream = null;
+					try {
+						stream = await navigator.mediaDevices.getUserMedia(constraints);
+						this.setPermissionsRequestedFlag();
+						return videoParams ? ['microphone', 'camera'] : ['microphone'];
+					} catch (error) {
+						if (error.name === NOT_ALLOWED_ERROR_CODE) {
+							throw error;
+						}
+						if (params.video === 'exact') {
+							return tryGetUserMedia({
+								video: 'ideal'
+							});
+						} else if (params.video === 'ideal') {
+							return tryGetUserMedia({
+								video: false
+							});
+						}
+						throw error;
+					} finally {
+						stream?.getTracks().forEach(track => track.stop());
+					}
+				};
+				try {
+					await this.getApplication().initHardware();
+					const devices = await tryGetUserMedia({
+						video: 'exact'
+					});
+					this.getApplication().viewPort.showButtons(['camera', 'microphone']);
+					this.getApplication().viewPort.unblockButtons(devices);
+				} catch (error) {
+					if (error.name === NOT_ALLOWED_ERROR_CODE) {
+						this.showMessageBox(this.localize['BX_IM_COMPONENT_CALL_NOT_ALLOWED_ERROR']);
+						return false;
+					}
+					this.showMessageBox(this.localize['BX_IM_COMPONENT_CALL_HARDWARE_ERROR']);
+				} finally {
+					BX.Call.Hardware.getCurrentDeviceList();
+				}
+			},
+			setPermissionsRequestedFlag() {
+				this.$nextTick(() => this.$store.dispatch('conference/setPermissionsRequested', {
+					status: true
+				}));
+			},
+			showMessageBox(text) {
+				ui_dialogs_messagebox.MessageBox.show({
+					message: text,
+					modal: true,
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
+				});
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="bx-im-component-call-permissions-container">
+			<template v-if="!skipRequest">
+				<div class="bx-im-component-call-permissions-text">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_TEXT'] }}</div>
+				<button @click="requestPermissions" class="bx-im-component-call-permissions-button">
+					{{ localize['BX_IM_COMPONENT_CALL_ENABLE_DEVICES_BUTTON'] }}
+				</button>
+				<slot></slot>
+			</template>
+			<template v-else>
+				<div class="bx-im-component-call-permissions-text">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_LOADING'] }}</div>
+				<button class="ui-btn ui-btn-sm ui-btn-wait bx-im-component-call-permissions-button">
+					{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_BUTTON'] }}
+				</button>
+			</template>
+		</div>
+	`
 	};
 
-	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var MobileChatButton = {
-	  computed: _objectSpread$2({
-	    dialogCounter: function dialogCounter() {
-	      if (this.dialog) {
-	        return this.dialog.counter;
-	      }
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    },
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  methods: {
-	    openChat: function openChat() {
-	      this.getApplication().toggleChat();
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-open-chat-button-container\">\n\t\t\t<div @click=\"openChat\" class=\"ui-btn-sm ui-btn-icon-chat bx-im-component-call-open-chat-button\">\n\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}\n\t\t\t\t<div v-if=\"dialogCounter > 0\" class=\"bx-im-component-call-open-chat-button-counter\">{{ dialogCounter }}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	const MobileChatButton = {
+		computed: {
+			dialogCounter() {
+				if (this.dialog) {
+					return this.dialog.counter;
+				}
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				dialog: state => state.dialogues.collection[state.application.dialog.dialogId],
+				conference: state => state.conference
+			})
+		},
+		methods: {
+			openChat() {
+				this.getApplication().toggleChat();
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-open-chat-button-container">
+			<div @click="openChat" class="ui-btn-sm ui-btn-icon-chat bx-im-component-call-open-chat-button">
+				{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}
+				<div v-if="dialogCounter > 0" class="bx-im-component-call-open-chat-button-counter">{{ dialogCounter }}</div>
+			</div>
+		</div>
+	`
 	};
 
-	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var ConferenceInfo = {
-	  props: {
-	    compactMode: {
-	      type: Boolean,
-	      required: false,
-	      "default": false
-	    }
-	  },
-	  data: function data() {
-	    return {
-	      conferenceDuration: '',
-	      durationInterval: null
-	    };
-	  },
-	  created: function created() {
-	    var _this = this;
-	    if (this.conferenceStarted) {
-	      this.updateConferenceDuration();
-	      this.durationInterval = setInterval(function () {
-	        _this.updateConferenceDuration();
-	      }, 1000);
-	    }
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    clearInterval(this.durationInterval);
-	  },
-	  computed: _objectSpread$3({
-	    conferenceStarted: function conferenceStarted() {
-	      return this.conference.common.conferenceStarted;
-	    },
-	    conferenceStartDate: function conferenceStartDate() {
-	      return this.conference.common.conferenceStartDate;
-	    },
-	    conferenceTitle: function conferenceTitle() {
-	      return this.conference.common.conferenceTitle;
-	    },
-	    userId: function userId() {
-	      return this.application.common.userId;
-	    },
-	    isBroadcast: function isBroadcast() {
-	      return this.conference.common.isBroadcast;
-	    },
-	    presentersList: function presentersList() {
-	      return this.conference.common.presenters;
-	    },
-	    presentersInfo: function presentersInfo() {
-	      return this.$store.getters['users/getList'](this.presentersList);
-	    },
-	    formattedPresentersList: function formattedPresentersList() {
-	      var presentersCount = this.presentersList.length;
-	      var prefix = presentersCount > 1 ? this.localize['BX_IM_COMPONENT_CALL_SPEAKERS_MULTIPLE'] : this.localize['BX_IM_COMPONENT_CALL_SPEAKER'];
-	      var presenters = this.presentersInfo.map(function (user) {
-	        return user.name;
-	      }).join(', ');
-	      return "".concat(prefix, ": ").concat(presenters);
-	    },
-	    isCurrentUserPresenter: function isCurrentUserPresenter() {
-	      return this.presentersList.includes(this.userId);
-	    },
-	    conferenceStatusText: function conferenceStatusText() {
-	      if (this.conferenceStarted === true) {
-	        return "".concat(this.localize['BX_IM_COMPONENT_CALL_STATUS_STARTED'], ", ").concat(this.conferenceDuration);
-	      } else if (this.conferenceStarted === false) {
-	        return this.localize['BX_IM_COMPONENT_CALL_STATUS_NOT_STARTED'];
-	      } else if (this.conferenceStarted === null) {
-	        return this.localize['BX_IM_COMPONENT_CALL_STATUS_LOADING'];
-	      }
-	    },
-	    conferenceStatusClasses: function conferenceStatusClasses() {
-	      return ['bx-im-component-call-info-status', this.conferenceStarted ? 'bx-im-component-call-info-status-active' : 'bx-im-component-call-info-status-not-active'];
-	    },
-	    containerClasses: function containerClasses() {
-	      return [this.compactMode ? 'bx-im-component-call-info-container-compact' : 'bx-im-component-call-info-container'];
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  watch: {
-	    conferenceStarted: function conferenceStarted(newValue) {
-	      var _this2 = this;
-	      if (newValue === true) {
-	        this.durationInterval = setInterval(function () {
-	          _this2.updateConferenceDuration();
-	        }, 1000);
-	      }
-	      this.updateConferenceDuration();
-	    }
-	  },
-	  methods: {
-	    updateConferenceDuration: function updateConferenceDuration() {
-	      if (!this.conferenceStartDate) {
-	        return false;
-	      }
-	      var startDate = this.conferenceStartDate;
-	      var currentDate = new Date();
-	      var durationInSeconds = Math.floor((currentDate - startDate) / 1000);
-	      var minutes = 0;
-	      if (durationInSeconds > 60) {
-	        minutes = Math.floor(durationInSeconds / 60);
-	        if (minutes < 10) {
-	          minutes = '0' + minutes;
-	        }
-	      }
-	      var seconds = durationInSeconds - minutes * 60;
-	      if (seconds < 10) {
-	        seconds = '0' + seconds;
-	      }
-	      this.conferenceDuration = "".concat(minutes, ":").concat(seconds);
-	      return true;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div :class=\"containerClasses\">\n\t\t\t<template v-if=\"compactMode\">\n\t\t\t\t<div class=\"bx-im-component-call-info-title-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-info-logo\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-info-title\">{{ conferenceTitle }}</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-info-speakers\">{{ formattedPresentersList }}</div>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-im-component-call-info-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-info-title\">{{ conferenceTitle }}</div>\n\t\t\t  \t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-info-speakers\">{{ formattedPresentersList }}</div>\t\n\t\t\t</template>\n\t\t\t<div :class=\"conferenceStatusClasses\">{{ conferenceStatusText }}</div>\n\t\t</div>\n\t"
+	const ConferenceInfo = {
+		props: {
+			compactMode: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				conferenceDuration: '',
+				durationInterval: null
+			};
+		},
+		created() {
+			if (this.conferenceStarted) {
+				this.updateConferenceDuration();
+				this.durationInterval = setInterval(() => {
+					this.updateConferenceDuration();
+				}, 1000);
+			}
+		},
+		beforeDestroy() {
+			clearInterval(this.durationInterval);
+		},
+		computed: {
+			conferenceStarted() {
+				return this.conference.common.conferenceStarted;
+			},
+			conferenceStartDate() {
+				return this.conference.common.conferenceStartDate;
+			},
+			conferenceTitle() {
+				return this.conference.common.conferenceTitle;
+			},
+			userId() {
+				return this.application.common.userId;
+			},
+			isBroadcast() {
+				return this.conference.common.isBroadcast;
+			},
+			presentersList() {
+				return this.conference.common.presenters;
+			},
+			presentersInfo() {
+				return this.$store.getters['users/getList'](this.presentersList);
+			},
+			formattedPresentersList() {
+				const presentersCount = this.presentersList.length;
+				const prefix = presentersCount > 1 ? this.localize['BX_IM_COMPONENT_CALL_SPEAKERS_MULTIPLE'] : this.localize['BX_IM_COMPONENT_CALL_SPEAKER'];
+				const presenters = this.presentersInfo.map(user => user.name).join(', ');
+				return `${prefix}: ${presenters}`;
+			},
+			isCurrentUserPresenter() {
+				return this.presentersList.includes(this.userId);
+			},
+			conferenceStatusText() {
+				if (this.conferenceStarted === true) {
+					return `${this.localize['BX_IM_COMPONENT_CALL_STATUS_STARTED']}, ${this.conferenceDuration}`;
+				} else if (this.conferenceStarted === false) {
+					return this.localize['BX_IM_COMPONENT_CALL_STATUS_NOT_STARTED'];
+				} else if (this.conferenceStarted === null) {
+					return this.localize['BX_IM_COMPONENT_CALL_STATUS_LOADING'];
+				}
+			},
+			conferenceStatusClasses() {
+				return ['bx-im-component-call-info-status', this.conferenceStarted ? 'bx-im-component-call-info-status-active' : 'bx-im-component-call-info-status-not-active'];
+			},
+			containerClasses() {
+				return [this.compactMode ? 'bx-im-component-call-info-container-compact' : 'bx-im-component-call-info-container'];
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference
+			})
+		},
+		watch: {
+			conferenceStarted(newValue) {
+				if (newValue === true) {
+					this.durationInterval = setInterval(() => {
+						this.updateConferenceDuration();
+					}, 1000);
+				}
+				this.updateConferenceDuration();
+			}
+		},
+		methods: {
+			updateConferenceDuration() {
+				if (!this.conferenceStartDate) {
+					return false;
+				}
+				const startDate = this.conferenceStartDate;
+				const currentDate = new Date();
+				let durationInSeconds = Math.floor((currentDate - startDate) / 1000);
+				let minutes = 0;
+				if (durationInSeconds > 60) {
+					minutes = Math.floor(durationInSeconds / 60);
+					if (minutes < 10) {
+						minutes = '0' + minutes;
+					}
+				}
+				let seconds = durationInSeconds - minutes * 60;
+				if (seconds < 10) {
+					seconds = '0' + seconds;
+				}
+				this.conferenceDuration = `${minutes}:${seconds}`;
+				return true;
+			}
+		},
+		// language=Vue
+		template: `
+		<div :class="containerClasses">
+			<template v-if="compactMode">
+				<div class="bx-im-component-call-info-title-container">
+					<div class="bx-im-component-call-info-logo"></div>
+					<div class="bx-im-component-call-info-title">{{ conferenceTitle }}</div>
+				</div>
+				<div v-if="isBroadcast" class="bx-im-component-call-info-speakers">{{ formattedPresentersList }}</div>
+			</template>
+			<template v-else>
+				<div class="bx-im-component-call-info-logo"></div>
+				<div class="bx-im-component-call-info-title">{{ conferenceTitle }}</div>
+					<div v-if="isBroadcast" class="bx-im-component-call-info-speakers">{{ formattedPresentersList }}</div>	
+			</template>
+			<div :class="conferenceStatusClasses">{{ conferenceStatusText }}</div>
+		</div>
+	`
 	};
 
-	function _regeneratorRuntime$1() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$1 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var UserForm = {
-	  data: function data() {
-	    return {
-	      userNewName: ''
-	    };
-	  },
-	  computed: _objectSpread$4({
-	    conferenceStarted: function conferenceStarted() {
-	      return this.conference.common.conferenceStarted;
-	    },
-	    userHasRealName: function userHasRealName() {
-	      if (this.user) {
-	        return this.user.name !== this.localize['BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME'];
-	      }
-	      return false;
-	    },
-	    intranetAvatarStyle: function intranetAvatarStyle() {
-	      if (this.user && !this.user.extranet && this.user.avatar) {
-	        return {
-	          backgroundImage: "url('".concat(this.user.avatar, "')")
-	        };
-	      }
-	      return '';
-	    },
-	    logoutLink: function logoutLink() {
-	      return "".concat(this.publicLink, "?logout=yes&sessid=").concat(BX.bitrix_sessid());
-	    },
-	    publicLink: function publicLink() {
-	      if (this.dialog) {
-	        return this.dialog["public"].link;
-	      }
-	    },
-	    userId: function userId() {
-	      return this.application.common.userId;
-	    },
-	    isBroadcast: function isBroadcast() {
-	      return this.conference.common.isBroadcast;
-	    },
-	    presentersList: function presentersList() {
-	      return this.conference.common.presenters;
-	    },
-	    isCurrentUserPresenter: function isCurrentUserPresenter() {
-	      return this.presentersList.includes(this.userId);
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    },
-	    videoModeButtonClasses: function videoModeButtonClasses() {
-	      var classes = ['bx-im-component-call-join-video'];
-	      if (!this.getApplication().hardwareInited) {
-	        classes.push('disabled');
-	      }
-	      return classes;
-	    },
-	    audioModeButtonClasses: function audioModeButtonClasses() {
-	      var classes = ['bx-im-component-call-join-audio'];
-	      if (!this.getApplication().hardwareInited) {
-	        classes.push('disabled');
-	      }
-	      return classes;
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    user: function user(state) {
-	      return state.users.collection[state.application.common.userId];
-	    },
-	    application: function application(state) {
-	      return state.application;
-	    },
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  methods: {
-	    startConference: function startConference(_ref) {
-	      var video = _ref.video;
-	      this.getApplication().startCall(video);
-	    },
-	    joinConference: function joinConference(_ref2) {
-	      var _this = this;
-	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee() {
-	        var video, viewerMode;
-	        return _regeneratorRuntime$1().wrap(function _callee$(_context) {
-	          while (1) switch (_context.prev = _context.next) {
-	            case 0:
-	              video = _ref2.video;
-	              if (!(_this.user.extranet && !_this.userHasRealName)) {
-	                _context.next = 4;
-	                break;
-	              }
-	              _context.next = 4;
-	              return _this.setNewName();
-	            case 4:
-	              if (!_this.conferenceStarted) {
-	                main_core_events.EventEmitter.emit(im_const.EventType.conference.waitForStart);
-	                _this.getApplication().setUserReadyToJoin();
-	                _this.getApplication().setJoinType(video);
-	              } else {
-	                viewerMode = _this.isBroadcast && !_this.isCurrentUserPresenter;
-	                im_lib_logger.Logger.warn('ready to join call', video, viewerMode);
-	                if (viewerMode) {
-	                  _this.getApplication().joinCall(_this.getApplication().preCall.id, _this.getApplication().preCall.uuid, {
-	                    joinAsViewer: true
-	                  });
-	                } else {
-	                  _this.getApplication().joinCall(_this.getApplication().preCall.id, _this.getApplication().preCall.uuid, {
-	                    video: video
-	                  });
-	                }
-	              }
-	            case 5:
-	            case "end":
-	              return _context.stop();
-	          }
-	        }, _callee);
-	      }))();
-	    },
-	    setNewName: function setNewName() {
-	      var _this2 = this;
-	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee2() {
-	        return _regeneratorRuntime$1().wrap(function _callee2$(_context2) {
-	          while (1) switch (_context2.prev = _context2.next) {
-	            case 0:
-	              if (!(_this2.userNewName.length > 0)) {
-	                _context2.next = 3;
-	                break;
-	              }
-	              _context2.next = 3;
-	              return _this2.getApplication().renameGuest(_this2.userNewName);
-	            case 3:
-	            case "end":
-	              return _context2.stop();
-	          }
-	        }, _callee2);
-	      }))();
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    },
-	    isDesktop: function isDesktop() {
-	      return im_lib_utils.Utils.platform.isBitrixDesktop();
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-form\">\n\t\t\t<template v-if=\"user && userHasRealName\">\n\t\t\t\t<template v-if=\"!user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-title\">\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_NAME_TITLE'] }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content-left\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-text\">{{ user.name }}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-if=\"!isDesktop()\">\n\t\t\t\t\t\t\t\t<a :href=\"logoutLink\" class=\"bx-im-component-call-intranet-name-logout\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_LOGOUT'] }}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-text\">{{ user.name }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- New guest, need to specify name -->\n\t\t\t<template v-else-if=\"user && !userHasRealName\">\n\t\t\t\t<input\n\t\t\t\t\tv-model.trim=\"userNewName\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t:placeholder=\"localize['BX_IM_COMPONENT_CALL_NAME_PLACEHOLDER']\"\n\t\t\t\t\tclass=\"bx-im-component-call-name-input\"\n\t\t\t\t\tref=\"nameInput\"\n\t\t\t\t/>\n\t\t\t</template>\n\t\t\t<!-- Buttons -->\n\t\t\t<template v-if=\"user\">\n\t\t\t\t<!-- Broadcast mode -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speaker can start conference -->\n\t\t\t\t\t<template v-if=\"isCurrentUserPresenter && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Speakers can join with audio/video -->\n\t\t\t\t\t<template v-else-if=\"conferenceStarted && isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join as viewers -->\n\t\t\t\t\t<template v-else-if=\"!isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\tclass=\"bx-im-component-call-join-video\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<!-- End broadcast mode -->\n\t\t\t\t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t<!-- Intranet user can start conference -->\n\t\t\t\t\t<template v-if=\"!user.extranet && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join -->\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!--End normal (not broadcast) mode-->\n\t\t</div>\n\t"
+	const UserForm = {
+		data() {
+			return {
+				userNewName: ''
+			};
+		},
+		computed: {
+			conferenceStarted() {
+				return this.conference.common.conferenceStarted;
+			},
+			userHasRealName() {
+				if (this.user) {
+					return this.user.name !== this.localize['BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME'];
+				}
+				return false;
+			},
+			intranetAvatarStyle() {
+				if (this.user && !this.user.extranet && this.user.avatar) {
+					return {
+						backgroundImage: `url('${this.user.avatar}')`
+					};
+				}
+				return '';
+			},
+			logoutLink() {
+				return `${this.publicLink}?logout=yes&sessid=${BX.bitrix_sessid()}`;
+			},
+			publicLink() {
+				if (this.dialog) {
+					return this.dialog.public.link;
+				}
+			},
+			userId() {
+				return this.application.common.userId;
+			},
+			isBroadcast() {
+				return this.conference.common.isBroadcast;
+			},
+			presentersList() {
+				return this.conference.common.presenters;
+			},
+			isCurrentUserPresenter() {
+				return this.presentersList.includes(this.userId);
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			videoModeButtonClasses() {
+				const classes = ['bx-im-component-call-join-video'];
+				if (!this.getApplication().hardwareInited) {
+					classes.push('disabled');
+				}
+				return classes;
+			},
+			audioModeButtonClasses() {
+				const classes = ['bx-im-component-call-join-audio'];
+				if (!this.getApplication().hardwareInited) {
+					classes.push('disabled');
+				}
+				return classes;
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				user: state => state.users.collection[state.application.common.userId],
+				application: state => state.application,
+				conference: state => state.conference
+			})
+		},
+		methods: {
+			startConference({
+				video
+			}) {
+				this.getApplication().startCall(video);
+			},
+			async joinConference({
+				video
+			}) {
+				if (this.user.extranet && !this.userHasRealName) {
+					await this.setNewName();
+				}
+				if (!this.conferenceStarted) {
+					main_core_events.EventEmitter.emit(im_const.EventType.conference.waitForStart);
+					this.getApplication().setUserReadyToJoin();
+					this.getApplication().setJoinType(video);
+				} else {
+					const viewerMode = this.isBroadcast && !this.isCurrentUserPresenter;
+					im_lib_logger.Logger.warn('ready to join call', video, viewerMode);
+					if (viewerMode) {
+						this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
+							joinAsViewer: true
+						});
+					} else {
+						this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
+							video
+						});
+					}
+				}
+			},
+			async setNewName() {
+				if (this.userNewName.length > 0) {
+					await this.getApplication().renameGuest(this.userNewName);
+				}
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			},
+			isDesktop() {
+				return im_lib_utils.Utils.platform.isBitrixDesktop();
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-form">
+			<template v-if="user && userHasRealName">
+				<template v-if="!user.extranet">
+					<div class="bx-im-component-call-intranet-name-container">
+						<div class="bx-im-component-call-intranet-name-title">
+							{{ localize['BX_IM_COMPONENT_CALL_INTRANET_NAME_TITLE'] }}
+						</div>
+						<div class="bx-im-component-call-intranet-name-content">
+							<div class="bx-im-component-call-intranet-name-content-left">
+								<div class="bx-im-component-call-intranet-name-text">{{ user.name }}</div>
+							</div>
+							<template v-if="!isDesktop()">
+								<a :href="logoutLink" class="bx-im-component-call-intranet-name-logout">
+									{{ localize['BX_IM_COMPONENT_CALL_INTRANET_LOGOUT'] }}
+								</a>
+							</template>
+						</div>
+					</div>
+				</template>
+				<template v-else-if="user.extranet">
+					<div class="bx-im-component-call-guest-name-container">
+						<div class="bx-im-component-call-guest-name-text">{{ user.name }}</div>
+					</div>
+				</template>
+			</template>
+			<!-- New guest, need to specify name -->
+			<template v-else-if="user && !userHasRealName">
+				<input
+					v-model.trim="userNewName"
+					type="text"
+					:placeholder="localize['BX_IM_COMPONENT_CALL_NAME_PLACEHOLDER']"
+					class="bx-im-component-call-name-input"
+					ref="nameInput"
+				/>
+			</template>
+			<!-- Buttons -->
+			<template v-if="user">
+				<!-- Broadcast mode -->
+				<template v-if="isBroadcast">
+					<!-- Speaker can start conference -->
+					<template v-if="isCurrentUserPresenter && !conferenceStarted">
+						<button
+							@click="startConference({video: true})"
+							:class="videoModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}
+						</button>
+						<button
+							@click="startConference({video: false})"
+							:class="audioModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}
+						</button>
+					</template>
+					<!-- Speakers can join with audio/video -->
+					<template v-else-if="conferenceStarted && isCurrentUserPresenter">
+						<button
+							@click="joinConference({video: true})"
+							:class="videoModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}
+						</button>
+						<button
+							@click="joinConference({video: false})"
+							:class="audioModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}
+						</button>
+					</template>
+					<!-- Others can join as viewers -->
+					<template v-else-if="!isCurrentUserPresenter">
+						<button
+							@click="joinConference({video: false})"
+							class="bx-im-component-call-join-video"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_JOIN'] }}
+						</button>
+					</template>
+				</template>
+				<!-- End broadcast mode -->
+				<template v-else-if="!isBroadcast">
+					<!-- Intranet user can start conference -->
+					<template v-if="!user.extranet && !conferenceStarted">
+						<button
+							@click="startConference({video: true})"
+							:class="videoModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}
+						</button>
+						<button
+							@click="startConference({video: false})"
+							:class="audioModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}
+						</button>
+					</template>
+					<!-- Others can join -->
+					<template v-else>
+						<button
+							@click="joinConference({video: true})"
+							:class="videoModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}
+						</button>
+						<button
+							@click="joinConference({video: false})"
+							:class="audioModeButtonClasses"
+						>
+							{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}
+						</button>
+					</template>
+				</template>
+			</template>
+			<!--End normal (not broadcast) mode-->
+		</div>
+	`
 	};
 
-	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var ChatHeader = {
-	  created: function created() {
-	    this.desktop = new im_lib_desktop.Desktop();
-	  },
-	  computed: _objectSpread$5({
-	    showTotalCounter: function showTotalCounter() {
-	      return im_lib_utils.Utils.platform.isBitrixDesktop() && (this.desktop.getApiVersion() >= 60 || !im_lib_utils.Utils.platform.isWindows()) && !this.getApplication().isExternalUser() && this.messageCount > 0;
-	    },
-	    messageCount: function messageCount() {
-	      return this.conference.common.messageCount;
-	    },
-	    formattedCounter: function formattedCounter() {
-	      return this.messageCount > 99 ? '99+' : this.messageCount;
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    }
-	  })),
-	  methods: {
-	    onCloseChat: function onCloseChat() {
-	      this.getApplication().toggleChat();
-	    },
-	    onTotalCounterClick: function onTotalCounterClick() {
-	      if (opener && opener.BXDesktopWindow) {
-	        opener.BXDesktopWindow.ExecuteCommand('show.active');
-	      }
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-right-header\">\n\t\t\t<div class=\"bx-im-component-call-right-header-left\">\n\t\t\t\t<div @click=\"onCloseChat\" class=\"bx-im-component-call-right-header-close\" :title=\"localize['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-right-header-title\">{{ localize['BX_IM_COMPONENT_CALL_CHAT_TITLE'] }}</div>\n \n\t\t\t</div>\n\t\t\t<template v-if=\"showTotalCounter\">\n\t\t\t\t<div @click=\"onTotalCounterClick\" class=\"bx-im-component-call-right-header-right bx-im-component-call-right-header-all-chats\">\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-title\">{{ localize['BX_IM_COMPONENT_CALL_ALL_CHATS'] }}</div>\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-counter\">{{ messageCount }}</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	const ChatHeader = {
+		created() {
+			this.desktop = new im_lib_desktop.Desktop();
+		},
+		computed: {
+			showTotalCounter() {
+				return im_lib_utils.Utils.platform.isBitrixDesktop() && (this.desktop.getApiVersion() >= 60 || !im_lib_utils.Utils.platform.isWindows()) && !this.getApplication().isExternalUser() && this.messageCount > 0;
+			},
+			messageCount() {
+				return this.conference.common.messageCount;
+			},
+			formattedCounter() {
+				return this.messageCount > 99 ? '99+' : this.messageCount;
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference
+			})
+		},
+		methods: {
+			onCloseChat() {
+				this.getApplication().toggleChat();
+			},
+			onTotalCounterClick() {
+				if (opener && opener.BXDesktopWindow) {
+					opener.BXDesktopWindow.ExecuteCommand('show.active');
+				}
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-right-header">
+			<div class="bx-im-component-call-right-header-left">
+				<div @click="onCloseChat" class="bx-im-component-call-right-header-close" :title="localize['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']"></div>
+				<div class="bx-im-component-call-right-header-title">{{ localize['BX_IM_COMPONENT_CALL_CHAT_TITLE'] }}</div>
+ 
+			</div>
+			<template v-if="showTotalCounter">
+				<div @click="onTotalCounterClick" class="bx-im-component-call-right-header-right bx-im-component-call-right-header-all-chats">
+					<div class="bx-im-component-call-right-header-all-chats-title">{{ localize['BX_IM_COMPONENT_CALL_ALL_CHATS'] }}</div>
+					<div class="bx-im-component-call-right-header-all-chats-counter">{{ messageCount }}</div>
+				</div>
+			</template>
+		</div>
+	`
 	};
 
-	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var WaitingForStart = {
-	  computed: _objectSpread$6({
-	    userCounter: function userCounter() {
-	      return this.dialog.userCounter;
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    },
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    }
-	  })),
-	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-wait-container\">\n\t\t\t<div class=\"bx-im-component-call-wait-main\">\n\t\t\t\t<div class=\"bx-im-component-call-wait-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-wait-title\">{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_TITLE'] }}</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-wait-user-counter\">\n\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_USER_COUNT'] }} {{ userCounter }}\n\t\t\t</div>\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
+	const WaitingForStart = {
+		computed: {
+			userCounter() {
+				return this.dialog.userCounter;
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference,
+				dialog: state => state.dialogues.collection[state.application.dialog.dialogId]
+			})
+		},
+		// language=Vue
+		template: `
+		<div class="bx-im-component-call-wait-container">
+			<div class="bx-im-component-call-wait-main">
+				<div class="bx-im-component-call-wait-logo"></div>
+				<div class="bx-im-component-call-wait-title">{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_TITLE'] }}</div>
+			</div>
+			<div class="bx-im-component-call-wait-user-counter">
+				{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_USER_COUNT'] }} {{ userCounter }}
+			</div>
+			<slot></slot>
+		</div>
+	`
 	};
 
-	var UserListItem = {
-	  props: {
-	    user: {
-	      type: Object,
-	      required: true
-	    },
-	    userCallStatus: {
-	      type: Object,
-	      required: true
-	    },
-	    currentUserId: {
-	      type: Number,
-	      required: true
-	    },
-	    isCurrentUserExternal: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isBroadcast: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isUserPresenter: {
-	      type: Boolean,
-	      required: true
-	    },
-	    pinAvailable: {
-	      type: Boolean,
-	      required: true
-	    },
-	    chatOwner: {
-	      type: Number,
-	      required: true
-	    },
-	    conferenceState: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data: function data() {
-	    return {
-	      renameMode: false,
-	      newName: '',
-	      renameRequested: false,
-	      menuId: 'bx-messenger-context-popup-external-data',
-	      onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
-	    };
-	  },
-	  computed: {
-	    isCurrentUserOwner: function isCurrentUserOwner() {
-	      return this.chatOwner === this.currentUserId;
-	    },
-	    isMobile: function isMobile() {
-	      return im_lib_utils.Utils.device.isMobile();
-	    },
-	    isDesktop: function isDesktop() {
-	      return im_lib_utils.Utils.platform.isBitrixDesktop();
-	    },
-	    isGuestWithDefaultName: function isGuestWithDefaultName() {
-	      var guestDefaultName = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME');
-	      return this.user.id === this.currentUserId && this.user.extranet && this.user.name === guestDefaultName;
-	    },
-	    isUserInCall: function isUserInCall() {
-	      return this.onlineStates.includes(this.userCallStatus.state);
-	    },
-	    // end statuses
-	    formattedSubtitle: function formattedSubtitle() {
-	      var subtitle = '';
-	      var role = this.$Bitrix.Loc.getMessage(this.user.id === this.chatOwner ? 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER' : 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_PARTICIPANT');
-	      if (this.user.id === this.currentUser) {
-	        subtitle = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER_MSGVER_1', {
-	          '#ROLE#': role
-	        });
-	      } else {
-	        subtitle = role;
-	      }
+	const UserListItem = {
+		props: {
+			user: {
+				type: Object,
+				required: true
+			},
+			userCallStatus: {
+				type: Object,
+				required: true
+			},
+			currentUserId: {
+				type: Number,
+				required: true
+			},
+			isCurrentUserExternal: {
+				type: Boolean,
+				required: true
+			},
+			isBroadcast: {
+				type: Boolean,
+				required: true
+			},
+			isUserPresenter: {
+				type: Boolean,
+				required: true
+			},
+			pinAvailable: {
+				type: Boolean,
+				required: true
+			},
+			chatOwner: {
+				type: Number,
+				required: true
+			},
+			conferenceState: {
+				type: String,
+				required: true
+			}
+		},
+		data: function () {
+			return {
+				renameMode: false,
+				newName: '',
+				renameRequested: false,
+				menuId: 'bx-messenger-context-popup-external-data',
+				onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
+			};
+		},
+		computed: {
+			isCurrentUserOwner() {
+				return this.chatOwner === this.currentUserId;
+			},
+			isMobile() {
+				return im_lib_utils.Utils.device.isMobile();
+			},
+			isDesktop() {
+				return im_lib_utils.Utils.platform.isBitrixDesktop();
+			},
+			isGuestWithDefaultName() {
+				const guestDefaultName = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME');
+				return this.user.id === this.currentUserId && this.user.extranet && this.user.name === guestDefaultName;
+			},
+			isUserInCall() {
+				return this.onlineStates.includes(this.userCallStatus.state);
+			},
+			// end statuses
+			formattedSubtitle() {
+				let subtitle = '';
+				const role = this.$Bitrix.Loc.getMessage(this.user.id === this.chatOwner ? 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER' : 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_PARTICIPANT');
+				if (this.user.id === this.currentUser) {
+					subtitle = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER_MSGVER_1', {
+						'#ROLE#': role
+					});
+				} else {
+					subtitle = role;
+				}
 
-	      // if (!this.user.extranet && !this.user.isOnline)
-	      // {
-	      // 	subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OFFLINE'));
-	      // }
+				// if (!this.user.extranet && !this.user.isOnline)
+				// {
+				// 	subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OFFLINE'));
+				// }
 
-	      return subtitle;
-	    },
-	    isMenuNeeded: function isMenuNeeded() {
-	      return this.menuItems.length > 0;
-	    },
-	    menuItems: function menuItems() {
-	      var _this = this;
-	      var items = [];
-	      // for self
-	      if (this.user.id === this.currentUserId) {
-	        // self-rename
-	        if (this.isCurrentUserExternal) {
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME_SELF'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.onRenameStart();
-	            }
-	          });
-	        }
-	        // change background
-	        if (this.isDesktop) {
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_CHANGE_BACKGROUND'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.$emit('userChangeBackground');
-	            }
-	          });
-	        }
-	      }
-	      // for other users
-	      else {
-	        // force-rename
-	        if (this.isCurrentUserOwner && this.user.externalAuthId === 'call') {
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.onRenameStart();
-	            }
-	          });
-	        }
-	        // kick
-	        if (this.isCurrentUserOwner && !this.isUserPresenter) {
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_KICK'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.$emit('userKick', {
-	                user: _this.user
-	              });
-	            }
-	          });
-	        }
-	        if (this.isUserInCall && this.userCallStatus.cameraState && this.pinAvailable) {
-	          // pin
-	          if (!this.userCallStatus.pinned) {
-	            items.push({
-	              text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_PIN'),
-	              onclick: function onclick() {
-	                _this.closeMenu();
-	                _this.$emit('userPin', {
-	                  user: _this.user
-	                });
-	              }
-	            });
-	          }
-	          // unpin
-	          else {
-	            items.push({
-	              text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_UNPIN'),
-	              onclick: function onclick() {
-	                _this.closeMenu();
-	                _this.$emit('userUnpin');
-	              }
-	            });
-	          }
-	        }
-	        // open 1-1 chat and profile
-	        if (this.isDesktop && !this.user.extranet) {
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_CHAT'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.$emit('userOpenChat', {
-	                user: _this.user
-	              });
-	            }
-	          });
-	          items.push({
-	            text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_PROFILE'),
-	            onclick: function onclick() {
-	              _this.closeMenu();
-	              _this.$emit('userOpenProfile', {
-	                user: _this.user
-	              });
-	            }
-	          });
-	        }
-	        // insert name
-	        items.push({
-	          text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_INSERT_NAME'),
-	          onclick: function onclick() {
-	            _this.closeMenu();
-	            _this.$emit('userInsertName', {
-	              user: _this.user
-	            });
-	          }
-	        });
-	      }
-	      return items;
-	    },
-	    avatarWrapClasses: function avatarWrapClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-avatar-wrap'];
-	      if (this.userCallStatus.talking) {
-	        classes.push('bx-im-component-call-user-list-item-avatar-wrap-talking');
-	      }
-	      return classes;
-	    },
-	    avatarClasses: function avatarClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-avatar'];
-	      if (!this.user.avatar && this.user.extranet) {
-	        classes.push('bx-im-component-call-user-list-item-avatar-extranet');
-	      } else if (!this.user.avatar && !this.user.extranet) {
-	        classes.push('bx-im-component-call-user-list-item-avatar-default');
-	      }
-	      return classes;
-	    },
-	    avatarStyle: function avatarStyle() {
-	      var style = {};
-	      if (this.user.avatar) {
-	        style.backgroundImage = "url('".concat(this.user.avatar, "')");
-	      } else if (!this.user.avatar && !this.user.extranet) {
-	        style.backgroundColor = this.user.color;
-	      }
-	      return style;
-	    },
-	    avatarInnerText: function avatarInnerText() {
-	      if (!this.user.avatar && !this.user.extranet) {
-	        return im_v2_lib_utils.Utils.text.getFirstLetters(this.user.name).toUpperCase();
-	      }
-	      return '';
-	    },
-	    isCallStatusPanelNeeded: function isCallStatusPanelNeeded() {
-	      if (this.isBroadcast) {
-	        return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
-	      } else {
-	        return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall;
-	      }
-	    },
-	    callMenuIconClasses: function callMenuIconClasses() {
-	      return ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-menu'];
-	    },
-	    callLeftIconClasses: function callLeftIconClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-left'];
-	      if (this.userCallStatus.floorRequestState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-floor-request visible');
-	      } else if (this.userCallStatus.screenState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-screen visible');
-	      }
-	      return classes;
-	    },
-	    callCenterIconClasses: function callCenterIconClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-center'];
-	      if (this.userCallStatus.microphoneState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-mic-on');
-	      } else {
-	        classes.push('bx-im-component-call-user-list-item-icons-mic-off');
-	      }
-	      return classes;
-	    },
-	    callRightIconClasses: function callRightIconClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-right'];
-	      if (this.userCallStatus.cameraState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-camera-on');
-	      } else {
-	        classes.push('bx-im-component-call-user-list-item-icons-camera-off');
-	      }
-	      return classes;
-	    },
-	    bodyClasses: function bodyClasses() {
-	      var classes = ['bx-im-component-call-user-list-item-body'];
-	      if (!this.isUserInCall) {
-	        classes.push('bx-im-component-call-user-list-item-body-offline');
-	      }
-	      return classes;
-	    },
-	    itemClasses: function itemClasses() {
-	      var classes = ['bx-im-component-call-user-list-item'];
-	      if (this.user.id === this.chatOwner) {
-	        classes.push('bx-im-component-call-user-list-item-owner');
-	      }
-	      return classes;
-	    }
-	  },
-	  methods: {
-	    openMenu: function openMenu() {
-	      var _this2 = this;
-	      if (this.menuPopup) {
-	        this.closeMenu();
-	        return false;
-	      }
+				return subtitle;
+			},
+			isMenuNeeded() {
+				return this.menuItems.length > 0;
+			},
+			menuItems() {
+				const items = [];
+				// for self
+				if (this.user.id === this.currentUserId) {
+					// self-rename
+					if (this.isCurrentUserExternal) {
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME_SELF'),
+							onclick: () => {
+								this.closeMenu();
+								this.onRenameStart();
+							}
+						});
+					}
+					// change background
+					if (this.isDesktop) {
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_CHANGE_BACKGROUND'),
+							onclick: () => {
+								this.closeMenu();
+								this.$emit('userChangeBackground');
+							}
+						});
+					}
+				}
+				// for other users
+				else {
+					// force-rename
+					if (this.isCurrentUserOwner && this.user.externalAuthId === 'call') {
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_RENAME'),
+							onclick: () => {
+								this.closeMenu();
+								this.onRenameStart();
+							}
+						});
+					}
+					// kick
+					if (this.isCurrentUserOwner && !this.isUserPresenter) {
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_KICK'),
+							onclick: () => {
+								this.closeMenu();
+								this.$emit('userKick', {
+									user: this.user
+								});
+							}
+						});
+					}
+					if (this.isUserInCall && this.userCallStatus.cameraState && this.pinAvailable) {
+						// pin
+						if (!this.userCallStatus.pinned) {
+							items.push({
+								text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_PIN'),
+								onclick: () => {
+									this.closeMenu();
+									this.$emit('userPin', {
+										user: this.user
+									});
+								}
+							});
+						}
+						// unpin
+						else {
+							items.push({
+								text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_UNPIN'),
+								onclick: () => {
+									this.closeMenu();
+									this.$emit('userUnpin');
+								}
+							});
+						}
+					}
+					// open 1-1 chat and profile
+					if (this.isDesktop && !this.user.extranet) {
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_CHAT'),
+							onclick: () => {
+								this.closeMenu();
+								this.$emit('userOpenChat', {
+									user: this.user
+								});
+							}
+						});
+						items.push({
+							text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_OPEN_PROFILE'),
+							onclick: () => {
+								this.closeMenu();
+								this.$emit('userOpenProfile', {
+									user: this.user
+								});
+							}
+						});
+					}
+					// insert name
+					items.push({
+						text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_MENU_INSERT_NAME'),
+						onclick: () => {
+							this.closeMenu();
+							this.$emit('userInsertName', {
+								user: this.user
+							});
+						}
+					});
+				}
+				return items;
+			},
+			avatarWrapClasses() {
+				const classes = ['bx-im-component-call-user-list-item-avatar-wrap'];
+				if (this.userCallStatus.talking) {
+					classes.push('bx-im-component-call-user-list-item-avatar-wrap-talking');
+				}
+				return classes;
+			},
+			avatarClasses() {
+				const classes = ['bx-im-component-call-user-list-item-avatar'];
+				if (!this.user.avatar && this.user.extranet) {
+					classes.push('bx-im-component-call-user-list-item-avatar-extranet');
+				} else if (!this.user.avatar && !this.user.extranet) {
+					classes.push('bx-im-component-call-user-list-item-avatar-default');
+				}
+				return classes;
+			},
+			avatarStyle() {
+				const style = {};
+				if (this.user.avatar) {
+					style.backgroundImage = `url('${this.user.avatar}')`;
+				} else if (!this.user.avatar && !this.user.extranet) {
+					style.backgroundColor = this.user.color;
+				}
+				return style;
+			},
+			avatarInnerText() {
+				if (!this.user.avatar && !this.user.extranet) {
+					return im_v2_lib_utils.Utils.text.getFirstLetters(this.user.name).toUpperCase();
+				}
+				return '';
+			},
+			isCallStatusPanelNeeded() {
+				if (this.isBroadcast) {
+					return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
+				} else {
+					return this.conferenceState === call_const.ConferenceStateType.call && this.isUserInCall;
+				}
+			},
+			callMenuIconClasses() {
+				return ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-menu'];
+			},
+			callLeftIconClasses() {
+				const classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-left'];
+				if (this.userCallStatus.floorRequestState) {
+					classes.push('bx-im-component-call-user-list-item-icons-floor-request visible');
+				} else if (this.userCallStatus.screenState) {
+					classes.push('bx-im-component-call-user-list-item-icons-screen visible');
+				}
+				return classes;
+			},
+			callCenterIconClasses() {
+				const classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-center'];
+				if (this.userCallStatus.microphoneState) {
+					classes.push('bx-im-component-call-user-list-item-icons-mic-on');
+				} else {
+					classes.push('bx-im-component-call-user-list-item-icons-mic-off');
+				}
+				return classes;
+			},
+			callRightIconClasses() {
+				const classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-right'];
+				if (this.userCallStatus.cameraState) {
+					classes.push('bx-im-component-call-user-list-item-icons-camera-on');
+				} else {
+					classes.push('bx-im-component-call-user-list-item-icons-camera-off');
+				}
+				return classes;
+			},
+			bodyClasses() {
+				const classes = ['bx-im-component-call-user-list-item-body'];
+				if (!this.isUserInCall) {
+					classes.push('bx-im-component-call-user-list-item-body-offline');
+				}
+				return classes;
+			},
+			itemClasses() {
+				const classes = ['bx-im-component-call-user-list-item'];
+				if (this.user.id === this.chatOwner) {
+					classes.push('bx-im-component-call-user-list-item-owner');
+				}
+				return classes;
+			}
+		},
+		methods: {
+			openMenu() {
+				if (this.menuPopup) {
+					this.closeMenu();
+					return false;
+				}
 
-	      //menu for other items
-	      var existingMenu = main_popup.MenuManager.getMenuById(this.menuId);
-	      if (existingMenu) {
-	        existingMenu.destroy();
-	      }
-	      this.menuPopup = main_popup.MenuManager.create({
-	        id: this.menuId,
-	        className: 'bx-conference-user-list-item-context-menu',
-	        background: '#00428F',
-	        contentBackground: '#00428F',
-	        darkMode: true,
-	        contentBorderRadius: '6px',
-	        borderRadius: '6px',
-	        bindElement: this.$refs['user-menu'],
-	        items: this.menuItems,
-	        events: {
-	          onPopupClose: function onPopupClose() {
-	            return _this2.menuPopup.destroy();
-	          },
-	          onPopupDestroy: function onPopupDestroy() {
-	            return _this2.menuPopup = null;
-	          }
-	        }
-	      });
-	      this.menuPopup.show();
-	    },
-	    closeMenu: function closeMenu() {
-	      this.menuPopup.destroy();
-	      this.menuPopup = null;
-	    },
-	    onRenameStart: function onRenameStart() {
-	      var _this3 = this;
-	      this.newName = this.user.name;
-	      this.renameMode = true;
-	      this.$nextTick(function () {
-	        _this3.$refs['rename-input'].focus();
-	        _this3.$refs['rename-input'].select();
-	      });
-	    },
-	    onRenameKeyDown: function onRenameKeyDown(event) {
-	      //enter
-	      if (event.keyCode === 13) {
-	        this.changeName();
-	      }
-	      //escape
-	      else if (event.keyCode === 27) {
-	        this.renameMode = false;
-	      }
-	    },
-	    changeName: function changeName() {
-	      var _this4 = this;
-	      if (this.user.name === this.newName.trim() || this.newName === '') {
-	        this.renameMode = false;
-	        return false;
-	      }
-	      this.$emit('userChangeName', {
-	        user: this.user,
-	        newName: this.newName
-	      });
-	      this.$nextTick(function () {
-	        _this4.renameMode = false;
-	      });
-	    },
-	    onFocus: function onFocus(event) {
-	      main_core_events.EventEmitter.emit(im_const.EventType.conference.userRenameFocus, event);
-	    },
-	    onBlur: function onBlur(event) {
-	      main_core_events.EventEmitter.emit(im_const.EventType.conference.userRenameBlur, event);
-	    }
-	  },
-	  //language=Vue
-	  template: "\n\t\t<div :class=\"itemClasses\">\n\t\t\t<!-- Avatar -->\n\t\t\t<div :class=\"avatarWrapClasses\">\n\t\t\t\t<div :class=\"avatarClasses\" :style=\"avatarStyle\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-avatar-inner-text\" v-if=\"avatarInnerText\">{{ avatarInnerText }}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Body -->\n\t\t\t<div :class=\"bodyClasses\">\n\t\t\t\t<!-- Introduce yourself blinking mode -->\n\t\t\t\t<template v-if=\"!renameMode && isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div @click=\"onRenameStart\" class=\"bx-im-component-call-user-list-introduce-yourself\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-introduce-yourself-text\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_INTRODUCE_YOURSELF') }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Rename mode -->\n\t\t\t\t<template v-else-if=\"renameMode\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-container\">\n\t\t\t\t\t\t\t<div @click=\"renameMode = false\" class=\"bx-im-component-call-user-list-change-name-cancel\"></div>\n\t\t\t\t\t\t\t<input @keydown=\"onRenameKeyDown\" @focus=\"onFocus\" @blur=\"onBlur\" v-model=\"newName\" :ref=\"'rename-input'\" type=\"text\" class=\"bx-im-component-call-user-list-change-name-input\">\n\t\t\t\t\t\t\t<div v-if=\"!renameRequested\" @click=\"changeName\" class=\"bx-im-component-call-user-list-change-name-confirm\"></div>\n\t\t\t\t\t\t\t<div v-else class=\"bx-im-component-call-user-list-change-name-loader\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-loader-icon\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"!renameMode && !isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name-wrap\">\n\t\t\t\t\t\t\t<!-- Name -->\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name\">{{ user.name }}</div>\n\t\t\t\t\t\t\t<!-- Status subtitle -->\n\t\t\t\t\t\t\t<div v-if=\"formattedSubtitle !== ''\" class=\"bx-im-component-call-user-list-item-name-subtitle\">{{ formattedSubtitle }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"isCallStatusPanelNeeded\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-icons\">\n\t\t\t\t\t\t<!-- Context menu icon -->\n\t\t\t\t\t\t<div :class=\"callMenuIconClasses\" v-if=\"menuItems.length > 0 && !isMobile\" @click=\"openMenu\" ref=\"user-menu\"></div>\n\t\t\t\t\t\t<div :class=\"callLeftIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callCenterIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callRightIconClasses\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
+				//menu for other items
+				const existingMenu = main_popup.MenuManager.getMenuById(this.menuId);
+				if (existingMenu) {
+					existingMenu.destroy();
+				}
+				this.menuPopup = main_popup.MenuManager.create({
+					id: this.menuId,
+					className: 'bx-conference-user-list-item-context-menu',
+					background: '#00428F',
+					contentBackground: '#00428F',
+					darkMode: true,
+					contentBorderRadius: '6px',
+					borderRadius: '6px',
+					bindElement: this.$refs['user-menu'],
+					items: this.menuItems,
+					events: {
+						onPopupClose: () => this.menuPopup.destroy(),
+						onPopupDestroy: () => this.menuPopup = null
+					}
+				});
+				this.menuPopup.show();
+			},
+			closeMenu() {
+				this.menuPopup.destroy();
+				this.menuPopup = null;
+			},
+			onRenameStart() {
+				this.newName = this.user.name;
+				this.renameMode = true;
+				this.$nextTick(() => {
+					this.$refs['rename-input'].focus();
+					this.$refs['rename-input'].select();
+				});
+			},
+			onRenameKeyDown(event) {
+				//enter
+				if (event.keyCode === 13) {
+					this.changeName();
+				}
+				//escape
+				else if (event.keyCode === 27) {
+					this.renameMode = false;
+				}
+			},
+			changeName() {
+				if (this.user.name === this.newName.trim() || this.newName === '') {
+					this.renameMode = false;
+					return false;
+				}
+				this.$emit('userChangeName', {
+					user: this.user,
+					newName: this.newName
+				});
+				this.$nextTick(() => {
+					this.renameMode = false;
+				});
+			},
+			onFocus(event) {
+				main_core_events.EventEmitter.emit(im_const.EventType.conference.userRenameFocus, event);
+			},
+			onBlur(event) {
+				main_core_events.EventEmitter.emit(im_const.EventType.conference.userRenameBlur, event);
+			}
+		},
+		//language=Vue
+		template: `
+		<div :class="itemClasses">
+			<!-- Avatar -->
+			<div :class="avatarWrapClasses">
+				<div :class="avatarClasses" :style="avatarStyle">
+					<div class="bx-im-component-call-user-list-item-avatar-inner-text" v-if="avatarInnerText">{{ avatarInnerText }}</div>
+				</div>
+			</div>
+			<!-- Body -->
+			<div :class="bodyClasses">
+				<!-- Introduce yourself blinking mode -->
+				<template v-if="!renameMode && isGuestWithDefaultName">
+					<div class="bx-im-component-call-user-list-item-body-left">
+						<div @click="onRenameStart" class="bx-im-component-call-user-list-introduce-yourself">
+							<div class="bx-im-component-call-user-list-introduce-yourself-text">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_INTRODUCE_YOURSELF') }}</div>
+						</div>
+					</div>
+				</template>
+				<!-- Rename mode -->
+				<template v-else-if="renameMode">
+					<div class="bx-im-component-call-user-list-item-body-left">
+						<div class="bx-im-component-call-user-list-change-name-container">
+							<div @click="renameMode = false" class="bx-im-component-call-user-list-change-name-cancel"></div>
+							<input @keydown="onRenameKeyDown" @focus="onFocus" @blur="onBlur" v-model="newName" :ref="'rename-input'" type="text" class="bx-im-component-call-user-list-change-name-input">
+							<div v-if="!renameRequested" @click="changeName" class="bx-im-component-call-user-list-change-name-confirm"></div>
+							<div v-else class="bx-im-component-call-user-list-change-name-loader">
+								<div class="bx-im-component-call-user-list-change-name-loader-icon"></div>
+							</div>
+						</div>
+					</div>
+				</template>
+				<template v-if="!renameMode && !isGuestWithDefaultName">
+					<div class="bx-im-component-call-user-list-item-body-left">
+						<div class="bx-im-component-call-user-list-item-name-wrap">
+							<!-- Name -->
+							<div class="bx-im-component-call-user-list-item-name">{{ user.name }}</div>
+							<!-- Status subtitle -->
+							<div v-if="formattedSubtitle !== ''" class="bx-im-component-call-user-list-item-name-subtitle">{{ formattedSubtitle }}</div>
+						</div>
+					</div>
+				</template>
+				<template v-if="isCallStatusPanelNeeded">
+					<div class="bx-im-component-call-user-list-item-icons">
+						<!-- Context menu icon -->
+						<div :class="callMenuIconClasses" v-if="menuItems.length > 0 && !isMobile" @click="openMenu" ref="user-menu"></div>
+						<div :class="callLeftIconClasses"></div>
+						<div :class="callCenterIconClasses"></div>
+						<div :class="callRightIconClasses"></div>
+					</div>
+				</template>
+			</div>
+		</div>
+	`
 	};
 
-	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var UserList = {
-	  components: {
-	    UserListItem: UserListItem
-	  },
-	  data: function data() {
-	    return {
-	      usersPerPage: 50,
-	      firstPageLoaded: false,
-	      pagesLoaded: 0,
-	      hasMoreToLoad: true,
-	      rename: {
-	        user: 0,
-	        newName: '',
-	        renameRequested: false
-	      },
-	      onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
-	    };
-	  },
-	  created: function created() {
-	    im_lib_logger.Logger.warn('Conference: user list created');
-	    this.requestUsers({
-	      firstPage: true
-	    });
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    this.loaderObserver = null;
-	  },
-	  computed: _objectSpread$7({
-	    chatOwner: function chatOwner() {
-	      var _this$dialog;
-	      return ((_this$dialog = this.dialog) === null || _this$dialog === void 0 ? void 0 : _this$dialog.ownerId) || 0;
-	    },
-	    pinAvailable: function pinAvailable() {
-	      var _this = this;
-	      var onlineUsers = 0;
-	      var users = Object.values(this.call.users);
-	      users.forEach(function (user) {
-	        if (_this.onlineStates.includes(user.state) && ++onlineUsers > 2) {
-	          return true;
-	        }
-	      });
-	      return false;
-	    },
-	    isCurrentUserExternal: function isCurrentUserExternal() {
-	      return Boolean(this.conference.user.hash);
-	    },
-	    userId: function userId() {
-	      return this.application.common.userId;
-	    },
-	    isBroadcast: function isBroadcast() {
-	      return this.conference.common.isBroadcast;
-	    },
-	    usersList: function usersList() {
-	      var _this2 = this;
-	      var users = this.conference.common.users.filter(function (user) {
-	        return !_this2.presentersList.includes(user) && _this2.call.users[user] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(_this2.call.users[user].state);
-	      });
-	      return babelHelpers.toConsumableArray(users).sort(this.userSortFunction);
-	    },
-	    presentersList: function presentersList() {
-	      return babelHelpers.toConsumableArray(this.conference.common.presenters).sort(this.userSortFunction);
-	    },
-	    rightPanelMode: function rightPanelMode() {
-	      return this.conference.common.rightPanelMode;
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    user: function user(state) {
-	      return state.users.collection[state.application.common.userId];
-	    },
-	    application: function application(state) {
-	      return state.application;
-	    },
-	    conference: function conference(state) {
-	      return state.conference;
-	    },
-	    call: function call(state) {
-	      return state.call;
-	    },
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    }
-	  })),
-	  methods: {
-	    getUserInfo: function getUserInfo(userId) {
-	      return this.$store.getters['users/get'](userId, true);
-	    },
-	    getUserStatus: function getUserStatus(userId) {
-	      return this.$store.getters['call/getUser'](userId);
-	    },
-	    requestUsers: function requestUsers() {
-	      var _this3 = this;
-	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	        _ref$firstPage = _ref.firstPage,
-	        firstPage = _ref$firstPage === void 0 ? false : _ref$firstPage;
-	      this.$Bitrix.RestClient.get().callMethod('im.dialog.users.list', {
-	        'DIALOG_ID': this.application.dialog.dialogId,
-	        'LIMIT': this.usersPerPage,
-	        'OFFSET': firstPage ? 0 : this.pagesLoaded * this.usersPerPage
-	      }).then(function (result) {
-	        im_lib_logger.Logger.warn('Conference: getting next user list result', result.data());
-	        var users = result.data();
-	        _this3.pagesLoaded++;
-	        if (users.length < _this3.usersPerPage) {
-	          _this3.hasMoreToLoad = false;
-	        }
-	        _this3.$store.dispatch('users/set', users);
-	        var usersIds = users.map(function (user) {
-	          return user.id;
-	        });
-	        return _this3.$store.dispatch('conference/setUsers', {
-	          users: usersIds
-	        });
-	      }).then(function () {
-	        if (firstPage) {
-	          _this3.firstPageLoaded = true;
-	        }
-	      })["catch"](function (result) {
-	        im_lib_logger.Logger.warn('Conference: error getting users list', result.error().ex);
-	      });
-	    },
-	    onUserMenuKick: function onUserMenuKick(_ref2) {
-	      var user = _ref2.user;
-	      this.showUserKickConfirm(user);
-	    },
-	    showUserKickConfirm: function showUserKickConfirm(user) {
-	      var _this4 = this;
-	      if (this.userKickConfirm) {
-	        this.userKickConfirm.close();
-	      }
-	      var confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_KICK_INTRANET_USER_CONFIRM_TEXT');
-	      if (user.extranet) {
-	        confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_KICK_GUEST_USER_CONFIRM_TEXT');
-	      }
-	      this.userKickConfirm = ui_dialogs_messagebox.MessageBox.create({
-	        message: confirmMessage,
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        onOk: function onOk() {
-	          _this4.kickUser(user);
-	          _this4.userKickConfirm.close();
-	        },
-	        onCancel: function onCancel() {
-	          _this4.userKickConfirm.close();
-	        }
-	      });
-	      this.userKickConfirm.show();
-	    },
-	    kickUser: function kickUser(user) {
-	      var _this5 = this;
-	      this.$store.dispatch('conference/removeUsers', {
-	        users: [user.id]
-	      });
-	      this.$Bitrix.RestClient.get().callMethod('im.chat.user.delete', {
-	        user_id: user.id,
-	        chat_id: this.application.dialog.chatId
-	      })["catch"](function (error) {
-	        im_lib_logger.Logger.error('Conference: removing user from chat error', error);
-	        _this5.$store.dispatch('conference/setUsers', {
-	          users: [user.id]
-	        });
-	      });
-	    },
-	    onUserMenuInsertName: function onUserMenuInsertName(_ref3) {
-	      var user = _ref3.user;
-	      if (this.rightPanelMode === call_const.ConferenceRightPanelMode.hidden || this.rightPanelMode === call_const.ConferenceRightPanelMode.users) {
-	        this.getApplication().toggleChat();
-	      }
-	      this.$nextTick(function () {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	          text: "".concat(user.name, ", "),
-	          focus: true
-	        });
-	      });
-	    },
-	    onUserChangeName: function onUserChangeName(_ref4) {
-	      var _this6 = this;
-	      var user = _ref4.user,
-	        newName = _ref4.newName;
-	      var method = user.id === this.userId ? 'call.user.update' : 'call.user.force.rename';
-	      var oldName = user.name;
-	      this.$store.dispatch('users/update', {
-	        id: user.id,
-	        fields: {
-	          name: newName,
-	          lastActivityDate: new Date()
-	        }
-	      });
-	      this.$Bitrix.RestClient.get().callMethod(method, {
-	        name: newName,
-	        chat_id: this.application.dialog.chatId,
-	        user_id: user.id
-	      }).then(function () {
-	        im_lib_logger.Logger.warn('Conference: rename completed', user.id, newName);
-	        if (oldName === _this6.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME')) {
-	          _this6.getApplication().setUserWasRenamed();
-	        }
-	      })["catch"](function (error) {
-	        im_lib_logger.Logger.error('Conference: renaming error', error);
-	        _this6.$store.dispatch('users/update', {
-	          id: user.id,
-	          fields: {
-	            name: oldName,
-	            lastActivityDate: new Date()
-	          }
-	        });
-	      });
-	    },
-	    onUserMenuPin: function onUserMenuPin(_ref5) {
-	      var user = _ref5.user;
-	      this.getApplication().pinUser(user);
-	    },
-	    onUserMenuUnpin: function onUserMenuUnpin() {
-	      this.getApplication().unpinUser();
-	    },
-	    onUserMenuChangeBackground: function onUserMenuChangeBackground() {
-	      this.getApplication().changeBackground();
-	    },
-	    onUserMenuOpenChat: function onUserMenuOpenChat(_ref6) {
-	      var user = _ref6.user;
-	      this.getApplication().openChat(user);
-	    },
-	    onUserMenuOpenProfile: function onUserMenuOpenProfile(_ref7) {
-	      var user = _ref7.user;
-	      this.getApplication().openProfile(user);
-	    },
-	    // Helpers
-	    getLoaderObserver: function getLoaderObserver() {
-	      var _this7 = this;
-	      var options = {
-	        root: document.querySelector('.bx-im-component-call-right-users'),
-	        threshold: 0.01
-	      };
-	      var callback = function callback(entries, observer) {
-	        entries.forEach(function (entry) {
-	          if (entry.isIntersecting && entry.intersectionRatio > 0.01) {
-	            im_lib_logger.Logger.warn('Conference: UserList: I see loader! Load next page!');
-	            _this7.requestUsers();
-	          }
-	        });
-	      };
-	      return new IntersectionObserver(callback, options);
-	    },
-	    userSortFunction: function userSortFunction(userA, userB) {
-	      if (userA === this.userId) {
-	        return -1;
-	      }
-	      if (userB === this.userId) {
-	        return 1;
-	      }
-	      if (this.call.users[userA] && (this.call.users[userA].floorRequestState || this.call.users[userA].screenState)) {
-	        return -1;
-	      }
-	      if (this.call.users[userB] && (this.call.users[userB].floorRequestState || this.call.users[userB].screenState)) {
-	        return 1;
-	      }
-	      if (this.call.users[userA] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userA].state)) {
-	        return -1;
-	      }
-	      if (this.call.users[userB] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userB].state)) {
-	        return 1;
-	      }
-	      return 0;
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  directives: {
-	    'bx-im-directive-user-list-observer': {
-	      inserted: function inserted(element, bindings, vnode) {
-	        vnode.context.loaderObserver = vnode.context.getLoaderObserver();
-	        vnode.context.loaderObserver.observe(element);
-	        return true;
-	      },
-	      unbind: function unbind(element, bindings, vnode) {
-	        if (vnode.context.loaderObserver) {
-	          vnode.context.loaderObserver.unobserve(element);
-	        }
-	        return true;
-	      }
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-user-list\">\n\t\t\t<!-- Loading first page -->\n\t\t\t<div v-if=\"!firstPageLoaded\" class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Loading completed -->\n\t\t\t<template v-else>\n\t\t\t\t<!-- Speakers list section (if broadcast) -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speakers category title -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PRESENTERS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ presentersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Speakers list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"presenter in presentersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\"\n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:user=\"getUserInfo(presenter)\"\n\t\t\t\t\t\t\t\t:userCallStatus=\"getUserStatus(presenter)\"\n\t\t\t\t\t\t\t\t:currentUserId=\"userId\"\n\t\t\t\t\t\t\t\t:isCurrentUserExternal=\"isCurrentUserExternal\"\n\t\t\t\t\t\t\t\t:isBroadcast=\"isBroadcast\"\n\t\t\t\t\t\t\t\t:isUserPresenter=\"presentersList.includes(presenter)\"\n\t\t\t\t\t\t\t\t:pinAvailable=\"pinAvailable\"\n\t\t\t\t\t\t\t\t:chatOwner=\"dialog.ownerId\"\n\t\t\t\t\t\t\t\t:conferenceState=\"conference.common.state\"\n\t\t\t\t\t\t\t\t:key=\"presenter\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Participants list section (if there are any users) -->\n\t\t\t\t<template v-if=\"usersList.length > 0\">\n\t\t\t\t\t<!-- Show participants category title if broadcast -->\n\t\t\t\t\t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-user-list-category bx-im-component-call-user-list-category-participants\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PARTICIPANTS') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-category-counter\">\n\t\t\t\t\t\t\t{{ usersList.length }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<!-- Participants list -->\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-items\">\n\t\t\t\t\t\t<template v-for=\"user in usersList\">\n\t\t\t\t\t\t\t<UserListItem\n\t\t\t\t\t\t\t\t@userChangeName=\"onUserChangeName\"\n\t\t\t\t\t\t\t\t@userKick=\"onUserMenuKick\"\n\t\t\t\t\t\t\t\t@userInsertName=\"onUserMenuInsertName\" \n\t\t\t\t\t\t\t\t@userPin=\"onUserMenuPin\"\n\t\t\t\t\t\t\t\t@userUnpin=\"onUserMenuUnpin\"\n\t\t\t\t\t\t\t\t@userChangeBackground=\"onUserMenuChangeBackground\"\n\t\t\t\t\t\t\t\t@userOpenChat=\"onUserMenuOpenChat\"\n\t\t\t\t\t\t\t\t@userOpenProfile=\"onUserMenuOpenProfile\"\n\t\t\t\t\t\t\t\t:user=\"getUserInfo(user)\"\n\t\t\t\t\t\t\t\t:userCallStatus=\"getUserStatus(user)\"\n\t\t\t\t\t\t\t\t:currentUserId=\"userId\"\n\t\t\t\t\t\t\t\t:isCurrentUserExternal=\"isCurrentUserExternal\"\n\t\t\t\t\t\t\t\t:isBroadcast=\"isBroadcast\"\n\t\t\t\t\t\t\t\t:isUserPresenter=\"presentersList.includes(user)\"\n\t\t\t\t\t\t\t\t:pinAvailable=\"pinAvailable\"\n\t\t\t\t\t\t\t\t:chatOwner=\"dialog.ownerId\"\n\t\t\t\t\t\t\t\t:conferenceState=\"conference.common.state\"\n\t\t\t\t\t\t\t\t:key=\"user\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Next page loader -->\n\t\t\t\t<div v-if=\"hasMoreToLoad\" v-bx-im-directive-user-list-observer class=\"bx-im-component-call-user-list-loader\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-icon\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-loader-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\n\t\t</div>\n\t"
+	const UserList = {
+		components: {
+			UserListItem
+		},
+		data() {
+			return {
+				usersPerPage: 50,
+				firstPageLoaded: false,
+				pagesLoaded: 0,
+				hasMoreToLoad: true,
+				rename: {
+					user: 0,
+					newName: '',
+					renameRequested: false
+				},
+				onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
+			};
+		},
+		created() {
+			im_lib_logger.Logger.warn('Conference: user list created');
+			this.requestUsers({
+				firstPage: true
+			});
+		},
+		beforeDestroy() {
+			this.loaderObserver = null;
+		},
+		computed: {
+			chatOwner() {
+				return this.dialog?.ownerId || 0;
+			},
+			pinAvailable() {
+				const users = Object.values(this.call.users);
+				const onlineCount = users.filter(user => this.onlineStates.includes(user.state)).length;
+				return onlineCount > 2;
+			},
+			isCurrentUserExternal() {
+				return Boolean(this.conference.user.hash);
+			},
+			userId() {
+				return this.application.common.userId;
+			},
+			isBroadcast() {
+				return this.conference.common.isBroadcast;
+			},
+			usersList() {
+				const users = this.conference.common.users.filter(user => {
+					return !this.presentersList.includes(user) && this.call.users[user] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[user].state);
+				});
+				return [...users].sort(this.userSortFunction);
+			},
+			presentersList() {
+				return [...this.conference.common.presenters].sort(this.userSortFunction);
+			},
+			rightPanelMode() {
+				return this.conference.common.rightPanelMode;
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				user: state => state.users.collection[state.application.common.userId],
+				application: state => state.application,
+				conference: state => state.conference,
+				call: state => state.call,
+				dialog: state => state.dialogues.collection[state.application.dialog.dialogId]
+			})
+		},
+		methods: {
+			getUserInfo(userId) {
+				return this.$store.getters['users/get'](userId, true);
+			},
+			getUserStatus(userId) {
+				return this.$store.getters['call/getUser'](userId);
+			},
+			requestUsers({
+				firstPage = false
+			} = {}) {
+				this.$Bitrix.RestClient.get().callMethod('im.dialog.users.list', {
+					'DIALOG_ID': this.application.dialog.dialogId,
+					'LIMIT': this.usersPerPage,
+					'OFFSET': firstPage ? 0 : this.pagesLoaded * this.usersPerPage
+				}).then(result => {
+					im_lib_logger.Logger.warn('Conference: getting next user list result', result.data());
+					const users = result.data();
+					this.pagesLoaded++;
+					if (users.length < this.usersPerPage) {
+						this.hasMoreToLoad = false;
+					}
+					this.$store.dispatch('users/set', users);
+					const usersIds = users.map(user => user.id);
+					return this.$store.dispatch('conference/setUsers', {
+						users: usersIds
+					});
+				}).then(() => {
+					if (firstPage) {
+						this.firstPageLoaded = true;
+					}
+				}).catch(result => {
+					im_lib_logger.Logger.warn('Conference: error getting users list', result.error().ex);
+				});
+			},
+			onUserMenuKick({
+				user
+			}) {
+				this.showUserKickConfirm(user);
+			},
+			showUserKickConfirm(user) {
+				if (this.userKickConfirm) {
+					this.userKickConfirm.close();
+				}
+				let confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_KICK_INTRANET_USER_CONFIRM_TEXT');
+				if (user.extranet) {
+					confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_KICK_GUEST_USER_CONFIRM_TEXT');
+				}
+				this.userKickConfirm = ui_dialogs_messagebox.MessageBox.create({
+					message: confirmMessage,
+					modal: true,
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+					onOk: () => {
+						this.kickUser(user);
+						this.userKickConfirm.close();
+					},
+					onCancel: () => {
+						this.userKickConfirm.close();
+					}
+				});
+				this.userKickConfirm.show();
+			},
+			kickUser(user) {
+				this.$store.dispatch('conference/removeUsers', {
+					users: [user.id]
+				});
+				this.$Bitrix.RestClient.get().callMethod('im.chat.user.delete', {
+					user_id: user.id,
+					chat_id: this.application.dialog.chatId
+				}).catch(error => {
+					im_lib_logger.Logger.error('Conference: removing user from chat error', error);
+					this.$store.dispatch('conference/setUsers', {
+						users: [user.id]
+					});
+				});
+			},
+			onUserMenuInsertName({
+				user
+			}) {
+				if (this.rightPanelMode === call_const.ConferenceRightPanelMode.hidden || this.rightPanelMode === call_const.ConferenceRightPanelMode.users) {
+					this.getApplication().toggleChat();
+				}
+				this.$nextTick(() => {
+					main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
+						text: `${user.name}, `,
+						focus: true
+					});
+				});
+			},
+			onUserChangeName({
+				user,
+				newName
+			}) {
+				const method = user.id === this.userId ? 'call.user.update' : 'call.user.force.rename';
+				const oldName = user.name;
+				this.$store.dispatch('users/update', {
+					id: user.id,
+					fields: {
+						name: newName,
+						lastActivityDate: new Date()
+					}
+				});
+				this.$Bitrix.RestClient.get().callMethod(method, {
+					name: newName,
+					chat_id: this.application.dialog.chatId,
+					user_id: user.id
+				}).then(() => {
+					im_lib_logger.Logger.warn('Conference: rename completed', user.id, newName);
+					if (oldName === this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME')) {
+						this.getApplication().setUserWasRenamed();
+					}
+				}).catch(error => {
+					im_lib_logger.Logger.error('Conference: renaming error', error);
+					this.$store.dispatch('users/update', {
+						id: user.id,
+						fields: {
+							name: oldName,
+							lastActivityDate: new Date()
+						}
+					});
+				});
+			},
+			onUserMenuPin({
+				user
+			}) {
+				this.getApplication().pinUser(user);
+			},
+			onUserMenuUnpin() {
+				this.getApplication().unpinUser();
+			},
+			onUserMenuChangeBackground() {
+				this.getApplication().changeBackground();
+			},
+			onUserMenuOpenChat({
+				user
+			}) {
+				this.getApplication().openChat(user);
+			},
+			onUserMenuOpenProfile({
+				user
+			}) {
+				this.getApplication().openProfile(user);
+			},
+			// Helpers
+			getLoaderObserver() {
+				const options = {
+					root: document.querySelector('.bx-im-component-call-right-users'),
+					threshold: 0.01
+				};
+				const callback = (entries, observer) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting && entry.intersectionRatio > 0.01) {
+							im_lib_logger.Logger.warn('Conference: UserList: I see loader! Load next page!');
+							this.requestUsers();
+						}
+					});
+				};
+				return new IntersectionObserver(callback, options);
+			},
+			userSortFunction(userA, userB) {
+				if (userA === this.userId) {
+					return -1;
+				}
+				if (userB === this.userId) {
+					return 1;
+				}
+				if (this.call.users[userA] && (this.call.users[userA].floorRequestState || this.call.users[userA].screenState)) {
+					return -1;
+				}
+				if (this.call.users[userB] && (this.call.users[userB].floorRequestState || this.call.users[userB].screenState)) {
+					return 1;
+				}
+				if (this.call.users[userA] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userA].state)) {
+					return -1;
+				}
+				if (this.call.users[userB] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userB].state)) {
+					return 1;
+				}
+				return 0;
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		directives: {
+			'bx-im-directive-user-list-observer': {
+				inserted(element, bindings, vnode) {
+					vnode.context.loaderObserver = vnode.context.getLoaderObserver();
+					vnode.context.loaderObserver.observe(element);
+					return true;
+				},
+				unbind(element, bindings, vnode) {
+					if (vnode.context.loaderObserver) {
+						vnode.context.loaderObserver.unobserve(element);
+					}
+					return true;
+				}
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-user-list">
+			<!-- Loading first page -->
+			<div v-if="!firstPageLoaded" class="bx-im-component-call-user-list-loader">
+				<div class="bx-im-component-call-user-list-loader-icon"></div>
+				<div class="bx-im-component-call-user-list-loader-text">
+					{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}
+				</div>
+			</div>
+			<!-- Loading completed -->
+			<template v-else>
+				<!-- Speakers list section (if broadcast) -->
+				<template v-if="isBroadcast">
+					<!-- Speakers category title -->
+					<div class="bx-im-component-call-user-list-category">
+						<div class="bx-im-component-call-user-list-category-text">
+							{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PRESENTERS') }}
+						</div>
+						<div class="bx-im-component-call-user-list-category-counter">
+							{{ presentersList.length }}
+						</div>
+					</div>
+					<!-- Speakers list -->
+					<div class="bx-im-component-call-user-list-items">
+						<template v-for="presenter in presentersList">
+							<UserListItem
+								@userChangeName="onUserChangeName"
+								@userKick="onUserMenuKick"
+								@userInsertName="onUserMenuInsertName"
+								@userPin="onUserMenuPin"
+								@userUnpin="onUserMenuUnpin"
+								@userChangeBackground="onUserMenuChangeBackground"
+								@userOpenChat="onUserMenuOpenChat"
+								@userOpenProfile="onUserMenuOpenProfile"
+								:user="getUserInfo(presenter)"
+								:userCallStatus="getUserStatus(presenter)"
+								:currentUserId="userId"
+								:isCurrentUserExternal="isCurrentUserExternal"
+								:isBroadcast="isBroadcast"
+								:isUserPresenter="presentersList.includes(presenter)"
+								:pinAvailable="pinAvailable"
+								:chatOwner="dialog.ownerId"
+								:conferenceState="conference.common.state"
+								:key="presenter"
+							/>
+						</template>
+					</div>
+				</template>
+				<!-- Participants list section (if there are any users) -->
+				<template v-if="usersList.length > 0">
+					<!-- Show participants category title if broadcast -->
+					<div v-if="isBroadcast" class="bx-im-component-call-user-list-category bx-im-component-call-user-list-category-participants">
+						<div class="bx-im-component-call-user-list-category-text">
+							{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_CATEGORY_PARTICIPANTS') }}
+						</div>
+						<div class="bx-im-component-call-user-list-category-counter">
+							{{ usersList.length }}
+						</div>
+					</div>
+					<!-- Participants list -->
+					<div class="bx-im-component-call-user-list-items">
+						<template v-for="user in usersList">
+							<UserListItem
+								@userChangeName="onUserChangeName"
+								@userKick="onUserMenuKick"
+								@userInsertName="onUserMenuInsertName" 
+								@userPin="onUserMenuPin"
+								@userUnpin="onUserMenuUnpin"
+								@userChangeBackground="onUserMenuChangeBackground"
+								@userOpenChat="onUserMenuOpenChat"
+								@userOpenProfile="onUserMenuOpenProfile"
+								:user="getUserInfo(user)"
+								:userCallStatus="getUserStatus(user)"
+								:currentUserId="userId"
+								:isCurrentUserExternal="isCurrentUserExternal"
+								:isBroadcast="isBroadcast"
+								:isUserPresenter="presentersList.includes(user)"
+								:pinAvailable="pinAvailable"
+								:chatOwner="dialog.ownerId"
+								:conferenceState="conference.common.state"
+								:key="user" />
+						</template>
+					</div>
+				</template>
+				<!-- Next page loader -->
+				<div v-if="hasMoreToLoad" v-bx-im-directive-user-list-observer class="bx-im-component-call-user-list-loader">
+					<div class="bx-im-component-call-user-list-loader-icon"></div>
+					<div class="bx-im-component-call-user-list-loader-text">
+						{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_LOADING_USERS') }}
+					</div>
+				</div>
+			</template>	
+		</div>
+	`
 	};
 
-	function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$8(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$8(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$8(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var UserListHeader = {
-	  computed: _objectSpread$8({
-	    userId: function userId() {
-	      return this.application.common.userId;
-	    },
-	    isCurrentUserOwner: function isCurrentUserOwner() {
-	      if (!this.dialog) {
-	        return false;
-	      }
-	      return this.dialog.ownerId === this.userId;
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    user: function user(state) {
-	      return state.users.collection[state.application.common.userId];
-	    },
-	    application: function application(state) {
-	      return state.application;
-	    },
-	    conference: function conference(state) {
-	      return state.conference;
-	    },
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    }
-	  })),
-	  methods: {
-	    onCloseUsers: function onCloseUsers() {
-	      this.getApplication().toggleUserList();
-	    },
-	    openMenu: function openMenu() {
-	      var _this = this;
-	      if (this.menuPopup) {
-	        this.closeMenu();
-	        return false;
-	      }
-	      this.menuPopup = main_popup.MenuManager.create({
-	        id: 'bx-im-component-call-user-list-header-popup',
-	        className: 'bx-conference-user-list-context-menu',
-	        background: '#00428F',
-	        contentBackground: '#00428F',
-	        darkMode: true,
-	        contentBorderRadius: '6px',
-	        borderRadius: '6px',
-	        bindElement: this.$refs['user-list-header-menu'],
-	        items: this.getMenuItems(),
-	        events: {
-	          onPopupClose: function onPopupClose() {
-	            return _this.menuPopup.destroy();
-	          },
-	          onPopupDestroy: function onPopupDestroy() {
-	            return _this.menuPopup = null;
-	          }
-	        }
-	      });
-	      this.menuPopup.show();
-	    },
-	    closeMenu: function closeMenu() {
-	      this.menuPopup.destroy();
-	      this.menuPopup = null;
-	    },
-	    getMenuItems: function getMenuItems() {
-	      var _this2 = this;
-	      var items = [{
-	        text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_HEADER_MENU_COPY_LINK'),
-	        onclick: function onclick() {
-	          _this2.closeMenu();
-	          _this2.onMenuCopyLink();
-	        }
-	      }];
-	      if (this.isCurrentUserOwner) {
-	        items.push({
-	          text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_HEADER_MENU_CHANGE_LINK'),
-	          onclick: function onclick() {
-	            _this2.closeMenu();
-	            _this2.onMenuChangeLink();
-	          }
-	        });
-	      }
-	      return items;
-	    },
-	    onMenuCopyLink: function onMenuCopyLink() {
-	      var publicLink = this.dialog["public"].link;
-	      im_lib_clipboard.Clipboard.copy(publicLink);
-	      var notificationText = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_LINK_COPIED');
-	      BX.UI.Notification.Center.notify({
-	        content: notificationText,
-	        autoHideDelay: 4000
-	      });
-	    },
-	    onMenuChangeLink: function onMenuChangeLink() {
-	      var _this3 = this;
-	      var confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_CHANGE_LINK_CONFIRM_TEXT');
-	      this.changeLinkConfirm = ui_dialogs_messagebox.MessageBox.create({
-	        message: confirmMessage,
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        onOk: function onOk() {
-	          _this3.changeLink();
-	          _this3.changeLinkConfirm.getPopupWindow().destroy();
-	        },
-	        onCancel: function onCancel() {
-	          _this3.changeLinkConfirm.getPopupWindow().destroy();
-	        }
-	      });
-	      this.changeLinkConfirm.show();
-	    },
-	    changeLink: function changeLink() {
-	      var _this4 = this;
-	      this.getApplication().changeLink().then(function () {
-	        var notificationText = _this4.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_LINK_CHANGED');
-	        BX.UI.Notification.Center.notify({
-	          content: notificationText,
-	          autoHideDelay: 4000
-	        });
-	      })["catch"](function (error) {
-	        console.error('Conference: change link error', error);
-	      });
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-user-list-header\">\n\t\t\t<div class=\"bx-im-component-call-user-list-header-top-actions\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-left\">\n\t\t\t\t\t<div @click=\"onCloseUsers\" class=\"bx-im-component-call-user-list-header-close\" :title=\"$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-right\">\n\t\t\t\t\t<div @click=\"openMenu\" class=\"bx-im-component-call-user-list-header-more\" ref=\"user-list-header-menu\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-user-list-header-users-summary\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-title\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	const UserListHeader = {
+		computed: {
+			userId() {
+				return this.application.common.userId;
+			},
+			isCurrentUserOwner() {
+				if (!this.dialog) {
+					return false;
+				}
+				return this.dialog.ownerId === this.userId;
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				user: state => state.users.collection[state.application.common.userId],
+				application: state => state.application,
+				conference: state => state.conference,
+				dialog: state => state.dialogues.collection[state.application.dialog.dialogId]
+			})
+		},
+		methods: {
+			onCloseUsers() {
+				this.getApplication().toggleUserList();
+			},
+			openMenu() {
+				if (this.menuPopup) {
+					this.closeMenu();
+					return false;
+				}
+				this.menuPopup = main_popup.MenuManager.create({
+					id: 'bx-im-component-call-user-list-header-popup',
+					className: 'bx-conference-user-list-context-menu',
+					background: '#00428F',
+					contentBackground: '#00428F',
+					darkMode: true,
+					contentBorderRadius: '6px',
+					borderRadius: '6px',
+					bindElement: this.$refs['user-list-header-menu'],
+					items: this.getMenuItems(),
+					events: {
+						onPopupClose: () => this.menuPopup.destroy(),
+						onPopupDestroy: () => this.menuPopup = null
+					}
+				});
+				this.menuPopup.show();
+			},
+			closeMenu() {
+				this.menuPopup.destroy();
+				this.menuPopup = null;
+			},
+			getMenuItems() {
+				const items = [{
+					text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_HEADER_MENU_COPY_LINK'),
+					onclick: () => {
+						this.closeMenu();
+						this.onMenuCopyLink();
+					}
+				}];
+				if (this.isCurrentUserOwner) {
+					items.push({
+						text: this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_HEADER_MENU_CHANGE_LINK'),
+						onclick: () => {
+							this.closeMenu();
+							this.onMenuChangeLink();
+						}
+					});
+				}
+				return items;
+			},
+			onMenuCopyLink() {
+				const publicLink = this.dialog.public.link;
+				im_lib_clipboard.Clipboard.copy(publicLink);
+				const notificationText = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_LINK_COPIED');
+				BX.UI.Notification.Center.notify({
+					content: notificationText,
+					autoHideDelay: 4000
+				});
+			},
+			onMenuChangeLink() {
+				const confirmMessage = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_CHANGE_LINK_CONFIRM_TEXT');
+				this.changeLinkConfirm = ui_dialogs_messagebox.MessageBox.create({
+					message: confirmMessage,
+					modal: true,
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+					onOk: () => {
+						this.changeLink();
+						this.changeLinkConfirm.getPopupWindow().destroy();
+					},
+					onCancel: () => {
+						this.changeLinkConfirm.getPopupWindow().destroy();
+					}
+				});
+				this.changeLinkConfirm.show();
+			},
+			changeLink() {
+				this.getApplication().changeLink().then(() => {
+					const notificationText = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_LINK_CHANGED');
+					BX.UI.Notification.Center.notify({
+						content: notificationText,
+						autoHideDelay: 4000
+					});
+				}).catch(error => {
+					console.error('Conference: change link error', error);
+				});
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			}
+		},
+		template: `
+		<div class="bx-im-component-call-user-list-header">
+			<div class="bx-im-component-call-user-list-header-top-actions">
+				<div class="bx-im-component-call-user-list-header-left">
+					<div @click="onCloseUsers" class="bx-im-component-call-user-list-header-close" :title="$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']"></div>
+				</div>
+				<div class="bx-im-component-call-user-list-header-right">
+					<div @click="openMenu" class="bx-im-component-call-user-list-header-more" ref="user-list-header-menu"></div>
+				</div>
+			</div>
+			<div class="bx-im-component-call-user-list-header-users-summary">
+				<div class="bx-im-component-call-user-list-header-title">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>
+			</div>
+		</div>
+	`
 	};
 
-	function ownKeys$9(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$9(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$9(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$9(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	/**
+	 * Bitrix im
+	 * Pubic conference Vue component
+	 *
+	 * @package bitrix
+	 * @subpackage im
+	 * @copyright 2001-2021 Bitrix
+	 */
+
 
 	//const
-	var popupModes = Object.freeze({
-	  preparation: 'preparation'
+	const popupModes = Object.freeze({
+		preparation: 'preparation'
 	});
 	ui_vue.BitrixVue.component('bx-im-component-conference-public', {
-	  components: {
-	    Error: Error$1,
-	    CheckDevices: CheckDevices,
-	    OrientationDisabled: OrientationDisabled,
-	    PasswordCheck: PasswordCheck,
-	    LoadingStatus: LoadingStatus,
-	    RequestPermissions: RequestPermissions,
-	    MobileChatButton: MobileChatButton,
-	    ConferenceInfo: ConferenceInfo,
-	    UserForm: UserForm,
-	    ChatHeader: ChatHeader,
-	    WaitingForStart: WaitingForStart,
-	    UserList: UserList,
-	    UserListHeader: UserListHeader,
-	    ConferenceSmiles: ConferenceSmiles
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      "default": "0"
-	    }
-	  },
-	  data: function data() {
-	    return {
-	      waitingForStart: false,
-	      popupMode: popupModes.preparation,
-	      viewPortMetaNode: null,
-	      chatDrag: false,
-	      // in %
-	      rightPanelSplitMode: {
-	        usersHeight: 50,
-	        chatHeight: 50,
-	        chatMinHeight: 30,
-	        chatMaxHeight: 80
-	      }
-	    };
-	  },
-	  created: function created() {
-	    this.initEventHandlers();
-	    main_core_events.EventEmitter.subscribe(im_const.EventType.conference.waitForStart, this.onWaitForStart);
-	    main_core_events.EventEmitter.subscribe(im_const.EventType.conference.hideSmiles, this.onHideSmiles);
-	    if (this.isMobile()) {
-	      this.setMobileMeta();
-	    } else {
-	      document.body.classList.add('bx-im-application-call-desktop-state');
-	    }
-	    if (!this.isDesktop()) {
-	      window.addEventListener('beforeunload', this.onBeforeUnload.bind(this));
-	    }
-	  },
-	  mounted: function mounted() {
-	    if (!this.isHttps()) {
-	      this.getApplication().setError(call_const.ConferenceErrorCode.unsafeConnection);
-	    }
-	    if (!this.passwordChecked) {
-	      main_core_events.EventEmitter.emit(im_const.EventType.conference.setPasswordFocus);
-	    }
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    this.destroyHandlers();
-	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.waitForStart, this.onWaitForStart);
-	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.hideSmiles, this.onHideSmiles);
-	    clearInterval(this.durationInterval);
-	  },
-	  computed: _objectSpread$9({
-	    EventType: function EventType() {
-	      return im_const.EventType;
-	    },
-	    RightPanelMode: function RightPanelMode() {
-	      return call_const.ConferenceRightPanelMode;
-	    },
-	    userId: function userId() {
-	      return this.application.common.userId;
-	    },
-	    dialogInited: function dialogInited() {
-	      if (this.dialog) {
-	        return this.dialog.init;
-	      }
-	    },
-	    conferenceStarted: function conferenceStarted() {
-	      return this.conference.common.conferenceStarted;
-	    },
-	    hasErrorInCall: function hasErrorInCall() {
-	      return this.conference.common.hasErrorInCall;
-	    },
-	    userInited: function userInited() {
-	      return this.conference.common.inited;
-	    },
-	    userHasRealName: function userHasRealName() {
-	      if (this.user) {
-	        return this.user.name !== this.localize['BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME'];
-	      }
-	      return false;
-	    },
-	    rightPanelMode: function rightPanelMode() {
-	      return this.conference.common.rightPanelMode;
-	    },
-	    userListClasses: function userListClasses() {
-	      var result = [];
-	      if (this.rightPanelMode === 'split') {
-	        result.push('bx-im-component-call-right-top');
-	      } else if (this.rightPanelMode === 'users') {
-	        result.push('bx-im-component-call-right-full');
-	      }
-	      return result;
-	    },
-	    userListStyles: function userListStyles() {
-	      if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
-	        return {};
-	      }
-	      return {
-	        height: "".concat(this.rightPanelSplitMode.usersHeight, "%")
-	      };
-	    },
-	    chatClasses: function chatClasses() {
-	      var result = [];
-	      if (this.rightPanelMode === 'split') {
-	        result.push('bx-im-component-call-right-bottom');
-	      } else if (this.rightPanelMode === 'chat') {
-	        result.push('bx-im-component-call-right-full');
-	      }
-	      return result;
-	    },
-	    chatStyles: function chatStyles() {
-	      if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
-	        return {};
-	      }
-	      return {
-	        height: "".concat(this.rightPanelSplitMode.chatHeight, "%")
-	      };
-	    },
-	    isChatShowed: function isChatShowed() {
-	      return this.conference.common.showChat;
-	    },
-	    isPreparationStep: function isPreparationStep() {
-	      return this.conference.common.state === call_const.ConferenceStateType.preparation;
-	    },
-	    isBroadcast: function isBroadcast() {
-	      return this.conference.common.isBroadcast;
-	    },
-	    presentersList: function presentersList() {
-	      return this.conference.common.presenters;
-	    },
-	    isCurrentUserPresenter: function isCurrentUserPresenter() {
-	      return this.presentersList.includes(this.userId);
-	    },
-	    errorCode: function errorCode() {
-	      return this.conference.common.error;
-	    },
-	    passwordChecked: function passwordChecked() {
-	      return this.conference.common.passChecked;
-	    },
-	    permissionsRequested: function permissionsRequested() {
-	      return this.conference.common.permissionsRequested;
-	    },
-	    callContainerClasses: function callContainerClasses() {
-	      return [this.conference.common.callEnded ? 'with-clouds' : ''];
-	    },
-	    wrapClasses: function wrapClasses() {
-	      var classes = ['bx-im-component-call-wrap'];
-	      if (this.isMobile() && this.isBroadcast && !this.isCurrentUserPresenter && this.isPreparationStep) {
-	        classes.push('bx-im-component-call-mobile-viewer-mode');
-	      }
-	      return classes;
-	    },
-	    callComponentClasses: function callComponentClasses() {
-	      return ['bx-im-component-call'];
-	    },
-	    chatId: function chatId() {
-	      if (this.application) {
-	        return this.application.dialog.chatId;
-	      }
-	      return 0;
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases(['BX_IM_COMPONENT_CALL_', 'IM_DIALOG_CLIPBOARD_']);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    conference: function conference(state) {
-	      return state.conference;
-	    },
-	    application: function application(state) {
-	      return state.application;
-	    },
-	    user: function user(state) {
-	      return state.users.collection[state.application.common.userId];
-	    },
-	    dialog: function dialog(state) {
-	      return state.dialogues.collection[state.application.dialog.dialogId];
-	    }
-	  })),
-	  watch: {
-	    isChatShowed: function isChatShowed(newValue) {
-	      var _this = this;
-	      if (this.isMobile()) {
-	        return false;
-	      }
-	      if (newValue === true) {
-	        this.$nextTick(function () {
-	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
-	            chatId: _this.chatId
-	          });
-	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	        });
-	      }
-	    },
-	    rightPanelMode: function rightPanelMode(newValue) {
-	      var _this2 = this;
-	      if (newValue === call_const.ConferenceRightPanelMode.chat || newValue === call_const.ConferenceRightPanelMode.split) {
-	        this.$nextTick(function () {
-	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
-	            chatId: _this2.chatId
-	          });
-	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	        });
-	      }
-	    },
-	    dialogInited: function dialogInited(newValue) {
-	      if (newValue === true) {
-	        this.getApplication().setDialogInited();
-	      }
-	    },
-	    //to skip request permissions step in desktop
-	    userInited: function userInited(newValue) {
-	      if (newValue === true && this.isDesktop() && this.passwordChecked) {
-	        this.$nextTick(function () {
-	          main_core_events.EventEmitter.emit(im_const.EventType.conference.requestPermissions);
-	        });
-	      }
-	    },
-	    user: function user() {
-	      if (this.user && this.userHasRealName) {
-	        this.getApplication().setUserWasRenamed();
-	      }
-	    }
-	  },
-	  methods: {
-	    initEventHandlers: function initEventHandlers() {
-	      this.sendMessageHandler = new im_eventHandler.SendMessageHandler(this.$Bitrix);
-	      this.textareaHandler = new ConferenceTextareaHandler(this.$Bitrix);
-	      this.readingHandler = new im_eventHandler.ReadingHandler(this.$Bitrix);
-	      this.reactionHandler = new im_eventHandler.ReactionHandler(this.$Bitrix);
-	      this.textareaUploadHandler = new ConferenceTextareaUploadHandler(this.$Bitrix);
-	    },
-	    destroyHandlers: function destroyHandlers() {
-	      this.sendMessageHandler.destroy();
-	      this.textareaHandler.destroy();
-	      this.readingHandler.destroy();
-	      this.reactionHandler.destroy();
-	      this.textareaUploadHandler.destroy();
-	    },
-	    onHideSmiles: function onHideSmiles() {
-	      this.getApplication().toggleSmiles();
-	    },
-	    onBeforeUnload: function onBeforeUnload(event) {
-	      if (!this.getApplication().viewPort) {
-	        return;
-	      }
-	      if (!this.isPreparationStep) {
-	        event.preventDefault();
-	        event.returnValue = '';
-	      }
-	    },
-	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	        text: event.text
-	      });
-	    },
-	    onSmilesSelectSet: function onSmilesSelectSet() {
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	    },
-	    onWaitForStart: function onWaitForStart() {
-	      this.waitingForStart = true;
-	    },
-	    onChatStartDrag: function onChatStartDrag(event) {
-	      if (this.chatDrag) {
-	        return;
-	      }
-	      this.chatDrag = true;
-	      this.chatDragStartPoint = event.clientY;
-	      this.chatDragStartHeight = this.rightPanelSplitMode.chatHeight;
-	      this.addChatDragEvents();
-	    },
-	    onChatContinueDrag: function onChatContinueDrag(event) {
-	      if (!this.chatDrag) {
-	        return;
-	      }
-	      this.chatDragControlPoint = event.clientY;
-	      var availableHeight = document.body.clientHeight;
-	      var maxHeightInPx = availableHeight * (this.rightPanelSplitMode.chatMaxHeight / 100);
-	      var minHeightInPx = availableHeight * (this.rightPanelSplitMode.chatMinHeight / 100);
-	      var startHeightInPx = availableHeight * (this.chatDragStartHeight / 100);
-	      var chatHeightInPx = Math.max(Math.min(startHeightInPx + this.chatDragStartPoint - this.chatDragControlPoint, maxHeightInPx), minHeightInPx);
-	      var chatHeight = chatHeightInPx / availableHeight * 100;
-	      if (this.rightPanelSplitMode.chatHeight !== chatHeight) {
-	        this.rightPanelSplitMode.chatHeight = chatHeight;
-	        this.rightPanelSplitMode.usersHeight = 100 - chatHeight;
-	      }
-	    },
-	    onChatStopDrag: function onChatStopDrag(event) {
-	      if (!this.chatDrag) {
-	        return;
-	      }
-	      this.chatDrag = false;
-	      this.removeChatDragEvents();
-	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	        chatId: this.chatId,
-	        force: true
-	      });
-	    },
-	    addChatDragEvents: function addChatDragEvents() {
-	      document.addEventListener('mousemove', this.onChatContinueDrag);
-	      document.addEventListener('mouseup', this.onChatStopDrag);
-	      document.addEventListener('mouseleave', this.onChatStopDrag);
-	    },
-	    removeChatDragEvents: function removeChatDragEvents() {
-	      document.removeEventListener('mousemove', this.onChatContinueDrag);
-	      document.removeEventListener('mouseup', this.onChatStopDrag);
-	      document.removeEventListener('mouseleave', this.onChatStopDrag);
-	    },
-	    isMobile: function isMobile() {
-	      return im_lib_utils.Utils.device.isMobile();
-	    },
-	    isDesktop: function isDesktop() {
-	      return im_lib_utils.Utils.platform.isBitrixDesktop();
-	    },
-	    setMobileMeta: function setMobileMeta() {
-	      if (!this.viewPortMetaNode) {
-	        this.viewPortMetaNode = document.createElement('meta');
-	        this.viewPortMetaNode.setAttribute('name', 'viewport');
-	        this.viewPortMetaNode.setAttribute("content", "width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0");
-	        document.head.appendChild(this.viewPortMetaNode);
-	      }
-	      document.body.classList.add('bx-im-application-call-mobile-state');
-	      if (im_lib_utils.Utils.browser.isSafariBased()) {
-	        document.body.classList.add('bx-im-application-call-mobile-safari-based');
-	      }
-	    },
-	    isHttps: function isHttps() {
-	      return location.protocol === 'https:';
-	    },
-	    getUserHash: function getUserHash() {
-	      return this.conference.user.hash;
-	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
-	    },
-	    openChat: function openChat() {
-	      this.getApplication().toggleChat();
-	    } /* endregion 03. Helpers */
-	  },
-	  template: "\n\t<div :class=\"wrapClasses\">\n\t\t<div :class=\"callComponentClasses\">\n\t\t\t<div class=\"bx-im-component-call-left\">\n\t\t\t\t<div id=\"bx-im-component-call-container\" :class=\"callContainerClasses\"></div>\n\t\t\t\t<div v-if=\"isPreparationStep\" class=\"bx-im-component-call-left-preparation\" v-show=\"!hasErrorInCall\">\n\t\t\t\t\t<!-- Step 1: Errors page -->\n\t\t\t\t\t<Error v-if=\"errorCode\"/>\n\t\t\t\t\t<!-- Step 2: Password page -->\n\t\t\t\t\t<PasswordCheck v-else-if=\"!passwordChecked\"/>\n\t\t\t\t\t<template v-else-if=\"!errorCode && passwordChecked\">\n\t\t\t\t\t\t<!-- Step 3: Loading page -->\n\t\t\t\t\t\t<LoadingStatus v-if=\"!userInited\"/>\n\t\t\t\t\t\t<template v-else-if=\"userInited\">\n\t\t\t\t\t\t\t<!-- BROADCAST MODE -->\n\t\t\t\t\t\t  \t<template v-if=\"isBroadcast\">\n\t\t\t\t\t\t  \t\t<template v-if=\"!isDesktop() && !permissionsRequested && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user) && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-if=\"permissionsRequested || !isCurrentUserPresenter\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices v-if=\"isCurrentUserPresenter\" />\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<button v-if=\"!isMobile()\" class=\"bx-im-component-call-open-chat-button bx-im-component-call-open-preview-chat-button\" @click=\"openChat\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}\n\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END BROADCAST MODE -->\n\t\t\t\t\t\t\t<!-- NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t  \t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t\t\t\t<!-- Step 4: Permissions page -->\n\t\t\t\t\t\t\t\t<template v-if=\"!isDesktop() && !permissionsRequested\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user)\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-else-if=\"permissionsRequested\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices/>\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<button v-if=\"!isMobile()\" class=\"bx-im-component-call-open-chat-button bx-im-component-call-open-preview-chat-button\" @click=\"openChat\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}\n\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<template v-if=\"userInited && !errorCode\">\n\t\t\t\t<transition :name=\"!isMobile()? 'videoconf-chat-slide': ''\">\n\t\t\t\t\t<div v-show=\"rightPanelMode !== RightPanelMode.hidden\" class=\"bx-im-component-call-right\">\n\t\t\t\t\t\t<!-- Start users list -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.users\" :class=\"userListClasses\" :style=\"userListStyles\">\n\t\t\t\t\t\t\t<UserListHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-users\">\n\t\t\t\t\t\t\t\t<UserList />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End users list -->\n\t\t\t\t\t\t<!-- Start chat -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.chat\" :class=\"chatClasses\" :style=\"chatStyles\">\n\t\t\t\t\t\t\t<!-- Resize handler -->\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"rightPanelMode === RightPanelMode.split\"\n\t\t\t\t\t\t\t\t@mousedown=\"onChatStartDrag\"\n\t\t\t\t\t\t\t\tclass=\"bx-im-component-call-right-bottom-resize-handle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<ChatHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-chat\">\n\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-im-component-call-smiles\">\n\t\t\t\t\t\t\t\t\t<ConferenceSmiles\n\t\t\t\t\t\t\t\t\t\tv-if=\"conference.common.showSmiles\"\n\t\t\t\t\t\t\t\t\t\t@selectSmile=\"onSmilesSelectSmile\"\n\t\t\t\t\t\t\t\t\t\t@selectSet=\"onSmilesSelectSet\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t\t<div v-if=\"user\" class=\"bx-im-component-call-textarea\">\n\t\t\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t\t\t:enableFile=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t\t\t:autoFocus=\"true\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End chat -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</template>\n\t\t</div>\n\t</div>\n\t"
+		components: {
+			Error,
+			CheckDevices,
+			OrientationDisabled,
+			PasswordCheck,
+			LoadingStatus,
+			RequestPermissions,
+			MobileChatButton,
+			ConferenceInfo,
+			UserForm,
+			ChatHeader,
+			WaitingForStart,
+			UserList,
+			UserListHeader,
+			ConferenceSmiles
+		},
+		props: {
+			dialogId: {
+				type: String,
+				default: "0"
+			}
+		},
+		data: function () {
+			return {
+				waitingForStart: false,
+				popupMode: popupModes.preparation,
+				viewPortMetaNode: null,
+				chatDrag: false,
+				// in %
+				rightPanelSplitMode: {
+					usersHeight: 50,
+					chatHeight: 50,
+					chatMinHeight: 30,
+					chatMaxHeight: 80
+				}
+			};
+		},
+		created() {
+			this.initEventHandlers();
+			main_core_events.EventEmitter.subscribe(im_const.EventType.conference.waitForStart, this.onWaitForStart);
+			main_core_events.EventEmitter.subscribe(im_const.EventType.conference.hideSmiles, this.onHideSmiles);
+			if (this.isMobile()) {
+				this.setMobileMeta();
+			} else {
+				document.body.classList.add('bx-im-application-call-desktop-state');
+			}
+			if (!this.isDesktop()) {
+				window.addEventListener('beforeunload', this.onBeforeUnload.bind(this));
+			}
+		},
+		mounted() {
+			if (!this.isHttps()) {
+				this.getApplication().setError(call_const.ConferenceErrorCode.unsafeConnection);
+			}
+			if (!this.passwordChecked) {
+				main_core_events.EventEmitter.emit(im_const.EventType.conference.setPasswordFocus);
+			}
+		},
+		beforeDestroy() {
+			this.destroyHandlers();
+			main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.waitForStart, this.onWaitForStart);
+			main_core_events.EventEmitter.unsubscribe(im_const.EventType.conference.hideSmiles, this.onHideSmiles);
+			clearInterval(this.durationInterval);
+		},
+		computed: {
+			EventType: () => im_const.EventType,
+			RightPanelMode: () => call_const.ConferenceRightPanelMode,
+			userId() {
+				return this.application.common.userId;
+			},
+			dialogInited() {
+				if (this.dialog) {
+					return this.dialog.init;
+				}
+			},
+			conferenceStarted() {
+				return this.conference.common.conferenceStarted;
+			},
+			hasErrorInCall() {
+				return this.conference.common.hasErrorInCall;
+			},
+			userInited() {
+				return this.conference.common.inited;
+			},
+			userHasRealName() {
+				if (this.user) {
+					return this.user.name !== this.localize['BX_IM_COMPONENT_CALL_DEFAULT_USER_NAME'];
+				}
+				return false;
+			},
+			rightPanelMode() {
+				return this.conference.common.rightPanelMode;
+			},
+			userListClasses() {
+				const result = [];
+				if (this.rightPanelMode === 'split') {
+					result.push('bx-im-component-call-right-top');
+				} else if (this.rightPanelMode === 'users') {
+					result.push('bx-im-component-call-right-full');
+				}
+				return result;
+			},
+			userListStyles() {
+				if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
+					return {};
+				}
+				return {
+					height: `${this.rightPanelSplitMode.usersHeight}%`
+				};
+			},
+			chatClasses() {
+				const result = [];
+				if (this.rightPanelMode === 'split') {
+					result.push('bx-im-component-call-right-bottom');
+				} else if (this.rightPanelMode === 'chat') {
+					result.push('bx-im-component-call-right-full');
+				}
+				return result;
+			},
+			chatStyles() {
+				if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
+					return {};
+				}
+				return {
+					height: `${this.rightPanelSplitMode.chatHeight}%`
+				};
+			},
+			isChatShowed() {
+				return this.conference.common.showChat;
+			},
+			isPreparationStep() {
+				return this.conference.common.state === call_const.ConferenceStateType.preparation;
+			},
+			isBroadcast() {
+				return this.conference.common.isBroadcast;
+			},
+			presentersList() {
+				return this.conference.common.presenters;
+			},
+			isCurrentUserPresenter() {
+				return this.presentersList.includes(this.userId);
+			},
+			errorCode() {
+				return this.conference.common.error;
+			},
+			passwordChecked() {
+				return this.conference.common.passChecked;
+			},
+			permissionsRequested() {
+				return this.conference.common.permissionsRequested;
+			},
+			callContainerClasses() {
+				return [this.conference.common.callEnded ? 'with-clouds' : ''];
+			},
+			wrapClasses() {
+				const classes = ['bx-im-component-call-wrap'];
+				if (this.isMobile() && this.isBroadcast && !this.isCurrentUserPresenter && this.isPreparationStep) {
+					classes.push('bx-im-component-call-mobile-viewer-mode');
+				}
+				return classes;
+			},
+			callComponentClasses() {
+				return ['bx-im-component-call'];
+			},
+			chatId() {
+				if (this.application) {
+					return this.application.dialog.chatId;
+				}
+				return 0;
+			},
+			localize() {
+				return ui_vue.BitrixVue.getFilteredPhrases(['BX_IM_COMPONENT_CALL_', 'IM_DIALOG_CLIPBOARD_']);
+			},
+			...ui_vue_vuex.Vuex.mapState({
+				conference: state => state.conference,
+				application: state => state.application,
+				user: state => state.users.collection[state.application.common.userId],
+				dialog: state => state.dialogues.collection[state.application.dialog.dialogId]
+			})
+		},
+		watch: {
+			isChatShowed(newValue) {
+				if (this.isMobile()) {
+					return false;
+				}
+				if (newValue === true) {
+					this.$nextTick(() => {
+						main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
+							chatId: this.chatId
+						});
+						main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+					});
+				}
+			},
+			rightPanelMode(newValue) {
+				if (newValue === call_const.ConferenceRightPanelMode.chat || newValue === call_const.ConferenceRightPanelMode.split) {
+					this.$nextTick(() => {
+						main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
+							chatId: this.chatId
+						});
+						main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+					});
+				}
+			},
+			dialogInited(newValue) {
+				if (newValue === true) {
+					this.getApplication().setDialogInited();
+				}
+			},
+			//to skip request permissions step in desktop
+			userInited(newValue) {
+				if (newValue === true && this.isDesktop() && this.passwordChecked) {
+					this.$nextTick(() => {
+						main_core_events.EventEmitter.emit(im_const.EventType.conference.requestPermissions);
+					});
+				}
+			},
+			user() {
+				if (this.user && this.userHasRealName) {
+					this.getApplication().setUserWasRenamed();
+				}
+			}
+		},
+		methods: {
+			initEventHandlers() {
+				this.sendMessageHandler = new im_eventHandler.SendMessageHandler(this.$Bitrix);
+				this.textareaHandler = new ConferenceTextareaHandler(this.$Bitrix);
+				this.readingHandler = new im_eventHandler.ReadingHandler(this.$Bitrix);
+				this.reactionHandler = new im_eventHandler.ReactionHandler(this.$Bitrix);
+				this.textareaUploadHandler = new ConferenceTextareaUploadHandler(this.$Bitrix);
+			},
+			destroyHandlers() {
+				this.sendMessageHandler.destroy();
+				this.textareaHandler.destroy();
+				this.readingHandler.destroy();
+				this.reactionHandler.destroy();
+				this.textareaUploadHandler.destroy();
+			},
+			onHideSmiles() {
+				this.getApplication().toggleSmiles();
+			},
+			onBeforeUnload(event) {
+				if (!this.getApplication().viewPort) {
+					return;
+				}
+				if (!this.isPreparationStep) {
+					event.preventDefault();
+					event.returnValue = '';
+				}
+			},
+			onSmilesSelectSmile(event) {
+				main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
+					text: event.text
+				});
+			},
+			onSmilesSelectSet() {
+				main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+			},
+			onWaitForStart() {
+				this.waitingForStart = true;
+			},
+			onChatStartDrag(event) {
+				if (this.chatDrag) {
+					return;
+				}
+				this.chatDrag = true;
+				this.chatDragStartPoint = event.clientY;
+				this.chatDragStartHeight = this.rightPanelSplitMode.chatHeight;
+				this.addChatDragEvents();
+			},
+			onChatContinueDrag(event) {
+				if (!this.chatDrag) {
+					return;
+				}
+				this.chatDragControlPoint = event.clientY;
+				const availableHeight = document.body.clientHeight;
+				const maxHeightInPx = availableHeight * (this.rightPanelSplitMode.chatMaxHeight / 100);
+				const minHeightInPx = availableHeight * (this.rightPanelSplitMode.chatMinHeight / 100);
+				const startHeightInPx = availableHeight * (this.chatDragStartHeight / 100);
+				const chatHeightInPx = Math.max(Math.min(startHeightInPx + this.chatDragStartPoint - this.chatDragControlPoint, maxHeightInPx), minHeightInPx);
+				const chatHeight = chatHeightInPx / availableHeight * 100;
+				if (this.rightPanelSplitMode.chatHeight !== chatHeight) {
+					this.rightPanelSplitMode.chatHeight = chatHeight;
+					this.rightPanelSplitMode.usersHeight = 100 - chatHeight;
+				}
+			},
+			onChatStopDrag(event) {
+				if (!this.chatDrag) {
+					return;
+				}
+				this.chatDrag = false;
+				this.removeChatDragEvents();
+				main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+					chatId: this.chatId,
+					force: true
+				});
+			},
+			addChatDragEvents() {
+				document.addEventListener('mousemove', this.onChatContinueDrag);
+				document.addEventListener('mouseup', this.onChatStopDrag);
+				document.addEventListener('mouseleave', this.onChatStopDrag);
+			},
+			removeChatDragEvents() {
+				document.removeEventListener('mousemove', this.onChatContinueDrag);
+				document.removeEventListener('mouseup', this.onChatStopDrag);
+				document.removeEventListener('mouseleave', this.onChatStopDrag);
+			},
+			isMobile() {
+				return im_lib_utils.Utils.device.isMobile();
+			},
+			isDesktop() {
+				return im_lib_utils.Utils.platform.isBitrixDesktop();
+			},
+			setMobileMeta() {
+				if (!this.viewPortMetaNode) {
+					this.viewPortMetaNode = document.createElement('meta');
+					this.viewPortMetaNode.setAttribute('name', 'viewport');
+					this.viewPortMetaNode.setAttribute("content", "width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0");
+					document.head.appendChild(this.viewPortMetaNode);
+				}
+				document.body.classList.add('bx-im-application-call-mobile-state');
+				if (im_lib_utils.Utils.browser.isSafariBased()) {
+					document.body.classList.add('bx-im-application-call-mobile-safari-based');
+				}
+			},
+			isHttps() {
+				return location.protocol === 'https:';
+			},
+			getUserHash() {
+				return this.conference.user.hash;
+			},
+			getApplication() {
+				return this.$Bitrix.Application.get();
+			},
+			openChat() {
+				this.getApplication().toggleChat();
+			}
+			/* endregion 03. Helpers */
+		},
+		template: `
+	<div :class="wrapClasses">
+		<div :class="callComponentClasses">
+			<div class="bx-im-component-call-left">
+				<div id="bx-im-component-call-container" :class="callContainerClasses"></div>
+				<div v-if="isPreparationStep" class="bx-im-component-call-left-preparation" v-show="!hasErrorInCall">
+					<!-- Step 1: Errors page -->
+					<Error v-if="errorCode"/>
+					<!-- Step 2: Password page -->
+					<PasswordCheck v-else-if="!passwordChecked"/>
+					<template v-else-if="!errorCode && passwordChecked">
+						<!-- Step 3: Loading page -->
+						<LoadingStatus v-if="!userInited"/>
+						<template v-else-if="userInited">
+							<!-- BROADCAST MODE -->
+								<template v-if="isBroadcast">
+									<template v-if="!isDesktop() && !permissionsRequested && isCurrentUserPresenter">
+									<ConferenceInfo/>
+									<RequestPermissions>
+										<template v-if="isMobile()">
+											<MobileChatButton/>
+										</template>
+									</RequestPermissions>
+								</template>
+								<!-- Skip permissions request for desktop and show button with loader  -->
+								<template v-if="isDesktop() && (!permissionsRequested || !user) && isCurrentUserPresenter">
+									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
+									<RequestPermissions :skipRequest="true"/>
+								</template>
+								<!-- Step 5: Page with video and mic check -->
+								<div v-if="permissionsRequested || !isCurrentUserPresenter" class="bx-im-component-call-video-step-container">
+									<!-- Compact conference info -->
+									<ConferenceInfo :compactMode="true"/>
+									<CheckDevices v-if="isCurrentUserPresenter" />
+									<!-- Bottom part of interface -->
+									<div class="bx-im-component-call-bottom-container">
+										<UserForm v-if="!waitingForStart"/>
+										<WaitingForStart v-else>
+											<template v-if="isMobile()">
+												<MobileChatButton/>
+											</template>
+										</WaitingForStart>
+									</div>
+								</div>
+								<button v-if="!isMobile()" class="bx-im-component-call-open-chat-button bx-im-component-call-open-preview-chat-button" @click="openChat">
+									{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}
+								</button>
+							</template>
+							<!-- END BROADCAST MODE -->
+							<!-- NORMAL MODE (NOT BROADCAST) -->
+								<template v-else-if="!isBroadcast">
+								<!-- Step 4: Permissions page -->
+								<template v-if="!isDesktop() && !permissionsRequested">
+									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
+									<RequestPermissions>
+										<template v-if="isMobile()">
+											<MobileChatButton/>
+										</template>
+									</RequestPermissions>
+								</template>
+								<!-- Skip permissions request for desktop and show button with loader  -->
+								<template v-if="isDesktop() && (!permissionsRequested || !user)">
+									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
+									<RequestPermissions :skipRequest="true"/>
+								</template>
+								<!-- Step 5: Page with video and mic check -->
+								<div v-else-if="permissionsRequested" class="bx-im-component-call-video-step-container">
+									<!-- Compact conference info -->
+									<ConferenceInfo :compactMode="true"/>
+									<CheckDevices/>
+									<!-- Bottom part of interface -->
+									<div class="bx-im-component-call-bottom-container">
+										<UserForm v-if="!waitingForStart"/>
+										<WaitingForStart v-else>
+											<template v-if="isMobile()">
+												<MobileChatButton/>
+											</template>
+										</WaitingForStart>
+									</div>
+								</div>
+								<button v-if="!isMobile()" class="bx-im-component-call-open-chat-button bx-im-component-call-open-preview-chat-button" @click="openChat">
+									{{ localize['BX_IM_COMPONENT_CALL_OPEN_CHAT'] }}
+								</button>
+							</template>
+							<!-- END NORMAL MODE (NOT BROADCAST) -->
+						</template>
+					</template>
+				</div>
+			</div>
+			<template v-if="userInited && !errorCode">
+				<transition :name="!isMobile()? 'videoconf-chat-slide': ''">
+					<div v-show="rightPanelMode !== RightPanelMode.hidden" class="bx-im-component-call-right">
+						<!-- Start users list -->
+						<div v-show="rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.users" :class="userListClasses" :style="userListStyles">
+							<UserListHeader />
+							<div class="bx-im-component-call-right-users">
+								<UserList />
+							</div>
+						</div>
+						<!-- End users list -->
+						<!-- Start chat -->
+						<div v-show="rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.chat" :class="chatClasses" :style="chatStyles">
+							<!-- Resize handler -->
+							<div
+								v-if="rightPanelMode === RightPanelMode.split"
+								@mousedown="onChatStartDrag"
+								class="bx-im-component-call-right-bottom-resize-handle"
+							></div>
+							<ChatHeader />
+							<div class="bx-im-component-call-right-chat">
+								<bx-im-component-dialog
+									:userId="userId"
+									:dialogId="dialogId"
+								/>
+								<keep-alive include="bx-im-component-call-smiles">
+									<ConferenceSmiles
+										v-if="conference.common.showSmiles"
+										@selectSmile="onSmilesSelectSmile"
+										@selectSet="onSmilesSelectSet"
+									/>
+								</keep-alive>
+								<div v-if="user" class="bx-im-component-call-textarea">
+									<bx-im-component-textarea
+										:userId="userId"
+										:dialogId="dialogId"
+										:writesEventLetter="3"
+										:enableFile="true"
+										:enableEdit="true"
+										:enableCommand="false"
+										:enableMention="false"
+										:autoFocus="true"
+									/>
+								</div>
+							</div>
+						<!-- End chat -->
+						</div>
+					</div>
+				</transition>
+			</template>
+		</div>
+	</div>
+	`
 	});
 
-}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX,BX.Messenger.EventHandler,BX.Messenger,window,BX.UI,window,BX,BX,BX.Messenger.Lib,BX.Call,BX.Call.Component,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.v2.Lib,BX.Messenger.Const,BX.Call.Const,BX.Event,BX,BX.Main,BX.Messenger.Lib,BX.UI.Dialogs));
+})(BX, BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Const, BX.Call.Const, BX.Messenger.EventHandler, BX.Messenger.Lib, BX.Event, BX.Messenger, window, BX.UI, window, BX, BX.UI.Dialogs, BX, BX.Messenger.Lib, BX.Call, BX.Call.Component, BX.Messenger.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.Lib);
 //# sourceMappingURL=conference-public.bundle.js.map

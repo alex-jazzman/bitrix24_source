@@ -100,7 +100,8 @@ this.BX.Booking = this.BX.Booking || {};
 				[booking_const.AhaMoment.SelectResources]: this.#shouldShowSelectResources(),
 				[booking_const.AhaMoment.CyclePopup]: this.#shouldShowCyclePopup(),
 				[booking_const.AhaMoment.SearchNavigation]: this.#shouldShowSearchNavigation(),
-				[booking_const.AhaMoment.IntegrationMapsYa]: this.#shouldShowIntegrationMapsYa()
+				[booking_const.AhaMoment.IntegrationMapsYa]: this.#shouldShowIntegrationMapsYa(),
+				[booking_const.AhaMoment.WeekView]: this.#shouldShowWeekView()
 			}[ahaMoment];
 		}
 		setShown(ahaMoment) {
@@ -156,6 +157,11 @@ this.BX.Booking = this.BX.Booking || {};
 		#shouldShowIntegrationMapsYa() {
 			return this.#wasNotShown(booking_const.AhaMoment.IntegrationMapsYa);
 		}
+		#shouldShowWeekView() {
+			const wasNotShown = this.#wasNotShown(booking_const.AhaMoment.WeekView);
+			const isLoaded = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isLoaded`];
+			return wasNotShown && isLoaded && !main_popup.PopupManager.isAnyPopupShown();
+		}
 		#wasNotShown(ahaMoment) {
 			return !this.#wasShown(ahaMoment);
 		}
@@ -178,7 +184,8 @@ this.BX.Booking = this.BX.Booking || {};
 				[booking_const.AhaMoment.SelectResources]: booking_const.Option.AhaSelectResources,
 				[booking_const.AhaMoment.CyclePopup]: booking_const.Option.AhaCyclePopup,
 				[booking_const.AhaMoment.SearchNavigation]: booking_const.Option.AhaSearchNavigation,
-				[booking_const.AhaMoment.IntegrationMapsYa]: booking_const.Option.AhaIntegrationMapsYa
+				[booking_const.AhaMoment.IntegrationMapsYa]: booking_const.Option.AhaIntegrationMapsYa,
+				[booking_const.AhaMoment.WeekView]: booking_const.Option.AhaWeekView
 			}[ahaMoment];
 		}
 	}

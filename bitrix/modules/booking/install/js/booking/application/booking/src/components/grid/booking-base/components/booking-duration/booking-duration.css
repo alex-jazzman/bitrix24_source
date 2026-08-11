@@ -1,26 +1,34 @@
 .booking-booking-booking__duration {
+	display: flex;
 	align-self: flex-start;
+	align-items: center;
+	max-height: 100%;
 	margin-right: auto;
 	font-size: var(--ui-font-size-xs);
 	cursor: pointer;
 }
 
 .booking-booking-booking.--overbooking .booking-booking-booking__duration {
+	align-self: center;
 	letter-spacing: -0.06em;
 	font-size: calc(var(--ui-font-size-xs) - 1px);
-	align-self: center;
+
 }
 
-.booking-booking-booking.--small .booking-booking-booking__duration {
+.booking-booking-booking.--extra-small .booking-booking-booking__duration {
 	align-self: center;
+	letter-spacing: -0.06em;
 	font-size: calc(var(--ui-font-size-3xs) * var(--zoom));
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-booking.--extra-small .booking-booking-booking__duration {
+	font-size: var(--ui-font-size-3xs);
 }
 
 .booking-booking-card__title-container + .booking-booking-booking__duration {
 	margin-right: initial;
 }
 
-.booking-booking-booking.--overbooking.--compact-mode .booking-booking-booking__duration,
 .booking-booking-booking:not(.--compact-mode) .booking-booking-card__row:not(.booking-booking-card__lower-row) .booking-booking-booking__duration {
 	display: none;
 }

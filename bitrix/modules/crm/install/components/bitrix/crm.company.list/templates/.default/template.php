@@ -21,7 +21,6 @@ use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
@@ -49,7 +48,6 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
-		'crm.template.editor',
 		'crm.entity-list.binder',
 	]
 );
@@ -745,13 +743,6 @@ if ($isDefaultCategory)
 	$navigationBar->setItems([
 		NavigationBarPanel::ID_REPEAT_SALE,
 	]);
-
-	$analytics = [
-		'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
-		'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
-	];
-
-	print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();
 }
 
 $APPLICATION->IncludeComponent(

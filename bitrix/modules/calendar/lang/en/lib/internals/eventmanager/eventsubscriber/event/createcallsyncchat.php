@@ -1,0 +1,2 @@
+<?php
+$MESS["CALENDAR_CALL_SYNC_GUEST_LINK_HINT"] = "Guest link: [URL=#MARKED_URL#]#URL#[/URL]";

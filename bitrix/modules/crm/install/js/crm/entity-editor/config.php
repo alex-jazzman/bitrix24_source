@@ -80,6 +80,7 @@ return [
 		'crm.entity-editor.field.phone-number-input',
 		'crm.entity-editor.duplicate.summary-list',
 		'crm.entity-editor.field.recurring',
+		'crm.entity-editor.analytics-controller',
 		'main.popup',
 		'intranet.old-interface.intranet-common',
 	],

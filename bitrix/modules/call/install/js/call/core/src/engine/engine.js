@@ -1,101 +1,54 @@
 import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import { JoinResponseError, ClientPlatform } from '../call_api';
+import { JoinResponseError } from '../sdk/errors';
+import { ClientPlatform } from '../sdk/const';
 import {ServerPlainCall} from './server_plain_call'
 import {BitrixCall} from './bitrix_call'
 import {CallStub} from './stub'
 import {Hardware} from '../call_hardware';
 import Util from '../util'
+import { stuckCallFinishTracker } from 'call.lib.stuck-call-finish-tracker';
 import {AbstractCall} from './abstract_call';
+import { setPrimary } from './engine-registry';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import {CallAI} from '../call_ai';
-import { CallMultiChannel } from '../call_multi_channel';
+import { BroadcastRequestChannel } from 'call.infrastructure.broadcast-channel';
 import { CallCloudRecord } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 
-export const CallState = {
-	Idle: 'Idle',
-	Proceeding: 'Proceeding',
-	Connected: 'Connected',
-	Finished: 'Finished'
-};
+import {
+	CallState,
+	UserState,
+	EndpointDirection,
+	CallType,
+	RoomType,
+	Provider,
+	StreamTag,
+	Direction,
+	Quality,
+	StartCallErrorCode,
+	DisconnectReason,
+	UserMnemonic,
+	CallEvent,
+	CallScheme,
+} from './types';
 
-export const UserState = {
-	Idle: 'Idle',
-	Busy: 'Busy',
-	Calling: 'Calling',
-	Unavailable: 'Unavailable',
-	Declined: 'Declined',
-	Ready: 'Ready',
-	Connecting: 'Connecting',
-	Connected: 'Connected',
-	Failed: 'Failed'
-};
-
-export const EndpointDirection = {
-	SendOnly: 'send',
-	RecvOnly: 'recv',
-	SendRecv: 'sendrecv',
-};
-
-export const CallType = {
-	Instant: 1,
-	Permanent: 2,
-	Large: 3,
-};
-
-export const RoomType = {
-	Small: 1,
-	Conference: 2,
-	Large: 3,
-	Personal: 4,
-};
-
-export const Provider = {
-	Plain: 'Plain',
-	Bitrix: 'Bitrix',
-};
-
-export const StreamTag = {
-	Main: 'main',
-	Screen: 'screen'
-};
-
-export const Direction = {
-	Incoming: 'Incoming',
-	Outgoing: 'Outgoing'
-};
-
-export const Quality = {
-	VeryHigh: "very_high",
-	High: "high",
-	Medium: "medium",
-	Low: "low",
-	VeryLow: "very_low"
-};
-
-export const StartCallErrorCode = {
-	AuthorizeError: 'AUTHORIZE_ERROR',
-	BlankAnswer: 'BLANK_ANSWER',
-	BlankAnswerWithErrorCode: 'BLANK_ANSWER_WITH_ERROR_CODE',
-	ErrorUnexpectedAnswer: 'ERROR_UNEXPECTED_ANSWER',
-	AccessDenied: 'ACCESS_DENIED',
-	NetworkError: 'NETWORK_ERROR',
-	NoWebrtc: 'NO_WEBRTC',
-	NotAllowedError: 'NotAllowedError',
-	NotReadableError: 'NotReadableError',
-	UnknownError: 'UNKNOWN_ERROR',
-};
-
-export const DisconnectReason = {
-	SecurityKeyChanged: 'SECURITY_KEY_CHANGED',
-	RoomClosed: 'ROOM_CLOSED',
-};
-
-export const UserMnemonic = {
-	all: 'all',
-	none: 'none'
-};
+export {
+	CallState,
+	UserState,
+	EndpointDirection,
+	CallType,
+	RoomType,
+	Provider,
+	StreamTag,
+	Direction,
+	Quality,
+	StartCallErrorCode,
+	DisconnectReason,
+	UserMnemonic,
+	CallEvent,
+	CallScheme,
+} from './types';
 
 type CreateCallOptions = {
 	type: number,
@@ -109,80 +62,11 @@ type CreateCallOptions = {
 	debug?: boolean
 }
 
-export const CallEvent = {
-	onUserInvited: 'onUserInvited',
-	onUserJoined: 'onUserJoined',
-	onUserStateChanged: 'onUserStateChanged',
-	onUserMicrophoneState: 'onUserMicrophoneState',
-	onUserCameraState: 'onUserCameraState',
-	onCameraPublishing: 'onCameraPublishing',
-	onMicrophonePublishing: 'onMicrophonePublishing',
-	onNeedResetMediaDevicesState: 'onNeedResetMediaDevicesState',
-	onUserVideoPaused: 'onUserVideoPaused',
-	onUserScreenState: 'onUserScreenState',
-	onUserCommonRecordState: 'onUserCommonRecordState',
-	onUserVoiceStarted: 'onUserVoiceStarted',
-	onUserVoiceStopped: 'onUserVoiceStopped',
-	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
-	onTurnOnCamera: 'onTurnOnCamera',
-	onAllParticipantsAudioMuted: 'onAllParticipantsAudioMuted',
-	onAllParticipantsVideoMuted: 'onAllParticipantsVideoMuted',
-	onAllParticipantsScreenshareMuted: 'onAllParticipantsScreenshareMuted',
-	onYouMuteAllParticipants: 'onYouMuteAllParticipants',
-	onRoomSettingsChanged: 'onRoomSettingsChanged',
-	onUserPermissionsChanged: 'onUserPermissionsChanged',
-	onUserRoleChanged: 'onUserRoleChanged',
-	onParticipantMuted: 'onParticipantMuted',
-	onUserEmotion: 'onUserEmotion',
-	onTrackSubscriptionFailed: 'onTrackSubscriptionFailed',
-	onUserStatsReceived: 'onUserStatsReceived',
-	onCustomMessage: 'onCustomMessage',
-	onLocalMediaReceived: 'onLocalMediaReceived',
-	onLocalMediaStopped: 'onLocalMediaStopped',
-	onLocalScreenUpdated: 'onLocalScreenUpdated',
-	onMicrophoneLevel: 'onMicrophoneLevel',
-	onDeviceListUpdated: 'onDeviceListUpdated',
-	onRTCStatsReceived: 'onRTCStatsReceived',
-	onCallFailure: 'onCallFailure',
-	onRemoteMediaAvailable: 'onRemoteMediaAvailable',
-	onRemoteMediaUnavailable: 'onRemoteMediaUnavailable',
-	onRemoteMediaReceived: 'onRemoteMediaReceived',
-	onRemoteMediaStopped: 'onRemoteMediaStopped',
-	onBadNetworkIndicator: 'onBadNetworkIndicator',
-	onConnectionQualityChanged: 'onConnectionQualityChanged',
-	onNetworkProblem: 'onNetworkProblem',
-	onReconnecting: 'onReconnecting',
-	onReconnected: 'onReconnected',
-	onReconnectingFailed: 'onReconnectingFailed',
-	onJoin: 'onJoin',
-	onLeave: 'onLeave',
-	onJoinRoomOffer: 'onJoinRoomOffer',
-	onJoinRoom: 'onJoinRoom',
-	onLeaveRoom: 'onLeaveRoom',
-	onListRooms: 'onListRooms',
-	onUpdateRoom: 'onUpdateRoom',
-	onTransferRoomSpeakerRequest: 'onTransferRoomSpeakerRequest',
-	onTransferRoomSpeaker: 'onTransferRoomSpeaker',
-	onDestroy: 'onDestroy',
-	onGetUserMediaEnded: 'onGetUserMediaEnded',
-	onGetUserMediaFailed: 'onGetUserMediaFailed',
-	onUpdateLastUsedCameraId: 'onUpdateLastUsedCameraId',
-	onToggleRemoteParticipantVideo: 'onToggleRemoteParticipantVideo',
-	onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
-	onRecorderStatusChanged: 'onRecorderStatusChanged',
-	onCloudRecordStatusChanged: 'onCloudRecordStatusChanged',
-};
-
 const ajaxActions = {
 	createCall: 'call.CallManager.create',
 	createChatForChildCall: 'call.Call.createChatForChildCall',
 	getPublicChannels: 'pull.channel.public.list',
 	getCall: 'call.CallManager.get'
-};
-
-export const CallScheme = {
-	classic: 1,
-	jwt: 2,
 };
 
 class Engine
@@ -213,7 +97,7 @@ class Engine
 
 		this.finishedCalls = new Set();
 
-		this.multiBroadcastClient = new CallMultiChannel('call_engine_channel');
+		this.multiBroadcastClient = new BroadcastRequestChannel('call_engine_channel');
 
 		this.init();
 	};
@@ -417,6 +301,7 @@ class Engine
 				},
 				debug: config.debug === true,
 				scheme: data.result.scheme,
+				invitePeriod: config.invitePeriod,
 			});
 
 			this.calls[call.uuid] = call;
@@ -599,6 +484,29 @@ class Engine
 
 	#onPullEvent(command: string, params, extra)
 	{
+		// Cancel any pending stuck-call recovery finish for this callUuid before
+		// dispatching: if the backend already finished the call, the engine layer
+		// will clean up the UI from this pull event, so a client-side
+		// CallManager.finish REST call is redundant.
+		if (command === 'Call::finish')
+		{
+			const finishedCallUuid = params?.call?.UUID || params?.call?.uuid;
+			if (finishedCallUuid)
+			{
+				// getCallConnectionData() in util.js schedules recovery as
+				// (null, callUuid) — it does not know the callId at that point.
+				// Cancel both (null, uuid) and (callId, uuid) so the debounced
+				// REST call never fires regardless of which key was used to
+				// schedule it.
+				const finishedCallId = params?.callId || params?.call?.ID || params?.call?.id || null;
+				stuckCallFinishTracker.cancelPending(null, finishedCallUuid);
+				if (finishedCallId)
+				{
+					stuckCallFinishTracker.cancelPending(finishedCallId, finishedCallUuid);
+				}
+			}
+		}
+
 		if (this.jwtPullHandlers[command])
 		{
 			this.jwtPullHandlers[command].call(this, params, extra);
@@ -727,13 +635,15 @@ class Engine
 
 		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, { timeout: 100 });
 		const hasActiveCalls = broadcastResponse.some((res) => res);
-		const canProcessEvent = !params.isAlreadyInCall || ClientPlatform === params.activeCallPlatform;
+		const canProcessEvent = !params.isAlreadyInCall
+			|| (params.activeCallPlatform !== 'any' && ClientPlatform === params.activeCallPlatform);
 		if (call && !hasActiveCalls && canProcessEvent)
 		{
 			BX.onCustomEvent(window, 'CallEvents::incomingCall', [{
 				call,
 				video: params.video === true,
 				isLegacyMobile: params.isLegacyMobile === true,
+				isRepeated: params.isRepeated === true,
 			}]);
 		}
 		this.log(call.uuid, `Incoming call ${call.uuid}`);
@@ -908,3 +818,5 @@ class BitrixCallFactory
 }
 
 export const CallEngine = new Engine();
+Util.registerEngine(CallEngine, true);
+setPrimary(CallEngine);

@@ -3,3 +3,9 @@
 	min-height: var(--height);
 	height: var(--height);
 }
+
+.booking-booking__base-component.--week-mode .booking-booking-busy-slot:before {
+	margin: 3px;
+	--line-size: 2px;
+	--background-size: 6px;
+}

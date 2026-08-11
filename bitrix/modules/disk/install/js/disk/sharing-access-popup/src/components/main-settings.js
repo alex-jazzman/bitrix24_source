@@ -20,13 +20,15 @@ export const SharingAccessMainSettings = {
 		isPublic: { type: Boolean, required: true },
 		objectId: { type: [Number, String], required: true },
 		uniqueCode: { type: String, default: null },
+		initialAccessRights: { type: Object, default: null },
 		mode: { type: String, default: 'default' },
 		closeDialog: { type: Function, required: true },
 	},
-	data() {
+	data()
+	{
 		return {
-			accessRights: null,
-			accessRightsLoading: true,
+			accessRights: this.initialAccessRights,
+			accessRightsLoading: this.initialAccessRights === null,
 		};
 	},
 	computed: {
@@ -52,7 +54,10 @@ export const SharingAccessMainSettings = {
 	},
 	mounted()
 	{
-		this.loadAccessRights();
+		if (this.accessRightsLoading)
+		{
+			this.loadAccessRights();
+		}
 	},
 	methods: {
 		async loadAccessRights()

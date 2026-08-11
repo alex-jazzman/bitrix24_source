@@ -39,6 +39,7 @@ return [
 		'./src/reaction',
 		'./src/service',
 		'./src/sticker',
+		'./src/suggests',
 		'./src/tariff-restrictions',
 		'./src/video-note',
 		'./src/mention',

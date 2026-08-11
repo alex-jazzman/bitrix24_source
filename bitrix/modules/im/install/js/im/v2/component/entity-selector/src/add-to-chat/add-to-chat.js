@@ -3,22 +3,24 @@ import { type PopupOptions } from 'main.popup';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { ActionByRole, ChatType, TabId, LocalStorageKey } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
+import { ActionByRole, ChatType, TabId, LocalStorageKey, ActionByUserType } from 'im.v2.const';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { GuestManager } from 'im.v2.lib.guest';
+import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Notifier } from 'im.v2.lib.notifier';
-import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { Utils } from 'im.v2.lib.utils';
 import { type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { GuestInvitationService, InvitationType } from 'im.v2.provider.service.guest-invitation';
 
 import { AddGuestContent } from '../elements/add-guest-content/add-guest-content';
-import { TabsWrapper } from '../elements/tabs-wrapper/tabs-wrapper';
 import { AddToChatContent } from '../elements/add-to-chat-content/add-to-chat-content';
 import { CopyInviteLink } from '../elements/copy-invite-link/copy-invite-link';
-import { GuestInvitationService } from './classes/guest-invitation-service';
+import { TabsWrapper } from '../elements/tabs-wrapper/tabs-wrapper';
 import { ChatInvitationInput } from './components/invitation-input';
+import { type Candidate } from './const/invitation.js';
 
 import './css/add-to-chat.css';
 
@@ -51,8 +53,9 @@ export const AddToChat = {
 			activeTabId: TabId.guests,
 			isCopyingInviteLink: false,
 			isUpdatingInviteLink: false,
-			inviteInputValue: '',
 			isInvitingGuests: false,
+			isAddButtonDisabled: true,
+			candidates: [],
 		};
 	},
 	computed: {
@@ -78,7 +81,12 @@ export const AddToChat = {
 		},
 		isGuestTab(): boolean
 		{
-			return this.tabsEnabled && this.activeTabId === TabId.guests;
+			if (!this.canInviteGuests)
+			{
+				return false;
+			}
+
+			return this.activeTabId === TabId.guests;
 		},
 		isChat(): boolean
 		{
@@ -96,21 +104,33 @@ export const AddToChat = {
 		{
 			return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST');
 		},
-		isAddButtonDisabled(): boolean
+		isPhoneInviteAvailable(): boolean
 		{
-			return !this.inviteInputValue;
+			return FeatureManager.isFeatureAvailable(Feature.inviteByPhoneAvailable);
 		},
-		canUpdateLink(): boolean
+		canManageGuestLinks(): boolean
 		{
-			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.updateGuestLink, this.dialogId);
+			const permissionManager = PermissionManager.getInstance();
+			const canPerformActionByRole = permissionManager.canPerformActionByRole(
+				ActionByRole.manageGuestLink,
+				this.dialogId,
+			);
+			const canPerformActionByUserType = permissionManager.canPerformActionByUserType(ActionByUserType.manageGuestLink);
+
+			return canPerformActionByRole && canPerformActionByUserType;
 		},
 		isChatWithGuestsAvailable(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.isChatWithGuestsAvailable);
+			return GuestManager.getInstance().isGuestLinkAvailable(this.dialogId);
 		},
-		tabsEnabled(): boolean
+		canInviteGuests(): boolean
 		{
-			return this.dialog.type === ChatType.chat && this.isChatWithGuestsAvailable;
+			if (!this.isChatWithGuestsAvailable)
+			{
+				return false;
+			}
+
+			return this.canManageGuestLinks;
 		},
 	},
 	created()
@@ -120,7 +140,7 @@ export const AddToChat = {
 	mounted()
 	{
 		const savedTab = LocalStorageManager.getInstance().get(LocalStorageKey.invitePopupTab);
-		if (this.tabsEnabled && savedTab)
+		if (this.canInviteGuests && savedTab)
 		{
 			this.activeTabId = savedTab;
 		}
@@ -177,8 +197,8 @@ export const AddToChat = {
 			try
 			{
 				this.isCopyingInviteLink = true;
-				const inviteLink = await new GuestInvitationService().generateInviteLink(this.chatId);
-				await Utils.text.copyToClipboard(inviteLink.sharingLink.url);
+				const sharingLink = await new GuestInvitationService().generateInviteLink(this.chatId);
+				await Utils.text.copyToClipboard(sharingLink.url);
 				Notifier.onCopyLinkComplete();
 			}
 			catch
@@ -207,11 +227,64 @@ export const AddToChat = {
 				this.isUpdatingInviteLink = false;
 			}
 		},
+		onInvitationInputValidityChange(isValid: boolean)
+		{
+			this.isAddButtonDisabled = !isValid;
+		},
+		onInvitationInputChange(candidates: Candidate[])
+		{
+			this.candidates = candidates;
+		},
 		async addGuest()
 		{
+			if (this.isAddButtonDisabled)
+			{
+				return;
+			}
+
 			this.isInvitingGuests = true;
+			const result = await this.sendGuestInvitations();
+			this.showGuestInvitationsResult(result);
 			this.isInvitingGuests = false;
 			this.$emit('close');
+		},
+		async sendGuestInvitations(): Promise<Array<{status: 'fulfilled' | 'rejected', ...}>>
+		{
+			const emails = this.candidates
+				.filter((candidate) => candidate.type === InvitationType.email)
+				.map((candidate) => ({ email: candidate.value }));
+			const phones = this.candidates
+				.filter((candidate) => candidate.type === InvitationType.phone)
+				.map((candidate) => ({ phone: candidate.value }));
+
+			const invitationService = new GuestInvitationService();
+			const tasks = [];
+			if (emails.length > 0)
+			{
+				tasks.push(invitationService.inviteByEmail(this.chatId, emails));
+			}
+
+			if (phones.length > 0)
+			{
+				tasks.push(invitationService.inviteByPhone(this.chatId, phones));
+			}
+
+			return Promise.allSettled(tasks);
+		},
+		showGuestInvitationsResult(results: Array<{status: 'fulfilled' | 'rejected', ...}>)
+		{
+			const failed = results.filter((result) => result.status === 'rejected').length;
+
+			const isAllFailed = failed > 0 && failed === results.length;
+			const isAnyFailed = failed > 0 && failed < results.length;
+			if (isAllFailed)
+			{
+				Notifier.onDefaultError();
+			}
+			else if (isAnyFailed)
+			{
+				Notifier.invite.onPartialError();
+			}
 		},
 	},
 	template: `
@@ -221,7 +294,7 @@ export const AddToChat = {
 			@close="$emit('close')"
 		>
 			<TabsWrapper
-				v-if="tabsEnabled"
+				v-if="canInviteGuests"
 				:activeTabId="activeTabId"
 				@onTabSwitch="onTabSwitch"
 			/>
@@ -242,7 +315,7 @@ export const AddToChat = {
 					<template #copy-link>
 						<CopyInviteLink
 							:dialogId="dialogId"
-							:canUpdateLink="canUpdateLink"
+							:canUpdateLink="canManageGuestLinks"
 							:isUpdatingInviteLink="isUpdatingInviteLink"
 							:isCopyingInviteLink="isCopyingInviteLink"
 							@onUpdateInviteLink="updateLink"
@@ -250,7 +323,11 @@ export const AddToChat = {
 						/>
 					</template>
 					<template #invitation-input>
-						<ChatInvitationInput v-model="inviteInputValue"/>
+						<ChatInvitationInput
+							:isPhoneAllowed="isPhoneInviteAvailable"
+							@change="onInvitationInputChange"
+							@validityChange="onInvitationInputValidityChange"
+						/>
 					</template>
 				</AddGuestContent>
 				<AddToChatContent

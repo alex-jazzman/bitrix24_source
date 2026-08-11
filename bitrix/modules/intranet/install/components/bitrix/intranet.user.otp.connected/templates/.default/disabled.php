@@ -18,16 +18,27 @@ $canActivateExistingOtp = (
 		&& $arResult["OTP"]["IS_EXIST"]
 	)
 );
+// CAN_EDIT_OTP === UserPermission::canEdit() === isCurrent(): признак «редактирую свой профиль».
+// Поэтому CAN_EDIT_OTP !== 'Y' означает «текущий пользователь — не владелец профиля» (редактор ОТП на чужом).
+$canDeferOtp = (
+	$arResult["OTP"]["IS_MANDATORY"]
+	&& $arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'
+	&& $arResult["OTP"]["CAN_EDIT_OTP"] !== 'Y'
+	&& !$arResult["OTP"]["IS_EXIST"]
+);
 
 Extension::load([
 	"ui.buttons",
 	'ui.design-tokens',
 	'intranet.design-tokens',
 	'ui.system.typography',
+	'intranet.push-otp.connect-popup',
+	'ui.notification',
 ]);
 $arJSParams = [
 	"signedParameters" => $this->getComponent()->getSignedParameters(),
 	"componentName" => $this->getComponent()->getName(),
+	"otpDays" => $arResult["OTP"]["DAY_LIST"],
 	"showOtpPopup" => (isset($_GET["otp"]) && $_GET["otp"] == "Y") ? "Y" : "N",
 	//"otpRecoveryCodes" => $arResult["IS_OTP_RECOVERY_CODES_ENABLE"] ? "Y" : "N",
 
@@ -44,15 +55,25 @@ $arJSParams = [
 		<h2 class="ui-headline --lg --accent"> <?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_TITLE') ?> </h2>
 		<p class="ui-text --md"> <?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_DESCRIPTION') ?> </p>
 	</div>
-	<?php if ($canActivateExistingOtp): ?>
-	<div class="intranet-user-otp-disabled__footer" id="button-container"></div>
+	<?php if ($canActivateExistingOtp || $canDeferOtp): ?>
+	<div class="intranet-user-otp-disabled__footer" id="button-container">
+		<?php if ($canDeferOtp): ?>
+		<button
+			type="button"
+			class="intranet-user-otp-con-top-status-link"
+			data-role="intranet-otp-defer"
+			data-testid="bx-user-otp-connected-defer-button"
+		><?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_BUTTON_PROROGUE') ?></button>
+		<?php endif; ?>
+	</div>
 	<?php endif; ?>
 </div>
 
-<?php if ($canActivateExistingOtp): ?>
+<?php if ($canActivateExistingOtp || $canDeferOtp): ?>
 <script>
 	BX.ready(() => {
 		BX.Intranet.UserOtpConnected.init(<?= Json::encode($arJSParams)?>);
+		<?php if ($canActivateExistingOtp): ?>
 		const isExist = <?= $arResult['OTP']['IS_EXIST'] ? 'true' : 'false'?>;
 		const enableButton = new BX.UI.Button({
 			text: "<?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_BUTTON') ?>",
@@ -86,6 +107,7 @@ $arJSParams = [
 		});
 
 		enableButton.renderTo(BX('button-container'));
+		<?php endif; ?>
 	});
 </script>
 <?php endif; ?>

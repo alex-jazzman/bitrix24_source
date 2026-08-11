@@ -60,8 +60,10 @@ export class ActivityField extends BaseField
 
 	#updateData(data): void
 	{
-		if (!Type.isStringFilled(data.get('newEmail')) && !Type.isBoolean(data.get('newPhone'))) {
+		if (!Type.isStringFilled(data.get('newEmail')) && !Type.isStringFilled(data.get('newPhone')))
+		{
 			top.console.error('Empty new email or phone');
+
 			return;
 		}
 

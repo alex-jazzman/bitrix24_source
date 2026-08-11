@@ -1,8 +1,13 @@
 import { Dom, Text, Type } from 'main.core';
-import { Counter } from 'ui.cnt';
+import { Counter, CounterStyle } from 'ui.cnt';
+import { BIcon } from 'ui.icon-set.api.vue';
 import { IconBackgroundColor } from '../enums/icon-background-color';
+import { ICON_TO_BICON_MAP } from './icon-bicon-map';
 
 export const Icon = {
+	components: {
+		BIcon,
+	},
 	props: {
 		code: {
 			type: String,
@@ -56,6 +61,26 @@ export const Icon = {
 			};
 		},
 
+		useBIcon(): boolean
+		{
+			return ICON_TO_BICON_MAP.hasOwnProperty(this.code) && !this.backgroundUri;
+		},
+
+		bIconName(): string
+		{
+			return ICON_TO_BICON_MAP[this.code] || '';
+		},
+
+		bIconColor(): string
+		{
+			if (this.isLogMessage)
+			{
+				return 'var(--ui-color-base-40)';
+			}
+
+			return 'var(--ui-color-background-primary)';
+		},
+
 		iconStyle(): Object
 		{
 			if (Type.isStringFilled(this.backgroundColor))
@@ -75,11 +100,23 @@ export const Icon = {
 			{
 				return;
 			}
+
+			const styleMap = {
+				danger: CounterStyle.FILLED_ALERT,
+				success: CounterStyle.FILLED_SUCCESS,
+			};
+			const style = styleMap[this.counterType];
+			if (!style)
+			{
+				return;
+			}
+
 			Dom.clean(this.counterNodeContainer);
 			const counter = new Counter({
 				value: 1,
+				useAirDesign: true,
 				border: true,
-				color: Counter.Color[this.counterType.toUpperCase()],
+				style,
 			});
 			counter.renderTo(this.counterNodeContainer);
 		},
@@ -97,7 +134,13 @@ export const Icon = {
 	},
 	template: `
 		<div :class="className" :style="iconStyle">
-			<i :style="styles"></i>
+			<BIcon
+				v-if="useBIcon"
+				:name="bIconName"
+				:size="24"
+				:color="bIconColor"
+			/>
+			<i v-else :style="styles"></i>
 			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>
 	`

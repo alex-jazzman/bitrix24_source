@@ -83,9 +83,12 @@ $arResult['SMS_SENDERS'] = array();
 $smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
 
 $disabledSmsProviders = [];
-if ($arResult['BITRIX24'] && LANGUAGE_ID === 'ua')
+if ($arResult['BITRIX24'] && LANGUAGE_ID === 'ua' && \Bitrix\Main\Loader::includeModule('messageservice'))
 {
-	$disabledSmsProviders = ['smsru', 'smsastby'];
+	$disabledSmsProviders = [
+		\Bitrix\MessageService\Sender\Sms\SmsRu::ID,
+		\Bitrix\MessageService\Sender\Sms\SmsAssistentBy::ID,
+	];
 }
 
 foreach ($smsSenders as $sender)

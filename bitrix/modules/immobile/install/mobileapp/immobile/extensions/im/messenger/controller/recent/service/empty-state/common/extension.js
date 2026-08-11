@@ -82,6 +82,28 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 		}
 
 		/**
+		 * @desc Fires the optional onActivatedWhenEmpty callback if the recent list is currently
+		 * empty (the empty-state condition: no items and no selected filter). Called on tab
+		 * activation only — it does NOT render anything, so switching tabs does not re-render the
+		 * welcome screen, and a spontaneous size change (e.g. hiding the last chat) does not
+		 * trigger it. Used e.g. to auto-open the copilot draft chat when entering an empty tab.
+		 */
+		notifyActivatedWhenEmpty()
+		{
+			if (this.hasSelectedFilter || !Type.isFunction(this.props.onActivatedWhenEmpty))
+			{
+				return;
+			}
+
+			if (this.recentLocator.get('render').getItemCollectionSize() !== 0)
+			{
+				return;
+			}
+
+			void this.props.onActivatedWhenEmpty();
+		}
+
+		/**
 		 * @private
 		 */
 		async hide()

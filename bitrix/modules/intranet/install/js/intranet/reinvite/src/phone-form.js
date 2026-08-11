@@ -1,5 +1,6 @@
 import { Form } from './form';
-import { Tag, Type, Loc } from 'main.core';
+import { Tag, Loc } from 'main.core';
+import 'phone_number';
 
 export class PhoneForm extends Form
 {

@@ -3566,11 +3566,6 @@ export class Grid extends BX.Kanban.Grid
 			});
 		})
 
-		if (items.length <= 1)
-		{
-			return;
-		}
-
 		this.actionPanel.appendItem({
 			id: 'kanban_category',
 			text: Loc.getMessage('CRM_KANBAN_PANEL_CATEGORY2'),

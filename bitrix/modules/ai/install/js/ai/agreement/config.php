@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/agreement.bundle.js',
 	'rel' => [
 		'ai.engine',
+		'main.core',
 		'main.popup',
 		'ui.buttons',
-		'main.core',
 		'ui.notification',
 	],
 	'skip_core' => false,

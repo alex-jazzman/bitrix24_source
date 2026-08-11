@@ -96,95 +96,24 @@ function sanitizeNode(node: Object, schema: Object): void
 	}
 }
 
-// Lift block-level nodes that landed inside an inline-only container out to the parent level.
-// `@tiptap/markdown` parses `![](url)` (and other block-level extensions with inline markdown tokens)
-// as inline children of the surrounding paragraph, producing JSON like `paragraph[text, image, text]`.
-// That JSON is schema-illegal because `image` has `inline: false, group: 'block'`. PMNode.fromJSON
-// doesn't validate content-model recursively, so the bad block sneaks past toValidBlock and only
-// blows up later at editor.commands.insertContent: "Invalid content for node paragraph".
-//
-// Returned shape:
-//   - a single normalized JSON node, OR
-//   - an array of JSON nodes when the container had to be split around a block child.
-// Callers must spread arrays into the parent's `content`.
-function flattenInlineBlocks(node: Object, schema: Object): Object | Array<Object>
+// Wrap a top-level inline node in a paragraph. Asset nodes like `imageAttachment` are inline,
+// so a stray inline node at the document root (e.g. from a degraded parse or legacy content) is
+// schema-illegal: `doc` accepts blocks only. One paragraph wrapper makes it legal without the old
+// "lift block out of inline" heuristic, which mis-fired on code blocks and other content.
+function normalizeTopLevelInline(blocks: Array<Object>, schema: Object): Array<Object>
 {
-	if (!node || typeof node !== 'object' || !Array.isArray(node.content) || node.content.length === 0)
-	{
-		return node;
-	}
-
-	const nodeType = schema.nodes[node.type];
-	const normalizedChildren = [];
-	for (const child of node.content)
-	{
-		const flat = flattenInlineBlocks(child, schema);
-		if (Array.isArray(flat))
-		{
-			normalizedChildren.push(...flat);
-		}
-		else if (flat !== null && flat !== undefined)
-		{
-			normalizedChildren.push(flat);
-		}
-	}
-
-	if (!nodeType || !nodeType.inlineContent)
-	{
-		// Container allows blocks (or unknown type — leave structure intact for toValidBlock to handle).
-		return { ...node, content: normalizedChildren };
-	}
-
-	// Inline-only container. Split around block children.
 	const out = [];
-	let inlineRun = null;
-	let sawAnyChild = false;
-	for (const child of normalizedChildren)
+	for (const block of blocks)
 	{
-		const childType = schema.nodes[child.type];
-		const isBlock = Boolean(childType && childType.isBlock);
-
-		if (!isBlock)
+		const nodeType = schema.nodes[block?.type];
+		if (nodeType && nodeType.isInline)
 		{
-			if (inlineRun === null)
-			{
-				inlineRun = [];
-			}
-			inlineRun.push(child);
-			sawAnyChild = true;
-			continue;
+			out.push({ type: 'paragraph', content: [block] });
 		}
-
-		if (inlineRun !== null)
+		else
 		{
-			if (inlineRun.length > 0)
-			{
-				out.push({ ...node, content: inlineRun });
-			}
-			inlineRun = null;
+			out.push(block);
 		}
-		else if (!sawAnyChild)
-		{
-			// Block child appears with no preceding inline content. Some parents (e.g. listItem with
-			// content 'paragraph block*') require a leading inline container; emit an empty clone so
-			// downstream schema validation has the canonical first slot filled.
-			out.push({ ...node, content: [] });
-		}
-		out.push(child);
-		sawAnyChild = true;
-	}
-	if (inlineRun !== null && inlineRun.length > 0)
-	{
-		out.push({ ...node, content: inlineRun });
-	}
-
-	if (out.length === 0)
-	{
-		return { ...node, content: [] };
-	}
-	if (out.length === 1)
-	{
-		return out[0];
 	}
 
 	return out;
@@ -299,24 +228,9 @@ export function safeParseMarkdown(
 	const schema = editor.view.state.schema;
 	sanitizeNode(parsed, schema);
 
-	// Lift block-level nodes out of inline-only containers (e.g. image inside paragraph).
-	// Tiptap's markdown lexer emits images as inline tokens, but the editor schema declares
-	// image (and other media/attachment nodes) as block — so the raw JSON is schema-illegal.
-	// Without flattening, editor.commands.insertContent throws "Invalid content for node paragraph"
-	// on the paste path, and prosemirrorJSONToYDoc silently stores bad JSON on the DB→YJS path.
-	const flatContent = [];
-	for (const block of parsed.content)
-	{
-		const flat = flattenInlineBlocks(block, schema);
-		if (Array.isArray(flat))
-		{
-			flatContent.push(...flat);
-		}
-		else if (flat !== null && flat !== undefined)
-		{
-			flatContent.push(flat);
-		}
-	}
+	// Image/asset nodes are inline, so `![](url)` lands legally inside its paragraph — no lifting needed.
+	// Only guard against a stray inline node at the document root.
+	const flatContent = normalizeTopLevelInline(parsed.content, schema);
 
 	const blocks = [];
 	let degraded = false;

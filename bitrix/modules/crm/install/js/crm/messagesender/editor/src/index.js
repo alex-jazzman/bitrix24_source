@@ -1,18 +1,21 @@
-import type { Appearance, Backend, Channel, ChannelPosition, PromoBanner } from './editor';
-import { Editor } from './editor';
-// styles reused around all components
-import './css/base.css';
-import 'ui.design-tokens';
-import 'ui.design-tokens.air';
+import {
+	type Backend,
+	type Channel,
+	type From,
+	type To,
+	replaceCustomMessagePlaceholders,
+} from 'messageservice.message.editor';
 
-export {
-	Editor,
-};
+import { Editor, type State, type EditorOptions, type Context } from './editor';
+
+export { Editor, replaceCustomMessagePlaceholders };
 
 export type {
-	Appearance,
-	PromoBanner,
-	Channel,
+	State,
+	EditorOptions,
+	Context,
 	Backend,
-	ChannelPosition,
+	Channel,
+	From,
+	To,
 };

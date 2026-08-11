@@ -13,6 +13,7 @@ use Bitrix\Crm\Conversion\DealConversionWizard;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\Field\DefaultValue\CloseDateConfigurator;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -22,6 +23,7 @@ use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Web\Json;
 
 if (!CModule::IncludeModule('crm'))
@@ -184,6 +186,7 @@ elseif($action === 'SAVE')
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 	$viewMode = ($params['VIEW_MODE'] ?? null);
+	$analytics = ($_POST['ANALYTICS'] ?? []);
 
 	if(($ID > 0 && !\CCrmDeal::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmDeal::CheckCreatePermission($currentUserPermissions, $categoryID))
@@ -889,6 +892,7 @@ elseif($action === 'SAVE')
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
 			$saveOptions = [
 				'REGISTER_SONET_EVENT' => true,
+				'ANALYTICS' => $analytics,
 				'eventId' => $request->getPost('EVENT_ID'),
 			];
 
@@ -917,7 +921,15 @@ elseif($action === 'SAVE')
 
 				if(!isset($fields['CLOSEDATE']))
 				{
-					$fields['CLOSEDATE'] = ConvertTimeStamp($now + (7 * 86400), 'SHORT', SITE_ID);
+					$timestamp =
+						ServiceLocator::getInstance()
+							->get(CloseDateConfigurator::class)
+							?->getDefaultValue(\CCrmOwnerType::Deal)
+							->getTimestamp()
+						?? $now + (7 * 86400)
+					;
+
+					$fields['CLOSEDATE'] = ConvertTimeStamp($timestamp, 'SHORT', SITE_ID);
 				}
 
 				if(!isset($fields['OPENED']))
@@ -975,6 +987,7 @@ elseif($action === 'SAVE')
 					'VIEW_MODE' => $viewMode,
 					'STAGE_ID' => $fields['STAGE_ID'],
 				];
+
 				$ID = $entity->Add($fields, true, $saveOptions);
 				if ($ID <= 0)
 				{
@@ -1528,6 +1541,11 @@ elseif($action === 'CONVERT')
 		}
 	}
 
+	if (isset($_POST['ANALYTICS']) && is_array($_POST['ANALYTICS']))
+	{
+		\Bitrix\Crm\Service\Container::getInstance()->getContext()->setAnalytics($_POST['ANALYTICS']);
+	}
+
 	$config->setOriginUrl(new Main\Web\Uri(isset($_POST['ORIGIN_URL']) ? $_POST['ORIGIN_URL'] : ''));
 
 	DealConversionWizard::remove($entityID);
@@ -2008,6 +2026,9 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
 			'MODULE_ID' => $moduleId,
+			'COMPONENT_AJAX_DATA' => [
+				'POST_FORM_ANALYTICS' => $_POST['POST_FORM_ANALYTICS_DATA']['data'] ?? [],
+			],
 			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
 			'HOST_COLUMN_FOR_QUICK_EDITOR_ID' => $_POST['HOST_COLUMN_FOR_QUICK_EDITOR_ID'] ?? null,
 		)

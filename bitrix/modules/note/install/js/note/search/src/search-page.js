@@ -1,5 +1,6 @@
 import { Loc, Type } from 'main.core';
 import 'ui.notification';
+import { NoteAnalytics } from 'note.analytics';
 import { DocumentList } from 'note.ui.document-list';
 import { SearchService } from './services/search-service';
 import { syncIMEModel } from './utils/sync-ime-model';
@@ -30,6 +31,7 @@ export const NoteSearchPageComponent = {
 			page: 0,
 			hasError: false,
 			requestId: 0,
+			analyticsClickTracked: false,
 		};
 	},
 	computed: {
@@ -99,6 +101,21 @@ export const NoteSearchPageComponent = {
 				clearTimeout(this.debounceTimer);
 				this.$emit('update-query', this.inputQuery.trim());
 			}
+		},
+		onSearchClick(): void
+		{
+			// Deliberate pointer click into the search field. mousedown never fires from the
+			// initial autofocus or from a tab-switch refocus, so no false/duplicate events.
+			if (!this.analyticsClickTracked)
+			{
+				NoteAnalytics.searchClicked(true);
+				this.analyticsClickTracked = true;
+			}
+		},
+		onBlur(): void
+		{
+			// Re-arm click_search so a click after leaving the field counts again.
+			this.analyticsClickTracked = false;
 		},
 		async runSearch(append: boolean): Promise<void>
 		{
@@ -176,6 +193,8 @@ export const NoteSearchPageComponent = {
 			{
 				return;
 			}
+			// Opening a collection tile from the full search-results page.
+			NoteAnalytics.collectionViewed('search_page');
 			this.$router.push({ name: 'workspace', params: { id: collectionId } });
 		},
 		showErrorToast(text: string): void
@@ -205,6 +224,8 @@ export const NoteSearchPageComponent = {
 					@compositionend="onInput"
 					@change="onInput"
 					@keydown="onKeydown"
+					@mousedown="onSearchClick"
+					@blur="onBlur"
 					autofocus
 				/>
 			</div>

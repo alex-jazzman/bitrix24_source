@@ -80,9 +80,6 @@ export const Empty = {
 		{
 			return {
 				text: this.loc('BOOKING_BOOKING_SOON_HINT'),
-				popupOptions: {
-					offsetLeft: -60,
-				},
 			};
 		},
 	},

@@ -1,10 +1,9 @@
-import { type JsonObject } from 'main.core';
-
 import { Messenger } from 'im.public';
 import { CopilotList } from 'im.v2.component.list.items.copilot';
 import { ActionByUserType, ChatType, Layout } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { CopilotChatService } from 'im.v2.provider.service.copilot';
@@ -18,10 +17,10 @@ export const AiAssistantListContainer = {
 	name: 'AiAssistantListContainer',
 	components: { CopilotList, AiAssistantCreateChatButton },
 	emits: ['selectChat'],
-	data(): JsonObject
+	data()
 	{
 		return {
-			isCreatingChat: false,
+			isCreating: false,
 		};
 	},
 	computed:
@@ -48,7 +47,40 @@ export const AiAssistantListContainer = {
 		{
 			this.$emit('selectChat', { layoutName: Layout.copilot, dialogId });
 		},
-		getCopilotChatService(): CopilotChatService
+		async createChat(): Promise<void>
+		{
+			if (this.isCreating)
+			{
+				return;
+			}
+
+			Analytics.getInstance().chatCreate.onStartClick(ChatType.copilot);
+
+			if (!FeatureManager.isFeatureAvailable(Feature.isCopilotDraftChatAvailable))
+			{
+				this.isCreating = true;
+				try
+				{
+					const newDialogId = await this.getCopilotService().createDefaultChat();
+					Analytics.getInstance().copilot.onCreateChat(newDialogId);
+					Analytics.getInstance().ignoreNextChatOpen(newDialogId);
+					void Messenger.openCopilot(newDialogId);
+				}
+				catch (error)
+				{
+					Logger.error('AiAssistantListContainer: createChat failed', error);
+				}
+				finally
+				{
+					this.isCreating = false;
+				}
+
+				return;
+			}
+
+			void Messenger.openCopilot();
+		},
+		getCopilotService(): CopilotChatService
 		{
 			if (!this.copilotService)
 			{
@@ -56,19 +88,6 @@ export const AiAssistantListContainer = {
 			}
 
 			return this.copilotService;
-		},
-		async createChat()
-		{
-			Analytics.getInstance().chatCreate.onStartClick(ChatType.copilot);
-			this.isCreatingChat = true;
-
-			const newDialogId = await this.getCopilotChatService().createDefaultChat()
-				.catch(() => {
-					this.isCreatingChat = false;
-				});
-
-			this.isCreatingChat = false;
-			void Messenger.openCopilot(newDialogId);
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -81,7 +100,7 @@ export const AiAssistantListContainer = {
 				<div class="bx-im-list-container-copilot__header_title">{{ headerTitle }}</div>
 				<AiAssistantCreateChatButton
 					v-if="canCreate"
-					:isCreating="isCreatingChat"
+					:isCreating="isCreating"
 					@newChat="createChat"
 				/>
 			</div>

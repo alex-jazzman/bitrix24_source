@@ -7,7 +7,7 @@ import { Model, NotificationFieldsMap, ResourceEntityType, Communication } from 
 import type { SlotRange } from 'booking.model.resources';
 import type { IntegrationCalendarType, IntegrationCalendarDataType, Skus } from 'booking.model.resources';
 
-import { getEmptyResource, getResource } from './lib';
+import { getEmptyResource, getResource, resolveDefaultSenderCode } from './lib';
 import type {
 	ResourceCreationWizardState,
 	InitPayload,
@@ -209,6 +209,12 @@ export class ResourceCreationWizardModel extends BuilderModel
 							'senderCode',
 						].map((field) => [field, resourceType[field]]),
 					);
+
+					if (!notificationsData.senderCode)
+					{
+						const senders = rootGetters[`${Model.Notifications}/getSenders`];
+						notificationsData.senderCode = resolveDefaultSenderCode(senders);
+					}
 
 					Object.assign(patch, notificationsData);
 				}

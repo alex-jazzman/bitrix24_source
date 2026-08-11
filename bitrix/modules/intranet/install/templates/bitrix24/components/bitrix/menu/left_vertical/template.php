@@ -17,6 +17,7 @@ CJSCore::Init([
 	'intranet.menu.analytics',
 	'ui.icon-set',
 	'ui.icon-set.outline',
+	'main.loader',
 ]);
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE") ? true : false;
 $this->setFrameMode(true);
@@ -425,7 +426,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					<?=Loc::getMessage("MENU_EDIT_READY_FULL_MSGVER_1")?>
 				</button>
 			</div>
-			<?php if ($arResult['CURRENT_PRESET_ID'] !== 'collab'): ?>
+			<?php if ($arResult['SHOW_SETTINGS_BUTTON']): ?>
 			<button class="menu-item-block menu-settings --footer"
 				data-role="menu-settings-item"
 				data-storage=""
@@ -444,10 +445,10 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		</div>
 	</div>
 </nav>
+<div class="left-menu-popup-wrapper" id="left-menu-preset-popup" style="display: none"></div>
 
 <div class="menu-items-stub menu-items-block__scope"></div>
 <?
-include($_SERVER["DOCUMENT_ROOT"] . $this->GetFolder() . "/menu_popup.php");
 
 $arJSParams = array(
 	"ajaxPath" => $this->GetFolder() . "/ajax.php",
@@ -470,6 +471,7 @@ $arJSParams = array(
 	'showLicenseButton' => $arResult['SHOW_LICENSE_BUTTON'] ?? false,
 	'licenseButtonPath' => $arResult['B24_LICENSE_PATH'] ?? '',
 	'isMessengerEmbedded' => AirTemplate::isMessengerEmbedded() ? 'Y' : 'N',
+	'currentPresetId' => $arResult['CURRENT_PRESET_ID'],
 );
 ?>
 
@@ -560,30 +562,10 @@ BX.message({
 	MENU_LICENSE_ALL: '<?=GetMessageJS("MENU_LICENSE_ALL")?>',
 });
 BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)?>);
-<?
 
-if ($arResult["SHOW_PRESET_POPUP"] === true)
-{
-?>
-	BX.ready(() => {
-		setTimeout(() => {
-			BX.Intranet.LeftMenu.showGlobalPreset();
-		}, 0);
-	});
-<?
-	if (isset($arResult["SHOW_IMPORT_CONFIGURATION"]))
-	{
-	?>
-BX.addCustomEvent(BX.Intranet.LeftMenu, 'BX.Intranet.LeftMenu::onPresetIsPostponed', function() {
+<?php if (isset($arResult["SHOW_IMPORT_CONFIGURATION"])):?>
 	BX.SidePanel.Instance.open('<?=\CUtil::JSEscape($arResult["URL_IMPORT_CONFIGURATION"])?>');
-});<?
-	}
-}
-elseif (isset($arResult["SHOW_IMPORT_CONFIGURATION"]))
-{
-?>BX.SidePanel.Instance.open('<?=\CUtil::JSEscape($arResult["URL_IMPORT_CONFIGURATION"])?>');<?
-}
-?>
+<?php endif;?>
 </script>
 <?php
 $frame = $this->createFrame()->begin('');

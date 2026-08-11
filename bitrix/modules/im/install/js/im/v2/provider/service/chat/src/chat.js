@@ -56,6 +56,11 @@ export class ChatService
 		return this.#loadService.loadChatWithContext(dialogId, messageId);
 	}
 
+	loadCopilotDraftChat(): Promise<{ dialogId: string, chatId: number }>
+	{
+		return this.#loadService.loadCopilotDraftChat();
+	}
+
 	loadComments(postId: number): Promise
 	{
 		return this.#loadService.loadComments(postId);

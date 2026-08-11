@@ -52,8 +52,7 @@ export const DatePlan = {
 		{
 			if (this.isTemplate)
 			{
-				const isEmpty = !this.task.startDatePlanAfter && !this.task.endDatePlanAfter;
-				if (isEmpty)
+				if (this.isEmpty)
 				{
 					return [{
 						title: datePlanMeta.title,
@@ -83,8 +82,7 @@ export const DatePlan = {
 				].filter(({ props: { dateTs } }) => dateTs);
 			}
 
-			const isEmpty = !this.task.startPlanTs && !this.task.endPlanTs;
-			if (isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime))
+			if (this.isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime))
 			{
 				return [{
 					title: datePlanMeta.title,
@@ -108,6 +106,15 @@ export const DatePlan = {
 					},
 				},
 			].filter(({ props: { dateTs } }) => dateTs);
+		},
+		isEmpty(): boolean
+		{
+			if (this.isTemplate)
+			{
+				return !this.task.startDatePlanAfter && !this.task.endDatePlanAfter;
+			}
+
+			return !this.task.startPlanTs && !this.task.endPlanTs;
 		},
 		readonly(): boolean
 		{
@@ -133,7 +140,7 @@ export const DatePlan = {
 			@mouseleave="isHovered = false"
 		>
 			<FieldHoverButton
-				v-if="!readonly"
+				v-if="!readonly && !isEmpty"
 				:icon="Outline.EDIT_L"
 				:isVisible="isHovered"
 				@click="handleClick"

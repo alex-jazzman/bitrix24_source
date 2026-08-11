@@ -12,8 +12,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 	const defaultConnectionOptions = {"OfferToReceiveAudio": "true", "OfferToReceiveVideo": "true"};
 	const signalingWaitReplyPeriod = 10000;
-	const invitePeriod = 30000;
-
 	const ajaxActions = Object.freeze({
 		decline: "call.Call.decline",
 	});
@@ -129,6 +127,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			});
 
 			this._videoEnablePending = false;
+
+			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()
@@ -235,7 +235,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				this.waitForAnswerTimeout = setTimeout(() =>
 				{
 					this.__onNoAnswer();
-				}, invitePeriod);
+				}, this.invitePeriod);
 
 				if (config.userData && config.show)
 				{
@@ -352,7 +352,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 						this.plainCallJwt.on(JNBXCall.Events.Failed, this.__onCallDisconnectedHandler);
 
 						this.signaling.sendMicrophoneState(!this.muted);
-						this.signaling.sendCameraState(this.videoEnabled);
+						this.signaling.sendCameraState(this.users, this.videoEnabled);
 						MediaDevices.startCapture();
 
 						if (this.videoAllowedFrom == BX.Call.UserMnemonic.none)
@@ -915,8 +915,15 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				data.reason = reason;
 			}
 
-			callEngine.getRestClient().callMethod(ajaxActions.decline, data).then(() => this.destroy());
-		};
+			return callEngine.getRestClient().callMethod(ajaxActions.decline, data)
+				.then(() => {
+					this.destroy();
+				})
+				.catch((error) => {
+					CallUtil.error('Failed to send decline to server', error);
+					this.destroy();
+				});
+		}
 
 		hangup()
 		{
@@ -1388,42 +1395,90 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		__onCallReconnecting()
 		{
-			this._reconnectionEventCount++;
-			this.eventEmitter.emit(BX.Call.Event.onReconnecting, [{
-				reconnectionEventCount: this._reconnectionEventCount,
-			}]);
+			let needStopSignalingReconnecting = true;
+			try
+			{
+				this.isSignalingReconnecting = true;
+				this._reconnectionEventCount++;
+				console.log(`Trying to reconnect to signaling. Attempt ${this._reconnectionEventCount}`);
+				this.eventEmitter.emit(BX.Call.Event.onReconnecting, [{
+					reconnectionEventCount: this._reconnectionEventCount,
+				}]);
 
-			CallUtil.getCallConnectionDataById(this.uuid)
-				.then((response) => {
-					if (this.ready && this.plainCallJwt)
-					{
-						const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData);
-						this.plainCallJwt.updateSignalingUrl(signalingUrl);
-					}
-					else
-					{
-						this.#beforeLeaveCall();
-					}
-				})
-				.catch((error) => {
-					const errorPreventingReconnection = Object.values(BX.Call.ErrorPreventingReconnection);
+				CallUtil.getCallConnectionDataById(this.uuid)
+					.then((response) => {
+						if (this.ready && this.plainCallJwt)
+						{
+							const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData);
+							this.plainCallJwt.updateSignalingUrl(signalingUrl);
 
-					if (errorPreventingReconnection.includes(error.errorCode))
-					{
-						console.error('errorPreventingReconnection fatal error');
-						this.onFatalError(error.code);
-					}
-					else if (this._reconnectionEventCount < this._maxReconnectionAttempts)
-					{
-						setTimeout(() => {
-							this.__onCallReconnecting();
-						}, 5000);
-					}
-					else
-					{
+							const webrtcConnectionPeer = this.peers?.[this.failedWebrtcConnectionPeerId];
+
+							// stop signaling reconnecting before webrtc reconnecting start
+							delete this.failedWebrtcConnectionPeerId;
+							this.isSignalingReconnecting = false;
+							needStopSignalingReconnecting = false;
+
+							if (webrtcConnectionPeer)
+							{
+								// repeat webrtc connection after successful signaling reconnection
+								webrtcConnectionPeer.reconnect();
+								webrtcConnectionPeer.updateCalculatedState();
+							}
+						}
+						else
+						{
+							this.#beforeLeaveCall();
+						}
+					})
+					.catch((error) => {
+						const errorPreventingReconnection = Object.values(BX.Call.ErrorPreventingReconnection);
+
+						if (errorPreventingReconnection.includes(error.errorCode))
+						{
+							console.error('errorPreventingReconnection fatal error');
+							this.onFatalError(error.code);
+						}
+						else if (this._reconnectionEventCount < this._maxReconnectionAttempts)
+						{
+							needStopSignalingReconnecting = false;
+							setTimeout(() => {
+								this.__onCallReconnecting();
+							}, 5000);
+						}
+						else
+						{
+							this.#beforeLeaveCall();
+						}
+					})
+					.catch((error) => {
+						console.error(error);
 						this.#beforeLeaveCall();
+					})
+					.finally(() => {
+						if (needStopSignalingReconnecting)
+						{
+							delete this.failedWebrtcConnectionPeerId;
+							this.isSignalingReconnecting = false;
+						}
+					});
+			}
+			catch (error)
+			{
+				console.error(error);
+				try
+				{
+					this.#beforeLeaveCall();
+				}
+				finally
+				{
+					if (needStopSignalingReconnecting)
+					{
+						delete this.failedWebrtcConnectionPeerId;
+						this.isSignalingReconnecting = false;
 					}
-				});
+				}
+			}
 		}
 
 		__onCallReconnected()
@@ -1769,6 +1824,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					break;
 				}
 
+				case clientEvents.cameraState:
+				{
+					const cameraStateValue = message.cameraState === true
+						|| message.cameraState === 'Y'
+						|| message.cameraState === 1
+						|| message.cameraState === '1';
+
+					this.eventEmitter.emit(BX.Call.Event.onUserCameraState, [
+						message.senderId,
+						cameraStateValue,
+					]);
+				}
+
 				case clientEvents.emotion:
 				{
 					this.eventEmitter.emit(BX.Call.Event.onUserEmotion, [
@@ -1822,8 +1890,10 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				this.plainCallJwt = null;
 			}
 
+			this.eventEmitter.emit(BX.Call.Event.onHangup);
+
 			// stop media streams
-			this.unsubscribeHardwareChanges();
+			// this.unsubscribeHardwareChanges();
 			for (let tag in this.localStreams)
 			{
 				if (this.localStreams[tag])
@@ -1927,6 +1997,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.offersStack = 0;
 
 			this.trackList = {};
+			this.remoteCameraState = true;
 
 			this._incomingVideoTrack = null;
 			this._incomingScreenTrack = null;
@@ -2058,7 +2129,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			{
 				clearTimeout(this.callingTimeout);
 			}
-			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), invitePeriod);
+			this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 			this.updateCalculatedState();
 		}
 
@@ -2087,7 +2158,10 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			}
 			else
 			{
-				this.callbacks.onStreamRemoved({ userId : this.userId });
+				if (!this.incomingVideoTrack)
+				{
+					this.callbacks.onStreamRemoved({ userId : this.userId });
+				}
 			}
 		}
 		setEndpoint(endpoint)
@@ -2153,6 +2227,13 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		updateCalculatedState()
 		{
+			if (this.call?.isSignalingReconnecting
+				&& this.peerConnection?.iceConnectionState === 'failed'
+				&& this.call?.failedWebrtcConnectionPeerId)
+			{
+				return;
+			}
+
 			var calculatedState = this.calculateState();
 
 			if (this.calculatedState != calculatedState)
@@ -2435,10 +2516,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				return;
 			}
 
-			if (trackList)
-			{
-				this.trackList = CallUtil.array_flip(trackList);
-			}
+			this.trackList = trackList ? CallUtil.array_flip(trackList) : {};
 
 			if (this.peerConnection)
 			{
@@ -2609,10 +2687,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				return;
 			}
 
-			if (trackList)
-			{
-				this.trackList = CallUtil.array_flip(trackList);
-			}
+			this.trackList = trackList ? CallUtil.array_flip(trackList) : {};
 
 			let sessionDescription = {
 				type: "answer",
@@ -2738,6 +2813,15 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				return;
 			}
 
+			if (this.call?.isSignalingReconnecting
+				&& this.peerConnection?.iceConnectionState === 'failed'
+				&& this.call?.failedWebrtcConnectionPeerId)
+			{
+				console.log('Wait signaling reconnection');
+
+				return;
+			}
+
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
 			this.connectionAttempt++;
 			if (!this.call)
@@ -2748,15 +2832,23 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			if (this.connectionAttempt > 3)
 			{
 				this.log("Error: Too many reconnection attempts, giving up");
+				console.log('Too many reconnection attempts, giving up');
 				this.failureReason = "Could not connect to user in time";
 				this._destroyPeerConnection();
 				this.updateCalculatedState();
+
 				return;
 			}
 
-			if (!this.wasIceConnectionStateDisconnected)
+			if (!this.call?.plainCallJwt)
 			{
-				this.callbacks.onReconnecting();
+				this.log('Plain call jwt was ended, giving up');
+				console.log('Plain call jwt was ended, giving up');
+				this.failureReason = 'Plain call jwt was ended';
+				this._destroyPeerConnection();
+				this.updateCalculatedState();
+
+				return;
 			}
 
 			console.trace("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
@@ -2903,16 +2995,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				}
 
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
-				this.wasIceConnectionStateDisconnected = false;
 			}
 			else if (this.peerConnection.iceConnectionState === "failed")
 			{
 				this.log("ICE connection failed. Trying to restore connection immediately");
+				if (this.call?.isSignalingReconnecting)
+				{
+					// remember peer to repeat webrtc connection after successful signaling reconnection
+					this.call.failedWebrtcConnectionPeerId = this.userId;
+				}
 				this.reconnect();
-			}
-			else if (this.peerConnection.iceConnectionState === "disconnected")
-			{
-				this.wasIceConnectionStateDisconnected = true;
 			}
 
 			this.updateCalculatedState();
@@ -2977,40 +3069,37 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.call.log("_onPeerConnectionRemoveStream", e);
 		}
 
-		_onPeerConnectionSignalingStateChange()
+		updateIncomingTracksFromPeerConnection()
 		{
+			if (!this.peerConnection || this.peerConnection.signalingState !== 'stable')
+			{
+				return;
+			}
+
 			let screenTrack = null;
 			let videoTrack = null;
-			if (this.peerConnection.signalingState == "stable")
-			{
-				this.peerConnection.getTransceivers().forEach(tr => {
-					if (
-						(tr.currentDirection == "sendrecv" || tr.currentDirection == "recvonly")
-						&& (tr.receiver && tr.receiver.track)
-					)
+
+			this.peerConnection.getTransceivers().forEach(tr => {
+				if (
+					(tr.currentDirection == "sendrecv" || tr.currentDirection == "recvonly")
+					&& (tr.receiver && tr.receiver.track)
+				)
+				{
+					const track = tr.receiver.track;
+
+					if (track.kind === 'video')
 					{
-						let track = tr.receiver.track;
-						console.log(`track received. mid: ${tr.mid} kind: ${track.kind}`);
-						if (track.kind === 'audio')
+						if (this.trackList[tr.mid] === 'screen')
 						{
-							// do nothing
+							screenTrack = track;
 						}
-						if (track.kind === 'video')
+						else if (this.trackList[tr.mid] === 'video' || this.remoteCameraState === true)
 						{
-							if (this.trackList[tr.mid] === 'screen')
-							{
-								screenTrack = track;
-							}
-							else
-							{
-								videoTrack = track;
-							}
+							videoTrack = track;
 						}
 					}
-				})
-
-				this.call.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
-			}
+				}
+			});
 
 			// if we set screen track before video track in Android after screen track was deleted on the other side
 			// we will get "MediaStreamTrack has been disposed" error
@@ -3024,6 +3113,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				this.incomingVideoTrack = videoTrack;
 				this.incomingScreenTrack = screenTrack;
 			}
+		}
+
+		_onPeerConnectionSignalingStateChange()
+		{
+			if (this.peerConnection.signalingState == "stable")
+			{
+				this.call.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
+			}
+
+			this.updateIncomingTracksFromPeerConnection();
 		}
 
 		stopSignalingTimeout()

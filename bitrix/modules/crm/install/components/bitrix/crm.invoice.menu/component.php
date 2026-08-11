@@ -164,14 +164,20 @@ if($arParams['TYPE'] === 'list')
 						$componentParams
 					),
 				],
-				'optionsFields' => array(
-					'EXPORT_ALL_FIELDS' => array(
+				'optionsFields' => [
+					'EXPORT_ALL_FIELDS' => [
 						'name' => 'EXPORT_ALL_FIELDS',
 						'type' => 'checkbox',
 						'title' => Loc::getMessage('INVOICE_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
-						'value' => 'N'
-					),
-				),
+						'value' => 'N',
+					],
+					'EXPORT_PRODUCT_FIELDS' => [
+						'name' => 'EXPORT_PRODUCT_FIELDS',
+						'type' => 'checkbox',
+						'title' => Loc::getMessage('INVOICE_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS'),
+						'value' => 'N',
+					],
+				],
 				'messages' => array(
 					'DialogTitle' => Loc::getMessage('INVOICE_EXPORT_CSV_TITLE'),
 					'DialogSummary' => Loc::getMessage('INVOICE_STEXPORT_SUMMARY'),

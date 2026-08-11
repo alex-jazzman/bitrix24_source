@@ -1,127 +1,163 @@
+import { Text } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { MessageBox } from 'ui.dialogs.messagebox';
+import { type MenuItemOptions } from 'ui.vue3.components.menu';
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
 
-import { PORT_TYPES } from '../../../shared/constants';
-
-import { diagramStore as useDiagramStore } from '../../../entities/blocks';
-import {
-	NodeSettingsLayout,
-	useNodeSettingsStore,
-	NodeSettingsPreview,
-} from '../../../entities/node-settings';
 import { useAppStore } from '../../../entities/app';
-import {
-	EditNodeSettingsForm,
-	AddSettingsItem,
-	CancelSettingsButton,
-	SaveSettingsButton,
-} from '../../../features/node-settings';
+import { diagramStore as useDiagramStore } from '../../../entities/blocks';
+import { NodeSettingsLayout, useNodeSettingsStore, EVENT_NAMES } from '../../../entities/node-settings';
+import { useLoc } from '../../../shared/composables';
+import { NODE_SETTINGS_TABS } from '../../../shared/constants';
+import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
+import { EditorChartTabs, SaveSettingsButton, CancelSettingsButton } from '../../../shared/ui';
+import { getBackgroundImage } from '../../../shared/utils';
+import { BlockMediator } from '../../blocks/lib';
+import { BasicNodeSettings } from './basic-node-settings';
+import { NodeSettingsRules } from './node-settings-rules';
+import { useDefaultTitle } from '../../../features/catalog';
+type NodeSettingsSetup = {
+	getMessage: () => string;
+	getBackgroundImage: () => string;
+	blockMediator: BlockMediator;
+};
 
 // @vue/component
 export const NodeSettings = {
 	name: 'NodeSettings',
 	components: {
-		NodeSettingsLayout,
-		EditNodeSettingsForm,
-		CancelSettingsButton,
+		BasicNodeSettings,
+		NodeSettingsRules,
+		EditorChartTabs,
 		SaveSettingsButton,
-		NodeSettingsPreview,
-		AddSettingsItem,
+		CancelSettingsButton,
+		NodeSettingsLayout,
+	},
+	setup(): NodeSettingsSetup
+	{
+		const { getMessage } = useLoc();
+
+		return {
+			getMessage,
+			getBackgroundImage,
+			blockMediator: new BlockMediator(),
+		};
 	},
 	computed:
 	{
-		...mapState(useDiagramStore, ['documentType', 'connections']),
+		...mapState(useDiagramStore, ['documentType']),
 		...mapState(useNodeSettingsStore, [
-			'block',
-			'isShown',
-			'nodeSettings',
 			'isLoading',
-			'isSaving',
+			'isShown',
+			'block',
+			'nodeSettings',
 			'ports',
 		]),
-		...mapWritableState(useNodeSettingsStore, ['isSaving']),
+		...mapWritableState(useNodeSettingsStore, ['isSaving', 'selectedTabId']),
+		moreMenuItems(): Array<MenuItemOptions>
+		{
+			return this.block ? this.blockMediator.getSettingsBlockMenuOptions(this.block) : [];
+		},
+		tabs(): Map
+		{
+			return new Map(
+				[
+					[
+						NODE_SETTINGS_TABS.basic,
+						{
+							id: NODE_SETTINGS_TABS.basic,
+							title: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TAB_BASIC'),
+							content: BasicNodeSettings,
+						},
+					],
+					[
+						NODE_SETTINGS_TABS.rules,
+						{
+							id: NODE_SETTINGS_TABS.rules,
+							title: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TAB_RULES'),
+							content: NodeSettingsRules,
+						},
+					],
+				],
+			);
+		},
 	},
 	methods:
 	{
-		...mapActions(useNodeSettingsStore, [
-			'toggleVisibility',
-			'toggleRuleSettingsVisibility',
-			'reset',
-			'setCurrentRule',
-			'deleteRuleSettings',
-			'saveForm',
-			'discardFormSettings',
-			'addRulePort',
-			'deletePort',
-		]),
-		...mapActions(useDiagramStore, [
-			'updateNodeTitle',
-			'publicDraft',
-			'updateBlockActivityField',
-			'setPorts',
-			'getBlockAncestorsByInputPortId',
-			'deleteConnectionByBlockIdAndPortId',
-		]),
 		...mapActions(useAppStore, [
 			'hideRightPanel',
 		]),
-		onShowConstructions(port: Port): void
-		{
-			this.toggleRuleSettingsVisibility(true);
-			this.setCurrentRule(port);
-		},
-		async deleteRule(ruleId: string): Promise<void>
-		{
-			const connections = [...this.connections];
-			this.deletePort(ruleId);
-			const { outputPortsToAdd, outputPortsToDelete } = this.deleteRuleSettings(ruleId);
-			outputPortsToAdd.forEach(({ portId, title }) => {
-				this.addRulePort(portId, PORT_TYPES.output, title);
-			});
-			outputPortsToDelete.forEach((portId) => {
-				this.deletePort(portId);
-				this.deleteConnectionByBlockIdAndPortId(this.block.id, portId);
-			});
-			this.deleteConnectionByBlockIdAndPortId(this.block.id, ruleId);
-			if (this.connections.length < connections.length)
-			{
-				await this.publicDraft();
-			}
-		},
-		deleteRelation(relationId: string): void
-		{
-			this.deletePort(relationId);
-		},
-		async onSaveForm(): Promise<void>
-		{
-			try
-			{
-				this.isSaving = true;
-				const activityData = await this.saveForm(this.documentType);
-				this.updateBlockActivityField(this.block.id, activityData);
-				this.setPorts(this.block.id, this.ports);
-				this.updateNodeTitle(this.block.id, this.nodeSettings.title);
-				await this.publicDraft();
-				this.hideSettings();
-			}
-			catch (e)
-			{
-				console.error(e);
-			}
-			finally
-			{
-				this.isSaving = false;
-			}
-		},
+		...mapActions(useNodeSettingsStore, [
+			'discardFormSettings',
+			'toggleVisibility',
+			'reset',
+			'saveRule',
+			'saveForm',
+			'saveRelation',
+		]),
+		...mapActions(useNodeDataInspectorStore, ['resetDataInspector']),
+		...mapActions(useDiagramStore, [
+			'updateBlockActivityField',
+			'setPorts',
+			'publicDraft',
+		]),
 		hideSettings(): void
 		{
 			this.hideRightPanel();
 			this.toggleVisibility(false);
 			this.reset();
+			this.resetDataInspector();
 		},
 		onClose(): void
 		{
 			this.discardFormSettings();
 			this.hideSettings();
+		},
+		async saveRules(): Array<Promise<void>>
+		{
+			await EventEmitter.emitAsync(EVENT_NAMES.BEFORE_SUBMIT_EVENT);
+			const rulesIds = [...this.nodeSettings.rules.keys()];
+
+			return Promise.all(rulesIds.map((ruleId) => this.saveRule(ruleId, this.documentType)));
+		},
+		saveRelations(): Array<Promise<void>>
+		{
+			const relationsIds = [...this.nodeSettings.relations.keys()];
+
+			return Promise.all(relationsIds.map((relationId) => this.saveRelation(relationId)));
+		},
+		async saveSettings(): Promise<void>
+		{
+			const { waitForCatalog, getDefaultTitle } = useDefaultTitle();
+			await waitForCatalog();
+			const activityData = await this.saveForm(this.documentType, getDefaultTitle(this.block.activity));
+			this.updateBlockActivityField(this.block.id, activityData);
+			this.setPorts(this.block.id, this.ports);
+			await this.publicDraft();
+		},
+		async onSave(): Promise<void>
+		{
+			this.isSaving = true;
+			try
+			{
+				await Promise.all([
+					this.saveRules(),
+					this.saveRelations(),
+				]);
+				await this.saveSettings();
+				this.hideSettings();
+			}
+			catch (error)
+			{
+				if (error.errors?.[0]?.message)
+				{
+					MessageBox.alert(Text.encode(error.errors[0].message));
+				}
+			}
+			finally
+			{
+				this.isSaving = false;
+			}
 		},
 	},
 	template: `
@@ -131,38 +167,40 @@ export const NodeSettings = {
 			:isShown="isShown"
 			@close="onClose"
 		>
-			<template #default>
-				<EditNodeSettingsForm
+			<template #header>
+				<slot
+					name="header"
 					:block="block"
-					:ports="ports"
-				>
-					<template #preview="{ port }">
-						<NodeSettingsPreview
-							:port="port"
-							:nodeSettings="nodeSettings"
-							:connectedBlocks="getBlockAncestorsByInputPortId(block, port)"
-							@showConstructions="onShowConstructions(port)"
-							@deletePreview="deleteRule(port.id)"
-						>
-							{{ port.title }}
-						</NodeSettingsPreview>
-					</template>
+					:title="nodeSettings?.title"
+					:moreMenuItems="moreMenuItems"
+					:onDeletedBlock="onClose"
+				/>
+			</template>
 
-					<template #addSettingsItem="{ text, itemType }">
-						<AddSettingsItem
-							:itemType="itemType"
-						>
-							{{ text }}
-						</AddSettingsItem>
-					</template>
-				</EditNodeSettingsForm>
+			<template #tabs>
+				<EditorChartTabs
+					v-model="selectedTabId"
+					:tabs="tabs"
+				/>
+			</template>
+
+			<template #data-inspector-toggle>
+				<slot name="data-inspector-toggle" />
+			</template>
+
+			<template #content>
+				<KeepAlive>
+					<component
+						:is="tabs.get(this.selectedTabId).content"
+					/>
+				</KeepALive>
 			</template>
 
 			<template #actions>
 				<SaveSettingsButton
 					:isSaving="isSaving"
 					:data-test-id="$testId('complexNodeSettingsSave')"
-					@click="onSaveForm"
+					@click="onSave"
 				/>
 				<CancelSettingsButton
 					:data-test-id="$testId('complexNodeSettingsDiscard')"
@@ -170,8 +208,5 @@ export const NodeSettings = {
 				/>
 			</template>
 		</NodeSettingsLayout>
-		<slot
-			v-if="isShown"
-		/>
 	`,
 };

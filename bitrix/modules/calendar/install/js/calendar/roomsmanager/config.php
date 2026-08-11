@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/roomsmanager.bundle.css',
 	'js' => 'dist/roomsmanager.bundle.js',
 	'rel' => [
-		'main.core',
-		'calendar.util',
 		'calendar.sectionmanager',
+		'calendar.util',
+		'main.core',
 		'main.core.events',
 	],
 	'skip_core' => false,

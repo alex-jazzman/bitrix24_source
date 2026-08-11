@@ -1,16 +1,10 @@
 <?php
+
 /**
  * Bitrix vars
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
- * @var CUser $USER
- * @var CDatabase $DB
- * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $templateFile
- * @var string $templateFolder
- * @var string $componentPath
  * @var CBitrixComponent $component
  */
 
@@ -19,176 +13,78 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Application;
+use Bitrix\Main\Grid\Component\ComponentParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\UI\Buttons;
-use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-$request = Application::getInstance()->getContext()->getRequest();
+$APPLICATION->SetTitle(Loc::getMessage('BIC_USAGE_STAT_PAGE_TITLE'));
+
+if (!empty($arResult['ERROR_MESSAGES']))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.info.error',
+		'',
+		[
+			'TITLE' => $arResult['ERROR_MESSAGES'][0],
+		]
+	);
+
+	return;
+}
 
 Extension::load([
 	'sidepanel',
 	'ui.buttons',
 	'ui.fonts.opensans',
-	'biconnector.grid'
+	'biconnector.grid',
+	'main.ui.filter',
+	'main.core',
+	'main.core.events',
+	'ui.notification',
+	'ui.hint',
+	'ui.label',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'pagetitle-toolbar-field-view');
 
-$frame = $request->get('IFRAME') === 'Y' ? '&IFRAME=Y' : '';
+/** @var \Bitrix\Main\Grid\Grid $grid */
+$grid = $arResult['GRID'];
 
-$isViewingOverLimit = $request->get('over_limit') === 'Y';
-
-if ($isViewingOverLimit || $arResult['BICONNECTOR_LIMIT'] > 0)
-{
-	Toolbar::addButton([
-		'link' => $isViewingOverLimit ? '?over_limit=N' . $frame :  '?over_limit=Y' . $frame,
-		'text' => $isViewingOverLimit ? Loc::getMessage('CT_BBSU_SHOW_ALL') : Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT'),
-		'color' => Buttons\Color::LIGHT_BORDER,
-	]);
-}
-
-$refreshButton = new Buttons\Button([
-	'icon' => Buttons\Icon::RELOAD,
-	'color' => Buttons\Color::PRIMARY,
-	'click' => "reloadUsageStats",
-]);
-$refreshButton->addAttribute('title', Loc::getMessage('CT_BBSU_REFRESH'));
-
-Toolbar::addButton($refreshButton);
-
-$arResult['HEADERS'] = [
-	[
-		'id' => 'ID',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_ID'),
-		'default' => true,
-		'editable' => false,
-	],
-	[
-		'id' => 'TIMESTAMP_X',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_TIMESTAMP_X'),
-		'default' => true,
-		'editable' => false,
-	],
-	[
-		'id' => 'KEY_ID',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_ACCESS_KEY'),
-		'default' => true,
-		'editable' => false,
-	],
-	[
-		'id' => 'SERVICE_ID',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_SERVICE_ID'),
-		'default' => true,
-		'editable' => false,
-	],
-	[
-		'id' => 'SOURCE_ID',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_SOURCE_ID_MSGVER_1'),
-		'default' => true,
-		'editable' => false,
-	],
-	[
-		'id' => 'ROW_NUM',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_ROW_NUM'),
-		'default' => true,
-		'editable' => false,
-		'align' => 'right',
-	],
-	[
-		'id' => 'DATA_SIZE',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_DATA_SIZE_MSGVER_1'),
-		'default' => true,
-		'editable' => false,
-		'align' => 'right',
-	],
-	[
-		'id' => 'REAL_TIME',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_REAL_TIME_MSGVER_1'),
-		'default' => false,
-		'editable' => false,
-		'align' => 'right',
-	],
-	[
-		'id' => 'FILTERS',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_FILTERS'),
-		'default' => false,
-		'editable' => false,
-	],
-	[
-		'id' => 'FIELDS',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_FIELDS'),
-		'default' => false,
-		'editable' => false,
-	],
-	[
-		'id' => 'DATASET_TYPE',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_DATASET_TYPE'),
-		'default' => true,
-		'editable' => false,
-	]
+$gridParams = [
+	'CURRENT_PAGE' => $grid->getPagination()?->getCurrentPage(),
 ];
-
-if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+if (!empty($arResult['GRID_STUB']))
 {
-	$arResult['HEADERS'] = array_filter($arResult['HEADERS'], function($header)  {
-		return !in_array($header['id'], ['SERVICE_ID', 'KEY_ID']);
-	});
+	$gridParams['STUB'] = $arResult['GRID_STUB'];
 }
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
-	[
-		'GRID_ID' => $arResult['GRID_ID'],
-		'COLUMNS' => $arResult['HEADERS'],
-		'ROWS' => $arResult['ROWS'],
-		'SORT' => $arResult['SORT'],
-		'AJAX_MODE' => 'Y',
-		'AJAX_OPTION_JUMP' => 'N',
-		'AJAX_OPTION_STYLE' => 'N',
-		'AJAX_OPTION_HISTORY' => 'N',
-		'ALLOW_ROWS_SORT' => false,
-		'SHOW_ROW_CHECKBOXES' => false,
-		'SHOW_SELECTED_COUNTER' => false,
-		'SHOW_TOTAL_COUNTER' => false,
-		'EDITABLE' => false,
-		'STUB' => empty($arResult['ROWS']) ? $arResult['STUB'] : null,
-		'SHOW_NAVIGATION_PANEL' => true,
-		'NAV_OBJECT' => $arResult['NAV'],
-		'NAV_PARAMS' => [
-			'SEF_MODE' => 'N',
-		],
-		'NAV_PARAM_NAME' => 'page',
-		'SHOW_PAGINATION' => true,
-		'SHOW_PAGESIZE' => true,
-		'PAGE_SIZES' => [
-			['NAME' => 10, 'VALUE' => '10'],
-			['NAME' => 20, 'VALUE' => '20'],
-			['NAME' => 50, 'VALUE' => '50'],
-		],
-
-	],
-	$component,
-	['HIDE_ICONS' => 'Y']
+	ComponentParams::get($grid, $gridParams)
 );
 ?>
-	<script>
-		function showMore(btn, textToAdd)
-		{
-			const text = btn.previousSibling;
-			text.textContent += textToAdd;
-			btn.remove();
-			return false;
-		}
+<script>
+	function showMore(btn, fullText)
+	{
+		const text = btn.previousSibling;
+		text.textContent = fullText;
+		btn.remove();
+		return false;
+	}
 
-		function reloadUsageStats()
-		{
-			BX.Main.gridManager.getInstanceById('<?= $arResult['GRID_ID'] ?>').reload();
-		}
-	</script>
+	function reloadUsageStats()
+	{
+		BX.Main.gridManager.getInstanceById('<?= CUtil::JSEscape($grid->getId()) ?>').reload();
+	}
+
+	BX.ready(() => {
+		BX.BIConnector.UsageStatGridManager.Instance = new BX.BIConnector.UsageStatGridManager({
+			gridId: '<?= CUtil::JSEscape($grid->getId()) ?>',
+		});
+	});
+</script>
 <?php
 if (!$arResult['IS_BI_BUILDER_SERVICE'] && !\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {

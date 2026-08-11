@@ -12,6 +12,7 @@ export { ChatServiceOl } from './chat/src/chat';
 export { SilentModeService } from './silent-mode/silent-mode';
 export { SearchService } from './search/search';
 export { CrmFormService } from './crm-form/crm-form';
+export { CrmService } from './crm/crm';
 export { QuickReplyService } from './quick-reply/quick-reply';
 
 export type {

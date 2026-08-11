@@ -17,7 +17,7 @@ else:
 <?
 foreach ($arParams['USER_PROPERTY'] as $key):
 ?>
-			<td><?=$arResult['USER_PROP'][$key] ? $arResult['USER_PROP'][$key] : GetMessage('ISL_'.$key)?></td>
+			<td><?=$arResult['USER_PROP'][$key] ? $arResult['USER_PROP'][$key] : GetMessage('ISL_'.$key.($key === 'PERSONAL_COUNTRY' ? '_MSGVER_1' : ''))?></td>
 <?
 endforeach;
 ?>

@@ -68,6 +68,7 @@ export const MessageAvatar = {
 			const avatarMap = {
 				[UserType.extranet]: ExtranetUserAvatar,
 				[UserType.collaber]: CollaberAvatar,
+				[UserType.guest]: CollaberAvatar,
 				[UserType.bot]: this.getBotAvatar(),
 			};
 

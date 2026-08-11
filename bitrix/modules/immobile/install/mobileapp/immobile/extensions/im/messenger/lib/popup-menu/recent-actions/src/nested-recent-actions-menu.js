@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 		filterAll: 'nested-filter-all',
 		filterUnread: 'nested-filter-unread',
 		taskList: 'nested-task-list',
+		feed: 'nested-feed',
 		files: 'nested-files',
 		calendar: 'nested-calendar',
 		readAll: 'nested-read-all',
@@ -119,6 +120,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 				this.#createFilterAllItem(),
 				this.#createFilterUnreadItem(),
 				this.#createTaskListItem(),
+				this.#createFeedItem(),
 				this.#createFilesItem(),
 				this.#createCalendarItem(),
 				this.#createReadAllItem(),
@@ -225,6 +227,19 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 		/**
 		 * @returns {PopupMenuItem}
 		 */
+		#createFeedItem()
+		{
+			return {
+				id: NestedActionId.feed,
+				title: Loc.getMessage('IMMOBILE_MESSENGER_NESTED_RECENT_ACTIONS_MENU_FEED'),
+				iconName: Icon.NEWSFEED.getIconName(),
+				sectionCode: RecentMenuSection.project,
+			};
+		}
+
+		/**
+		 * @returns {PopupMenuItem}
+		 */
 		#createFilesItem()
 		{
 			return {
@@ -318,6 +333,10 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 					void this.#openProjectTasks();
 					break;
 
+				case NestedActionId.feed:
+					void this.#openProjectFeed();
+					break;
+
 				case NestedActionId.files:
 					void this.#openProjectFiles();
 					break;
@@ -377,6 +396,28 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			catch (error)
 			{
 				logger.error('openProjectTasks: failed', error);
+				Notification.showErrorToast();
+			}
+		}
+
+		async #openProjectFeed()
+		{
+			const projectId = this.#getProjectId();
+			if (Type.isNull(projectId))
+			{
+				Notification.showErrorToast();
+
+				return;
+			}
+
+			try
+			{
+				const { ProjectOpener } = await requireLazy('project/opener');
+				void ProjectOpener.openNews({ projectId: projectId });
+			}
+			catch (error)
+			{
+				logger.error('openProjectFeed: failed', error);
 				Notification.showErrorToast();
 			}
 		}

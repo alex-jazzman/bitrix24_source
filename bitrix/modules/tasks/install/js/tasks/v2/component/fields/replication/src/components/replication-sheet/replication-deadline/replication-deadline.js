@@ -3,6 +3,7 @@ import { TextMd } from 'ui.system.typography.vue';
 
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { DeadlineAfterPopup } from 'tasks.v2.component.fields.deadline';
+import { calendar } from 'tasks.v2.lib.calendar';
 
 // @vue/component
 export const ReplicationDeadline = {
@@ -15,6 +16,7 @@ export const ReplicationDeadline = {
 	inject: {
 		replicateParams: {},
 		taskId: {},
+		task: {},
 	},
 	emits: ['update'],
 	data(): Object
@@ -68,13 +70,17 @@ export const ReplicationDeadline = {
 				);
 			}
 
-			const days = deadlineAfter / (24 * 60 * 60 * 1000);
+			const days = deadlineAfter / this.dayDuration;
 
 			return Loc.getMessagePlural(
 				'TASKS_V2_REPLICATION_DEADLINE_IN_DAYS',
 				days,
 				{ '#TASK_DEADLINE#': days },
 			);
+		},
+		dayDuration(): number
+		{
+			return this.task?.matchesWorkTime ? calendar.workdayDuration : (24 * 60 * 60 * 1000);
 		},
 		today(): Date
 		{
@@ -100,9 +106,7 @@ export const ReplicationDeadline = {
 		},
 		isHours(durationTs: number): boolean
 		{
-			const dayTs = 24 * 60 * 60 * 1000;
-
-			return durationTs < dayTs || durationTs % dayTs !== 0;
+			return durationTs < this.dayDuration || durationTs % this.dayDuration !== 0;
 		},
 		isWeeks(durationTs: number): boolean
 		{
@@ -113,8 +117,8 @@ export const ReplicationDeadline = {
 	},
 	template: `
 		<div class="tasks-field-replication-section">
-			<TextMd tag="div" className="tasks-field-replication-row">
-				<span class="tasks-field-replication-secondary">
+			<TextMd tag="div" className="tasks-field-replication-row tasks-field-replication-secondary">
+				<span>
 					{{ loc('TASKS_V2_REPLICATION_DEADLINE') }}
 				</span>
 				<HoverPill textOnly noOffset ref="deadline">

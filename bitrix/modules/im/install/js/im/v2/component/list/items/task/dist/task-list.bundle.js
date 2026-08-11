@@ -149,6 +149,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@itemRightClick="onItemRightClick"
 			@closeMenu="onCloseMenu"
 			@loadNextPage="onLoadNextPage"
+			data-test-id="im_container-recent__unread-list"
 		>
 			<template #empty-state>
 				<RecentEmptyState 

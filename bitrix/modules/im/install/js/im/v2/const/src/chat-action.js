@@ -29,7 +29,6 @@ export const ActionByRole = Object.freeze({
 	openSidebarMenu: 'openSidebarMenu',
 	updateInviteLink: 'updateInviteLink',
 	manageGuestLink: 'manageGuestLink',
-	updateGuestLink: 'updateGuestLink',
 	createDocumentSign: 'createDocumentSign',
 	createCalendarSlots: 'createCalendarSlots',
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
@@ -41,6 +40,7 @@ export const ChatActionGroup = Object.freeze({
 	manageUsersAdd: 'manageUsersAdd',
 	manageUsersDelete: 'manageUsersDelete',
 	manageMessages: 'manageMessages',
+	manageGuestInvites: 'manageGuestInvites',
 });
 
 export const ActionByUserType = Object.freeze({
@@ -56,4 +56,6 @@ export const ActionByUserType = Object.freeze({
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 	changeStickerPack: 'changeStickerPack',
 	createStickerPack: 'createStickerPack',
+	extend: 'extend',
+	manageGuestLink: 'manageGuestLink',
 });

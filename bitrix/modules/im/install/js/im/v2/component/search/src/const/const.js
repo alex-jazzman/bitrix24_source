@@ -9,6 +9,7 @@ export const EntitySearchType = {
 export const EntitySearchConfig = {
 	[EntitySearchType.addToChat]: {
 		exclude: [EntitySearch.chats],
+		excludeGuests: true,
 	},
 	[EntitySearchType.messageForward]: {
 		exclude: [],

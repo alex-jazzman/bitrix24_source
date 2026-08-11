@@ -21,6 +21,10 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 		checkFunction: main_core.Type.isNumber,
 		formatFunction: im_v2_model.convertToNumber
 	}, {
+		fieldName: 'operatorIsBot',
+		targetFieldName: 'operatorIsBot',
+		checkFunction: main_core.Type.isBoolean
+	}, {
 		fieldName: 'status',
 		targetFieldName: 'status',
 		checkFunction: main_core.Type.isString,
@@ -54,6 +58,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 				id: 0,
 				chatId: 0,
 				operatorId: 0,
+				operatorIsBot: false,
 				status: '',
 				queueId: 0,
 				pinned: false,

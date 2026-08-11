@@ -1,40 +1,60 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, booking_core, booking_const, booking_provider_service_calendarService, main_core, booking_lib_removeResource) {
+(function (exports, booking_core, booking_const, booking_lib_utils, booking_lib_duration, booking_provider_service_calendarService, main_core, booking_lib_removeResource) {
 	'use strict';
 
-	const DAY_MS = 1000 * 60 * 60 * 24;
+	const DayMs = booking_lib_duration.Duration.getUnitDurations().d;
+	const WeekMs = DayMs * booking_const.Grid.Duration.Week;
 	class FilterResultNavigator {
+		#store = null;
+		get $store() {
+			if (!this.#store) {
+				this.#store = booking_core.Core.getStore();
+			}
+			return this.#store;
+		}
 		getOptimalFilterDateTs(inFuture = false) {
-			const $store = booking_core.Core.getStore();
-			const count = $store.getters[`${booking_const.Model.Filter}/datesCount`]?.count ?? 0;
-			const maxDate = $store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate;
-			const minDate = $store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate;
-			const selectedDateTs = $store.getters[`${booking_const.Model.Interface}/selectedDateTs`];
+			const isWeekMode = this.#isWeekMode();
+			const count = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.count ?? 0;
+			const maxDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate;
+			const minDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate;
+			const selectedDateTs = this.$store.getters[`${booking_const.Model.Interface}/selectedDateTs`] - this.#getOffset();
+			const selectedFirstDayPeriodTs = this.$store.getters[`${booking_const.Model.Interface}/selectedFirstDayPeriodTs`];
 			if (count === 0) {
-				return selectedDateTs;
+				return isWeekMode ? selectedFirstDayPeriodTs : selectedDateTs;
 			}
 			if (maxDate !== null && (this.#getDateTs(maxDate) > selectedDateTs || inFuture)) {
-				return this.getNextFilterDateTs((inFuture ? this.#getTodayTs() : selectedDateTs) - DAY_MS, inFuture);
+				return this.getNextFilterDateTs((inFuture ? this.#getTodayTs() : selectedDateTs) - DayMs, inFuture);
 			}
 			if (minDate !== null && this.#getDateTs(minDate) < selectedDateTs) {
-				return this.getPreviousFilterDateTs(selectedDateTs + DAY_MS);
+				return this.getPreviousFilterDateTs(selectedDateTs + DayMs);
 			}
-			return selectedDateTs;
+			return isWeekMode ? selectedFirstDayPeriodTs : selectedDateTs;
 		}
 		async getPreviousFilterDateTs(startingDateTs) {
-			const $store = booking_core.Core.getStore();
-			const minDate = $store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate;
+			if (this.#isWeekMode()) {
+				return this.#getPreviousFilterWeekStartTs(startingDateTs);
+			}
+			return this.#getPreviousFilterDayTs(startingDateTs);
+		}
+		async getNextFilterDateTs(startingDateTs, inFuture = false) {
+			if (this.#isWeekMode()) {
+				return this.#getNextFilterWeekStartTs(startingDateTs, inFuture);
+			}
+			return this.#getNextFilterDayTs(startingDateTs, inFuture);
+		}
+		async #getPreviousFilterDayTs(startingDateTs) {
+			const minDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate;
 			if (minDate === null) {
 				return null;
 			}
 			const minDateTs = this.#getDateTs(minDate);
-			const selectedDateTs = startingDateTs || $store.getters[`${booking_const.Model.Interface}/selectedDateTs`];
+			const selectedDateTs = startingDateTs ?? this.$store.getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.#getOffset();
 			if (selectedDateTs <= minDateTs) {
 				return minDateTs;
 			}
-			const maxDateTs = this.#getDateTs($store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate);
+			const maxDateTs = this.#getDateTs(this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate);
 			if (selectedDateTs > maxDateTs) {
 				return maxDateTs;
 			}
@@ -42,22 +62,21 @@ this.BX.Booking = this.BX.Booking || {};
 			if (previousFilterDate) {
 				return previousFilterDate;
 			}
-			const previousDate = new Date(selectedDateTs - DAY_MS);
+			const previousDate = new Date(selectedDateTs - DayMs);
 			await this.#loadNextFilterDates(previousDate.getTime(), minDateTs);
-			return this.#findPreviousDate(selectedDateTs);
+			return this.#findPreviousDate(selectedDateTs) ?? null;
 		}
-		async getNextFilterDateTs(startingDateTs, inFuture = false) {
-			const $store = booking_core.Core.getStore();
-			const maxDate = $store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate;
+		async #getNextFilterDayTs(startingDateTs, inFuture = false) {
+			const maxDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate;
 			if (maxDate === null) {
 				return null;
 			}
-			const selectedDateTs = startingDateTs || $store.getters[`${booking_const.Model.Interface}/selectedDateTs`];
+			const selectedDateTs = startingDateTs ?? this.$store.getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.#getOffset();
 			const maxDateTs = this.#getDateTs(maxDate);
 			if (selectedDateTs >= maxDateTs) {
 				return maxDateTs;
 			}
-			const minDateTs = this.#getDateTs($store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate);
+			const minDateTs = this.#getDateTs(this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate);
 			if (selectedDateTs < minDateTs) {
 				return minDateTs;
 			}
@@ -65,10 +84,10 @@ this.BX.Booking = this.BX.Booking || {};
 			if (nextFilterDate) {
 				return nextFilterDate;
 			}
-			const nextDate = new Date(selectedDateTs + DAY_MS); // + (inFuture ? 0 : DAY_MS));
+			const nextDate = new Date(selectedDateTs + DayMs); // + (inFuture ? 0 : DayMs));
 
 			await this.#loadNextFilterDates(nextDate.getTime(), maxDateTs);
-			return this.#findNextDate(selectedDateTs);
+			return this.#findNextDate(selectedDateTs) ?? null;
 		}
 		#getTodayTs() {
 			const today = new Date();
@@ -79,19 +98,92 @@ this.BX.Booking = this.BX.Booking || {};
 			d.setHours(0, 0, 0, 0);
 			return d.getTime();
 		}
+		#getOffset() {
+			return this.$store.getters[`${booking_const.Model.Interface}/offset`];
+		}
+		#isWeekMode() {
+			return this.$store.getters[`${booking_const.Model.Interface}/isWeekMode`];
+		}
+		#getFirstWeekDay() {
+			return this.$store.getters[`${booking_const.Model.Interface}/firstWeekDay`];
+		}
+		#getWeekStartTs(dateTs) {
+			return booking_lib_utils.Utils.time.getWeekStartTs(dateTs, this.#getFirstWeekDay());
+		}
+		#getSelectedWeekStartTs() {
+			return this.$store.getters[`${booking_const.Model.Interface}/selectedFirstDayPeriodTs`] + this.#getOffset();
+		}
+		#getWeekStarts() {
+			const weekStarts = new Set(this.$store.state[booking_const.Model.Filter].filterDates.map(dateTs => this.#getWeekStartTs(dateTs)));
+			return [...weekStarts].sort((a, b) => a - b);
+		}
+		async #getPreviousFilterWeekStartTs(startingDateTs) {
+			const minDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate;
+			if (minDate === null) {
+				return null;
+			}
+			const minWeekStartTs = this.#getWeekStartTs(this.#getDateTs(minDate));
+			const selectedWeekStartTs = this.#getWeekStartTs(startingDateTs ?? this.#getSelectedWeekStartTs());
+			if (selectedWeekStartTs <= minWeekStartTs) {
+				return minWeekStartTs;
+			}
+			const maxWeekStartTs = this.#getWeekStartTs(this.#getDateTs(this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate));
+			if (selectedWeekStartTs > maxWeekStartTs) {
+				return maxWeekStartTs;
+			}
+			const previousFilterWeekStart = this.#findPreviousWeekStart(selectedWeekStartTs);
+			if (previousFilterWeekStart) {
+				return previousFilterWeekStart;
+			}
+			const previousWeek = new Date(selectedWeekStartTs - DayMs);
+			await this.#loadNextFilterDates(previousWeek.getTime(), minWeekStartTs);
+			return this.#findPreviousWeekStart(selectedWeekStartTs) ?? null;
+		}
+		async #getNextFilterWeekStartTs(startingDateTs, inFuture = false) {
+			const maxDate = this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.maxDate;
+			if (maxDate === null) {
+				return null;
+			}
+			const selectedWeekStartTs = this.#getWeekStartTs(startingDateTs ?? this.#getSelectedWeekStartTs());
+			const maxWeekStartTs = this.#getWeekStartTs(this.#getDateTs(maxDate));
+			if (selectedWeekStartTs >= maxWeekStartTs) {
+				return maxWeekStartTs;
+			}
+			const minWeekStartTs = this.#getWeekStartTs(this.#getDateTs(this.$store.getters[`${booking_const.Model.Filter}/datesCount`]?.minDate));
+			if (selectedWeekStartTs < minWeekStartTs) {
+				return minWeekStartTs;
+			}
+			const nextFilterWeekStart = this.#findNextWeekStart(selectedWeekStartTs, inFuture);
+			if (nextFilterWeekStart) {
+				return nextFilterWeekStart;
+			}
+			const nextWeek = new Date(selectedWeekStartTs + WeekMs);
+			await this.#loadNextFilterDates(nextWeek.getTime(), maxWeekStartTs);
+			return this.#findNextWeekStart(selectedWeekStartTs, inFuture) ?? null;
+		}
 		async #loadNextFilterDates(selectedDateTs, limitDateTs) {
-			const filterFields = booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/fields`];
+			const filterFields = this.$store.getters[`${booking_const.Model.Filter}/fields`];
 			await booking_provider_service_calendarService.calendarService.loadNextFilterMarks(filterFields, selectedDateTs, limitDateTs);
 		}
 		#findPreviousDate(selectedDateTs) {
-			return booking_core.Core.getStore().state[booking_const.Model.Filter].filterDates.findLast(dateTs => dateTs < selectedDateTs);
+			return this.$store.state[booking_const.Model.Filter].filterDates.findLast(dateTs => dateTs < selectedDateTs);
+		}
+		#findPreviousWeekStart(selectedWeekStartTs) {
+			return this.#getWeekStarts().findLast(weekStartTs => weekStartTs < selectedWeekStartTs);
 		}
 		#findNextDate(viewDateTs, inFuture = false) {
-			const filterDates = [...booking_core.Core.getStore().state[booking_const.Model.Filter].filterDates].sort();
+			const filterDates = [...this.$store.state[booking_const.Model.Filter].filterDates].sort();
 			if (inFuture) {
 				return filterDates.find(dateTs => dateTs >= viewDateTs);
 			}
 			return filterDates.find(dateTs => dateTs > viewDateTs);
+		}
+		#findNextWeekStart(viewWeekStartTs, inFuture = false) {
+			const weekStarts = this.#getWeekStarts();
+			if (inFuture) {
+				return weekStarts.find(weekStartTs => weekStartTs >= viewWeekStartTs);
+			}
+			return weekStarts.find(weekStartTs => weekStartTs > viewWeekStartTs);
 		}
 	}
 	const filterResultNavigator = new FilterResultNavigator();
@@ -183,5 +275,5 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.deletingResourceFilterResultCountActualizer = deletingResourceFilterResultCountActualizer;
 	exports.filterResultNavigator = filterResultNavigator;
 
-})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking, BX.Booking.Const, BX.Booking.Provider.Service, BX, BX.Booking.Lib);
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking, BX.Booking.Const, BX.Booking, BX.Booking.Lib, BX.Booking.Provider.Service, BX, BX.Booking.Lib);
 //# sourceMappingURL=filter-result-navigator.bundle.js.map

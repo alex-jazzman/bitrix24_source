@@ -1,6 +1,15 @@
 import { toRaw } from 'ui.vue3';
 import { Core } from 'booking.core';
+import { Communication } from 'booking.const';
+import type { NotificationsSenderModel } from 'booking.model.notifications';
 import type { ResourceModel } from './types';
+
+export function resolveDefaultSenderCode(senders: NotificationsSenderModel[]): string
+{
+	const aiCall = senders.find((s) => s.code === Communication.AiCall);
+
+	return aiCall?.canUse ? Communication.AiCall : Communication.Bitrix24;
+}
 
 export function getResource(resourceId: number): ResourceModel
 {

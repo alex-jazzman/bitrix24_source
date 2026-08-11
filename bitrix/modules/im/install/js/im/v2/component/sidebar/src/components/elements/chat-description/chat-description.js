@@ -5,6 +5,7 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 import { Parser } from 'im.v2.lib.parser';
 import { SidebarManager } from 'im.v2.lib.sidebar';
 import { CollabManager } from 'im.v2.lib.collab';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import './chat-description.css';
@@ -80,6 +81,15 @@ export const ChatDescription = {
 		{
 			return this.expanded ? this.purifiedDescription : this.previewDescription;
 		},
+		copilotDescription(): string
+		{
+			if (FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
+			{
+				return this.$store.getters['copilot/getAgentName'];
+			}
+
+			return (new CopilotManager()).getAIModelName(this.dialogId);
+		},
 		descriptionByChatType(): Record<string, () => string>
 		{
 			return {
@@ -89,7 +99,7 @@ export const ChatDescription = {
 				[ChatType.generalChannel]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 				[ChatType.comment]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
 				[ChatType.taskComments]: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'),
-				[ChatType.copilot]: () => (new CopilotManager()).getAIModelName(this.dialogId),
+				[ChatType.copilot]: () => this.copilotDescription,
 				[ChatType.collab]: () => CollabManager.getSidebarChatTypeText(),
 				default: () => Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
 			};

@@ -3,9 +3,13 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_iconSet_api_vue, ui_vue3, im_v2_const) {
+(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_vue3, im_v2_const) {
 	'use strict';
 
+	const CatalogEvent = {
+		request: 'im:vibe-code-catalog:request',
+		stateChanged: 'im:vibe-code-catalog:state-changed'
+	};
 	const ICON_NAME = ui_iconSet_api_vue.Outline.VIBECODE_CATALOG;
 	const COUNTER_DISPLAY_LIMIT = 99;
 	const AVAILABLE_LAYOUTS = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.notification]);
@@ -51,9 +55,27 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.counter.toString();
 			}
 		},
+		created() {
+			main_core_events.EventEmitter.subscribe(CatalogEvent.stateChanged, this.onStateChanged);
+		},
+		beforeUnmount() {
+			if (this.isActive) {
+				main_core_events.EventEmitter.emit(CatalogEvent.request, {
+					open: false,
+					node: null
+				});
+			}
+			main_core_events.EventEmitter.unsubscribe(CatalogEvent.stateChanged, this.onStateChanged);
+		},
 		methods: {
-			onClick(event) {
-				this.isActive = !this.isActive;
+			onClick() {
+				main_core_events.EventEmitter.emit(CatalogEvent.request, {
+					open: !this.isActive,
+					node: this.$el
+				});
+			},
+			onStateChanged(event) {
+				this.isActive = event.getData().active === true;
 			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -64,6 +86,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			v-if="shouldShow"
 			type="button"
 			class="bx-im-list-container-vibe-code-catalog-button__container"
+			data-bx-vibe-code-catalog-events="true"
 			:class="{'--active': isActive }"
 			:aria-label="loc('IM_ELEMENTS_VIBE_CODE_CATALOG_ARIA_TITLE')"
 			:aria-pressed="isActive"
@@ -88,5 +111,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.VibeCodeCatalogButton = VibeCodeCatalogButton;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.UI.IconSet, BX.Vue3, BX.Messenger.v2.Const);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.UI.IconSet, BX.Vue3, BX.Messenger.v2.Const);
 //# sourceMappingURL=vibe-code-catalog-button.bundle.js.map

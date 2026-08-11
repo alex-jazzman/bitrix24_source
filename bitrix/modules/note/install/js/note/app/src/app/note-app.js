@@ -4,6 +4,7 @@ import { BitrixVue, reactive, watchEffect } from 'ui.vue3';
 import { createSidebarFeature, DialogService, NoteEvent } from 'note.sidebar';
 import { openOrphanRestorePopup, RecycleBinService } from 'note.recyclebin';
 import { NoteTheme, NoteThemeContext } from 'note.ui.theme-context';
+import { NoteAnalytics } from 'note.analytics';
 import 'ui.notification';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
@@ -78,7 +79,7 @@ export class NoteApp
 			emitAction: (name, payload) => this.#emitAction(name, payload),
 			getRouteDocumentContext: () => this.#routeDocumentContext,
 			reloadRouteDocumentContext: async () => {
-				await this.#syncRouteState(false);
+				await this.#syncRouteState(false, true);
 			},
 			routeNames: {
 				home: ROUTE_NAME_HOME,
@@ -178,9 +179,67 @@ export class NoteApp
 		EventEmitter.subscribe(NoteEvent.COLLECTION_RENAMED, this.#handleCollectionRenamed);
 		EventEmitter.subscribe(NoteEvent.DOCUMENT_CHILDREN_CHANGED, this.#handleChildrenChanged);
 
+		this.#trackWelcomeEntry();
+
 		void this.#bootstrap();
 
 		return this;
+	}
+
+	// welcome_points: one event per KB entry (mount runs once per entry, not per SPA re-render).
+	// The ?source scrub is deferred to #bootstrap (post router.isReady) — see #scrubWelcomeSourceFromUrl.
+	#trackWelcomeEntry(): void
+	{
+		NoteAnalytics.welcomePoint(this.#resolveWelcomeSource());
+	}
+
+	#resolveWelcomeSource(): string
+	{
+		const optionSource = this.#options?.welcomeSource;
+		if (Type.isStringFilled(optionSource))
+		{
+			return optionSource;
+		}
+
+		try
+		{
+			const querySource = new URLSearchParams(window.location.search).get('source');
+			if (Type.isStringFilled(querySource))
+			{
+				return querySource;
+			}
+		}
+		catch
+		{
+			// ignore malformed location
+		}
+
+		return 'left_menu';
+	}
+
+	// Drop ?source= from the address bar once it has been read for analytics. It is a one-shot entry
+	// marker (e.g. the wiki post-import redirect), so leaving it would litter the URL and re-fire
+	// welcome_points on reload. Called after router.isReady() so vue-router has already written its
+	// initial history state; replaceState only rewrites the bar and triggers no navigation.
+	#scrubWelcomeSourceFromUrl(): void
+	{
+		try
+		{
+			const url = new URL(window.location.href);
+			if (!url.searchParams.has('source'))
+			{
+				return;
+			}
+
+			url.searchParams.delete('source');
+			const query = url.searchParams.toString();
+			const cleaned = url.pathname + (query ? `?${query}` : '') + url.hash;
+			window.history.replaceState(window.history.state, '', cleaned);
+		}
+		catch
+		{
+			// ignore malformed location
+		}
 	}
 
 	destroy(): void
@@ -310,6 +369,9 @@ export class NoteApp
 		try
 		{
 			await this.#router.isReady();
+			// After the router settled its initial navigation: scrubbing earlier races with
+			// vue-router rewriting history state from the URL it captured at boot (?source would return).
+			this.#scrubWelcomeSourceFromUrl();
 			await this.#applyWelcomeRedirect();
 			const hasInitialCollections = this.#hydrateFromInitialCollections();
 			this.#hydrateFromInitialSidebarContext();
@@ -321,6 +383,16 @@ export class NoteApp
 			{
 				this.#removeRouteAfterEach = this.#router.afterEach((to, from) => {
 					this.#previousRouteName = String(from?.name || '');
+
+					// Hash-only navigation within the same document: skip resync so an anchor click
+					// doesn't refetch/remount the document. The editor scrolls via its own $route.hash watcher.
+					const sameRoute = to?.name === from?.name
+						&& String(to?.params?.id ?? '') === String(from?.params?.id ?? '');
+					if (sameRoute && to?.hash !== from?.hash)
+					{
+						return;
+					}
+
 					void this.#syncRouteState(false);
 				});
 			}
@@ -331,12 +403,12 @@ export class NoteApp
 		}
 	}
 
-	async #syncRouteState(withCollectionFallback: boolean = false): Promise<void>
+	async #syncRouteState(withCollectionFallback: boolean = false, force: boolean = false): Promise<void>
 	{
 		const syncId = ++this.#routeSyncId;
 		this.#applyImmediateSharedFlag();
 		this.#captureLastKnownCollectionFromRoute();
-		await this.#syncRouteDocumentContext(syncId);
+		await this.#syncRouteDocumentContext(syncId, force);
 		if (syncId !== this.#routeSyncId || !this.#sidebarFeature)
 		{
 			return;
@@ -420,7 +492,7 @@ export class NoteApp
 		}
 	}
 
-	async #syncRouteDocumentContext(syncId: number): Promise<void>
+	async #syncRouteDocumentContext(syncId: number, force: boolean = false): Promise<void>
 	{
 		if (!this.#router || !this.#routeDocumentResolver || !this.#routeDocumentContext)
 		{
@@ -429,6 +501,22 @@ export class NoteApp
 
 		const routeDocId = this.#extractRouteDocumentId(this.#router.currentRoute?.value);
 		if (this.#applyInitialRouteDocumentContext(routeDocId))
+		{
+			return;
+		}
+
+		// Idempotent guard: the same document is already loaded. A hash-only anchor click (or any
+		// spurious route resync where the afterEach hash guard didn't fire due to transient from/to
+		// state) must not refetch and remount an already-open document. `force` lets deliberate
+		// same-route reloads (restore-from-trash, sidebar reload) bypass this.
+		const current = this.#routeDocumentContext;
+		if (
+			!force
+			&& routeDocId > 0
+			&& Number(current.docId) === routeDocId
+			&& current.status === 'ready'
+			&& Type.isPlainObject(current.document)
+		)
 		{
 			return;
 		}
@@ -1163,7 +1251,7 @@ export class NoteApp
 			{
 				// Already on the restored document's page; the route stays the same,
 				// so refresh resolver state manually to flip the editor out of trashed mode.
-				void this.#syncRouteState(false);
+				void this.#syncRouteState(false, true);
 			}
 			else
 			{

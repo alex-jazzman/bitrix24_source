@@ -337,7 +337,7 @@ export class MessageMenu extends BaseMenu
 
 	getCreateTaskItem(): ?MenuItemOptions
 	{
-		if (this.isDeletedMessage() || this.#isStickerMessage())
+		if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest())
 		{
 			return null;
 		}
@@ -356,7 +356,7 @@ export class MessageMenu extends BaseMenu
 
 	getCreateMeetingItem(): ?MenuItemOptions
 	{
-		if (this.isDeletedMessage() || this.#isStickerMessage())
+		if (this.isDeletedMessage() || this.#isStickerMessage() || this.#isCurrentUserGuest())
 		{
 			return null;
 		}
@@ -699,5 +699,10 @@ export class MessageMenu extends BaseMenu
 		const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 
 		return pins.length >= this.maxPins;
+	}
+
+	#isCurrentUserGuest(): boolean
+	{
+		return this.store.getters['users/isGuest'](this.getCurrentUserId());
 	}
 }

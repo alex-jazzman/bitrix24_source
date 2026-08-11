@@ -65,6 +65,13 @@ export class LoadService
 		return this.#requestChat(method, params);
 	}
 
+	loadCopilotDraftChat(): Promise<{ dialogId: string, chatId: number }>
+	{
+		return this.#requestChat(RestMethod.imV2CopilotDraftChatGet, {
+			messageLimit: MessageService.getMessageRequestLimit(),
+		});
+	}
+
 	loadChatWithContext(dialogId: string, messageId: number): Promise
 	{
 		const params = {

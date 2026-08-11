@@ -165,6 +165,12 @@
 	pointer-events: none;
 }
 
+.note-editor-popover-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
 .note-editor-popover-button-color {
 	padding: 0.35rem;
 }
@@ -245,6 +251,11 @@
 	color: var(--ui-color-base-4);
 }
 
+.note-editor-input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .note-editor-input-clamp {
 	min-width: 12rem;
 }
@@ -280,8 +291,16 @@
 }
 
 .ProseMirror.note-editor-prose {
-	padding: 1rem 1rem 1rem var(--note-heading-gutter, 48px);
+	/* flow-root makes the editor its own BFC so it contains trailing floated media
+	   (align-left/right): without it the box collapses to the in-flow text and the
+	   bottom padding renders above the images instead of below them.
+	   Generous bottom padding is then a real click-to-type zone below the last
+	   block (handled by note-gapcursor's handleClick); border-box keeps it inside
+	   min-height:100% so a short document gets no extra scroll. */
+	display: flow-root;
+	padding: 1rem 1rem 8rem var(--note-heading-gutter, 48px);
 	min-height: 100%;
+	box-sizing: border-box;
 	outline: none;
 	color: var(--ui-color-base-1);
 	line-height: 1.55;
@@ -468,6 +487,9 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	padding-left: 0.875rem;
 	border-left: 3px solid var(--ui-color-divider-accent);
 	color: var(--ui-color-base-2);
+	/* Own BFC so the box (and its left border) shrinks beside a floated image instead of flowing
+	   under it — otherwise the left stripe ends up hidden behind a left-aligned image. */
+	display: flow-root;
 }
 
 /* Callout / Admonition blocks */
@@ -772,6 +794,10 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	position: relative;
 	margin-top: 1.5em;
 	margin-bottom: 1.5em;
+	/* Own BFC: next to a floated image the box shrinks beside the float instead of flowing under
+	   it. Without this the full-width div overlaps the image (steals clicks) and the absolutely
+	   positioned overlay anchors to the wrong (full-width) edge. */
+	display: flow-root;
 }
 
 .ProseMirror.note-editor-prose .note-editor-code-block > pre {
@@ -925,10 +951,6 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	display: block;
 }
 
-.ProseMirror.note-editor-prose .ProseMirror-gapcursor.note-editor-gapcursor-between-atoms::after {
-	top: -0.875rem;
-}
-
 /* @tiptap/core ships a hardcoded `border-top: 1px solid black` for the
  * gapcursor blink line — invisible on dark theme. Map to `--ui-color-base-1`
  * so the line inverts with the theme. */
@@ -936,14 +958,71 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	border-top-color: var(--ui-color-base-1);
 }
 
-.ProseMirror.note-editor-prose .note-editor-file-attachment,
-.ProseMirror.note-editor-prose .note-editor-image-attachment,
-.ProseMirror.note-editor-prose .note-editor-video-attachment {
+.ProseMirror.note-editor-prose .note-editor-file-attachment {
 	margin: 1rem 0;
 	border: none;
 	border-radius: 10px;
 	padding: 0.625rem;
 	overflow: hidden;
+}
+
+/* Image/video are resizable block nodes: width:fit-content lets the block shrink to the media so
+   the selection outline hugs it and margin:auto can center it.
+   flow-root makes the block its own BFC (like blockquote/callout/code) so it stays float-aware:
+   beside a floated neighbour it shrinks/drops as a whole instead of overlapping it.
+   overflow:visible so the overlay pill can escape a narrow block's bounds. */
+.ProseMirror.note-editor-prose .note-editor-image-attachment,
+.ProseMirror.note-editor-prose .note-editor-video-attachment {
+	display: flow-root;
+	width: fit-content;
+	max-width: 100%;
+	border: none;
+	border-radius: 10px;
+	overflow: visible;
+}
+
+/* Non-resizable video (no url yet, resolving): keep padding and contained layout. */
+.ProseMirror.note-editor-prose .note-editor-video-attachment:not(.note-editor-media) {
+	padding: 0.625rem;
+	overflow: hidden;
+}
+
+/* Alignment is a per-node flag applied by node-view on the block element.
+   center: block centered with margin auto. left/right: float so following text wraps beside it. */
+.ProseMirror.note-editor-prose .note-editor-media--align-center {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Float media cap at 70% of the container so the wrapped text always keeps a usable column and
+   BFC neighbours (callout/code/table) can't be squeezed to a sliver. */
+.ProseMirror.note-editor-prose .note-editor-media--align-left {
+	float: left;
+	max-width: 70%;
+	margin: 0.25rem 2rem 1rem 0;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media--align-right {
+	float: right;
+	max-width: 70%;
+	margin: 0.25rem 0 1rem 2rem;
+}
+
+/* Demote: float → block when the hypothetical text column would drop below the readability
+   threshold. Width/max-width are intentionally kept as-is (set inline by JS) so the media
+   does not resize on demote — this is what prevents oscillation. */
+.ProseMirror.note-editor-prose .note-editor-media--stacked {
+	float: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media--align-left.note-editor-media--stacked {
+	margin-right: auto;
+	margin-left: 0;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media--align-right.note-editor-media--stacked {
+	margin-left: auto;
+	margin-right: 0;
 }
 
 /* Reuse: add your-class.ProseMirror-selectednode to this list for new node types */
@@ -965,8 +1044,19 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 .ProseMirror.note-editor-prose .note-editor-video-inner {
 	display: flex;
 	flex-direction: column;
+	/* Fill the block, which carries the authoritative width %. */
+	width: 100%;
 }
 
+/* Resizable preview wrapper: position:relative anchors handles/overlay absolutely inside it. */
+.ProseMirror.note-editor-prose .note-editor-video-attachment-preview {
+	position: relative;
+	width: 100%;
+	border-radius: 6px;
+	overflow: visible;
+}
+
+/* Legacy/non-resizable video preview (resolving skeleton wrapper). */
 .ProseMirror.note-editor-prose .note-editor-video-preview {
 	width: 100%;
 	border-radius: 6px;
@@ -974,11 +1064,19 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	background: var(--ui-color-accent-soft-grey-2);
 }
 
+/* height:auto lets the player follow the video's intrinsic aspect ratio at any width — without it a
+   capped height keeps the box wider than the frame and the #000 background shows as side letterbox bars. */
 .ProseMirror.note-editor-prose .note-editor-video-player {
 	display: block;
 	width: 100%;
-	max-height: 420px;
+	height: auto;
 	background: #000;
+	border-radius: 6px;
+}
+
+/* Resolving skeleton borrows the player class but has no video to give it height. */
+.ProseMirror.note-editor-prose .note-editor-video-player.note-editor-attachment-skeleton {
+	min-height: 190px;
 }
 
 .ProseMirror.note-editor-prose[contenteditable="true"] .note-editor-video-player {
@@ -1026,6 +1124,10 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 }
 
 .ProseMirror.note-editor-prose .note-editor-upload-asset {
+	/* Own BFC so the dashed box shrinks to the column available beside a floated
+	   media neighbour instead of stretching full width underneath it (same
+	   float-aware trick as .note-editor-image/video-attachment). */
+	display: flow-root;
 	margin: 1rem 0;
 	border: 1px dashed color-mix(in srgb, var(--ui-color-accent-main-primary) 55%, #8f64ff);
 	border-radius: 10px;
@@ -1149,9 +1251,14 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	/* Fill the block, which carries the authoritative width %. A column flex with auto width
+	   shrink-wraps its cross-size to the image's intrinsic width instead of stretching, leaving the
+	   selection outline / resize handles floating outside a shrunk (portrait) image. */
+	width: 100%;
 }
 
 .ProseMirror.note-editor-prose .note-editor-image-attachment-preview {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1160,6 +1267,106 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	border-radius: 8px;
 	overflow: visible;
 	background: transparent;
+}
+
+/* Side resize handles — shown only when the media node is selected in edit mode. */
+.ProseMirror.note-editor-prose .note-editor-media-resize-handle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: ew-resize;
+	z-index: 2;
+	/* Pointer-driven resize (mouse + touch): keep the browser from scrolling/zooming mid-drag. */
+	touch-action: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-resize-handle--left {
+	left: 0;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-resize-handle--right {
+	right: 0;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-resize-handle::after {
+	content: "";
+	width: 4px;
+	height: 36px;
+	max-height: 60%;
+	border-radius: 4px;
+	background: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 1px var(--ui-color-bg-content-primary);
+}
+
+.ProseMirror.note-editor-prose .note-editor-image-attachment-preview--resizing,
+.ProseMirror.note-editor-prose .note-editor-video-attachment-preview--resizing {
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* Align/replace pill — floats centered above the media (shown only on selection).
+   Styled to match the toolbar popover-card (.note-editor-popover-card / -button) one-to-one.
+   Natural width so it never clips on narrow media. */
+.ProseMirror.note-editor-prose .note-editor-media-overlay {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 3;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	width: max-content;
+	height: 40px;
+	padding: 8px 16px;
+	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-pill, 9999px);
+	border: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-overlay-btn {
+	min-width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-3xs, 6px);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	/* BIcon ("Replace") reads this var; currentColor binds it to the button color so it matches
+	   the note SVG icons and follows the hover/active accent below. */
+	--ui-icon-set__icon-color: currentColor;
+	line-height: 1;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-overlay-btn:hover,
+.ProseMirror.note-editor-prose .note-editor-media-overlay-btn--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-overlay-btn--active {
+	background-color: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+}
+
+.ProseMirror.note-editor-prose .note-editor-media-overlay-divider {
+	width: 1px;
+	height: 24px;
+	background: var(--ui-color-divider-default);
+	flex: 0 0 auto;
 }
 
 .ProseMirror.note-editor-prose .note-editor-image-attachment-preview .note-editor-attachment-tile-link {
@@ -1183,7 +1390,8 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 
 .ProseMirror.note-editor-prose .note-editor-image-attachment-image {
 	display: block;
-	width: auto;
+	/* Fill the block, which carries the width (% when resized, fit-content → natural otherwise). */
+	width: 100%;
 	max-width: 100%;
 	height: auto;
 	margin: 0 auto;
@@ -1733,6 +1941,37 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	flex-shrink: 0;
 }
 
+/* Suggestion mode (model A): search field is visible so the user can click into it
+ * as a fallback when focus is kept in the document. No hiding needed — filtering is
+ * driven by dialog.search(query) from the trigger plugin's state.apply. */
+
+/* Override upstream tab.css `::before` Chrome sub-pixel fix that hardcodes `background: #fff`.
+ * The pseudo-element is a 1px right-edge strip covering the seam between the label and content
+ * area. Under dark theme the popup background is `--ui-color-bg-content-primary`; use
+ * `transparent` to neutralise the hardcoded white without introducing a new hex value.
+ * Selector specificity matches the upstream double-class rule plus the context prefix. */
+.note-editor-mention-popup.--ui-context-content-dark .ui-selector-tab-labels--active.ui-selector-tab-labels::before,
+.note-editor-mention-popup.--ui-context-content-dark .ui-selector-tab-labels--animate-show.ui-selector-tab-labels::before,
+.note-editor-mention-popup.--ui-context-content-dark .ui-selector-tab-labels--animate-hide.ui-selector-tab-labels::before {
+    background: transparent;
+}
+
+/* Active tab title uses base-8 which is dark in this inverted popup context; base-1 is the light token here. */
+.note-editor-mention-popup.--ui-context-content-dark .ui-selector-tab-label-active .ui-selector-tab-title
+{
+	color: var(--ui-color-base-1);
+}
+
+/* Mention selection visuals.
+ * Single NodeSelection (arrow / drag) → ProseMirror adds .ProseMirror-selectednode.
+ * Range/AllSelection (Ctrl+A) → atoms get no selectednode class, so the resolver
+ * plugin decorates them with .note-mention-selected (see note-mention-node.js). */
+.ProseMirror.note-editor-prose [data-type="note-mention"].ProseMirror-selectednode .note-mention-chip,
+.ProseMirror.note-editor-prose [data-type="note-mention"].note-mention-selected .note-mention-chip {
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-color-accent-main-link) 35%, transparent);
+	border-radius: .16em;
+}
+
 
 /* Mobile adaptation for note.editor. Scoped via html.note-mobile.
  *
@@ -1840,6 +2079,11 @@ html.note-mobile .note-heading.is-revealed .note-heading__hash {
 	display: inline-flex;
 	opacity: 1;
 	color: var(--ui-color-base-2);
+}
+
+/* Wider hit zone for resize handles on mobile — visual strip (::after) unchanged. */
+html.note-mobile .ProseMirror.note-editor-prose .note-editor-media-resize-handle {
+	width: 20px;
 }
 
 /* Toolbar scroll thumb: always visible on mobile, no hover animation. */

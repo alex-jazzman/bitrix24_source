@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Bizproc\Public\Integration\AiAssistant\EventHandler\AiAssistantAgentActivity;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -35,103 +34,36 @@ class bizproc extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
+		global $APPLICATION;
 
-		if (!$DB->TableExists('b_bp_workflow_instance'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		RegisterModule("bizproc");
-		RegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "bizproc", "CBPVirtualDocument", "OnAfterIBlockElementDelete");
-		RegisterModuleDependences("main", "OnAdminInformerInsertItems", "bizproc", "CBPAllTaskService", "OnAdminInformerInsertItems");
-		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestServiceBuildDescription');
-		RegisterModuleDependences('rest', 'OnRestAppDelete', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestAppDelete');
-		RegisterModuleDependences('rest', 'OnRestAppUpdate', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestAppUpdate');
-		RegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'bizproc', 'CBPDocument', 'onAfterTMDayStart');
 
 		COption::SetOptionString("bizproc", "SkipNonPublicCustomTypes", "Y");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventImportController');
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventExportController');
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationClear', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventClearController');
-		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'getEntityList');
-		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'bizproc', Bitrix\Bizproc\Integration\NotifySchema::class, 'onGetNotifySchema');
-
-		//Comments
-		$commentsListener = \Bitrix\Bizproc\Integration\CommentListener::class;
-		$eventManager->registerEventHandler('forum', 'OnAfterCommentAdd', 'bizproc', $commentsListener, 'onAfterCommentAdd');
-		//$eventManager->registerEventHandler('forum', 'OnAfterCommentUpdate', 'bizproc', $commentsListener, 'onAfterCommentUpdate');
-		$eventManager->registerEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
-		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
-
-		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
-		$eventManager->registerEventHandler('crm', 'DealCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'dealCategoryOnBeforeDelete');
-		$eventManager->registerEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
-		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'bizproc', '\Bitrix\Bizproc\Internal\Integration\AI\Event\EventHandler', 'onContextGetMessages');
-		$eventManager->registerEventHandler('intranet', 'onAddAbsence', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence');
-		/** @see AiAssistantAgentActivity::onCollectCustomContext() */
-		$eventManager->registerEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'bizproc', AiAssistantAgentActivity::class, 'onCollectCustomContext');
-
-		CAgent::AddAgent('\Bitrix\Bizproc\Infrastructure\Agent\StorageCleanupAgent::runAgent();', 'bizproc', 'N', 86400);
 
 		return true;
 	}
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
-		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
-		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/db/".$connection->getType()."/uninstall.sql");
+		global $APPLICATION;
 
-			if (!empty($errors))
-			{
-				$APPLICATION->ThrowException(implode("", $errors));
-				return false;
-			}
+		$dropTables = array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y";
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
+			return false;
 		}
 
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "bizproc", "CBPVirtualDocument", "OnAfterIBlockElementDelete");
-		UnRegisterModuleDependences("main", "OnAdminInformerInsertItems", "bizproc", "CBPAllTaskService", "OnAdminInformerInsertItems");
-		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestServiceBuildDescription');
-		UnRegisterModuleDependences('rest', 'OnRestAppDelete', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestAppDelete');
-		UnRegisterModuleDependences('rest', 'OnRestAppUpdate', 'bizproc', '\Bitrix\Bizproc\RestService', 'onRestAppUpdate');
-		UnRegisterModuleDependences('timeman', 'OnAfterTMDayStart', 'bizproc', 'CBPDocument', 'onAfterTMDayStart');
 		UnRegisterModule("bizproc");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationImport', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventImportController');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationExport', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventExportController');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationClear', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventClearController');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'getEntityList');
-		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'bizproc', Bitrix\Bizproc\Integration\NotifySchema::class, 'onGetNotifySchema');
-
-		//Comments
-		$commentsListener = \Bitrix\Bizproc\Integration\CommentListener::class;
-		$eventManager->unRegisterEventHandler('forum', 'OnAfterCommentAdd', 'bizproc', $commentsListener, 'onAfterCommentAdd');
-		//$eventManager->unRegisterEventHandler('forum', 'OnAfterCommentUpdate', 'bizproc', $commentsListener, 'onAfterCommentUpdate');
-		$eventManager->unRegisterEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
-		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
-
-		$eventManager->unRegisterEventHandler('intranet', 'onSettingsProvidersCollect', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect');
-		$eventManager->unRegisterEventHandler('crm', 'DealCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'dealCategoryOnBeforeDelete');
-		$eventManager->unRegisterEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
-		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'bizproc', '\Bitrix\Bizproc\Internal\Integration\AI\Event\EventHandler', 'onContextGetMessages');
-		$eventManager->unRegisterEventHandler('intranet', 'onAddAbsence', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence');
-		/** @see AiAssistantAgentActivity::onCollectCustomContext() */
-		$eventManager->unRegisterEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'bizproc', AiAssistantAgentActivity::class, 'onCollectCustomContext');
 
 		return true;
 	}
@@ -193,7 +125,6 @@ class bizproc extends CModule
 		$this->InstallDB(false);
 		$this->InstallEvents();
 		$this->InstallPublic();
-		$this->installAgents();
 
 		$GLOBALS["errors"] = $this->errors;
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("BIZPROC_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/step2.php");
@@ -239,17 +170,5 @@ class bizproc extends CModule
 				)
 			);
 		return $arr;
-	}
-
-	private function installAgents(): void
-	{
-		$startTime = \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL');
-		\CAgent::AddAgent(
-			name: 'Bitrix\\Bizproc\\Install\\Agent\\CreateRobotVersionIndex::run();',
-			module: $this->MODULE_ID,
-			interval: 60,
-			next_exec: $startTime,
-			existError: false,
-		);
 	}
 }

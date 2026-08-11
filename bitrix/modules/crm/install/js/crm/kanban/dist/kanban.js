@@ -2993,9 +2993,6 @@ this.BX.CRM = this.BX.CRM || {};
 					}
 				});
 			});
-			if (items.length <= 1) {
-				return;
-			}
 			this.actionPanel.appendItem({
 				id: 'kanban_category',
 				text: main_core.Loc.getMessage('CRM_KANBAN_PANEL_CATEGORY2'),
@@ -5288,8 +5285,8 @@ this.BX.CRM = this.BX.CRM || {};
 		editorNodeSelectPopup = null;
 		editorLoaded = false;
 		editorOpen = false;
-		quickFormSaveButton = null;
-		quickFormCancelButton = null;
+		quickFormSaveButtonInstance = null;
+		quickFormCancelButtonInstance = null;
 		editorId = null;
 		editor = null;
 		loader = null;
@@ -5691,7 +5688,7 @@ this.BX.CRM = this.BX.CRM || {};
 								'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
 								'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 								'ENABLE_SETTINGS_FOR_ALL': true,
-								'ANALYTICS_CONFIG': analyticsConfig,
+								'POST_FORM_ANALYTICS_DATA': analyticsConfig,
 								'HOST_COLUMN_FOR_QUICK_EDITOR_ID': this.getId().toString()
 							}
 						}
@@ -5739,7 +5736,7 @@ this.BX.CRM = this.BX.CRM || {};
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
 						FIELDS: formFields,
 						CONTEXT: context,
-						ANALYTICS_CONFIG: analyticsConfig,
+						POST_FORM_ANALYTICS_DATA: analyticsConfig,
 						HOST_COLUMN_FOR_QUICK_EDITOR_ID: this.getId().toString()
 					}, result => {
 						this.editorNodeContainer.innerHTML = result;
@@ -5805,7 +5802,7 @@ this.BX.CRM = this.BX.CRM || {};
 				}
 				BX.addCustomEvent(window, 'BX.Crm.EntityEditorAjax:onSubmitFailure', errors => {
 					if (this.editorOpen) {
-						this.quickFormSaveButton.classList.remove("ui-btn-wait");
+						this.quickFormSaveButtonInstance.setWaiting(false);
 						this.editorNode.classList.remove("crm-kanban-quick-form-wait");
 						var message = '';
 						var requiredFields = [];
@@ -5932,11 +5929,11 @@ this.BX.CRM = this.BX.CRM || {};
 			return this.editorOpen;
 		}
 		showQuickEditorLoader() {
-			this.quickFormSaveButton.classList.add("ui-btn-wait");
+			this.quickFormSaveButtonInstance.setWaiting(true);
 			this.editorNode.classList.add("crm-kanban-quick-form-wait");
 		}
 		hideQuickEditorLoader() {
-			this.quickFormSaveButton.classList.remove("ui-btn-wait");
+			this.quickFormSaveButtonInstance.setWaiting(false);
 			this.editorNode.classList.remove("crm-kanban-quick-form-wait");
 		}
 		closeQuickFormEditor() {
@@ -6041,7 +6038,7 @@ this.BX.CRM = this.BX.CRM || {};
 			{
 				this.editorNode = main_core.Dom.create("div", {
 					props: {
-						className: "crm-kanban-quick-form"
+						className: "crm-kanban-quick-form --ui-context-content-light"
 					},
 					style: {
 						height: "0px"
@@ -6052,37 +6049,32 @@ this.BX.CRM = this.BX.CRM || {};
 						}
 					})]
 				});
+				this.quickFormSaveButtonInstance = new ui_buttons.Button({
+					text: main_core.Loc.getMessage("CRM_KANBAN_POPUP_SAVE"),
+					size: ui_buttons.ButtonSize.SMALL,
+					useAirDesign: true,
+					style: ui_buttons.AirButtonStyle.FILLED,
+					onclick: () => {
+						this.processQuickEditor();
+						this.showQuickEditorLoader();
+					}
+				});
+				this.quickFormCancelButtonInstance = new ui_buttons.Button({
+					text: main_core.Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
+					size: ui_buttons.ButtonSize.SMALL,
+					useAirDesign: true,
+					style: ui_buttons.AirButtonStyle.OUTLINE,
+					onclick: () => {
+						this.enabledAddButton();
+						this.hideQuickFormEditor();
+						this.cleanEditor();
+					}
+				});
 				this.editorNodeCreate = main_core.Dom.create("div", {
 					props: {
 						className: "crm-kanban-quick-form-buttons"
 					},
-					children: [this.quickFormSaveButton = main_core.Dom.create("input", {
-						attrs: {
-							type: "button",
-							value: main_core.Loc.getMessage("CRM_KANBAN_POPUP_SAVE"),
-							className: "ui-btn ui-btn-xs ui-btn-primary"
-						},
-						events: {
-							click: ev => {
-								this.processQuickEditor();
-								this.showQuickEditorLoader();
-								BX.PreventDefault(ev);
-							}
-						}
-					}), this.quickFormCancelButton = main_core.Dom.create("input", {
-						attrs: {
-							type: "button",
-							value: main_core.Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
-							className: "ui-btn ui-btn-xs ui-btn-link"
-						},
-						events: {
-							click: () => {
-								this.enabledAddButton();
-								this.hideQuickFormEditor();
-								this.cleanEditor();
-							}
-						}
-					})]
+					children: [this.quickFormSaveButtonInstance.render(), this.quickFormCancelButtonInstance.render()]
 				});
 			}
 			var stageIdKey = this.getGrid().getTypeInfoParam('stageIdKey');
@@ -7708,5 +7700,5 @@ this.BX.CRM = this.BX.CRM || {};
 	exports.StageLabels = StageLabels;
 	exports.ViewMode = ViewMode;
 
-})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX.CRM.Kanban, BX.Crm, BX, BX, BX.Main, BX, BX, BX, BX.UI.EntitySelector, BX.UI.Tour, BX, BX.Crm.Integration.Analytics, BX.Pull, BX.Crm.Autorun, BX.UI.Analytics, BX.Main, BX.Crm.Activity, BX.Crm, BX, BX.SidePanel, BX.UI.System.Label, BX.UI, BX, BX.Currency, BX.UI, BX.CRM.Kanban);
+})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX.CRM.Kanban, BX.Crm, BX, BX, BX.Main, BX, BX, BX, BX.UI.EntitySelector, BX.UI.Tour, BX.UI.Notification, BX.Crm.Integration.Analytics, BX.Pull, BX.Crm.Autorun, BX.UI.Analytics, BX.Main, BX.Crm.Activity, BX.Crm, BX, BX.SidePanel, BX.UI.System.Label, BX.UI, BX, BX.Currency, BX.UI, BX.CRM.Kanban);
 //# sourceMappingURL=kanban.js.map

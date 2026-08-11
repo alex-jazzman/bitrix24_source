@@ -17,7 +17,7 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI\Component\TemplateHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
-use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internal\Service\Grid\ReplicationHintService;
 
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.templates.list/templates/.default/script.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/table-view.js");
@@ -238,9 +238,34 @@ function prepareTaskTemplateRowTitle($row, $arParams)
 		)
 	);
 
-	$title = '<a href="'.$taskTemplateUrl.'" class="task-title">'.htmlspecialcharsbx($row['TITLE']).'</a> ';
+	$indicators = '<span class="template-title-indicators">' . prepareRegularHint($row) . '</span>';
+
+	$title = '<a href="'.$taskTemplateUrl.'" class="task-title">'.htmlspecialcharsbx($row['TITLE']).$indicators.'</a> ';
 
 	return $title;
+}
+
+function prepareRegularHint(array $row): string
+{
+	if (($row['REPLICATE'] ?? '') !== 'Y')
+	{
+		return '';
+	}
+
+	if (!isset($row['REPLICATE_PARAMS']))
+	{
+		return '';
+	}
+
+	$hint = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->get(ReplicationHintService::class)
+		->renderForTemplate(
+			templateId: (int)$row['ID'],
+			replicateParams: $row['REPLICATE_PARAMS'],
+			userId: \Bitrix\Tasks\Util\User::getId(),
+		)
+	;
+
+	return $hint ?? '';
 }
 
 function prepareTaskTemplateRegular($row, $arParams)

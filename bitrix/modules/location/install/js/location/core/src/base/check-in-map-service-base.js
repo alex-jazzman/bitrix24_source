@@ -192,4 +192,14 @@ export default class CheckInMapServiceBase
 	{
 		throw new Error('Must be implemented');
 	}
+
+	/**
+	 * Enable or disable grayscale filter on the map tiles.
+	 * Markers and layers remain unaffected.
+	 * @param {boolean} enabled
+	 */
+	setGrayscale(enabled)
+	{
+		throw new Error('Must be implemented');
+	}
 }

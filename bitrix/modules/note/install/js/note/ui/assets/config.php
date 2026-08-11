@@ -5,12 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-// Static assets only: bundled images shared by PHP (SystemUser),
-// CSS (editor callout) and Vue components (document-list-item).
-// No JS/CSS bundle is built; the extension is a stable container
-// for absolute asset URLs under /bitrix/js/note/ui/assets/images/.
+// Shared static assets under /bitrix/js/note/ui/assets/images/, plus a tiny JS
+// bundle exposing their canonical URLs (AssetUrl) so JS consumers import the path
+// from one place instead of hardcoding it. CSS/PHP consumers reference the same
+// published paths directly.
 
 return [
-	'rel' => [],
+	'js' => './dist/assets.bundle.js',
+	'rel' => [
+		'main.polyfill.core',
+	],
 	'skip_core' => true,
 ];

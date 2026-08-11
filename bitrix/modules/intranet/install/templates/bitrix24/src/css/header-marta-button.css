@@ -1,0 +1,24 @@
+.air-header__marta-slot {
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	overflow: visible;
+	visibility: hidden;
+}
+
+.air-header__marta-slot.--ready {
+	visibility: visible;
+}
+
+.air-header__marta-slot .aiassistant-marta {
+	position: relative;
+	left: auto;
+	bottom: auto;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	transform: scale(0.82);
+	transform-origin: center;
+}

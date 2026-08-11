@@ -21,7 +21,11 @@
 
 	MonthView.prototype.preBuild = function()
 	{
-		this.viewCont = BX.create('DIV', {props: {className: this.contClassName}, style: {display: 'none'}});
+		this.viewCont = BX.create('DIV', {
+			attrs: {'data-testid': 'calendar-month-view'},
+			props: {className: this.contClassName},
+			style: {display: 'none'}
+		});
 	};
 
 	MonthView.prototype.build = function()
@@ -370,7 +374,10 @@
 			holderIndex: this.entryHolders.length,
 			node: this.currentMonthRow.appendChild(BX.create('DIV', {
 				props: {className: BX.util.trim('calendar-grid-month-cell' + className)},
-				attrs: {'data-bx-calendar-month-day': dayCode},
+				attrs: {
+					'data-bx-calendar-month-day': dayCode,
+					'data-testid': 'calendar-month-view__create-cell-' + dayCode
+				},
 				html: '<span class="calendar-grid-cell-inner">' +
 				'<span class="calendar-num-day" data-bx-calendar-date="' + time + '">' +
 				(date.getDate() == 1 ? BX.message('EC_MONTH_SHORT')
@@ -707,7 +714,10 @@
 			}
 
 			partWrap = BX.create('DIV', {
-				attrs: {'data-bx-calendar-entry': entry.uid},
+				attrs: {
+					'data-bx-calendar-entry': entry.uid,
+					'data-testid': 'calendar-month-view__event-' + entry.uid
+				},
 				props: {className: entryClassName}, style: {
 					top: 0,
 					left: 'calc((100% / ' + this.dayCount + ') * (' + (from.dayOffset + 1) + ' - 1) + 2px)',

@@ -140,6 +140,12 @@ this.BX.Booking = this.BX.Booking || {};
 						});
 					};
 				},
+				/** @function bookings/getByIntervalAndIds */
+				getByIntervalAndIds: (state, getters) => {
+					return (fromTs, toTs, ids) => {
+						return getters.getByInterval(fromTs, toTs).filter(booking => ids.includes(booking.id));
+					};
+				},
 				/** @function bookings/getByDateAndIds */
 				getByDateAndIds: (state, getters) => {
 					return (dateTs, ids) => {

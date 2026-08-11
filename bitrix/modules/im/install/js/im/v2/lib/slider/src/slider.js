@@ -3,13 +3,14 @@ import { SidePanel, type SliderManager } from 'main.sidepanel';
 import { EventEmitter } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
-import { EventType, Layout } from 'im.v2.const';
+import { EventType, Layout, PromoId } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Launch } from 'im.v2.application.launch';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { CallManager } from 'im.v2.lib.call';
 import { showCloseWithActiveCallConfirm } from 'im.v2.lib.confirm';
+import { PromoManager } from 'im.v2.lib.promo';
 
 import 'ui.notification';
 import 'im.v2.lib.opener';
@@ -133,11 +134,39 @@ export class MessengerSlider
 			return Launch('messenger');
 		}).then((application) => {
 			Logger.warn('Slider: Messenger application launched', application);
+			this.#showBitrixGptAgentPromo();
 
 			return application;
 		});
 
 		return this.applicationPromise;
+	}
+
+	#showBitrixGptAgentPromo(): void
+	{
+		const shouldShowBitrixGptAgentPromo = PromoManager.getInstance().needToShow(PromoId.bitrixGptAgent);
+
+		if (!shouldShowBitrixGptAgentPromo)
+		{
+			return;
+		}
+
+		void Runtime.loadExtension('ui.banner-dispatcher').then(({ BannerDispatcher }) => {
+			BannerDispatcher.normal.toQueue(
+				(onDone) => {
+					void Runtime.loadExtension('im.v2.component.elements.bitrix-gpt-agent-promo')
+						.then(({ BitrixGptAgentPromo }) => {
+							BitrixGptAgentPromo.show({ onClose: onDone });
+
+							EventEmitter.subscribeOnce(EventType.slider.onClose, () => {
+								BitrixGptAgentPromo.close();
+							});
+						})
+					;
+				},
+				{ forceShowOnTop: true },
+			);
+		});
 	}
 
 	async initMessengerComponent(): Promise

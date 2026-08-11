@@ -12,6 +12,7 @@
 
 .bx-im-sidebar-shared-link__icon {
 	--ui-icon-set__icon-color: var(--ui-color-blue-70);
+	--ui-icon-set__icon-size: 20px;
 
 	margin-right: 10px;
 }
@@ -45,6 +46,7 @@
 
 .bx-im-sidebar-shared-link__icon_menu {
 	--ui-icon-set__icon-color: var(--ui-color-gray-50);
+	--ui-icon-set__icon-size: 20px;
 }
 
 .bx-im-sidebar-shared-link__icon_menu.--disabled {

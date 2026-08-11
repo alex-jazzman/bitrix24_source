@@ -87,9 +87,11 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 		 */
 		async loadCommentChatWithMessagesByPostId(postId)
 		{
-			if (!Type.isNumber(postId))
+			if (!Type.isNumber(postId) || postId <= 0)
 			{
-				return Promise.reject(new Error('ChatService: loadCommentChatWithMessagesByPostId: postId is not provided'));
+				logger.error('LoadService.loadCommentChatWithMessagesByPostId: invalid postId', postId);
+
+				return Promise.reject(new Error(`ChatService: loadCommentChatWithMessagesByPostId: invalid postId (${postId})`));
 			}
 
 			const params = {
@@ -308,7 +310,14 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				return this.store.dispatch('commentModel/setComments', extractor.getCommentInfo());
 			}
 
-			const { parentMessageId: postId, dialogId, chatId } = dialogData.parentMessageId;
+			const { parentMessageId: postId, dialogId, chatId } = dialogData;
+			if (!Type.isNumber(postId) || postId <= 0)
+			{
+				logger.warn('LoadService.updateCommentModel: parentMessageId is missing on comment dialog', dialogData);
+
+				return;
+			}
+
 			const commentInfo = this.store.getters['commentModel/getByMessageId'](postId);
 			const messageModel = this.store.getters['messagesModel/getById'](postId);
 			const currentUserId = serviceLocator.get('core').getUserId();
@@ -317,7 +326,7 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				messageId: postId,
 				dialogId,
 				chatId,
-				isUserSubscribed: commentInfo?.isUserSubscribed ?? Number(messageModel.authorId) === Number(currentUserId),
+				isUserSubscribed: commentInfo?.isUserSubscribed ?? Number(messageModel?.authorId) === Number(currentUserId),
 			});
 		}
 

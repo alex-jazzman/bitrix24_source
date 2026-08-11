@@ -1,9 +1,9 @@
 import { Loc } from 'main.core';
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 
-import { Logger } from 'im.v2.lib.logger';
-import { Uploader } from 'im.lib.uploader';
-import { Notifier } from 'im.v2.lib.notifier';
+import { Logger } from 'call.adapter.logger';
+import { Uploader } from 'call.adapter.uploader';
+import { Notifier } from 'call.adapter.notifier';
 
 const FILE_MAX_SIZE = 100 * 1024 * 1024;
 const FILE_MAX_SIZE_PHRASE_NUMBER = 100;
@@ -70,7 +70,7 @@ export class UploadManager extends EventEmitter
 		this.uploader.subscribe('onCreateFileError', this.#onUploadError.bind(this));
 	}
 
-	#onFileMaxSizeExceeded(event: BaseEvent)
+	#onFileMaxSizeExceeded(event)
 	{
 		Logger.warn('UploadManager: onFileMaxSizeExceeded', event);
 		const eventData = event.getData();
@@ -82,7 +82,7 @@ export class UploadManager extends EventEmitter
 		});
 	}
 
-	#onSelectFile(event: BaseEvent)
+	#onSelectFile(event)
 	{
 		Logger.warn('UploadManager: onSelectFile', event);
 		const { file, previewData } = event.getData();
@@ -97,7 +97,7 @@ export class UploadManager extends EventEmitter
 		this.#addUploadTask(file, previewData);
 	}
 
-	#onStartUpload(event: BaseEvent)
+	#onStartUpload(event)
 	{
 		Logger.warn('UploadManager: onStartUpload', event);
 		const { previewData, id, file } = event.getData();
@@ -110,7 +110,7 @@ export class UploadManager extends EventEmitter
 		});
 	}
 
-	#onProgress(event: BaseEvent)
+	#onProgress(event)
 	{
 		Logger.warn('UploadManager: onProgress', event);
 		const { id, progress } = event.getData();
@@ -120,7 +120,7 @@ export class UploadManager extends EventEmitter
 		});
 	}
 
-	#onComplete(event: BaseEvent)
+	#onComplete(event)
 	{
 		Logger.warn('UploadManager: onComplete', event);
 		const { id, result } = event.getData();
@@ -130,7 +130,7 @@ export class UploadManager extends EventEmitter
 		});
 	}
 
-	#onUploadError(event: BaseEvent)
+	#onUploadError(event)
 	{
 		Logger.warn('UploadManager: onUploadError', event);
 		const eventData = event.getData();

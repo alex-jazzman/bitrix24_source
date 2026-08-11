@@ -5,6 +5,7 @@ export const AnalyticsTool = Object.freeze({
 export const AnalyticsCategory = Object.freeze({
 	booking: 'booking',
 	waitlist: 'waitlist',
+	banners: 'banners',
 });
 
 export const AnalyticsEvent = Object.freeze({

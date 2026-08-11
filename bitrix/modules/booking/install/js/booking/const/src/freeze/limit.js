@@ -7,4 +7,5 @@ export const LimitFeatureId = Object.freeze({
 	NotificationsSettings: 'booking_notifications_settings',
 	Overbooking: 'booking_overbooking',
 	Waitlist: 'booking_waitlist',
+	MultidayBooking: 'booking_long',
 });

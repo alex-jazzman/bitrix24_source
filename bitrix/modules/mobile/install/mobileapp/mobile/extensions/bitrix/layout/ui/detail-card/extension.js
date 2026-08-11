@@ -46,6 +46,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.mounted = false;
 			this.isClosing = false;
 			this.analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {})).setSubSection('details');
+			this.sendAnalyticsInBody = false;
 
 			this.menuActionsProvider = null;
 			this.setAdditionalProvider = null;
@@ -1659,11 +1660,20 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 							...componentParamsForSave,
 							data: preparedPayload,
 							loadedTabs: this.getLoadedTabs(),
+							analyticsData:
+								shouldSendAnalytics && this.shouldSendAnalyticsInBody()
+									? this.getAnalyticsParams()?.exportToObject()
+									: null
+							,
 						},
-						analyticsLabel: shouldSendAnalytics && {
-							...this.getEntityAnalyticsData(),
-							event: 'save',
-						},
+						analyticsLabel:
+							shouldSendAnalytics && !this.shouldSendAnalyticsInBody()
+								? {
+									...this.getEntityAnalyticsData(),
+									event: 'save',
+								}
+								: null
+						,
 					})
 					.then((response) => this.processSaveErrors(response, preparedPayload, shouldSendAnalytics))
 					.catch((response) => this.processSaveErrors(response, preparedPayload, shouldSendAnalytics))
@@ -1722,7 +1732,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		processSaveErrors(response, payload, shouldSendAnalytics = false)
 		{
-			if (shouldSendAnalytics)
+			if (shouldSendAnalytics && !this.shouldSendAnalyticsInBody())
 			{
 				const status = response.status === 'success' && response.errors.length === 0 ? 'success' : 'error';
 				this.getAnalyticsParams().setStatus(status).send();
@@ -2235,6 +2245,25 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.ahaMomentsManager = manager;
 
 			return this;
+		}
+
+		/**
+		 * @param {Boolean} shouldSendAnalyticsInBody
+		 * @return {DetailCardComponent}
+		 */
+		setSendAnalyticsInBody(shouldSendAnalyticsInBody)
+		{
+			this.sendAnalyticsInBody = shouldSendAnalyticsInBody;
+
+			return this;
+		}
+
+		/**
+		 * @return {Boolean}
+		 */
+		shouldSendAnalyticsInBody()
+		{
+			return this.sendAnalyticsInBody;
 		}
 
 		static create(result)

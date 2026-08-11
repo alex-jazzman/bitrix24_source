@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
+		'im:messenger/application/lib/chat-deletion-manager',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',

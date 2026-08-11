@@ -1,6 +1,6 @@
-import { type Selector } from 'documentgenerator.selector';
 import { Runtime, Type } from 'main.core';
-import type { Store } from 'ui.vue3.vuex';
+
+import { type Selector } from 'documentgenerator.selector';
 import { type Logger } from './logger';
 
 export type Document = {
@@ -11,90 +11,81 @@ export type Document = {
 export class DocumentService
 {
 	#logger: Logger;
-	#store: Store;
-
 	#menu: ?Selector.Menu = null;
+	#menuCustomData: ?Object = null;
 
-	constructor(params: { logger: Logger, store: Store })
+	constructor({ logger }: { logger: Logger })
 	{
-		this.#logger = params.logger;
-		this.#store = params.store;
+		this.#logger = logger;
 	}
 
-	async selectOrCreateDocument(bindElement: HTMLElement): Promise<?Document>
+	async selectOrCreateDocument(bindElement: HTMLElement, customData: Object): Promise<?Document>
 	{
-		void this.#store.dispatch('application/setProgress', { isLoading: true });
+		const menu = await this.#getMenu(customData);
 
-		try
+		const result = await menu.show(bindElement);
+
+		if (await this.#isDocument(result))
 		{
-			const menu = await this.#getMenu();
+			return {
+				title: result.getTitle(),
+				publicUrl: await this.#getPublicUrl(result, customData),
+			};
+		}
 
-			const result = await menu.show(bindElement);
-
-			if (await this.#isDocument(result))
+		if (await this.#isTemplate(result))
+		{
+			let document = null;
+			try
 			{
-				return {
-					title: result.getTitle(),
-					publicUrl: await this.#getPublicUrl(result),
-				};
+				document = await menu.createDocument(result);
+			}
+			catch (error)
+			{
+				this.#logger.error('Failed to create document from template', { template: result, error });
+
+				throw error;
 			}
 
-			if (await this.#isTemplate(result))
+			if (Type.isNil(document))
 			{
-				let document = null;
-				try
-				{
-					document = await menu.createDocument(result);
-				}
-				catch (error)
-				{
-					this.#logger.error('Failed to create document from template', { template: result, error });
-
-					throw error;
-				}
-
-				if (Type.isNil(document))
-				{
-					return null;
-				}
-
-				return {
-					title: document.getTitle(),
-					publicUrl: await this.#getPublicUrl(document),
-				};
+				return null;
 			}
 
-			return null;
+			return {
+				title: document.getTitle(),
+				publicUrl: await this.#getPublicUrl(document, customData),
+			};
 		}
-		finally
-		{
-			void this.#store.dispatch('application/setProgress', { isLoading: false });
-		}
+
+		return null;
 	}
 
-	async #getMenu(): Promise<Selector.Menu>
+	async #getMenu(customData: Object): Promise<Selector.Menu>
 	{
-		if (this.#menu)
+		if (this.#menu && this.#menuCustomData === customData)
 		{
 			return this.#menu;
 		}
 
 		const exports = await this.#loadExtension();
 
+		const { moduleId, provider, value } = customData;
+
 		/** @see BX.DocumentGenerator.Selector.Menu */
 		this.#menu = new exports.Selector.Menu({
-			moduleId: 'crm',
-			provider: this.#store.state.application.contentProviders.documents.provider,
-			value: this.#store.state.application.context.entityId,
-			analyticsLabelPrefix: 'crmTimelineSmsEditor',
+			moduleId,
+			provider,
+			value,
 		});
+		this.#menuCustomData = customData;
 
 		return this.#menu;
 	}
 
-	#getPublicUrl(document: Selector.Document): Promise<string>
+	#getPublicUrl(document: Selector.Document, customData: Object): Promise<string>
 	{
-		return this.#getMenu()
+		return this.#getMenu(customData)
 			.then((menu) => {
 				return menu.getDocumentPublicUrl(document);
 			})

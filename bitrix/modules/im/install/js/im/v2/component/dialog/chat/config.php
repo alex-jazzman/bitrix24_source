@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'im.v2.application.core',
 		'im.v2.component.elements.avatar',
+		'im.v2.component.elements.guest-name-popup',
 		'im.v2.component.elements.popup',
 		'im.v2.component.entity-selector',
 		'im.v2.component.message-list',
@@ -22,6 +23,7 @@ return [
 		'im.v2.lib.counter',
 		'im.v2.lib.demo',
 		'im.v2.lib.feature',
+		'im.v2.lib.guest',
 		'im.v2.lib.layout',
 		'im.v2.lib.logger',
 		'im.v2.lib.parser',

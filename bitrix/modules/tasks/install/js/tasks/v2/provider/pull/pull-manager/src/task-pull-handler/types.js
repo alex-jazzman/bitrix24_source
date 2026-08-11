@@ -3,6 +3,7 @@ import type { StageDto } from 'tasks.v2.provider.service.group-service';
 export type PushData = {
 	USER_ID: number,
 	TASK_ID: number,
+	FROM_AI?: boolean,
 	AFTER: TaskPush,
 	BEFORE: TaskPush,
 };

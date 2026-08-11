@@ -1,5 +1,6 @@
 import { BIcon } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
+import { NoteAnalytics } from 'note.analytics';
 
 import type { SidebarDocument } from '../type';
 import { SidebarLoader } from './sidebar-loader';
@@ -163,6 +164,7 @@ export const TreeNode = {
 		},
 		onOpen(): void
 		{
+			NoteAnalytics.documentViewed('side_menu');
 			this.$emit('open', this.doc);
 			if (!this.canExpand)
 			{

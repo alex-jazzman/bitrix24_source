@@ -13,6 +13,7 @@ return [
 		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.lib.layout',
+		'imopenlines.v2.lib.quick-reply',
 	],
 	'skip_core' => true,
 ];

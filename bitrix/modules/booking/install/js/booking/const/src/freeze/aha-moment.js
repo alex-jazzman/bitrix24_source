@@ -11,4 +11,5 @@ export const AhaMoment = Object.freeze({
 	CyclePopup: 'cycle_popup',
 	SearchNavigation: 'search_navigation',
 	IntegrationMapsYa: 'integration_maps_ya',
+	WeekView: 'week_view',
 });

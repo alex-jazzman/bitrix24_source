@@ -44,9 +44,12 @@ export const CellStatsOverlay = {
 		},
 	},
 	methods: {
-		goToDay(ts: number): void
+		goToDayMode(): void
 		{
-			void this.$store.dispatch(`${Model.Interface}/goToDay`, ts + this.offset);
+			void this.$store.dispatch(`${Model.Interface}/goToDayMode`, {
+				selectedDateTs: this.cell.fromTs + this.offset,
+				resourceId: this.cell.resourceId,
+			});
 		},
 	},
 	template: `
@@ -86,7 +89,7 @@ export const CellStatsOverlay = {
 						:text="loc('BOOKING_BOOKING_SELECT')"
 						:size="ButtonSize.EXTRA_EXTRA_SMALL"
 						:color="ButtonColor.PRIMARY"
-						@click="goToDay(cell.fromTs)"
+						@click="goToDayMode()"
 					/>
 				</div>
 			</div>

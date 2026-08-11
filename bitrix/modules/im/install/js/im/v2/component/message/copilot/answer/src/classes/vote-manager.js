@@ -49,7 +49,7 @@ export class VoteManager
 
 		if (value === VoteValue.dislike && context)
 		{
-			this.#openFeedbackForm(context);
+			this.#openFeedbackForm(messageId, context);
 		}
 
 		try
@@ -82,14 +82,15 @@ export class VoteManager
 		void this.#store.dispatch('copilot/votes/delete', messageId);
 	}
 
-	#openFeedbackForm(context: VoteContext): void
+	#openFeedbackForm(messageId: number, context: VoteContext): void
 	{
 		const chat = this.#store.getters['chats/get'](context.dialogId);
+		const message = this.#store.getters['messages/getById'](messageId);
 		const userCounter = chat?.userCounter ?? 0;
 
 		void this.#feedbackManager.openCopilotForm({
 			userCounter,
-			text: context.text,
+			message,
 		});
 	}
 }

@@ -1,8 +1,8 @@
 <?php
-$MESS['M_CRM_ENTITY_TAB_ACTION_EXCLUDE'] = 'В список исключений';
+$MESS['M_CRM_ENTITY_TAB_ACTION_EXCLUDE'] = 'В стоп-лист';
 $MESS['M_CRM_ENTITY_TAB_ACTION_CHAT'] = 'Обсудить с коллегами';
 $MESS['M_CRM_ENTITY_TAB_ACTION_ACTIVITY'] = 'Запланировать дело';
-$MESS['M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION'] = "Это действие нельзя отменить.\nВы уверены, что хотите добавить элемент в список исключений?";
+$MESS['M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION'] = "Это действие нельзя отменить.\nВы уверены, что хотите добавить элемент в стоп-лист?";
 $MESS['M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION_OK'] = 'Добавить';
 
 $MESS['M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TITLE'] = 'Для действия недостаточно прав';

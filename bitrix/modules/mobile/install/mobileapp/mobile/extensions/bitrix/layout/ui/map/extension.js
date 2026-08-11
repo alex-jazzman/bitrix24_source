@@ -57,6 +57,8 @@ jn.define('layout/ui/map', (require, exports, module) => {
 	 * @typedef {Object} FitBoundsOptions
 	 * @property {Array<Number>} [padding] - [vertical, horizontal] or [top, right, bottom, left]
 	 * @property {Number} [maxZoom] - Range: 0..22 (clamped by map max zoom)
+	 * @property {Boolean} [animate] - Enable smooth pan/zoom animation
+	 * @property {Number} [duration] - Animation duration in seconds (used when animate=true)
 	 */
 
 	/**
@@ -108,6 +110,7 @@ jn.define('layout/ui/map', (require, exports, module) => {
 					},
 					uri: loadingOverlayImageUri,
 					resizeMode: 'cover',
+					autoPlayAnimation: true,
 				}),
 				this.#renderControlButtons(),
 			);
@@ -422,6 +425,15 @@ jn.define('layout/ui/map', (require, exports, module) => {
 		updateSettings(props = {})
 		{
 			this.sendEvent(CommandType.UPDATE_SETTINGS, props);
+		}
+
+		/**
+		 * Enable or disable grayscale filter on the map.
+		 * @param {boolean} enabled
+		 */
+		setGrayscale(enabled)
+		{
+			this.sendEvent(CommandType.SET_GRAYSCALE, { enabled });
 		}
 	}
 

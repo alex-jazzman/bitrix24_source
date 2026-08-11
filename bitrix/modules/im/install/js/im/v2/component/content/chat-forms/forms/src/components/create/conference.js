@@ -62,12 +62,11 @@ export const ConferenceCreation = {
 			},
 		};
 	},
-	computed:
-	{
+	computed: {
+		ChatType: () => ChatType,
 		EmptyAvatarType: () => EmptyAvatarType,
 	},
-	watch:
-	{
+	watch: {
 		chatTitle(newValue)
 		{
 			CreateChatManager.getInstance().setChatTitle(newValue);
@@ -93,8 +92,7 @@ export const ConferenceCreation = {
 		}
 		this.saveFields();
 	},
-	methods:
-	{
+	methods: {
 		onMembersChange(currentTags: SelectorEntityItem[])
 		{
 			this.chatMembers = currentTags;
@@ -111,21 +109,9 @@ export const ConferenceCreation = {
 		{
 			this.settings.description = description;
 		},
-		onManageUsersAddChange(newValue: UserRoleItem)
+		onRightChange({ name, value }: { name: string, value: UserRoleItem })
 		{
-			this.rights.manageUsersAdd = newValue;
-		},
-		onManageUsersDeleteChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUsersDelete = newValue;
-		},
-		onManageUiChange(newValue: UserRoleItem)
-		{
-			this.rights.manageUi = newValue;
-		},
-		onManageMessagesChange(newValue: UserRoleItem)
-		{
-			this.rights.manageMessages = newValue;
+			this.rights[name] = value;
 		},
 		onAvatarChange(newAvatarFile: File)
 		{
@@ -299,12 +285,10 @@ export const ConferenceCreation = {
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageMessages="rights.manageMessages"
+				:chatType="ChatType.videoconf"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
+				@rightChange="onRightChange"
 			/>
 		</div>
 		<ButtonPanel

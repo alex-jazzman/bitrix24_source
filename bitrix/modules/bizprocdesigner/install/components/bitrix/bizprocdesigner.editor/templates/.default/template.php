@@ -59,6 +59,7 @@ Extension::load([
 	'ui.icon-set.actions',
 	'ui.icon-set.main',
 	'bizproc.automation',
+	'main.clipboard',
 ]);
 
 if (\Bitrix\BizprocDesigner\Internal\Config\Feature::instance()->isAiAssistantAvailable())

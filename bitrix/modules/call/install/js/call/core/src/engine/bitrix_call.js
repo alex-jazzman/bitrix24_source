@@ -1,4 +1,4 @@
-import { Type, Browser } from 'main.core';
+import { Type, Browser, Event } from 'main.core';
 
 import {AbstractCall} from './abstract_call';
 import {
@@ -11,7 +11,7 @@ import {
 	CallType,
 	Provider,
 	DisconnectReason,
-} from './engine';
+} from './types';
 import {
 	Call,
 	CALL_STATE,
@@ -28,6 +28,7 @@ import Util from '../util'
 import { UnsupportedBrowserFeatures } from './unsupported_features_in_browsers';
 import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '../call_common_record';
 import { CallStreamManager } from '../media-stream-manager';
+import { SpeakerManager } from './speaker-manager';
 
 /**
  * Implements Call interface
@@ -77,7 +78,7 @@ const BitrixCallEvent = {
 	onCallConference: 'BitrixCall::onCallConference'
 };
 
-const invitePeriod = 30000;
+
 const reinvitePeriod = 5500;
 
 // const MAX_USERS_WITHOUT_SIMULCAST = 6;
@@ -99,6 +100,8 @@ export class BitrixCall extends AbstractCall
 	constructor(config)
 	{
 		super(config);
+
+		this.invitePeriod = config.invitePeriod > 0 ? config.invitePeriod : Util.getCallInvitePeriod();
 
 		this.videoQuality = Quality.VeryHigh; // initial video quality. will drop on new peers connecting
 
@@ -153,6 +156,15 @@ export class BitrixCall extends AbstractCall
 		this.#isFirefox = BX.browser.IsFirefox();
 
 		this.#cloudRecordState = CloudRecordStatus.NONE;
+
+		this.speakerManager = new SpeakerManager({
+			onSpeakerConfirmed: (deviceId) => {
+				this.runCallback(CallEvent.onSpeakerConfirmed, { deviceId });
+			},
+			onSpeakerFallback: (deviceId) => {
+				this.runCallback(CallEvent.onSpeakerFallback, { deviceId });
+			},
+		});
 	}
 
 	get provider()
@@ -754,6 +766,21 @@ export class BitrixCall extends AbstractCall
 
 	startScreenSharing()
 	{
+		this.#applyScreenSharing();
+	}
+
+	startScreenSharingWithStream(stream: MediaStream)
+	{
+		stream.getVideoTracks().forEach((track) => {
+			Event.bind(track, 'ended', () => {
+				this.stopScreenSharing();
+			}, { once: true });
+		});
+		this.#applyScreenSharing(stream);
+	}
+
+	#applyScreenSharing(stream = null)
+	{
 		if (!this.BitrixCall)
 		{
 			return;
@@ -765,8 +792,15 @@ export class BitrixCall extends AbstractCall
 			screenState: true,
 		});
 
-		this.BitrixCall.startScreenShare();
-	};
+		if (stream)
+		{
+			this.BitrixCall.startScreenShareWithStream(stream);
+		}
+		else
+		{
+			this.BitrixCall.startScreenShare();
+		}
+	}
 
 	stopScreenSharing()
 	{
@@ -800,7 +834,7 @@ export class BitrixCall extends AbstractCall
 					clearTimeout(this.waitForAnswerTimeout);
 					this.waitForAnswerTimeout = setTimeout(() => {
 						this.#onNoAnswer();
-					}, invitePeriod);
+					}, this.invitePeriod);
 				}
 
 				this.state = CallState.Connected;
@@ -825,9 +859,19 @@ export class BitrixCall extends AbstractCall
 
 				if (this.pendingHangups?.length > 0)
 				{
+					// A pending hangup is superseded if the user is being re-invited
+					const usersToInviteSet = new Set(
+						usersToInvite.map((user) => parseInt(user, 10)),
+					);
 					const pendingHangups = this.pendingHangups;
 					this.pendingHangups = [];
-					pendingHangups.forEach((hangupParams) => this.#onPullEventHangup(hangupParams));
+					pendingHangups.forEach((hangupParams) => {
+						if (usersToInviteSet.has(parseInt(hangupParams.senderId, 10)))
+						{
+							return;
+						}
+						this.#onPullEventHangup(hangupParams);
+					});
 				}
 
 				if (config.userData && config.show)
@@ -843,7 +887,6 @@ export class BitrixCall extends AbstractCall
 					const inviteParams = {
 						users: usersToInvite,
 						video: Hardware.isCameraOn ? 'Y' : 'N',
-						repeated: 'Y',
 					};
 
 					this.signaling.inviteUsers(inviteParams).then(() => this.scheduleRepeatInvite());
@@ -2030,7 +2073,7 @@ export class BitrixCall extends AbstractCall
 		{
 			this.runCallback(CallEvent.onUserCameraState, {
 				userId,
-				microphoneState: !isMutedVideo,
+				cameraState: !isMutedVideo,
 			});
 		}
 	};
@@ -2127,6 +2170,8 @@ export class BitrixCall extends AbstractCall
 			peer.reconnecting = true;
 			peer.updateCalculatedState();
 		}
+
+		this.runCallback(CallEvent.onParticipantReconnecting, { participant });
 	};
 
 	#onParticipantReconnected = (participant) => {
@@ -2138,6 +2183,8 @@ export class BitrixCall extends AbstractCall
 			peer.participant = participant;
 			peer.updateCalculatedState();
 		}
+
+		this.runCallback(CallEvent.onParticipantReconnected, { participant });
 	};
 
 	#onParticipantLeaved = (participant) => {
@@ -2484,19 +2531,10 @@ export class BitrixCall extends AbstractCall
 		);
 	}
 
-	#onCallMessageReceived = (e) =>
+	#onCallMessageReceived = (event) =>
 	{
-		let message;
+		const message = event.content;
 		let peer;
-
-		try
-		{
-			message = JSON.parse(e.text);
-		} catch (err)
-		{
-			this.log("Could not parse scenario message.", err);
-			return;
-		}
 
 		const eventName = message.eventName;
 		if (eventName === clientEvents.cameraState)
@@ -2828,6 +2866,11 @@ export class BitrixCall extends AbstractCall
 		this.joinedAsViewer = false;
 		this.localVideoShown = false;
 		this.floorRequestActive = false;
+
+		if (this.speakerManager)
+		{
+			this.speakerManager.destroy();
+		}
 
 		if (this.localVAD)
 		{
@@ -3205,7 +3248,7 @@ class Peer
 		{
 			clearTimeout(this.callingTimeout);
 		}
-		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), invitePeriod);
+		this.callingTimeout = setTimeout(() => this.onInviteTimeout(true), this.call.invitePeriod);
 		this.updateCalculatedState();
 	}
 

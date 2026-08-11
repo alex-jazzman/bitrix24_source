@@ -1,0 +1,157 @@
+.timeman-work-time-report-review-popup .popup-window-content,
+.timeman-work-time-report-popup .popup-window-content {
+	display: flex;
+}
+
+.tm-work-time-report {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding: var(--ui-space-stack-2xs, 4px) 0;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tm-work-time-report__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.tm-work-time-report__title-block {
+	display: flex;
+	gap: var(--ui-space-stack-3xs, 2px);
+	min-width: 0;
+	color: var(--ui-color-base-0, #000000);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tm-work-time-report__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 12px);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+}
+
+.tm-work-time-report__content::before {
+	content: '';
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	flex-shrink: 0;
+	align-self: stretch;
+	height: var(--ui-size-3xl, 32px);
+	margin-bottom: -44px;
+	background: linear-gradient(
+		180deg,
+		var(--ui-color-bg-content-primary, #FFFFFF) 0%,
+		rgba(255, 255, 255, 0.00) 50%
+	);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.tm-work-time-report__content.--scrolled::before {
+	opacity: 1;
+}
+
+.tm-work-time-report__content::after {
+	content: '';
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	flex-shrink: 0;
+	align-self: stretch;
+	height: var(--ui-size-3xl, 32px);
+	margin-top: -44px;
+	background: linear-gradient(
+		0deg,
+		var(--ui-color-bg-content-primary, #FFFFFF) 0%,
+		rgba(255, 255, 255, 0.00) 50%
+	);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.tm-work-time-report__content.--has-more::after {
+	opacity: 1;
+}
+
+.tm-work-time-report__content::-webkit-scrollbar {
+	width: 0;
+}
+
+.tm-work-time-report__footer {
+	display: flex;
+	justify-content: center;
+	gap: var(--ui-space-stack-xs, 8px);
+	padding-top: var(--ui-space-stack-xs, 8px);
+}
+
+.tm-work-time-report__button-container {
+	z-index: 2;
+	display: flex;
+	justify-content: center;
+	position: sticky;
+	bottom: 0;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.00) 0%,
+		var(--ui-color-bg-content-primary, #FFFFFF) 50%
+	);
+}
+
+.tm-work-time-report__editor-title {
+	color: var(--ui-color-base-1, #535c69);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tm-work-time-report__editor {
+	position: relative;
+}
+
+.tm-work-time-report__editor-loader {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.55);
+	cursor: progress;
+}
+
+.tm-work-time-report__gpt-card-loader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100px;
+}
+
+.tm-work-time-report__people {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-xs2, 10px);
+	margin-bottom: 10px;
+}
+
+.tm-work-time-report__people-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-xs2, 10px);
+	font-size: var(--ui-font-size-lg, 15px);
+	color: var(--ui-color-base-1);
+}
+
+.tm-work-time-report__people-avatar {
+	--ui-icon-size: 24px;
+	flex-shrink: 0;
+}

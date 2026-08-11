@@ -12,8 +12,19 @@ export const OpenLinesTextarea = {
 			default: '',
 		},
 	},
+	methods: {
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
+		},
+	},
 	template: `
-		<ChatTextarea :dialogId="dialogId" :key="dialogId">
+		<ChatTextarea
+			:dialogId="dialogId"
+			:key="dialogId"
+			:placeholder="this.loc('IMOL_CONTENT_TEXTAREA_PLACEHOLDER')"
+			:withCopilot="false"
+		>
 			<template #bottom-panel-buttons>
 				<ToolbarButtons :dialogId="dialogId" />
 			</template>

@@ -1,10 +1,10 @@
 <?php
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_BUTTON_ADD_NEW_ITEM"] = "Add";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_BUTTON_SELECTOR_ADD"] = "Done";
-$MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_DESCRIPTION_PROJECT"] = "Are you sure you want to remove this participant from the project? They will lose access to the project chat, files, tasks and/or calendar events.";
+$MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_DESCRIPTION_PROJECT"] = "Are you sure you want to remove this member from the project? They will lose access to the project chat, files, tasks and/or calendar events.";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_TITLE"] = "Are you sure you want to remove this user from the chat?";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_TITLE_CHANNEL"] = "Are you sure you want to remove this channel subscriber?";
-$MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_TITLE_PROJECT"] = "Remove participant";
+$MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_TITLE_PROJECT"] = "Remove member";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_YES"] = "Yes";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_EMPTY_SCREEN_TITLE"] = "No members";
 $MESS["IMMOBILE_SIDEBAR_V2_PARTICIPANTS_IS_YOU"] = "(You)";

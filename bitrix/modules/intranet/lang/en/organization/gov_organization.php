@@ -249,6 +249,7 @@ $MESS["INTR_PROP_EMP_TITLE"] = "Link to User";
 $MESS["ISL_TPL_NOTE_NULL"] = "Your search did not match any users.";
 $MESS["ISL_WORK_CITY"] = "City";
 $MESS["ISL_WORK_COUNTRY"] = "Country";
+$MESS["ISL_WORK_COUNTRY_MSGVER_1"] = "Country/Region";
 $MESS["ISL_WORK_LOGO"] = "Organization logo";
 $MESS["ISV_B24_INVITE"] = "Invite users";
 $MESS["ISV_EMPLOYEES"] = "EMPLOYEES";

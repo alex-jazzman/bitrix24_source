@@ -4,7 +4,7 @@
 	width: max-content;
 	position: sticky;
 	top: 0;
-	padding-right: 260px;
+	padding-right: var(--booking-sidebar-zone-width);
 	background: var(--ui-color-base-8);
 }
 
@@ -13,11 +13,11 @@
 	gap: 3px;
 	align-items: center;
 	justify-content: flex-end;
-	width: var(--booking-resource-item-width);
-	min-width: var(--booking-resource-item-width);
-	height: var(--booking-height-second-row-week-grid);
+	width: calc(var(--booking-week-cell-width) * var(--zoom));
+	min-width: calc(var(--booking-week-cell-width) * var(--zoom));
+	height: var(--booking-week-days-panel-height);
 	box-sizing: border-box;
-	padding: var(--booking-resource-item-padding);
+	padding: var(--booking-week-cell-padding);
 	font-size: var(--ui-font-size-lg);
 	letter-spacing: var(--ui-letter-spacing-l);
 	white-space: nowrap;

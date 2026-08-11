@@ -21,13 +21,14 @@
 
 				const fieldWrapperConfig = BX.prop.getObject(field.props, 'wrapperConfig', {});
 				const showBorderCurrent = BX.prop.getBoolean(fieldWrapperConfig, 'showWrapperBorder', true);
-				const fieldWrapperConfigPrevious = index > 0 ? BX.prop.getObject(
-					fields[index - 1].props,
+				const previousField = index > 0 ? fields[index - 1] : null;
+				const fieldWrapperConfigPrevious = BX.prop.getObject(
+					previousField?.props,
 					'wrapperConfig',
 					{},
-				) : {};
+				);
 				const showBorderPrevious = BX.prop.getBoolean(fieldWrapperConfigPrevious, 'showWrapperBorder', true);
-				const showBorder = index > 0 && showBorderCurrent && showBorderPrevious;
+				const showBorder = Boolean(previousField) && showBorderCurrent && showBorderPrevious;
 
 				return View(
 					{

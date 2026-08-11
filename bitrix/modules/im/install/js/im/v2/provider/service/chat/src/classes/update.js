@@ -131,6 +131,23 @@ export class UpdateService
 
 	#updateChatInModel(dialogId: string, chatConfig: ChatUpdateConfig): Promise
 	{
+		const permissions = {
+			manageUi: chatConfig.manageUi,
+			manageSettings: chatConfig.manageSettings,
+			manageUsersAdd: chatConfig.manageUsersAdd,
+			manageUsersDelete: chatConfig.manageUsersDelete,
+			manageMessages: chatConfig.manageMessages,
+			manageGuestInvites: chatConfig.manageGuestInvites,
+		};
+		// do not pass keys the form did not set: during the deep merge in the model
+		// undefined would overwrite previously stored values (manageGuestInvites/manageSettings)
+		Object.keys(permissions).forEach((key) => {
+			if (permissions[key] === undefined)
+			{
+				delete permissions[key];
+			}
+		});
+
 		return Core.getStore().dispatch('chats/update', {
 			dialogId,
 			fields: {
@@ -138,12 +155,7 @@ export class UpdateService
 				description: chatConfig.description,
 				ownerId: chatConfig.ownerId,
 				role: getChatRoleForUser(chatConfig),
-				permissions: {
-					manageUi: chatConfig.manageUi,
-					manageUsersAdd: chatConfig.manageUsersAdd,
-					manageUsersDelete: chatConfig.manageUsersDelete,
-					manageMessages: chatConfig.manageMessages,
-				},
+				permissions,
 			},
 		});
 	}

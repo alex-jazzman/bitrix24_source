@@ -1,0 +1,351 @@
+<?php
+
+namespace Bitrix\AI\Tuning;
+
+use Bitrix\AI\Config;
+use Bitrix\AI\Facade\Bitrix24;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ORM;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
+
+/**
+ * Class for manage tuning options
+ */
+class Manager
+{
+	private const CONFIG_EXTERNAL_CODE = 'tuning';
+
+	private GroupCollection $groups;
+
+	public function __construct()
+	{
+		$this->groups = new GroupCollection();
+		$this->createDefaultGroups();
+		$this->createInternalGroups();
+
+		$this->loadExternal();
+		$this->loadInternal();
+
+		$this->onAfterLoad();
+		$this->applyCopilotName();
+	}
+
+	private function applyCopilotName(): void
+	{
+		if (!Loader::includeModule('ui'))
+		{
+			return;
+		}
+
+		$copilotName = (new CopilotNameService())->getCopilotName();
+		if ($copilotName === '')
+		{
+			return;
+		}
+
+		$replacements = [
+			'#COPILOT_NAME#' => $copilotName,
+			'CoPilot' => $copilotName,
+		];
+
+		foreach ($this->groups as $group)
+		{
+			/** @var Group $group */
+			foreach ($group->getItems() as $item)
+			{
+				/** @var Item $item */
+				$title = $item->getTitle();
+				$replacedTitle = strtr($title, $replacements);
+				if ($replacedTitle !== $title)
+				{
+					$item->setTitle($replacedTitle);
+				}
+
+				$header = $item->getHeader();
+				if ($header !== null)
+				{
+					$replacedHeader = strtr($header, $replacements);
+					if ($replacedHeader !== $header)
+					{
+						$item->setHeader($replacedHeader);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Default config for AI module
+	 * @return void
+	 */
+	private function loadInternal(): void
+	{
+		foreach (Defaults::getInternalItems() as $groupCode => $items)
+		{
+			foreach ($items as $code => $item)
+			{
+				/** @var Item $item */
+				$value = Config::getValue($code);
+				if ($value)
+				{
+					$item->setValue($value);
+				}
+
+				$group = $this->groups->get($groupCode);
+				$group?->addItem($item);
+			}
+		}
+	}
+
+	/**
+	 * Loads config from external handlers.
+	 *
+	 * @return void
+	 */
+	private function loadExternal(): void
+	{
+		$event = new Event('ai', 'onTuningLoad');
+		$event->send();
+
+		$storage = self::getTuningStorage();
+		foreach ($event->getResults() as $result)
+		{
+			if (!$result instanceof ORM\EventResult)
+			{
+				continue;
+			}
+
+			foreach ($result->getModified()['groups'] ?? [] as $groupCode => $raw)
+			{
+				if (!$this->groups->get($groupCode))
+				{
+					$group = Group::create($groupCode, $raw);
+					if ($group)
+					{
+						Defaults::normalizeGroupSort($group);
+						$this->groups->set($groupCode, $group);
+					}
+				}
+			}
+
+			foreach ($result->getModified()['items'] ?? [] as $code => $raw)
+			{
+				$groupCode = $raw['group'] ?? Defaults::GROUP_DEFAULT;
+				$group = $this->groups->get($groupCode);
+				$item = Item::create($code, $raw);
+
+				if ($item && $group && !Defaults::isGroupInternal($group))
+				{
+					$item->setValue(
+						array_key_exists($code, $storage)
+							? $storage[$code]
+							: ($raw['default'] ?? null)
+					);
+
+					$group->addItem($item);
+				}
+			}
+
+			foreach ($result->getModified()['itemRelations'] ?? [] as $groupCode => $relations)
+			{
+				foreach ($relations as $parent => $children)
+				{
+					$this->groups->get($groupCode)?->addItemRelations($parent, $children);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Special preparatory operations on setting items. F.e. hiding some elements from lists
+	 * @return void
+	 */
+	private function onAfterLoad(): void
+	{
+		if (Bitrix24::shouldUseB24() && Bitrix24::getPortalZone() === 'ru')
+		{
+			$this->removeEngineFromGroups(['landing_site_text_provider'], 'ChatGPT');
+		}
+	}
+
+	private function removeEngineFromGroups(array $availableInItems, string $engineCode): void
+	{
+		foreach ($this->groups as $group)
+		{
+			/** @var Group $group */
+			foreach ($group->getItems() as $item)
+			{
+				if (!$this->shouldProcessItem($item, $availableInItems))
+				{
+					continue;
+				}
+
+				$this->removeEngineFromItem($item, $engineCode);
+			}
+		}
+	}
+
+	private function shouldProcessItem($item, array $availableInItems): bool
+	{
+		return $item->isList() && !in_array($item->getCode(), $availableInItems, true);
+	}
+
+	private function removeEngineFromItem($item, string $engineCode): void
+	{
+		$item->setOptions(array_filter(
+			$item->getOptions(),
+			static fn($code) => $code !== $engineCode,
+			ARRAY_FILTER_USE_KEY
+		));
+	}
+
+	/**
+	 * Get default internal groups and add to store
+	 * @return void
+	 */
+	private function createInternalGroups(): void
+	{
+		foreach (Defaults::getInternalGroups() as $code => $group)
+		{
+			$this->groups->set($code, $group);
+		}
+	}
+
+	/**
+	 * Get default groups and add to store
+	 * @return void
+	 */
+	private function createDefaultGroups(): void
+	{
+		foreach (Defaults::getDefaultGroups() as $code => $group)
+		{
+			$this->groups->set($code, $group);
+		}
+	}
+
+	/**
+	 * Returns Collection of all tuning items.
+	 * @param bool $toArray - if true - format objects list to array
+	 *
+	 * @return GroupCollection|array
+	 */
+	public function getList(bool $toArray = false): GroupCollection|array
+	{
+		$this->groups->sort();
+		foreach ($this->groups as $group)
+		{
+			/**
+			 * @var Group $group
+			 */
+			$group->sortItems();
+		}
+
+		return $toArray
+			? $this->groups->toArray()
+			: $this->groups
+		;
+	}
+
+	/**
+	 * Returns tuning item by code.
+	 *
+	 * @param string $code
+	 * @return Item|null
+	 */
+	public function getItem(string $code): ?Item
+	{
+		foreach ($this->groups as $group)
+		{
+			/**
+			 * @var Group $group
+			 */
+			if ($group->getItems()->get($code))
+			{
+				return $group->getItems()->get($code);
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Saves current config to db.
+	 *
+	 * @return void
+	 */
+	public function save(): void
+	{
+		$externalConfig = new Collection();
+
+		foreach ($this->groups as $group)
+		{
+			/**
+			 * @var Group $group
+			 */
+			foreach ($group->getItems() as $code => $item)
+			{
+				$item->onSave();
+
+				if (Defaults::isItemInternal($item))
+				{
+					Config::setOptionsValue($code, $item->getValue());
+				}
+				else
+				{
+					$externalConfig->set($item->getCode(), $item);
+				}
+			}
+		}
+
+		if (!$externalConfig->isEmpty())
+		{
+			$savedConfig = static::getTuningStorage();
+			$newConfig = $externalConfig->toArray();
+			Config::setOptionsValue(self::CONFIG_EXTERNAL_CODE, json_encode($newConfig));
+
+			try
+			{
+				foreach ($newConfig as $key => $value)
+				{
+					if (
+						isset($savedConfig[$key])
+						&& $value !== $savedConfig[$key]
+					)
+					{
+						$analyticsEvent = new AnalyticsEvent('change', 'settings', 'ai');
+						$analyticsEvent
+							->setType($key)
+							->setP1('isAdmin_' . (\Bitrix\AI\Facade\User::isAdmin() ? 'Y' : 'N'))
+							->setP2(static::formatSettingValue($value))
+							->setP3(static::formatSettingValue($savedConfig[$key]))
+							->send();
+					}
+				}
+			}
+			catch (\Throwable $e) {}
+		}
+	}
+
+	private static function formatSettingValue(mixed $value): string
+	{
+		if ($value === true)
+		{
+			return 'on';
+		}
+		if ($value === false)
+		{
+			return 'off';
+		}
+
+		return (string)$value;
+	}
+
+	public static function getTuningStorage(): array
+	{
+		$config = json_decode(Config::getValue(self::CONFIG_EXTERNAL_CODE) ?? "", true) ?: [];
+
+		return is_array($config) ? $config : [];
+	}
+}

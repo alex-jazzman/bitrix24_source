@@ -3168,7 +3168,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					manageSettings: im_v2_const.UserRole.none,
 					manageUsersAdd: im_v2_const.UserRole.none,
 					manageUsersDelete: im_v2_const.UserRole.none,
-					manageMessages: im_v2_const.UserRole.member
+					manageMessages: im_v2_const.UserRole.member,
+					manageGuestInvites: im_v2_const.UserRole.none
 				},
 				tariffRestrictions: {
 					isHistoryLimitExceeded: false
@@ -3477,10 +3478,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					state.collection[payload.dialogId] = payload.fields;
 				},
 				update: (state, payload) => {
-					state.collection[payload.dialogId] = {
-						...state.collection[payload.dialogId],
+					const existingItem = state.collection[payload.dialogId];
+					const updatedItem = {
+						...existingItem,
 						...payload.fields
 					};
+					// permissions must be merged deeply: a partial update missing some keys
+					// (e.g. manageGuestInvites/manageSettings) must not overwrite the whole object
+					if (existingItem?.permissions && payload.fields.permissions) {
+						updatedItem.permissions = {
+							...existingItem.permissions,
+							...payload.fields.permissions
+						};
+					}
+					state.collection[payload.dialogId] = updatedItem;
 				},
 				delete: (state, payload) => {
 					delete state.collection[payload.dialogId];
@@ -3797,6 +3808,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UserPositionByType = {
 		[im_v2_const.UserType.bot]: main_core.Loc.getMessage('IM_MODEL_USERS_CHAT_BOT'),
 		[im_v2_const.UserType.collaber]: main_core.Loc.getMessage('IM_MODEL_USERS_COLLABER'),
+		[im_v2_const.UserType.guest]: main_core.Loc.getMessage('IM_MODEL_USERS_COLLABER'),
 		default: main_core.Loc.getMessage('IM_MODEL_USERS_DEFAULT_NAME')
 	};
 	class UsersModel extends ui_vue3_vuex.BuilderModel {
@@ -3933,6 +3945,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function users/isCurrentUserAdmin */
 				isCurrentUserAdmin: state => {
 					return state.isCurrentUserAdmin;
+				},
+				/** @function users/isGuest */
+				isGuest: state => userId => {
+					return state.collection[userId]?.type === im_v2_const.UserType.guest;
 				}
 			};
 		}
@@ -7780,7 +7796,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}];
 
 	const EntityType = {
-		chat: 'chat'
+		chat: 'chat',
+		guestChat: 'guest_chat'
 	};
 	class SharedLinkModel extends ui_vue3_vuex.BuilderModel {
 		getState() {
@@ -7808,6 +7825,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					const entityId = chatId.toString();
 					return Object.values(state.collection).find(link => {
 						return link.entityId === entityId && link.entityType === EntityType.chat;
+					});
+				},
+				/** @function sidebar/sharedLink/getGuestInviteLink */
+				getGuestInviteLink: state => chatId => {
+					const entityId = chatId.toString();
+					return Object.values(state.collection).find(link => {
+						return link.entityId === entityId && link.entityType === EntityType.guestChat;
 					});
 				}
 			};
@@ -7847,11 +7871,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						newLink
 					} = payload;
 					const chatId = Number(newLink.entityId);
-					const currentLink = im_v2_application_core.Core.getStore().getters['sidebar/sharedLink/getChatInviteLink'](chatId);
+					const getterByEntityType = {
+						[EntityType.guestChat]: 'sidebar/sharedLink/getGuestInviteLink',
+						[EntityType.chat]: 'sidebar/sharedLink/getChatInviteLink'
+					};
+					const currentLink = im_v2_application_core.Core.getStore().getters[getterByEntityType[newLink.entityType]](chatId);
 					void im_v2_application_core.Core.getStore().dispatch('sidebar/sharedLink/set', newLink);
-					store.commit('delete', {
-						id: currentLink.id
-					});
+					if (currentLink && currentLink.id !== newLink.id) {
+						store.commit('delete', {
+							id: currentLink.id
+						});
+					}
 				}
 			};
 		}
@@ -8599,6 +8629,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return null;
 					}
 					return chat.mcpAuth;
+				},
+				/** @function copilot/chats/isTempChat */
+				isTempChat: () => dialogId => {
+					return im_v2_lib_utils.Utils.dialog.isTempAiAssistantDialogId(dialogId);
 				}
 			};
 		}
@@ -8679,6 +8713,47 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						return;
 					}
 					store.commit('clearMcpAuth', dialogId);
+				},
+				/** @function copilot/chats/delete */
+				delete: (store, dialogId) => {
+					if (!store.state.collection[dialogId]) {
+						return;
+					}
+					store.commit('delete', dialogId);
+				},
+				/** @function copilot/chats/migrate */
+				migrate: (store, payload) => {
+					const {
+						fromDialogId,
+						toDialogId
+					} = payload;
+					const source = store.state.collection[fromDialogId];
+					if (!source || fromDialogId === toDialogId) {
+						return;
+					}
+					const userFields = {
+						forceSearchEnabled: source.forceSearchEnabled,
+						agentModeEnabled: source.agentModeEnabled,
+						mcpAuth: source.mcpAuth
+					};
+					const target = store.state.collection[toDialogId];
+					if (target) {
+						store.commit('update', {
+							dialogId: toDialogId,
+							fields: userFields
+						});
+					} else {
+						store.commit('add', {
+							dialogId: toDialogId,
+							fields: {
+								...this.getElementState(),
+								...userFields,
+								dialogId: toDialogId,
+								role: source.role
+							}
+						});
+					}
+					store.commit('delete', fromDialogId);
 				}
 			};
 		}
@@ -8725,6 +8800,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				clearMcpAuth: (state, dialogId) => {
 					state.collection[dialogId].mcpAuth = null;
+				},
+				delete: (state, dialogId) => {
+					delete state.collection[dialogId];
 				}
 			};
 		}
@@ -9054,7 +9132,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				availableAIModels: {},
 				name: '',
 				agentName: '',
-				widgetDialogId: ''
+				widgetDialogId: '',
+				suggests: []
 			};
 		}
 		getGetters() {
@@ -9094,6 +9173,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function copilot/isChatOpenedInWidget */
 				isChatOpenedInWidget: state => dialogId => {
 					return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
+				},
+				/** @function copilot/getSuggests */
+				getSuggests: state => {
+					return state.suggests;
 				}
 			};
 		}
@@ -9132,6 +9215,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/** @function copilot/setWidgetDialogId */
 				setWidgetDialogId: (store, payload) => {
 					store.commit('setWidgetDialogId', payload ?? '');
+				},
+				/** @function copilot/setSuggests */
+				setSuggests: (store, payload) => {
+					if (!main_core.Type.isArray(payload)) {
+						return;
+					}
+					store.commit('setSuggests', payload);
 				}
 			};
 		}
@@ -9151,6 +9241,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				},
 				setWidgetDialogId: (state, payload) => {
 					state.widgetDialogId = payload;
+				},
+				setSuggests: (state, payload) => {
+					state.suggests = payload;
 				}
 			};
 		}

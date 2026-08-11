@@ -32,14 +32,24 @@ export function createCollaborationExtensions({ provider, user }: { provider: Ob
 					const parent = el.parentElement;
 					const prevBlock = el.previousElementSibling;
 
-					if (prose && parent === prose && prevBlock instanceof HTMLElement)
-					{
-						const blockRect = prevBlock.getBoundingClientRect();
-						const proseRect = prose.getBoundingClientRect();
+					// A remote NodeSelection on a block atom (image/video/file) drops the caret right
+					// after the block. Anchor it to the block's top-left corner. Generalised beyond
+					// direct children of .ProseMirror so atoms nested in a callout/blockquote work too —
+					// we position against the caret's own offsetParent rather than always against prose.
+					const ATOM_BLOCK_SELECTOR = '[data-type="imageAttachment"], [data-type="videoAttachment"], [data-type="fileAttachment"]';
+					const isBlockAtom = prevBlock instanceof HTMLElement
+						&& (parent === prose || prevBlock.matches(ATOM_BLOCK_SELECTOR));
 
+					if (prose && isBlockAtom)
+					{
 						Dom.style(el, 'position', 'absolute');
-						Dom.style(el, 'left', `${blockRect.left - proseRect.left + prose.scrollLeft}px`);
-						Dom.style(el, 'top', `${blockRect.top - proseRect.top + prose.scrollTop}px`);
+
+						const host = (el.offsetParent instanceof HTMLElement) ? el.offsetParent : prose;
+						const blockRect = prevBlock.getBoundingClientRect();
+						const hostRect = host.getBoundingClientRect();
+
+						Dom.style(el, 'left', `${blockRect.left - hostRect.left + host.scrollLeft}px`);
+						Dom.style(el, 'top', `${blockRect.top - hostRect.top + host.scrollTop}px`);
 						Dom.style(el, 'width', '0');
 						Dom.style(el, 'height', '0');
 						Dom.style(el, 'border-left', 'none');

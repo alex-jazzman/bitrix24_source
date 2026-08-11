@@ -3,8 +3,7 @@ import {EventEmitter} from 'main.core.events';
 import Item from './item';
 import Backend from "../backend";
 import Options from "../options";
-import ItemUserFavorites from "./item-user-favorites";
-import ItemUserSelf from "./item-user-self";
+import { ITEM_CODE_USER_FAVORITES, ITEM_CODE_USER_SELF } from "./item-codes";
 import Utils from "../utils";
 
 export default class ItemAdminShared extends Item
@@ -21,11 +20,11 @@ export default class ItemAdminShared extends Item
 		Backend
 			.deleteAdminSharedItemMenu(this.getId())
 			.then(() => {
-				if (this.storage.indexOf(ItemUserFavorites.code) >= 0)
+				if (this.storage.indexOf(ITEM_CODE_USER_FAVORITES) >= 0)
 				{
 					Backend.deleteFavoritesItemMenu({id: this.getId()});
 				}
-				if (this.storage.indexOf(ItemUserSelf.code) >= 0)
+				if (this.storage.indexOf(ITEM_CODE_USER_SELF) >= 0)
 				{
 					Backend.deleteSelfITem(this.getId());
 				}
@@ -54,7 +53,7 @@ export default class ItemAdminShared extends Item
 		});
 */
 
-		if (this.storage.filter((value) => {return value === ItemUserFavorites.code || value === ItemUserSelf.code;}).length > 0)
+		if (this.storage.filter((value) => {return value === ITEM_CODE_USER_FAVORITES || value === ITEM_CODE_USER_SELF;}).length > 0)
 		{
 			contextMenuItems.push({
 				text: Loc.getMessage('MENU_REMOVE_STANDARD_ITEM'),
@@ -67,7 +66,9 @@ export default class ItemAdminShared extends Item
 						.deleteAdminSharedItemMenu(this.getId())
 						.then(() => {
 							this.showMessage(Loc.getMessage('MENU_ITEM_WAS_DELETED_FROM_ALL'));
-							const codeToConvert = this.storage.indexOf(ItemUserSelf.code) >= 0 ? ItemUserSelf.code : ItemUserFavorites.code;
+							const codeToConvert = this.storage.indexOf(ITEM_CODE_USER_SELF) >= 0
+								? ITEM_CODE_USER_SELF
+								: ITEM_CODE_USER_FAVORITES;
 							this.container.dataset.type = codeToConvert;
 							this.container.dataset.storage = this.storage.filter((v) => {return v !== codeToConvert}).join(',');
 							EventEmitter.emit(this, Options.eventName('onItemConvert'), this);

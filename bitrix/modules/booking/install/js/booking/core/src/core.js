@@ -87,7 +87,6 @@ class CoreApplication
 					isFeatureEnabled: this.#params.isFeatureEnabled,
 					canTurnOnTrial: this.#params.canTurnOnTrial,
 					canTurnOnDemo: this.#params.canTurnOnDemo,
-					isMultidayFeatureAvailable: this.#params.isMultidayFeatureAvailable,
 					embedItems: this.#params.embedItems.map((item: { id: number, code: string, module: string }) => {
 						return {
 							value: item.id,

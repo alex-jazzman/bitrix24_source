@@ -23,6 +23,10 @@ export const BlockContent = {
 			type: Number,
 			default: null,
 		},
+		contentBlockColor: {
+			type: Number,
+			default: null,
+		},
 		deactivated: {
 			type: Boolean,
 			default: false,
@@ -31,17 +35,22 @@ export const BlockContent = {
 	computed: {
 		contentClassName(): { [string]: boolean }
 		{
+			const effectiveColor = this.contentBlockColor ?? this.colorIndex;
+
 			const bgColorsClassNames = Object.keys(CONTENT_BG_COLORS_CLASS_NAMES)
 				.reduce((colorsMap, colorKey, index) => {
 					return {
 						...colorsMap,
-						[CONTENT_BG_COLORS_CLASS_NAMES[colorKey]]: this.colorIndex === index && !this.deactivated,
+						[CONTENT_BG_COLORS_CLASS_NAMES[colorKey]]: effectiveColor === index && !this.deactivated,
 					};
 				}, {});
+
+			const hasColoredBg = Object.values(bgColorsClassNames).some(Boolean);
 
 			return {
 				[CONTENT_CLASS_NAMES.base]: true,
 				[CONTENT_CLASS_NAMES.deactivated]: this.deactivated,
+				'--default': !hasColoredBg && !this.deactivated,
 				...bgColorsClassNames,
 			};
 		},

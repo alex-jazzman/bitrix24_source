@@ -9,4 +9,5 @@ export const ImageAttachment = FileAssetNodeFactory.createNode({
 	defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
 	defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE',
 	nodeViewComponent: ImageAttachmentNodeViewComponent,
+	resizable: true,
 });

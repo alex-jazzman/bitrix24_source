@@ -131,8 +131,10 @@ function prepareOptions(&$letter, &$messageData)
 	$parameters = [];
 	if (is_array($messageData) && count($messageData))
 	{
+		$allowedOptionCodes = [];
 		foreach ($letter->getMessage()->getConfiguration()->getOptions() as $option)
 		{
+			$allowedOptionCodes[$option->getCode()] = true;
 			if (!isset($messageData[$option->getCode()]))
 			{
 				continue;
@@ -180,7 +182,12 @@ function prepareOptions(&$letter, &$messageData)
 
 			$messageData[$option->getCode()] = $postFiles->getFiles([], $files);
 		}
-		$letter->getMessage()->setConfigurationData($messageData);
+		// Pass only declared configuration options to the message. Keys that are
+		// not options (e.g. BODY_PHP) must never be taken from the client request,
+		// otherwise they reach the mail compiler as raw PHP and lead to RCE.
+		$letter->getMessage()->setConfigurationData(
+			array_intersect_key($messageData, $allowedOptionCodes)
+		);
 		if ($messageData['CAMPAIGN_ID'] ?? false)
 		{
 			$parameters['CAMPAIGN_ID'] = $messageData['CAMPAIGN_ID'];

@@ -7,7 +7,7 @@ export class RightPanel extends EventEmitter
 {
 	static #EXPANDED_CLASS = '--right-panel-expanded';
 	static #RESIZING_CLASS = '--resizing';
-	static #DEFAULT_WIDTH = 380;
+	static #DEFAULT_WIDTH = 360;
 	static #SS_WIDTH_KEY = 'b24_right_panel_width';
 	static #SS_EXPANDED_KEY = 'b24_right_panel_expanded';
 

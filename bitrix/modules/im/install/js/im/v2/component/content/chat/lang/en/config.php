@@ -1,6 +1,7 @@
 <?php
 $MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER_MSGVER_1"] = "Ask me anything";
 $MESS["IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE"] = "Your personal assistant";
+$MESS["IM_CONTENT_AI_ASSISTANT_EMPTY_STATE_TITLE"] = "Hello! How can I help you today?";
 $MESS["IM_CONTENT_AI_ASSISTANT_MCP_INTEGRATIONS"] = "Connections";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Subscribe";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Channel will show up in your chat list as soon as you subscribe to it.";

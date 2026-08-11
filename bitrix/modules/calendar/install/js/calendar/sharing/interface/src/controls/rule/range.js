@@ -7,7 +7,7 @@ import { RangeModel } from '../../model/index';
 type Params = {
 	readOnly: boolean,
 	model: RangeModel,
-	showReadOnlyPopup: function,
+	showReadOnlyPopup: Function,
 };
 
 export default class Range
@@ -182,12 +182,13 @@ export default class Range
 		this.#layout.weekdaysSelect = Tag.render`
 			<div
 				class="calendar-sharing__settings-weekdays calendar-sharing__settings-select calendar-sharing__settings-select-arrow"
-				title="${ this.#model.formatWeekdays()}"
+				title="${this.#model.formatWeekdays()}"
 			>
 				${this.#model.getWeekdaysTitle()}
 			</div>
 		`;
 
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-io-without-polyfill
 		const observer = new IntersectionObserver(() => {
 			if (this.#layout.weekdaysSelect.offsetWidth > 0)
 			{
@@ -228,6 +229,11 @@ export default class Range
 
 	#getTextNodeWidth(textNode): number
 	{
+		if (!textNode)
+		{
+			return 0;
+		}
+
 		const spanNode = BX.Tag.render`<span style="position: absolute;">${textNode.cloneNode()}</span>`;
 		textNode.replaceWith(spanNode);
 		const textWidth = spanNode.offsetWidth;
@@ -302,6 +308,7 @@ export default class Range
 
 		this.onMouseMove = (e) => {
 			this.controllableWeekdays.forEach((controllableWeekday) => {
+				// eslint-disable-next-line no-param-reassign
 				controllableWeekday.intersected = false;
 			});
 
@@ -381,6 +388,7 @@ export default class Range
 
 	#showTimeMenu(timeSelect, callbacks): void
 	{
+		// eslint-disable-next-line init-declarations
 		let timeMenu;
 
 		const items = callbacks.getTimeStamps().map((timeStamp) => {
@@ -390,6 +398,7 @@ export default class Range
 				`,
 				className: callbacks.isSelected(timeStamp.value) ? 'menu-popup-no-icon --selected' : 'menu-popup-no-icon',
 				onclick: () => {
+					// eslint-disable-next-line no-param-reassign
 					timeSelect.innerHTML = timeStamp.name;
 					callbacks.onItemSelected(timeStamp.value);
 					timeMenu.close();
@@ -433,6 +442,6 @@ export default class Range
 
 	formatAmPmSpan(time): string
 	{
-		return time.toLowerCase().replace(/(am|pm)/g, '<span class="calendar-sharing__settings-time-am-pm">$1</span>');
+		return time.toLowerCase().replaceAll(/(am|pm)/g, '<span class="calendar-sharing__settings-time-am-pm">$1</span>');
 	}
 }

@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
+		'note.analytics',
 		'note.archive',
 		'note.editor',
 		'note.recyclebin',

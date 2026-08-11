@@ -11,8 +11,48 @@ export const AttachmentNodeViewBaseComponent = {
 			type: String,
 			default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE',
 		},
+		editable: {
+			type: Boolean,
+			default: false,
+		},
+		selected: {
+			type: Boolean,
+			default: false,
+		},
+		onResize: {
+			type: Function,
+			default: null,
+		},
+		onResizeActive: {
+			type: Function,
+			default: null,
+		},
+		onResizeProgress: {
+			type: Function,
+			default: null,
+		},
+		onAlign: {
+			type: Function,
+			default: null,
+		},
+		onReplace: {
+			type: Function,
+			default: null,
+		},
 	},
 	computed: {
+		width(): number | null
+		{
+			const value = Number(this.attrs.width);
+
+			return Number.isFinite(value) && value > 0 ? value : null;
+		},
+		align(): string
+		{
+			const value = this.attrs.align;
+
+			return (value === 'left' || value === 'right') ? value : 'center';
+		},
 		fileName(): string
 		{
 			return this.attrs.name || Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED');

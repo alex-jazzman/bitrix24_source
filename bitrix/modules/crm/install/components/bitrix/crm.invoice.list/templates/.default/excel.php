@@ -13,6 +13,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 $isStExport = (isset($arResult['STEXPORT_MODE']) && $arResult['STEXPORT_MODE'] === 'Y');
 $isStExportFirstPage = (isset($arResult['STEXPORT_IS_FIRST_PAGE']) && $arResult['STEXPORT_IS_FIRST_PAGE'] === 'Y');
 $isStExportLastPage = (isset($arResult['STEXPORT_IS_LAST_PAGE']) && $arResult['STEXPORT_IS_LAST_PAGE'] === 'Y');
+$isExportProductFields = (
+	isset($arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'])
+	&& $arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'] === 'Y'
+);
 
 
 if ((!is_array($arResult['INVOICE']) || count($arResult['INVOICE']) <=0) && (!$isStExport || $isStExportFirstPage))
@@ -28,12 +32,12 @@ else
 		$arHeaders[$arHead['id']] = $arHead;
 	}
 	// Special logic for ENTITIES_LINKS headers: expand in 3 columns
-	$showProductRows = false;
+	$showEntityLinks = false;
 	foreach($arResult['SELECTED_HEADERS'] as $headerID)
 	{
 		if (isset($arHeaders[$headerID]) && $headerID === 'ENTITIES_LINKS')
 		{
-			$showProductRows = true;
+			$showEntityLinks = true;
 		}
 	}
 
@@ -59,6 +63,11 @@ else
 				?><th><?=$arHead['name']?></th><?
 			endif;
 		}
+		if ($isExportProductFields):
+			?><th><?=htmlspecialcharsbx(GetMessage('CRM_COLUMN_PRODUCT_NAME'))?></th><?
+			?><th><?=htmlspecialcharsbx(GetMessage('CRM_COLUMN_PRODUCT_PRICE'))?></th><?
+			?><th><?=htmlspecialcharsbx(GetMessage('CRM_COLUMN_PRODUCT_QUANTITY'))?></th><?
+		endif;
 			?></tr>
 		</thead>
 		<tbody><?
@@ -74,13 +83,13 @@ else
 
 	foreach ($arResult['INVOICE'] as $i => &$arInvoice)
 	{
-		// Serialize each product row as invoice with single product
-		$productRows = $showProductRows && isset($arInvoice['PRODUCT_ROWS']) ? $arInvoice['PRODUCT_ROWS'] : array();
-		if(count($productRows) == 0)
-		{
-			// Invoice has no product rows (or they are not displayed) - we have to create dummy for next loop by product rows only
-			$productRows[] = array();
-		}
+		// Serialize each product row as invoice with single product;
+		// fallback to a single empty row so the invoice is still rendered when there are no products
+		$hasProducts = !empty($arInvoice['PRODUCT_ROWS']);
+		$productRows = ($showEntityLinks || $isExportProductFields) && $hasProducts
+			? $arInvoice['PRODUCT_ROWS']
+			: [[]]
+		;
 		$invoiceData = array();
 		$personTypeId = $arInvoice['PERSON_TYPE_ID'];
 		foreach($productRows as $productRow)
@@ -102,6 +111,11 @@ else
 					?><td><?= htmlspecialcharsbx($arInvoice['COMPANY_TITLE']) ?></td><?
 					?><td><?= $arInvoice['CONTACT_FORMATTED_NAME'] ?></td><?
 
+					continue;
+				}
+				if ($isExportProductFields && $headerID === 'PRICE')
+				{
+					?><td class="number2"><?=CCrmProductRow::ResolveExportRowSum($productRow, $arInvoice['PRICE'] ?? '')?></td><?
 					continue;
 				}
 
@@ -156,6 +170,16 @@ else
 					?><td><?=$invoiceData[$headerID]?></td><?
 				}
 			}
+			if ($isExportProductFields):
+				$productName =
+					isset($productRow['PRODUCT_NAME'])
+						? htmlspecialcharsbx($productRow['PRODUCT_NAME'])
+						: ''
+				;
+				?><td><?=$productName?></td><?
+				?><td><?=CCrmProductRow::GetPrice($productRow, '')?></td><?
+				?><td><?=CCrmProductRow::GetQuantity($productRow, '')?></td><?
+			endif;
 			?></tr><?
 		}
 	}

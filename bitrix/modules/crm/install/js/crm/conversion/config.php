@@ -34,7 +34,6 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.popup',
-		'ui.analytics',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'ui.entity-selector',

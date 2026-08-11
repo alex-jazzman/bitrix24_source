@@ -66,6 +66,7 @@ class CallAiComponent extends \CBitrixComponent
 	protected function prepareResult(): bool
 	{
 		$this->arResult['CALL_ID'] = $this->callId;
+		$this->arResult['CALL_UUID'] = $this->call->getUuid();
 
 		$currentUserId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
 		$this->arResult['CURRENT_USER_ID'] = $currentUserId;
@@ -93,7 +94,7 @@ class CallAiComponent extends \CBitrixComponent
 				{
 					$transcription = $content;
 				}
-				$this->arResult[$type] = $content->toRestFormat(mentionFormat: 'html');
+				$this->arResult[$type] = $content->toRestFormat(mentionFormat: MentionService::FORMAT_HTML);
 				$this->arResult["{$type}_VERSION"] = $content->getVersion();
 			}
 		}

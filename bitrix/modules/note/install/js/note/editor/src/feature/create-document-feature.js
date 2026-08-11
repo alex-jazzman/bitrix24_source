@@ -13,6 +13,7 @@ import { headingAnchorPluginKey } from '../extensions/heading-anchor-plugin';
 import { ProviderLifecycle } from './provider-lifecycle';
 import { EditorMount } from './editor-mount';
 import { saveDocument } from './document-persistence';
+import { parseInternalNoteLink } from '../utils/internal-link';
 import { DocumentService } from '../application/document-service';
 import type { CollaborationContext, DocumentData } from '../type';
 
@@ -44,6 +45,25 @@ class DocumentFeatureController
 		this.onOpenInternalLink = typeof onOpenInternalLink === 'function' ? onOpenInternalLink : null;
 		this.onHardDelete = typeof onHardDelete === 'function' ? onHardDelete : null;
 		this.onAccessRevoked = typeof onAccessRevoked === 'function' ? onAccessRevoked : null;
+
+		// Handles internal-link mention clicks (document/collection) from NodeView dispatcher.
+		// NodeView dispatches by navKind: slider types open SidePanel directly;
+		// internal-link types call this callback so the feature can emit open-internal-link.
+		this.onMentionClick = ({ type, id, url }) => {
+			void type;
+			void id;
+
+			if (!url || !this.onOpenInternalLink)
+			{
+				return;
+			}
+
+			const parsed = parseInternalNoteLink(url);
+			if (parsed)
+			{
+				this.onOpenInternalLink(parsed);
+			}
+		};
 		this.capabilityRefreshTimer = null;
 		// When a lifecycle event (trash/archive) triggers the access re-check, its own toast
 		// already explains the removal — suppress the redundant access-revoked toast.
@@ -618,10 +638,14 @@ class DocumentFeatureController
 			return;
 		}
 
-		const scrollContainer = this.#findScrollContainer(target);
-		if (!scrollContainer)
+		// Desktop: a bounded overflow:auto element (.content) is the scrollport. Mobile: the page
+		// scrolls the native viewport, so #findScrollContainer returns null and we align the viewport
+		// scroller instead. Both paths reuse the same room/align/pin logic so the heading lands under
+		// the sticky actions bar / fixed mobile header (reservedTop), not at raw viewport top 0.
+		const scroller = this.#findScrollContainer(target) ?? (document.scrollingElement || document.documentElement);
+		if (!(scroller instanceof HTMLElement))
 		{
-			target.scrollIntoView({ block: 'start' });
+			target.scrollIntoView({ block: 'start', behavior: this.#getAnchorScrollBehavior() });
 
 			return;
 		}
@@ -629,15 +653,17 @@ class DocumentFeatureController
 		// Extend the scrollable area only as much as needed for this specific
 		// target. Documents without anchor navigation keep their natural height
 		// — no permanent empty void at the bottom.
-		this.#ensureRoomToScrollTargetToTop(scrollContainer, target);
+		this.#ensureRoomToScrollTargetToTop(scroller, target);
 
-		this.#alignTargetToTop(scrollContainer, target);
+		// Initial alignment is smooth (unless the user prefers reduced motion);
+		// every later `realign` inside #keepTargetPinned stays 'auto' — see there.
+		this.#alignTargetToTop(scroller, target, this.#getAnchorScrollBehavior());
 
 		// Images above the target may still load later (browser prefetch, user
 		// scrolls up). Keep the target visually pinned by re-aligning inside the
 		// ResizeObserver callback, which fires after layout but before paint —
 		// so the heading never drifts away on screen.
-		this.#keepTargetPinned(scrollContainer, target, editorRoot);
+		this.#keepTargetPinned(scroller, target, editorRoot);
 	}
 
 	#computeReservedTop(scrollContainer: HTMLElement): { containerTop: number, reservedTop: number }
@@ -661,7 +687,15 @@ class DocumentFeatureController
 		};
 	}
 
-	#alignTargetToTop(scrollContainer: HTMLElement, target: HTMLElement): void
+	#getAnchorScrollBehavior(): 'smooth' | 'auto'
+	{
+		const prefersReducedMotion = typeof window.matchMedia === 'function'
+			&& window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		return prefersReducedMotion ? 'auto' : 'smooth';
+	}
+
+	#alignTargetToTop(scrollContainer: HTMLElement, target: HTMLElement, behavior: 'smooth' | 'auto' = 'auto'): void
 	{
 		// Land the heading where the document title normally sits — flush against
 		// the sticky page actions bar (plus the mobile fixed page header).
@@ -670,7 +704,7 @@ class DocumentFeatureController
 
 		scrollContainer.scrollTo({
 			top: scrollContainer.scrollTop + delta,
-			behavior: 'auto',
+			behavior,
 		});
 	}
 
@@ -741,7 +775,18 @@ class DocumentFeatureController
 
 		// ResizeObserver as a fallback for anything else that resizes the editor
 		// (videos, web fonts, late NodeView mounting, …).
-		const observer = new ResizeObserver(() => realign());
+		// ResizeObserver always fires once on observe() with the current size (no real change);
+		// that spurious 'auto' realign would clobber the smooth scroll scrollToAnchor just started.
+		let skipInitialResize = true;
+		const observer = new ResizeObserver(() => {
+			if (skipInitialResize)
+			{
+				skipInitialResize = false;
+
+				return;
+			}
+			realign();
+		});
 		observer.observe(editorRoot);
 		cleanups.push(() => observer.disconnect());
 
@@ -795,6 +840,16 @@ class DocumentFeatureController
 			// by its overflow style, not by whether it happens to overflow now.
 			if (overflowY === 'auto' || overflowY === 'scroll')
 			{
+				// On mobile the height chain is `height:auto` and the page scrolls the native
+				// viewport, yet <body> still computes overflow-y:auto (mobile.css's overflow-x:hidden
+				// coerces overflow-y to auto). Such a match isn't a real inner scrollport —
+				// body.scrollTo() is a no-op — so treat it as "use the window" (return null; the
+				// caller falls back to the viewport scroller).
+				if (parent === document.body || parent === document.documentElement)
+				{
+					return null;
+				}
+
 				return parent;
 			}
 			parent = parent.parentElement;
@@ -1328,6 +1383,7 @@ class DocumentFeatureController
 			title: this.state.title,
 			onRenameTitle: this.handleTitleRename,
 			onOpenInternalLink: this.onOpenInternalLink,
+			onMentionClick: this.onMentionClick,
 		});
 	}
 }

@@ -6,6 +6,7 @@ import { DocumentList } from 'note.ui.document-list';
 import { ActionMenuService } from 'note.ui.action-menu';
 import { App as PermissionsApp } from 'note.permissions';
 import { DialogService } from 'note.sidebar';
+import { NoteAnalytics } from 'note.analytics';
 import { WorkspaceService } from './services/workspace-service';
 
 const PAGE_SIZE = 50;
@@ -252,6 +253,7 @@ export const NoteWorkspacePageComponent = {
 		},
 		onOpen(item): void
 		{
+			NoteAnalytics.documentViewed('docs_list');
 			this.$emit('open', { documentId: item.documentId });
 		},
 		setTab(tab: string): void
@@ -281,21 +283,27 @@ export const NoteWorkspacePageComponent = {
 				return;
 			}
 
+			let success = false;
 			try
 			{
 				if (navigator?.clipboard?.writeText)
 				{
 					await navigator.clipboard.writeText(url);
+					success = true;
 				}
 				else if (window.BX?.clipboard?.copy)
 				{
+					// BX.clipboard.copy has no reliable return value; treat absence of a throw as success.
 					window.BX.clipboard.copy(url);
+					success = true;
 				}
 			}
 			catch
 			{
-				// silent
+				success = false;
 			}
+
+			NoteAnalytics.collectionLinkCopied(success);
 
 			BX.UI.Notification.Center.notify({
 				content: this.messages.linkCopied,

@@ -137,6 +137,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		isMessageBuilderAvailable: 'isMessageBuilderAvailable',
 		isTaskCardAvailable: 'isMountedTasksCardAvailable',
 		isBitrixGptV2Available: 'isBitrixGptV2Available',
+		isCopilotDraftChatAvailable: 'isCopilotDraftChatAvailable',
 		isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
 		isCollabV2Available: 'isNestedChatAvailable',
 		isChatWithGuestsAvailable: 'isChatWithGuestsAvailable',

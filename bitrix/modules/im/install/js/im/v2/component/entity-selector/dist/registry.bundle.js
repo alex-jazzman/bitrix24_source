@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_public, im_v2_application_core, im_v2_const, im_v2_lib_feature, im_v2_lib_localStorage, im_v2_component_elements_popup, im_v2_lib_notifier, im_v2_lib_utils, im_v2_lib_permission, im_v2_provider_service_chat, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, im_v2_component_elements_button, ui_entitySelector, im_v2_lib_analytics, im_v2_component_search, im_v2_lib_channel, im_v2_lib_access, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_rest, ui_infoHelper, intranet_invitationInput, im_v2_lib_collab, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending) {
+(function (exports, main_core, im_public, im_v2_application_core, im_v2_component_elements_popup, im_v2_const, im_v2_lib_feature, im_v2_lib_guest, im_v2_lib_localStorage, im_v2_lib_notifier, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_guestInvitation, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, ui_entitySelector, im_v2_lib_analytics, im_v2_component_search, im_v2_lib_channel, im_v2_lib_access, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_confirm, im_v2_component_elements_button, ui_infoHelper, intranet_invitationInput, im_v2_lib_collab, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending) {
 	'use strict';
 
 	const ITEM_CLASS = 'bx-im-add-guests-tab__language-selector_item';
@@ -298,45 +298,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const Tabs = [{
-		id: im_v2_const.TabId.employees,
-		title: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_EMPLOYEES_TAB')
-	}, {
-		id: im_v2_const.TabId.guests,
-		title: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_GUESTS_TAB')
-	}];
-	const TabsWrapper = {
-		name: 'TabsWrapper',
-		components: {
-			SegmentButton: im_v2_component_elements_button.SegmentButton
-		},
-		props: {
-			activeTabId: {
-				type: String,
-				required: true
-			}
-		},
-		emits: ['onTabSwitch'],
-		computed: {
-			Tabs: () => Tabs
-		},
-		methods: {
-			switchTab(tabId) {
-				im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.invitePopupTab, tabId);
-				this.$emit('onTabSwitch', tabId);
-			}
-		},
-		template: `
-		<div class="bx-im-tab-wrapper__tabs">
-			<SegmentButton
-				:tabs="Tabs"
-				:activeTabId="activeTabId"
-				@segmentSelected="switchTab"
-			/>
-		</div>
-	`
-	};
-
 	const SEARCH_ENTITY_ID = 'user';
 
 	// @vue/component
@@ -565,6 +526,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		directives: {
 			hint: ui_vue3_directives_hint.hint
 		},
+		inject: ['enableAutoHide', 'disableAutoHide'],
 		props: {
 			dialogId: {
 				type: String,
@@ -599,7 +561,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			updateLinkHint() {
 				return {
-					text: this.loc('IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT'),
+					text: this.loc('IM_ENTITY_SELECTOR_ADD_GUEST_LINK_UPDATE_HINT_MSGVER_1'),
 					popupOptions: {
 						width: 278,
 						bindOptions: {
@@ -618,6 +580,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		methods: {
 			loc(phraseCode, replacements = {}) {
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			async confirmAndUpdateInviteLink() {
+				this.disableAutoHide();
+				const confirmResult = await im_v2_lib_confirm.showUpdateGuestLinkConfirm();
+				if (!confirmResult) {
+					this.enableAutoHide();
+					return;
+				}
+				this.enableAutoHide();
+				this.$emit('onUpdateInviteLink');
 			}
 		},
 		template: `
@@ -638,7 +610,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				v-hint="updateLinkHint"
 				:class="{'--loading': isUpdatingInviteLink}"
 				class="bx-im-copy-invite-link__update-link_button"
-				@click="$emit('onUpdateInviteLink')"
+				@click="confirmAndUpdateInviteLink"
 			>
 				<BIcon :name="refreshIcon" :size="20" />
 			</button>
@@ -646,30 +618,53 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	class GuestInvitationService {
-		generateInviteLink(chatId) {
-			const payload = {
-				data: {
-					chatId
-				}
-			};
-			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatGuestLinkGenerate, payload).catch(([error]) => {
-				console.error('GuestInvitationService: generate invite link error', error);
-				throw error;
-			});
-		}
-		updateLink(chatId) {
-			const payload = {
-				data: {
-					chatId
-				}
-			};
-			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatGuestLinkRegenerate, payload).catch(([error]) => {
-				console.error('GuestInvitationService: regenerate invite link error', error);
-				throw error;
-			});
-		}
-	}
+	const Tabs = [{
+		id: im_v2_const.TabId.employees,
+		title: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_EMPLOYEES_TAB')
+	}, {
+		id: im_v2_const.TabId.guests,
+		title: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_GUESTS_TAB')
+	}];
+	const TabsWrapper = {
+		name: 'TabsWrapper',
+		components: {
+			SegmentButton: im_v2_component_elements_button.SegmentButton
+		},
+		props: {
+			activeTabId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['onTabSwitch'],
+		computed: {
+			Tabs: () => Tabs
+		},
+		methods: {
+			switchTab(tabId) {
+				im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.invitePopupTab, tabId);
+				this.$emit('onTabSwitch', tabId);
+			}
+		},
+		template: `
+		<div class="bx-im-tab-wrapper__tabs">
+			<SegmentButton
+				:tabs="Tabs"
+				:activeTabId="activeTabId"
+				@segmentSelected="switchTab"
+			/>
+		</div>
+	`
+	};
+
+	const InviteValueType = Object.freeze({
+		email: 'email',
+		phone: 'phone',
+		error: 'error'
+	});
+	const ENTITY_ID = 'guest-invite';
+	const INPUT_DELIMITERS = new Set([' ', ',']);
+	const INPUT_SPLIT_PATTERN = /[\s,]+/;
 
 	// @vue/component
 	const ChatInvitationInput = {
@@ -678,39 +673,146 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
-			modelValue: {
-				type: String,
-				default: ''
+			isPhoneAllowed: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['update:modelValue'],
+		emits: ['change', 'validityChange'],
 		data() {
 			return {
-				wasBlurred: false
+				candidates: []
 			};
 		},
 		computed: {
 			IconsSet: () => ui_iconSet_api_vue.Set,
-			isValid() {
-				return main_core.Validation.isEmail(this.modelValue);
+			hasInvalidCandidates() {
+				return this.candidates.some(tag => tag.type === InviteValueType.error);
 			},
-			hasError() {
-				return this.wasBlurred && this.modelValue.length > 0 && !this.isValid;
-			},
-			warningLabelIcon() {
-				return {
-					name: ui_iconSet_api_vue.Set.WARNING,
-					size: 18,
-					color: '--ui-color-palette-red-60'
-				};
+			placeholder() {
+				if (this.isPhoneAllowed) {
+					return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER_WITH_PHONE');
+				}
+				return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER_MSGVER_1');
 			}
 		},
+		watch: {
+			candidates(newValue) {
+				this.$emit('change', newValue);
+			}
+		},
+		created() {
+			this.tagSelector = this.getTagSelector();
+		},
+		mounted() {
+			this.tagSelector.renderTo(this.$refs['tag-selector']);
+			this.tagSelector.focusTextBox();
+		},
 		methods: {
-			onInput() {
-				this.$emit('update:modelValue', this.$refs['invitation-input'].value);
+			getTagSelector() {
+				return new ui_entitySelector.TagSelector({
+					showAddButton: false,
+					showTextBox: true,
+					showCreateButton: false,
+					textBoxAutoHide: false,
+					tagMaxWidth: 200,
+					placeholder: this.placeholder,
+					events: {
+						onBeforeTagAdd: this.registerNewCandidate,
+						onAfterTagRemove: this.unregisterCandidate,
+						onInput: this.splitInputOnDelimiter,
+						onEnter: this.commitInput,
+						onBlur: this.commitInput,
+						onContainerClick: this.focusTextBox
+					}
+				});
 			},
-			onBlur() {
-				this.wasBlurred = true;
+			resolveInvitationType(value) {
+				if (this.isEmail(value)) {
+					return InviteValueType.email;
+				}
+				if (this.isPhone(value)) {
+					return InviteValueType.phone;
+				}
+				return InviteValueType.error;
+			},
+			isEmail(value) {
+				return main_core.Validation.isEmail(value);
+			},
+			isPhone(value) {
+				if (!this.isPhoneAllowed) {
+					return false;
+				}
+				return BX.PhoneNumber.getValidNumberRegex().test(value);
+			},
+			commitInput() {
+				const inputValue = this.tagSelector.getTextBoxValue();
+				const inviteCandidates = inputValue.split(INPUT_SPLIT_PATTERN).filter(candidate => candidate.length > 0);
+				if (inviteCandidates.length === 0) {
+					return;
+				}
+				for (const candidate of inviteCandidates) {
+					const hasDuplicate = this.candidates.some(tagItem => tagItem.value === candidate);
+					if (hasDuplicate) {
+						continue;
+					}
+					this.tagSelector.addTag({
+						id: candidate,
+						entityId: ENTITY_ID,
+						entityType: this.resolveInvitationType(candidate),
+						title: candidate
+					});
+				}
+				this.tagSelector.clearTextBox();
+			},
+			registerNewCandidate(event) {
+				const {
+					tag
+				} = event.getData();
+				const textBox = event.getTarget().getTextBox();
+				textBox.placeholder = '';
+				const tagType = tag.getEntityType();
+				if (tagType === InviteValueType.error) {
+					main_core.Dom.addClass(this.tagSelector.getOuterContainer(), '--error');
+				}
+				this.candidates = [...this.candidates, {
+					value: tag.getTitle(),
+					type: tagType
+				}];
+				this.emitValidity();
+			},
+			unregisterCandidate(event) {
+				const {
+					tag
+				} = event.getData();
+				this.candidates = this.candidates.filter(tagItem => tagItem.value !== tag.getTitle());
+				const remainingErrorTags = this.tagSelector.getTags().filter(tagItem => {
+					return tagItem.getEntityType() === InviteValueType.error;
+				});
+				if (remainingErrorTags.length === 0) {
+					main_core.Dom.removeClass(this.tagSelector.getOuterContainer(), '--error');
+				}
+				this.emitValidity();
+			},
+			emitValidity() {
+				this.$emit('validityChange', this.candidates.length > 0 && !this.hasInvalidCandidates);
+			},
+			splitInputOnDelimiter(event) {
+				const {
+					event: nativeInputEvent
+				} = event.getData();
+				const typedCharacter = nativeInputEvent.data;
+				if (!INPUT_DELIMITERS.has(typedCharacter)) {
+					return;
+				}
+				const textBoxValue = this.tagSelector.getTextBoxValue();
+				const valueWithoutTrailingDelimiter = textBoxValue.endsWith(typedCharacter) ? textBoxValue.slice(0, -1) : textBoxValue;
+				if (valueWithoutTrailingDelimiter.length > 0) {
+					this.commitInput();
+				}
+			},
+			focusTextBox() {
+				this.tagSelector.getTextBox().focus();
 			},
 			loc(phraseCode) {
 				return main_core.Loc.getMessage(phraseCode);
@@ -718,16 +820,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-invitation-input__container">
-			<input
-				ref="invitation-input"
-				:class="{ '--error': hasError }"
-				type="text"
-				:placeholder="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_INPUT_PLACEHOLDER')"
-				:value="modelValue"
-				@input="onInput"
-				@blur="onBlur"
-			/>
-			<div v-if="hasError" class="bx-im-invitation-input__error">
+			<div ref="tag-selector"></div>
+			<div v-if="hasInvalidCandidates" class="bx-im-invitation-input__error">
 				<BIcon :name="IconsSet.WARNING" class="bx-im-invitation-input__error-icon" />
 				<span class="bx-im-invitation-input__error-text">
 					{{ loc('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE') }}
@@ -772,8 +866,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				activeTabId: im_v2_const.TabId.guests,
 				isCopyingInviteLink: false,
 				isUpdatingInviteLink: false,
-				inviteInputValue: '',
-				isInvitingGuests: false
+				isInvitingGuests: false,
+				isAddButtonDisabled: true,
+				candidates: []
 			};
 		},
 		computed: {
@@ -796,7 +891,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
 			isGuestTab() {
-				return this.tabsEnabled && this.activeTabId === im_v2_const.TabId.guests;
+				if (!this.canInviteGuests) {
+					return false;
+				}
+				return this.activeTabId === im_v2_const.TabId.guests;
 			},
 			isChat() {
 				return this.dialog.type !== im_v2_const.ChatType.user;
@@ -810,17 +908,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			guestDescription() {
 				return main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST');
 			},
-			isAddButtonDisabled() {
-				return !this.inviteInputValue;
+			isPhoneInviteAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.inviteByPhoneAvailable);
 			},
-			canUpdateLink() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.updateGuestLink, this.dialogId);
+			canManageGuestLinks() {
+				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+				const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.manageGuestLink, this.dialogId);
+				const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.manageGuestLink);
+				return canPerformActionByRole && canPerformActionByUserType;
 			},
 			isChatWithGuestsAvailable() {
-				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatWithGuestsAvailable);
+				return im_v2_lib_guest.GuestManager.getInstance().isGuestLinkAvailable(this.dialogId);
 			},
-			tabsEnabled() {
-				return this.dialog.type === im_v2_const.ChatType.chat && this.isChatWithGuestsAvailable;
+			canInviteGuests() {
+				if (!this.isChatWithGuestsAvailable) {
+					return false;
+				}
+				return this.canManageGuestLinks;
 			}
 		},
 		created() {
@@ -828,7 +932,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		mounted() {
 			const savedTab = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.invitePopupTab);
-			if (this.tabsEnabled && savedTab) {
+			if (this.canInviteGuests && savedTab) {
 				this.activeTabId = savedTab;
 			}
 		},
@@ -879,8 +983,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			async copyInviteLink() {
 				try {
 					this.isCopyingInviteLink = true;
-					const inviteLink = await new GuestInvitationService().generateInviteLink(this.chatId);
-					await im_v2_lib_utils.Utils.text.copyToClipboard(inviteLink.sharingLink.url);
+					const sharingLink = await new im_v2_provider_service_guestInvitation.GuestInvitationService().generateInviteLink(this.chatId);
+					await im_v2_lib_utils.Utils.text.copyToClipboard(sharingLink.url);
 					im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 				} catch {
 					im_v2_lib_notifier.Notifier.onDefaultError();
@@ -891,7 +995,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			async updateLink() {
 				try {
 					this.isUpdatingInviteLink = true;
-					await new GuestInvitationService().updateLink(this.chatId);
+					await new im_v2_provider_service_guestInvitation.GuestInvitationService().updateLink(this.chatId);
 					im_v2_lib_notifier.Notifier.onUpdateLinkComplete();
 				} catch {
 					im_v2_lib_notifier.Notifier.onDefaultError();
@@ -899,10 +1003,48 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					this.isUpdatingInviteLink = false;
 				}
 			},
+			onInvitationInputValidityChange(isValid) {
+				this.isAddButtonDisabled = !isValid;
+			},
+			onInvitationInputChange(candidates) {
+				this.candidates = candidates;
+			},
 			async addGuest() {
+				if (this.isAddButtonDisabled) {
+					return;
+				}
 				this.isInvitingGuests = true;
+				const result = await this.sendGuestInvitations();
+				this.showGuestInvitationsResult(result);
 				this.isInvitingGuests = false;
 				this.$emit('close');
+			},
+			async sendGuestInvitations() {
+				const emails = this.candidates.filter(candidate => candidate.type === im_v2_provider_service_guestInvitation.InvitationType.email).map(candidate => ({
+					email: candidate.value
+				}));
+				const phones = this.candidates.filter(candidate => candidate.type === im_v2_provider_service_guestInvitation.InvitationType.phone).map(candidate => ({
+					phone: candidate.value
+				}));
+				const invitationService = new im_v2_provider_service_guestInvitation.GuestInvitationService();
+				const tasks = [];
+				if (emails.length > 0) {
+					tasks.push(invitationService.inviteByEmail(this.chatId, emails));
+				}
+				if (phones.length > 0) {
+					tasks.push(invitationService.inviteByPhone(this.chatId, phones));
+				}
+				return Promise.allSettled(tasks);
+			},
+			showGuestInvitationsResult(results) {
+				const failed = results.filter(result => result.status === 'rejected').length;
+				const isAllFailed = failed > 0 && failed === results.length;
+				const isAnyFailed = failed > 0 && failed < results.length;
+				if (isAllFailed) {
+					im_v2_lib_notifier.Notifier.onDefaultError();
+				} else if (isAnyFailed) {
+					im_v2_lib_notifier.Notifier.invite.onPartialError();
+				}
 			}
 		},
 		template: `
@@ -912,7 +1054,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@close="$emit('close')"
 		>
 			<TabsWrapper
-				v-if="tabsEnabled"
+				v-if="canInviteGuests"
 				:activeTabId="activeTabId"
 				@onTabSwitch="onTabSwitch"
 			/>
@@ -933,7 +1075,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<template #copy-link>
 						<CopyInviteLink
 							:dialogId="dialogId"
-							:canUpdateLink="canUpdateLink"
+							:canUpdateLink="canManageGuestLinks"
 							:isUpdatingInviteLink="isUpdatingInviteLink"
 							:isCopyingInviteLink="isCopyingInviteLink"
 							@onUpdateInviteLink="updateLink"
@@ -941,7 +1083,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						/>
 					</template>
 					<template #invitation-input>
-						<ChatInvitationInput v-model="inviteInputValue"/>
+						<ChatInvitationInput
+							:isPhoneAllowed="isPhoneInviteAvailable"
+							@change="onInvitationInputChange"
+							@validityChange="onInvitationInputValidityChange"
+						/>
 					</template>
 				</AddGuestContent>
 				<AddToChatContent
@@ -1397,5 +1543,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.Messenger.v2.Component.Elements, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.UI, BX.Intranet, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI, BX.Intranet, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=registry.bundle.js.map

@@ -42,6 +42,11 @@ jn.define('im/messenger/controller/recent/service/empty-state/dummy', (require, 
 		{
 			this.logger.log('redraw');
 		}
+
+		notifyActivatedWhenEmpty()
+		{
+			this.logger.log('notifyActivatedWhenEmpty');
+		}
 	}
 
 	module.exports = DummyEmptyStateService;

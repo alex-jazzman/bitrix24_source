@@ -1,7 +1,6 @@
 .select {
 	position: relative;
 	width: 100%;
-	height: -webkit-fit-content;
 	height: fit-content;
 	margin: 0 auto;
 }

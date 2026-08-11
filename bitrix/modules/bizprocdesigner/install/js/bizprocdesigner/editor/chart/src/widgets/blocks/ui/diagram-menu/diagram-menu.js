@@ -1,7 +1,7 @@
 import { Runtime } from 'main.core';
-import { Outline, Main } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.core';
 import { AirButtonStyle } from 'ui.vue3.components.button';
-import type { MenuOptions } from 'ui.vue3.components.menu';
+import { type MenuOptions } from 'ui.vue3.components.menu';
 import { MenuButton } from '../../../../shared/ui';
 
 // @vue/component

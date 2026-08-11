@@ -1,0 +1,23 @@
+.bx-im-message-block-unordered-list-item__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 2px;
+}
+
+.bx-im-message-block-unordered-list-item__icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--im-message-builder-color);
+
+	flex-shrink: 0;
+}
+
+.bx-im-message-block-unordered-list-item__marker {
+	flex-shrink: 0;
+}
+
+.bx-im-message-block-unordered-list-item__bullet {
+	display: inline-block;
+	width: 20px;
+	line-height: 20px;
+	text-align: center;
+}

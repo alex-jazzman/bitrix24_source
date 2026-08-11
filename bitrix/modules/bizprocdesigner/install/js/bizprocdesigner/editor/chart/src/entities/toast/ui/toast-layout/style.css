@@ -6,6 +6,7 @@
 	width: 700px;
 	--ui-icon-set__icon-color: var(--ui-color-base-8);
 }
+
 .editor-chart-toast-layout__divider {
 	width: 9px;
 	height: 20px;

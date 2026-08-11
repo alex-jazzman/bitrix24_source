@@ -291,9 +291,29 @@ endif;
 
 				Toolbar::addAfterTitleHtml('<div id="crm-details-category-changer-container" class="crm-details-pagetitle-container"></div>');
 
-				$changeableCategories = $userPermissions->category()->filterAvailableForAddingCategories(
-					$factory?->getCategories() ?? [],
-				);
+				$currentCategoryId = (int)$arResult['CATEGORY_ID'];
+				$entityId = (int)$arResult['ENTITY_ID'];
+				$canChangeCategory = true;
+				if ($entityId > 0)
+				{
+					$currentItem = $factory?->getItem($entityId);
+					$canChangeCategory = $currentItem
+						&& $userPermissions->item()->canUpdateItem($currentItem)
+					;
+				}
+
+				if ($canChangeCategory)
+				{
+					$changeableCategories = $userPermissions->category()->filterAvailableForAddingCategoriesWithCurrent(
+						$factory?->getCategories() ?? [],
+						$currentCategoryId,
+					);
+				}
+				else
+				{
+					$currentCategory = $factory?->getCategory($currentCategoryId);
+					$changeableCategories = $currentCategory ? [$currentCategory] : [];
+				}
 
 				?>
 				BX.Crm.ItemDetailsComponent.PageTitle.CategoryChanger.renderToTarget(

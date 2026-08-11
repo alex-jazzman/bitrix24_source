@@ -2,6 +2,8 @@
 $MESS['IM_LIB_CONFIRM_USER_KICK'] = "Вы уверены, что хотите исключить пользователя?";
 $MESS['IM_LIB_CONFIRM_USER_CHANNEL_KICK'] = "Исключить подписчика из канала?";
 $MESS['IM_LIB_CONFIRM_USER_KICK_MSGVER_1'] = "Исключить участника из чата?";
+$MESS['IM_LIB_CONFIRM_GUEST_KICK_TITLE'] = "Исключить участника из чата?";
+$MESS['IM_LIB_CONFIRM_GUEST_KICK_TEXT'] = "Гость удалится из чата, но сможет снова вступить в него, пока действует его ссылка для приглашения. Ссылка действительна 24 часа";
 $MESS['IM_LIB_CONFIRM_USER_KICK_YES'] = "Да, исключить";
 $MESS['IM_LIB_CONFIRM_LEAVE_CHAT_MSGVER_1'] = "Выйти из чата?";
 $MESS['IM_LIB_CONFIRM_LEAVE_CHAT_YES_MSGVER_1'] = "Да, выйти";
@@ -53,3 +55,7 @@ $MESS['IM_LIB_CONFIRM_DELETE_STICKER_PACK_CONFIRM_CONFIRM'] = "Да, удали�
 $MESS['IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_TITLE'] = "Удалить набор из ваших стикеров?";
 $MESS['IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_TEXT'] = "Остальные сотрудники по-прежнему смогут использовать стикеры из этого набора";
 $MESS['IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_CONFIRM'] = "Да, удалить";
+
+$MESS['IM_LIB_CONFIRM_UPDATE_GUEST_LINK_TITLE'] = "Изменить ссылку для приглашения?";
+$MESS['IM_LIB_CONFIRM_UPDATE_GUEST_LINK_TEXT'] = "По старой ссылке вступить в чат больше не получится. Гости, которые присоединились по этой ссылке раньше, не смогут открыть чат";
+$MESS['IM_LIB_CONFIRM_UPDATE_GUEST_LINK_CONFIRM'] = "Да, изменить";

@@ -222,6 +222,10 @@
 			}
 			this.startProgress();
 			this.type.setTitle(this.form.querySelector('[name="title"]').value);
+			const daysBeforeCloseInput = this.form.querySelector('[name="daysBeforeClose"]');
+			if (daysBeforeCloseInput) {
+				this.type.setDaysBeforeClose(daysBeforeCloseInput.value);
+			}
 			crm_typeModel.TypeModel.getBooleanFieldNames().forEach(fieldName => {
 				const fieldNode = this.getBooleanFieldNodeByName(fieldName);
 				if (fieldNode) {
@@ -431,6 +435,10 @@
 					this.setBooleanFieldCheckedState(node, data[fieldName]);
 				}
 			});
+			const daysBeforeCloseInput = this.form.querySelector('[name="daysBeforeClose"]');
+			if (daysBeforeCloseInput && !main_core.Type.isNil(data.daysBeforeClose)) {
+				daysBeforeCloseInput.value = String(data.daysBeforeClose);
+			}
 			this.disableLinkedUserFieldsIfNotAvailable();
 		}
 		toggleBooleanField(fieldName) {

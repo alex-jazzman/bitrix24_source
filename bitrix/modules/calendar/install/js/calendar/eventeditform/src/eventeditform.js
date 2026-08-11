@@ -59,6 +59,7 @@ export class EventEditForm
 		this.isNewProjectsOn = options.calendarContext?.isNewProjectsOn || false;
 		this.analyticsChatId = options.createChatId || null;
 		this.analyticsSubSection = options.analyticsSubSection || this.getFormAnalyticsContext();
+		this.eventType = options.formDataValue?.eventType || options.entry?.data?.EVENT_TYPE || null;
 
 		if (this.isCollabUser)
 		{
@@ -526,6 +527,13 @@ export class EventEditForm
 		{
 			this.DOM.form.appendChild(
 				Tag.render`<input type="hidden" name="analyticsChatId" value="${this.analyticsChatId}">`,
+			);
+		}
+
+		if (this.eventType)
+		{
+			this.DOM.form.appendChild(
+				Tag.render`<input type="hidden" name="event_type" value="${this.eventType}">`,
 			);
 		}
 
@@ -1774,14 +1782,14 @@ export class EventEditForm
 				});
 			}
 
-			if (!canEdit && item.entityType === 'email')
+			if (item.entityType === 'email')
 			{
 				result.push({
 					id: item.id,
 					entityId: item.entityId,
 					entityType: 'email',
 					title: item.title,
-					deselectable: false,
+					deselectable: canEdit,
 				});
 			}
 		});
@@ -2806,7 +2814,10 @@ export class EventEditForm
 	{
 		const formData = new FormData(this.DOM.form);
 		const endsOn = formData.get('rrule_endson');
-		const FREQ = formData.get('EVENT_RRULE[FREQ]') ?? 'NONE';
+
+		const rruleType = this.DOM.content.querySelector(`#${this.uid}_rrule_type`);
+		const FREQ = rruleType?.dataset?.value ?? 'NONE';
+
 		let INTERVAL = parseInt(formData.get('EVENT_RRULE[INTERVAL]'), 10) || null;
 		let COUNT = null;
 		let UNTIL = null;
@@ -2825,7 +2836,9 @@ export class EventEditForm
 
 		if (FREQ === 'NONE')
 		{
-			INTERVAL = COUNT = UNTIL = null;
+			INTERVAL = null;
+			COUNT = null;
+			UNTIL = null;
 		}
 
 		if (FREQ === 'WEEKLY')

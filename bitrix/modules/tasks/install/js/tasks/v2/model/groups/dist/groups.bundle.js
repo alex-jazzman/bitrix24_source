@@ -27,7 +27,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				image: '',
 				url: '',
 				type: '',
-				stagesIds: []
+				stagesIds: [],
+				isRestrictedView: false
 			};
 		}
 	}

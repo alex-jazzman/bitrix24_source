@@ -2,7 +2,7 @@ import { Button } from 'ui.buttons';
 import { ClientSelector, type Communication, type CommunicationItem } from 'crm.client-selector';
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
-import { ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
+import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { type Menu, type MenuItem, type MenuItemOptions, MenuManager } from 'main.popup';
@@ -212,14 +212,6 @@ export default class GoToChat extends Item
 
 	createLayout(): HTMLElement
 	{
-		for (const tourString of this.getSetting('tours', []))
-		{
-			if (Type.isStringFilled(tourString))
-			{
-				Runtime.html(null, tourString);
-			}
-		}
-
 		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-gotochat --hidden --skeleton">
 			<div class="crm-entity-stream-content-new-detail-gotochat-container hidden">
 				<div class="crm-entity-stream-content-gotochat-settings-container">

@@ -5,8 +5,8 @@ jn.define('im/messenger/loc/src/feature-phrases', (require, exports, module) => 
 	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
-	 * @typedef {string} NewPhraseCode Код фразы, который используют места вызова.
-	 * @typedef {string} LegacyPhraseCode Код фразы, значение которого подставляется при выключенном флаге.
+	 * @typedef {string} NewPhraseCode
+	 * @typedef {string} LegacyPhraseCode
 	 */
 
 	/**

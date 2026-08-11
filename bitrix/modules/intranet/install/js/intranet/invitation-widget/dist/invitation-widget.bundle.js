@@ -524,7 +524,6 @@ this.BX = this.BX || {};
 	}
 
 	class CollabContent extends Content {
-		articleCode = '22706764';
 		#openChat;
 		constructor(options) {
 			super(options);
@@ -532,6 +531,7 @@ this.BX = this.BX || {};
 			const settings = main_core.Extension.getSettings('intranet.invitation-widget');
 			this.isNewProjectsAvailable = settings?.isNewProjectsAvailable;
 			this.canCreateProjects = settings?.canCreateProjects;
+			this.articleCode = this.isNewProjectsAvailable ? '28397818' : '22706764';
 		}
 		getConfig() {
 			const defaultHtml = this.getOptions().awaitData.then(response => {
@@ -565,7 +565,7 @@ this.BX = this.BX || {};
 				};
 				const itemNameMessage = this.isNewProjectsAvailable ? main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT') : main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB');
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()}">
+				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}">
 					<div class="intranet-invitation-widget-content">
 						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab">
 							<div class="ui-icon-set --collab"></div>
@@ -578,7 +578,7 @@ this.BX = this.BX || {};
 							</div>
 							<div class="intranet-invitation-widget-item-link">
 								<span onclick="${showCollabHelper}" class="intranet-invitation-widget-item-link-text">
-									${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')}
+									${this.isNewProjectsAvailable ? main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC') : main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')}
 								</span>
 							</div>
 						</div>

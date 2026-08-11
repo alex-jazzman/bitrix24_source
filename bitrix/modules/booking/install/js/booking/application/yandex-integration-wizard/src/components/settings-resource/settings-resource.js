@@ -117,6 +117,7 @@ export const YandexIntegrationWizardSettingsResource = {
 				options: {
 					editMode: true,
 					catalogSkuEntityOptions: this.getCatalogSkuEntityOptions(),
+					shortSlotsOnly: true,
 				},
 				loadData: () => this.getResources(),
 				save: (data) => this.saveResources(data),
@@ -154,8 +155,11 @@ export const YandexIntegrationWizardSettingsResource = {
 				};
 			});
 
-			await resourceDialogService.getMainResources();
-			const mainResources = (this.$store.getters[`${Model.Resources}/get`] || []).map((resource) => {
+			const mainResources = await resourceDialogService.getMainResources({
+				shortSlotsOnly: true,
+			});
+
+			const mainResourcesWithoutSkus = mainResources.map((resource) => {
 				return {
 					...resource,
 					skus: [],
@@ -164,7 +168,7 @@ export const YandexIntegrationWizardSettingsResource = {
 			});
 
 			return [
-				...mainResources,
+				...mainResourcesWithoutSkus,
 				...resources,
 			];
 		},

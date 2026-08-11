@@ -1,6 +1,7 @@
 import { Type, Loc, Runtime } from 'main.core';
-import { Dialog, Item, ItemOptions, TabOptions, EntityOptions } from 'ui.entity-selector';
-import type { Block, PortId } from '../../../../shared/types';
+import { Dialog, type Item, type ItemOptions, type TabOptions, type EntityOptions } from 'ui.entity-selector';
+
+import { type Block, type PortId } from '../../../../shared/types';
 import { diagramStore } from '../../../blocks';
 
 type ShowOptions = {
@@ -11,17 +12,20 @@ export class ValueSelector
 	store: diagramStore;
 	currentBlock: Block;
 	currentPortId: PortId | null = null;
+	connectedBlocks: Array<Block> | null = null;
 	selectedItem: Item | null = null;
 
 	constructor(
 		store: diagramStore,
 		currentBlock: Block,
 		currentPortId: PortId | null = null,
+		connectedBlocks: Array<Block> | null = null,
 	)
 	{
 		this.store = store;
 		this.currentBlock = currentBlock;
 		this.currentPortId = currentPortId;
+		this.connectedBlocks = connectedBlocks;
 	}
 
 	show(targetElement: Element, options: ShowOptions = {}): Promise
@@ -59,7 +63,7 @@ export class ValueSelector
 			return [
 				{
 					id: 'bizproc-document',
-				}
+				},
 			];
 		}
 
@@ -165,8 +169,8 @@ export class ValueSelector
 						entityId: elem.key,
 						title: item.Name,
 						customData: {
-							property: item
-						}
+							property: item,
+						},
 					});
 				});
 
@@ -183,12 +187,18 @@ export class ValueSelector
 
 	getReturnItems(): ItemOptions[]
 	{
-		const blocks = this.store.getAllBlockAncestors(
+		const blocks = this.connectedBlocks ?? this.store.getAllBlockAncestors(
 			this.currentBlock,
 			this.currentPortId,
 		);
 
-		return blocks.reduce((acc, block: Block) => {
+		return blocks.reduce((acc, currentBlock: Block) => {
+			const block = Type.isPlainObject(currentBlock?.block) ? currentBlock.block : currentBlock;
+			if (!Type.isPlainObject(block?.activity))
+			{
+				return acc;
+			}
+
 			if (Type.isArrayFilled(block.activity.Children))
 			{
 				const properties = this.#processChildrenProperties(block);
@@ -290,7 +300,13 @@ export class ValueSelector
 						id,
 						entityId: 'bizproc-document',
 						entityType: 'document',
-						title: `${property.Name} (${fullTitle})`,
+						title: Loc.getMessage(
+							'BIZPROCDESIGNER_SELECTOR_DOCUMENT_PROPERTY_TITLE',
+							{
+								'#PROPERTY_NAME#': property.Name,
+								'#BLOCK_TITLE#': fullTitle,
+							},
+						),
 						customData: {
 							document: property.Default,
 							idTemplate: `{=${block.id}:${property.Id}.#FIELD#}`,

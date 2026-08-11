@@ -28,6 +28,7 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 	} = require('im/messenger/application/lib/dialog-manager/src/open-filter/projects-tariff-restriction');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { PerfPoint } = require('debug/prism');
 	const { openPlanLimitsWidgetByError } = require('im/messenger/lib/plan-limit');
 
 	/**
@@ -98,6 +99,8 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 				return false;
 			}
 
+			const openPerfPoint = new PerfPoint('open-dialog', `dialog ${dialogId}`).start();
+
 			if (normalizedOptions.makeTabActive)
 			{
 				PageManager.getNavigator().makeTabActive();
@@ -106,6 +109,8 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 			const resolveResult = await this.#resolveDialog(normalizedOptions, options);
 			if (!resolveResult)
 			{
+				openPerfPoint.end();
+
 				return false;
 			}
 
@@ -134,6 +139,7 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 			if (this.#isOpenline(dialogHelper))
 			{
 				this.#openAsOpenline(dialog, dialogHelper);
+				openPerfPoint.end();
 
 				return true;
 			}
@@ -142,7 +148,7 @@ jn.define('im/messenger/application/lib/dialog-manager/src/manager', (require, e
 
 			this.logger.log('openDialog: options: ', trackedOptions);
 
-			await dialog.open(trackedOptions, parentWidget);
+			await dialog.open(trackedOptions, parentWidget, openPerfPoint);
 
 			return true;
 		}

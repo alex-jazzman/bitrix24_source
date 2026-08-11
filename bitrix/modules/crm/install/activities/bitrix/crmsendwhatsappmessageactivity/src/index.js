@@ -1,10 +1,16 @@
-import { Reflection, Type, Event, ajax, Text, Dom } from 'main.core';
-import { Editor, FilledPlaceholder } from 'crm.template.editor';
-import { Designer, tryGetGlobalContext, Template, SelectorItemsManager, enrichFieldsWithModifiers } from 'bizproc.automation';
+import {
+	Designer,
+	enrichFieldsWithModifiers,
+	SelectorItemsManager,
+	Template,
+	tryGetGlobalContext,
+} from 'bizproc.automation';
+import { Editor, type FilledPlaceholder } from 'crm.template.editor';
+import { ajax, Dom, Event, Reflection, Text, Type } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
+import './css/style.css';
 
 const namespace = Reflection.namespace('BX.Crm.Activity');
-
-import './css/style.css';
 
 class CrmSendWhatsAllMessageActivity
 {
@@ -187,9 +193,17 @@ class CrmSendWhatsAllMessageActivity
 
 		const editor = new Editor({
 			target: this.#editorWrapper,
-			onSelect: ({ id, value, parentTitle, title }) => {
-				const templatePlaceholders: Map = this.#placeholders.get(templateId);
-				templatePlaceholders.set(id, { value, parentTitle, title });
+			events: {
+				onUpdatePlaceholder: (event: BaseEvent) => {
+					const { filledPlaceholder } = event.getData();
+
+					const templatePlaceholders: Map = this.#placeholders.get(templateId);
+					templatePlaceholders.set(filledPlaceholder.PLACEHOLDER_ID, {
+						value: filledPlaceholder.FIELD_NAME,
+						parentTitle: filledPlaceholder.PARENT_TITLE,
+						title: filledPlaceholder.TITLE,
+					});
+				},
 			},
 			dialogOptions: {
 				items: this.#dialogItems,

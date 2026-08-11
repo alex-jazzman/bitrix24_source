@@ -69,7 +69,8 @@ export const QuickReply = {
 
 				if (hasFilledQuery)
 				{
-					return reply.text.toLowerCase().includes(query);
+					return (reply.name || '').toLowerCase().includes(query)
+						|| (reply.text || '').toLowerCase().includes(query);
 				}
 
 				return true;
@@ -126,6 +127,17 @@ export const QuickReply = {
 			this.isPopupOpen = false;
 			this.isFormOpen = false;
 			this.editingReply = null;
+			this.highlightedReplyId = 0;
+			this.resetSearchState();
+		},
+		resetSearchState(): void
+		{
+			if (this.filter.searchQuery === '')
+			{
+				return;
+			}
+			this.filter.searchQuery = '';
+			void this.quickReplyManager.search(this.dialogId, '');
 		},
 		async loadInitial(): Promise<void>
 		{
@@ -153,6 +165,10 @@ export const QuickReply = {
 		},
 		async serverSearch(query: string): Promise<void>
 		{
+			if (!this.isPopupOpen)
+			{
+				return;
+			}
 			await this.quickReplyManager.search(this.dialogId, query);
 		},
 		async onSave(data: QuickReplySaveFormData): Promise<void>
@@ -196,6 +212,8 @@ export const QuickReply = {
 			this.quickReplyManager.selectReply(this.dialogId, reply);
 			this.$emit('selectReply', reply.text);
 			this.isPopupOpen = false;
+			this.highlightedReplyId = 0;
+			this.resetSearchState();
 		},
 		onSuccessHide(): void
 		{
@@ -219,6 +237,7 @@ export const QuickReply = {
 				:class="{ '--active': isPopupOpen }"
 				:title="loc('IMOL_CONTENT_TEXTAREA_QUICK_REPLY')"
 				class="bx-imol-textarea-icon"
+				data-testid="quick-reply-toggle"
 				@click="togglePopup"
 			/>
 		</span>

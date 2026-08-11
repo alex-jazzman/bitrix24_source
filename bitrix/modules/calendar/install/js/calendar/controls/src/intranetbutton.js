@@ -1,5 +1,6 @@
 import { ControlButton } from 'intranet.control-button';
 import { Event, Loc, Type } from 'main.core';
+import { SidePanel, type Slider } from 'main.sidepanel';
 import { Util } from 'calendar.util';
 
 export class IntranetButton
@@ -34,20 +35,103 @@ export class IntranetButton
 		}
 	}
 
+	isProjectCalendarSlider(slider: ?Slider): boolean
+	{
+		if (Type.isNull(slider))
+		{
+			return false;
+		}
+
+		const sliderUrl = slider.getUrl();
+		if (!Type.isStringFilled(sliderUrl))
+		{
+			return false;
+		}
+
+		return /workgroups\/group\/\d+\/calendar\/?/i.test(sliderUrl);
+	}
+
+	isCalendarEventSlider(slider: ?Slider): boolean
+	{
+		if (Type.isNull(slider))
+		{
+			return false;
+		}
+
+		const sliderData = slider.getData();
+
+		return sliderData.get('type') === 'calendar:slider';
+	}
+
+	shouldOpenChatSafely(): boolean
+	{
+		return this.getSlidersToCloseForChat().length > 0;
+	}
+
 	openChatWithConfirm()
 	{
+		const openChatHandler = this.shouldOpenChatSafely() ? this.openChatSafely.bind(this) : this.openChat;
+
 		if (this.shouldNotConfirmOpenChat())
 		{
-			this.openChat();
+			void openChatHandler();
 
 			return;
 		}
 
-		Util.showConfirmPopup(this.openChat, Loc.getMessage('EC_CREATE_CHAT_CONFIRM_QUESTION'), {
+		Util.showConfirmPopup(openChatHandler, Loc.getMessage('EC_CREATE_CHAT_CONFIRM_QUESTION'), {
 			okCaption: Loc.getMessage('EC_CREATE_CHAT_OK'),
 			minWidth: 350,
 			maxWidth: 350,
 		});
+	}
+
+	openChatSafely()
+	{
+		this.openChat().then(() => {
+			this.closeSliders(this.getSlidersToCloseForChat());
+		});
+	}
+
+	getSlidersToCloseForChat(): Slider[]
+	{
+		const openSliders = [...SidePanel.Instance.getOpenSliders()];
+		const slidersToClose = [];
+
+		for (let index = openSliders.length - 1; index >= 0; index--)
+		{
+			const slider = openSliders[index];
+
+			if (this.isCalendarEventSlider(slider))
+			{
+				slidersToClose.push(slider);
+
+				continue;
+			}
+
+			if (this.isProjectCalendarSlider(slider))
+			{
+				slidersToClose.push(slider);
+
+				continue;
+			}
+
+			break;
+		}
+
+		return slidersToClose;
+	}
+
+	closeSliders(sliders: Slider[])
+	{
+		if (sliders.length === 0)
+		{
+			return;
+		}
+
+		const [slider, ...restSliders] = sliders;
+
+		slider.close(false, () => this.closeSliders(restSliders));
 	}
 
 	startVideoCallWithConfirm(videoCallContext = 'context_menu')

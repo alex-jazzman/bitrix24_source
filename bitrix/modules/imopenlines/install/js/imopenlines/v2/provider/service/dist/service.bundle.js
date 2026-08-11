@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
-(function (exports, im_v2_application_core, im_v2_lib_notifier, im_v2_lib_rest, im_v2_lib_logger, imopenlines_v2_const, im_public, im_v2_const, im_v2_lib_layout, im_v2_provider_service_chat, im_v2_provider_service_search, imopenlines_v2_lib_search) {
+(function (exports, im_v2_application_core, im_v2_lib_notifier, im_v2_lib_rest, im_v2_lib_logger, imopenlines_v2_const, main_core, ui_notification, im_public, im_v2_const, im_v2_lib_layout, im_v2_provider_service_chat, im_v2_provider_service_search, imopenlines_v2_lib_search) {
 	'use strict';
 
 	class RecentService {
@@ -95,6 +95,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 		}
 	}
 
+	const ANSWER_RACE_ERROR_CODES = new Set(['IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE', 'IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST']);
 	class AnswerService {
 		requestAnswer(dialogId) {
 			const queryParams = {
@@ -102,9 +103,16 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 					dialogId
 				}
 			};
-			return im_v2_lib_rest.runAction(imopenlines_v2_const.RestMethod.linesV2SessionAnswer, queryParams).catch(error => {
+			return im_v2_lib_rest.runAction(imopenlines_v2_const.RestMethod.linesV2SessionAnswer, queryParams).catch(errors => {
+				const errorList = Array.isArray(errors) ? errors : [errors];
+				if (errorList.some(error => ANSWER_RACE_ERROR_CODES.has(error?.code))) {
+					BX.UI.Notification.Center.notify({
+						content: main_core.Loc.getMessage('IMOL_CONTENT_ANSWER_ALREADY_RESPONSIBLE')
+					});
+					return;
+				}
 				im_v2_lib_notifier.Notifier.onDefaultError();
-				im_v2_lib_logger.Logger.error('Imol.OperatorAnswer: request error', error);
+				im_v2_lib_logger.Logger.error('Imol.OperatorAnswer: request error', errors);
 			});
 		}
 	}
@@ -417,6 +425,36 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 		}
 	}
 
+	class CrmService {
+		saveToCrm(dialogId) {
+			const queryParams = {
+				data: {
+					dialogId
+				}
+			};
+			return im_v2_lib_rest.runAction(imopenlines_v2_const.RestMethod.linesV2DialogCrmSave, queryParams).then(result => {
+				this.#updateModel(dialogId, result.dialogCrm);
+			}).catch(error => {
+				im_v2_lib_notifier.Notifier.onDefaultError();
+				im_v2_lib_logger.Logger.error('Imol.SaveToCrm: request error', error);
+			});
+		}
+		#updateModel(dialogId, dialogCrm) {
+			if (!dialogCrm) {
+				return;
+			}
+			void im_v2_application_core.Core.getStore().dispatch('openLines/crm/set', {
+				dialogId,
+				data: {
+					leadId: dialogCrm.lead?.id ?? null,
+					contactId: dialogCrm.contact?.id ?? null,
+					dealId: dialogCrm.deal?.id ?? null,
+					companyId: dialogCrm.company?.id ?? null
+				}
+			});
+		}
+	}
+
 	class QuickReplyService {
 		loadList(params) {
 			return im_v2_lib_rest.runAction(imopenlines_v2_const.RestMethod.linesV2QuickReplyList, {
@@ -483,6 +521,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	exports.AnswerService = AnswerService;
 	exports.ChatServiceOl = ChatServiceOl;
 	exports.CrmFormService = CrmFormService;
+	exports.CrmService = CrmService;
 	exports.FinishService = FinishService;
 	exports.InterceptService = InterceptService;
 	exports.JoinService = JoinService;
@@ -496,5 +535,5 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	exports.StartService = StartService;
 	exports.TransferService = TransferService;
 
-})(this.BX.OpenLines.v2.Provider.Service = this.BX.OpenLines.v2.Provider.Service || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.OpenLines.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.OpenLines.v2.Lib);
+})(this.BX.OpenLines.v2.Provider.Service = this.BX.OpenLines.v2.Provider.Service || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.OpenLines.v2.Const, BX, BX.UI.Notification, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.OpenLines.v2.Lib);
 //# sourceMappingURL=service.bundle.js.map

@@ -12,6 +12,7 @@ import {
 	PortsLayout,
 	PortAux,
 	BLOCK_LAYOUT_SLOT_NAMES,
+	shouldAnimateBlock,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
@@ -74,6 +75,7 @@ export const BlockTool = {
 			portTypes: PORT_TYPES,
 			portPosition: PORT_POSITION,
 			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
+			shouldAnimateBlock,
 		};
 	},
 	computed: {
@@ -158,6 +160,8 @@ export const BlockTool = {
 												<BlockToolIcon
 													:iconName="block.node.icon"
 													:deactivated="!isBlockActivated"
+													:blockId="block.id"
+													:animate="shouldAnimateBlock(block)"
 												/>
 											</template>
 

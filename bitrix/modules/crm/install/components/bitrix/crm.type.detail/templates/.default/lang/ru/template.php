@@ -52,3 +52,4 @@ $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1"] = "Список рабоч
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_HINT_ABOUT_CUSTOM_SECTIONS_IN_CRM"] = "Вы находитесь в разделе CRM. Создать смарт-процесс внутри рабочего места (HR, Документы, Производство и др.) можно в разделе Автоматизация";
 $MESS["CRM_TYPE_DETAIL_TITLE"] = "Смарт-процесс";
 $MESS['CRM_TYPE_DETAIL_PERMISSIONS_WILL_BE_RESET_ALERT'] = 'Права доступа на этот смарт-процесс нужно будет настроить заново. <a href="#LINK#">Посмотрите</a>, как они настроены сейчас';
+$MESS['CRM_TYPE_DETAIL_FIELD_DAYS_BEFORE_CLOSE'] = 'Дней до завершения элемента смарт-процесса с момента создания';

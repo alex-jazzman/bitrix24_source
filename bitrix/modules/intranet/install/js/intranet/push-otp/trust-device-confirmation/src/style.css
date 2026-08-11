@@ -97,6 +97,12 @@
 	background-image: url("../images/number-icon.png");
 }
 
+.intranet-trust-device-confirmation-popup-content-item__icon.--email {
+	background-image: url("../images/email-icon.png");
+	background-position: center;
+	background-size: 59px 51px;
+}
+
 .intranet-trust-device-confirmation-popup-content-item__icon--device {
 	width: 45px;
 	height: 45px;

@@ -12,13 +12,13 @@ return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
+		'ai.ui.field.selectorfield',
 		'main.core',
 		'main.core.events',
 		'ui.alerts',
-		'ui.section',
-		'ai.ui.field.selectorfield',
-		'ui.form-elements.view',
 		'ui.form-elements.field',
+		'ui.form-elements.view',
+		'ui.section',
 	],
 	'skip_core' => false,
 	'settings' => [

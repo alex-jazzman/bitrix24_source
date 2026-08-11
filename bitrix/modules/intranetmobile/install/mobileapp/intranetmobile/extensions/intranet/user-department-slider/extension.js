@@ -44,7 +44,7 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 
 		render()
 		{
-			const { sliderWidth } = this.props;
+			const { sliderWidth, style } = this.props;
 			const isIOS = this.#isIOS();
 			const renderedStructures = this.#renderDepartmentStructures();
 			if (renderedStructures.length === 1)
@@ -60,6 +60,7 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 				],
 				style: {
 					marginBottom: isIOS ? 0 : Component.cardPaddingB.toNumber(),
+					backgroundColor: style?.backgroundColor,
 				},
 				navigationMode: this.#isIOS() ? SliderNavigationMode.SWIPE : SliderNavigationMode.BUTTON,
 				...this.#getSliderHeightProps(),
@@ -108,8 +109,9 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 
 		#renderDepartmentStructure = (departmentIds, index) => {
 			const preparedDepartmentIds = this.#prepareDepartmentIds(departmentIds);
-			const { userId, sliderWidth, chevron, onClick, withPressed } = this.props;
+			const { userId, sliderWidth, chevron, onClick, withPressed, style } = this.props;
 			const cardStyle = sliderWidth ? { width: sliderWidth } : {};
+			cardStyle.backgroundColor = style?.backgroundColor;
 
 			return Card(
 				{
@@ -143,6 +145,7 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 		sliderWidth: PropTypes.number.isRequired,
 		chevron: PropTypes.bool,
 		onClick: PropTypes.func,
+		style: PropTypes.object,
 	};
 
 	module.exports = {

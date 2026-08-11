@@ -34,7 +34,7 @@ body {
 }
 
 body.--right-panel-expanded {
-	--air-right-panel-width: 380px;
+	--air-right-panel-width: 360px;
 	--air-right-panel-expanded: 1;
 
 	--air-sidepanel-toolbar-right: var(--air-sidepanel-toolbar-right-shifted);

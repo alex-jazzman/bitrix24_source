@@ -15,6 +15,7 @@ return [
 		'call:calls/bitrix-dev',
 		'call:calls/bitrix-jwt',
 		'call:calls/settings-manager',
+		'call:calls/stuck-call-finish-tracker',
 	],
 	'components' => []
 ];

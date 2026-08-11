@@ -89,6 +89,7 @@ if(isset($arResult['CATEGORY_CHANGER'])):
 				{
 					entityId: <?=$categoryChanger['ENTITY_ID']?>,
 					categoryIds: <?=CUtil::PhpToJSObject($categoryChanger['CATEGORY_IDS'])?>,
+					currentCategoryId: <?=(int)$categoryChanger['CURRENT_CATEGORY_ID']?>,
 					serviceUrl: "<?=CUtil::JSEscape($categoryChanger['SERVICE_URL'])?>",
 					action: "<?=CUtil::JSEscape($categoryChanger['ACTION_NAME'])?>"
 				}

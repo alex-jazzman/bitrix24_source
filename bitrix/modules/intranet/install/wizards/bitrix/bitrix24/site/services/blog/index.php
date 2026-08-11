@@ -1,8 +1,12 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
-	die();
+<?php
 
-use \Bitrix\Main;
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Intranet\Internal\Integration\Ui\CopilotService;
+use Bitrix\Main;
 
 if(!CModule::IncludeModule("blog"))
 	return;
@@ -76,8 +80,10 @@ $arBlogPosts = array(
 	array(
 		"TITLE" => GetMessage("BLOG_DEMO_MESSAGE_TITLE4"),
 		"DETAIL_TEXT" => Main\Localization\Loc::getMessage(
-			"BLOG_DEMO_MESSAGE_BODY4",
-			[],
+			"BLOG_DEMO_MESSAGE_BODY4_MSGVER_1",
+			[
+				'#COPILOT_NAME#' => CopilotService::getName(),
+			],
 			defined('B24_LANGUAGE_ID') && constant('B24_LANGUAGE_ID') === 'by'
 				? B24_LANGUAGE_ID: null,
 		),

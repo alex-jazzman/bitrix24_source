@@ -1,12 +1,11 @@
 import {AdjustFieldController} from "./adjustfieldcontroller";
 import {EditFieldController} from "./editfieldcontroller";
 import {Type} from "main.core";
-import {Resourcebooking, BookingUtil} from "calendar.resourcebooking";
 import {customizeCrmEntityEditor} from "./customizecrmentityeditor"
 import {CalendarViewSettingsSlider} from "./calendarviewsettingsslider"
 import {AdminSettingsViewer} from "./adminsettingsviewer"
 
-export {Resourcebooking, BookingUtil, AdminSettingsViewer};
+export {AdminSettingsViewer};
 export class ResourcebookingUserfield
 {
 	static fieldParamsCache = {};

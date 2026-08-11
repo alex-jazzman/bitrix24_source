@@ -1,0 +1,8 @@
+.openlines-header-menu .ui-popup-menu-item {
+	max-width: 270px;
+}
+
+.openlines-header-menu .ui-popup-menu-item-title-text {
+	white-space: normal;
+	text-overflow: clip;
+}

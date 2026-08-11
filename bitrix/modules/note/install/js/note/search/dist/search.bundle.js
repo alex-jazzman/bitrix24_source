@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_notification, note_ui_documentList) {
+(function (exports, main_core, ui_notification, note_analytics, note_ui_documentList) {
 	'use strict';
 
 	const ACTION_SEARCH = 'note.infrastructure.SearchController.search';
@@ -89,7 +89,8 @@ this.BX = this.BX || {};
 				hasMore: false,
 				page: 0,
 				hasError: false,
-				requestId: 0
+				requestId: 0,
+				analyticsClickTracked: false
 			};
 		},
 		computed: {
@@ -148,6 +149,18 @@ this.BX = this.BX || {};
 					this.$emit('update-query', this.inputQuery.trim());
 				}
 			},
+			onSearchClick() {
+				// Deliberate pointer click into the search field. mousedown never fires from the
+				// initial autofocus or from a tab-switch refocus, so no false/duplicate events.
+				if (!this.analyticsClickTracked) {
+					note_analytics.NoteAnalytics.searchClicked(true);
+					this.analyticsClickTracked = true;
+				}
+			},
+			onBlur() {
+				// Re-arm click_search so a click after leaving the field counts again.
+				this.analyticsClickTracked = false;
+			},
 			async runSearch(append) {
 				if (!append) {
 					this.items = [];
@@ -204,6 +217,8 @@ this.BX = this.BX || {};
 				if (!collectionId) {
 					return;
 				}
+				// Opening a collection tile from the full search-results page.
+				note_analytics.NoteAnalytics.collectionViewed('search_page');
 				this.$router.push({
 					name: 'workspace',
 					params: {
@@ -235,6 +250,8 @@ this.BX = this.BX || {};
 					@compositionend="onInput"
 					@change="onInput"
 					@keydown="onKeydown"
+					@mousedown="onSearchClick"
+					@blur="onBlur"
 					autofocus
 				/>
 			</div>
@@ -255,5 +272,5 @@ this.BX = this.BX || {};
 
 	exports.NoteSearchPageComponent = NoteSearchPageComponent;
 
-})(this.BX.Note = this.BX.Note || {}, BX, BX.UI.Notification, BX.Note.Ui);
+})(this.BX.Note = this.BX.Note || {}, BX, BX.UI.Notification, BX.Note, BX.Note.Ui);
 //# sourceMappingURL=search.bundle.js.map

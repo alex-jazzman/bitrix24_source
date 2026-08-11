@@ -448,6 +448,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				if (isBotChat) {
 					return false;
 				}
+				const isCurrentUserGuest = this.$store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+				const isGuest = this.$store.getters['users/isGuest'](this.authorDialogId);
+				if (isCurrentUserGuest && isGuest) {
+					return false;
+				}
 				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 				return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.openAvatarMenu, this.contextDialogId);
 			},

@@ -6,7 +6,6 @@ import { Core } from 'booking.core';
 import { EventName, Model } from 'booking.const';
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 import { ResourceCreationWizardModel } from 'booking.model.resource-creation-wizard';
-import { AiAgentModel } from 'booking.model.ai-agent';
 import { SidePanelInstance } from 'booking.lib.side-panel-instance';
 import { App } from './components/app';
 
@@ -39,16 +38,11 @@ export class ResourceCreationWizard
 		try
 		{
 			await Core.init();
-			await Promise.all([
-				Core.addDynamicModule(
-					ResourceCreationWizardModel
-						.create()
-						.setVariables({ resourceId }),
-				),
-				Core.addDynamicModule(
-					AiAgentModel.create(),
-				),
-			]);
+			await Core.addDynamicModule(
+				ResourceCreationWizardModel
+					.create()
+					.setVariables({ resourceId }),
+			);
 		}
 		catch (error)
 		{
@@ -89,10 +83,7 @@ export class ResourceCreationWizard
 		this.#application.unmount();
 		this.#application = null;
 
-		await Promise.all([
-			Core.removeDynamicModule(Model.ResourceCreationWizard),
-			Core.removeDynamicModule(Model.AiAgent),
-		]);
+		await Core.removeDynamicModule(Model.ResourceCreationWizard);
 	}
 
 	subscribe(): void

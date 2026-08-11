@@ -1,6 +1,6 @@
 import { CallPopupContainer } from 'call.component.elements';
 import { Loc, Dom } from 'main.core';
-import { Util, CallAI } from 'call.core';
+import { CallAI } from 'call.core';
 
 import type { PopupOptions } from 'main.popup';
 import type { JsonObject } from 'main.core';

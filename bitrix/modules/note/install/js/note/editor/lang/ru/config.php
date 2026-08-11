@@ -2,6 +2,7 @@
 
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'] = 'Без названия';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE'] = 'Файл недоступен';
+$MESS['NOTE_EDITOR_IMAGE_REPLACE'] = 'Заменить';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE'] = 'Файл';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE'] = 'Изображение';
 $MESS['NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'] = 'Видео';
@@ -109,3 +110,5 @@ $MESS['NOTE_EDITOR_CONTENT_OVERWRITTEN'] = 'Пока вы работали с д
 $MESS['NOTE_EDITOR_HEADING_COPY_ANCHOR'] = 'Скопировать ссылку на заголовок';
 $MESS['NOTE_EDITOR_HEADING_ANCHOR_COPIED'] = 'Ссылка на заголовок скопирована';
 $MESS['NOTE_EDITOR_HEADING_TOGGLE_COLLAPSE'] = 'Свернуть или развернуть раздел';
+
+$MESS['NOTE_EDITOR_MENTION_TAB_USER'] = 'Сотрудники';
