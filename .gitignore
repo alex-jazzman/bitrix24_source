@@ -4,5 +4,7 @@
 !jsconfig.json
 !/bitrix/
 /bitrix/*
+!/bitrix/aliases_generator.php
+!/bitrix/aliases.php
 !/bitrix/modules/
 /bitrix/modules/mywebstor*
